@@ -9,7 +9,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_entra_app_registration_no_password_credentials:
+class Test_entra_app_registration_client_secret_unused:
     def test_no_app_registrations(self):
         """No app registrations in tenant: no findings."""
         entra_client = mock.MagicMock
@@ -22,17 +22,17 @@ class Test_entra_app_registration_no_password_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials.entra_client",
+                "prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials import (
-                entra_app_registration_no_password_credentials,
+            from prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused import (
+                entra_app_registration_client_secret_unused,
             )
 
             entra_client.app_registrations = {}
 
-            check = entra_app_registration_no_password_credentials()
+            check = entra_app_registration_client_secret_unused()
             result = check.execute()
 
             assert len(result) == 0
@@ -51,12 +51,12 @@ class Test_entra_app_registration_no_password_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials.entra_client",
+                "prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials import (
-                entra_app_registration_no_password_credentials,
+            from prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused import (
+                entra_app_registration_client_secret_unused,
             )
 
             entra_client.app_registrations = {
@@ -68,7 +68,7 @@ class Test_entra_app_registration_no_password_credentials:
                 )
             }
 
-            check = entra_app_registration_no_password_credentials()
+            check = entra_app_registration_client_secret_unused()
             result = check.execute()
 
             assert len(result) == 1
@@ -94,12 +94,12 @@ class Test_entra_app_registration_no_password_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials.entra_client",
+                "prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials import (
-                entra_app_registration_no_password_credentials,
+            from prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused import (
+                entra_app_registration_client_secret_unused,
             )
 
             entra_client.app_registrations = {
@@ -118,7 +118,7 @@ class Test_entra_app_registration_no_password_credentials:
                 )
             }
 
-            check = entra_app_registration_no_password_credentials()
+            check = entra_app_registration_client_secret_unused()
             result = check.execute()
 
             assert len(result) == 1
@@ -144,12 +144,12 @@ class Test_entra_app_registration_no_password_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials.entra_client",
+                "prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials import (
-                entra_app_registration_no_password_credentials,
+            from prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused import (
+                entra_app_registration_client_secret_unused,
             )
 
             entra_client.app_registrations = {
@@ -167,7 +167,7 @@ class Test_entra_app_registration_no_password_credentials:
                 )
             }
 
-            check = entra_app_registration_no_password_credentials()
+            check = entra_app_registration_client_secret_unused()
             result = check.execute()
 
             assert len(result) == 1
@@ -189,12 +189,12 @@ class Test_entra_app_registration_no_password_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials.entra_client",
+                "prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials import (
-                entra_app_registration_no_password_credentials,
+            from prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused import (
+                entra_app_registration_client_secret_unused,
             )
 
             entra_client.app_registrations = {
@@ -217,7 +217,7 @@ class Test_entra_app_registration_no_password_credentials:
                 )
             }
 
-            check = entra_app_registration_no_password_credentials()
+            check = entra_app_registration_client_secret_unused()
             result = check.execute()
 
             assert len(result) == 1
@@ -241,12 +241,12 @@ class Test_entra_app_registration_no_password_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials.entra_client",
+                "prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_registration_no_password_credentials.entra_app_registration_no_password_credentials import (
-                entra_app_registration_no_password_credentials,
+            from prowler.providers.m365.services.entra.entra_app_registration_client_secret_unused.entra_app_registration_client_secret_unused import (
+                entra_app_registration_client_secret_unused,
             )
 
             entra_client.app_registrations = {
@@ -269,7 +269,7 @@ class Test_entra_app_registration_no_password_credentials:
                 ),
             }
 
-            check = entra_app_registration_no_password_credentials()
+            check = entra_app_registration_client_secret_unused()
             result = check.execute()
 
             assert len(result) == 2

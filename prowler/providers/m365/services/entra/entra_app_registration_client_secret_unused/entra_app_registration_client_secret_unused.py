@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 
 
-class entra_app_registration_no_password_credentials(Check):
+class entra_app_registration_client_secret_unused(Check):
     """
     Ensure that application registrations do not use password credentials (client secrets).
 
