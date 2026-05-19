@@ -29,7 +29,7 @@ from prowler.providers.okta.exceptions.exceptions import (
 from prowler.providers.okta.lib.mutelist.mutelist import OktaMutelist
 from prowler.providers.okta.models import OktaIdentityInfo, OktaSession
 
-DEFAULT_SCOPES = ["okta.policies.read"]
+DEFAULT_SCOPES = ["okta.policies.read", "okta.brands.read"]
 # Accept only Okta-managed domains. Custom (vanity) domains are rejected on
 # purpose — they're a recurring source of typos and silent misconfig and
 # Prowler's audience overwhelmingly uses Okta-managed hosts. The TLDs below

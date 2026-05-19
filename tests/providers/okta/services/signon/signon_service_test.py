@@ -3,6 +3,7 @@ from unittest import mock
 from prowler.providers.okta.services.signon.signon_service import (
     GlobalSessionPolicy,
     GlobalSessionPolicyRule,
+    SignInPage,
     Signon,
     _next_after_cursor,
 )
@@ -48,10 +49,27 @@ def _fake_rule(
     return r
 
 
+def _fake_brand(brand_id: str, name: str):
+    b = mock.MagicMock()
+    b.id = brand_id
+    b.name = name
+    return b
+
+
+def _fake_sign_in_page(page_content: str):
+    p = mock.MagicMock()
+    p.page_content = page_content
+    return p
+
+
 def _resp(headers: dict = None):
     r = mock.MagicMock()
     r.headers = headers or {}
     return r
+
+
+async def _empty_brands(*_a, **_k):
+    return ([], _resp({}), None)
 
 
 class Test_next_after_cursor:
@@ -97,6 +115,7 @@ class Test_Signon_service:
             mocked = mock.MagicMock()
             mocked.list_policies = fake_list_policies
             mocked.list_policy_rules = fake_list_rules
+            mocked.list_brands = _empty_brands
             mocked_client_cls.return_value = mocked
 
             service = Signon(provider)
@@ -140,6 +159,7 @@ class Test_Signon_service:
             mocked = mock.MagicMock()
             mocked.list_policies = fake_list_policies
             mocked.list_policy_rules = fake_list_rules
+            mocked.list_brands = _empty_brands
             mocked_client_cls.return_value = mocked
             service = Signon(provider)
 
@@ -157,7 +177,122 @@ class Test_Signon_service:
         ) as mocked_client_cls:
             mocked = mock.MagicMock()
             mocked.list_policies = failing
+            mocked.list_brands = _empty_brands
             mocked_client_cls.return_value = mocked
             service = Signon(provider)
 
         assert service.global_session_policies == {}
+
+
+class Test_Signon_service_brands:
+    """Brand sign-in page fetching for the DOD banner check."""
+
+    def _build_with_brands(
+        self,
+        provider,
+        brands_response,
+        sign_in_page_responses: dict,
+    ):
+        async def fake_list_policies(*_a, **_k):
+            return ([], _resp({}), None)
+
+        async def fake_list_brands(*_a, **_k):
+            return brands_response
+
+        async def fake_get_sign_in_page(brand_id, *_a, **_k):
+            return sign_in_page_responses[brand_id]
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = fake_list_policies
+            mocked.list_brands = fake_list_brands
+            mocked.get_customized_sign_in_page = fake_get_sign_in_page
+            mocked_client_cls.return_value = mocked
+            return Signon(provider)
+
+    def test_fetches_brand_with_customized_page(self):
+        provider = set_mocked_okta_provider()
+        brand = _fake_brand("brand-1", "Primary")
+        page = _fake_sign_in_page("<html>banner here</html>")
+        service = self._build_with_brands(
+            provider,
+            brands_response=([brand], _resp({}), None),
+            sign_in_page_responses={"brand-1": (page, _resp({}), None)},
+        )
+
+        assert "brand-1" in service.sign_in_pages
+        result = service.sign_in_pages["brand-1"]
+        assert isinstance(result, SignInPage)
+        assert result.is_customized is True
+        assert result.page_content == "<html>banner here</html>"
+        assert result.fetch_error is None
+
+    def test_404_marks_brand_as_not_customized(self):
+        provider = set_mocked_okta_provider()
+        brand = _fake_brand("brand-1", "Primary")
+        service = self._build_with_brands(
+            provider,
+            brands_response=([brand], _resp({}), None),
+            sign_in_page_responses={
+                "brand-1": (None, _resp({}), Exception("404 Not Found"))
+            },
+        )
+
+        assert service.sign_in_pages["brand-1"].is_customized is False
+        assert service.sign_in_pages["brand-1"].fetch_error is None
+
+    def test_403_captured_into_fetch_error(self):
+        provider = set_mocked_okta_provider()
+        brand = _fake_brand("brand-1", "Primary")
+        service = self._build_with_brands(
+            provider,
+            brands_response=([brand], _resp({}), None),
+            sign_in_page_responses={
+                "brand-1": (None, _resp({}), Exception("403 Forbidden: invalid_scope"))
+            },
+        )
+
+        result = service.sign_in_pages["brand-1"]
+        assert result.is_customized is False
+        assert "403" in result.fetch_error
+
+    def test_returns_empty_on_brands_api_error(self):
+        provider = set_mocked_okta_provider()
+
+        async def fake_list_policies(*_a, **_k):
+            return ([], _resp({}), None)
+
+        async def failing_brands(*_a, **_k):
+            return ([], _resp({}), Exception("Brands API unavailable"))
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = fake_list_policies
+            mocked.list_brands = failing_brands
+            mocked_client_cls.return_value = mocked
+            service = Signon(provider)
+
+        assert service.sign_in_pages == {}
+
+    def test_handles_multiple_brands(self):
+        provider = set_mocked_okta_provider()
+        brand_a = _fake_brand("brand-a", "Brand A")
+        brand_b = _fake_brand("brand-b", "Brand B")
+        page_a = _fake_sign_in_page("<html>A</html>")
+
+        service = self._build_with_brands(
+            provider,
+            brands_response=([brand_a, brand_b], _resp({}), None),
+            sign_in_page_responses={
+                "brand-a": (page_a, _resp({}), None),
+                "brand-b": (None, _resp({}), Exception("404 not found")),
+            },
+        )
+
+        assert set(service.sign_in_pages.keys()) == {"brand-a", "brand-b"}
+        assert service.sign_in_pages["brand-a"].page_content == "<html>A</html>"
+        assert service.sign_in_pages["brand-b"].is_customized is False
