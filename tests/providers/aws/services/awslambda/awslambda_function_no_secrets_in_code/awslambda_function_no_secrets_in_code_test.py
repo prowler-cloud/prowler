@@ -1,3 +1,4 @@
+import io
 import zipfile
 from unittest import mock
 
@@ -50,6 +51,37 @@ def get_lambda_code_with_secrets(code):
     return LambdaCode(
         location="",
         code_zip=zipfile.ZipFile(create_zip_file(code)),
+    )
+
+
+LAMBDA_DEPS_JSON_WITH_SECRET = """
+{
+  "runtimeTarget": { "name": ".NETCoreApp,Version=v8.0" },
+  "libraries": {
+    "AWSSDK.SecretsManager/3.7.0": {
+      "type": "package",
+      "password": "test-deps-json-password"
+    }
+  }
+}
+"""
+
+
+def get_lambda_code_from_files(files: dict) -> LambdaCode:
+    zip_output = io.BytesIO()
+    with zipfile.ZipFile(zip_output, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for name, content in files.items():
+            zip_file.writestr(name, content)
+    zip_output.seek(0)
+    return LambdaCode(location="", code_zip=zipfile.ZipFile(zip_output))
+
+
+def mock_get_function_code_with_deps_json_secret():
+    yield create_lambda_function(), get_lambda_code_from_files(
+        {
+            "lambda_function.py": LAMBDA_FUNCTION_CODE_WITHOUT_SECRETS,
+            "myapp.deps.json": LAMBDA_DEPS_JSON_WITH_SECRET,
+        }
     )
 
 
@@ -184,6 +216,70 @@ class Test_awslambda_function_no_secrets_in_code:
             ),
         ):
             # Test Check
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+                awslambda_function_no_secrets_in_code,
+            )
+
+            check = awslambda_function_no_secrets_in_code()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_id == LAMBDA_FUNCTION_NAME
+            assert result[0].resource_arn == LAMBDA_FUNCTION_ARN
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"No secrets found in Lambda function {LAMBDA_FUNCTION_NAME} code."
+            )
+            assert result[0].resource_tags == []
+
+    def test_function_code_deps_json_secret_not_ignored(self):
+        lambda_client = mock.MagicMock
+        lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
+        lambda_client._get_function_code = mock_get_function_code_with_deps_json_secret
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+                awslambda_function_no_secrets_in_code,
+            )
+
+            check = awslambda_function_no_secrets_in_code()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "myapp.deps.json" in result[0].status_extended
+
+    def test_function_code_deps_json_secret_ignored_by_file_pattern(self):
+        lambda_client = mock.MagicMock
+        lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
+        lambda_client._get_function_code = mock_get_function_code_with_deps_json_secret
+        lambda_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_ignore_files": ["*.deps.json"],
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
             from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
                 awslambda_function_no_secrets_in_code,
             )
