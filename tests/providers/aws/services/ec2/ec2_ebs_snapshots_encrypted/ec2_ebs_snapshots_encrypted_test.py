@@ -29,7 +29,8 @@ class Test_ec2_ebs_snapshots_encrypted:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+            audit_config={"max_ebs_snapshots": 0},
         )
 
         with (
@@ -63,7 +64,8 @@ class Test_ec2_ebs_snapshots_encrypted:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+            audit_config={"max_ebs_snapshots": 0},
         )
 
         with (
@@ -113,7 +115,8 @@ class Test_ec2_ebs_snapshots_encrypted:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+            audit_config={"max_ebs_snapshots": 0},
         )
 
         with (

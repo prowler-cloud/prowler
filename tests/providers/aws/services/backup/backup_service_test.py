@@ -283,6 +283,14 @@ class TestBackupService:
     def test_list_recovery_points(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
+        # Recovery points are fetched lazily via iter_recovery_points()
+        assert backup.recovery_points == []
+
+        recovery_points = list(backup.iter_recovery_points())
+        assert len(recovery_points) == 1
+        # Memoized: a second pass reuses the cache
+        assert list(backup.iter_recovery_points()) == recovery_points
+
         assert len(backup.recovery_points) == 1
         assert (
             backup.recovery_points[0].arn

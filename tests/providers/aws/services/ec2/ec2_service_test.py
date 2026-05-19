@@ -334,8 +334,10 @@ class Test_EC2_Service:
         )
         ec2 = EC2(aws_provider)
 
-        assert snapshot_id in str(ec2.snapshots)
-        for snapshot in ec2.snapshots:
+        # Public status is hydrated lazily via iter_snapshots(determine_public=True)
+        snapshots = list(ec2.iter_snapshots(determine_public=True))
+        assert snapshot_id in str(snapshots)
+        for snapshot in snapshots:
             if snapshot.id == snapshot_id:
                 assert re.match(r"snap-[0-9a-z]{8}", snapshot.id)
                 assert (

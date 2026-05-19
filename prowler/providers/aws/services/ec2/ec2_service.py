@@ -26,8 +26,10 @@ class EC2(AWSService):
         self.snapshots = []
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
+        # Snapshot IDs whose public status has already been hydrated by the
+        # lazy iter_snapshots() generator (memoization, sequential checks)
+        self._public_snapshots_determined = set()
         self.__threading_call__(self._describe_snapshots)
-        self.__threading_call__(self._determine_public_snapshots, self.snapshots)
         self.network_interfaces = {}
         self.__threading_call__(self._describe_network_interfaces)
         self.images = []
@@ -207,6 +209,7 @@ class EC2(AWSService):
                                 arn=arn,
                                 region=regional_client.region,
                                 encrypted=snapshot.get("Encrypted", False),
+                                start_time=snapshot.get("StartTime"),
                                 tags=snapshot.get("Tags"),
                                 volume=snapshot["VolumeId"],
                             )
@@ -242,6 +245,28 @@ class EC2(AWSService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def iter_snapshots(self, determine_public: bool = False):
+        """Yield snapshots newest-first (best-effort), hydrating public status lazily.
+
+        ``self.snapshots`` is already listed eagerly (it also feeds
+        ``volumes_with_snapshots``/``regions_with_snapshots`` used by other
+        checks). The expensive ``describe_snapshot_attribute`` call used to
+        determine public access is deferred here and only issued for the
+        snapshots the consumer actually pulls, memoized per snapshot id so it
+        is shared across checks (checks run sequentially, so no locking).
+        """
+        for snapshot in sorted(
+            self.snapshots,
+            key=lambda s: (s.start_time.timestamp() if s.start_time else 0.0),
+            reverse=True,
+        ):
+            if determine_public and snapshot.id not in (
+                self._public_snapshots_determined
+            ):
+                self._determine_public_snapshots(snapshot)
+                self._public_snapshots_determined.add(snapshot.id)
+            yield snapshot
 
     def _describe_network_interfaces(self, regional_client):
         try:
@@ -686,6 +711,7 @@ class Snapshot(BaseModel):
     region: str
     encrypted: bool
     public: bool = False
+    start_time: Optional[datetime] = None
     tags: Optional[list] = []
     volume: Optional[str]
 
