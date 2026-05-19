@@ -965,7 +965,32 @@ class M365PowerShell(PowerShellSession):
             "Get-EXOMailbox -RecipientTypeDetails SharedMailbox -ResultSize Unlimited | Select-Object DisplayName, UserPrincipalName, ExternalDirectoryObjectId, Identity | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
+    
+    def get_application_access_policies(self) -> dict:
+        """
+        Get Exchange Online Application Access Policies.
 
+        Retrieves all Exchange Online Application Access Policies.
+
+        Returns:
+            dict: Application access policies in JSON format.
+
+        Example:
+            >>> get_application_access_policies()
+            [
+                {
+                    "Identity": "Policy1",
+                    "AppId": "12345678-1234-1234-1234-123456789012",
+                    "AccessRight": "RestrictAccess",
+                    "Description": "Restrict mailbox access"
+                }
+            ]
+        """
+        return self.execute(
+            "Get-ApplicationAccessPolicy | ConvertTo-Json -Depth 10",
+            json_parse=True,
+        )
+    
     def get_user_account_status(self) -> dict:
         """
         Get User Account Status.
