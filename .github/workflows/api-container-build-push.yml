@@ -132,11 +132,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Pin prowler SDK to latest master commit
+      - name: Pin prowler SDK to latest master commit and refresh lockfile
         if: github.event_name == 'push'
         run: |
+          set -e
           LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git refs/heads/master | cut -f1)
           sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
+          # Refresh api/uv.lock so it matches the pinned SHA above; the API
+          # Dockerfile runs `uv sync --locked`, which aborts on any drift
+          # between pyproject.toml and uv.lock.
+          pip install --no-cache-dir "uv==0.11.14"
+          (cd api && uv lock)
 
       - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
