@@ -413,3 +413,23 @@ class Test_SageMaker_Service:
         assert registry.region == AWS_REGION_EU_WEST_1
         assert registry.has_groups is True
         assert registry.has_approved_packages is True
+
+    def test_list_model_package_groups_access_denied(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        def mock_access_denied(self, operation_name, kwarg):
+            if operation_name == "ListModelPackageGroups":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "User is not authorized to perform sagemaker:ListModelPackageGroups",
+                        }
+                    },
+                    "ListModelPackageGroups",
+                )
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.sagemaker_model_registries == []

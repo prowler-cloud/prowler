@@ -235,10 +235,31 @@ class SageMaker(AWSService):
                                 if pkg_page["ModelPackageSummaryList"]:
                                     has_approved = True
                                     break
+                        except ClientError as pkg_error:
+                            if pkg_error.response["Error"]["Code"] in (
+                                "AccessDeniedException",
+                                "UnrecognizedClientException",
+                            ):
+                                raise
+                            logger.error(
+                                f"{regional_client.region} -- {pkg_error.__class__.__name__}[{pkg_error.__traceback__.tb_lineno}]: {pkg_error}"
+                            )
                         except Exception as pkg_error:
                             logger.error(
                                 f"{regional_client.region} -- {pkg_error.__class__.__name__}[{pkg_error.__traceback__.tb_lineno}]: {pkg_error}"
                             )
+        except ClientError as error:
+            if error.response["Error"]["Code"] in (
+                "AccessDeniedException",
+                "UnrecognizedClientException",
+            ):
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
