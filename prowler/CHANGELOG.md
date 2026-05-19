@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.28.0] (Prowler v5.28.0)
+
+### 🚀 Added
+
+- `entra_app_registration_no_password_credentials` check for M365 provider [(#11232)](https://github.com/prowler-cloud/prowler/pull/11232)
+
+---
+
 ## [5.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added
