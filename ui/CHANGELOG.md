@@ -2,19 +2,19 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.27.0] (Prowler UNRELEASED)
+## [1.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added
 
 - UI health endpoint at `GET /api/health` for Docker Compose liveness checks [(#11145)](https://github.com/prowler-cloud/prowler/pull/11145)
 - AWS findings and resource details now expose a "View in AWS Console" link that opens the resource directly in the AWS Console via the universal `/go/view` ARN resolver. The per-provider external link is rendered by a new shared `ExternalResourceLink` component, which also covers the existing IaC repository link [(#9172)](https://github.com/prowler-cloud/prowler/pull/9172)
 - OCSF JSON download for universal compliance frameworks (DORA, CSA CCM), alongside the existing CSV and PDF actions [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- Lighthouse AI: Prowler App Finding Groups MCP tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
 
 ### 🔄 Changed
 
-- Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
-- Faster, stricter pre-commit: prek lints and formats only staged UI files (husky removed), with Prettier and ESLint (`--max-warnings 40`, stale-disable detection) now covering the full UI workspace, including `public/` assets (only the auto-generated `public/mockServiceWorker.js` stays ignored) [(#11118)](https://github.com/prowler-cloud/prowler/pull/11118)
-- Lighthouse now accepts Prowler App Finding Groups MCP tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
+- Trimmed unused `npm` dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
+- Faster, stricter pre-commit: prek lints and formats only staged UI files (husky removed), with Prettier and ESLint (`--max-warnings 40`, stale-disable detection) now covering the full UI workspace, including `public/` assets [(#11118)](https://github.com/prowler-cloud/prowler/pull/11118)
 - Attack Paths graph now uses React Flow with improved layout, interactions, export, minimap, and browser test coverage [(#10686)](https://github.com/prowler-cloud/prowler/pull/10686)
 - SAML ACS URL is only shown if the email domain is configured [(#11144)](https://github.com/prowler-cloud/prowler/pull/11144)
 - "View Resource" action in the finding resource detail drawer is now an icon-only link rendered next to the resource name (instead of a text button in the UID row), keeping the "View in AWS Console" link unchanged [(#11193)](https://github.com/prowler-cloud/prowler/pull/11193)
@@ -22,23 +22,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Mute Findings modal now enforces the 100-character limit on the rule name input with a live counter and inline error, matching the existing reason field behaviour [(#11158)](https://github.com/prowler-cloud/prowler/pull/11158)
+- Finding drawer no longer renders literal backticks around inline code in Risk, Description and Remediation sections [(#11142)](https://github.com/prowler-cloud/prowler/pull/11142)
+- Launch Scan first-provider wizard continues after provider creation instead of resetting the Scans page [(#11136)](https://github.com/prowler-cloud/prowler/pull/11136)
 - Attack Paths graph nodes now wrap long resource and finding labels, indicate truncated values with `…`, and show the full value in an immediate tooltip [(#11197)](https://github.com/prowler-cloud/prowler/pull/11197)
 
 ### 🔐 Security
 
-- UI npm dependencies updated to patched versions for Next.js, Vite, LangChain, XML parsing, lodash, and related transitive packages [(#11171)](https://github.com/prowler-cloud/prowler/pull/11171)
-
----
-
-## [1.26.2] (Prowler 5.26.2)
-
-### 🐞 Fixed
-
-- Finding drawer no longer renders literal backticks around inline code in Risk, Description and Remediation sections [(#11142)](https://github.com/prowler-cloud/prowler/pull/11142)
-
-### 🐞 Fixed
-
-- Launch Scan first-provider wizard continues after provider creation instead of resetting the Scans page [(#11136)](https://github.com/prowler-cloud/prowler/pull/11136)
+- `npm` dependencies updated to patched versions for Next.js, Vite, LangChain, XML parsing, lodash, and related transitive packages [(#11173)](https://github.com/prowler-cloud/prowler/pull/11173)
+- Hardened `npm` supply chain controls [(#11157)](https://github.com/prowler-cloud/prowler/pull/11157)
 
 ---
 

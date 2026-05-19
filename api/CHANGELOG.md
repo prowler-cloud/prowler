@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.28.0] (Prowler UNRELEASED)
+## [1.28.0] (Prowler v5.27.0)
 
 ### 🚀 Added
 
@@ -12,25 +12,15 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
-- Replace `poetry` with `uv` (`0.11.14`) as the API package manager; migrate `pyproject.toml` to `[dependency-groups]` and regenerate as `uv.lock` [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
+- Replace `poetry` with `uv` as package manager [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
 - PDF compliance reports cap detail tables at 100 failed findings per check (configurable via `DJANGO_PDF_MAX_FINDINGS_PER_CHECK`) to bound worker memory on large scans [(#11160)](https://github.com/prowler-cloud/prowler/pull/11160)
 
 ### 🐞 Fixed
 
-- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` and, in one-shot scan-worker deployments, from burning a fresh container per redelivery [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
-
-### 🐞 Fixed
-
+- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
+- Attack Paths: `BEDROCK-001` and `BEDROCK-002` now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
 - Universal compliance CSV and OCSF outputs (DORA, CSA CCM) were truncated to the first batch on multi-batch scans; they now stream every finding [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
-
----
-
-## [1.27.2] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
-- Attack Paths: BEDROCK-001 and BEDROCK-002 now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
 
 ---
 
