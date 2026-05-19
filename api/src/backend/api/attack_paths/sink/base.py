@@ -19,6 +19,17 @@ class SinkDatabase(Protocol):
 
     def close(self) -> None: ...
 
+    def verify_connectivity(self) -> None:
+        """Raise if the backend the API read path uses is unreachable.
+
+        Neo4j verifies its single driver. Neptune verifies the reader
+        driver (the endpoint the API serves reads from); on single-endpoint
+        clusters the reader aliases the writer, so that path is covered too.
+        Used by the readiness probe; must not block longer than the caller's
+        probe budget.
+        """
+        ...
+
     def get_session(
         self,
         database: str | None = None,

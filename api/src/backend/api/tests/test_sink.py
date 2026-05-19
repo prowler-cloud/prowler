@@ -455,6 +455,124 @@ class TestGetBackendForScanCutover:
         assert backend is not active_neptune
 
 
+class TestSinkVerifyConnectivity:
+    """The readiness probe calls ``verify_connectivity`` through the shim.
+
+    Neo4j checks its single driver; Neptune checks the reader (the API read
+    path), which on single-endpoint clusters aliases the writer.
+    """
+
+    @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
+    def test_neo4j_verifies_its_driver(self, mock_driver, settings):
+        from api.attack_paths.sink.neo4j import Neo4jSink
+
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": "7687",
+                "USER": "neo4j",
+                "PASSWORD": "pw",
+            },
+        }
+        driver = MagicMock()
+        mock_driver.return_value = driver
+
+        sink = Neo4jSink()
+        sink.init()
+        driver.verify_connectivity.reset_mock()  # ignore the eager init check
+        sink.verify_connectivity()
+
+        driver.verify_connectivity.assert_called_once_with()
+
+    @patch("api.attack_paths.sink.neptune.neptune_auth_provider")
+    @patch("api.attack_paths.sink.neptune.neo4j.GraphDatabase.driver")
+    def test_neptune_verifies_reader_not_writer(
+        self, mock_driver, mock_auth_provider, settings
+    ):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neptune": {
+                "WRITER_ENDPOINT": "writer.example",
+                "READER_ENDPOINT": "reader.example",
+                "PORT": "8182",
+                "REGION": "eu-west-1",
+            },
+        }
+        writer, reader = MagicMock(name="writer"), MagicMock(name="reader")
+        mock_driver.side_effect = [writer, reader]
+        mock_auth_provider.return_value = lambda: None
+
+        sink = NeptuneSink()
+        sink.init()
+        writer.verify_connectivity.reset_mock()
+        reader.verify_connectivity.reset_mock()
+
+        sink.verify_connectivity()
+
+        reader.verify_connectivity.assert_called_once_with()
+        writer.verify_connectivity.assert_not_called()
+
+
+class TestSinkInitToleratesUnreachableSink:
+    """Init must not crash the process when the sink is down at boot.
+
+    Same degradation model as Postgres: the driver is retained and
+    reconnects lazily; /health/ready surfaces the outage until it recovers.
+    """
+
+    @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
+    def test_neo4j_init_continues_when_verify_fails(self, mock_driver, settings):
+        from api.attack_paths.sink.neo4j import Neo4jSink
+
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": "7687",
+                "USER": "neo4j",
+                "PASSWORD": "pw",
+            },
+        }
+        driver = MagicMock()
+        driver.verify_connectivity.side_effect = RuntimeError("unreachable")
+        mock_driver.return_value = driver
+
+        sink = Neo4jSink()
+        # Must not raise.
+        assert sink.init() is driver
+        assert sink._driver is driver
+
+    @patch("api.attack_paths.sink.neptune.neptune_auth_provider")
+    @patch("api.attack_paths.sink.neptune.neo4j.GraphDatabase.driver")
+    def test_neptune_init_continues_when_verify_fails(
+        self, mock_driver, mock_auth_provider, settings
+    ):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neptune": {
+                "WRITER_ENDPOINT": "writer.example",
+                "READER_ENDPOINT": "reader.example",
+                "PORT": "8182",
+                "REGION": "eu-west-1",
+            },
+        }
+        driver = MagicMock()
+        driver.verify_connectivity.side_effect = RuntimeError("unreachable")
+        mock_driver.return_value = driver
+        mock_auth_provider.return_value = lambda: None
+
+        sink = NeptuneSink()
+        # Must not raise; both drivers retained.
+        sink.init()
+        assert sink._writer is not None
+        assert sink._reader is not None
+
+
 class TestNeptuneAdminNoOps:
     """Neptune is single-database; admin DDL has no work to do."""
 

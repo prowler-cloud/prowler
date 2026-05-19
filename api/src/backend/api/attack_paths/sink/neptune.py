@@ -38,16 +38,17 @@ from config.env import env
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
 
+logger = logging.getLogger(__name__)
+
 SERVICE_UNAVAILABLE_MAX_RETRIES = env.int(
     "ATTACK_PATHS_SERVICE_UNAVAILABLE_MAX_RETRIES", default=3
 )
 READ_QUERY_TIMEOUT_SECONDS = env.int(
     "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
 )
-# Neptune serverless cold-start can be >30s; give the driver room.
+# Neptune serverless cold-start can be >30s; give the driver room
 CONN_ACQUISITION_TIMEOUT = env.int("NEPTUNE_CONN_ACQUISITION_TIMEOUT", default=60)
-# Roll connections hourly so SigV4 rotations and cert refreshes don't strand
-# long-lived pool entries.
+# Roll connections hourly so SigV4 rotations and cert refreshes don't strand long-lived pool entries
 MAX_CONNECTION_LIFETIME = env.int("NEPTUNE_MAX_CONNECTION_LIFETIME", default=3600)
 MAX_CONNECTION_POOL_SIZE = env.int("NEPTUNE_MAX_CONNECTION_POOL_SIZE", default=50)
 
@@ -113,14 +114,19 @@ class NeptuneSink(SinkDatabase):
                 writer_endpoint = cfg["WRITER_ENDPOINT"]
                 reader_endpoint = cfg["READER_ENDPOINT"] or writer_endpoint
 
+                # Eager connectivity checks are best-effort
+                # A Neptune that is down at boot must not crash the process, same degradation model as Postgres
+                # Drivers reconnect lazily on first use
+                # /health/ready surfaces the outage until it recovers
                 self._writer = self._build_driver(writer_endpoint)
-                self._writer.verify_connectivity()
+                self._verify_best_effort(self._writer, "writer")
 
                 if reader_endpoint == writer_endpoint:
                     self._reader = self._writer
+
                 else:
                     self._reader = self._build_driver(reader_endpoint)
-                    self._reader.verify_connectivity()
+                    self._verify_best_effort(self._reader, "reader")
 
                 if not self._atexit_registered:
                     atexit.register(self.close)
@@ -128,8 +134,8 @@ class NeptuneSink(SinkDatabase):
 
     def close(self) -> None:
         with self._lock:
-            # Driver.close() is idempotent, so closing the same driver twice
-            # (when reader aliases writer on single-endpoint configs) is safe.
+            # `Driver.close()` is idempotent, so closing the same driver twice
+            # (when reader aliases writer on single-endpoint configs) is safe
             for driver in (self._reader, self._writer):
                 if driver is None:
                     continue
@@ -151,6 +157,24 @@ class NeptuneSink(SinkDatabase):
         self.init()
         assert self._reader is not None
         return self._reader
+
+    @staticmethod
+    def _verify_best_effort(driver: neo4j.Driver, role: str) -> None:
+        try:
+            driver.verify_connectivity()
+
+        except Exception:
+            logger.warning(
+                "Neptune %s endpoint unreachable at init; continuing with a lazily-reconnecting driver",
+                role,
+                exc_info=True,
+            )
+
+    def verify_connectivity(self) -> None:
+        # The API read path uses the reader driver
+        # On single-endpoint clusters it aliases the writer, so this also covers the writer
+        # A writer-only outage is a workers' concern (no HTTP probe there) and deliberately does not fail API readiness
+        self._get_reader().verify_connectivity()
 
     @contextmanager
     def get_session(
@@ -304,8 +328,8 @@ class NeptuneSink(SinkDatabase):
     # Sync write path
 
     def ensure_sync_indexes(self, database: str) -> None:  # noqa: ARG002
-        # Neptune routes node and relationship lookups through `~id`, which is
-        # the cluster's primary key. No additional index is needed or supported.
+        # Neptune routes node and relationship lookups through `~id`, which is the cluster's primary key
+        # No additional index is needed or supported
         return None
 
     def write_nodes(
@@ -326,11 +350,11 @@ class NeptuneSink(SinkDatabase):
         # matters: Neptune assigns a default `vertex` label to any node
         # created without an explicit one, so we pin `_ProviderResource`
         # (which every synced node carries anyway) at MERGE-time. Additional
-        # labels are added after.
+        # labels are added after
         #
         # We also write `_provider_element_id` as a regular property so
         # non-sync code (drop_subgraph, query helpers) keeps a stable contract
-        # that doesn't know about `~id`.
+        # that doesn't know about `~id`
         query = f"""
             UNWIND $rows AS row
             MERGE (n:`{PROVIDER_RESOURCE_LABEL}` {{`~id`: row.provider_element_id}})
@@ -354,7 +378,7 @@ class NeptuneSink(SinkDatabase):
 
         # `id(n) = $value` is Neptune's parameterized fast path; both endpoint
         # MATCHes resolve in O(1) via the system `~id`, so per-row work stays
-        # bounded regardless of batch size.
+        # bounded regardless of batch size
         query = f"""
             UNWIND $rows AS row
             MATCH (s) WHERE id(s) = row.start_element_id

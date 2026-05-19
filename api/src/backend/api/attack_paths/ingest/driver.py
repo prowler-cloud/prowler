@@ -49,6 +49,7 @@ def _uri() -> str:
             "NEO4J_HOST / NEO4J_PORT must be set to use the attack-paths "
             "temp database. Workers require Neo4j env even when the sink is Neptune."
         )
+
     return f"bolt://{host}:{port}"
 
 
@@ -157,6 +158,7 @@ def clear_cache(database: str) -> None:
     try:
         with get_session(database) as session:
             session.run("CALL db.clearQueryCaches()")
+
     except GraphDatabaseQueryException as exc:
         logging.warning(f"Failed to clear query cache for database `{database}`: {exc}")
 

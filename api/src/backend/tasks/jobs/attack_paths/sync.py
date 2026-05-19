@@ -182,6 +182,7 @@ def _node_to_sync_dict(
     _strip_internal_properties(props)
     _normalize_sink_properties(props)
     labels = tuple(sorted(set(record["labels"] or [])))
+
     return labels, {
         "provider_element_id": f"{provider_id}:{record['element_id']}",
         "props": props,
@@ -196,6 +197,7 @@ def _rel_to_sync_dict(
     _strip_internal_properties(props)
     _normalize_sink_properties(props)
     rel_type = record["rel_type"]
+
     return rel_type, {
         "start_element_id": f"{provider_id}:{record['start_element_id']}",
         "end_element_id": f"{provider_id}:{record['end_element_id']}",
@@ -237,15 +239,18 @@ def _normalize_sink_properties(props: dict[str, Any]) -> None:
 def _to_sink_property_value(value: Any) -> Any:
     if hasattr(value, "iso_format") and callable(value.iso_format):
         return value.iso_format()
+
     if type(value).__module__.startswith("neo4j.spatial"):
         return str(value)
+
     if isinstance(value, dict):
-        # openCypher SET rejects map property values; encode as JSON so the
-        # structured payload survives the round-trip and is queryable with
-        # CONTAINS substring checks.
+        # openCypher `SET` rejects map property values: encode as JSON so the structured payload
+        # survives the round-trip and is queryable with `CONTAINS` substring checks
         return json.dumps(value, sort_keys=True, default=str)
+
     if isinstance(value, list):
-        # openCypher SET rejects list/array property values; encode as a
-        # delimited string read back with split() inside queries.
+        # openCypher `SET` rejects list/array property values: encode as a
+        # delimited string read back with split() inside queries
         return ",".join(str(_to_sink_property_value(v)) for v in value)
+
     return value

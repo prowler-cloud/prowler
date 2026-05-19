@@ -153,10 +153,10 @@ def execute_custom_query(
     scan: AttackPathsScan,
 ) -> dict[str, Any]:
     # Defense-in-depth for custom queries:
-    # 1. neo4j.READ_ACCESS — prevents mutations at the driver level
-    # 2. inject_provider_label() — regex-based label injection scopes node patterns
-    # 3. _serialize_graph() — post-query filter drops nodes without the provider label
-    # 4. USING QUERY:TIMEOUTMILLISECONDS on Neptune — server-side runaway cutoff
+    # 1. `neo4j.READ_ACCESS` — prevents mutations at the driver level
+    # 2. `inject_provider_label()` — regex-based label injection scopes node patterns
+    # 3. `_serialize_graph()` — post-query filter drops nodes without the provider label
+    # 4. `USING QUERY:TIMEOUTMILLISECONDS` on Neptune — server-side runaway cutoff
     #
     # Layer 2 is best-effort (regex can't fully parse Cypher);
     # layer 3 is the safety net that guarantees provider isolation.

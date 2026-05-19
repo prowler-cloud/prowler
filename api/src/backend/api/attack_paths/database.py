@@ -92,10 +92,20 @@ def get_driver() -> neo4j.Driver:
     # Neo4jSink exposes get_driver(); NeptuneSink exposes get_writer()
     if hasattr(backend, "get_driver"):
         return backend.get_driver()
+
     if hasattr(backend, "get_writer"):
         return backend.get_writer()
 
     raise RuntimeError("Active sink backend does not expose a driver handle")
+
+
+def verify_connectivity() -> None:
+    """Raise if the configured graph database is unreachable on the API read path.
+
+    Backend-agnostic entry point for the readiness probe: Neo4j verifies its
+    driver, Neptune verifies the reader endpoint.
+    """
+    sink_module.get_backend().verify_connectivity()
 
 
 def get_uri() -> str:

@@ -24,6 +24,8 @@ from config.env import env
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
 
+logger = logging.getLogger(__name__)
+
 SERVICE_UNAVAILABLE_MAX_RETRIES = env.int(
     "ATTACK_PATHS_SERVICE_UNAVAILABLE_MAX_RETRIES", default=3
 )
@@ -79,7 +81,19 @@ class Neo4jSink(SinkDatabase):
                     connection_acquisition_timeout=CONN_ACQUISITION_TIMEOUT,
                     max_connection_pool_size=MAX_CONNECTION_POOL_SIZE,
                 )
-                self._driver.verify_connectivity()
+                # Eager connectivity check is best-effort:
+                # A Neo4 that is down at boot must not crash the process, same degradation model as Postgres
+                # The driver reconnects lazily on first use
+                # /health/ready surfaces the outage until it recovers
+                try:
+                    self._driver.verify_connectivity()
+
+                except Exception:
+                    logger.warning(
+                        "Neo4j sink unreachable at init; continuing with a lazily-reconnecting driver",
+                        exc_info=True,
+                    )
+
                 if not self._atexit_registered:
                     atexit.register(self.close)
                     self._atexit_registered = True
@@ -87,6 +101,9 @@ class Neo4jSink(SinkDatabase):
 
     def _get_driver(self) -> neo4j.Driver:
         return self.init()
+
+    def verify_connectivity(self) -> None:
+        self._get_driver().verify_connectivity()
 
     def close(self) -> None:
         with self._lock:

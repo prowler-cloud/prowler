@@ -106,7 +106,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     attack_paths_scan = db_utils.retrieve_attack_paths_scan(tenant_id, scan_id)
 
     # Idempotency guard: cleanup may have flipped this row to a terminal state
-    # while the message was still in flight. Bail out before touching state.
+    # while the message was still in flight. Bail out before touching state
     if attack_paths_scan and attack_paths_scan.state in (
         StateChoices.FAILED,
         StateChoices.COMPLETED,
@@ -135,7 +135,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     else:
         if not attack_paths_scan:
-            # Safety net for in-flight messages or direct task invocations; dispatcher normally pre-creates the row.
+            # Safety net for in-flight messages or direct task invocations; dispatcher normally pre-creates the row
             logger.warning(
                 f"No Attack Paths Scan found for scan {scan_id} and tenant {tenant_id}, let's create it then"
             )
@@ -235,7 +235,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             cartography_analysis.run(tmp_neo4j_session, tmp_cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
-            # Creating Internet node and CAN_ACCESS relationships
+            # Creating Internet node and `CAN_ACCESS` relationships
             logger.info(
                 f"Creating Internet graph for AWS account {prowler_api_provider.uid}"
             )
@@ -335,9 +335,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.exception(exception_message)
         ingestion_exceptions["global_error"] = exception_message
 
-        # Recover graph_data_ready based on how far the swap got.
-        # Partial drop (mid-batch failure) may leave `subgraph_dropped=False`
-        # with data partially deleted, so we prefer that over permanently blocked queries.
+        # Recover `graph_data_ready` based on how far the swap got
+        # Partial drop (mid-batch failure) may leave `subgraph_dropped=False` with data partially deleted,
+        # so we prefer that over permanently blocked queries
         try:
             if sync_completed:
                 db_utils.set_graph_data_ready(attack_paths_scan, True)

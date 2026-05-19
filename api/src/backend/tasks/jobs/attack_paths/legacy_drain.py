@@ -57,8 +57,8 @@ def drain_legacy_neo4j_for_provider(
         # No early return on missing/empty DB: `has_provider_data` and
         # `drop_subgraph` are both safe (they swallow DatabaseNotFound and are
         # no-ops when the subgraph is empty), and the bottom check is the only
-        # one that distinguishes a missing DB from an empty existing DB. An
-        # early return here would leave empty existing tenant DBs orphaned.
+        # one that distinguishes a missing DB from an empty existing DB
+        # An early return here would leave empty existing tenant DBs orphaned
         if sink.has_provider_data(tenant_db, str(provider_id)):
             deleted = sink.drop_subgraph(tenant_db, str(provider_id))
             logger.info(

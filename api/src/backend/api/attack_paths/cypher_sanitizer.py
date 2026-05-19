@@ -27,13 +27,13 @@ from tasks.jobs.attack_paths.config import get_provider_label
 
 
 # Step 1 - String / comment protection
-# Single combined regex: strings first, then line comments.
+# Single combined regex: strings first, then line comments
 # The regex engine finds the leftmost match, so a string like 'https://prowler.com'
-# is consumed as a string before the // inside it can match as a comment.
+# is consumed as a string before the // inside it can match as a comment
 _PROTECTED_RE = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"|//[^\n]*")
 
 # Step 2 - Clause splitting
-# OPTIONAL MATCH must come before MATCH to avoid partial matching.
+# `OPTIONAL MATCH` must come before `MATCH` to avoid partial matching
 _CLAUSE_RE = re.compile(
     r"\b(OPTIONAL\s+MATCH|MATCH|WHERE|RETURN|WITH|ORDER\s+BY"
     r"|SKIP|LIMIT|UNION|UNWIND|CALL)\b",
@@ -41,10 +41,10 @@ _CLAUSE_RE = re.compile(
 )
 
 # Pass A - Labeled node patterns (all segments)
-# Matches node patterns that have at least one :Label.
-# (?<!\w)\(  - open paren NOT preceded by a word char (excludes function calls).
-# Group 1:  optional variable + one or more :Label
-# Group 2:  optional {properties} + closing paren
+# Matches node patterns that have at least one `:Label`
+# `(?<!\w)\(`  - open paren NOT preceded by a word char, excludes function calls
+# Group 1:  optional variable + one or more `:Label`
+# Group 2:  optional `{`properties`}` + closing paren
 _LABELED_NODE_RE = re.compile(
     r"(?<!\w)\("
     r"("
@@ -57,9 +57,9 @@ _LABELED_NODE_RE = re.compile(
     r")"
 )
 
-# Pass B - Bare node patterns (MATCH segments only)
-# Matches (identifier) or (identifier {properties}) without any :Label.
-# Only applied in MATCH/OPTIONAL MATCH segments.
+# Pass B - Bare node patterns (`MATCH` segments only)
+# Matches (identifier) or (identifier {properties}) without any `:Label`
+# Only applied in `MATCH` / `OPTIONAL MATCH` segments
 _BARE_NODE_RE = re.compile(
     r"(?<!\w)\(" r"(\s*[a-zA-Z_]\w*)" r"(\s*(?:\{[^}]*\})?)" r"\s*\)"
 )

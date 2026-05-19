@@ -49,10 +49,12 @@ def _build_backend(name: SinkBackend) -> SinkDatabase:
         from api.attack_paths.sink.neo4j import Neo4jSink
 
         return Neo4jSink()
+
     if name is SinkBackend.NEPTUNE:
         from api.attack_paths.sink.neptune import NeptuneSink
 
         return NeptuneSink()
+
     raise RuntimeError(f"Unknown sink backend {name!r}")
 
 
@@ -64,12 +66,14 @@ def init(name: SinkBackend | str | None = None) -> SinkDatabase:
     global _backend
     if _backend is not None:
         return _backend
+
     with _lock:
         if _backend is None:
             resolved = SinkBackend(name) if name else _resolve_setting()
             backend = _build_backend(resolved)
             backend.init()
             _backend = backend
+
     return _backend
 
 
@@ -82,9 +86,11 @@ def close() -> None:
         ]
         _backend = None
         _secondary_backends.clear()
+
     for backend in backends:
         try:
             backend.close()
+
         except Exception:  # pragma: no cover - best-effort
             pass
 
@@ -108,10 +114,12 @@ def get_backend_for_scan(scan: AttackPathsScan) -> SinkDatabase:
     if scan.is_neptune:
         if _resolve_setting() is not SinkBackend.NEPTUNE:
             return _build_backend_cached(SinkBackend.NEPTUNE)
+
         return get_backend()
 
     if _resolve_setting() is SinkBackend.NEPTUNE:
         return _build_backend_cached(SinkBackend.NEO4J)
+
     return get_backend()
 
 
@@ -122,9 +130,11 @@ def _build_backend_cached(name: SinkBackend) -> SinkDatabase:
     # `get_backend_for_scan` becomes a one-liner returning `get_backend()`.
     if name in _secondary_backends:
         return _secondary_backends[name]
+
     with _lock:
         if name not in _secondary_backends:
             backend = _build_backend(name)
             backend.init()
             _secondary_backends[name] = backend
+
     return _secondary_backends[name]

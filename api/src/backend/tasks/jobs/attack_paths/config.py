@@ -21,7 +21,7 @@ PROWLER_FINDING_LABEL = "ProwlerFinding"
 PROVIDER_RESOURCE_LABEL = "_ProviderResource"
 
 # Dynamic isolation labels that contain entity UUIDs and are added to every synced node during sync
-# Format: _Tenant_{uuid_no_hyphens}, _Provider_{uuid_no_hyphens}
+# Format: `_Tenant_{uuid_no_hyphens}`, `_Provider_{uuid_no_hyphens}`
 TENANT_LABEL_PREFIX = "_Tenant_"
 PROVIDER_LABEL_PREFIX = "_Provider_"
 DYNAMIC_ISOLATION_PREFIXES = [TENANT_LABEL_PREFIX, PROVIDER_LABEL_PREFIX]
@@ -34,15 +34,14 @@ class ProviderConfig:
     name: str
     root_node_label: str  # e.g., "AWSAccount"
     uid_field: str  # e.g., "arn"
-    # Label for resources connected to the account node, enabling indexed finding lookups.
+    # Label for resources connected to the account node, enabling indexed finding lookups
     resource_label: str  # e.g., "_AWSResource"
     ingestion_function: Callable
-    # Maps a Postgres resource UID (e.g. full ARN) to the short-id form Cartography stores on some node types (e.g. `i-xxx` for EC2Instance).
+    # Maps a Postgres resource UID (e.g. full ARN) to the short-id form Cartography stores on some node types (e.g. `i-xxx` for EC2Instance)
     short_uid_extractor: Callable[[str], str]
 
 
 # Provider Configurations
-# -----------------------
 
 AWS_CONFIG = ProviderConfig(
     name="aws",
@@ -87,7 +86,6 @@ INTERNAL_PROPERTIES: list[str] = [
 
 
 # Provider Config Accessors
-# -------------------------
 
 
 def is_provider_available(provider_type: str) -> bool:
@@ -135,7 +133,6 @@ def get_short_uid_extractor(provider_type: str) -> Callable[[str], str]:
 
 
 # Dynamic Isolation Label Helpers
-# --------------------------------
 
 
 def _normalize_uuid(value: str | UUID) -> str:
