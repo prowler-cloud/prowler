@@ -10,6 +10,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
 - `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
 
+### 🔄 Changed
+
+- AWS resource scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages are now fetched lazily with a configurable per-service resource limit (default latest 100 via `aws.max_scanned_resources_per_service`), prioritizing `FAIL` findings so non-compliant resources are never hidden before compliant ones up to the limit [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
+
 ### 🐞 Fixed
 
 - Compliance CSV row count now matches the UI per requirement by sourcing rows from the framework JSON's `requirement.Checks` instead of the stale `finding.compliance` snapshot [(#11370)](https://github.com/prowler-cloud/prowler/pull/11370)
