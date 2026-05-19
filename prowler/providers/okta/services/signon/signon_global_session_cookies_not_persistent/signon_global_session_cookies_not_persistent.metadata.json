@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "signon_global_session_cookies_not_persistent",
+  "CheckTitle": "Default Global Session Policy has a Priority 1 non-default rule disabling persistent global session cookies",
+  "CheckType": [],
+  "ServiceName": "signon",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "The **Default Global Session Policy** must have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Okta global session cookies persist across browser sessions** to `Disabled` (DISA STIG V-273206 / OKTA-APP-001710).",
+  "Risk": "Persistent global session cookies keep an authenticated Okta session alive across browser restarts. Cached authentication that survives the original browsing context can grant continued access long after a user closes the browser, and any cached authorization decisions outlive the session window the user expected.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Okta Admin Console as a Super Admin\n2. Go to Security > Global Session Policy\n3. Open the Default Policy\n4. Add or edit a non-default rule\n5. Move that rule to Priority 1 so it is evaluated before the built-in Default Rule\n6. Set 'Okta global session cookies persist across browser sessions' to Disabled\n7. Save the rule",
+      "Terraform": "resource \"okta_policy_rule_signon\" \"prowler_no_persistent_cookies\" {\n  policy_id           = okta_policy_signon.default.id\n  name                = \"Prowler-enforced no persistent cookies\"\n  status              = \"ACTIVE\"\n  session_persistent  = false\n}\n"
+    },
+    "Recommendation": {
+      "Text": "Configure the Default Global Session Policy so its Priority 1 non-default rule disables persistent global session cookies.",
+      "Url": "https://hub.prowler.com/check/signon_global_session_cookies_not_persistent"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
