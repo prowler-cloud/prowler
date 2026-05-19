@@ -46,6 +46,7 @@ jobs:
             schema.ocsf.io:443
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             o26192.ingest.us.sentry.io:443
             management.azure.com:443
