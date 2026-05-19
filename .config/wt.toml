@@ -11,7 +11,7 @@ envs = "wt step copy-ignored"
 [[pre-start]]
 deps = "uv sync"
 
-# Block 3: prepare pnpm via corepack (matches the pinned packageManager).
+# Block 3: prepare pnpm via corepack.
 [[pre-start]]
 corepack-enable = "corepack enable"
 corepack-install = "cd ui && corepack install"
