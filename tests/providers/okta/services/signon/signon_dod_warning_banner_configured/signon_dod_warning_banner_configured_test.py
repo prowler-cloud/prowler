@@ -58,6 +58,7 @@ class Test_signon_dod_warning_banner_configured:
             assert "DOD Notice and Consent Banner detected" in (
                 findings[0].status_extended
             )
+            assert "customized sign-in page" in findings[0].status_extended
 
     def test_fail_when_customized_page_missing_banner(self):
         page = sign_in_page(
@@ -83,7 +84,31 @@ class Test_signon_dod_warning_banner_configured:
             assert findings[0].status == "FAIL"
             assert "does not contain" in findings[0].status_extended
 
-    def test_manual_when_no_customization(self):
+    def test_pass_when_default_page_contains_banner(self):
+        page = sign_in_page(
+            brand_id="brand-1",
+            brand_name="Primary",
+            is_customized=False,
+            page_content=f"<html><body>{DOD_BANNER_HTML_SNIPPET}</body></html>",
+        )
+        signon_client = build_signon_client(sign_in_pages={"brand-1": page})
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_okta_provider(),
+            ),
+            mock.patch(CHECK_PATH, new=signon_client),
+        ):
+            from prowler.providers.okta.services.signon.signon_dod_warning_banner_configured.signon_dod_warning_banner_configured import (
+                signon_dod_warning_banner_configured,
+            )
+
+            findings = signon_dod_warning_banner_configured().execute()
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert "default sign-in page" in findings[0].status_extended
+
+    def test_manual_when_page_content_missing(self):
         page = sign_in_page(
             brand_id="brand-1",
             brand_name="Primary",
@@ -105,7 +130,9 @@ class Test_signon_dod_warning_banner_configured:
             findings = signon_dod_warning_banner_configured().execute()
             assert len(findings) == 1
             assert findings[0].status == "MANUAL"
-            assert "No customized sign-in page" in findings[0].status_extended
+            assert "could not be retrieved from the Okta API" in (
+                findings[0].status_extended
+            )
 
     def test_manual_when_fetch_error(self):
         page = sign_in_page(
@@ -132,6 +159,33 @@ class Test_signon_dod_warning_banner_configured:
             assert "Could not retrieve" in findings[0].status_extended
             assert "403" in findings[0].status_extended
 
+    def test_fail_when_only_partial_banner_markers_are_present(self):
+        page = sign_in_page(
+            brand_id="brand-1",
+            brand_name="Primary",
+            is_customized=True,
+            page_content=(
+                "<html><body>This U.S. Government portal is for authorized use "
+                "only.</body></html>"
+            ),
+        )
+        signon_client = build_signon_client(sign_in_pages={"brand-1": page})
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_okta_provider(),
+            ),
+            mock.patch(CHECK_PATH, new=signon_client),
+        ):
+            from prowler.providers.okta.services.signon.signon_dod_warning_banner_configured.signon_dod_warning_banner_configured import (
+                signon_dod_warning_banner_configured,
+            )
+
+            findings = signon_dod_warning_banner_configured().execute()
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "does not contain" in findings[0].status_extended
+
     def test_emits_one_finding_per_brand(self):
         compliant = sign_in_page(
             brand_id="brand-prod",
@@ -149,6 +203,7 @@ class Test_signon_dod_warning_banner_configured:
             brand_id="brand-legacy",
             brand_name="Legacy",
             is_customized=False,
+            page_content=f"<html>{DOD_BANNER_HTML_SNIPPET}</html>",
         )
         signon_client = build_signon_client(
             sign_in_pages={
@@ -174,5 +229,5 @@ class Test_signon_dod_warning_banner_configured:
             assert by_brand == {
                 "brand-prod": "PASS",
                 "brand-sandbox": "FAIL",
-                "brand-legacy": "MANUAL",
+                "brand-legacy": "PASS",
             }

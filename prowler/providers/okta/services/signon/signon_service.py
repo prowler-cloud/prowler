@@ -36,10 +36,11 @@ class Signon(OktaService):
     policy carries its rules; downstream checks read directly from this
     structure.
 
-    Also populates `self.sign_in_pages` keyed by brand id with the
-    customized sign-in page HTML, used by the DOD warning-banner check.
-    Brands without a customized page are tracked with `is_customized=False`
-    so the check can render a MANUAL finding.
+    Also populates `self.sign_in_pages` keyed by brand id with sign-in page
+    HTML used by the DOD warning-banner check. When a brand has no
+    customized page, the service falls back to the default sign-in page
+    exposed by the Okta Management API and tracks it with
+    `is_customized=False`.
     """
 
     def __init__(self, provider):
@@ -153,40 +154,51 @@ class Signon(OktaService):
         for brand in all_brands:
             brand_id = getattr(brand, "id", "") or ""
             brand_name = getattr(brand, "name", "") or ""
-            page_result = await self.client.get_customized_sign_in_page(brand_id)
-            page_err = page_result[-1]
-            page_data = page_result[0]
-            if page_err is not None:
-                err_text = str(page_err).lower()
-                # 404 is the documented response when a brand has no
-                # customized sign-in page yet. The default Okta page still
-                # shows, but its content is not retrievable via API — flag
-                # the brand for MANUAL review downstream.
-                if (
-                    "404" in err_text
-                    or "not found" in err_text
-                    or "e0000007" in err_text
-                ):
-                    result[brand_id] = SignInPage(
-                        brand_id=brand_id,
-                        brand_name=brand_name,
-                        is_customized=False,
-                    )
-                else:
-                    result[brand_id] = SignInPage(
-                        brand_id=brand_id,
-                        brand_name=brand_name,
-                        is_customized=False,
-                        fetch_error=str(page_err),
-                    )
-                continue
-            result[brand_id] = SignInPage(
+            result[brand_id] = await self._fetch_sign_in_page(brand_id, brand_name)
+        return result
+
+    async def _fetch_sign_in_page(self, brand_id: str, brand_name: str) -> "SignInPage":
+        page_result = await self.client.get_customized_sign_in_page(brand_id)
+        page_err = page_result[-1]
+        page_data = page_result[0]
+        if page_err is None:
+            return SignInPage(
                 brand_id=brand_id,
                 brand_name=brand_name,
                 is_customized=True,
                 page_content=getattr(page_data, "page_content", None),
             )
-        return result
+
+        if not self._is_missing_customized_page_error(page_err):
+            return SignInPage(
+                brand_id=brand_id,
+                brand_name=brand_name,
+                is_customized=False,
+                fetch_error=str(page_err),
+            )
+
+        default_page_result = await self.client.get_default_sign_in_page(brand_id)
+        default_page_err = default_page_result[-1]
+        default_page_data = default_page_result[0]
+        if default_page_err is not None:
+            return SignInPage(
+                brand_id=brand_id,
+                brand_name=brand_name,
+                is_customized=False,
+                fetch_error=str(default_page_err),
+            )
+
+        return SignInPage(
+            brand_id=brand_id,
+            brand_name=brand_name,
+            is_customized=False,
+            page_content=getattr(default_page_data, "page_content", None),
+        )
+
+    @staticmethod
+    def _is_missing_customized_page_error(error) -> bool:
+        err_text = str(error).lower()
+        return "404" in err_text or "not found" in err_text or "e0000007" in err_text
 
     @staticmethod
     async def _paginate(fetch):

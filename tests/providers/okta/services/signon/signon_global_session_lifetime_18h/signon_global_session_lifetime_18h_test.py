@@ -120,6 +120,33 @@ class Test_signon_global_session_lifetime_18h:
             assert findings[0].status == "FAIL"
             assert "does not define" in findings[0].status_extended
 
+    def test_fail_when_lifetime_is_disabled_with_zero(self):
+        policy = default_policy(
+            [
+                non_default_rule("Unlimited Lifetime", lifetime_min=0, priority=1),
+                default_rule(priority=2),
+            ]
+        )
+        signon_client = build_signon_client({"pol-default": policy})
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_okta_provider(),
+            ),
+            mock.patch(CHECK_PATH, new=signon_client),
+        ):
+            from prowler.providers.okta.services.signon.signon_global_session_lifetime_18h.signon_global_session_lifetime_18h import (
+                signon_global_session_lifetime_18h,
+            )
+
+            findings = signon_global_session_lifetime_18h().execute()
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "0 minutes" in findings[0].status_extended
+            assert "disables the maximum Okta global session lifetime" in (
+                findings[0].status_extended
+            )
+
     def test_fail_when_default_rule_is_priority_one(self):
         policy = default_policy(
             [

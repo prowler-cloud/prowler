@@ -192,6 +192,7 @@ class Test_Signon_service_brands:
         provider,
         brands_response,
         sign_in_page_responses: dict,
+        default_sign_in_page_responses: dict | None = None,
     ):
         async def fake_list_policies(*_a, **_k):
             return ([], _resp({}), None)
@@ -202,6 +203,9 @@ class Test_Signon_service_brands:
         async def fake_get_sign_in_page(brand_id, *_a, **_k):
             return sign_in_page_responses[brand_id]
 
+        async def fake_get_default_sign_in_page(brand_id, *_a, **_k):
+            return default_sign_in_page_responses[brand_id]
+
         with mock.patch(
             "prowler.providers.okta.lib.service.service.OktaSDKClient"
         ) as mocked_client_cls:
@@ -209,6 +213,7 @@ class Test_Signon_service_brands:
             mocked.list_policies = fake_list_policies
             mocked.list_brands = fake_list_brands
             mocked.get_customized_sign_in_page = fake_get_sign_in_page
+            mocked.get_default_sign_in_page = fake_get_default_sign_in_page
             mocked_client_cls.return_value = mocked
             return Signon(provider)
 
@@ -229,7 +234,27 @@ class Test_Signon_service_brands:
         assert result.page_content == "<html>banner here</html>"
         assert result.fetch_error is None
 
-    def test_404_marks_brand_as_not_customized(self):
+    def test_404_falls_back_to_default_sign_in_page(self):
+        provider = set_mocked_okta_provider()
+        brand = _fake_brand("brand-1", "Primary")
+        default_page = _fake_sign_in_page("<html>default banner here</html>")
+        service = self._build_with_brands(
+            provider,
+            brands_response=([brand], _resp({}), None),
+            sign_in_page_responses={
+                "brand-1": (None, _resp({}), Exception("404 Not Found"))
+            },
+            default_sign_in_page_responses={"brand-1": (default_page, _resp({}), None)},
+        )
+
+        assert service.sign_in_pages["brand-1"].is_customized is False
+        assert service.sign_in_pages["brand-1"].fetch_error is None
+        assert (
+            service.sign_in_pages["brand-1"].page_content
+            == "<html>default banner here</html>"
+        )
+
+    def test_default_sign_in_page_error_captured_when_customized_page_missing(self):
         provider = set_mocked_okta_provider()
         brand = _fake_brand("brand-1", "Primary")
         service = self._build_with_brands(
@@ -238,10 +263,14 @@ class Test_Signon_service_brands:
             sign_in_page_responses={
                 "brand-1": (None, _resp({}), Exception("404 Not Found"))
             },
+            default_sign_in_page_responses={
+                "brand-1": (None, _resp({}), Exception("403 Forbidden"))
+            },
         )
 
-        assert service.sign_in_pages["brand-1"].is_customized is False
-        assert service.sign_in_pages["brand-1"].fetch_error is None
+        result = service.sign_in_pages["brand-1"]
+        assert result.is_customized is False
+        assert "403" in result.fetch_error
 
     def test_403_captured_into_fetch_error(self):
         provider = set_mocked_okta_provider()
@@ -252,6 +281,7 @@ class Test_Signon_service_brands:
             sign_in_page_responses={
                 "brand-1": (None, _resp({}), Exception("403 Forbidden: invalid_scope"))
             },
+            default_sign_in_page_responses={},
         )
 
         result = service.sign_in_pages["brand-1"]
@@ -291,8 +321,16 @@ class Test_Signon_service_brands:
                 "brand-a": (page_a, _resp({}), None),
                 "brand-b": (None, _resp({}), Exception("404 not found")),
             },
+            default_sign_in_page_responses={
+                "brand-b": (
+                    _fake_sign_in_page("<html>default B</html>"),
+                    _resp({}),
+                    None,
+                )
+            },
         )
 
         assert set(service.sign_in_pages.keys()) == {"brand-a", "brand-b"}
         assert service.sign_in_pages["brand-a"].page_content == "<html>A</html>"
         assert service.sign_in_pages["brand-b"].is_customized is False
+        assert service.sign_in_pages["brand-b"].page_content == "<html>default B</html>"

@@ -93,6 +93,15 @@ class signon_global_session_lifetime_18h(Check):
             )
             return [report]
 
+        if lifetime == 0:
+            report.status = "FAIL"
+            report.status_extended = (
+                f"Priority 1 non-default rule '{priority_one_rule.name}' in "
+                f"Default Global Session Policy '{policy.name}' disables the "
+                "maximum Okta global session lifetime by setting it to 0 minutes."
+            )
+            return [report]
+
         if lifetime <= threshold:
             report.status = "PASS"
             report.status_extended = (

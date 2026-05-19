@@ -2,18 +2,31 @@ from prowler.lib.check.models import Check, CheckReportOkta
 from prowler.providers.okta.services.signon.signon_client import signon_client
 from prowler.providers.okta.services.signon.signon_service import SignInPage
 
-# Distinctive substrings drawn from the DTM-08-060 Standard Mandatory DOD
-# Notice and Consent Banner. The full banner is ~1300 characters and is
-# highly variable across HTML encodings, so the check matches on a
-# tolerant marker set: a customized sign-in page is considered to carry
-# the banner when at least two of these markers appear (case-insensitive).
-BANNER_MARKERS = (
-    "u.s. government",
-    "usg information system",
-    "only authorized use",
-    "may be intercepted",
+# Distinctive marker groups drawn from the DTM-08-060 Standard Mandatory
+# DOD Notice and Consent Banner. The HTML can vary across brands, so the
+# check looks for the banner's core ideas rather than requiring an exact
+# string match.
+BANNER_MARKER_GROUPS = (
+    ("u.s. government", "us government"),
+    ("information system", "information systems"),
+    ("authorized use only", "authorized use"),
+    (
+        "subject to monitoring",
+        "may be intercepted",
+        "searched, monitored, and recorded",
+        "consent to monitoring",
+    ),
 )
-MIN_MARKER_MATCHES = 2
+
+
+def _matched_banner_groups(content_lower: str) -> list[str]:
+    matched_markers: list[str] = []
+    for marker_group in BANNER_MARKER_GROUPS:
+        for marker in marker_group:
+            if marker in content_lower:
+                matched_markers.append(marker)
+                break
+    return matched_markers
 
 
 class signon_dod_warning_banner_configured(Check):
@@ -21,9 +34,9 @@ class signon_dod_warning_banner_configured(Check):
 
     Okta must display the Standard Mandatory DOD Notice and Consent
     Banner (DTM-08-060) before granting access to the application. The
-    check inspects each brand's customized sign-in page; tenants without
-    a customized page fall through to MANUAL because the default Okta
-    page content is not retrievable via the Management API.
+    check inspects each brand's sign-in page HTML returned by the Okta
+    Management API, using the customized page when present and otherwise
+    falling back to the default sign-in page.
     """
 
     def execute(self) -> list[CheckReportOkta]:
@@ -64,39 +77,41 @@ class signon_dod_warning_banner_configured(Check):
             if page.fetch_error:
                 report.status = "MANUAL"
                 report.status_extended = (
-                    f"Could not retrieve the customized sign-in page for "
+                    f"Could not retrieve the sign-in page for "
                     f"brand '{page.brand_name or page.brand_id}' ({page.fetch_error}). "
-                    "Inspect the brand customization manually to confirm the "
+                    "Inspect the brand manually to confirm the "
                     "DOD Notice and Consent Banner (DTM-08-060) is displayed."
                 )
                 findings.append(report)
                 continue
 
-            if not page.is_customized or not page.page_content:
+            if not page.page_content:
                 report.status = "MANUAL"
                 report.status_extended = (
-                    f"No customized sign-in page is configured for brand "
-                    f"'{page.brand_name or page.brand_id}'. The DOD Notice "
-                    "and Consent Banner cannot be audited via API — verify "
-                    "the default sign-in page in the Admin Console."
+                    f"Sign-in page content for brand "
+                    f"'{page.brand_name or page.brand_id}' could not be "
+                    "retrieved from the Okta API. Verify the DOD Notice and "
+                    "Consent Banner (DTM-08-060) manually in the Admin Console."
                 )
                 findings.append(report)
                 continue
 
+            page_type = "customized" if page.is_customized else "default"
             content_lower = page.page_content.lower()
-            matches = sum(1 for marker in BANNER_MARKERS if marker in content_lower)
+            matches = _matched_banner_groups(content_lower)
 
-            if matches >= MIN_MARKER_MATCHES:
+            if len(matches) == len(BANNER_MARKER_GROUPS):
                 report.status = "PASS"
                 report.status_extended = (
-                    f"DOD Notice and Consent Banner detected on the customized "
+                    f"DOD Notice and Consent Banner detected on the {page_type} "
                     f"sign-in page for brand '{page.brand_name or page.brand_id}' "
-                    f"({matches} of {len(BANNER_MARKERS)} marker phrases matched)."
+                    f"({len(matches)} of {len(BANNER_MARKER_GROUPS)} required "
+                    "marker groups matched)."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Customized sign-in page for brand "
+                    f"{page_type.title()} sign-in page for brand "
                     f"'{page.brand_name or page.brand_id}' does not contain "
                     "the DOD Notice and Consent Banner (DTM-08-060)."
                 )
