@@ -21,6 +21,7 @@ from celery import chain, states
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
+from config.version import RELEASE_ID
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
@@ -425,7 +426,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.28.0"
+        spectacular_settings.VERSION = RELEASE_ID
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
