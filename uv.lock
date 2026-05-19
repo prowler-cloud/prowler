@@ -3320,7 +3320,6 @@ dependencies = [
     { name = "slack-sdk" },
     { name = "stackit-core" },
     { name = "stackit-iaas" },
-    { name = "stackit-objectstorage" },
     { name = "stackit-resourcemanager" },
     { name = "tabulate" },
     { name = "tzlocal" },
@@ -3428,7 +3427,6 @@ requires-dist = [
     { name = "slack-sdk", specifier = "==3.39.0" },
     { name = "stackit-core", specifier = "==0.2.0" },
     { name = "stackit-iaas", specifier = "==1.4.0" },
-    { name = "stackit-objectstorage", specifier = "==1.4.0" },
     { name = "stackit-resourcemanager", specifier = "==0.8.0" },
     { name = "tabulate", specifier = "==0.9.0" },
     { name = "tzlocal", specifier = "==5.3.1" },
@@ -4266,21 +4264,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/52/07/24e65278300d5c3cb19cb1660bff924c80812cf8aad3e715f826bae5aa80/stackit_iaas-1.4.0.tar.gz", hash = "sha256:93523b23442350c7ebefd9129485c4c2a539f694a9c36a0f8edfaba9862057ea", size = 116236, upload-time = "2026-05-13T09:43:15.996Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/08/51/2201164d7bfacf47539888c735f10f6320c188252384957aa1b23121a210/stackit_iaas-1.4.0-py3-none-any.whl", hash = "sha256:3f4a32321b57ac238f73e5d660c6428186b92cc0425c1f0783ba801e377149d9", size = 316588, upload-time = "2026-05-13T09:43:14.943Z" },
-]
-
-[[package]]
-name = "stackit-objectstorage"
-version = "1.4.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pydantic" },
-    { name = "python-dateutil" },
-    { name = "requests" },
-    { name = "stackit-core" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/90/80/b790756af40a5c6d979dd688b2557394ac54b594eb4c08edc33157ba890f/stackit_objectstorage-1.4.0.tar.gz", hash = "sha256:4a3812b4de102b199f061706a802909f9e53ae9b0858769d5bd720f814c8bdbe", size = 31814, upload-time = "2026-05-13T09:43:05.027Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/f1/ffa8d5e2ec9f818c72a6f045691364eb4e927ee86641993a70882d00205a/stackit_objectstorage-1.4.0-py3-none-any.whl", hash = "sha256:1a3285c6840d95cff591d84fd21803575cb0d010c398e6575ed92987b9c39866", size = 65061, upload-time = "2026-05-13T09:43:04.13Z" },
 ]
 
 [[package]]

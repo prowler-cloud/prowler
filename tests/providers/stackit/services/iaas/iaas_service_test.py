@@ -30,8 +30,8 @@ class Test_IaaS_Service:
         assert iaas_service.api_token is not None
         assert isinstance(iaas_service.security_groups, list)
         assert isinstance(iaas_service.server_nics, list)
-        assert isinstance(iaas_service.public_nic_ids, set)
         assert isinstance(iaas_service.in_use_sg_ids, set)
+        assert iaas_service.scan_unused_services is False
 
     def test_service_project_id(self):
         """Test that the service correctly extracts project_id from provider."""
@@ -51,12 +51,6 @@ class Test_IaaS_Service:
         assert hasattr(iaas_service, "security_groups")
         assert isinstance(iaas_service.security_groups, list)
 
-    def test_public_nic_ids_set_structure(self):
-        """Test that public_nic_ids is properly initialized as a set."""
-        iaas_service = IaaSService(set_mocked_stackit_provider())
-        assert hasattr(iaas_service, "public_nic_ids")
-        assert isinstance(iaas_service.public_nic_ids, set)
-
     def test_in_use_sg_ids_set_structure(self):
         """Test that in_use_sg_ids is properly initialized as a set."""
         iaas_service = IaaSService(set_mocked_stackit_provider())
@@ -66,7 +60,6 @@ class Test_IaaS_Service:
     @pytest.mark.parametrize(
         "method_name,client_method_name",
         [
-            ("_list_public_ips", "list_public_ips"),
             ("_list_server_nics", "list_project_nics"),
             ("_list_security_groups", "list_security_groups"),
             ("_list_security_group_rules", "list_security_group_rules"),
@@ -106,6 +99,30 @@ class Test_IaaS_Service:
 
         assert len(iaas_service.security_groups) == 1
         assert iaas_service.security_groups[0].id == "sg-1"
+
+    def test_in_use_considers_all_nics_not_only_public(self):
+        """A SG attached to any NIC (public or private) counts as in_use."""
+        iaas_service = IaaSService(set_mocked_stackit_provider())
+
+        # NIC without a public IP, but has a security group attached
+        private_nic = {"id": "nic-private", "security_groups": ["sg-private"]}
+        used = iaas_service._get_used_security_group_ids([private_nic])
+
+        assert "sg-private" in used
+
+    def test_in_use_sg_ids_populated_via_list_server_nics(self):
+        """_list_server_nics marks SGs on any NIC as in_use."""
+        iaas_service = IaaSService(set_mocked_stackit_provider())
+        client = MagicMock()
+        client.list_project_nics.return_value = [
+            {"id": "nic-1", "security_groups": ["sg-1"]},
+            {"id": "nic-2", "security_groups": ["sg-2"]},
+        ]
+
+        iaas_service._list_server_nics(client, "eu01")
+
+        assert "sg-1" in iaas_service.in_use_sg_ids
+        assert "sg-2" in iaas_service.in_use_sg_ids
 
 
 # Test SecurityGroupRule helper methods

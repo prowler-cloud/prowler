@@ -29,3 +29,11 @@ class TestStackITArguments:
     def test_api_token_argument_is_not_registered(self, parser):
         with pytest.raises(SystemExit):
             parser.parse_args(["stackit", "--stackit-api-token", "secret-token"])
+
+    def test_scan_unused_services_defaults_to_false(self, parser):
+        args = parser.parse_args(["stackit"])
+        assert args.scan_unused_services is False
+
+    def test_scan_unused_services_flag_sets_true(self, parser):
+        args = parser.parse_args(["stackit", "--scan-unused-services"])
+        assert args.scan_unused_services is True

@@ -613,14 +613,6 @@ mongodbatlas:
   # mongodbatlas.organizations_service_account_secrets_expiration --> Maximum hours for service account secrets validity
   max_service_account_secret_validity_hours: 8
 
-# StackIT Configuration
-stackit:
-  # StackIT Global Configuration
-  # Maximum number of API retries
-  max_api_retries: 3
-  # API request timeout in seconds
-  timeout_seconds: 30
-
 # Cloudflare Configuration
 cloudflare:
   # Maximum number of retries for API requests (default is 2)

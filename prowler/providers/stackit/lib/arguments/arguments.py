@@ -24,3 +24,12 @@ def init_parser(self):
         choices=StackitProvider.get_regions(),
         default=None,
     )
+
+    scan_unused_services_subparser = stackit_parser.add_argument_group(
+        "Scan Unused Services"
+    )
+    scan_unused_services_subparser.add_argument(
+        "--scan-unused-services",
+        action="store_true",
+        help="Scan unused services",
+    )

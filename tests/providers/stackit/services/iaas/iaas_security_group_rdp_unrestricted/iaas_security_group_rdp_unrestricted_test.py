@@ -12,6 +12,9 @@ from tests.providers.stackit.stackit_fixtures import (
 
 
 class Test_iaas_security_group_rdp_unrestricted:
+    def setup_method(self):
+        mock.MagicMock.scan_unused_services = False
+
     def test_no_security_groups(self):
         """Test with no security groups - should return empty results."""
         iaas_client = mock.MagicMock

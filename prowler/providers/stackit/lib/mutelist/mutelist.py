@@ -4,7 +4,7 @@ from prowler.lib.outputs.utils import unroll_dict, unroll_tags
 
 
 class StackITMutelist(Mutelist):
-    def is_finding_muted(self, *, finding: CheckReportStackIT) -> bool:
+    def is_finding_muted(self, finding: CheckReportStackIT) -> bool:
         """
         Determines if a StackIT finding is muted based on mutelist rules.
 

@@ -9,7 +9,7 @@ Mutelist:
   Accounts:
     "project_id_1":
       Checks:
-        "objectstorage_bucket_encryption":
+        "iaas_security_group_ssh_unrestricted":
           Regions:
             - "*"
           Resources:

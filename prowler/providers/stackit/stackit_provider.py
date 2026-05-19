@@ -76,6 +76,7 @@ class StackitProvider(Provider):
     _identity: StackITIdentityInfo
     _audit_config: dict
     _mutelist: StackITMutelist
+    _scan_unused_services: bool = False
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -83,6 +84,7 @@ class StackitProvider(Provider):
         api_token: str = None,
         project_id: str = None,
         regions: set = None,
+        scan_unused_services: bool = False,
         config_path: str = None,
         fixer_config: dict = None,
         mutelist_path: str = None,
@@ -106,6 +108,7 @@ class StackitProvider(Provider):
         self._api_token = api_token or os.getenv("STACKIT_API_TOKEN")
         self._project_id = project_id or os.getenv("STACKIT_PROJECT_ID")
         self._audited_regions = regions if regions else self.get_regions()
+        self._scan_unused_services = scan_unused_services
 
         # 2) Validate credentials format (following Azure's validation pattern)
         try:
@@ -248,6 +251,10 @@ class StackitProvider(Provider):
         Returns any fixer configuration provided to the StackIT provider.
         """
         return self._fixer_config
+
+    @property
+    def scan_unused_services(self) -> bool:
+        return self._scan_unused_services
 
     @property
     def mutelist(self) -> StackITMutelist:

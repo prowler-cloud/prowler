@@ -264,6 +264,7 @@ class Provider(ABC):
                             if arguments.stackit_region
                             else None
                         ),
+                        scan_unused_services=arguments.scan_unused_services,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

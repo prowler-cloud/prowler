@@ -24,6 +24,7 @@ class IaaSService:
         self.provider = provider
         self.project_id = provider.identity.project_id
         self.api_token = provider.session.get("api_token")
+        self.scan_unused_services = provider.scan_unused_services
 
         # Generate regional clients (AWS pattern)
         self.regional_clients = provider.generate_regional_clients("iaas")
@@ -34,7 +35,6 @@ class IaaSService:
 
         # Initialize server NICs list and used security group IDs
         self.server_nics: list = []
-        self.public_nic_ids: set[str] = set()  # NICs with public IPs
         self.in_use_sg_ids: set[str] = set()
 
         # Fetch resources from all regions
@@ -43,7 +43,6 @@ class IaaSService:
     def _fetch_all_regions(self):
         """Fetch resources from all audited regions."""
         for region, client in self.regional_clients.items():
-            self._list_public_ips(client, region)
             self._list_server_nics(client, region)
             self._list_security_groups(client, region)
 
@@ -250,67 +249,12 @@ class IaaSService:
 
         return rules
 
-    def _list_public_ips(self, client, region: str):
-        """
-        List all public IPs in the StackIT project and build a set of NIC IDs
-        that have public IPs attached.
-
-        This method populates self.public_nic_ids with the NIC IDs that are
-        publicly accessible via public IP addresses.
-        """
-        if not client:
-            logger.warning(
-                f"Cannot list public IPs in {region}: StackIT IaaS client not available"
-            )
-            return
-
-        # Call the list public IPs API with centralized error handling
-        response = self._handle_api_call(
-            client.list_public_ips, project_id=self.project_id, region=region
-        )
-
-        # Extract public IPs from response
-        if hasattr(response, "items"):
-            public_ips_list = response.items
-        elif isinstance(response, dict):
-            public_ips_list = response.get("items", [])
-        elif isinstance(response, list):
-            public_ips_list = response
-        else:
-            logger.warning(
-                f"Unexpected response type from list_public_ips: {type(response)}"
-            )
-            public_ips_list = []
-
-        # Extract NIC IDs that have public IPs
-        for public_ip in public_ips_list:
-            try:
-                if hasattr(public_ip, "network_interface"):
-                    nic_id = public_ip.network_interface
-                elif isinstance(public_ip, dict):
-                    nic_id = public_ip.get("network_interface") or public_ip.get(
-                        "networkInterface"
-                    )
-                else:
-                    continue
-
-                if nic_id:
-                    self.public_nic_ids.add(nic_id)
-
-            except Exception as e:
-                logger.debug(f"Error extracting NIC ID from public IP: {e}")
-                continue
-
-        logger.info(
-            f"Successfully listed {len(public_ips_list)} public IPs in {region}."
-        )
-
     def _list_server_nics(self, client, region: str):
         """
         List all server network interfaces (NICs) in the StackIT project.
 
         This method fetches all NICs and determines which security groups are
-        actively in use by checking which security groups are attached to NICs.
+        actively in use by checking which security groups are attached to any NIC.
         """
         if not client:
             logger.warning(
@@ -338,59 +282,26 @@ class IaaSService:
 
         self.server_nics.extend(nics_list)
 
-        # Extract security group IDs that are in use (on public NICs only)
+        # A security group is "in use" when attached to any NIC
         used_sg_ids = self._get_used_security_group_ids(nics_list)
         self.in_use_sg_ids.update(used_sg_ids)
 
-        # Count NICs with public IPs for logging
-        public_nic_count = sum(
-            1
-            for nic in nics_list
-            if (
-                (hasattr(nic, "id") and nic.id in self.public_nic_ids)
-                or (isinstance(nic, dict) and nic.get("id") in self.public_nic_ids)
-            )
-        )
-
         logger.info(
-            f"Successfully listed {len(nics_list)} NICs in {region} "
-            f"({public_nic_count} with public IPs). "
-            f"Found {len(used_sg_ids)} security groups attached to public NICs."
+            f"Successfully listed {len(nics_list)} NICs in {region}. "
+            f"Found {len(used_sg_ids)} security groups attached to NICs."
         )
 
     def _get_used_security_group_ids(self, nics_list) -> set[str]:
         """
-        Get the set of security group IDs that are actively attached to NICs
-        with public IP addresses (internet-accessible).
-
-        Only security groups on NICs with public IPs are considered "in use"
-        for security checks, as private NICs are not reachable from the internet.
-
-        Design Decision: This implementation intentionally focuses on internet-facing
-        resources to reduce noise and align with cloud security best practices.
-        Security groups on private NICs (without public IPs) are not flagged, as
-        they do not represent direct exposure to the public internet. This approach
-        helps teams prioritize the most critical security risks.
+        Get the set of security group IDs that are actively attached to any NIC.
 
         Returns:
-            set[str]: Set of security group IDs that are attached to public NICs
+            set[str]: Set of security group IDs that are attached to at least one NIC
         """
         used_sg_ids = set()
 
         for nic in nics_list:
             try:
-                # Get the NIC ID
-                if hasattr(nic, "id"):
-                    nic_id = nic.id
-                elif isinstance(nic, dict):
-                    nic_id = nic.get("id")
-                else:
-                    continue
-
-                # Only consider security groups on NICs with public IPs
-                if nic_id not in self.public_nic_ids:
-                    continue
-
                 # Extract security groups from NIC
                 if hasattr(nic, "security_groups"):
                     sg_list = nic.security_groups
@@ -399,10 +310,9 @@ class IaaSService:
                 else:
                     continue
 
-                # Add all security group IDs to the set
                 if sg_list:
                     for sg_id in sg_list:
-                        if sg_id:  # Ignore None or empty strings
+                        if sg_id:
                             used_sg_ids.add(sg_id)
 
             except Exception as e:

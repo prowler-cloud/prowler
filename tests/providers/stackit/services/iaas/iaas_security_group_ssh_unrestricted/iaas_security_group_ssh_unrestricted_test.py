@@ -12,6 +12,9 @@ from tests.providers.stackit.stackit_fixtures import (
 
 
 class Test_iaas_security_group_ssh_unrestricted:
+    def setup_method(self):
+        mock.MagicMock.scan_unused_services = False
+
     def test_no_security_groups(self):
         """Test with no security groups - should return empty results."""
         iaas_client = mock.MagicMock
@@ -533,3 +536,54 @@ class Test_iaas_security_group_ssh_unrestricted:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
+
+    def test_security_group_not_in_use_with_scan_unused_services(self):
+        """Unused SG with unrestricted SSH must FAIL when scan_unused_services=True."""
+        iaas_client = mock.MagicMock
+        iaas_client.scan_unused_services = True
+        security_group_name = "unused-security-group"
+        security_group_id = str(uuid4())
+
+        iaas_client.security_groups = [
+            SecurityGroup(
+                id=security_group_id,
+                name=security_group_name,
+                project_id=STACKIT_PROJECT_ID,
+                region="eu01",
+                rules=[
+                    SecurityGroupRule(
+                        id="rule-1",
+                        direction="ingress",
+                        protocol="tcp",
+                        ip_range="0.0.0.0/0",
+                        port_range_min=22,
+                        port_range_max=22,
+                    )
+                ],
+                in_use=False,
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_stackit_provider(scan_unused_services=True),
+            ),
+            mock.patch(
+                "prowler.providers.stackit.services.iaas.iaas_service.IaaSService",
+                new=iaas_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.stackit.services.iaas.iaas_client.iaas_client",
+                new=service_client,
+            ),
+        ):
+            from prowler.providers.stackit.services.iaas.iaas_security_group_ssh_unrestricted.iaas_security_group_ssh_unrestricted import (
+                iaas_security_group_ssh_unrestricted,
+            )
+
+            check = iaas_security_group_ssh_unrestricted()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "allows unrestricted SSH access" in result[0].status_extended

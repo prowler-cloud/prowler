@@ -17,6 +17,7 @@ def set_mocked_stackit_provider(
     identity: StackITIdentityInfo = None,
     audit_config: dict = None,
     fixer_config: dict = None,
+    scan_unused_services: bool = False,
 ) -> StackitProvider:
     """
     Create a mocked StackIT provider for testing.
@@ -46,5 +47,6 @@ def set_mocked_stackit_provider(
     }
     provider.audit_config = audit_config if audit_config else {}
     provider.fixer_config = fixer_config if fixer_config else {}
+    provider.scan_unused_services = scan_unused_services
 
     return provider

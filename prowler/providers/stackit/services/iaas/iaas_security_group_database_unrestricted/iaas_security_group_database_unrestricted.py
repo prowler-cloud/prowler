@@ -31,8 +31,7 @@ class iaas_security_group_database_unrestricted(Check):
         findings = []
 
         for security_group in iaas_client.security_groups:
-            # Only check security groups that are actively in use
-            if not security_group.in_use:
+            if not (iaas_client.scan_unused_services or security_group.in_use):
                 continue
             exposed_databases = []
             exposing_rule = None

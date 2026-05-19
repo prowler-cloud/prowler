@@ -177,6 +177,7 @@ class TestStackITProviderInitialization:
             provider="stackit",
             stackit_project_id="12345678-1234-1234-1234-123456789abc",
             stackit_region=None,
+            scan_unused_services=False,
             config_file="config.yaml",
             mutelist_file=None,
             fixer_config="fixer_config.yaml",
@@ -195,6 +196,39 @@ class TestStackITProviderInitialization:
 
         assert "api_token" not in captured_kwargs
         assert captured_kwargs["project_id"] == arguments.stackit_project_id
+        assert captured_kwargs["scan_unused_services"] is False
+
+    def test_init_global_provider_passes_scan_unused_services_true(self, monkeypatch):
+        """scan_unused_services=True is forwarded to the provider constructor."""
+        captured_kwargs = {}
+
+        class FakeStackitProvider:
+            def __init__(self, **kwargs):
+                captured_kwargs.update(kwargs)
+
+        fake_module = types.SimpleNamespace(StackitProvider=FakeStackitProvider)
+        arguments = Namespace(
+            provider="stackit",
+            stackit_project_id="12345678-1234-1234-1234-123456789abc",
+            stackit_region=None,
+            scan_unused_services=True,
+            config_file="config.yaml",
+            mutelist_file=None,
+            fixer_config="fixer_config.yaml",
+        )
+
+        monkeypatch.setenv("STACKIT_API_TOKEN", "env-token")
+        monkeypatch.setattr(common_provider.Provider, "_global", None)
+
+        with (
+            patch.object(common_provider, "import_module", return_value=fake_module),
+            patch.object(
+                common_provider, "load_and_validate_config_file", return_value={}
+            ),
+        ):
+            common_provider.Provider.init_global_provider(arguments)
+
+        assert captured_kwargs["scan_unused_services"] is True
 
 
 class TestStackITProviderTestConnection:
