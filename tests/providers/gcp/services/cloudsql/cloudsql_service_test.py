@@ -43,6 +43,11 @@ class TestCloudSQLService:
                 {"value": "test"}
             ]
             assert cloudsql_client.instances[0].flags == []
+            assert cloudsql_client.instances[0].instance_type == "CLOUD_SQL_INSTANCE"
+            assert (
+                cloudsql_client.instances[0].cmek_key_name
+                == "projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1"
+            )
             assert cloudsql_client.instances[0].project_id == GCP_PROJECT_ID
 
             assert cloudsql_client.instances[1].name == "instance2"
@@ -62,12 +67,14 @@ class TestCloudSQLService:
                 {"value": "test"}
             ]
             assert cloudsql_client.instances[1].flags == []
+            assert cloudsql_client.instances[1].instance_type == "CLOUD_SQL_INSTANCE"
+            assert cloudsql_client.instances[1].cmek_key_name is None
             assert cloudsql_client.instances[1].project_id == GCP_PROJECT_ID
 
     def test_instances_without_backup_configuration(self):
         """Test that CloudSQL service handles instances without backupConfiguration field"""
 
-        def mock_api_client_without_backup_config(*args, **kwargs):
+        def mock_api_client_without_backup_config(*_args, **_kwargs):
             from unittest.mock import MagicMock
 
             client = MagicMock()
@@ -119,7 +126,7 @@ class TestCloudSQLService:
     def test_instances_with_empty_backup_configuration(self):
         """Test that CloudSQL service handles instances with empty backupConfiguration"""
 
-        def mock_api_client_with_empty_backup_config(*args, **kwargs):
+        def mock_api_client_with_empty_backup_config(*_args, **_kwargs):
             from unittest.mock import MagicMock
 
             client = MagicMock()
@@ -170,7 +177,7 @@ class TestCloudSQLService:
     def test_instances_without_settings_fields(self):
         """Test that CloudSQL service handles instances with minimal settings"""
 
-        def mock_api_client_with_minimal_settings(*args, **kwargs):
+        def mock_api_client_with_minimal_settings(*_args, **_kwargs):
             from unittest.mock import MagicMock
 
             client = MagicMock()
