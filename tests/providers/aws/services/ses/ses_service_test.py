@@ -29,8 +29,11 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "policy1": '{"policy1": "value1"}',
             },
             "Tags": {"tag1": "value1", "tag2": "value2"},
-            "DkimStatus": "SUCCESS",
-            "DkimSigningAttributesOrigin": "AWS_SES",
+            "DkimAttributes": {
+                "Status": "SUCCESS",
+                "SigningEnabled": True,
+                "SigningAttributesOrigin": "AWS_SES",
+            },
         }
     return make_api_call(self, operation_name, kwarg)
 
@@ -82,3 +85,4 @@ class Test_SES_Service:
         assert ses.email_identities[arn].tags == {"tag1": "value1", "tag2": "value2"}
         assert ses.email_identities[arn].dkim_status == "SUCCESS"
         assert ses.email_identities[arn].dkim_signing_attributes_origin == "AWS_SES"
+        assert ses.email_identities[arn].dkim_signing_enabled is True
