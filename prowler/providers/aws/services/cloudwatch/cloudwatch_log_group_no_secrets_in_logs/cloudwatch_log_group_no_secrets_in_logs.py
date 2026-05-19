@@ -1,6 +1,7 @@
 from json import dumps, loads
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     convert_to_cloudwatch_timestamp_format,
@@ -10,97 +11,99 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_group_no_secrets_in_logs(Check):
     def execute(self):
-        findings = []
-        if logs_client.log_groups:
-            secrets_ignore_patterns = logs_client.audit_config.get(
-                "secrets_ignore_patterns", []
-            )
-            for log_group in logs_client.log_groups.values():
-                report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
-                report.status = "PASS"
-                report.status_extended = (
-                    f"No secrets found in {log_group.name} log group."
-                )
-                log_group_secrets = []
-                if log_group.log_streams:
-                    for log_stream_name in log_group.log_streams:
-                        log_stream_secrets = {}
-                        log_stream_data = "\n".join(
+        if not logs_client.log_groups:
+            return []
+
+        secrets_ignore_patterns = logs_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
+
+        def evaluate(log_group):
+            report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
+            report.status = "PASS"
+            report.status_extended = f"No secrets found in {log_group.name} log group."
+            log_group_secrets = []
+            if log_group.log_streams:
+                for log_stream_name in log_group.log_streams:
+                    log_stream_secrets = {}
+                    log_stream_data = "\n".join(
+                        [
+                            dumps(event["message"])
+                            for event in log_group.log_streams[log_stream_name]
+                        ]
+                    )
+                    log_stream_secrets_output = detect_secrets_scan(
+                        data=log_stream_data,
+                        excluded_secrets=secrets_ignore_patterns,
+                        detect_secrets_plugins=logs_client.audit_config.get(
+                            "detect_secrets_plugins",
+                        ),
+                    )
+
+                    if log_stream_secrets_output:
+                        for secret in log_stream_secrets_output:
+                            flagged_event = log_group.log_streams[log_stream_name][
+                                secret["line_number"] - 1
+                            ]
+                            cloudwatch_timestamp = (
+                                convert_to_cloudwatch_timestamp_format(
+                                    flagged_event["timestamp"]
+                                )
+                            )
+                            if cloudwatch_timestamp not in log_stream_secrets.keys():
+                                log_stream_secrets[cloudwatch_timestamp] = SecretsDict()
+
+                            try:
+                                log_event_data = dumps(
+                                    loads(flagged_event["message"]), indent=2
+                                )
+                            except Exception:
+                                log_event_data = dumps(
+                                    flagged_event["message"], indent=2
+                                )
+                            if len(log_event_data.split("\n")) > 1:
+                                # Can get more informative output if there is more than 1 line.
+                                # Will rescan just this event to get the type of secret and the line number
+                                event_detect_secrets_output = detect_secrets_scan(
+                                    data=log_event_data,
+                                    detect_secrets_plugins=logs_client.audit_config.get(
+                                        "detect_secrets_plugins"
+                                    ),
+                                )
+                                if event_detect_secrets_output:
+                                    for secret in event_detect_secrets_output:
+                                        log_stream_secrets[
+                                            cloudwatch_timestamp
+                                        ].add_secret(
+                                            secret["line_number"], secret["type"]
+                                        )
+                            else:
+                                log_stream_secrets[cloudwatch_timestamp].add_secret(
+                                    1, secret["type"]
+                                )
+                    if log_stream_secrets:
+                        secrets_string = "; ".join(
                             [
-                                dumps(event["message"])
-                                for event in log_group.log_streams[log_stream_name]
+                                f"at {timestamp} - {log_stream_secrets[timestamp].to_string()}"
+                                for timestamp in log_stream_secrets
                             ]
                         )
-                        log_stream_secrets_output = detect_secrets_scan(
-                            data=log_stream_data,
-                            excluded_secrets=secrets_ignore_patterns,
-                            detect_secrets_plugins=logs_client.audit_config.get(
-                                "detect_secrets_plugins",
-                            ),
+                        log_group_secrets.append(
+                            f"in log stream {log_stream_name} {secrets_string}"
                         )
+            if log_group_secrets:
+                secrets_string = "; ".join(log_group_secrets)
+                report.status = "FAIL"
+                report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}."
+            return report
 
-                        if log_stream_secrets_output:
-                            for secret in log_stream_secrets_output:
-                                flagged_event = log_group.log_streams[log_stream_name][
-                                    secret["line_number"] - 1
-                                ]
-                                cloudwatch_timestamp = (
-                                    convert_to_cloudwatch_timestamp_format(
-                                        flagged_event["timestamp"]
-                                    )
-                                )
-                                if (
-                                    cloudwatch_timestamp
-                                    not in log_stream_secrets.keys()
-                                ):
-                                    log_stream_secrets[cloudwatch_timestamp] = (
-                                        SecretsDict()
-                                    )
-
-                                try:
-                                    log_event_data = dumps(
-                                        loads(flagged_event["message"]), indent=2
-                                    )
-                                except Exception:
-                                    log_event_data = dumps(
-                                        flagged_event["message"], indent=2
-                                    )
-                                if len(log_event_data.split("\n")) > 1:
-                                    # Can get more informative output if there is more than 1 line.
-                                    # Will rescan just this event to get the type of secret and the line number
-                                    event_detect_secrets_output = detect_secrets_scan(
-                                        data=log_event_data,
-                                        detect_secrets_plugins=logs_client.audit_config.get(
-                                            "detect_secrets_plugins"
-                                        ),
-                                    )
-                                    if event_detect_secrets_output:
-                                        for secret in event_detect_secrets_output:
-                                            log_stream_secrets[
-                                                cloudwatch_timestamp
-                                            ].add_secret(
-                                                secret["line_number"], secret["type"]
-                                            )
-                                else:
-                                    log_stream_secrets[cloudwatch_timestamp].add_secret(
-                                        1, secret["type"]
-                                    )
-                        if log_stream_secrets:
-                            secrets_string = "; ".join(
-                                [
-                                    f"at {timestamp} - {log_stream_secrets[timestamp].to_string()}"
-                                    for timestamp in log_stream_secrets
-                                ]
-                            )
-                            log_group_secrets.append(
-                                f"in log stream {log_stream_name} {secrets_string}"
-                            )
-                if log_group_secrets:
-                    secrets_string = "; ".join(log_group_secrets)
-                    report.status = "FAIL"
-                    report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}."
-                findings.append(report)
-        return findings
+        return limited_findings(
+            logs_client.iter_log_groups(with_events=True),
+            evaluate,
+            get_resource_scan_limit(
+                logs_client.audit_config, "max_cloudwatch_log_groups"
+            ),
+        )
 
 
 class SecretsDict(dict):

@@ -83,21 +83,23 @@ class Logs(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
+        # log_groups is listed eagerly (it also feeds metric filters), but the
+        # expensive per-log-group hydration (tags, and log events for the
+        # no-secrets check) is deferred to the lazy iter_log_groups()
+        # generator so scans stop early once the FAIL quota is met.
         self.log_groups = {}
+        self._log_groups_hydrated = set()
+        # The threshold for number of events to return per log group.
+        self.events_per_log_group_threshold = 1000
         self.__threading_call__(self._describe_log_groups)
         self.resource_policies = {}
         self.__threading_call__(self._describe_resource_policies)
         self.metric_filters = []
         self.__threading_call__(self._describe_metric_filters)
+        # Tags are light and broadly consumed (e.g. by metric-filter checks),
+        # so they stay eager; only the heavy per-log-group log events used by
+        # the no-secrets check are deferred to iter_log_groups(with_events).
         if self.log_groups:
-            if (
-                "cloudwatch_log_group_no_secrets_in_logs"
-                in provider.audit_metadata.expected_checks
-            ):
-                self.events_per_log_group_threshold = (
-                    1000  # The threshold for number of events to return per log group.
-                )
-                self.__threading_call__(self._get_log_events)
             self.__threading_call__(
                 self._list_tags_for_resource, self.log_groups.values()
             )
@@ -174,6 +176,7 @@ class Logs(AWSService):
                             retention_days=retention_days,
                             never_expire=never_expire,
                             kms_id=kms,
+                            creation_time=log_group.get("creationTime"),
                             region=regional_client.region,
                         )
         except ClientError as error:
@@ -192,37 +195,45 @@ class Logs(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_log_events(self, regional_client):
-        regional_log_groups = [
-            log_group
-            for log_group in self.log_groups.values()
-            if log_group.region == regional_client.region
-        ]
-        total_log_groups = len(regional_log_groups)
+    def _get_log_events(self, log_group):
         logger.info(
-            f"CloudWatch Logs - Retrieving log events for {total_log_groups} log groups in {regional_client.region}..."
+            f"CloudWatch Logs - Retrieving log events for log group {log_group.name}..."
         )
         try:
-            for count, log_group in enumerate(regional_log_groups, start=1):
-                events = regional_client.filter_log_events(
-                    logGroupName=log_group.name,
-                    limit=self.events_per_log_group_threshold,
-                )["events"]
-                for event in events:
-                    if event["logStreamName"] not in log_group.log_streams:
-                        log_group.log_streams[event["logStreamName"]] = []
-                    log_group.log_streams[event["logStreamName"]].append(event)
-                if count % 10 == 0:
-                    logger.info(
-                        f"CloudWatch Logs - Retrieved log events for {count}/{total_log_groups} log groups in {regional_client.region}..."
-                    )
+            regional_client = self.regional_clients[log_group.region]
+            events = regional_client.filter_log_events(
+                logGroupName=log_group.name,
+                limit=self.events_per_log_group_threshold,
+            )["events"]
+            for event in events:
+                if event["logStreamName"] not in log_group.log_streams:
+                    log_group.log_streams[event["logStreamName"]] = []
+                log_group.log_streams[event["logStreamName"]].append(event)
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{log_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        logger.info(
-            f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
-        )
+
+    def iter_log_groups(self, with_events: bool = False):
+        """Yield log groups lazily, hydrating tags (and events) on demand.
+
+        ``describe_log_groups`` has no server-side ordering, so newest-first
+        is best-effort by ``creationTime``. Tags, and log events for the
+        no-secrets check, are fetched only for the log groups the consumer
+        actually pulls, memoized per ARN and shared across checks (checks run
+        sequentially, so no locking needed).
+        """
+        if not self.log_groups:
+            return
+        for log_group in sorted(
+            self.log_groups.values(),
+            key=lambda lg: lg.creation_time or 0,
+            reverse=True,
+        ):
+            if with_events and log_group.arn not in self._log_groups_hydrated:
+                self._get_log_events(log_group)
+                self._log_groups_hydrated.add(log_group.arn)
+            yield log_group
 
     def _describe_resource_policies(self, regional_client):
         logger.info("CloudWatch Logs - Describing resource policies...")
@@ -292,6 +303,7 @@ class LogGroup(BaseModel):
     retention_days: int
     never_expire: bool
     kms_id: Optional[str]
+    creation_time: Optional[int] = None
     region: str
     log_streams: dict[str, list[str]] = (
         {}
