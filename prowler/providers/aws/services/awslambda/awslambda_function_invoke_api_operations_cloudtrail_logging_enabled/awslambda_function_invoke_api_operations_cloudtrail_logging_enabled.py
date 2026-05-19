@@ -1,4 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
@@ -7,8 +8,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 
 class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check):
     def execute(self):
-        findings = []
-        for function in awslambda_client.functions.values():
+        def evaluate(function):
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "FAIL"
@@ -49,6 +49,12 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
                         report.status = "PASS"
                         report.status_extended = f"Lambda function {function.name} is recorded by CloudTrail trail {trail.name}."
                         break
-            findings.append(report)
+            return report
 
-        return findings
+        return limited_findings(
+            awslambda_client.iter_functions(),
+            evaluate,
+            get_resource_scan_limit(
+                awslambda_client.audit_config, "max_lambda_functions"
+            ),
+        )

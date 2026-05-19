@@ -1,11 +1,11 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_using_cross_account_layers(Check):
     def execute(self):
-        findings = []
-        for function in awslambda_client.functions.values():
+        def evaluate(function):
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
             cross_account_layers = [
                 layer
@@ -30,5 +30,12 @@ class awslambda_function_using_cross_account_layers(Check):
                     f"Lambda function {function.name} only uses layers "
                     f"from the same account ({awslambda_client.audited_account})."
                 )
-            findings.append(report)
-        return findings
+            return report
+
+        return limited_findings(
+            awslambda_client.iter_functions(),
+            evaluate,
+            get_resource_scan_limit(
+                awslambda_client.audit_config, "max_lambda_functions"
+            ),
+        )

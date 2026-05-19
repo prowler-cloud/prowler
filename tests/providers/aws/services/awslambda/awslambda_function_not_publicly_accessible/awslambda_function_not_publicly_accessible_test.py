@@ -278,6 +278,9 @@ class Test_awslambda_function_not_publicly_accessible:
 
     def test_function_public_with_canonical(self):
         lambda_client = mock.MagicMock
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         lambda_client.audited_account = AWS_ACCOUNT_NUMBER
         lambda_client.audit_config = {}
         function_name = "test-lambda"
@@ -518,6 +521,9 @@ class Test_awslambda_function_not_publicly_accessible:
 
     def test_function_could_be_invoked_by_specific_aws_account(self):
         lambda_client = mock.MagicMock
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         lambda_client.audited_account = AWS_ACCOUNT_NUMBER
         lambda_client.audit_config = {}
         function_name = "test-lambda"
@@ -583,6 +589,9 @@ class Test_awslambda_function_not_publicly_accessible:
 
     def test_function_could_be_invoked_by_specific_other_aws_account(self):
         lambda_client = mock.MagicMock
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         lambda_client.audited_account = AWS_ACCOUNT_NUMBER
         lambda_client.audit_config = {}
         function_name = "test-lambda"
@@ -648,6 +657,9 @@ class Test_awslambda_function_not_publicly_accessible:
 
     def test_function_public_policy_with_several_statements(self):
         lambda_client = mock.MagicMock
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         lambda_client.audited_account = AWS_ACCOUNT_NUMBER
         lambda_client.audit_config = {}
         function_name = "test-lambda"

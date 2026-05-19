@@ -2,64 +2,73 @@ import os
 import tempfile
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_no_secrets_in_code(Check):
     def execute(self):
-        findings = []
-        if awslambda_client.functions:
-            secrets_ignore_patterns = awslambda_client.audit_config.get(
-                "secrets_ignore_patterns", []
+        if not awslambda_client.functions:
+            return []
+
+        secrets_ignore_patterns = awslambda_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
+
+        def evaluate(function_with_code):
+            function, function_code = function_with_code
+            if not function_code:
+                return None
+            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
+
+            report.status = "PASS"
+            report.status_extended = (
+                f"No secrets found in Lambda function {function.name} code."
             )
-            for function, function_code in awslambda_client._get_function_code():
-                if function_code:
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(), resource=function
+            with tempfile.TemporaryDirectory() as tmp_dir_name:
+                function_code.code_zip.extractall(tmp_dir_name)
+                # List all files
+                files_in_zip = next(os.walk(tmp_dir_name))[2]
+                secrets_findings = []
+                for file in files_in_zip:
+                    detect_secrets_output = detect_secrets_scan(
+                        file=f"{tmp_dir_name}/{file}",
+                        excluded_secrets=secrets_ignore_patterns,
+                        detect_secrets_plugins=awslambda_client.audit_config.get(
+                            "detect_secrets_plugins",
+                        ),
                     )
-
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"No secrets found in Lambda function {function.name} code."
-                    )
-                    with tempfile.TemporaryDirectory() as tmp_dir_name:
-                        function_code.code_zip.extractall(tmp_dir_name)
-                        # List all files
-                        files_in_zip = next(os.walk(tmp_dir_name))[2]
-                        secrets_findings = []
-                        for file in files_in_zip:
-                            detect_secrets_output = detect_secrets_scan(
-                                file=f"{tmp_dir_name}/{file}",
-                                excluded_secrets=secrets_ignore_patterns,
-                                detect_secrets_plugins=awslambda_client.audit_config.get(
-                                    "detect_secrets_plugins",
-                                ),
+                    if detect_secrets_output:
+                        for (
+                            secret
+                        ) in (
+                            detect_secrets_output
+                        ):  # Appears that only 1 file is being scanned at a time, so could rework this
+                            output_file_name = secret["filename"].replace(
+                                f"{tmp_dir_name}/", ""
                             )
-                            if detect_secrets_output:
-                                for (
-                                    secret
-                                ) in (
-                                    detect_secrets_output
-                                ):  # Appears that only 1 file is being scanned at a time, so could rework this
-                                    output_file_name = secret["filename"].replace(
-                                        f"{tmp_dir_name}/", ""
-                                    )
-                                    secrets_string = ", ".join(
-                                        [
-                                            f"{secret['type']} on line {secret['line_number']}"
-                                            for secret in detect_secrets_output
-                                        ]
-                                    )
-                                    secrets_findings.append(
-                                        f"{output_file_name}: {secrets_string}"
-                                    )
+                            secrets_string = ", ".join(
+                                [
+                                    f"{secret['type']} on line {secret['line_number']}"
+                                    for secret in detect_secrets_output
+                                ]
+                            )
+                            secrets_findings.append(
+                                f"{output_file_name}: {secrets_string}"
+                            )
 
-                        if secrets_findings:
-                            final_output_string = "; ".join(secrets_findings)
-                            report.status = "FAIL"
-                            report.status_extended = f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} found in Lambda function {function.name} code -> {final_output_string}."
+                if secrets_findings:
+                    final_output_string = "; ".join(secrets_findings)
+                    report.status = "FAIL"
+                    report.status_extended = f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} found in Lambda function {function.name} code -> {final_output_string}."
 
-                    findings.append(report)
+            return report
 
-        return findings
+        return limited_findings(
+            awslambda_client._get_function_code(),
+            evaluate,
+            get_resource_scan_limit(
+                awslambda_client.audit_config, "max_lambda_functions"
+            ),
+        )

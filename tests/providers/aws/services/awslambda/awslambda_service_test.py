@@ -196,6 +196,9 @@ class Test_Lambda_Service:
             )
             assert awslambda.functions
             assert len(awslambda.functions) == 2
+            # Policy, URL config and tags are hydrated lazily on iteration
+            assert awslambda.functions[lambda_arn_1].policy == {}
+            list(awslambda.iter_functions())
             # Lambda 1
             assert awslambda.functions[lambda_arn_1].name == lambda_name_1
             assert awslambda.functions[lambda_arn_1].arn == lambda_arn_1

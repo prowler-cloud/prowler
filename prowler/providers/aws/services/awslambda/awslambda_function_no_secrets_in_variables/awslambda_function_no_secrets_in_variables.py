@@ -1,17 +1,18 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_no_secrets_in_variables(Check):
     def execute(self):
-        findings = []
         secrets_ignore_patterns = awslambda_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-        for function in awslambda_client.functions.values():
+
+        def evaluate(function):
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
@@ -40,6 +41,12 @@ class awslambda_function_no_secrets_in_variables(Check):
                     report.status = "FAIL"
                     report.status_extended = f"Potential secret found in Lambda function {function.name} variables -> {secrets_string}."
 
-            findings.append(report)
+            return report
 
-        return findings
+        return limited_findings(
+            awslambda_client.iter_functions(),
+            evaluate,
+            get_resource_scan_limit(
+                awslambda_client.audit_config, "max_lambda_functions"
+            ),
+        )

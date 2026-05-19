@@ -30,6 +30,10 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
     @mock_aws
     def test_no_functions(self):
         lambda_client = mock.MagicMock
+        lambda_client.audit_config = {}
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         lambda_client.functions = {}
 
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
@@ -68,6 +72,10 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
     def test_lambda_not_recorded_by_cloudtrail(self):
         # Lambda Client
         lambda_client = mock.MagicMock
+        lambda_client.audit_config = {}
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         function_name = "test-lambda"
         function_runtime = "python3.9"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
@@ -136,6 +144,10 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
     def test_lambda_recorded_by_cloudtrail_classic_event_selector(self):
         # Lambda Client
         lambda_client = mock.MagicMock
+        lambda_client.audit_config = {}
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         function_name = "test-lambda"
         function_runtime = "python3.9"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
@@ -216,6 +228,10 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
     def test_lambda_recorded_by_cloudtrail_advanced_event_selector(self):
         # Lambda Client
         lambda_client = mock.MagicMock
+        lambda_client.audit_config = {}
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         function_name = "test-lambda"
         function_runtime = "python3.9"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
@@ -299,6 +315,10 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
     def test_all_lambdas_recorded_by_cloudtrail(self):
         # Lambda Client
         lambda_client = mock.MagicMock
+        lambda_client.audit_config = {}
+        lambda_client.iter_functions = lambda: iter(
+            list(lambda_client.functions.values())
+        )
         function_name = "test-lambda"
         function_runtime = "python3.9"
         function_arn = "arn:aws:lambda"
