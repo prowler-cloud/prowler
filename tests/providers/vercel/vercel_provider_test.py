@@ -222,3 +222,52 @@ class TestVercelProviderTestConnection:
 
         with pytest.raises(VercelCredentialsError):
             VercelProvider.test_connection(raise_on_exception=True)
+
+
+class TestVercelSessionTokenSecurity:
+    """The Vercel API token must never leak through serialization or repr."""
+
+    def test_token_is_still_accessible_as_attribute(self):
+        session = VercelSession(token=API_TOKEN, team_id=TEAM_ID)
+
+        assert session.token == API_TOKEN
+
+    def test_token_excluded_from_dict(self):
+        session = VercelSession(token=API_TOKEN, team_id=TEAM_ID)
+
+        serialized = session.dict()
+
+        assert "token" not in serialized
+        assert API_TOKEN not in str(serialized)
+        assert serialized["team_id"] == TEAM_ID
+
+    def test_token_excluded_from_model_dump(self):
+        session = VercelSession(token=API_TOKEN, team_id=TEAM_ID)
+
+        serialized = session.model_dump()
+
+        assert "token" not in serialized
+        assert API_TOKEN not in str(serialized)
+
+    def test_token_excluded_from_json(self):
+        session = VercelSession(token=API_TOKEN, team_id=TEAM_ID)
+
+        serialized = session.json()
+
+        assert "token" not in serialized
+        assert API_TOKEN not in serialized
+
+    def test_token_excluded_from_model_dump_json(self):
+        session = VercelSession(token=API_TOKEN, team_id=TEAM_ID)
+
+        serialized = session.model_dump_json()
+
+        assert "token" not in serialized
+        assert API_TOKEN not in serialized
+
+    def test_token_excluded_from_repr_and_str(self):
+        session = VercelSession(token=API_TOKEN, team_id=TEAM_ID)
+
+        assert API_TOKEN not in repr(session)
+        assert API_TOKEN not in str(session)
+        assert "token" not in repr(session)

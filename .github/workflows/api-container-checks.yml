@@ -83,6 +83,7 @@ jobs:
             registry-1.docker.io:443
             auth.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             debian.map.fastlydns.net:80
             release-assets.githubusercontent.com:443
             objects.githubusercontent.com:443

@@ -8,6 +8,212 @@ resolution-markers = [
 ]
 
 [manifest]
+constraints = [
+    { name = "about-time", specifier = "==4.2.1" },
+    { name = "aenum", specifier = "==3.1.17" },
+    { name = "aiofiles", specifier = "==24.1.0" },
+    { name = "aiohappyeyeballs", specifier = "==2.6.1" },
+    { name = "aiohttp", specifier = "==3.13.5" },
+    { name = "aiosignal", specifier = "==1.4.0" },
+    { name = "alibabacloud-actiontrail20200706", specifier = "==2.4.1" },
+    { name = "alibabacloud-credentials", specifier = "==1.0.3" },
+    { name = "alibabacloud-credentials-api", specifier = "==1.0.0" },
+    { name = "alibabacloud-cs20151215", specifier = "==6.1.0" },
+    { name = "alibabacloud-darabonba-array", specifier = "==0.1.0" },
+    { name = "alibabacloud-darabonba-encode-util", specifier = "==0.0.2" },
+    { name = "alibabacloud-darabonba-map", specifier = "==0.0.1" },
+    { name = "alibabacloud-darabonba-signature-util", specifier = "==0.0.4" },
+    { name = "alibabacloud-darabonba-string", specifier = "==0.0.4" },
+    { name = "alibabacloud-darabonba-time", specifier = "==0.0.1" },
+    { name = "alibabacloud-ecs20140526", specifier = "==7.2.5" },
+    { name = "alibabacloud-endpoint-util", specifier = "==0.0.4" },
+    { name = "alibabacloud-gateway-oss", specifier = "==0.0.17" },
+    { name = "alibabacloud-gateway-sls", specifier = "==0.4.2" },
+    { name = "alibabacloud-gateway-sls-util", specifier = "==0.4.1" },
+    { name = "alibabacloud-gateway-spi", specifier = "==0.0.3" },
+    { name = "alibabacloud-openapi-util", specifier = "==0.2.4" },
+    { name = "alibabacloud-oss-util", specifier = "==0.0.6" },
+    { name = "alibabacloud-oss20190517", specifier = "==1.0.6" },
+    { name = "alibabacloud-ram20150501", specifier = "==1.2.0" },
+    { name = "alibabacloud-sas20181203", specifier = "==6.1.0" },
+    { name = "alibabacloud-sts20150401", specifier = "==1.1.6" },
+    { name = "alibabacloud-tea", specifier = "==0.4.3" },
+    { name = "alibabacloud-tea-openapi", specifier = "==0.4.4" },
+    { name = "alibabacloud-tea-util", specifier = "==0.3.14" },
+    { name = "alibabacloud-tea-xml", specifier = "==0.0.3" },
+    { name = "alibabacloud-vpc20160428", specifier = "==6.13.0" },
+    { name = "aliyun-log-fastpb", specifier = "==0.3.0" },
+    { name = "annotated-types", specifier = "==0.7.0" },
+    { name = "antlr4-python3-runtime", specifier = "==4.13.2" },
+    { name = "anyio", specifier = "==4.13.0" },
+    { name = "apscheduler", specifier = "==3.11.2" },
+    { name = "astroid", specifier = "==3.3.11" },
+    { name = "async-timeout", specifier = "==5.0.1" },
+    { name = "attrs", specifier = "==26.1.0" },
+    { name = "aws-sam-translator", specifier = "==1.109.0" },
+    { name = "aws-xray-sdk", specifier = "==2.15.0" },
+    { name = "azure-common", specifier = "==1.1.28" },
+    { name = "azure-core", specifier = "==1.41.0" },
+    { name = "azure-mgmt-core", specifier = "==1.6.0" },
+    { name = "bandit", specifier = "==1.8.3" },
+    { name = "black", specifier = "==25.1.0" },
+    { name = "blinker", specifier = "==1.9.0" },
+    { name = "certifi", specifier = "==2026.4.22" },
+    { name = "cffi", specifier = "==2.0.0" },
+    { name = "cfn-lint", specifier = "==1.51.0" },
+    { name = "charset-normalizer", specifier = "==3.4.7" },
+    { name = "circuitbreaker", specifier = "==2.1.3" },
+    { name = "click", specifier = "==8.3.3" },
+    { name = "click-plugins", specifier = "==1.1.1.2" },
+    { name = "contextlib2", specifier = "==21.6.0" },
+    { name = "coverage", specifier = "==7.6.12" },
+    { name = "darabonba-core", specifier = "==1.0.5" },
+    { name = "decorator", specifier = "==5.2.1" },
+    { name = "dill", specifier = "==0.4.1" },
+    { name = "distro", specifier = "==1.9.0" },
+    { name = "dnspython", specifier = "==2.8.0" },
+    { name = "docker", specifier = "==7.1.0" },
+    { name = "dogpile-cache", specifier = "==1.5.0" },
+    { name = "durationpy", specifier = "==0.10" },
+    { name = "email-validator", specifier = "==2.2.0" },
+    { name = "exceptiongroup", specifier = "==1.3.1" },
+    { name = "execnet", specifier = "==2.1.2" },
+    { name = "filelock", specifier = "==3.20.3" },
+    { name = "flake8", specifier = "==7.1.2" },
+    { name = "flask", specifier = "==3.1.3" },
+    { name = "freezegun", specifier = "==1.5.1" },
+    { name = "frozenlist", specifier = "==1.8.0" },
+    { name = "google-api-core", specifier = "==2.30.3" },
+    { name = "google-auth", specifier = "==2.52.0" },
+    { name = "googleapis-common-protos", specifier = "==1.75.0" },
+    { name = "graphemeu", specifier = "==0.7.2" },
+    { name = "graphql-core", specifier = "==3.2.8" },
+    { name = "h11", specifier = "==0.16.0" },
+    { name = "hpack", specifier = "==4.1.0" },
+    { name = "httpcore", specifier = "==1.0.9" },
+    { name = "httplib2", specifier = "==0.31.2" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "hyperframe", specifier = "==6.1.0" },
+    { name = "iamdata", specifier = "==0.1.202605131" },
+    { name = "idna", specifier = "==3.15" },
+    { name = "importlib-metadata", specifier = "==8.7.1" },
+    { name = "iniconfig", specifier = "==2.3.0" },
+    { name = "iso8601", specifier = "==2.1.0" },
+    { name = "isodate", specifier = "==0.7.2" },
+    { name = "isort", specifier = "==6.1.0" },
+    { name = "itsdangerous", specifier = "==2.2.0" },
+    { name = "jinja2", specifier = "==3.1.6" },
+    { name = "jmespath", specifier = "==1.1.0" },
+    { name = "joserfc", specifier = "==1.6.5" },
+    { name = "jsonpatch", specifier = "==1.33" },
+    { name = "jsonpath-ng", specifier = "==1.8.0" },
+    { name = "jsonpointer", specifier = "==3.1.1" },
+    { name = "jsonschema-path", specifier = "==0.3.4" },
+    { name = "jsonschema-specifications", specifier = "==2025.9.1" },
+    { name = "jwcrypto", specifier = "==1.5.7" },
+    { name = "keystoneauth1", specifier = "==5.14.0" },
+    { name = "lazy-object-proxy", specifier = "==1.12.0" },
+    { name = "lz4", specifier = "==4.4.5" },
+    { name = "markdown-it-py", specifier = "==4.2.0" },
+    { name = "markupsafe", specifier = "==3.0.3" },
+    { name = "mccabe", specifier = "==0.7.0" },
+    { name = "mdurl", specifier = "==0.1.2" },
+    { name = "microsoft-kiota-authentication-azure", specifier = "==1.9.2" },
+    { name = "microsoft-kiota-http", specifier = "==1.9.2" },
+    { name = "microsoft-kiota-serialization-form", specifier = "==1.9.2" },
+    { name = "microsoft-kiota-serialization-json", specifier = "==1.9.2" },
+    { name = "microsoft-kiota-serialization-multipart", specifier = "==1.9.2" },
+    { name = "microsoft-kiota-serialization-text", specifier = "==1.9.2" },
+    { name = "mock", specifier = "==5.2.0" },
+    { name = "moto", specifier = "==5.1.11" },
+    { name = "mpmath", specifier = "==1.3.0" },
+    { name = "msal", specifier = "==1.36.0" },
+    { name = "msal-extensions", specifier = "==1.3.1" },
+    { name = "msgraph-core", specifier = "==1.3.8" },
+    { name = "msrest", specifier = "==0.7.1" },
+    { name = "multidict", specifier = "==6.7.1" },
+    { name = "multipart", specifier = "==1.3.1" },
+    { name = "mypy-extensions", specifier = "==1.1.0" },
+    { name = "narwhals", specifier = "==2.21.0" },
+    { name = "nest-asyncio", specifier = "==1.6.0" },
+    { name = "networkx", specifier = "==3.4.2" },
+    { name = "oauthlib", specifier = "==3.3.1" },
+    { name = "openapi-schema-validator", specifier = "==0.6.3" },
+    { name = "openapi-spec-validator", specifier = "==0.7.1" },
+    { name = "opentelemetry-api", specifier = "==1.41.1" },
+    { name = "opentelemetry-sdk", specifier = "==1.41.1" },
+    { name = "opentelemetry-semantic-conventions", specifier = "==0.62b1" },
+    { name = "os-service-types", specifier = "==1.8.2" },
+    { name = "packaging", specifier = "==26.2" },
+    { name = "pathable", specifier = "==0.4.4" },
+    { name = "pathspec", specifier = "==1.1.1" },
+    { name = "pbr", specifier = "==7.0.3" },
+    { name = "platformdirs", specifier = "==4.9.6" },
+    { name = "plotly", specifier = "==6.7.0" },
+    { name = "pluggy", specifier = "==1.6.0" },
+    { name = "prek", specifier = "==0.3.9" },
+    { name = "propcache", specifier = "==0.5.2" },
+    { name = "proto-plus", specifier = "==1.28.0" },
+    { name = "protobuf", specifier = "==7.34.1" },
+    { name = "psutil", specifier = "==7.2.2" },
+    { name = "py-partiql-parser", specifier = "==0.6.1" },
+    { name = "pyasn1", specifier = "==0.6.3" },
+    { name = "pyasn1-modules", specifier = "==0.4.2" },
+    { name = "pycodestyle", specifier = "==2.12.1" },
+    { name = "pycparser", specifier = "==3.0" },
+    { name = "pycryptodomex", specifier = "==3.23.0" },
+    { name = "pydantic-core", specifier = "==2.41.5" },
+    { name = "pydash", specifier = "==8.0.6" },
+    { name = "pyflakes", specifier = "==3.2.0" },
+    { name = "pygments", specifier = "==2.20.0" },
+    { name = "pyjwt", specifier = "==2.12.1" },
+    { name = "pylint", specifier = "==3.3.4" },
+    { name = "pynacl", specifier = "==1.6.2" },
+    { name = "pyopenssl", specifier = "==26.2.0" },
+    { name = "pyparsing", specifier = "==3.3.2" },
+    { name = "pytest", specifier = "==8.3.5" },
+    { name = "pytest-cov", specifier = "==6.0.0" },
+    { name = "pytest-env", specifier = "==1.1.5" },
+    { name = "pytest-randomly", specifier = "==3.16.0" },
+    { name = "pytest-xdist", specifier = "==3.6.1" },
+    { name = "pywin32", specifier = "==311" },
+    { name = "pyyaml", specifier = "==6.0.3" },
+    { name = "referencing", specifier = "==0.36.2" },
+    { name = "regex", specifier = "==2026.5.9" },
+    { name = "requests", specifier = "==2.34.0" },
+    { name = "requests-file", specifier = "==3.0.1" },
+    { name = "requests-oauthlib", specifier = "==2.0.0" },
+    { name = "requestsexceptions", specifier = "==1.4.0" },
+    { name = "responses", specifier = "==0.26.0" },
+    { name = "retrying", specifier = "==1.4.2" },
+    { name = "rfc3339-validator", specifier = "==0.1.4" },
+    { name = "rich", specifier = "==15.0.0" },
+    { name = "rpds-py", specifier = "==0.30.0" },
+    { name = "s3transfer", specifier = "==0.14.0" },
+    { name = "setuptools", specifier = "==82.0.1" },
+    { name = "six", specifier = "==1.17.0" },
+    { name = "sniffio", specifier = "==1.3.1" },
+    { name = "std-uritemplate", specifier = "==2.0.8" },
+    { name = "stevedore", specifier = "==5.7.0" },
+    { name = "sympy", specifier = "==1.14.0" },
+    { name = "tldextract", specifier = "==5.3.1" },
+    { name = "tomli", specifier = "==2.4.1" },
+    { name = "tomlkit", specifier = "==0.15.0" },
+    { name = "typing-extensions", specifier = "==4.15.0" },
+    { name = "typing-inspection", specifier = "==0.4.2" },
+    { name = "tzdata", specifier = "==2026.2" },
+    { name = "uritemplate", specifier = "==4.2.0" },
+    { name = "urllib3", specifier = "==2.7.0" },
+    { name = "vulture", specifier = "==2.14" },
+    { name = "websocket-client", specifier = "==1.9.0" },
+    { name = "werkzeug", specifier = "==3.1.8" },
+    { name = "wrapt", specifier = "==2.1.2" },
+    { name = "xlsxwriter", specifier = "==3.2.9" },
+    { name = "xmltodict", specifier = "==1.0.4" },
+    { name = "yarl", specifier = "==1.23.0" },
+    { name = "zipp", specifier = "==3.23.1" },
+    { name = "zstd", specifier = "==1.5.7.3" },
+]
 overrides = [{ name = "okta", specifier = "==3.4.2" }]
 
 [[package]]
@@ -1208,8 +1414,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aws-sam-translator" },
     { name = "jsonpatch" },
-    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "networkx" },
     { name = "pyyaml" },
     { name = "regex" },
     { name = "sympy" },
@@ -2619,25 +2824,9 @@ wheels = [
 name = "networkx"
 version = "3.4.2"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.11'",
-]
 sdist = { url = "https://files.pythonhosted.org/packages/fd/1d/06475e1cd5264c0b870ea2cc6fdb3e37177c1e565c43f56ff17a10e3937f/networkx-3.4.2.tar.gz", hash = "sha256:307c3669428c5362aab27c8a1260aa8f47c4e91d3891f48be0141738d8d053e1", size = 2151368, upload-time = "2024-10-21T12:39:38.695Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl", hash = "sha256:df5d4365b724cf81b8c6a7312509d0c22386097011ad1abe274afd5e9d3bbc5f", size = 1723263, upload-time = "2024-10-21T12:39:36.247Z" },
-]
-
-[[package]]
-name = "networkx"
-version = "3.6.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12'",
-    "python_full_version == '3.11.*'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/51/63fe664f3908c97be9d2e4f1158eb633317598cfa6e1fc14af5383f17512/networkx-3.6.1.tar.gz", hash = "sha256:26b7c357accc0c8cde558ad486283728b65b6a95d85ee1cd66bafab4c8168509", size = 2517025, upload-time = "2025-12-08T17:02:39.908Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl", hash = "sha256:d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762", size = 2068504, upload-time = "2025-12-08T17:02:38.159Z" },
 ]
 
 [[package]]
@@ -3126,6 +3315,7 @@ dependencies = [
     { name = "pygithub" },
     { name = "python-dateutil" },
     { name = "pytz" },
+    { name = "scaleway" },
     { name = "schema" },
     { name = "shodan" },
     { name = "slack-sdk" },
@@ -3230,6 +3420,7 @@ requires-dist = [
     { name = "pygithub", specifier = "==2.8.0" },
     { name = "python-dateutil", specifier = "==2.9.0.post0" },
     { name = "pytz", specifier = "==2025.1" },
+    { name = "scaleway", specifier = "==2.10.3" },
     { name = "schema", specifier = "==0.7.5" },
     { name = "shodan", specifier = "==1.31.0" },
     { name = "slack-sdk", specifier = "==3.39.0" },
@@ -3976,6 +4167,32 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/62/74/8d69dcb7a9efe8baa2046891735e5dfe433ad558ae23d9e3c14c633d1d58/s3transfer-0.14.0.tar.gz", hash = "sha256:eff12264e7c8b4985074ccce27a3b38a485bb7f7422cc8046fee9be4983e4125", size = 151547, upload-time = "2025-09-09T19:23:31.089Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/48/f0/ae7ca09223a81a1d890b2557186ea015f6e0502e9b8cb8e1813f1d8cfa4e/s3transfer-0.14.0-py3-none-any.whl", hash = "sha256:ea3b790c7077558ed1f02a3072fb3cb992bbbd253392f4b6e9e8976941c7d456", size = 85712, upload-time = "2025-09-09T19:23:30.041Z" },
+]
+
+[[package]]
+name = "scaleway"
+version = "2.10.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "scaleway-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/64/ce/774eea10c35fb0f028d0ae2e45d404bc16d83ac5cdd12f410d348e6dd6a4/scaleway-2.10.3.tar.gz", hash = "sha256:b1f9dd1b1450767205234c6f5a345e5e25dc039c780253d698893b5c344ce594", size = 717421, upload-time = "2025-11-04T10:03:13.644Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/d6/2b41dfb4cac8bf51cc100050f70129aa5284d04344ceec1391176467b1cb/scaleway-2.10.3-py3-none-any.whl", hash = "sha256:dbf381440d6caf37c878cf16445a63f4969a4aac2257c9b72c744d10ff223a0c", size = 877950, upload-time = "2025-11-04T10:03:12.128Z" },
+]
+
+[[package]]
+name = "scaleway-core"
+version = "2.10.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-dateutil" },
+    { name = "pyyaml" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/61/6a/9f53cc92ad2332f96b48bd4975e53e15b8099a148a4e7386d64d393538d5/scaleway_core-2.10.3.tar.gz", hash = "sha256:56432f755d694669429de51d51c1d0b3361b28dc2f939b28e4cb954610ee76be", size = 27282, upload-time = "2025-11-04T10:01:41.021Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/d0/b6b133a27a94fc272d316f7bc8722be701130b93ee12c60c0c2413c16199/scaleway_core-2.10.3-py3-none-any.whl", hash = "sha256:fd4112144554d6adae22ff737555eeb0e38cb1063250b3e88c9aebc1b957793b", size = 33523, upload-time = "2025-11-04T10:01:40.106Z" },
 ]
 
 [[package]]
