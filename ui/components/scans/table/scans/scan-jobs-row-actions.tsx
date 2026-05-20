@@ -8,6 +8,11 @@ import {
   ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
@@ -20,6 +25,7 @@ interface ScanJobsRowActionsProps {
 export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
   const canCancel =
@@ -53,11 +59,28 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
             />
           </>
         )}
-        <ActionDropdownItem
-          icon={<CalendarClock />}
-          label="Edit Scan Schedule"
-          disabled
-        />
+        {isCloudEnvironment ? (
+          <ActionDropdownItem
+            icon={<CalendarClock />}
+            label="Edit Scan Schedule"
+            disabled
+          />
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="block">
+                <ActionDropdownItem
+                  icon={<CalendarClock />}
+                  label="Edit Scan Schedule"
+                  disabled
+                />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              Available in Prowler Cloud
+            </TooltipContent>
+          </Tooltip>
+        )}
         {canCancel && (
           <ActionDropdownDangerZone>
             <ActionDropdownItem
