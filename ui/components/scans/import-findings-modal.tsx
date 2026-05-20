@@ -1,14 +1,13 @@
 "use client";
 
-import { FileUp, Info, Upload } from "lucide-react";
+import { Info, Upload } from "lucide-react";
 import Link from "next/link";
-import { type DragEvent, type FormEvent, useState } from "react";
+import { type FormEvent, useState } from "react";
 
-import { FieldError } from "@/components/shadcn";
+import { FieldError, FileUploadDropzone } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
-import { cn } from "@/lib";
 
 interface ImportFindingsModalProps {
   open: boolean;
@@ -22,13 +21,11 @@ export function ImportFindingsModal({
   onOpenChange,
 }: ImportFindingsModalProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const closeModal = () => {
     setFile(null);
     setError(null);
-    setIsDragging(false);
     onOpenChange(false);
   };
 
@@ -36,12 +33,6 @@ export function ImportFindingsModal({
     if (!nextFile) return;
     setFile(nextFile);
     setError(null);
-  };
-
-  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    setSelectedFile(event.dataTransfer.files[0]);
   };
 
   const handleImport = (event: FormEvent<HTMLFormElement>) => {
@@ -68,8 +59,9 @@ export function ImportFindingsModal({
       }}
       title="Import Prowler CLI Findings"
       size="xl"
+      className="gap-2"
     >
-      <form onSubmit={handleImport} className="flex flex-col gap-5">
+      <form onSubmit={handleImport} className="flex flex-col gap-8">
         <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex items-center gap-2 rounded-md border px-3 py-2">
           <Info className="text-text-neutral-secondary size-4" />
           <span className="text-text-neutral-secondary text-xs">
@@ -83,47 +75,22 @@ export function ImportFindingsModal({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Upload className="text-text-neutral-secondary size-4" />
-          <span className="text-text-neutral-primary text-sm font-medium">
-            Import findings from Prowler CLI
-          </span>
-        </div>
-
-        <label
-          htmlFor="import-findings-file"
-          onDragOver={(event) => {
-            event.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-          className={cn(
-            "border-border-neutral-tertiary bg-bg-neutral-primary hover:bg-bg-neutral-tertiary flex min-h-[132px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center transition-colors",
-            isDragging &&
-              "border-border-input-primary-press bg-bg-neutral-tertiary",
-          )}
-        >
-          <FileUp className="text-text-neutral-secondary size-6" />
-          <span className="text-text-neutral-primary text-sm font-medium">
-            {file ? file.name : "Drag and drop your findings file here"}
-          </span>
-          <span className="text-text-neutral-secondary text-xs">
-            {file ? `${Math.ceil(file.size / 1024).toLocaleString()} KB` : "or"}
-          </span>
-          {!file && (
-            <span className="text-button-tertiary text-sm font-medium">
-              Select Files
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <Upload className="text-text-neutral-secondary size-4" />
+            <span className="text-text-neutral-primary text-sm font-medium">
+              Import findings from Prowler CLI
             </span>
-          )}
-          <input
-            id="import-findings-file"
-            type="file"
+          </div>
+
+          <FileUploadDropzone
+            file={file}
+            onFileSelect={setSelectedFile}
             accept=".json,.ocsf.json,application/json"
-            className="sr-only"
-            onChange={(event) => setSelectedFile(event.target.files?.[0])}
+            title="Drag and drop your findings file here"
+            selectText="Select Files"
           />
-        </label>
+        </div>
 
         {error && <FieldError>{error}</FieldError>}
 

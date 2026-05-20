@@ -1,6 +1,6 @@
 "use client";
 
-import { Cloud, Rocket } from "lucide-react";
+import { CloudCog, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useState } from "react";
@@ -10,12 +10,12 @@ import {
   Field,
   FieldError,
   FieldLabel,
+  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Textarea,
 } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { EntityInfo } from "@/components/ui/entities";
@@ -93,10 +93,11 @@ export function LaunchScanModal({
       }}
       title="Launch A Scan"
       size="xl"
+      className="gap-8"
     >
-      <form onSubmit={launchScan} className="flex flex-col gap-5">
+      <form onSubmit={launchScan} className="flex flex-col gap-8">
         <div className="flex items-center gap-2">
-          <Cloud className="text-text-neutral-secondary size-4" />
+          <CloudCog className="text-text-neutral-secondary size-4" />
           <span className="text-text-neutral-secondary text-sm">
             Select a Cloud Account you would like to scan
           </span>
@@ -143,12 +144,11 @@ export function LaunchScanModal({
           <FieldLabel htmlFor="launch-scan-note">
             Scan Note (optional)
           </FieldLabel>
-          <Textarea
+          <Input
             id="launch-scan-note"
             aria-label="Scan Note"
             value={scanNote}
             onChange={(event) => setScanNote(event.target.value)}
-            textareaSize="sm"
           />
         </Field>
 
