@@ -2,6 +2,11 @@
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=61.0", "wheel"]
 
+[dependency-groups]
+dev = [
+  "pytest==8.3.5"
+]
+
 [project]
 dependencies = [
   "fastmcp==2.14.0",
@@ -15,6 +20,9 @@ version = "0.5.0"
 
 [project.scripts]
 prowler-mcp = "prowler_mcp_server.main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.uv]
 package = true
