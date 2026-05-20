@@ -572,14 +572,12 @@ def _process_finding_micro_batch(
             if uid not in last_status_cache:
                 last_status_cache[uid] = data
 
-    # ============================================================
-    # All DB writes for this micro-batch run inside ONE rls_transaction
-    # (with deadlock-retry at micro-batch granularity instead of per-finding).
-    # ============================================================
+    # All DB writes for this micro-batch run inside ONE rls_transaction,
+    # with deadlock-retry at micro-batch granularity instead of per-finding.
     for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
         try:
             with rls_transaction(tenant_id):
-                # ---- 1) Pre-resolve Resources in bulk ----
+                # 1) Pre-resolve Resources in bulk
                 # Collect all uids referenced by this batch that are not in cache yet.
                 # NOTE: we intentionally include empty-string uids here. The SDK
                 # explicitly emits findings with `resource_uid=""` for some flows
@@ -647,7 +645,7 @@ def _process_finding_micro_batch(
                         resource_cache[uid] = r
                         resource_failed_findings_cache.setdefault(uid, 0)
 
-                # ---- 2) Pre-resolve ResourceTags in bulk ----
+                # 2) Pre-resolve ResourceTags in bulk
                 batch_tag_kv: set[tuple[str, str]] = set()
                 for f in non_null_findings:
                     for k, v in f.resource_tags.items():
@@ -686,7 +684,7 @@ def _process_finding_micro_batch(
                         )
                     tag_cache.update(existing_tags)
 
-                # ---- 3) Per-finding in-memory processing ----
+                # 3) Per-finding in-memory processing
                 for finding in non_null_findings:
                     resource_uid = finding.resource_uid
                     resource_instance = resource_cache.get(resource_uid)
@@ -856,7 +854,7 @@ def _process_finding_micro_batch(
                         group_resources_cache=group_resources_cache,
                     )
 
-                # ---- 4) Bulk create ResourceTagMappings ----
+                # 4) Bulk create ResourceTagMappings
                 # Replaces the original per-resource `upsert_or_delete_tags`
                 # (which did one `update_or_create` + SELECT FOR UPDATE per mapping).
                 if tag_mappings_to_create:
@@ -878,13 +876,13 @@ def _process_finding_micro_batch(
                             if uid is not None:
                                 resources_with_new_tag_mappings.add(uid)
 
-                # ---- 5) Bulk create Findings ----
+                # 5) Bulk create Findings
                 if findings_to_create:
                     Finding.objects.bulk_create(
                         findings_to_create, batch_size=SCAN_DB_BATCH_SIZE
                     )
 
-                # ---- 6) Bulk create ResourceFindingMapping rows ----
+                # 6) Bulk create ResourceFindingMapping rows
                 mappings_to_create = [
                     ResourceFindingMapping(
                         tenant_id=tenant_id,
@@ -908,14 +906,7 @@ def _process_finding_micro_batch(
                             f"inserted {inserted}. Rolling back micro-batch."
                         )
 
-                # ---- 7) (eliminado) Bulk update finding denormalized arrays
-                # Antes habia un Finding.bulk_update sobre resource_regions/
-                # resource_services/resource_types tras el INSERT. Ahora esos
-                # arrays se poblan directamente al construir el Finding
-                # (ver paso 3), eliminando el UPDATE CASE WHEN posterior.
-                # Saves ~14ms/call x 6 calls = ~86ms per micro-batch.
-
-                # ---- 8) Bulk update Resources ----
+                # 7) Bulk update Resources
                 # Union of:
                 #  - resources whose fields changed (dirty_resources)
                 #  - resources that got new tag mappings (need updated_at bump,
