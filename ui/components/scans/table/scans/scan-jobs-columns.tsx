@@ -192,20 +192,24 @@ const selectColumn = ({
 }: GetScanJobsColumnsOptions): ColumnDef<ScanProps> => ({
   id: "select",
   header: ({ table }) => (
-    <SelectHeader
-      table={table}
-      selectedCount={Object.values(rowSelection).filter(Boolean).length}
-      selectableRowCount={selectableRowCount}
-    />
+    <div className="flex min-w-10">
+      <SelectHeader
+        table={table}
+        selectedCount={Object.values(rowSelection).filter(Boolean).length}
+        selectableRowCount={selectableRowCount}
+      />
+    </div>
   ),
   cell: ({ row }) => (
-    <Checkbox
-      size="sm"
-      checked={row.getIsSelected()}
-      onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-      onClick={(event) => event.stopPropagation()}
-      aria-label="Select scan"
-    />
+    <div className="flex min-w-10">
+      <Checkbox
+        size="sm"
+        checked={row.getIsSelected()}
+        onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+        onClick={(event) => event.stopPropagation()}
+        aria-label="Select scan"
+      />
+    </div>
   ),
   enableSorting: false,
   enableHiding: false,

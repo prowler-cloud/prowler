@@ -6,6 +6,7 @@ import { useState } from "react";
 import { DataTable } from "@/components/ui/table";
 import type { MetaDataProps, ScanProps } from "@/types";
 
+import { AutoRefresh } from "../../auto-refresh";
 import { SCAN_JOBS_TAB, type ScanJobsTab } from "../../scans-table.utils";
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
@@ -14,6 +15,8 @@ interface ScanJobsTableProps {
   meta?: MetaDataProps;
   tab: ScanJobsTab;
 }
+
+const REFRESHING_STATES = ["available", "executing"] as const;
 
 function ImportedScansEmptyState() {
   return (
@@ -30,6 +33,11 @@ function ImportedScansEmptyState() {
 
 export function ScanJobsTable({ data, meta, tab }: ScanJobsTableProps) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const hasRefreshingScan = data.some((scan) =>
+    REFRESHING_STATES.includes(
+      scan.attributes.state as (typeof REFRESHING_STATES)[number],
+    ),
+  );
   const columns = getScanJobsColumns({
     tab,
     rowSelection,
@@ -41,14 +49,17 @@ export function ScanJobsTable({ data, meta, tab }: ScanJobsTableProps) {
   }
 
   return (
-    <DataTable
-      key={`scan-jobs-${tab}-${data.length}-${meta?.pagination?.page ?? 1}`}
-      columns={columns}
-      data={data}
-      metadata={meta}
-      enableRowSelection
-      rowSelection={rowSelection}
-      onRowSelectionChange={setRowSelection}
-    />
+    <>
+      <AutoRefresh hasExecutingScan={hasRefreshingScan} />
+      <DataTable
+        key={`scan-jobs-${tab}-${data.length}-${meta?.pagination?.page ?? 1}`}
+        columns={columns}
+        data={data}
+        metadata={meta}
+        enableRowSelection
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+      />
+    </>
   );
 }

@@ -1,38 +1,73 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { describe, expect, it, vi } from "vitest";
 
-import { describe, expect, it } from "vitest";
+vi.mock("@/components/shadcn", () => ({
+  Badge: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
+  ),
+  Checkbox: () => <input type="checkbox" />,
+  Progress: () => <div />,
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}));
 
-const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const filePath = path.join(currentDir, "scan-jobs-columns.tsx");
-const source = readFileSync(filePath, "utf8");
+vi.mock("@/components/ui/entities", () => ({
+  DateWithTime: () => <time />,
+  EntityInfo: () => <span />,
+}));
 
-const getColumnsSource = (name: string): string => {
-  const start = source.indexOf(`const ${name} =`);
-  const end = source.indexOf("];", start);
+vi.mock("@/components/ui/table", () => ({
+  DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
+}));
 
-  return source.slice(start, end);
-};
+vi.mock("./scan-jobs-row-actions", () => ({
+  ScanJobsRowActions: () => <button type="button" />,
+}));
+
+import { SCAN_JOBS_TAB, type ScanJobsTab } from "../../scans-table.utils";
+import { getScanJobsColumns } from "./scan-jobs-columns";
+
+const getColumnIds = (tab: ScanJobsTab) =>
+  getScanJobsColumns({
+    tab,
+    rowSelection: {},
+    selectableRowCount: 1,
+  }).map((column) => column.id);
 
 describe("getScanJobsColumns", () => {
-  it("does not show resources for active scans because they are still running", () => {
-    expect(getColumnsSource("activeColumns")).not.toContain("resourcesColumn");
-  });
-
-  it("keeps resources visible for completed scans", () => {
-    expect(getColumnsSource("completedColumns")).toContain("resourcesColumn");
-  });
-
-  it("uses the shared resources badge styling for scan resource counts", () => {
-    expect(source).toContain('variant="tag" className="rounded text-sm"');
-    expect(source).not.toContain("RESOURCE_COUNT_STYLES");
-  });
-
-  it("uses Badge variants for scan status colors instead of inline status color classes", () => {
-    expect(source).toContain('variant="warning"');
-    expect(source).toContain('variant="success"');
-    expect(source).toContain('variant="error"');
-    expect(source).not.toContain("variantClassName");
+  it("uses the expected columns for each scan tab", () => {
+    expect(getColumnIds(SCAN_JOBS_TAB.ACTIVE)).toEqual([
+      "select",
+      "account",
+      "scanNote",
+      "progress",
+      "scanTime",
+      "scanSchedule",
+      "launched",
+      "actions",
+    ]);
+    expect(getColumnIds(SCAN_JOBS_TAB.COMPLETED)).toEqual([
+      "select",
+      "account",
+      "scanNote",
+      "resources",
+      "findings",
+      "status",
+      "scanSchedule",
+      "scanDate",
+      "actions",
+    ]);
+    expect(getColumnIds(SCAN_JOBS_TAB.SCHEDULED)).toEqual([
+      "select",
+      "account",
+      "scanSchedule",
+      "lastScan",
+      "nextScan",
+      "actions",
+    ]);
   });
 });
