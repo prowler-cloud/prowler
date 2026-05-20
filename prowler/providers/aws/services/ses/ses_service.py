@@ -52,7 +52,9 @@ class SES(AWSService):
                 dkim_attrs = identity_attributes.get("DkimAttributes", {}) or {}
                 identity.dkim_status = dkim_attrs.get("Status")
                 identity.dkim_signing_enabled = dkim_attrs.get("SigningEnabled", False)
-                identity.dkim_signing_attributes_origin = dkim_attrs.get("SigningAttributesOrigin")
+                identity.dkim_signing_attributes_origin = dkim_attrs.get(
+                    "SigningAttributesOrigin"
+                )
 
             except Exception as error:
                 logger.error(
