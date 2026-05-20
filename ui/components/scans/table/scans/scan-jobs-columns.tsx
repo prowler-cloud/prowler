@@ -1,7 +1,6 @@
 "use client";
 
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { Bell, ShieldCheck, TriangleAlert } from "lucide-react";
 
 import {
   Badge,
@@ -11,14 +10,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { TableLink } from "@/components/ui/custom";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
+import { toLocalDateString } from "@/lib/date-utils";
 import type { ProviderType, ScanProps } from "@/types";
 
 import {
   formatScanDuration,
   getScanAlias,
-  getScanFindingsSummary,
   getScanScheduleLabel,
   getScanStatusLabel,
   SCAN_JOBS_TAB,
@@ -124,43 +124,6 @@ function ProgressCell({ scan }: { scan: ScanProps }) {
   );
 }
 
-function FindingsSummaryCell({ scan }: { scan: ScanProps }) {
-  const summary = getScanFindingsSummary(scan.attributes);
-
-  if (!summary) {
-    return <span className="text-text-neutral-tertiary text-sm">-</span>;
-  }
-
-  return (
-    <div className="flex min-w-[160px] items-center gap-4">
-      <div className="flex flex-col gap-1">
-        <Badge variant="error">
-          <TriangleAlert className="size-3" />
-          {summary.fail.toLocaleString()}
-        </Badge>
-        {typeof summary.failNew === "number" && (
-          <span className="text-text-neutral-secondary flex items-center gap-1 text-xs">
-            <Bell className="size-3" />
-            {summary.failNew.toLocaleString()} New
-          </span>
-        )}
-      </div>
-      <div className="flex flex-col gap-1">
-        <Badge variant="success">
-          <ShieldCheck className="size-3" />
-          {summary.pass.toLocaleString()}
-        </Badge>
-        {typeof summary.passNew === "number" && (
-          <span className="text-text-neutral-secondary flex items-center gap-1 text-xs">
-            <Bell className="size-3" />
-            {summary.passNew.toLocaleString()} New
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function StatusCell({ scan }: { scan: ScanProps }) {
   const state = scan.attributes.state;
   const variant =
@@ -243,6 +206,18 @@ const resourcesColumn: ColumnDef<ScanProps> = {
   enableSorting: false,
 };
 
+function FindingsLinkCell({ scan }: { scan: ScanProps }) {
+  const scanDate = toLocalDateString(scan.attributes.completed_at);
+
+  return (
+    <TableLink
+      href={`/findings?filter[scan]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`}
+      isDisabled={scan.attributes.state !== "completed" || !scanDate}
+      label="View Findings"
+    />
+  );
+}
+
 const actionsColumn: ColumnDef<ScanProps> = {
   id: "actions",
   header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
@@ -305,7 +280,7 @@ const completedColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Findings" />
     ),
-    cell: ({ row }) => <FindingsSummaryCell scan={row.original} />,
+    cell: ({ row }) => <FindingsLinkCell scan={row.original} />,
     enableSorting: false,
   },
   {
@@ -358,6 +333,7 @@ const scheduledColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Last Scan" />
     ),
+    // TODO: Replace this with the backend-provided last completed scan date for this provider.
     cell: ({ row }) => (
       <DateWithTime dateTime={row.original.attributes.completed_at} />
     ),

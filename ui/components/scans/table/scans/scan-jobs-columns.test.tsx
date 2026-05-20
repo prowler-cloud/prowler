@@ -1,4 +1,8 @@
+import type { CellContext } from "@tanstack/react-table";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+import type { ScanProps } from "@/types";
 
 vi.mock("@/components/shadcn", () => ({
   Badge: ({ children }: { children: React.ReactNode }) => (
@@ -20,6 +24,18 @@ vi.mock("@/components/ui/entities", () => ({
   EntityInfo: () => <span />,
 }));
 
+vi.mock("@/components/ui/custom", () => ({
+  TableLink: ({
+    href,
+    isDisabled,
+    label,
+  }: {
+    href: string;
+    isDisabled?: boolean;
+    label: string;
+  }) => (isDisabled ? <span>{label}</span> : <a href={href}>{label}</a>),
+}));
+
 vi.mock("@/components/ui/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
@@ -37,6 +53,46 @@ const getColumnIds = (tab: ScanJobsTab) =>
     rowSelection: {},
     selectableRowCount: 1,
   }).map((column) => column.id);
+
+const makeCompletedScan = (): ScanProps => ({
+  type: "scans",
+  id: "scan-1",
+  attributes: {
+    name: "Production scan",
+    trigger: "manual",
+    state: "completed",
+    unique_resource_count: 7,
+    progress: 100,
+    scanner_args: null,
+    duration: 73,
+    started_at: "2026-01-01T10:00:00Z",
+    inserted_at: "2026-01-01T10:00:00Z",
+    completed_at: "2026-01-01T10:05:00Z",
+    scheduled_at: "",
+    next_scan_at: "",
+  },
+  relationships: {
+    provider: { data: { type: "providers", id: "provider-1" } },
+    task: { data: { type: "tasks", id: "task-1" } },
+  },
+});
+
+const renderCell = (columnId: string, scan: ScanProps) => {
+  const column = getScanJobsColumns({
+    tab: SCAN_JOBS_TAB.COMPLETED,
+    rowSelection: {},
+    selectableRowCount: 1,
+  }).find((item) => item.id === columnId);
+  const cell = column?.cell as
+    | ((context: CellContext<ScanProps, unknown>) => React.ReactNode)
+    | undefined;
+
+  if (!cell) throw new Error(`Column ${columnId} does not define a cell`);
+
+  render(
+    <>{cell({ row: { original: scan } } as CellContext<ScanProps, unknown>)}</>,
+  );
+};
 
 describe("getScanJobsColumns", () => {
   it("uses the expected columns for each scan tab", () => {
@@ -69,5 +125,16 @@ describe("getScanJobsColumns", () => {
       "nextScan",
       "actions",
     ]);
+  });
+
+  it("renders the completed findings column as a findings link", () => {
+    renderCell("findings", makeCompletedScan());
+
+    const link = screen.getByRole("link", { name: /view findings/i });
+
+    expect(link).toHaveAttribute(
+      "href",
+      "/findings?filter[scan]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
+    );
   });
 });
