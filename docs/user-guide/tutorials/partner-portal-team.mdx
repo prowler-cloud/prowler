@@ -1,0 +1,73 @@
+---
+title: 'Managing Your Partner Portal Team'
+---
+
+Each partner organization in Prowler Partner Portal has its own team and its own role catalog. Partner administrators invite team members by email and assign each member a role from the catalog.
+
+## Roles
+
+Today every partner organization ships with two built-in roles:
+
+- **Admin** — full management of the partner organization (team, customers, settings, branding, billing, partner deletion). Admins are mapped to **Cloud Manager** on the customer tenants the partner manages on Prowler Cloud.
+- **Member** — read-only inside the Partner Portal. Members can change their own password and operate on customer tenants as **Cloud Operator** on Prowler Cloud.
+
+The role assigned at invitation time decides both Partner Portal and Cloud-side permissions; there is no separate Cloud role to assign.
+
+Each role bundles a set of permissions:
+
+| Permission | Description |
+|---|---|
+| Manage members | Invite, re-invite, revoke and remove team members. |
+| Manage settings | Edit the partner organization's profile and configuration. |
+| Manage billing | Manage billing details and subscriptions. |
+| Manage organizations | Add and remove customer organizations and provision their Prowler Cloud tenants. |
+| Access tenants | Open a customer tenant in Prowler Cloud on behalf of the customer. |
+
+Permissions surface on the session as boolean flags (`manage_members`, `manage_settings`, `manage_billing`, `manage_organizations`, `access_tenants`) that the UI consults to gate the corresponding sidebar entries and actions.
+
+## Inviting a Team Member
+
+<Steps>
+  <Step title="Open Team">
+    From the sidebar, choose **Team**. The page is only visible to users whose role grants `manage_members`.
+  </Step>
+
+  <Step title="Send the invitation">
+    Click **Invite user**, enter the work email, choose a role, and send. Inviting an email that is already a team member is rejected. The invitee receives an email with a one-time link that opens the public `/invitations/accept` page.
+  </Step>
+
+  <Step title="Track status">
+    The Team table lists each invitation's state: **Pending**, **Accepted**, **Expired** or **Revoked**.
+  </Step>
+</Steps>
+
+When the invitee opens the link, they fill in their full name and a password (minimum 12 characters), accept, and are redirected to the sign-in page with a confirmation banner.
+
+## Re-Inviting or Revoking
+
+For invitations in **Pending** or **Expired** state, the row's **Re-invite** action emails a fresh link, bumps the invitation's expiry, and updates the **Invite Sent** column. **Revoke** invalidates the invitation immediately; the invitee can no longer accept it.
+
+An email address can have only one **Pending** invitation at a time. To re-issue, revoke the existing invitation first or use **Re-invite**.
+
+## Disabling, Enabling, or Removing a Member
+
+Active members expose a **Disable** action on their row. Disabling soft-deletes the member: their access is revoked immediately, but the row stays in the table flagged as **Disabled** for audit trail.
+
+Disabled members can be **Enabled** to restore access, or **Re-invited** to send a fresh invitation that brings them back as a fresh active member.
+
+## Notes
+
+- The first administrator of a new partner organization is created during sign-up.
+- An email address can have only one active membership in a given partner organization.
+- Permissions are scoped to a partner organization — a session for partner A does not carry permissions on partner B.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Onboarding Customers" icon="building" href="/user-guide/tutorials/partner-portal-customer-onboarding">
+    Provision customer Prowler Cloud tenants and operate on their behalf.
+  </Card>
+  <Card title="Customizing Partner Portal Branding" icon="palette" href="/user-guide/tutorials/partner-portal-branding">
+    Upload your logo and customize visual identity.
+  </Card>
+</Columns>
