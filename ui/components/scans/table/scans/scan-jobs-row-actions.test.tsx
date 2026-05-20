@@ -99,4 +99,22 @@ describe("ScanJobsRowActions", () => {
       screen.queryByText("Available in Prowler Cloud"),
     ).not.toBeInTheDocument();
   });
+
+  it("does not render cancel scan while the scan cancellation API is missing", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(<ScanJobsRowActions scan={makeScan()} />);
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("menuitem", { name: /cancel scan/i }),
+    ).not.toBeInTheDocument();
+  });
 });

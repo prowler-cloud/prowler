@@ -1,11 +1,10 @@
 "use client";
 
-import { CalendarClock, Download, Eye, XCircle } from "lucide-react";
+import { CalendarClock, Download, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
   ActionDropdown,
-  ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import {
@@ -16,7 +15,7 @@ import {
 import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
-import { SCAN_STATE, type ScanProps } from "@/types";
+import type { ScanProps } from "@/types";
 
 interface ScanJobsRowActionsProps {
   scan: ScanProps;
@@ -28,10 +27,6 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
-  const canCancel =
-    scanState === SCAN_STATE.AVAILABLE ||
-    scanState === SCAN_STATE.SCHEDULED ||
-    scanState === SCAN_STATE.EXECUTING;
   const scanDate = toLocalDateString(scan.attributes.completed_at);
 
   const openFindings = () => {
@@ -81,15 +76,7 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
             </TooltipContent>
           </Tooltip>
         )}
-        {canCancel && (
-          <ActionDropdownDangerZone>
-            <ActionDropdownItem
-              icon={<XCircle />}
-              label="Cancel Scan"
-              destructive
-            />
-          </ActionDropdownDangerZone>
-        )}
+        {/* TODO: Restore Cancel Scan once the backend exposes a public scan cancellation endpoint. */}
       </ActionDropdown>
     </div>
   );

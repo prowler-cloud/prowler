@@ -4,6 +4,7 @@ import type { ScanAttributes, ScanProps } from "@/types";
 
 import {
   formatScanDuration,
+  getEnabledScanJobsTab,
   getScanAlias,
   getScanFindingsSummary,
   getScanJobsTab,
@@ -41,6 +42,15 @@ describe("scans-table.utils", () => {
     expect(getScanJobsTab("unknown")).toBe(SCAN_JOBS_TAB.ACTIVE);
     expect(getScanJobsTab(SCAN_JOBS_TAB.COMPLETED)).toBe(
       SCAN_JOBS_TAB.COMPLETED,
+    );
+  });
+
+  it("falls back from imported scans to active scans outside Cloud", () => {
+    expect(getEnabledScanJobsTab(SCAN_JOBS_TAB.IMPORTED, false)).toBe(
+      SCAN_JOBS_TAB.ACTIVE,
+    );
+    expect(getEnabledScanJobsTab(SCAN_JOBS_TAB.IMPORTED, true)).toBe(
+      SCAN_JOBS_TAB.IMPORTED,
     );
   });
 

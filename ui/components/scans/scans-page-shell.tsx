@@ -15,7 +15,11 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@/components/shadcn";
+import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import { EntityInfo } from "@/components/ui/entities";
 import type { ProviderType, ScanProviderInfo } from "@/types";
 import { PROVIDER_DISPLAY_NAMES, PROVIDER_TYPES } from "@/types/providers";
@@ -23,6 +27,7 @@ import { PROVIDER_DISPLAY_NAMES, PROVIDER_TYPES } from "@/types/providers";
 import { ImportFindingsModal } from "./import-findings-modal";
 import { LaunchScanModal } from "./launch-scan-modal";
 import {
+  getEnabledScanJobsTab,
   getScanJobsTab,
   SCAN_JOBS_TAB,
   SCAN_TAB_LABELS,
@@ -57,7 +62,12 @@ export function ScansPageShell({
   const searchParams = useSearchParams();
   const [launchOpen, setLaunchOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
+  const [importedTabTooltipOpen, setImportedTabTooltipOpen] = useState(false);
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const activeTab = getEnabledScanJobsTab(
+    getScanJobsTab(searchParams.get("tab") ?? undefined),
+    isCloudEnvironment,
+  );
   const providerType = getFirstFilterValue(
     searchParams.get("filter[provider_type__in]"),
   );
@@ -80,15 +90,34 @@ export function ScansPageShell({
   };
 
   const setTab = (tab: string) => {
+    if (tab === SCAN_JOBS_TAB.IMPORTED && !isCloudEnvironment) return;
+
     updateParams({ tab });
   };
 
   const launchDisabled = !hasManageScansPermission || providers.length === 0;
+  const importDisabled = !isCloudEnvironment;
+
+  const importButton = (
+    <Button
+      type="button"
+      variant="outline"
+      size="lg"
+      onClick={() => {
+        if (!importDisabled) setImportOpen(true);
+      }}
+      disabled={importDisabled}
+      className="justify-start"
+    >
+      <Upload className="size-4" />
+      Import Findings
+    </Button>
+  );
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 lg:max-w-[760px]">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 lg:w-auto lg:grid-cols-[240px_240px_240px]">
           <Select
             value={providerType}
             onValueChange={(value) =>
@@ -151,18 +180,20 @@ export function ScansPageShell({
           </Select>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:justify-end">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {importDisabled ? (
+            <span className="relative inline-flex w-fit sm:mr-14" tabIndex={0}>
+              {importButton}
+              <span className="absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
+                <CloudFeatureBadgeLink />
+              </span>
+            </span>
+          ) : (
+            importButton
+          )}
           <Button
             type="button"
-            variant="link"
-            onClick={() => setImportOpen(true)}
-            className="justify-start px-0"
-          >
-            <Upload className="size-4" />
-            Import Prowler CLI Findings
-          </Button>
-          <Button
-            type="button"
+            size="lg"
             onClick={() => setLaunchOpen(true)}
             disabled={launchDisabled}
           >
@@ -177,11 +208,44 @@ export function ScansPageShell({
         className="flex flex-col gap-[18px]"
       >
         <TabsList className="overflow-x-auto">
-          {Object.values(SCAN_JOBS_TAB).map((tab) => (
-            <TabsTrigger key={tab} value={tab}>
-              {SCAN_TAB_LABELS[tab as ScanJobsTab]}
-            </TabsTrigger>
-          ))}
+          {Object.values(SCAN_JOBS_TAB).map((tab) => {
+            const isImportedTab = tab === SCAN_JOBS_TAB.IMPORTED;
+            const isDisabled = isImportedTab && !isCloudEnvironment;
+            const trigger = (
+              <TabsTrigger
+                key={tab}
+                value={tab}
+                aria-disabled={isDisabled}
+                data-disabled={isDisabled ? "" : undefined}
+                className={isDisabled ? "cursor-not-allowed opacity-50" : ""}
+                onMouseEnter={() => {
+                  if (isDisabled) setImportedTabTooltipOpen(true);
+                }}
+                onMouseLeave={() => {
+                  if (isDisabled) setImportedTabTooltipOpen(false);
+                }}
+                onFocus={() => {
+                  if (isDisabled) setImportedTabTooltipOpen(true);
+                }}
+                onBlur={() => {
+                  if (isDisabled) setImportedTabTooltipOpen(false);
+                }}
+              >
+                {SCAN_TAB_LABELS[tab as ScanJobsTab]}
+              </TabsTrigger>
+            );
+
+            if (!isDisabled) return trigger;
+
+            return (
+              <Tooltip key={tab} open={importedTabTooltipOpen}>
+                <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+                <TooltipContent side="top">
+                  Available in Prowler Cloud
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
         </TabsList>
         <TabsContent value={activeTab} className="mt-0">
           {children}

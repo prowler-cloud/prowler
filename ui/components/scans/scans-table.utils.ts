@@ -66,6 +66,17 @@ export function getScanJobsTab(value?: string | string[]): ScanJobsTab {
     : DEFAULT_SCAN_JOBS_TAB;
 }
 
+export function getEnabledScanJobsTab(
+  tab: ScanJobsTab,
+  isCloudEnvironment: boolean,
+): ScanJobsTab {
+  if (tab === SCAN_JOBS_TAB.IMPORTED && !isCloudEnvironment) {
+    return DEFAULT_SCAN_JOBS_TAB;
+  }
+
+  return tab;
+}
+
 export function getScanJobsTabFilters(
   tab: ScanJobsTab,
 ): Record<string, string> {
