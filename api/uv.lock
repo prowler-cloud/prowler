@@ -4410,8 +4410,8 @@ wheels = [
 
 [[package]]
 name = "prowler"
-version = "5.27.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=v5.27#cb01769237cb99a21f2f12cce470e239573e1a01" }
+version = "5.27.1"
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=v5.27#abebbeea20fe2ba616e6a3bbfc9e7f2931b24d95" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
