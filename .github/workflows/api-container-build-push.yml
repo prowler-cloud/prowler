@@ -145,6 +145,26 @@ jobs:
           pip install --no-cache-dir "uv==0.11.14"
           (cd api && uv lock)
 
+      - name: Pin prowler SDK to latest release branch (v5.Y) commit and refresh lockfile
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -e
+          # RELEASE_TAG looks like "5.14.0"; the SDK release branch is "v5.14".
+          VERSION="${RELEASE_TAG#v}"
+          VERSION_BRANCH="v$(echo "${VERSION}" | cut -d. -f1,2)"
+          LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git "refs/heads/${VERSION_BRANCH}" | cut -f1)
+          if [ -z "${LATEST_SHA}" ]; then
+            echo "ERROR: release branch ${VERSION_BRANCH} not found in prowler-cloud/prowler"
+            exit 1
+          fi
+          echo "Pinning SDK to ${VERSION_BRANCH}@${LATEST_SHA}"
+          sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
+          # Refresh api/uv.lock so it matches the pinned SHA above; the API
+          # Dockerfile runs `uv sync --locked`, which aborts on any drift
+          # between pyproject.toml and uv.lock.
+          pip install --no-cache-dir "uv==0.11.14"
+          (cd api && uv lock)
+
       - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:

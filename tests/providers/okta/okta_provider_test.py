@@ -7,6 +7,7 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
     OktaInvalidOrgDomainError,
+    OktaInvalidProviderIdError,
     OktaPrivateKeyFileError,
     OktaSetUpIdentityError,
 )
@@ -395,6 +396,55 @@ class Test_OktaProvider_test_connection:
     def test_raises_when_raise_enabled(self, _clear_okta_env):
         with pytest.raises(OktaEnvironmentVariableError):
             OktaProvider.test_connection()
+
+    def test_provider_id_match_succeeds(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            connection = OktaProvider.test_connection(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                provider_id=OKTA_ORG_DOMAIN,
+            )
+        assert connection.is_connected is True
+        assert connection.error is None
+
+    def test_provider_id_match_is_case_insensitive(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            connection = OktaProvider.test_connection(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                provider_id=OKTA_ORG_DOMAIN.upper(),
+            )
+        assert connection.is_connected is True
+
+    def test_provider_id_mismatch_raises(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            with pytest.raises(OktaInvalidProviderIdError):
+                OktaProvider.test_connection(
+                    okta_org_domain=OKTA_ORG_DOMAIN,
+                    okta_client_id=OKTA_CLIENT_ID,
+                    okta_private_key_file="/tmp/key.pem",
+                    provider_id="other.okta.com",
+                )
+
+    def test_provider_id_mismatch_returns_error_when_raise_disabled(
+        self, _clear_okta_env, tmp_path
+    ):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            connection = OktaProvider.test_connection(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                provider_id="other.okta.com",
+                raise_on_exception=False,
+            )
+        assert connection.is_connected is False
+        assert isinstance(connection.error, OktaInvalidProviderIdError)
 
 
 class Test_OktaProvider_print_credentials:
