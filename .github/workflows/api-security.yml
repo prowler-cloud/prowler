@@ -59,6 +59,7 @@ jobs:
             github.com:443
             api.github.com:443
             objects.githubusercontent.com:443
+            raw.githubusercontent.com:443
             release-assets.githubusercontent.com:443
             api.osv.dev:443
             api.deps.dev:443

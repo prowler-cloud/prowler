@@ -1222,7 +1222,9 @@
     {
       "Id": "3.1.6.1",
       "Description": "Ensure accessing groups from outside this organization is set to private",
-      "Checks": [],
+      "Checks": [
+        "groups_external_access_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1243,7 +1245,9 @@
     {
       "Id": "3.1.6.2",
       "Description": "Ensure creating groups is restricted",
-      "Checks": [],
+      "Checks": [
+        "groups_creation_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1264,7 +1268,9 @@
     {
       "Id": "3.1.6.3",
       "Description": "Ensure default for permission to view conversations is restricted",
-      "Checks": [],
+      "Checks": [
+        "groups_view_conversations_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",

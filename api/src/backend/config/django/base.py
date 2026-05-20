@@ -118,6 +118,8 @@ REST_FRAMEWORK = {
         "attack-paths-custom-query": env(
             "DJANGO_THROTTLE_ATTACK_PATHS_CUSTOM_QUERY", default="10/min"
         ),
+        "health-live": env("DJANGO_THROTTLE_HEALTH_LIVE", default="120/min"),
+        "health-ready": env("DJANGO_THROTTLE_HEALTH_READY", default="60/min"),
     },
 }
 

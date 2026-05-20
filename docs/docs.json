@@ -74,6 +74,12 @@
             ]
           },
           {
+            "group": "Prowler for Claude Code",
+            "pages": [
+              "getting-started/products/prowler-claude-code-plugin"
+            ]
+          },
+          {
             "group": "Prowler MCP Server",
             "pages": [
               "getting-started/products/prowler-mcp",
@@ -324,6 +330,13 @@
                 "pages": [
                   "user-guide/providers/openstack/getting-started-openstack",
                   "user-guide/providers/openstack/authentication"
+                ]
+              },
+              {
+                "group": "Scaleway",
+                "pages": [
+                  "user-guide/providers/scaleway/getting-started-scaleway",
+                  "user-guide/providers/scaleway/authentication"
                 ]
               },
               {
