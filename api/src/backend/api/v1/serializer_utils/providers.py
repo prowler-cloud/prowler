@@ -406,6 +406,26 @@ from rest_framework_json_api import serializers
             },
             {
                 "type": "object",
+                "title": "Okta OAuth Credentials",
+                "properties": {
+                    "okta_client_id": {
+                        "type": "string",
+                        "description": "Client ID of the Okta API Services app used for OAuth 2.0 private-key JWT authentication.",
+                    },
+                    "okta_private_key": {
+                        "type": "string",
+                        "description": "PEM-encoded private key whose matching public key (JWK) is registered on the Okta service app.",
+                    },
+                    "okta_scopes": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "OAuth scopes to request. Optional; defaults to the minimum set required to run the currently enabled Okta checks.",
+                    },
+                },
+                "required": ["okta_client_id", "okta_private_key"],
+            },
+            {
+                "type": "object",
                 "title": "Vercel API Token",
                 "properties": {
                     "api_token": {

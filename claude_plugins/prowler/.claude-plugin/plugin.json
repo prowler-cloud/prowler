@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "prowler",
+  "version": "0.1.0",
+  "description": "Prowler for Claude Code — cloud security and compliance skills powered by the Prowler MCP server. Bundles compliance triage and remediation; more skills coming.",
+  "author": {
+    "name": "Prowler",
+    "email": "support@prowler.com",
+    "url": "https://prowler.com"
+  },
+  "homepage": "https://docs.prowler.com",
+  "repository": "https://github.com/prowler-cloud/prowler",
+  "license": "Apache-2.0",
+  "keywords": [
+    "prowler",
+    "security",
+    "compliance",
+    "cloud-security",
+    "mcp"
+  ],
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "Prowler API key",
+      "description": "API key token used to authenticate with Prowler Cloud / Prowler App via the Prowler MCP server. Create one at https://cloud.prowler.com.",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

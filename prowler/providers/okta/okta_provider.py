@@ -22,6 +22,7 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
     OktaInvalidOrgDomainError,
+    OktaInvalidProviderIdError,
     OktaPrivateKeyFileError,
     OktaSetUpIdentityError,
     OktaSetUpSessionError,
@@ -348,8 +349,17 @@ class OktaProvider(Provider):
         okta_private_key_file: str = "",
         okta_scopes: Optional[Union[str, list[str]]] = None,
         raise_on_exception: bool = True,
+        provider_id: str = None,
     ) -> Connection:
-        """Test the connection to Okta with the provided OAuth credentials."""
+        """Test the connection to Okta with the provided OAuth credentials.
+
+        Args:
+            provider_id: The provider ID (Okta org domain). When supplied, the
+                authenticated org domain must match it — guards against the
+                stored provider UID drifting from the org the credentials were
+                actually issued for. Compared case-insensitively, matching the
+                normalization applied during session setup.
+        """
         try:
             OktaProvider.validate_arguments(
                 okta_org_domain=okta_org_domain,
@@ -364,7 +374,17 @@ class OktaProvider(Provider):
                 private_key_file=okta_private_key_file,
                 scopes=okta_scopes,
             )
-            OktaProvider.setup_identity(session)
+            identity = OktaProvider.setup_identity(session)
+
+            if provider_id and provider_id.strip().lower() != identity.org_domain:
+                raise OktaInvalidProviderIdError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        f"The provider ID '{provider_id}' does not match the "
+                        f"authenticated Okta org domain '{identity.org_domain}'."
+                    ),
+                )
+
             return Connection(is_connected=True)
         except Exception as error:
             logger.critical(

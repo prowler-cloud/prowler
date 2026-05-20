@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.28.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `okta` provider support with OAuth 2.0 private-key JWT credentials form (client ID + PEM private key) [(#11213)](https://github.com/prowler-cloud/prowler/pull/11213)
+
+---
+
 ## [1.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added

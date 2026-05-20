@@ -260,6 +260,20 @@ export const buildVercelSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildOktaSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.OKTA_CLIENT_ID]: getFormValue(
+      formData,
+      ProviderCredentialFields.OKTA_CLIENT_ID,
+    ),
+    [ProviderCredentialFields.OKTA_PRIVATE_KEY]: getFormValue(
+      formData,
+      ProviderCredentialFields.OKTA_PRIVATE_KEY,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildOpenStackSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: getFormValue(
@@ -512,6 +526,10 @@ export const buildSecretConfig = (
     vercel: () => ({
       secretType: "static",
       secret: buildVercelSecret(formData),
+    }),
+    okta: () => ({
+      secretType: "static",
+      secret: buildOktaSecret(formData),
     }),
   };
 
