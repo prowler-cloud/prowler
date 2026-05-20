@@ -1,8 +1,8 @@
 ---
-title: 'Onboarding Customers and Accessing Their Tenants'
+title: 'Onboarding Customers and Accessing Their Workspaces'
 ---
 
-Prowler Partner Portal lets partners provision Prowler Cloud tenants for customer organizations and operate inside those tenants on the customer's behalf. Every partner action is recorded in Prowler Cloud's audit log with both the partner identity and an `on_behalf_of` claim that pinpoints the customer.
+Prowler Partner Portal lets partners provision customer workspaces in Prowler Cloud for customer organizations and operate inside those workspaces on the customer's behalf. Every partner action is recorded in Prowler Cloud's audit log with both the partner identity and an `on_behalf_of` claim that pinpoints the customer.
 
 ## Provisioning a Customer
 
@@ -16,7 +16,7 @@ Prowler Partner Portal lets partners provision Prowler Cloud tenants for custome
   </Step>
 
   <Step title="Wait for provisioning">
-    Prowler Partner Portal calls Prowler Cloud to create the tenant. Provisioning is asynchronous; the customer row updates from **Pending** to **Active** when the tenant is ready (usually under a minute).
+    Prowler Partner Portal calls Prowler Cloud to create the customer workspace. Provisioning is asynchronous; the customer row updates from **Pending** to **Active** when the workspace is ready (usually under a minute).
   </Step>
 </Steps>
 
@@ -34,16 +34,16 @@ The Customers table lists the customer organizations linked to your partner. Eac
 
 ## Customer Self-Pairing with a Partner Code
 
-Each approved partner has a **Partner Code** — a unique, Prowler-issued value shown on **Settings → Profile** with the helper text *"Share this code with customers to link their accounts"*. Sharing the code lets a customer paste it into their Prowler Cloud account and request the partner relationship; once confirmed, the customer is listed in your Customers view alongside any partner-provisioned tenants.
+Each approved partner has a **Partner Code** — a unique, Prowler-issued value shown on **Settings → Profile** with the helper text *"Share this code with customers to link their accounts"*. Sharing the code lets a customer paste it into their Prowler Cloud account and request the partner relationship; once confirmed, the customer is listed in your Customers view alongside any partner-provisioned customer workspaces.
 
 The customer-side flow that consumes the Partner Code is rolled out progressively in Prowler Cloud. Verify availability with your Prowler contact before sharing the code.
 
-## Accessing a Customer Tenant on Behalf of the Customer
+## Accessing a Customer Workspace on Behalf of the Customer
 
-From **Customers**, open the customer's row and choose **Open in Prowler Cloud**. You're redirected to [cloud.prowler.com](https://cloud.prowler.com) signed in as a partner user **on behalf of** the customer. While operating in the tenant:
+From **Customers**, open the customer's row and choose **Open in Prowler Cloud**. You're redirected to [cloud.prowler.com](https://cloud.prowler.com) signed in as a partner user **on behalf of** the customer. While operating in the customer workspace:
 
 - You see the same Prowler Cloud UI a customer administrator would see.
-- Every action is recorded in Prowler Cloud's audit log with both your identity (the partner user) and an `on_behalf_of` claim identifying the customer tenant.
+- Every action is recorded in Prowler Cloud's audit log with both your identity (the partner user) and an `on_behalf_of` claim identifying the customer.
 - Returning to Prowler Partner Portal — close the tab or use the *Back to Partner Portal* link.
 
 ## Customer Self-Access
@@ -52,7 +52,7 @@ Customers continue to sign into [cloud.prowler.com](https://cloud.prowler.com) d
 
 ## Removing a Customer
 
-Removing a customer in Prowler Partner Portal detaches the tenant from your partner organization but does **not** delete the underlying Prowler Cloud tenant. Coordinate tenant disposal with the customer through Prowler Cloud directly.
+Removing a customer in Prowler Partner Portal detaches the customer workspace from your partner organization but does **not** delete the underlying customer data in Prowler Cloud. Coordinate workspace disposal with the customer through Prowler Cloud directly.
 
 ## Next Steps
 

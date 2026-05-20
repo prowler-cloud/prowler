@@ -8,22 +8,22 @@ Each partner organization in Prowler Partner Portal has its own team and its own
 
 Today every partner organization ships with two built-in roles:
 
-- **Admin** — full management of the partner organization (team, customers, settings, branding, billing, partner deletion). Admins are mapped to **Cloud Manager** on the customer tenants the partner manages on Prowler Cloud.
-- **Member** — read-only inside the Partner Portal. Members can change their own password and operate on customer tenants as **Cloud Operator** on Prowler Cloud.
-
-The role assigned at invitation time decides both Partner Portal and Cloud-side permissions; there is no separate Cloud role to assign.
+- **Superadmin** — full partner account management. Invites members, manages customer organizations, edits branding, and accesses customer workspaces.
+- **Organization Admin** — manages customer organizations and billing, and accesses customer workspaces. Cannot invite members or change partner settings.
 
 Each role bundles a set of permissions:
 
-| Permission | Description |
-|---|---|
-| Manage members | Invite, re-invite, revoke and remove team members. |
-| Manage settings | Edit the partner organization's profile and configuration. |
-| Manage billing | Manage billing details and subscriptions. |
-| Manage organizations | Add and remove customer organizations and provision their Prowler Cloud tenants. |
-| Access tenants | Open a customer tenant in Prowler Cloud on behalf of the customer. |
+| Permission | Description | Superadmin | Organization Admin |
+|---|---|:---:|:---:|
+| Manage members | Invite, re-invite, revoke and remove team members. | ✓ | |
+| Manage settings | Edit the partner organization's profile and configuration. | ✓ | |
+| Manage billing | Manage billing details and subscriptions. | ✓ | ✓ |
+| Manage organizations | Add and remove customer organizations and provision their customer workspaces. | ✓ | ✓ |
+| Access tenants | Open a customer workspace in Prowler Cloud on behalf of the customer. | ✓ | ✓ |
 
 Permissions surface on the session as boolean flags (`manage_members`, `manage_settings`, `manage_billing`, `manage_organizations`, `access_tenants`) that the UI consults to gate the corresponding sidebar entries and actions.
+
+The Cloud-side permission level (Manager or Operator) used when a partner user opens a customer workspace in Prowler Cloud is provisioned automatically and managed in Prowler Cloud — there is no separate Cloud role to assign at invitation time.
 
 ## Inviting a Team Member
 
@@ -65,7 +65,7 @@ Disabled members can be **Enabled** to restore access, or **Re-invited** to send
 
 <Columns cols={2}>
   <Card title="Onboarding Customers" icon="building" href="/user-guide/tutorials/partner-portal-customer-onboarding">
-    Provision customer Prowler Cloud tenants and operate on their behalf.
+    Provision customer workspaces in Prowler Cloud and operate on their behalf.
   </Card>
   <Card title="Customizing Partner Portal Branding" icon="palette" href="/user-guide/tutorials/partner-portal-branding">
     Upload your logo and customize visual identity.
