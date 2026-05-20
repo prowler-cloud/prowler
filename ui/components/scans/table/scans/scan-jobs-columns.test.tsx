@@ -24,6 +24,11 @@ describe("getScanJobsColumns", () => {
     expect(getColumnsSource("completedColumns")).toContain("resourcesColumn");
   });
 
+  it("uses the shared resources badge styling for scan resource counts", () => {
+    expect(source).toContain('variant="tag" className="rounded text-sm"');
+    expect(source).not.toContain("RESOURCE_COUNT_STYLES");
+  });
+
   it("uses Badge variants for scan status colors instead of inline status color classes", () => {
     expect(source).toContain('variant="warning"');
     expect(source).toContain('variant="success"');

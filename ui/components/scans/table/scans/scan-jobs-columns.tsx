@@ -32,9 +32,6 @@ interface GetScanJobsColumnsOptions {
   selectableRowCount: number;
 }
 
-const RESOURCE_COUNT_STYLES =
-  "border-border-tag bg-bg-tag text-text-neutral-primary rounded-md border px-2 py-1 text-xs font-semibold";
-
 function SelectHeader({
   table,
   selectedCount,
@@ -103,9 +100,9 @@ function ScanNoteCell({ scan }: { scan: ScanProps }) {
 
 function ResourceCountCell({ count }: { count?: number }) {
   return (
-    <span className={RESOURCE_COUNT_STYLES}>
-      {(count ?? 0).toLocaleString()}
-    </span>
+    <Badge variant="tag" className="rounded text-sm">
+      <span className="font-bold">{(count ?? 0).toLocaleString()}</span>
+    </Badge>
   );
 }
 

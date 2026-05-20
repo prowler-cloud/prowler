@@ -65,7 +65,7 @@ export function LaunchScanModal({
     const formData = new FormData();
     formData.set("providerId", providerId);
     if (scanNote.trim()) {
-      formData.set("scanNote", scanNote.trim());
+      formData.set("scanName", scanNote.trim());
     }
 
     const result = await scanOnDemand(formData);
