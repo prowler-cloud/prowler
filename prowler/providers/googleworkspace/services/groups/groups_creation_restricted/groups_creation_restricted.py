@@ -50,11 +50,10 @@ class groups_creation_restricted(Check):
                 issues.append("group owners can allow external members")
 
             # Check incoming mail from outside
-            # Default is true (insecure) — only false is compliant
-            if incoming_mail is None or incoming_mail is True:
-                effective = "true (default)" if incoming_mail is None else "true"
+            # Default is false (secure) — only true is non-compliant
+            if incoming_mail is True:
                 issues.append(
-                    f"group owners can allow incoming email from outside the organization ({effective})"
+                    "group owners can allow incoming email from outside the organization"
                 )
 
             if not issues:

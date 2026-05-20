@@ -150,7 +150,7 @@ class TestGroupsCreationRestricted:
             assert "incoming email" in findings[0].status_extended
 
     def test_fail_all_defaults_none(self):
-        """Test FAIL when all settings are None (defaults: USERS_IN_DOMAIN, false, true — mixed insecure)"""
+        """Test FAIL when all settings are None — only USERS_IN_DOMAIN default is insecure"""
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (
@@ -175,9 +175,40 @@ class TestGroupsCreationRestricted:
 
             assert len(findings) == 1
             assert findings[0].status == "FAIL"
-            # Should report both insecure defaults
+            # Only creation access level has an insecure default (USERS_IN_DOMAIN)
             assert "ADMIN_ONLY" in findings[0].status_extended
-            assert "incoming email" in findings[0].status_extended
+            assert "incoming email" not in findings[0].status_extended
+            assert "external members" not in findings[0].status_extended
+
+    def test_pass_admin_only_others_none(self):
+        """Test PASS when creation is ADMIN_ONLY and boolean settings are None (secure defaults)"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.groups.groups_creation_restricted.groups_creation_restricted.groups_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.groups.groups_creation_restricted.groups_creation_restricted import (
+                groups_creation_restricted,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = GroupsPolicies(
+                create_groups_access_level="ADMIN_ONLY",
+            )
+
+            check = groups_creation_restricted()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert "properly restricted" in findings[0].status_extended
 
     def test_fail_multiple_issues(self):
         """Test FAIL with all three sub-settings non-compliant"""
