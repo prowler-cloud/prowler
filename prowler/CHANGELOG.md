@@ -11,6 +11,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Google Workspace Groups service with 3 new checks [(#11186)](https://github.com/prowler-cloud/prowler/pull/11186)
 - `ses_identity_dkim_enabled` check for AWS provider [(#10923)](https://github.com/prowler-cloud/prowler/pull/10923)
 - `sagemaker_models_registry_in_use` check for AWS provider, verifying that at least one SageMaker Model Package Group has an approved model package to enforce ML governance workflows [(#11196)](https://github.com/prowler-cloud/prowler/pull/11196)
+- `securityhub_delegated_admin_enabled_all_regions` check for AWS provider, verifying that Security Hub has a delegated administrator configured org-wide, the hub is active in all opted-in regions, and organization auto-enable is on [(#8710)](https://github.com/prowler-cloud/prowler/issues/8710)
+- `config_delegated_admin_and_org_aggregator_all_regions` check for AWS provider, verifying that AWS Config has a registered delegated administrator and at least one organization aggregator covering all AWS regions [(#8710)](https://github.com/prowler-cloud/prowler/issues/8710)
 
 ### 🔄 Changed
 
