@@ -169,9 +169,10 @@ export const addProviderFormSchema = z
         providerUid: z
           .string()
           .trim()
+          .toLowerCase()
           .regex(
             /^[a-z0-9][a-z0-9-]*\.(okta\.com|oktapreview\.com|okta-emea\.com|okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com)$/,
-            "Org Domain must be lowercase and end in an Okta-managed domain (e.g. acme.okta.com), without scheme or path",
+            "Org Domain must be an Okta-managed domain (e.g. acme.okta.com), without scheme or path",
           ),
       }),
     ]),

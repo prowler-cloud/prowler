@@ -60,6 +60,9 @@ describe("addProviderFormSchema - okta", () => {
     "agency.okta.mil",
     "agency.okta-miltest.com",
     "agency.trex-govcloud.com",
+    "Acme.okta.com",
+    "  ACME.OKTA.COM  ",
+    "Agency.Okta-Gov.com",
   ];
 
   it.each(validUidFixtures)("accepts okta-managed org domain %s", (uid) => {
@@ -72,10 +75,28 @@ describe("addProviderFormSchema - okta", () => {
     expect(result.success).toBe(true);
   });
 
+  it.each([
+    ["Acme.okta.com", "acme.okta.com"],
+    ["  ACME.OKTA.COM  ", "acme.okta.com"],
+    ["Agency.Okta-Gov.com", "agency.okta-gov.com"],
+  ])("normalizes okta org domain %s to %s", (input, expected) => {
+    const result = addProviderFormSchema.safeParse({
+      providerType: "okta",
+      providerUid: input,
+      providerAlias: "okta-test",
+    });
+
+    expect(result.success).toBe(true);
+    expect(
+      result.success && "providerUid" in result.data
+        ? result.data.providerUid
+        : undefined,
+    ).toBe(expected);
+  });
+
   const invalidUidFixtures = [
     "https://acme.okta.com",
     "acme.example.com",
-    "Acme.okta.com",
     "acme.okta.com/path",
     "",
   ];
