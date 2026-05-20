@@ -3,7 +3,14 @@
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { Bell, ShieldCheck, TriangleAlert } from "lucide-react";
 
-import { Badge, Checkbox, Progress } from "@/components/shadcn";
+import {
+  Badge,
+  Checkbox,
+  Progress,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import type { ProviderType, ScanProps } from "@/types";
@@ -65,11 +72,32 @@ function AccountCell({ scan }: { scan: ScanProps }) {
   }
 
   return (
-    <EntityInfo
-      cloudProvider={providerInfo.provider as ProviderType}
-      entityAlias={providerInfo.alias}
-      entityId={providerInfo.uid}
-    />
+    <div className="max-w-[240px] min-w-0">
+      <EntityInfo
+        cloudProvider={providerInfo.provider as ProviderType}
+        entityAlias={providerInfo.alias}
+        entityId={providerInfo.uid}
+      />
+    </div>
+  );
+}
+
+function ScanNoteCell({ scan }: { scan: ScanProps }) {
+  const scanNote = getScanAlias(scan);
+
+  if (scanNote === "-") {
+    return <span className="text-text-neutral-tertiary text-sm">-</span>;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="text-text-neutral-primary block max-w-[180px] truncate text-sm font-medium whitespace-nowrap">
+          {scanNote}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top">{scanNote}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -86,14 +114,7 @@ function ProgressCell({ scan }: { scan: ScanProps }) {
   const isQueued = scan.attributes.state === "available";
 
   if (isQueued) {
-    return (
-      <Badge
-        variant="tag"
-        className="border-bg-warning-primary/30 bg-bg-warning-secondary text-text-warning"
-      >
-        Queued for scan
-      </Badge>
-    );
+    return <Badge variant="warning">Queued for scan</Badge>;
   }
 
   return (
@@ -116,7 +137,7 @@ function FindingsSummaryCell({ scan }: { scan: ScanProps }) {
   return (
     <div className="flex min-w-[160px] items-center gap-4">
       <div className="flex flex-col gap-1">
-        <Badge className="bg-bg-fail-secondary text-text-error-primary border-transparent">
+        <Badge variant="error">
           <TriangleAlert className="size-3" />
           {summary.fail.toLocaleString()}
         </Badge>
@@ -128,7 +149,7 @@ function FindingsSummaryCell({ scan }: { scan: ScanProps }) {
         )}
       </div>
       <div className="flex flex-col gap-1">
-        <Badge className="bg-bg-pass-secondary text-text-success-primary border-transparent">
+        <Badge variant="success">
           <ShieldCheck className="size-3" />
           {summary.pass.toLocaleString()}
         </Badge>
@@ -145,18 +166,14 @@ function FindingsSummaryCell({ scan }: { scan: ScanProps }) {
 
 function StatusCell({ scan }: { scan: ScanProps }) {
   const state = scan.attributes.state;
-  const variantClassName =
+  const variant =
     state === "completed"
-      ? "bg-bg-pass-secondary text-text-success-primary"
+      ? "success"
       : state === "failed" || state === "cancelled"
-        ? "bg-bg-fail-secondary text-text-error-primary"
-        : "bg-bg-tag text-text-neutral-primary";
+        ? "error"
+        : "tag";
 
-  return (
-    <Badge variant="tag" className={variantClassName}>
-      {getScanStatusLabel(state)}
-    </Badge>
-  );
+  return <Badge variant={variant}>{getScanStatusLabel(state)}</Badge>;
 }
 
 function ScheduleCell({ scan }: { scan: ScanProps }) {
@@ -206,16 +223,12 @@ const accountColumn: ColumnDef<ScanProps> = {
   enableSorting: false,
 };
 
-const scanAliasColumn: ColumnDef<ScanProps> = {
-  id: "scanAlias",
+const scanNoteColumn: ColumnDef<ScanProps> = {
+  id: "scanNote",
   header: ({ column }) => (
-    <DataTableColumnHeader column={column} title="Scan Alias" param="name" />
+    <DataTableColumnHeader column={column} title="Scan Note" param="name" />
   ),
-  cell: ({ row }) => (
-    <span className="text-text-neutral-primary text-sm font-medium">
-      {getScanAlias(row.original)}
-    </span>
-  ),
+  cell: ({ row }) => <ScanNoteCell scan={row.original} />,
 };
 
 const resourcesColumn: ColumnDef<ScanProps> = {
@@ -241,8 +254,7 @@ const activeColumns = (
 ): ColumnDef<ScanProps>[] => [
   selectColumn(options),
   accountColumn,
-  scanAliasColumn,
-  resourcesColumn,
+  scanNoteColumn,
   {
     id: "progress",
     header: ({ column }) => (
@@ -285,7 +297,7 @@ const completedColumns = (
 ): ColumnDef<ScanProps>[] => [
   selectColumn(options),
   accountColumn,
-  scanAliasColumn,
+  scanNoteColumn,
   resourcesColumn,
   {
     id: "findings",

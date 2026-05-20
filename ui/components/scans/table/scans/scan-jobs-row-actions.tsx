@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Download, Eye, Pencil, XCircle } from "lucide-react";
+import { CalendarClock, Download, Eye, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -11,7 +11,7 @@ import {
 import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
-import type { ScanProps } from "@/types";
+import { SCAN_STATE, type ScanProps } from "@/types";
 
 interface ScanJobsRowActionsProps {
   scan: ScanProps;
@@ -22,7 +22,10 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const { toast } = useToast();
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
-  const isActive = scanState === "available" || scanState === "executing";
+  const canCancel =
+    scanState === SCAN_STATE.AVAILABLE ||
+    scanState === SCAN_STATE.SCHEDULED ||
+    scanState === SCAN_STATE.EXECUTING;
   const scanDate = toLocalDateString(scan.attributes.completed_at);
 
   const openFindings = () => {
@@ -55,16 +58,12 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
           label="Edit Scan Schedule"
           disabled
         />
-        {!isCompleted && (
-          <ActionDropdownItem icon={<Pencil />} label="Edit Scan" disabled />
-        )}
-        {isActive && (
+        {canCancel && (
           <ActionDropdownDangerZone>
             <ActionDropdownItem
               icon={<XCircle />}
               label="Cancel Scan"
               destructive
-              disabled
             />
           </ActionDropdownDangerZone>
         )}

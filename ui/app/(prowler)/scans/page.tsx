@@ -6,7 +6,9 @@ import { auth } from "@/auth.config";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import {
   getScanJobsTab,
+  getScanJobsTabFilters,
   isImportedScansTab,
+  isScanStateFilterKey,
 } from "@/components/scans/scans-table.utils";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scans/scan-jobs-table";
@@ -70,11 +72,14 @@ const SSRDataTableScans = async ({
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
   const sort = searchParams.sort?.toString();
 
-  const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(
-      ([key]) => key.startsWith("filter[") && key !== "scanId",
+  const filters = {
+    ...Object.fromEntries(
+      Object.entries(searchParams).filter(
+        ([key]) => key.startsWith("filter[") && !isScanStateFilterKey(key),
+      ),
     ),
-  );
+    ...getScanJobsTabFilters(tab),
+  };
 
   const query = (filters["filter[search]"] as string) || "";
 

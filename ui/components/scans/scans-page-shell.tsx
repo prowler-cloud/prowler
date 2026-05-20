@@ -86,7 +86,7 @@ export function ScansPageShell({
   const launchDisabled = !hasManageScansPermission || providers.length === 0;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-[18px]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 lg:max-w-[760px]">
           <Select
@@ -171,7 +171,11 @@ export function ScansPageShell({
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setTab}>
+      <Tabs
+        value={activeTab}
+        onValueChange={setTab}
+        className="flex flex-col gap-[18px]"
+      >
         <TabsList className="overflow-x-auto">
           {Object.values(SCAN_JOBS_TAB).map((tab) => (
             <TabsTrigger key={tab} value={tab}>
@@ -179,7 +183,9 @@ export function ScansPageShell({
             </TabsTrigger>
           ))}
         </TabsList>
-        <TabsContent value={activeTab}>{children}</TabsContent>
+        <TabsContent value={activeTab} className="mt-0">
+          {children}
+        </TabsContent>
       </Tabs>
 
       <ImportFindingsModal open={importOpen} onOpenChange={setImportOpen} />

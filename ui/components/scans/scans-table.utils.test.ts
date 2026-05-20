@@ -7,6 +7,7 @@ import {
   getScanAlias,
   getScanFindingsSummary,
   getScanJobsTab,
+  getScanJobsTabFilters,
   getScanScheduleLabel,
   getScanStatusLabel,
   SCAN_JOBS_TAB,
@@ -41,6 +42,19 @@ describe("scans-table.utils", () => {
     expect(getScanJobsTab(SCAN_JOBS_TAB.COMPLETED)).toBe(
       SCAN_JOBS_TAB.COMPLETED,
     );
+  });
+
+  it("maps scan job tabs to the state filters expected by the API", () => {
+    expect(getScanJobsTabFilters(SCAN_JOBS_TAB.ACTIVE)).toEqual({
+      "filter[state__in]": "available,executing",
+    });
+    expect(getScanJobsTabFilters(SCAN_JOBS_TAB.COMPLETED)).toEqual({
+      "filter[state__in]": "completed,failed,cancelled",
+    });
+    expect(getScanJobsTabFilters(SCAN_JOBS_TAB.SCHEDULED)).toEqual({
+      "filter[state__in]": "scheduled",
+    });
+    expect(getScanJobsTabFilters(SCAN_JOBS_TAB.IMPORTED)).toEqual({});
   });
 
   it("formats scan labels and durations for table display", () => {

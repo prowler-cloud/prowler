@@ -1,8 +1,9 @@
-import type {
-  ScanAttributes,
-  ScanProps,
-  ScanState,
-  ScanTrigger,
+import {
+  SCAN_STATE,
+  type ScanAttributes,
+  type ScanProps,
+  type ScanState,
+  type ScanTrigger,
 } from "@/types";
 
 export const SCAN_JOBS_TAB = {
@@ -30,6 +31,32 @@ export const SCAN_TAB_LABELS: Record<ScanJobsTab, string> = {
   [SCAN_JOBS_TAB.IMPORTED]: "Imported Scans",
 };
 
+const SCAN_JOBS_TAB_FILTERS: Record<ScanJobsTab, Record<string, string>> = {
+  [SCAN_JOBS_TAB.ACTIVE]: {
+    "filter[state__in]": `${SCAN_STATE.AVAILABLE},${SCAN_STATE.EXECUTING}`,
+  },
+  [SCAN_JOBS_TAB.COMPLETED]: {
+    "filter[state__in]": [
+      SCAN_STATE.COMPLETED,
+      SCAN_STATE.FAILED,
+      SCAN_STATE.CANCELLED,
+    ].join(","),
+  },
+  [SCAN_JOBS_TAB.SCHEDULED]: {
+    "filter[state__in]": SCAN_STATE.SCHEDULED,
+  },
+  [SCAN_JOBS_TAB.IMPORTED]: {},
+};
+
+export const SCAN_STATE_FILTER_KEYS = [
+  "filter[state]",
+  "filter[state__in]",
+] as const;
+
+export function isScanStateFilterKey(key: string): boolean {
+  return SCAN_STATE_FILTER_KEYS.some((filterKey) => filterKey === key);
+}
+
 export function getScanJobsTab(value?: string | string[]): ScanJobsTab {
   const rawValue = Array.isArray(value) ? value[0] : value;
   const tabs = Object.values(SCAN_JOBS_TAB);
@@ -37,6 +64,12 @@ export function getScanJobsTab(value?: string | string[]): ScanJobsTab {
   return tabs.includes(rawValue as ScanJobsTab)
     ? (rawValue as ScanJobsTab)
     : DEFAULT_SCAN_JOBS_TAB;
+}
+
+export function getScanJobsTabFilters(
+  tab: ScanJobsTab,
+): Record<string, string> {
+  return { ...SCAN_JOBS_TAB_FILTERS[tab] };
 }
 
 export function isImportedScansTab(tab: ScanJobsTab): boolean {
