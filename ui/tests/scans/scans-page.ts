@@ -7,8 +7,9 @@ export class ScansPage extends BasePage {
   readonly scanTable: Locator;
 
   // Scan provider selection elements
+  readonly launchScanButton: Locator;
   readonly scanProviderSelect: Locator;
-  readonly scanAliasInput: Locator;
+  readonly scanNoteInput: Locator;
   readonly startNowButton: Locator;
 
   // Scan state elements
@@ -18,15 +19,18 @@ export class ScansPage extends BasePage {
     super(page);
 
     // Scan provider selection elements
-    this.scanProviderSelect = page
-      .getByRole("combobox")
-      .filter({ hasText: "Choose a provider" });
-    this.scanAliasInput = page.getByRole("textbox", {
-      name: "Scan label (optional)",
+    this.launchScanButton = page.getByRole("button", {
+      name: /^Launch Scan$/i,
     });
-    this.startNowButton = page.getByRole("button", {
-      name: /Start now|Start scan now/i,
+    this.scanProviderSelect = page.getByRole("combobox", {
+      name: "Cloud Account",
     });
+    this.scanNoteInput = page.getByRole("textbox", {
+      name: "Scan Note",
+    });
+    this.startNowButton = page
+      .getByRole("dialog")
+      .getByRole("button", { name: /^Launch Scan$/i });
 
     // Scan state elements
     this.successToast = page.getByRole("alert", {
@@ -55,14 +59,15 @@ export class ScansPage extends BasePage {
   async selectProviderByUID(uid: string): Promise<void> {
     // Select the provider by UID
 
+    await this.launchScanButton.click();
     await this.scanProviderSelect.click();
     await this.page.getByRole("option", { name: new RegExp(uid) }).click();
   }
 
-  async fillScanAlias(alias: string): Promise<void> {
-    // Fill the scan alias
+  async fillScanNote(note: string): Promise<void> {
+    // Fill the scan note
 
-    await this.scanAliasInput.fill(alias);
+    await this.scanNoteInput.fill(note);
   }
 
   async clickStartNowButton(): Promise<void> {
@@ -72,7 +77,7 @@ export class ScansPage extends BasePage {
     await this.startNowButton.click();
   }
 
-  async verifyScanLaunched(alias: string): Promise<void> {
+  async verifyScanLaunched(accountId: string): Promise<void> {
     // Verify the scan was launched
 
     // Verify the success toast is visible
@@ -83,17 +88,17 @@ export class ScansPage extends BasePage {
     // Wait for the scans table to be visible
     await expect(this.scanTable).toBeVisible();
 
-    // Find a row that contains the scan alias
-    const rowWithAlias = this.scanTable
+    // Find a row that contains the account ID
+    const rowWithAccount = this.scanTable
       .locator("tbody tr")
-      .filter({ hasText: alias })
+      .filter({ hasText: accountId })
       .first();
 
-    // Verify the row with the scan alias is visible
-    await expect(rowWithAlias).toBeVisible();
+    // Verify the row with the account is visible
+    await expect(rowWithAccount).toBeVisible();
 
     // Basic state/assertion hint: queued/available/executing (non-blocking if not present)
-    await rowWithAlias.textContent().then((text) => {
+    await rowWithAccount.textContent().then((text) => {
       if (!text) return;
 
       const hasExpectedState = /executing|available|queued/i.test(text);
