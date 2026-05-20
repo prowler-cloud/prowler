@@ -15,6 +15,10 @@ on:
       - 'ui/**'
       - 'api/**'  # API changes can affect UI E2E
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -126,6 +130,12 @@ jobs:
           echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}" >> .env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}" >> .env
 
+      - name: Build API image from current code
+        # docker-compose.yml references prowlercloud/prowler-api:latest from the registry,
+        # which lags behind PR changes; build locally so E2E exercises the API image
+        # produced by this PR.
+        run: docker build -t prowlercloud/prowler-api:latest ./api
+
       - name: Start API services
         run: |
           export PROWLER_API_VERSION=latest
@@ -154,7 +164,7 @@ jobs:
             for fixture in api/fixtures/dev/*.json; do
               if [ -f "$fixture" ]; then
                 echo "Loading $fixture"
-                poetry run python manage.py loaddata "$fixture" --database admin
+                uv run python manage.py loaddata "$fixture" --database admin
               fi
             done
           '
@@ -266,7 +276,7 @@ jobs:
         with:
           name: playwright-report
           path: ui/playwright-report/
-          retention-days: 30
+          retention-days: 7
 
       - name: Cleanup services
         if: always()

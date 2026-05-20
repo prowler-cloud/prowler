@@ -42,7 +42,7 @@ describe("getProviderWizardModalTitle", () => {
   it("returns add title for add mode", () => {
     const title = getProviderWizardModalTitle(PROVIDER_WIZARD_MODE.ADD);
 
-    expect(title).toBe("Adding A Cloud Provider");
+    expect(title).toBe("Adding A Provider");
   });
 
   it("returns update title for update mode", () => {

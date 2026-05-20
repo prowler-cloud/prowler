@@ -1,0 +1,409 @@
+name: 'Release: Bump Versions'
+
+on:
+  release:
+    types:
+      - 'published'
+
+concurrency:
+  group: release-bump-versions-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+env:
+  PROWLER_VERSION: ${{ github.event.release.tag_name }}
+  DOCS_FILE: docs/getting-started/installation/prowler-app.mdx
+
+permissions: {}
+
+jobs:
+  detect-release-type:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      is_minor: ${{ steps.detect.outputs.is_minor }}
+      is_patch: ${{ steps.detect.outputs.is_patch }}
+      major_version: ${{ steps.detect.outputs.major_version }}
+      minor_version: ${{ steps.detect.outputs.minor_version }}
+      patch_version: ${{ steps.detect.outputs.patch_version }}
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Detect release type and parse version
+        id: detect
+        run: |
+          if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR_VERSION=${BASH_REMATCH[1]}
+            MINOR_VERSION=${BASH_REMATCH[2]}
+            PATCH_VERSION=${BASH_REMATCH[3]}
+
+            echo "major_version=${MAJOR_VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "minor_version=${MINOR_VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "patch_version=${PATCH_VERSION}" >> "${GITHUB_OUTPUT}"
+
+            if (( MAJOR_VERSION != 5 )); then
+              echo "::error::Releasing another Prowler major version, aborting..."
+              exit 1
+            fi
+
+            if (( PATCH_VERSION == 0 )); then
+              echo "is_minor=true" >> "${GITHUB_OUTPUT}"
+              echo "is_patch=false" >> "${GITHUB_OUTPUT}"
+              echo "✓ Minor release detected: $PROWLER_VERSION"
+            else
+              echo "is_minor=false" >> "${GITHUB_OUTPUT}"
+              echo "is_patch=true" >> "${GITHUB_OUTPUT}"
+              echo "✓ Patch release detected: $PROWLER_VERSION"
+            fi
+          else
+            echo "::error::Invalid version syntax: '$PROWLER_VERSION' (must be X.Y.Z)"
+            exit 1
+          fi
+
+  bump-minor-master:
+    name: Bump versions on master (minor release)
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_minor == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout master
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: Compute next versions for master
+        run: |
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
+
+          # SDK / UI / docs mirror the Prowler version directly.
+          NEXT_SDK_VERSION=${MAJOR_VERSION}.$((MINOR_VERSION + 1)).0
+
+          # API is an independent stream: 1.<prowler_minor + 1>.X
+          # After Prowler 5.M.0 release, master moves on to next API minor: 1.(M+2).0
+          NEXT_API_VERSION=1.$((MINOR_VERSION + 2)).0
+
+          # Read current versions to drive sed replacements.
+          CURRENT_API_VERSION=$(grep -oP '^version = "\K[^"]+' api/pyproject.toml)
+          CURRENT_DOCS_VERSION=$(grep -oP 'PROWLER_UI_VERSION="\K[^"]+' "${DOCS_FILE}")
+
+          echo "NEXT_SDK_VERSION=${NEXT_SDK_VERSION}" >> "${GITHUB_ENV}"
+          echo "NEXT_API_VERSION=${NEXT_API_VERSION}" >> "${GITHUB_ENV}"
+          echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
+          echo "CURRENT_DOCS_VERSION=${CURRENT_DOCS_VERSION}" >> "${GITHUB_ENV}"
+
+          echo "Released Prowler version: $PROWLER_VERSION"
+          echo "Next SDK/UI version (master): $NEXT_SDK_VERSION"
+          echo "Next API version (master):   $NEXT_API_VERSION  (current: $CURRENT_API_VERSION)"
+          echo "Docs target version:         $PROWLER_VERSION   (current: $CURRENT_DOCS_VERSION)"
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+
+      - name: Decide whether to bump docs on master
+        id: docs_decision
+        run: |
+          # Skip docs bump if master is already at or ahead of the release version
+          # (re-run, or patch shipped against an older minor line).
+          HIGHEST=$(printf '%s\n%s\n' "${CURRENT_DOCS_VERSION}" "${PROWLER_VERSION}" | sort -V | tail -n1)
+          if [[ "${CURRENT_DOCS_VERSION}" == "${PROWLER_VERSION}" || "${HIGHEST}" != "${PROWLER_VERSION}" ]]; then
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+            echo "Skipping docs bump: current ($CURRENT_DOCS_VERSION) >= release ($PROWLER_VERSION)"
+          else
+            echo "skip=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Bump SDK version (pyproject.toml, config.py)
+        run: |
+          set -e
+          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_SDK_VERSION}\"|" pyproject.toml
+          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_SDK_VERSION}\"|" prowler/config/config.py
+
+      - name: Bump API version (api/pyproject.toml, specs/v1.yaml)
+        run: |
+          set -e
+          sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${NEXT_API_VERSION}\"|" api/pyproject.toml
+          sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${NEXT_API_VERSION}|" api/src/backend/api/specs/v1.yaml
+
+      - name: Regenerate lockfiles after version bump
+        run: |
+          set -e
+          # The bumps above edit pyproject.toml / api/pyproject.toml but leave
+          # uv.lock / api/uv.lock stale, which makes `uv sync --locked` fail in
+          # the container builds. Refresh both with the uv version the images
+          # pin (plain `uv lock`, no --upgrade: only the version line changes).
+          pip install --no-cache-dir "uv==0.11.14"
+          uv lock
+          (cd api && uv lock)
+
+      - name: Bump UI version (.env)
+        run: |
+          set -e
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=.*|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_SDK_VERSION}|" .env
+
+      - name: Bump docs versions (prowler-app.mdx)
+        if: steps.docs_decision.outputs.skip == 'false'
+        run: |
+          set -e
+          sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
+          sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
+
+      - name: Show consolidated diff
+        run: git --no-pager diff
+
+      - name: Create PR for next versions to master
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: master
+          commit-message: 'chore(release): Bump versions to v${{ env.NEXT_SDK_VERSION }}'
+          branch: release-version-bump-to-v${{ env.NEXT_SDK_VERSION }}
+          title: 'chore(release): Bump versions to v${{ env.NEXT_SDK_VERSION }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler versions on master after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            | Area | File(s) | New version |
+            | --- | --- | --- |
+            | SDK | `pyproject.toml`, `prowler/config/config.py` | v${{ env.NEXT_SDK_VERSION }} |
+            | API | `api/pyproject.toml`, `api/src/backend/api/specs/v1.yaml` | v${{ env.NEXT_API_VERSION }} |
+            | UI | `.env` (`NEXT_PUBLIC_PROWLER_RELEASE_VERSION`) | v${{ env.NEXT_SDK_VERSION }} |
+            | Docs | `docs/getting-started/installation/prowler-app.mdx` (`PROWLER_UI_VERSION`, `PROWLER_API_VERSION`) | v${{ env.PROWLER_VERSION }} (skipped if already at or ahead) |
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+  bump-minor-version-branch:
+    name: Bump versions on version branch (minor release)
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_minor == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout version branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: v${{ needs.detect-release-type.outputs.major_version }}.${{ needs.detect-release-type.outputs.minor_version }}
+          persist-credentials: false
+
+      - name: Compute first patch versions for version branch
+        run: |
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
+          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
+
+          # SDK / UI first patch mirrors Prowler version directly.
+          FIRST_PATCH_VERSION=${MAJOR_VERSION}.${MINOR_VERSION}.1
+
+          # API on this branch stays on the 1.<MINOR+1>.X stream, starting at .1
+          FIRST_API_PATCH_VERSION=1.$((MINOR_VERSION + 1)).1
+
+          CURRENT_API_VERSION=$(grep -oP '^version = "\K[^"]+' api/pyproject.toml)
+
+          echo "FIRST_PATCH_VERSION=${FIRST_PATCH_VERSION}" >> "${GITHUB_ENV}"
+          echo "FIRST_API_PATCH_VERSION=${FIRST_API_PATCH_VERSION}" >> "${GITHUB_ENV}"
+          echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
+          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
+
+          echo "Released Prowler version:     $PROWLER_VERSION"
+          echo "Version branch:               $VERSION_BRANCH"
+          echo "First SDK/UI patch:           $FIRST_PATCH_VERSION"
+          echo "First API patch:              $FIRST_API_PATCH_VERSION  (current: $CURRENT_API_VERSION)"
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+
+      - name: Bump SDK version (pyproject.toml, config.py)
+        run: |
+          set -e
+          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${FIRST_PATCH_VERSION}\"|" pyproject.toml
+          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${FIRST_PATCH_VERSION}\"|" prowler/config/config.py
+
+      - name: Bump API version (api/pyproject.toml, specs/v1.yaml)
+        run: |
+          set -e
+          sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${FIRST_API_PATCH_VERSION}\"|" api/pyproject.toml
+          sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${FIRST_API_PATCH_VERSION}|" api/src/backend/api/specs/v1.yaml
+
+      - name: Regenerate lockfiles after version bump
+        run: |
+          set -e
+          # The bumps above edit pyproject.toml / api/pyproject.toml but leave
+          # uv.lock / api/uv.lock stale, which makes `uv sync --locked` fail in
+          # the container builds. Refresh both with the uv version the images
+          # pin (plain `uv lock`, no --upgrade: only the version line changes).
+          pip install --no-cache-dir "uv==0.11.14"
+          uv lock
+          (cd api && uv lock)
+
+      - name: Bump UI version (.env)
+        run: |
+          set -e
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=.*|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${FIRST_PATCH_VERSION}|" .env
+
+      - name: Show consolidated diff
+        run: git --no-pager diff
+
+      - name: Create PR for first patch versions to version branch
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(release): Bump versions to v${{ env.FIRST_PATCH_VERSION }}'
+          branch: release-version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
+          title: 'chore(release): Bump versions to v${{ env.FIRST_PATCH_VERSION }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler versions on `${{ env.VERSION_BRANCH }}` after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            | Area | File(s) | New version |
+            | --- | --- | --- |
+            | SDK | `pyproject.toml`, `prowler/config/config.py` | v${{ env.FIRST_PATCH_VERSION }} |
+            | API | `api/pyproject.toml`, `api/src/backend/api/specs/v1.yaml` | v${{ env.FIRST_API_PATCH_VERSION }} |
+            | UI | `.env` (`NEXT_PUBLIC_PROWLER_RELEASE_VERSION`) | v${{ env.FIRST_PATCH_VERSION }} |
+            | Docs | (not touched on version branches) | — |
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+  bump-patch-version-branch:
+    name: Bump versions on version branch (patch release)
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_patch == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Compute next patch versions
+        run: |
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
+          PATCH_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_PATCH_VERSION}
+          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
+
+          # SDK / UI patch mirrors Prowler version directly.
+          NEXT_PATCH_VERSION=${MAJOR_VERSION}.${MINOR_VERSION}.$((PATCH_VERSION + 1))
+
+          CURRENT_API_VERSION=$(grep -oP '^version = "\K[^"]+' api/pyproject.toml)
+
+          # API on this branch stays on 1.<MINOR+1>.X; bump its patch component.
+          if [[ $CURRENT_API_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            API_PATCH=${BASH_REMATCH[3]}
+            NEXT_API_PATCH_VERSION=1.$((MINOR_VERSION + 1)).$((API_PATCH + 1))
+          else
+            echo "::error::Invalid API version format: $CURRENT_API_VERSION"
+            exit 1
+          fi
+
+          echo "NEXT_PATCH_VERSION=${NEXT_PATCH_VERSION}" >> "${GITHUB_ENV}"
+          echo "NEXT_API_PATCH_VERSION=${NEXT_API_PATCH_VERSION}" >> "${GITHUB_ENV}"
+          echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
+          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
+
+          echo "Released Prowler version:     $PROWLER_VERSION"
+          echo "Version branch:               $VERSION_BRANCH"
+          echo "Next SDK/UI patch:            $NEXT_PATCH_VERSION"
+          echo "Next API patch:               $NEXT_API_PATCH_VERSION  (current: $CURRENT_API_VERSION)"
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_PATCH_VERSION: ${{ needs.detect-release-type.outputs.patch_version }}
+
+      - name: Bump SDK version (pyproject.toml, config.py)
+        run: |
+          set -e
+          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_PATCH_VERSION}\"|" pyproject.toml
+          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_PATCH_VERSION}\"|" prowler/config/config.py
+
+      - name: Bump API version (api/pyproject.toml, specs/v1.yaml)
+        run: |
+          set -e
+          sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${NEXT_API_PATCH_VERSION}\"|" api/pyproject.toml
+          sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${NEXT_API_PATCH_VERSION}|" api/src/backend/api/specs/v1.yaml
+
+      - name: Regenerate lockfiles after version bump
+        run: |
+          set -e
+          # The bumps above edit pyproject.toml / api/pyproject.toml but leave
+          # uv.lock / api/uv.lock stale, which makes `uv sync --locked` fail in
+          # the container builds. Refresh both with the uv version the images
+          # pin (plain `uv lock`, no --upgrade: only the version line changes).
+          pip install --no-cache-dir "uv==0.11.14"
+          uv lock
+          (cd api && uv lock)
+
+      - name: Bump UI version (.env)
+        run: |
+          set -e
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=.*|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_PATCH_VERSION}|" .env
+
+      - name: Show consolidated diff
+        run: git --no-pager diff
+
+      - name: Create PR for next patch versions to version branch
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(release): Bump versions to v${{ env.NEXT_PATCH_VERSION }}'
+          branch: release-version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
+          title: 'chore(release): Bump versions to v${{ env.NEXT_PATCH_VERSION }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler versions on `${{ env.VERSION_BRANCH }}` after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            | Area | File(s) | New version |
+            | --- | --- | --- |
+            | SDK | `pyproject.toml`, `prowler/config/config.py` | v${{ env.NEXT_PATCH_VERSION }} |
+            | API | `api/pyproject.toml`, `api/src/backend/api/specs/v1.yaml` | v${{ env.NEXT_API_PATCH_VERSION }} |
+            | UI | `.env` (`NEXT_PUBLIC_PROWLER_RELEASE_VERSION`) | v${{ env.NEXT_PATCH_VERSION }} |
+            | Docs | (not touched on version branches) | — |
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.

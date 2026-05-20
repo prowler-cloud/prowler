@@ -2,6 +2,68 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.29.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+
+---
+
+## [1.28.0] (Prowler v5.27.0)
+
+### 🚀 Added
+
+- GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+- `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
+
+### 🔄 Changed
+
+- Replace `poetry` with `uv` as package manager [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
+- Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+- PDF compliance reports cap detail tables at 100 failed findings per check (configurable via `DJANGO_PDF_MAX_FINDINGS_PER_CHECK`) to bound worker memory on large scans [(#11160)](https://github.com/prowler-cloud/prowler/pull/11160)
+
+### 🐞 Fixed
+
+- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
+- Attack Paths: `BEDROCK-001` and `BEDROCK-002` now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
+
+
+---
+
+## [1.27.1] (Prowler v5.26.1)
+
+### 🐞 Fixed
+
+- `POST /api/v1/scans` was intermittently failing with `Scan matching query does not exist` in the `scan-perform` worker; the Celery task is now published via `transaction.on_commit` so the worker cannot read the Scan before the dispatch-wide transaction commits [(#11122)](https://github.com/prowler-cloud/prowler/pull/11122)
+
+---
+
+## [1.27.0] (Prowler v5.26.0)
+
+### 🚀 Added
+
+- `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+
+### 🔄 Changed
+
+- ASD Essential Eight (AWS) compliance framework support [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
+
+### 🔐 Security
+
+- `trivy` binary from 0.69.2 to 0.70.0 and `cryptography` from 46.0.6 to 46.0.7 (transitive via prowler SDK) in the API image for CVE-2026-33186 and CVE-2026-39892 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
+
+---
+
+## [1.26.1] (Prowler v5.25.1)
+
+### 🐞 Fixed
+
+- Attack Paths: AWS scans no longer fail when enabled regions cannot be retrieved, and scans stuck in `scheduled` state are now cleaned up after the stale threshold [(#10917)](https://github.com/prowler-cloud/prowler/pull/10917)
+- Scan report and compliance downloads now redirect to a presigned S3 URL instead of streaming through the API worker, preventing gunicorn timeouts on large files [(#10927)](https://github.com/prowler-cloud/prowler/pull/10927)
+
+---
+
 ## [1.26.0] (Prowler v5.25.0)
 
 ### 🚀 Added
@@ -12,7 +74,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
-- Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+- Allows tenant owners to expel users from their organizations [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 - `aggregate_findings`, `aggregate_attack_surface`, `aggregate_scan_resource_group_summaries` and `aggregate_scan_category_summaries` now upsert via `bulk_create(update_conflicts=True, ...)` instead of the prior `ignore_conflicts=True` / plain INSERT / `already backfilled` short-circuit. Re-runs triggered by the post-mute reaggregation pipeline no longer trip the `unique_*_per_scan` constraints nor silently drop updates, and are race-safe under concurrent writers (e.g. scan completion overlapping with a fresh mute rule) [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
 - Rename the scan-category and scan-resource-group summary aggregators from `backfill_*` to `aggregate_*` [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
 

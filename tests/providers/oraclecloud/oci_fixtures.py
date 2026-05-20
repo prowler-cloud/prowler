@@ -37,6 +37,7 @@ def set_mocked_oraclecloud_provider(
         signer=MagicMock(),
         profile="DEFAULT",
     )
+    provider.home_region = region
 
     # Mock identity
     provider.identity = OCIIdentityInfo(

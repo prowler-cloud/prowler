@@ -16,13 +16,13 @@ class Policy(AzureService):
         logger.info("Policy - Getting policy assigments...")
         policy_assigments = {}
 
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
                 policy_assigments_list = client.policy_assignments.list()
-                policy_assigments.update({subscription_name: {}})
+                policy_assigments.update({subscription_id: {}})
 
                 for policy_assigment in policy_assigments_list:
-                    policy_assigments[subscription_name].update(
+                    policy_assigments[subscription_id].update(
                         {
                             policy_assigment.name: PolicyAssigment(
                                 id=policy_assigment.id,
@@ -33,7 +33,7 @@ class Policy(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         return policy_assigments

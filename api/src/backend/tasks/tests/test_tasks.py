@@ -21,6 +21,7 @@ from tasks.tasks import (
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
     perform_attack_paths_scan_task,
+    perform_scan_task,
     perform_scheduled_scan_task,
     reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
@@ -841,6 +842,72 @@ class TestScanCompleteTasks:
 
         # Attack Paths task should be skipped when provider cannot run it
         mock_attack_paths_task.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "row_pre_existing",
+        [True, False],
+        ids=["row-pre-existing", "row-missing-fallback"],
+    )
+    @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.create_compliance_requirements_task.si")
+    @patch("tasks.tasks.update_provider_compliance_scores_task.si")
+    @patch("tasks.tasks.perform_scan_summary_task.si")
+    @patch("tasks.tasks.generate_outputs_task.si")
+    @patch("tasks.tasks.generate_compliance_reports_task.si")
+    @patch("tasks.tasks.check_integrations_task.si")
+    @patch("tasks.tasks.attack_paths_db_utils.set_attack_paths_scan_task_id")
+    @patch("tasks.tasks.attack_paths_db_utils.create_attack_paths_scan")
+    @patch("tasks.tasks.attack_paths_db_utils.retrieve_attack_paths_scan")
+    @patch("tasks.tasks.perform_attack_paths_scan_task.apply_async")
+    @patch("tasks.tasks.can_provider_run_attack_paths_scan", return_value=True)
+    def test_scan_complete_dispatches_attack_paths_scan(
+        self,
+        _mock_can_run_attack_paths,
+        mock_attack_paths_task,
+        mock_retrieve,
+        mock_create,
+        mock_set_task_id,
+        mock_check_integrations_task,
+        mock_compliance_reports_task,
+        mock_outputs_task,
+        mock_scan_summary_task,
+        mock_update_compliance_scores_task,
+        mock_compliance_requirements_task,
+        mock_chain,
+        mock_attack_surface_task,
+        row_pre_existing,
+    ):
+        """When a provider can run Attack Paths, dispatch must:
+        1. Reuse the existing row or create one if missing.
+        2. Call apply_async on the Attack Paths task.
+        3. Persist the returned Celery task id on the row.
+        """
+        existing_row = MagicMock(id="ap-scan-id")
+        if row_pre_existing:
+            mock_retrieve.return_value = existing_row
+        else:
+            mock_retrieve.return_value = None
+            mock_create.return_value = existing_row
+
+        async_result = MagicMock(task_id="celery-task-id")
+        mock_attack_paths_task.return_value = async_result
+
+        _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
+
+        mock_retrieve.assert_called_once_with("tenant-id", "scan-id")
+        if row_pre_existing:
+            mock_create.assert_not_called()
+        else:
+            mock_create.assert_called_once_with("tenant-id", "scan-id", "provider-id")
+
+        mock_attack_paths_task.assert_called_once_with(
+            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"}
+        )
+
+        mock_set_task_id.assert_called_once_with(
+            "tenant-id", "ap-scan-id", "celery-task-id"
+        )
 
 
 class TestAttackPathsTasks:
@@ -2387,6 +2454,57 @@ class TestPerformScheduledScanTask:
             ).count()
             == 1
         )
+
+    def test_no_op_when_provider_does_not_exist(self, tenants_fixture):
+        """Return None without raising when the provider was already deleted."""
+        tenant = tenants_fixture[0]
+        missing_provider_id = str(uuid.uuid4())
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+        # Orphan PeriodicTask left behind from a previous lifecycle.
+        self._create_periodic_task(missing_provider_id, tenant.id)
+        orphan_name = f"scan-perform-scheduled-{missing_provider_id}"
+        assert PeriodicTask.objects.filter(name=orphan_name).exists()
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=missing_provider_id
+            )
+
+        assert result is None
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        # Orphan PeriodicTask is cleaned up so beat stops re-firing it.
+        assert not PeriodicTask.objects.filter(name=orphan_name).exists()
+
+
+@pytest.mark.django_db
+class TestPerformScanTask:
+    """Unit tests for perform_scan_task."""
+
+    def test_no_op_when_provider_does_not_exist(self, tenants_fixture):
+        """Return None without raising when the provider was already deleted."""
+        tenant = tenants_fixture[0]
+        missing_provider_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+        ):
+            result = perform_scan_task.run(
+                tenant_id=str(tenant.id),
+                scan_id=scan_id,
+                provider_id=missing_provider_id,
+            )
+
+        assert result is None
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
 
 
 @pytest.mark.django_db

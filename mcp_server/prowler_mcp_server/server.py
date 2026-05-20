@@ -41,12 +41,22 @@ async def setup_main_server():
         logger.error(f"Failed to import Prowler Documentation server: {e}")
 
 
-# Add health check endpoint
+# Response follows the IETF Health Check Response Format
+# (draft-inadarei-api-health-check-06). `version` is the contract version of
+# this endpoint; `releaseId` is the package build version.
 @prowler_mcp_server.custom_route("/health", methods=["GET"])
-async def health_check(request) -> JSONResponse:
+async def health_check(_request) -> JSONResponse:
     """Health check endpoint."""
     return JSONResponse(
-        {"status": "healthy", "service": "prowler-mcp-server", "version": __version__}
+        {
+            "status": "pass",
+            "version": "1",
+            "releaseId": __version__,
+            "serviceId": "prowler-mcp-server",
+            "description": "Prowler MCP Server",
+        },
+        media_type="application/health+json",
+        headers={"Cache-Control": "no-store"},
     )
 
 

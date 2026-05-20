@@ -116,6 +116,7 @@ jobs:
           allowed-endpoints: >
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             auth.docker.io:443
             registry.npmjs.org:443
             dl-cdn.alpinelinux.org:443
@@ -151,7 +152,7 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
   # Create and push multi-architecture manifest
   create-manifest:
@@ -172,6 +173,7 @@ jobs:
             registry-1.docker.io:443
             auth.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
 
       - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0

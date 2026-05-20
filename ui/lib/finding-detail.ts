@@ -53,6 +53,7 @@ export function findingToFindingResourceRow(
     region: resource?.region || "-",
     severity: finding.attributes.severity,
     status: finding.attributes.status,
+    statusExtended: finding.attributes.status_extended,
     delta: finding.attributes.delta,
     isMuted: finding.attributes.muted,
     mutedReason: finding.attributes.muted_reason,

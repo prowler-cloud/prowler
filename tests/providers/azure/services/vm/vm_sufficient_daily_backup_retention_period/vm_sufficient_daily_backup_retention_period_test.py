@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -10,7 +11,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_vm_sufficient_daily_backup_retention_period:
     def test_no_subscriptions(self):
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         recovery_client = mock.MagicMock()
+        recovery_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {}
         recovery_client.vaults = {}
         with (
@@ -37,7 +40,9 @@ class Test_vm_sufficient_daily_backup_retention_period:
 
     def test_no_vms(self):
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         recovery_client = mock.MagicMock()
+        recovery_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {}}
         recovery_client.vaults = {AZURE_SUBSCRIPTION_ID: {}}
         with (
@@ -118,7 +123,9 @@ class Test_vm_sufficient_daily_backup_retention_period:
             backup_policies={policy_id: backup_policy},
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         recovery_client = mock.MagicMock()
+        recovery_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         recovery_client.vaults = {AZURE_SUBSCRIPTION_ID: {vault_id: vault}}
         vm_client.audit_config = {
@@ -212,7 +219,9 @@ class Test_vm_sufficient_daily_backup_retention_period:
             backup_policies={policy_id: backup_policy},
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         recovery_client = mock.MagicMock()
+        recovery_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         recovery_client.vaults = {AZURE_SUBSCRIPTION_ID: {vault_id: vault}}
         vm_client.audit_config = {
@@ -306,7 +315,9 @@ class Test_vm_sufficient_daily_backup_retention_period:
             backup_policies={policy_id: backup_policy},
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         recovery_client = mock.MagicMock()
+        recovery_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         recovery_client.vaults = {AZURE_SUBSCRIPTION_ID: {vault_id: vault}}
         vm_client.audit_config = {
@@ -391,7 +402,9 @@ class Test_vm_sufficient_daily_backup_retention_period:
             backup_policies={},
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         recovery_client = mock.MagicMock()
+        recovery_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         recovery_client.vaults = {AZURE_SUBSCRIPTION_ID: {vault_id: vault}}
         with (

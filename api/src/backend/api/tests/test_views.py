@@ -1625,6 +1625,21 @@ class TestProviderViewSet:
                     "uid": "C12",
                     "alias": "Google Workspace Minimum Length",
                 },
+                {
+                    "provider": "okta",
+                    "uid": "acme.okta.com",
+                    "alias": "Okta Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta-gov.com",
+                    "alias": "Okta Gov Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta.mil",
+                    "alias": "Okta Mil Org",
+                },
             ]
         ),
     )
@@ -2143,6 +2158,24 @@ class TestProviderViewSet:
                     "googleworkspace-uid",
                     "uid",
                 ),
+                (
+                    {
+                        "provider": "okta",
+                        "uid": "https://acme.okta.com",
+                        "alias": "test",
+                    },
+                    "okta-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "okta",
+                        "uid": "acme.example.com",
+                        "alias": "test",
+                    },
+                    "okta-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -2162,6 +2195,25 @@ class TestProviderViewSet:
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
         )
+
+    @pytest.mark.parametrize(
+        "input_uid,stored_uid",
+        [
+            ("Acme.okta.com", "acme.okta.com"),
+            ("  ACME.OKTA.COM  ", "acme.okta.com"),
+            ("Agency.Okta-Gov.com", "agency.okta-gov.com"),
+        ],
+    )
+    def test_providers_create_okta_uid_normalized(
+        self, authenticated_client, input_uid, stored_uid
+    ):
+        response = authenticated_client.post(
+            reverse("provider-list"),
+            data={"provider": "okta", "uid": input_uid, "alias": "Okta"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.get().uid == stored_uid
 
     def test_providers_partial_update(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -2320,17 +2372,17 @@ class TestProviderViewSet:
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 13),
+                ("inserted_at", TODAY, 14),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    13,
+                    14,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    13,
+                    14,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2963,6 +3015,19 @@ class TestProviderSecretViewSet:
                     "api_token": "fake-vercel-api-token-for-testing",
                 },
             ),
+            # Okta with inline private key credentials
+            (
+                Provider.ProviderChoices.OKTA.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "okta_client_id": "0oa123456789abcdef",
+                    "okta_private_key": "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+                    "okta_scopes": [
+                        "okta.policies.read",
+                        "okta.groups.read",
+                    ],
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -3073,6 +3138,46 @@ class TestProviderSecretViewSet:
         assert (
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
+        )
+
+    def test_provider_secrets_invalid_create_okta_missing_private_key(
+        self,
+        providers_fixture,
+        authenticated_client,
+    ):
+        okta_provider = next(
+            provider
+            for provider in providers_fixture
+            if provider.provider == Provider.ProviderChoices.OKTA.value
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "Okta Secret",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        "okta_client_id": "0oa123456789abcdef",
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(okta_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/okta_private_key"
         )
 
     def test_provider_secrets_partial_update(
@@ -3841,9 +3946,14 @@ class TestScanViewSet:
             "prowler-output-123_threatscore_report.pdf",
         )
 
+        presigned_url = (
+            "https://test-bucket.s3.amazonaws.com/"
+            "tenant-id/scan-id/threatscore/prowler-output-123_threatscore_report.pdf"
+            "?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300"
+        )
         mock_s3_client = Mock()
         mock_s3_client.list_objects_v2.return_value = {"Contents": [{"Key": pdf_key}]}
-        mock_s3_client.get_object.return_value = {"Body": io.BytesIO(b"pdf-bytes")}
+        mock_s3_client.generate_presigned_url.return_value = presigned_url
 
         mock_env_str.return_value = bucket
         mock_get_s3_client.return_value = mock_s3_client
@@ -3852,19 +3962,26 @@ class TestScanViewSet:
         url = reverse("scan-threatscore", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
 
-        assert response.status_code == status.HTTP_200_OK
-        assert response["Content-Type"] == "application/pdf"
-        assert response["Content-Disposition"].endswith(
-            '"prowler-output-123_threatscore_report.pdf"'
-        )
-        assert response.content == b"pdf-bytes"
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response["Location"] == presigned_url
         mock_s3_client.list_objects_v2.assert_called_once()
-        mock_s3_client.get_object.assert_called_once_with(Bucket=bucket, Key=pdf_key)
+        mock_s3_client.generate_presigned_url.assert_called_once_with(
+            "get_object",
+            Params={
+                "Bucket": bucket,
+                "Key": pdf_key,
+                "ResponseContentDisposition": (
+                    'attachment; filename="prowler-output-123_threatscore_report.pdf"'
+                ),
+                "ResponseContentType": "application/pdf",
+            },
+            ExpiresIn=300,
+        )
 
     def test_report_s3_success(self, authenticated_client, scans_fixture, monkeypatch):
         """
-        When output_location is an S3 URL and the S3 client returns the file successfully,
-        the view should return the ZIP file with HTTP 200 and proper headers.
+        When output_location is an S3 URL and the object exists,
+        the view should return a 302 redirect to a presigned S3 URL.
         """
         scan = scans_fixture[0]
         bucket = "test-bucket"
@@ -3878,22 +3995,33 @@ class TestScanViewSet:
             type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
         )
 
+        presigned_url = (
+            "https://test-bucket.s3.amazonaws.com/report.zip"
+            "?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300"
+        )
+
         class FakeS3Client:
-            def get_object(self, Bucket, Key):
+            def head_object(self, Bucket, Key):
                 assert Bucket == bucket
                 assert Key == key
-                return {"Body": io.BytesIO(b"s3 zip content")}
+                return {}
+
+            def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
+                assert ClientMethod == "get_object"
+                assert Params["Bucket"] == bucket
+                assert Params["Key"] == key
+                assert Params["ResponseContentDisposition"] == (
+                    'attachment; filename="report.zip"'
+                )
+                assert ExpiresIn == 300
+                return presigned_url
 
         monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
 
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
-        assert response.status_code == 200
-        expected_filename = os.path.basename("report.zip")
-        content_disposition = response.get("Content-Disposition")
-        assert content_disposition.startswith('attachment; filename="')
-        assert f'filename="{expected_filename}"' in content_disposition
-        assert response.content == b"s3 zip content"
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response["Location"] == presigned_url
 
     def test_report_s3_success_no_local_files(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -4032,23 +4160,31 @@ class TestScanViewSet:
         )
 
         match_key = "path/compliance/mitre_attack_aws.csv"
+        presigned_url = (
+            "https://test-bucket.s3.amazonaws.com/path/compliance/mitre_attack_aws.csv"
+            "?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300"
+        )
 
         class FakeS3Client:
             def list_objects_v2(self, Bucket, Prefix):
                 return {"Contents": [{"Key": match_key}]}
 
-            def get_object(self, Bucket, Key):
-                return {"Body": io.BytesIO(b"ignored")}
+            def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
+                assert ClientMethod == "get_object"
+                assert Params["Key"] == match_key
+                assert Params["ResponseContentDisposition"] == (
+                    'attachment; filename="mitre_attack_aws.csv"'
+                )
+                assert ExpiresIn == 300
+                return presigned_url
 
         monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
 
         framework = match_key.split("/")[-1].split(".")[0]
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
-        assert resp.status_code == status.HTTP_200_OK
-        cd = resp["Content-Disposition"]
-        assert cd.startswith('attachment; filename="')
-        assert cd.endswith('filename="mitre_attack_aws.csv"')
+        assert resp.status_code == status.HTTP_302_FOUND
+        assert resp["Location"] == presigned_url
 
     def test_compliance_s3_not_found(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -4251,8 +4387,8 @@ class TestScanViewSet:
         scan.save()
 
         fake_client = MagicMock()
-        fake_client.get_object.side_effect = ClientError(
-            {"Error": {"Code": "NoSuchKey"}}, "GetObject"
+        fake_client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "NoSuchKey"}}, "HeadObject"
         )
         mock_get_s3_client.return_value = fake_client
 
@@ -4275,8 +4411,8 @@ class TestScanViewSet:
         scan.save()
 
         fake_client = MagicMock()
-        fake_client.get_object.side_effect = ClientError(
-            {"Error": {"Code": "AccessDenied"}}, "GetObject"
+        fake_client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "AccessDenied"}}, "HeadObject"
         )
         mock_get_s3_client.return_value = fake_client
 

@@ -1,0 +1,42 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_employee_name_spoofing_protection_enabled",
+  "CheckTitle": "Protection against spoofing of employee names is enabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when the sender's display name matches an employee's name but the email comes from an external address. This is a common social engineering technique where attackers impersonate colleagues or executives.",
+  "Risk": "Without protection against employee name spoofing, users may receive **emails that appear to come from colleagues or executives** but are actually from external attackers. This enables **business email compromise (BEC)**, **wire fraud**, and **social engineering attacks** that exploit trust relationships.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/9157861",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **Safety** > **Spoofing and authentication**\n4. Check **Protect against spoofing of employee names**\n5. Select the desired action (e.g., Move email to spam)\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable protection against spoofing of employee names and configure an appropriate action such as moving to spam or quarantining.",
+      "Url": "https://hub.prowler.com/check/gmail_employee_name_spoofing_protection_enabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_domain_spoofing_protection_enabled",
+    "gmail_inbound_domain_spoofing_protection_enabled",
+    "gmail_unauthenticated_email_protection_enabled",
+    "gmail_groups_spoofing_protection_enabled"
+  ],
+  "Notes": ""
+}

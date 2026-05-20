@@ -122,6 +122,7 @@ jobs:
             github.com:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             pypi.org:443
             registry-1.docker.io:443
             release-assets.githubusercontent.com:443
@@ -132,11 +133,37 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Pin prowler SDK to latest master commit
+      - name: Pin prowler SDK to latest master commit and refresh lockfile
         if: github.event_name == 'push'
         run: |
+          set -e
           LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git refs/heads/master | cut -f1)
           sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
+          # Refresh api/uv.lock so it matches the pinned SHA above; the API
+          # Dockerfile runs `uv sync --locked`, which aborts on any drift
+          # between pyproject.toml and uv.lock.
+          pip install --no-cache-dir "uv==0.11.14"
+          (cd api && uv lock)
+
+      - name: Pin prowler SDK to latest release branch (v5.Y) commit and refresh lockfile
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -e
+          # RELEASE_TAG looks like "5.14.0"; the SDK release branch is "v5.14".
+          VERSION="${RELEASE_TAG#v}"
+          VERSION_BRANCH="v$(echo "${VERSION}" | cut -d. -f1,2)"
+          LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git "refs/heads/${VERSION_BRANCH}" | cut -f1)
+          if [ -z "${LATEST_SHA}" ]; then
+            echo "ERROR: release branch ${VERSION_BRANCH} not found in prowler-cloud/prowler"
+            exit 1
+          fi
+          echo "Pinning SDK to ${VERSION_BRANCH}@${LATEST_SHA}"
+          sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
+          # Refresh api/uv.lock so it matches the pinned SHA above; the API
+          # Dockerfile runs `uv sync --locked`, which aborts on any drift
+          # between pyproject.toml and uv.lock.
+          pip install --no-cache-dir "uv==0.11.14"
+          (cd api && uv lock)
 
       - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
@@ -158,7 +185,7 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
   # Create and push multi-architecture manifest
   create-manifest:
@@ -179,6 +206,7 @@ jobs:
             registry-1.docker.io:443
             auth.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
       - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:

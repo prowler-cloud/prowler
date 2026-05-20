@@ -1,14 +1,14 @@
-name: 'UI: Tests'
+name: "UI: Tests"
 
 on:
   push:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
   pull_request:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,7 +16,7 @@ concurrency:
 
 env:
   UI_WORKING_DIR: ./ui
-  NODE_VERSION: '24.13.0'
+  NODE_VERSION: "24.13.0"
 
 permissions: {}
 
@@ -42,6 +42,9 @@ jobs:
             fonts.gstatic.com:443
             api.github.com:443
             release-assets.githubusercontent.com:443
+            cdn.playwright.dev:443
+            objects.githubusercontent.com:443
+            playwright.download.prss.microsoft.com:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -129,11 +132,15 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run healthcheck
 
+      - name: Run pnpm audit
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run audit
+
       - name: Run unit tests (all - critical paths changed)
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed == 'true'
         run: |
           echo "Critical paths changed - running ALL unit tests"
-          pnpm run test:run
+          pnpm run test:unit
 
       - name: Run unit tests (related to changes only)
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files != ''
@@ -142,7 +149,7 @@ jobs:
           echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}"
           # Convert space-separated to vitest related format (remove ui/ prefix for relative paths)
           CHANGED_FILES=$(echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
-          pnpm exec vitest related $CHANGED_FILES --run
+          pnpm exec vitest related $CHANGED_FILES --run --project unit
         env:
           STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-source.outputs.all_changed_files }}
 
@@ -150,7 +157,25 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files == ''
         run: |
           echo "Only test files changed - running ALL unit tests"
-          pnpm run test:run
+          pnpm run test:unit
+
+      - name: Cache Playwright browsers
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: playwright-cache
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
+      - name: Install Playwright Chromium browser
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium
+
+      - name: Run browser tests
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run test:browser
 
       - name: Build application
         if: steps.check-changes.outputs.any_changed == 'true'

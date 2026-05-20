@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import time
+import uuid
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -16,10 +17,11 @@ from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain
+from celery import chain, states
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
+from config.version import RELEASE_ID
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
@@ -53,13 +55,14 @@ from django.db.models import (
 )
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast, Coalesce, RowNumber
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -422,7 +425,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.27.0"
+        spectacular_settings.VERSION = RELEASE_ID
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2080,24 +2083,38 @@ class ScanViewSet(BaseRLSViewSet):
             },
         )
 
-    def _load_file(self, path_pattern, s3=False, bucket=None, list_objects=False):
+    def _load_file(
+        self,
+        path_pattern,
+        s3=False,
+        bucket=None,
+        list_objects=False,
+        content_type=None,
+    ):
         """
-        Loads a binary file (e.g., ZIP or CSV) and returns its content and filename.
+        Resolve a report file location and return the bytes (filesystem) or a redirect (S3).
 
         Depending on the input parameters, this method supports loading:
-        - From S3 using a direct key.
-        - From S3 by listing objects under a prefix and matching suffix.
-        - From the local filesystem using glob pattern matching.
+        - From S3 using a direct key, returns a 302 to a short-lived presigned URL.
+        - From S3 by listing objects under a prefix and matching suffix, returns a 302 to a short-lived presigned URL.
+        - From the local filesystem using glob pattern matching, returns the file bytes.
+
+        The S3 branch never streams bytes through the worker; this prevents gunicorn
+        worker timeouts on large reports.
 
         Args:
             path_pattern (str): The key or glob pattern representing the file location.
             s3 (bool, optional): Whether the file is stored in S3. Defaults to False.
             bucket (str, optional): The name of the S3 bucket, required if `s3=True`. Defaults to None.
             list_objects (bool, optional): If True and `s3=True`, list objects by prefix to find the file. Defaults to False.
+            content_type (str, optional): On the S3 branch, forwarded as `ResponseContentType`
+                so the presigned download advertises the same Content-Type the API used to send.
+                Ignored on the filesystem branch.
 
         Returns:
-            tuple[bytes, str]: A tuple containing the file content as bytes and the filename if successful.
-            Response: A DRF `Response` object with an appropriate status and error detail if an error occurs.
+            tuple[bytes, str]: For the filesystem branch, the file content and filename.
+            HttpResponseRedirect: For the S3 branch on success, a 302 redirect to a presigned `GetObject` URL.
+            Response: For any error path, a DRF `Response` with an appropriate status and detail.
         """
         if s3:
             try:
@@ -2144,25 +2161,45 @@ class ScanViewSet(BaseRLSViewSet):
                 # path_pattern here is prefix, but in compliance we build correct suffix check before
                 key = keys[0]
             else:
-                # path_pattern is exact key
+                # path_pattern is exact key; HEAD before presigning to preserve the 404 contract.
                 key = path_pattern
-            try:
-                s3_obj = client.get_object(Bucket=bucket, Key=key)
-            except ClientError as e:
-                code = e.response.get("Error", {}).get("Code")
-                if code == "NoSuchKey":
+                try:
+                    client.head_object(Bucket=bucket, Key=key)
+                except ClientError as e:
+                    code = e.response.get("Error", {}).get("Code")
+                    if code in ("NoSuchKey", "404"):
+                        return Response(
+                            {
+                                "detail": "The scan has no reports, or the report generation task has not started yet."
+                            },
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
                     return Response(
-                        {
-                            "detail": "The scan has no reports, or the report generation task has not started yet."
-                        },
-                        status=status.HTTP_404_NOT_FOUND,
+                        {"detail": "There is a problem with credentials."},
+                        status=status.HTTP_403_FORBIDDEN,
                     )
-                return Response(
-                    {"detail": "There is a problem with credentials."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            content = s3_obj["Body"].read()
+
             filename = os.path.basename(key)
+            # escape quotes and strip CR/LF so a malformed key cannot break out of the header
+            safe_filename = (
+                filename.replace("\\", "\\\\")
+                .replace('"', '\\"')
+                .replace("\r", "")
+                .replace("\n", "")
+            )
+            params = {
+                "Bucket": bucket,
+                "Key": key,
+                "ResponseContentDisposition": f'attachment; filename="{safe_filename}"',
+            }
+            if content_type:
+                params["ResponseContentType"] = content_type
+            url = client.generate_presigned_url(
+                "get_object",
+                Params=params,
+                ExpiresIn=300,
+            )
+            return HttpResponseRedirect(url)
         else:
             files = glob.glob(path_pattern)
             if not files:
@@ -2205,12 +2242,16 @@ class ScanViewSet(BaseRLSViewSet):
             bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
             key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
             loader = self._load_file(
-                key_prefix, s3=True, bucket=bucket, list_objects=False
+                key_prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=False,
+                content_type="application/x-zip-compressed",
             )
         else:
             loader = self._load_file(scan.output_location, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2248,13 +2289,19 @@ class ScanViewSet(BaseRLSViewSet):
             prefix = os.path.join(
                 os.path.dirname(key_prefix), "compliance", f"{name}.csv"
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="text/csv",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "compliance", f"*_{name}.csv")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2287,13 +2334,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "cis",
                 "*_cis_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "cis", "*_cis_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2327,13 +2380,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "threatscore",
                 "*_threatscore_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2367,13 +2426,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "ens",
                 "*_ens_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "ens", "*_ens_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2406,13 +2471,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "nis2",
                 "*_nis2_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "nis2", "*_nis2_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2445,13 +2516,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "csa",
                 "*_csa_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "csa", "*_csa_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2460,28 +2537,45 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+
+        # Broker publish is deferred to on_commit so the worker cannot read
+        # Scan before BaseRLSViewSet's dispatch-wide atomic commits.
+        pre_task_id = str(uuid.uuid4())
+
         with transaction.atomic():
             scan = input_serializer.save()
-        with transaction.atomic():
-            task = perform_scan_task.apply_async(
-                kwargs={
-                    "tenant_id": self.request.tenant_id,
-                    "scan_id": str(scan.id),
-                    "provider_id": str(scan.provider_id),
-                    # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute")
-                },
+            scan.task_id = pre_task_id
+            scan.save(update_fields=["task_id"])
+
+            attack_paths_db_utils.create_attack_paths_scan(
+                tenant_id=self.request.tenant_id,
+                scan_id=str(scan.id),
+                provider_id=str(scan.provider_id),
             )
 
-        attack_paths_db_utils.create_attack_paths_scan(
-            tenant_id=self.request.tenant_id,
-            scan_id=str(scan.id),
-            provider_id=str(scan.provider_id),
-        )
+            task_result, _ = TaskResult.objects.get_or_create(
+                task_id=pre_task_id,
+                defaults={"status": states.PENDING, "task_name": "scan-perform"},
+            )
+            prowler_task, _ = Task.objects.update_or_create(
+                id=pre_task_id,
+                tenant_id=self.request.tenant_id,
+                defaults={"task_runner_task": task_result},
+            )
 
-        prowler_task = Task.objects.get(id=task.id)
-        scan.task_id = task.id
-        scan.save(update_fields=["task_id"])
+            scan_kwargs = {
+                "tenant_id": self.request.tenant_id,
+                "scan_id": str(scan.id),
+                "provider_id": str(scan.provider_id),
+                # Disabled for now
+                # checks_to_execute=scan.scanner_args.get("checks_to_execute")
+            }
+
+            transaction.on_commit(
+                lambda: perform_scan_task.apply_async(
+                    kwargs=scan_kwargs, task_id=pre_task_id
+                )
+            )
 
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)

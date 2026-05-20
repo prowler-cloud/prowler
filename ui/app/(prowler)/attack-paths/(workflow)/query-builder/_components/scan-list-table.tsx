@@ -151,7 +151,7 @@ const getColumns = ({
   {
     accessorKey: "provider",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Account" />
+      <DataTableColumnHeader column={column} title="Provider" />
     ),
     cell: ({ row }) => (
       <EntityInfo
@@ -244,13 +244,6 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   const endIndex = startIndex + pageSize;
   const paginatedScans = scans.slice(startIndex, endIndex);
 
-  // TODO(#10863): remove this workaround (ref + split handlers + pushWithParams)
-  // once the DataTable unified-pagination-callback refactor in PR #10863 lands.
-  // The underlying issue is that DataTablePagination's controlled mode fires
-  // onPageSizeChange and onPageChange(1) back-to-back in the same tick, so the
-  // second router.push reads a stale searchParams snapshot and silently reverts
-  // the page-size change. Replace both handlers with a single
-  // onPaginationChange handler after that PR merges.
   const suppressNextPageResetRef = useRef(false);
 
   const pushWithParams = (nextParams: Record<string, string>) => {

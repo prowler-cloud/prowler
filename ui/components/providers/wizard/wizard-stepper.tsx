@@ -21,7 +21,7 @@ interface WizardStepperProps {
 
 const STEPS: StepConfig[] = [
   {
-    label: "Link a Cloud Provider",
+    label: "Link a Provider",
     description: "Enter the provider details you would like to add in Prowler.",
     icon: FolderGit2,
   },

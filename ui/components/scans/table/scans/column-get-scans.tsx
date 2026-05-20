@@ -75,7 +75,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
     accessorKey: "cloudProvider",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Cloud Provider" />
+      <DataTableColumnHeader column={column} title="Provider" />
     ),
     cell: ({ row }) => {
       const providerInfo = row.original.providerInfo;
