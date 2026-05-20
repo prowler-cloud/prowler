@@ -2,11 +2,11 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
-## [0.7.0] (Prowler UNRELEASED)
+## [0.7.0] (Prowler v5.27.0)
 
 ### 🚀 Added
 
-- MCP Server tools for Prowler Finding Groups Management [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
+- Finding Groups tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
 
 ### 🔐 Security
 

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { type NodeProps, Position } from "@xyflow/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -83,6 +84,42 @@ describe("ResourceNode", () => {
       ).not.toBeInTheDocument();
       expect(screen.getByText("main-vpc")).toBeInTheDocument();
       expect(screen.getByText("VPC")).toBeInTheDocument();
+    });
+
+    it("should show up to four readable lines for long resource names", () => {
+      // Given
+      const props = buildNodeProps(
+        buildGraphNode("AWSRole", "AWSReservedSSO_AdministratorAccessExtra"),
+      );
+
+      // When
+      const { container } = render(<ResourceNode {...props} />);
+
+      // Then
+      expect(screen.getByText("AWSReservedSSO_A")).toBeInTheDocument();
+      expect(screen.getByText("dministratorAcce")).toBeInTheDocument();
+      expect(screen.getByText("ssExtra")).toBeInTheDocument();
+      expect(screen.getByText("AWS Role")).toBeInTheDocument();
+      expect(container.querySelector("title")).toBeNull();
+    });
+
+    it("should expose the full resource name as an immediate tooltip when truncated", async () => {
+      // Given
+      const name =
+        "arn:aws:iam::998057895221:role/OrganizationAccountAccessRole/integration";
+      const props = buildNodeProps(buildGraphNode("AWSRole", name));
+
+      // When
+      render(<ResourceNode {...props} />);
+
+      // Then
+      expect(screen.getByText("arn:aws:iam::998")).toBeInTheDocument();
+      expect(screen.getByText("057895221:role/O")).toBeInTheDocument();
+      expect(screen.getByText("ntAccessRole/in…")).toBeInTheDocument();
+
+      await userEvent.hover(screen.getByTestId("attack-path-resource-node"));
+
+      expect(await screen.findAllByText(name)).not.toHaveLength(0);
     });
   });
 });

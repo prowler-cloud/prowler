@@ -17,6 +17,8 @@ interface EntityInfoProps {
   icon?: ReactNode;
   /** Small icon rendered inline before the entity alias text */
   nameIcon?: ReactNode;
+  /** Inline element rendered after the entity alias (e.g. action link). */
+  nameAction?: ReactNode;
   entityAlias?: string;
   entityId?: string;
   badge?: string;
@@ -37,6 +39,7 @@ export const EntityInfo = ({
   cloudProvider,
   icon,
   nameIcon,
+  nameAction,
   entityAlias,
   entityId,
   badge,
@@ -74,6 +77,7 @@ export const EntityInfo = ({
                 ({badge})
               </span>
             )}
+            {nameAction && <span className="shrink-0">{nameAction}</span>}
           </div>
           {entityId && (
             <div className="flex min-w-0 items-center gap-2">

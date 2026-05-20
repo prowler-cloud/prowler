@@ -10,9 +10,13 @@ class sqlserver_tde_encrypted_with_cmk(Check):
                 subscription, subscription
             )
             for sql_server in sql_servers:
-                databases = (
-                    sql_server.databases if sql_server.databases is not None else []
-                )
+                databases = [
+                    database
+                    for database in (
+                        sql_server.databases if sql_server.databases is not None else []
+                    )
+                    if database.name.lower() != "master"
+                ]
                 if len(databases) > 0:
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=sql_server

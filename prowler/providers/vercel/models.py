@@ -9,7 +9,7 @@ from prowler.providers.common.models import ProviderOutputOptions
 class VercelSession(BaseModel):
     """Vercel API session information."""
 
-    token: str
+    token: str = Field(exclude=True, repr=False)
     team_id: Optional[str] = None
     base_url: str = "https://api.vercel.com"
     http_session: Any = Field(default=None, exclude=True)
