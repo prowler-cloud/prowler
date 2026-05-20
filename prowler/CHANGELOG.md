@@ -11,7 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🔄 Changed
 
-- `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
+- `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
 
 ---
 

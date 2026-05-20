@@ -6,7 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🚀 Added
 
-- `okta` provider support [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
+- `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
 
 ---
 

@@ -501,6 +501,12 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider == self.ProviderChoices.OKTA and self.uid:
+            # Mirror the SDK, which lowercases the org domain before connecting.
+            # Without this the API would reject Acme.okta.com even though the
+            # SDK would accept it, and stored uids could disagree with the
+            # authenticated org domain.
+            self.uid = self.uid.strip().lower()
         getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):
