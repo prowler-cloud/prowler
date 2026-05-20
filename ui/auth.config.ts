@@ -236,10 +236,51 @@ export const authConfig = {
         });
         if (!tokenResponse) return null;
 
+        // Handle MFA required
+        if ("mfaRequired" in tokenResponse && tokenResponse.mfaRequired) {
+          throw new Error(
+            "mfa_required:" + JSON.stringify({
+              email: tokenResponse.email,
+              tenantId: tokenResponse.tenantId,
+            })
+          );
+        }
+
         const userMeResponse = await getUserByMe(tokenResponse.accessToken);
 
         const user = tokenUserFromApi(userMeResponse);
 
+        return {
+          ...user,
+          accessToken: tokenResponse.accessToken,
+          refreshToken: tokenResponse.refreshToken,
+        };
+      },
+    }),
+    Credentials({
+      id: "totp-credentials",
+      name: "totp-credentials",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" },
+        totpCode: { label: "TOTP Code", type: "text" },
+        tenantId: { label: "Tenant ID", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password || !credentials?.totpCode) {
+          return null;
+        }
+        const { validateTotp } = await import("./actions/auth");
+        const tokenResponse = await validateTotp({
+          email: credentials.email as string,
+          password: credentials.password as string,
+          totpCode: credentials.totpCode as string,
+          tenantId: credentials.tenantId as string,
+        });
+        if (!tokenResponse) return null;
+
+        const userMeResponse = await getUserByMe(tokenResponse.accessToken);
+        const user = tokenUserFromApi(userMeResponse);
         return {
           ...user,
           accessToken: tokenResponse.accessToken,
