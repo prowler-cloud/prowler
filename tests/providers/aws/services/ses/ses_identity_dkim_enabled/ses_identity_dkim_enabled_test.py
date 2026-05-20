@@ -322,7 +322,7 @@ class Test_ses_identity_dkim_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "SES identity test-domain-dkim-verified-not-signed does not have DKIM signing configured."
+                == "SES identity test-domain-dkim-verified-not-signed has DKIM verified but signing is disabled."
             )
             assert result[0].resource_id == "test-domain-dkim-verified-not-signed"
             assert result[0].region == AWS_REGION_EU_WEST_1

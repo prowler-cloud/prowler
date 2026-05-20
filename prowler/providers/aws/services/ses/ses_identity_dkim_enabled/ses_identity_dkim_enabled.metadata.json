@@ -3,15 +3,14 @@
   "CheckID": "ses_identity_dkim_enabled",
   "CheckTitle": "SES identity has DKIM signing enabled",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices",
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "ses",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "ResourceGroup": "email-security",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon SES identities** are evaluated for **DKIM (DomainKeys Identified Mail)** signing enabled and verified. DKIM adds a cryptographic signature to outgoing emails, allowing recipients to verify that the email was sent by the domain owner and was not altered in transit.",
   "Risk": "Without DKIM signing, emails sent from SES identities are vulnerable to **spoofing and tampering**. Attackers can forge emails that appear to come from your domain, leading to phishing attacks, brand impersonation, and loss of email deliverability. Email providers are more likely to reject or mark unsigned emails as spam, impacting business communication and reputation.",
   "RelatedUrl": "",
