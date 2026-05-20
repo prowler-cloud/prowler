@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.29.0] (Prowler v5.28.0)
 
+### 🚀 Added
+
+- `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+
 ### 🔄 Changed
 
 - Scan finding ingestion: bulk-resolve `Resource`/`ResourceTag` rows, replace per-mapping `SELECT FOR UPDATE` with deferred `ResourceTagMapping.bulk_create(ignore_conflicts=True)`, wrap each micro-batch in a single `rls_transaction`, and raise `SCAN_DB_BATCH_SIZE` to 1000. Cuts wall-clock ~13x and `COMMIT` count by ~99% on large batches [(#11249)](https://github.com/prowler-cloud/prowler/pull/11249)
