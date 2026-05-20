@@ -5,6 +5,12 @@ import logging
 import os
 import time
 import uuid
+import base64
+import io
+import pyotp
+import qrcode
+
+from api.v1.serializers import TOTPSetupSerializer, TOTPVerifySerializer, TOTPValidateSerializer
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -8453,3 +8459,107 @@ class FindingGroupViewSet(BaseRLSViewSet):
         return self._paginated_resource_response(
             request, filtered_queryset, resource_ids, request.tenant_id
         )
+
+@extend_schema(tags=["TOTP"], summary="Setup TOTP", description="Generate a TOTP secret and QR code for the authenticated user.")
+class TOTPSetupView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TOTPSetupSerializer
+    resource_name = "totp-setup"
+    http_method_names = ["get"]
+
+    def get(self, request):
+        user = request.user
+        if not user.totp_secret:
+            user.totp_secret = pyotp.random_base32()
+            user.save(update_fields=["totp_secret"])
+
+        totp = pyotp.TOTP(user.totp_secret)
+        otpauth_url = totp.provisioning_uri(name=user.email, issuer_name="Prowler")
+
+        img = qrcode.make(otpauth_url)
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        qr_code_b64 = base64.b64encode(buffer.getvalue()).decode()
+
+        return Response(
+            data={"type": "totp-setup", "attributes": {"secret": user.totp_secret, "qr_code": qr_code_b64, "otpauth_url": otpauth_url}},
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(tags=["TOTP"], summary="Verify and enable TOTP", description="Verify a TOTP code and enable 2FA for the authenticated user.")
+class TOTPVerifyView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TOTPVerifySerializer
+    resource_name = "totp-verify"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        serializer = TOTPVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        totp_code = serializer.validated_data["totp_code"]
+
+        if not user.totp_secret:
+            return Response({"errors": [{"detail": "TOTP not set up. Call /totp/setup first."}]}, status=status.HTTP_400_BAD_REQUEST)
+
+        totp = pyotp.TOTP(user.totp_secret)
+        if not totp.verify(totp_code, valid_window=1):
+            return Response({"errors": [{"detail": "Invalid TOTP code."}]}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.totp_enabled = True
+        user.save(update_fields=["totp_enabled"])
+        return Response({"data": {"type": "totp-verify", "attributes": {"detail": "2FA enabled successfully."}}}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["TOTP"], summary="Disable TOTP", description="Disable 2FA for the authenticated user.")
+class TOTPDisableView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    resource_name = "totp-disable"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        user = request.user
+        user.totp_enabled = False
+        user.totp_secret = None
+        user.save(update_fields=["totp_enabled", "totp_secret"])
+        return Response({"data": {"type": "totp-disable", "attributes": {"detail": "2FA disabled successfully."}}}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["TOTP"], summary="Validate TOTP and get tokens", description="Validate TOTP code to get full JWT tokens.")
+class TOTPValidateView(GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = TOTPValidateSerializer
+    resource_name = "totp-validate"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        from django.contrib.auth import authenticate as django_authenticate
+        from api.v1.serializers import generate_tokens
+        serializer = TOTPValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
+        totp_code = serializer.validated_data["totp_code"]
+        tenant_id = str(serializer.validated_data.get("tenant_id", ""))
+
+        user = django_authenticate(username=email, password=password)
+        if user is None:
+            return Response({"errors": [{"detail": "Invalid credentials."}]}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not user.totp_enabled or not user.totp_secret:
+            return Response({"errors": [{"detail": "2FA is not enabled for this user."}]}, status=status.HTTP_400_BAD_REQUEST)
+
+        totp = pyotp.TOTP(user.totp_secret)
+        if not totp.verify(totp_code, valid_window=1):
+            return Response({"errors": [{"detail": "Invalid TOTP code."}]}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not tenant_id:
+            first_membership = user.memberships.order_by("date_joined").first()
+            if first_membership is None:
+                return Response({"errors": [{"detail": "User has no memberships."}]}, status=status.HTTP_400_BAD_REQUEST)
+            tenant_id = str(first_membership.tenant_id)
+
+        tokens = generate_tokens(user, tenant_id)
+        return Response(data={"type": "totp-validate", "attributes": tokens}, status=status.HTTP_200_OK)

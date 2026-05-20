@@ -168,6 +168,14 @@ class BaseTokenSerializer(TokenObtainPairSerializer):
                 raise ValidationError("User has no memberships.")
             tenant_id = str(first_membership.tenant_id)
 
+        # Check if TOTP is enabled for this user
+        if user.totp_enabled and user.totp_secret:
+            return {
+                'mfa_required': True,
+                'email': email,
+                'tenant_id': tenant_id,
+            }
+
         return generate_tokens(user, tenant_id)
 
 
@@ -182,8 +190,9 @@ class TokenSerializer(BaseTokenSerializer):
     )
 
     # Output tokens
-    refresh = serializers.CharField(read_only=True)
-    access = serializers.CharField(read_only=True)
+    refresh = serializers.CharField(read_only=True, allow_null=True, required=False)
+    access = serializers.CharField(read_only=True, allow_null=True, required=False)
+    mfa_required = serializers.BooleanField(read_only=True, required=False)
 
     class JSONAPIMeta:
         resource_name = "tokens"
@@ -4285,3 +4294,35 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
             "uid": obj.get("provider_uid", ""),
             "alias": obj.get("provider_alias", ""),
         }
+
+
+# TOTP Serializers
+
+class TOTPSetupSerializer(serializers.Serializer):
+    secret = serializers.CharField(read_only=True)
+    qr_code = serializers.CharField(read_only=True)
+    otpauth_url = serializers.CharField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "totp-setup"
+
+
+class TOTPVerifySerializer(serializers.Serializer):
+    totp_code = serializers.CharField(write_only=True, max_length=6, min_length=6)
+
+    class JSONAPIMeta:
+        resource_name = "totp-verify"
+
+
+class TOTPValidateSerializer(serializers.Serializer):
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True)
+    totp_code = serializers.CharField(write_only=True, max_length=6, min_length=6)
+    tenant_id = serializers.UUIDField(write_only=True, required=False)
+
+    # Output tokens
+    refresh = serializers.CharField(read_only=True)
+    access = serializers.CharField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "totp-validate"
