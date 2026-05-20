@@ -10,6 +10,7 @@ export * from "./combobox";
 export * from "./drawer";
 export * from "./dropdown/dropdown";
 export * from "./field/field";
+export * from "./file-upload";
 export * from "./info-field";
 export * from "./input/input";
 export * from "./progress";
