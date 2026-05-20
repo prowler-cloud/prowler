@@ -1289,6 +1289,7 @@
         "elb_ssl_listeners",
         "elbv2_ssl_listeners",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "elbv2_nlb_tls_termination_enabled",
         "cloudfront_distributions_https_enabled",
         "cloudfront_distributions_origin_traffic_encrypted",
@@ -1442,6 +1443,7 @@
         "acm_certificates_with_secure_key_algorithms",
         "elb_insecure_ssl_ciphers",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_using_deprecated_ssl_protocols"
       ]
     },

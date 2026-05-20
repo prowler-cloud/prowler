@@ -2366,7 +2366,8 @@
         }
       ],
       "Checks": [
-        "elbv2_insecure_ssl_ciphers"
+        "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled"
       ]
     },
     {
@@ -2389,7 +2390,8 @@
         }
       ],
       "Checks": [
-        "elbv2_insecure_ssl_ciphers"
+        "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled"
       ]
     },
     {

@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "elbv2_listener_pqc_tls_enabled",
+  "CheckTitle": "ELBv2 post-quantum TLS policy protects HTTPS/TLS listeners from future quantum decryption",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "elbv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
+  "Description": "**ELBv2 HTTPS and TLS listeners** are assessed for use of **post-quantum (PQ) TLS security policies**. Listeners whose `SslPolicy` is not in the approved PQ set lack hybrid key exchange (ML-KEM 768 + ECDHE), leaving recorded traffic vulnerable to future quantum decryption.",
+  "Risk": "Without PQ-ready TLS policies, encrypted traffic captured today can be stored and decrypted once a **cryptographically relevant quantum computer** exists (**harvest now, decrypt later** attack). This threatens long-term **confidentiality** of sensitive data, credentials, and session tokens transmitted through the load balancer.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/describe-ssl-policies.html",
+    "https://aws.amazon.com/security/post-quantum-cryptography/",
+    "https://csrc.nist.gov/projects/post-quantum-cryptography"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elbv2 modify-listener --listener-arn <listener_arn> --ssl-policy ELBSecurityPolicy-TLS13-1-2-PQ-2025-09",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::Listener\n    Properties:\n      LoadBalancerArn: <example_resource_arn>\n      Protocol: HTTPS\n      Port: 443\n      DefaultActions:\n        - Type: forward\n          TargetGroupArn: <example_resource_arn>\n      Certificates:\n        - CertificateArn: <example_certificate_arn>\n      SslPolicy: ELBSecurityPolicy-TLS13-1-2-PQ-2025-09  # FIX: uses a post-quantum TLS policy\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Load Balancers\n2. Select the load balancer and open the Listeners tab\n3. Select the HTTPS/TLS listener and choose Edit\n4. Set Security policy to ELBSecurityPolicy-TLS13-1-2-PQ-2025-09 (or any approved PQ policy)\n5. Save changes",
+      "Terraform": "```hcl\nresource \"aws_lb_listener\" \"<example_resource_name>\" {\n  load_balancer_arn = \"<example_resource_arn>\"\n  port              = 443\n  protocol          = \"HTTPS\"\n  ssl_policy        = \"ELBSecurityPolicy-TLS13-1-2-PQ-2025-09\" # FIX: post-quantum TLS policy\n  certificate_arn   = \"<example_certificate_arn>\"\n\n  default_action {\n    type             = \"forward\"\n    target_group_arn = \"<example_resource_arn>\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Migrate all ELBv2 HTTPS and TLS listeners to a **post-quantum TLS policy** (`ELBSecurityPolicy-TLS13-*-PQ-2025-09` family) to enable hybrid key exchange (ML-KEM + ECDHE). Periodically review and update policies as AWS publishes new PQ-ready options.",
+      "Url": "https://hub.prowler.com/check/elbv2_listener_pqc_tls_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "elbv2_insecure_ssl_ciphers"
+  ],
+  "Notes": ""
+}

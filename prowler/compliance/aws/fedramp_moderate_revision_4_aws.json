@@ -1145,6 +1145,7 @@
       "Checks": [
         "apigateway_restapi_client_certificate_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -1164,6 +1165,7 @@
       "Checks": [
         "apigateway_restapi_client_certificate_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
