@@ -389,6 +389,12 @@ export type VercelCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type OktaCredentials = {
+  [ProviderCredentialFields.OKTA_CLIENT_ID]: string;
+  [ProviderCredentialFields.OKTA_PRIVATE_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -406,7 +412,8 @@ export type CredentialsFormSchema =
   | CloudflareCredentials
   | OpenStackCredentials
   | GoogleWorkspaceCredentials
-  | VercelCredentials;
+  | VercelCredentials
+  | OktaCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
