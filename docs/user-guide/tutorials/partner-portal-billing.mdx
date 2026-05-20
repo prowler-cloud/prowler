@@ -1,0 +1,107 @@
+---
+title: 'Managing Billing and Customer Plans'
+---
+
+Prowler Partner Portal billing has two sides: the partner's own billing posture (payment method and partner plan) lives on the dedicated **Billing** page, while customer-level plans and subscriptions are managed from the **Customers** view. This page walks through both.
+
+## Permissions
+
+The `manage_billing` permission controls every billing surface that mutates state. It is granted today to both built-in roles — **Superadmin** and **Organization Admin** — so any active team member with a seed role can manage billing. See [Managing Your Partner Portal Team](/user-guide/tutorials/partner-portal-team) for the full permission matrix.
+
+## Partner Billing Settings
+
+The **Billing** entry in the sidebar opens the partner's own billing settings at `/billing`. The page is gated behind the `NEXT_PUBLIC_BILLING_ENABLED` feature flag and only ships when Prowler enables it for your partner organization — if you do not see the sidebar entry, billing has not been enabled yet for your account.
+
+The page is organized in three tabs:
+
+- **Billing & Wallet** — Your Partner Plan and Payment Method, side by side.
+- **Invoice History** — invoice listing (coming soon).
+- **Customer Billing** — per-customer billing detail (coming soon).
+
+### Your Partner Plan
+
+The **Your Partner Plan** card on the Billing & Wallet tab shows the agreement Prowler has negotiated with your partner organization. It surfaces:
+
+- **Partner Discount** — the discount applied to every customer invoice.
+- **Scan Credit Price** — the rate at which scan credits are billed.
+- **Resource Overage Rate** — the per-resource rate for usage above plan limits.
+
+Use **View My Partner Agreement** to download the full agreement.
+
+### Payment Method
+
+The **Payment Method** card holds the single card that funds every customer subscription for the partner account. From here you can:
+
+<Steps>
+  <Step title="Add or replace the card">
+    Click **Add Payment Method** (or **Replace Payment Method** if a card already exists) to open the Stripe-backed dialog. The card brand (Visa, Mastercard, Amex) and the last four digits are displayed once saved.
+  </Step>
+
+  <Step title="Watch for expiry">
+    Cards close to expiry show an **Expiring soon** badge. Expired cards switch to a red **Expired** label and block new subscriptions until replaced.
+  </Step>
+</Steps>
+
+Some partners are configured for **invoice billing** instead of card billing. In that case the Payment Method card is provisioned automatically the first time a customer plan change requires it; no card entry is needed.
+
+## Adding a Customer with a Billing Plan
+
+The **+ Add Customer** wizard on `/customers` includes a billing-plan step. The wizard runs in three stages:
+
+<Steps>
+  <Step title="Create the customer profile">
+    Enter the customer's organization name and primary contact email.
+  </Step>
+
+  <Step title="Set the billing plan">
+    Pick a plan from the available list:
+
+    | Plan | Price | Notes |
+    |---|---|---|
+    | **Trial** | $0 | Single-scan trial, upgrade anytime. |
+    | **Prowler Cloud Pro (Annual)** | $79 / month | 20 provider accounts, 250 provider scans, billed annually. |
+    | **Prowler Cloud Pro (Monthly)** | $99 / month | 20 provider accounts, 240 provider scans, monthly billing cycle. |
+
+    The Trial plan is selectable here but **not** offered later in the Change Plan drawer — it is a one-time onboarding option.
+  </Step>
+
+  <Step title="Launch the customer workspace">
+    Navigate into the customer's workspace to connect cloud providers and set up scan schedules. See [Onboarding Customers](/user-guide/tutorials/partner-portal-customer-onboarding).
+  </Step>
+</Steps>
+
+## Changing a Customer's Plan
+
+To move an existing customer between paid plans, open the customer row on `/customers` and choose **Change plan**. A drawer slides in with the available paid plans pre-selected at the customer's current plan. Pick a new plan and click **Apply plan change**; a toast confirms the transition and the customer row refreshes.
+
+If the customer is still on **Trial**, the drawer title changes to **Complete subscription** — applying a plan there is the customer's first paid subscription, not a change.
+
+When the partner is on invoice billing and no payment method exists yet, the drawer provisions an invoice payment method automatically before applying the change. If provisioning fails, the toast surfaces the error and the plan change is not applied.
+
+## Per-Customer Billing Visibility
+
+The **Customers** view exposes the customer-level billing posture in two places:
+
+- **Billing stats cards** at the top of the page summarize:
+  - **Billing active** — count of customers with an active subscription.
+  - **Total MTD** per currency — month-to-date revenue with a comparison to last month and a trend indicator.
+- **Customer table columns** — each row shows the customer's plan, billing status and current period totals alongside the cloud-account and findings counts.
+
+The billing stats cards are hidden when no customer has billing activity yet.
+
+## Notes
+
+- Card payments are processed by **Stripe**. Plan changes and recurring billing are coordinated through **Metronome**; partner billing identifiers are persisted on the partner record on the first plan change.
+- The legacy `scan_based` plan has been retired. Existing customers on `scan_based` are migrated to one of the Prowler Cloud Pro plans during onboarding.
+- Backend identifiers such as `tenant_id` remain unchanged in API payloads and audit logs, even though the partner-facing UI consistently uses **customer** or **customer workspace**.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Onboarding Customers" icon="building" href="/user-guide/tutorials/partner-portal-customer-onboarding">
+    Provision customer workspaces in Prowler Cloud and operate on their behalf.
+  </Card>
+  <Card title="Your Partner Organization" icon="briefcase" href="/user-guide/tutorials/partner-portal-organization">
+    Lifecycle, settings, Partner Code and closing your organization.
+  </Card>
+</Columns>
