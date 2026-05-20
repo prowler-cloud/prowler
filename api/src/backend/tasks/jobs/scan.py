@@ -98,8 +98,6 @@ COMPLIANCE_REQUIREMENT_COPY_COLUMNS = (
 # Controls how many findings we process per micro-batch before flushing to DB writes
 FINDINGS_MICRO_BATCH_SIZE = env.int("DJANGO_FINDINGS_MICRO_BATCH_SIZE", default=3000)
 # Controls how many rows each ORM bulk_create/bulk_update call sends to Postgres.
-# Postgres bind-parameter limit is ~32k; we stay well below that even at 1000 rows
-# with the widest INSERT (findings has ~22 cols -> 22k binds @ 1000 rows).
 SCAN_DB_BATCH_SIZE = env.int("DJANGO_SCAN_DB_BATCH_SIZE", default=1000)
 # Throttle scan progress persistence: minimum progress delta (fraction 0-1)
 # between two persisted progress updates.
