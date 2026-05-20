@@ -1625,6 +1625,21 @@ class TestProviderViewSet:
                     "uid": "C12",
                     "alias": "Google Workspace Minimum Length",
                 },
+                {
+                    "provider": "okta",
+                    "uid": "acme.okta.com",
+                    "alias": "Okta Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta-gov.com",
+                    "alias": "Okta Gov Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta.mil",
+                    "alias": "Okta Mil Org",
+                },
             ]
         ),
     )
@@ -2143,6 +2158,24 @@ class TestProviderViewSet:
                     "googleworkspace-uid",
                     "uid",
                 ),
+                (
+                    {
+                        "provider": "okta",
+                        "uid": "https://acme.okta.com",
+                        "alias": "test",
+                    },
+                    "okta-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "okta",
+                        "uid": "acme.example.com",
+                        "alias": "test",
+                    },
+                    "okta-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -2162,6 +2195,25 @@ class TestProviderViewSet:
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
         )
+
+    @pytest.mark.parametrize(
+        "input_uid,stored_uid",
+        [
+            ("Acme.okta.com", "acme.okta.com"),
+            ("  ACME.OKTA.COM  ", "acme.okta.com"),
+            ("Agency.Okta-Gov.com", "agency.okta-gov.com"),
+        ],
+    )
+    def test_providers_create_okta_uid_normalized(
+        self, authenticated_client, input_uid, stored_uid
+    ):
+        response = authenticated_client.post(
+            reverse("provider-list"),
+            data={"provider": "okta", "uid": input_uid, "alias": "Okta"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.get().uid == stored_uid
 
     def test_providers_partial_update(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -2320,17 +2372,17 @@ class TestProviderViewSet:
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 13),
+                ("inserted_at", TODAY, 14),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    13,
+                    14,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    13,
+                    14,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2963,6 +3015,19 @@ class TestProviderSecretViewSet:
                     "api_token": "fake-vercel-api-token-for-testing",
                 },
             ),
+            # Okta with inline private key credentials
+            (
+                Provider.ProviderChoices.OKTA.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "okta_client_id": "0oa123456789abcdef",
+                    "okta_private_key": "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+                    "okta_scopes": [
+                        "okta.policies.read",
+                        "okta.groups.read",
+                    ],
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -3073,6 +3138,46 @@ class TestProviderSecretViewSet:
         assert (
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
+        )
+
+    def test_provider_secrets_invalid_create_okta_missing_private_key(
+        self,
+        providers_fixture,
+        authenticated_client,
+    ):
+        okta_provider = next(
+            provider
+            for provider in providers_fixture
+            if provider.provider == Provider.ProviderChoices.OKTA.value
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "Okta Secret",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        "okta_client_id": "0oa123456789abcdef",
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(okta_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/okta_private_key"
         )
 
     def test_provider_secrets_partial_update(
