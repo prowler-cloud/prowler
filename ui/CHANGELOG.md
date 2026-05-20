@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - New Scan Jobs view with tab-specific Active, Completed, Scheduled, and Imported scan workflows [(#11258)](https://github.com/prowler-cloud/prowler/pull/11258)
+- `okta` provider support with OAuth 2.0 private-key JWT credentials form (client ID + PEM private key) [(#11213)](https://github.com/prowler-cloud/prowler/pull/11213)
 
 ---
 
