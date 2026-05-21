@@ -51,12 +51,28 @@ Dependencies are continuously monitored for known vulnerabilities with timely up
 
 ### Automated Dependency Updates
 
-- **Dependabot:** Automated pull requests for dependency updates
-  - **Python (pip):** Monthly updates for SDK
-  - **GitHub Actions:** Monthly updates for workflow dependencies
-  - **Docker:** Monthly updates for base images
-  - Temporarily paused for API and UI to maintain stability during active development
-  - **Security-first approach:** Even when paused, Dependabot automatically creates pull requests for security vulnerabilities, ensuring critical security patches are never delayed
+Dependency update automation is transitioning from Dependabot to **Renovate** to gain finer control over update cadence, grouping, and per-component scope. Both tools currently run in parallel during the migration.
+
+#### Renovate (Primary)
+
+Configuration: [`.github/renovate.json`](https://github.com/prowler-cloud/prowler/blob/master/.github/renovate.json)
+
+- **Coverage:** Python (SDK, API, MCP Server), npm (UI), GitHub Actions, Docker images, and Pre-commit hooks
+- **Range Strategy:** Versions are pinned to ensure reproducible builds
+- **Vulnerability Alerts:** GitHub Security Advisories generate immediate pull requests that bypass rate limits and scheduled windows, labeled `security` for prioritized triage
+
+#### Dependabot (Legacy)
+
+Configuration: [`.github/dependabot.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/dependabot.yml)
+
+Dependabot remains active for the SDK and shared automation ecosystems until the Renovate migration completes:
+
+- **Python (pip):** Monthly updates for SDK
+- **GitHub Actions:** Monthly updates for workflow dependencies
+- **Docker:** Monthly updates for base images
+- **Pre-commit:** Monthly updates for hook revisions
+
+Dependabot is paused for the API and UI; Renovate now handles those components. Even when paused, Dependabot continues to open pull requests for security vulnerabilities, ensuring critical patches are never delayed.
 
 ## Container Security
 
