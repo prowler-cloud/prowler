@@ -4,6 +4,7 @@ import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
+import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import {
   getScanJobsTab,
   getScanJobsTabFilters,
@@ -23,12 +24,15 @@ export default async function Scans({
   const resolvedSearchParams = await searchParams;
 
   const providersData = await getAllProviders();
+  const providers = providersData?.data ?? [];
 
-  const connectedProviders =
-    providersData?.data?.filter(
-      (provider: ProviderProps) =>
-        provider.attributes.connection.connected === true,
-    ) || [];
+  const connectedProviders = providers.filter(
+    (provider: ProviderProps) =>
+      provider.attributes.connection.connected === true,
+  );
+  const thereIsNoProviders = providers.length === 0;
+  const thereIsNoProvidersConnected =
+    !thereIsNoProviders && connectedProviders.length === 0;
 
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
@@ -36,14 +40,18 @@ export default async function Scans({
 
   return (
     <ContentLayout title="Scan Jobs" icon="lucide:timer">
-      <ScansPageShell
-        providers={connectedProviders}
-        hasManageScansPermission={hasManageScansPermission}
-      >
-        <Suspense fallback={<SkeletonTableScans />}>
-          <SSRDataTableScans searchParams={resolvedSearchParams} />
-        </Suspense>
-      </ScansPageShell>
+      {thereIsNoProviders || thereIsNoProvidersConnected ? (
+        <ScansProvidersEmptyState thereIsNoProviders={thereIsNoProviders} />
+      ) : (
+        <ScansPageShell
+          providers={connectedProviders}
+          hasManageScansPermission={hasManageScansPermission}
+        >
+          <Suspense fallback={<SkeletonTableScans />}>
+            <SSRDataTableScans searchParams={resolvedSearchParams} />
+          </Suspense>
+        </ScansPageShell>
+      )}
     </ContentLayout>
   );
 }
