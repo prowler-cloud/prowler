@@ -374,7 +374,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.11.1",
       "Description": "Only approved Marketplace apps SHALL be allowed for installation",
-      "Checks": [],
+      "Checks": [
+        "marketplace_apps_access_restricted"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -1704,7 +1706,9 @@
     {
       "Id": "GWS.SITES.1.1",
       "Description": "Sites Service SHOULD be disabled for all users",
-      "Checks": [],
+      "Checks": [
+        "sites_service_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Sites",

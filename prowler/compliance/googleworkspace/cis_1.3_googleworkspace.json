@@ -1285,7 +1285,9 @@
     {
       "Id": "3.1.7.1",
       "Description": "Ensure service status for Google Sites is set to off",
-      "Checks": [],
+      "Checks": [
+        "sites_service_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1306,7 +1308,9 @@
     {
       "Id": "3.1.8.1",
       "Description": "Ensure access to external Google Groups is OFF for Everyone",
-      "Checks": [],
+      "Checks": [
+        "additionalservices_external_groups_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1327,7 +1331,9 @@
     {
       "Id": "3.1.9.1.1",
       "Description": "Ensure users access to Google Workspace Marketplace apps is restricted",
-      "Checks": [],
+      "Checks": [
+        "marketplace_apps_access_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",

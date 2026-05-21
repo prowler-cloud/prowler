@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "additionalservices_external_groups_disabled",
+  "CheckTitle": "Access to external Google Groups is off for everyone",
+  "CheckType": [],
+  "ServiceName": "additionalservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The Additional Google services configuration **disables access to external Google Groups** for all users. This setting controls whether users can access groups created outside the organization from their Google Workspace account.",
+  "Risk": "When external Google Groups access is enabled, users can access and participate in groups created **outside the organization**, potentially exposing them to **phishing, social engineering, or data leakage** through unmanaged external group communications.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/181865",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Additional Google services**\n3. Scroll down to **Google Groups**\n4. Set it to **OFF for everyone**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable access to **external Google Groups** for all users. If specific users require access to external groups, enable it by exception for those users or groups only.",
+      "Url": "https://hub.prowler.com/check/additionalservices_external_groups_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check covers the 'Additional Google services > Google Groups' toggle, which is distinct from the 'Groups for Business' sharing settings covered by the groups service checks."
+}
