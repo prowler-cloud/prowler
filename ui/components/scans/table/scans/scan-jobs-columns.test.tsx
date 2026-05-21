@@ -8,7 +8,6 @@ vi.mock("@/components/shadcn", () => ({
   Badge: ({ children }: { children: React.ReactNode }) => (
     <span>{children}</span>
   ),
-  Checkbox: () => <input type="checkbox" />,
   Progress: () => <div />,
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
@@ -48,11 +47,7 @@ import { SCAN_JOBS_TAB, type ScanJobsTab } from "../../scans-table.utils";
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
 const getColumnIds = (tab: ScanJobsTab) =>
-  getScanJobsColumns({
-    tab,
-    rowSelection: {},
-    selectableRowCount: 1,
-  }).map((column) => column.id);
+  getScanJobsColumns({ tab }).map((column) => column.id);
 
 const makeCompletedScan = (): ScanProps => ({
   type: "scans",
@@ -80,8 +75,6 @@ const makeCompletedScan = (): ScanProps => ({
 const renderCell = (columnId: string, scan: ScanProps) => {
   const column = getScanJobsColumns({
     tab: SCAN_JOBS_TAB.COMPLETED,
-    rowSelection: {},
-    selectableRowCount: 1,
   }).find((item) => item.id === columnId);
   const cell = column?.cell as
     | ((context: CellContext<ScanProps, unknown>) => React.ReactNode)
@@ -95,11 +88,9 @@ const renderCell = (columnId: string, scan: ScanProps) => {
 };
 
 const renderHeader = (tab: ScanJobsTab, columnId: string) => {
-  const column = getScanJobsColumns({
-    tab,
-    rowSelection: {},
-    selectableRowCount: 1,
-  }).find((item) => item.id === columnId);
+  const column = getScanJobsColumns({ tab }).find(
+    (item) => item.id === columnId,
+  );
   const header = column?.header;
 
   if (typeof header !== "function") {
@@ -112,7 +103,6 @@ const renderHeader = (tab: ScanJobsTab, columnId: string) => {
 describe("getScanJobsColumns", () => {
   it("uses the expected columns for each scan tab", () => {
     expect(getColumnIds(SCAN_JOBS_TAB.ACTIVE)).toEqual([
-      "select",
       "account",
       "scanNote",
       "progress",
@@ -122,7 +112,6 @@ describe("getScanJobsColumns", () => {
       "actions",
     ]);
     expect(getColumnIds(SCAN_JOBS_TAB.COMPLETED)).toEqual([
-      "select",
       "account",
       "scanNote",
       "resources",
@@ -133,7 +122,6 @@ describe("getScanJobsColumns", () => {
       "actions",
     ]);
     expect(getColumnIds(SCAN_JOBS_TAB.SCHEDULED)).toEqual([
-      "select",
       "account",
       "scanSchedule",
       "nextScan",

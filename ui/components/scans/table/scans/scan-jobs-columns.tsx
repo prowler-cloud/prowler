@@ -1,10 +1,9 @@
 "use client";
 
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import {
   Badge,
-  Checkbox,
   Progress,
   Tooltip,
   TooltipContent,
@@ -28,37 +27,6 @@ import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
 interface GetScanJobsColumnsOptions {
   tab: ScanJobsTab;
-  rowSelection: RowSelectionState;
-  selectableRowCount: number;
-}
-
-function SelectHeader({
-  table,
-  selectedCount,
-  selectableRowCount,
-}: {
-  table: { toggleAllPageRowsSelected: (value: boolean) => void };
-  selectedCount: number;
-  selectableRowCount: number;
-}) {
-  const isAllSelected =
-    selectedCount > 0 && selectedCount === selectableRowCount;
-  const isSomeSelected =
-    selectedCount > 0 && selectedCount < selectableRowCount;
-
-  return (
-    <Checkbox
-      size="sm"
-      checked={isAllSelected}
-      indeterminate={isSomeSelected}
-      onCheckedChange={(checked) =>
-        table.toggleAllPageRowsSelected(checked === true)
-      }
-      onClick={(event) => event.stopPropagation()}
-      aria-label="Select all scans"
-      disabled={selectableRowCount === 0}
-    />
-  );
 }
 
 function AccountCell({ scan }: { scan: ScanProps }) {
@@ -149,35 +117,6 @@ function ScheduleCell({ scan }: { scan: ScanProps }) {
   );
 }
 
-const selectColumn = ({
-  rowSelection,
-  selectableRowCount,
-}: GetScanJobsColumnsOptions): ColumnDef<ScanProps> => ({
-  id: "select",
-  header: ({ table }) => (
-    <div className="flex min-w-10">
-      <SelectHeader
-        table={table}
-        selectedCount={Object.values(rowSelection).filter(Boolean).length}
-        selectableRowCount={selectableRowCount}
-      />
-    </div>
-  ),
-  cell: ({ row }) => (
-    <div className="flex min-w-10">
-      <Checkbox
-        size="sm"
-        checked={row.getIsSelected()}
-        onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-        onClick={(event) => event.stopPropagation()}
-        aria-label="Select scan"
-      />
-    </div>
-  ),
-  enableSorting: false,
-  enableHiding: false,
-});
-
 const accountColumn: ColumnDef<ScanProps> = {
   id: "account",
   header: ({ column }) => (
@@ -225,10 +164,7 @@ const actionsColumn: ColumnDef<ScanProps> = {
   enableSorting: false,
 };
 
-const activeColumns = (
-  options: GetScanJobsColumnsOptions,
-): ColumnDef<ScanProps>[] => [
-  selectColumn(options),
+const activeColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanNoteColumn,
   {
@@ -268,10 +204,7 @@ const activeColumns = (
   actionsColumn,
 ];
 
-const completedColumns = (
-  options: GetScanJobsColumnsOptions,
-): ColumnDef<ScanProps>[] => [
-  selectColumn(options),
+const completedColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanNoteColumn,
   resourcesColumn,
@@ -315,10 +248,7 @@ const completedColumns = (
   actionsColumn,
 ];
 
-const scheduledColumns = (
-  options: GetScanJobsColumnsOptions,
-): ColumnDef<ScanProps>[] => [
-  selectColumn(options),
+const scheduledColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
   {
     id: "scanSchedule",
@@ -362,7 +292,7 @@ const scheduledColumns = (
 export function getScanJobsColumns(
   options: GetScanJobsColumnsOptions,
 ): ColumnDef<ScanProps>[] {
-  if (options.tab === SCAN_JOBS_TAB.SCHEDULED) return scheduledColumns(options);
-  if (options.tab === SCAN_JOBS_TAB.ACTIVE) return activeColumns(options);
-  return completedColumns(options);
+  if (options.tab === SCAN_JOBS_TAB.SCHEDULED) return scheduledColumns();
+  if (options.tab === SCAN_JOBS_TAB.ACTIVE) return activeColumns();
+  return completedColumns();
 }

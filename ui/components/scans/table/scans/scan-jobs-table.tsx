@@ -1,9 +1,7 @@
 "use client";
 
-import type { RowSelectionState } from "@tanstack/react-table";
 import { ExternalLink, Info } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn";
 import { DataTable } from "@/components/ui/table";
@@ -56,17 +54,12 @@ function ImportedScansEmptyState() {
 }
 
 export function ScanJobsTable({ data, meta, tab }: ScanJobsTableProps) {
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const hasRefreshingScan = data.some((scan) =>
     REFRESHING_STATES.includes(
       scan.attributes.state as (typeof REFRESHING_STATES)[number],
     ),
   );
-  const columns = getScanJobsColumns({
-    tab,
-    rowSelection,
-    selectableRowCount: data.length,
-  });
+  const columns = getScanJobsColumns({ tab });
 
   if (tab === SCAN_JOBS_TAB.IMPORTED && data.length === 0) {
     return <ImportedScansEmptyState />;
@@ -80,9 +73,6 @@ export function ScanJobsTable({ data, meta, tab }: ScanJobsTableProps) {
         columns={columns}
         data={data}
         metadata={meta}
-        enableRowSelection
-        rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
       />
     </>
   );
