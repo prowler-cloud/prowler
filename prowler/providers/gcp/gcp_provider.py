@@ -21,6 +21,8 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.exceptions.exceptions import (
+    GCPBaseException,
+    GCPGetOrganizationProjectsError,
     GCPInvalidProviderIdError,
     GCPLoadADCFromDictError,
     GCPLoadServiceAccountKeyFromDictError,
@@ -621,10 +623,7 @@ class GcpProvider(Provider):
             credentials_file: str
 
         Returns:
-            dict[str, GCPProject]
-
-        Usage:
-            >>> GcpProvider.get_projects(credentials=credentials, organization_id=organization_id)
+            dict of project_id and GCPProject object
         """
         projects = {}
         try:
@@ -688,13 +687,25 @@ class GcpProvider(Provider):
                         )
                 except HttpError as http_error:
                     if "Cloud Asset API has not been used" in str(http_error):
-                        logger.error(
-                            f"Projects cannot be retrieved from the Organization since Cloud Asset API has not been used before or it is disabled [{http_error.__traceback__.tb_lineno}]. Enable it by visiting https://console.developers.google.com/apis/api/cloudasset.googleapis.com/ then retry."
+                        message = (
+                            "Projects cannot be retrieved from the Organization since the Cloud Asset API "
+                            "has not been used before or it is disabled. Enable it by visiting "
+                            "https://console.developers.google.com/apis/api/cloudasset.googleapis.com/ then retry."
                         )
                     else:
-                        logger.error(
-                            f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
+                        message = (
+                            f"Cloud Asset API call failed while listing projects under organization "
+                            f"'{organization_id}': {http_error}. Ensure the credentials' principal has "
+                            "'roles/cloudasset.viewer' bound at the organization level."
                         )
+                    logger.critical(
+                        f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {message}"
+                    )
+                    raise GCPGetOrganizationProjectsError(
+                        file=__file__,
+                        original_exception=http_error,
+                        message=message,
+                    )
             else:
                 try:
                     # Initialize Cloud Resource Manager API for simple project listing
@@ -781,8 +792,10 @@ class GcpProvider(Provider):
                             labels={},
                             lifecycle_state="ACTIVE",
                         )
-                # If no projects were able to be accessed via API, add them manually from the credentials file
-                elif credentials_file:
+                # If no projects were able to be accessed via API, add them manually from the credentials file.
+                # Skip this fallback when an organization scan was explicitly requested: silently
+                # downgrading scope to the service account's home project hides permission errors.
+                elif credentials_file and not organization_id:
                     with open(credentials_file, "r", encoding="utf-8") as file:
                         project_id = json.load(file)["project_id"]
                         # Handle empty or null project names
@@ -798,6 +811,8 @@ class GcpProvider(Provider):
                             labels={},
                             lifecycle_state="ACTIVE",
                         )
+        except GCPBaseException as gcp_error:
+            raise gcp_error
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
