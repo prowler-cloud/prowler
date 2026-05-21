@@ -161,7 +161,7 @@
     "vitest": "4.0.18",
     "vitest-browser-react": "2.0.4"
   },
-  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
+  "packageManager": "pnpm@10.33.4",
   "pnpm": {
     "overrides": {
       "@hono/node-server": "1.19.14",
