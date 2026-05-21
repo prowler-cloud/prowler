@@ -102,8 +102,8 @@ RUN uv sync --locked --no-install-project && \
 
 RUN .venv/bin/python .venv/lib/python3.12/site-packages/prowler/providers/m365/lib/powershell/m365_powershell.py
 
-COPY src/backend/ ./backend/
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --chown=prowler:prowler src/backend/ ./backend/
+COPY --chown=prowler:prowler docker-entrypoint.sh ./docker-entrypoint.sh
 
 WORKDIR /home/prowler/backend
 
