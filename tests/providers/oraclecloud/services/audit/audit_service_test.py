@@ -29,10 +29,9 @@ class TestAuditService:
 
     def test_get_configuration_uses_home_region_not_configured_region(self):
         """Test Audit uses the tenancy home region instead of the configured region."""
-        oraclecloud_provider = set_mocked_oraclecloud_provider(
-            region="eu-frankfurt-1",
-            home_region="us-ashburn-1",
-        )
+        oraclecloud_provider = set_mocked_oraclecloud_provider(region="eu-frankfurt-1")
+        # The tenancy home region differs from the configured session region
+        oraclecloud_provider.home_region = "us-ashburn-1"
         mock_config_response = MagicMock()
         mock_config_response.data.retention_period_days = 365
 

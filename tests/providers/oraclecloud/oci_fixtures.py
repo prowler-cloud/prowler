@@ -21,7 +21,6 @@ def set_mocked_oraclecloud_provider(
     tenancy_name: str = OCI_TENANCY_NAME,
     user_id: str = OCI_USER_ID,
     region: str = OCI_REGION,
-    home_region: str = OCI_REGION,
 ) -> MagicMock:
     """Create a mocked OCI provider for testing"""
     provider = MagicMock()
@@ -46,13 +45,10 @@ def set_mocked_oraclecloud_provider(
         tenancy_name=tenancy_name,
         user_id=user_id,
         region=region,
-        home_region=home_region,
-        region_subscriptions=[],
         profile="DEFAULT",
         audited_regions={region},
         audited_compartments=[OCI_COMPARTMENT_ID],
     )
-    provider.home_region = home_region
 
     # Mock compartments
     provider.compartments = {

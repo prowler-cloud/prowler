@@ -131,121 +131,6 @@ class TestSetIdentityAuthenticationErrors:
             assert identity.user_id == "ocid1.user.oc1..aaaaaaaexample"
             assert identity.region == "us-ashburn-1"
 
-    def test_successful_authentication_persists_home_region_separately(
-        self, mock_session
-    ):
-        """Test the tenancy home region is stored separately from the session region."""
-        mock_session.config["region"] = "eu-frankfurt-1"
-
-        with patch("oci.identity.IdentityClient") as mock_identity_client:
-            mock_tenancy = MagicMock()
-            mock_tenancy.name = "test-tenancy"
-
-            home_region_subscription = MagicMock()
-            home_region_subscription.region_name = "us-ashburn-1"
-            home_region_subscription.is_home_region = True
-
-            secondary_region_subscription = MagicMock()
-            secondary_region_subscription.region_name = "eu-frankfurt-1"
-            secondary_region_subscription.is_home_region = False
-
-            mock_client_instance = MagicMock()
-            mock_client_instance.get_tenancy.return_value = MagicMock(data=mock_tenancy)
-            mock_client_instance.list_region_subscriptions.return_value = MagicMock(
-                data=[secondary_region_subscription, home_region_subscription]
-            )
-            mock_identity_client.return_value = mock_client_instance
-
-            identity = OraclecloudProvider.set_identity(mock_session)
-
-            assert identity.region == "eu-frankfurt-1"
-            assert identity.home_region == "us-ashburn-1"
-            assert identity.region_subscriptions == [
-                secondary_region_subscription,
-                home_region_subscription,
-            ]
-            mock_client_instance.list_region_subscriptions.assert_called_once_with(
-                "ocid1.tenancy.oc1..aaaaaaaexample"
-            )
-
-    def test_successful_authentication_logs_when_home_region_lookup_fails(
-        self, mock_session
-    ):
-        """Test expected OCI errors during home region lookup are visible."""
-        import oci
-
-        with (
-            patch("oci.identity.IdentityClient") as mock_identity_client,
-            patch(
-                "prowler.providers.oraclecloud.oraclecloud_provider.logger"
-            ) as mock_logger,
-        ):
-            mock_tenancy = MagicMock()
-            mock_tenancy.name = "test-tenancy"
-
-            mock_client_instance = MagicMock()
-            mock_client_instance.get_tenancy.return_value = MagicMock(data=mock_tenancy)
-            mock_client_instance.list_region_subscriptions.side_effect = (
-                oci.exceptions.ClientError("client error")
-            )
-            mock_identity_client.return_value = mock_client_instance
-
-            identity = OraclecloudProvider.set_identity(mock_session)
-
-            assert identity.region == "us-ashburn-1"
-            assert identity.home_region == "us-ashburn-1"
-            assert identity.region_subscriptions == []
-            mock_logger.warning.assert_called_once()
-            warning_message = mock_logger.warning.call_args.args[0]
-            assert "Audit configuration checks" in warning_message
-            assert "return 404" in warning_message
-
-    def test_home_region_lookup_does_not_swallow_unexpected_errors(self, mock_session):
-        """Test unexpected home region lookup errors are not hidden."""
-        with patch("oci.identity.IdentityClient") as mock_identity_client:
-            mock_tenancy = MagicMock()
-            mock_tenancy.name = "test-tenancy"
-
-            mock_client_instance = MagicMock()
-            mock_client_instance.get_tenancy.return_value = MagicMock(data=mock_tenancy)
-            mock_client_instance.list_region_subscriptions.side_effect = ValueError(
-                "bad region subscription shape"
-            )
-            mock_identity_client.return_value = mock_client_instance
-
-            with pytest.raises(ValueError, match="bad region subscription shape"):
-                OraclecloudProvider.set_identity(mock_session)
-
-    def test_get_regions_to_audit_reuses_cached_region_subscriptions(self):
-        """Test subscribed regions are reused from identity instead of fetched again."""
-        home_region_subscription = MagicMock()
-        home_region_subscription.region_name = "us-ashburn-1"
-        home_region_subscription.is_home_region = True
-
-        secondary_region_subscription = MagicMock()
-        secondary_region_subscription.region_name = "eu-frankfurt-1"
-        secondary_region_subscription.is_home_region = False
-
-        provider = OraclecloudProvider.__new__(OraclecloudProvider)
-        provider._identity = MagicMock(
-            tenancy_id="ocid1.tenancy.oc1..aaaaaaaexample",
-            region_subscriptions=[
-                home_region_subscription,
-                secondary_region_subscription,
-            ],
-        )
-        provider._session = MagicMock()
-
-        with patch("oci.identity.IdentityClient") as mock_identity_client:
-            regions = provider.get_regions_to_audit()
-
-            mock_identity_client.assert_not_called()
-            assert [region.key for region in regions] == [
-                "us-ashburn-1",
-                "eu-frankfurt-1",
-            ]
-            assert [region.is_home_region for region in regions] == [True, False]
-
     @staticmethod
     def _create_service_error(status, message):
         """Helper to create an OCI ServiceError."""
@@ -328,8 +213,6 @@ class TestOraclecloudProviderInit:
             tenancy_name="test-tenancy",
             user_id="ocid1.user.oc1..aaaaaaaexample",
             region="us-ashburn-1",
-            home_region="us-ashburn-1",
-            region_subscriptions=[],
             profile="DEFAULT",
             audited_regions=set(),
             audited_compartments=[],

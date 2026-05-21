@@ -161,7 +161,12 @@ class OraclecloudProvider(Provider):
 
         # Get regions
         self._regions = self.get_regions_to_audit(region)
-        self._home_region = self._identity.home_region
+        self._home_region = None
+        if self._regions:
+            self._home_region = next(
+                (region.key for region in self._regions if region.is_home_region),
+                self._regions[0].key,
+            )
         logger.info(f"Home region is: {self._home_region}")
 
         # Get compartments
@@ -509,43 +514,11 @@ class OraclecloudProvider(Provider):
         logger.info(f"OCI User ID: {user_id}")
         logger.info(f"OCI Region: {region}")
 
-        home_region = region
-        region_subscriptions = []
-        try:
-            region_subscriptions = identity_client.list_region_subscriptions(
-                tenancy_id
-            ).data
-            home_region = next(
-                (
-                    region_subscription.region_name
-                    for region_subscription in region_subscriptions
-                    if getattr(region_subscription, "is_home_region", False)
-                ),
-                None,
-            )
-            if not home_region:
-                home_region = region
-                logger.warning(
-                    "Could not determine tenancy home region from OCI region "
-                    "subscriptions. Audit configuration checks may use the "
-                    f"configured region ({region}) and return 404."
-                )
-        except (oci.exceptions.ServiceError, oci.exceptions.ClientError) as error:
-            logger.warning(
-                "Could not determine tenancy home region from OCI region "
-                "subscriptions. Audit configuration checks may use the "
-                f"configured region ({region}) and return 404: {error}"
-            )
-
-        logger.info(f"OCI Home Region: {home_region}")
-
         return OCIIdentityInfo(
             tenancy_id=tenancy_id,
             tenancy_name=tenancy_name,
             user_id=user_id,
             region=region,
-            home_region=home_region,
-            region_subscriptions=region_subscriptions,
             profile=session.profile,
             audited_regions=set([region]) if region else set(),
             audited_compartments=compartment_ids if compartment_ids else [],
@@ -591,20 +564,18 @@ class OraclecloudProvider(Provider):
 
         # Audit all subscribed regions
         try:
-            region_subscriptions = self._identity.region_subscriptions
-            if not region_subscriptions:
-                # Create identity client with proper authentication handling
-                if self._session.signer:
-                    identity_client = oci.identity.IdentityClient(
-                        config=self._session.config, signer=self._session.signer
-                    )
-                else:
-                    identity_client = oci.identity.IdentityClient(
-                        config=self._session.config
-                    )
-                region_subscriptions = identity_client.list_region_subscriptions(
-                    self._identity.tenancy_id
-                ).data
+            # Create identity client with proper authentication handling
+            if self._session.signer:
+                identity_client = oci.identity.IdentityClient(
+                    config=self._session.config, signer=self._session.signer
+                )
+            else:
+                identity_client = oci.identity.IdentityClient(
+                    config=self._session.config
+                )
+            region_subscriptions = identity_client.list_region_subscriptions(
+                self._identity.tenancy_id
+            ).data
 
             # Check if auditing specific region or all
             regions_check = (
@@ -624,7 +595,6 @@ class OraclecloudProvider(Provider):
                             is_home_region=region_sub.is_home_region,
                         )
                     )
-
             logger.info(f"Found {len(regions)} subscribed regions")
         except Exception as error:
             logger.warning(
