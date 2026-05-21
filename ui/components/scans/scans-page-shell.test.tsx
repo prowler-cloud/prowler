@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ScansPageShell } from "./scans-page-shell";
 
-const { pushMock } = vi.hoisted(() => ({
+const { pushMock, searchParamsValue } = vi.hoisted(() => ({
   pushMock: vi.fn(),
+  searchParamsValue: { current: "" },
 }));
 
 const { accountsSelectorSpy, providerTypeSelectorSpy } = vi.hoisted(() => ({
@@ -17,7 +19,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: pushMock,
   }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(searchParamsValue.current),
 }));
 
 vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
@@ -83,6 +85,7 @@ describe("ScansPageShell", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+    searchParamsValue.current = "";
   });
 
   it("does not render an imported findings tab", () => {
@@ -130,6 +133,25 @@ describe("ScansPageShell", () => {
         selectedProviderTypes: [],
       }),
     );
+  });
+
+  it("clears the active sort when switching tabs", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=active&sort=trigger";
+    const user = userEvent.setup();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /completed/i }));
+
+    expect(pushMock).toHaveBeenCalled();
+    const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
+    expect(calledUrl).toContain("tab=completed");
+    expect(calledUrl).not.toContain("sort=");
   });
 
   it("uses a generic type filter label in Cloud", () => {

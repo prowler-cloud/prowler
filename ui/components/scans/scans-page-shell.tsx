@@ -78,7 +78,7 @@ export function ScansPageShell({
   };
 
   const setTab = (tab: string) => {
-    updateParams({ tab });
+    updateParams({ tab, sort: null });
   };
 
   const setFilterValues = (filterKey: string, values: string[]) => {
