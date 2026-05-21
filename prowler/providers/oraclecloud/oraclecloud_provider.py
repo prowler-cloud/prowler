@@ -626,7 +626,7 @@ class OraclecloudProvider(Provider):
                     )
 
             logger.info(f"Found {len(regions)} subscribed regions")
-        except (oci.exceptions.ServiceError, oci.exceptions.ClientError) as error:
+        except Exception as error:
             logger.warning(
                 f"Could not retrieve region subscriptions: {error}. Using configured region."
             )
