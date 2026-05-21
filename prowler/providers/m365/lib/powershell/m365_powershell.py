@@ -105,10 +105,10 @@ class M365PowerShell(PowerShellSession):
 
         Note:
             ``client_id`` and ``tenant_id`` are sanitized via ``sanitize()`` since
-            they are UUIDs. ``client_secret`` is intentionally NOT sanitized so that
-            valid special characters (e.g. ``$``, ``!``, ``#``) are preserved; it is
-            wrapped in single quotes with any embedded single quote escaped
-            (``'`` -> ``''``) to prevent PowerShell variable expansion.
+            they are UUIDs. ``client_secret`` is assigned with a single-quoted
+            string (escaping any embedded single quote as ``''``) following
+            PowerShell best practices for literal values, so its content is taken
+            verbatim with no variable expansion or subexpression evaluation.
         """
         # Certificate Auth
         if credentials.certificate_content and credentials.client_id:
@@ -141,9 +141,10 @@ class M365PowerShell(PowerShellSession):
             sanitized_client_id = self.sanitize(credentials.client_id)
             sanitized_tenant_id = self.sanitize(credentials.tenant_id)
             self.execute(f"$clientID = '{sanitized_client_id}'")
-            # Use single quotes to prevent PowerShell variable expansion;
-            # only escape embedded single quotes (' → '') — do NOT sanitize()
-            # as secrets legitimately contain $, !, # etc.
+            # Single-quoted strings are the PowerShell convention for literals:
+            # the content is taken verbatim with no variable expansion. Escape any
+            # embedded single quote as '' and do not sanitize() so the value is
+            # preserved exactly.
             sanitized_secret = (credentials.client_secret or "").replace("'", "''")
             self.execute(f"$clientSecret = '{sanitized_secret}'")
             self.execute(f"$tenantID = '{sanitized_tenant_id}'")

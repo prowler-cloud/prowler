@@ -159,7 +159,8 @@ class Testm365PowerShell:
             ("O'Brien", "$clientSecret = 'O''Brien'"),
             # Consecutive single quotes each get doubled.
             ("a''b", "$clientSecret = 'a''''b'"),
-            # Injection-style payload stays a single literal string, cannot break out.
+            # A payload with quotes and metacharacters stays a single literal
+            # string and cannot break out of the quoting.
             (
                 "'; Remove-Item -Recurse -Force; '",
                 "$clientSecret = '''; Remove-Item -Recurse -Force; '''",
@@ -179,7 +180,8 @@ class Testm365PowerShell:
         self, mock_popen, secret, expected_command
     ):
         """The client_secret is single-quote escaped, preserving every special
-        character and never allowing PowerShell expansion or command injection."""
+        character verbatim with no PowerShell expansion or subexpression
+        evaluation."""
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
         credentials = M365Credentials(
