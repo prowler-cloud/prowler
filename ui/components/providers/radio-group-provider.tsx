@@ -21,6 +21,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OktaProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
   VercelProviderBadge,
@@ -102,6 +103,11 @@ const PROVIDERS = [
     value: "vercel",
     label: "Vercel",
     badge: VercelProviderBadge,
+  },
+  {
+    value: "okta",
+    label: "Okta",
+    badge: OktaProviderBadge,
   },
 ] as const;
 

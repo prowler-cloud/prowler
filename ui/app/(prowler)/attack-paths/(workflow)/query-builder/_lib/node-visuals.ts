@@ -33,6 +33,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OktaProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
   VercelProviderBadge,
@@ -174,6 +175,11 @@ const KNOWN_NODE_VISUALS = {
     category: NODE_CATEGORY.ACCOUNT,
     description: "Vercel Account",
     Icon: VercelProviderBadge,
+  },
+  oktaaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Okta Account",
+    Icon: OktaProviderBadge,
   },
   s3bucket: {
     category: NODE_CATEGORY.STORAGE,

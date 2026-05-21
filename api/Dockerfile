@@ -89,7 +89,7 @@ WORKDIR /home/prowler
 # Ensure output directory exists
 RUN mkdir -p /tmp/prowler_api_output
 
-COPY pyproject.toml uv.lock ./
+COPY --chown=prowler:prowler pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir uv==0.11.14
@@ -97,13 +97,13 @@ RUN pip install --no-cache-dir --upgrade pip && \
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
 # Add `--no-install-project` to avoid installing the current project as a package
-RUN uv sync --no-install-project && \
+RUN uv sync --locked --no-install-project && \
     rm -rf ~/.cache/uv
 
 RUN .venv/bin/python .venv/lib/python3.12/site-packages/prowler/providers/m365/lib/powershell/m365_powershell.py
 
-COPY src/backend/ ./backend/
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --chown=prowler:prowler src/backend/ ./backend/
+COPY --chown=prowler:prowler docker-entrypoint.sh ./docker-entrypoint.sh
 
 WORKDIR /home/prowler/backend
 

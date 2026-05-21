@@ -31,6 +31,7 @@ vi.mock("@/components/icons/providers-badge", () => ({
   CloudflareProviderBadge: () => <span>Cloudflare</span>,
   OpenStackProviderBadge: () => <span>OpenStack</span>,
   VercelProviderBadge: () => <span>Vercel</span>,
+  OktaProviderBadge: () => <span>Okta</span>,
 }));
 
 vi.mock("@/components/shadcn/select/multiselect", () => ({

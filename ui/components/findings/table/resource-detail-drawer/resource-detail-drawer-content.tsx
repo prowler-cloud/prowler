@@ -53,6 +53,7 @@ import {
   QueryCodeEditor,
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
+import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -441,8 +442,7 @@ export function ResourceDetailDrawerContent({
     findingUid: f?.uid,
     region: resourceRegion,
   });
-  const hasIdAction =
-    Boolean(resourceDetailHref) || Boolean(externalResourceTarget);
+  const hasIdAction = Boolean(externalResourceTarget);
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -712,32 +712,41 @@ export function ResourceDetailDrawerContent({
                       entityAlias={resourceName}
                       entityId={resourceUid}
                       idLabel="UID"
-                      idAction={
-                        hasIdAction ? (
-                          <span className="inline-flex items-center gap-2">
-                            {resourceDetailHref && (
+                      nameAction={
+                        resourceDetailHref ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button variant="link" size="link-sm" asChild>
                                 <Link
                                   href={resourceDetailHref}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  prefetch={false}
                                 >
-                                  View Resource
-                                  <ExternalLink className="size-3" />
+                                  <span className="sr-only">View Resource</span>
+                                  <ExternalLink
+                                    className="size-3"
+                                    aria-hidden="true"
+                                  />
                                 </Link>
                               </Button>
-                            )}
-                            {externalResourceTarget && (
-                              <ExternalResourceLink
-                                providerType={providerType}
-                                resourceUid={resourceUid}
-                                providerUid={providerUid}
-                                resourceName={resourceName}
-                                findingUid={f?.uid}
-                                region={resourceRegion}
-                              />
-                            )}
-                          </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              View Resource
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
+                      idAction={
+                        hasIdAction ? (
+                          <ExternalResourceLink
+                            providerType={providerType}
+                            resourceUid={resourceUid}
+                            providerUid={providerUid}
+                            resourceName={resourceName}
+                            findingUid={f?.uid}
+                            region={resourceRegion}
+                          />
                         ) : undefined
                       }
                     />
@@ -837,6 +846,9 @@ export function ResourceDetailDrawerContent({
             <TabsList>
               <TabsTrigger value="overview">Finding Overview</TabsTrigger>
               <TabsTrigger value="remediation">Remediation</TabsTrigger>
+              <TabsTrigger value="metadata">
+                Resource Metadata / Evidence
+              </TabsTrigger>
               <TabsTrigger value="other-findings">
                 Findings for this resource
               </TabsTrigger>
@@ -1061,6 +1073,21 @@ export function ResourceDetailDrawerContent({
               )
             ) : (
               <OverviewNavigationSkeleton testId="remediation-navigation-skeleton" />
+            )}
+          </TabsContent>
+
+          {/* Metadata */}
+          <TabsContent
+            value="metadata"
+            className="minimal-scrollbar flex flex-col gap-4 overflow-y-auto"
+          >
+            {isNavigating ? (
+              <MetadataNavigationSkeleton />
+            ) : (
+              <ResourceMetadataPanel
+                metadata={f?.resourceMetadata}
+                details={f?.resourceDetails}
+              />
             )}
           </TabsContent>
 
@@ -1388,6 +1415,21 @@ function EventsNavigationSkeleton() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function MetadataNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="metadata-navigation-skeleton"
+      aria-hidden="true"
+    >
+      <Card variant="inner">
+        <OverviewCardSkeleton lineWidths={["w-20", "w-full", "w-3/4"]} />
+      </Card>
+      <Skeleton className="h-56 w-full rounded" />
     </div>
   );
 }
