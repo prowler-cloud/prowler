@@ -20,8 +20,8 @@
     "dependencies"
   ],
   "dependencyDashboardTitle": "Dependency Dashboard",
-  "prConcurrentLimit": 10,
-  "prHourlyLimit": 2,
+  "prConcurrentLimit": 20,
+  "prHourlyLimit": 10,
   "vulnerabilityAlerts": {
     "prHourlyLimit": 0,
     "prConcurrentLimit": 0
@@ -31,21 +31,12 @@
   "rangeStrategy": "pin",
   "packageRules": [
     {
-      "description": "Patches: 1st of every month, Madrid overnight window (22:00-06:00)",
-      "matchUpdateTypes": [
-        "patch"
-      ],
-      "schedule": [
-        "* 22-23,0-5 1 * *"
-      ]
-    },
-    {
-      "description": "Minors: 8th of every 2 months, Madrid overnight window",
+      "description": "Minors: 8th of every 3 months, Madrid overnight window (22:00-06:00)",
       "matchUpdateTypes": [
         "minor"
       ],
       "schedule": [
-        "* 22-23,0-5 8 */2 *"
+        "* 22-23,0-5 8 */3 *"
       ]
     },
     {
