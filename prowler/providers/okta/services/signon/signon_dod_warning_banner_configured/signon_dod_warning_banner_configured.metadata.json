@@ -9,8 +9,8 @@
   "Severity": "informational",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "Each Okta brand's sign-in page must present the Standard Mandatory DOD Notice and Consent Banner (DTM-08-060) before granting access (DISA STIG V-273192 / OKTA-APP-000200). The check inspects sign-in page HTML returned by the Okta Management API, using the customized page when present and otherwise falling back to the default sign-in page.",
-  "Risk": "Without the DOD Notice and Consent Banner, users are not informed that the system is a U.S. Government information system subject to monitoring. The absence of the banner weakens the legal basis for incident response and prosecution and breaks alignment with federal laws, Executive Orders, directives, policies, regulations, standards, and guidance.",
+  "Description": "Each Okta brand's sign-in page must present the **Standard Mandatory DOD Notice and Consent Banner** (`DTM-08-060`) before granting access.\n\nThe check inspects the sign-in page HTML returned by the Okta Management API, using the *customized* page when present and otherwise falling back to the *default* sign-in page.\n\nAligns with **DISA STIG V-273192 / OKTA-APP-000200**.",
+  "Risk": "Without the **DOD Notice and Consent Banner**, users are not informed that the system is a U.S. Government information system subject to monitoring.\n\n- **Legal basis** for incident response and prosecution is weakened\n- **Alignment** with federal laws, Executive Orders, directives, and standards is broken\n- **Implied consent** to monitoring cannot be asserted on connection",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://help.okta.com/oie/en-us/content/topics/settings/settings-customization.htm",
@@ -21,11 +21,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Follow the supplemental 'Okta DOD Warning Banner Configuration Guide' shipped with the DISA Okta IDaaS STIG package\n2. Sign in to the Okta Admin Console as a Super Admin\n3. Go to Customizations > Brands and select the brand\n4. Edit the Sign-in page customization\n5. Insert the full DTM-08-060 Standard Mandatory DOD Notice and Consent Banner text in the page content\n6. Publish the customization and verify the banner is presented before sign-in",
+      "Other": "1. Follow the supplemental *Okta DOD Warning Banner Configuration Guide* shipped with the **DISA Okta IDaaS STIG** package.\n2. Sign in to the **Okta Admin Console** as a *Super Admin*.\n3. Navigate to **Customizations** > **Brands** and select the brand.\n4. Edit the **Sign-in page** customization.\n5. Insert the full `DTM-08-060` Standard Mandatory DOD Notice and Consent Banner text into the page content.\n6. Publish the customization and verify the banner is presented before sign-in.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Customize the Okta sign-in page for each brand to display the Standard Mandatory DOD Notice and Consent Banner (DTM-08-060) before users authenticate.",
+      "Text": "Customize the Okta sign-in page for **each brand** to display the **Standard Mandatory DOD Notice and Consent Banner** (`DTM-08-060`) before users authenticate.\n\nApplies only to Okta tenants under **U.S. Department of Defense** scope; non-DOD organizations can mute this check.",
       "Url": "https://hub.prowler.com/check/signon_dod_warning_banner_configured"
     }
   },

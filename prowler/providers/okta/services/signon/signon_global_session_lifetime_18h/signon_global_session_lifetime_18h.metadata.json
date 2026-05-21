@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "Every active Global Session Policy must have a **Priority 1** rule that is **not** the built-in `Default Rule`, setting **Maximum Okta global session lifetime** to 18 hours or less (DISA STIG V-273203 / OKTA-APP-001665). Okta evaluates policies by group assignment, so a permissive custom policy can govern users. Override the threshold via `okta_max_session_lifetime_minutes`.",
-  "Risk": "Without an enforced session lifetime, an authenticated Okta session can be reused indefinitely without reauthentication. Stolen session material continues to grant access long after the original sign-in event, and authorization changes (role revocation, group removal) take effect only on the next forced reauth.",
+  "Description": "Every active Okta **Global Session Policy** needs a **Priority 1** rule that is **not** the built-in `Default Rule`, setting *Maximum Okta global session lifetime* to `18` hours or less.\n\nOkta evaluates policies by group assignment, so a permissive custom policy can govern users. Threshold override: `okta_max_session_lifetime_minutes` (minutes). Aligns with **DISA STIG V-273203**.",
+  "Risk": "Without an enforced session lifetime, an authenticated Okta session can be reused indefinitely without reauthentication.\n\n- **Stolen session material** continues to grant access long after sign-in\n- **Authorization changes** (role revocation, group removal) take effect only on the next reauth\n- **Token replay** against downstream apps stays viable for the session window",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm",
@@ -20,11 +20,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Sign in to the Okta Admin Console as a Super Admin\n2. Go to Security > Global Session Policy\n3. Open the Default Policy\n4. Add or edit a non-default rule\n5. Move that rule to Priority 1 so it is evaluated before the built-in Default Rule\n6. Set 'Maximum Okta global session lifetime' to 18 hours or less\n7. Save the rule",
-      "Terraform": "resource \"okta_policy_rule_signon\" \"prowler_session_lifetime_18h\" {\n  policy_id           = okta_policy_signon.default.id\n  name                = \"Prowler-enforced session lifetime\"\n  status              = \"ACTIVE\"\n  session_lifetime    = 1080\n  session_persistent  = false\n}\n"
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Global Session Policy**.\n3. Open the **Default Policy** (and repeat for every other active policy).\n4. Add or edit a non-default rule.\n5. Move that rule to **Priority 1** so it is evaluated before the built-in `Default Rule`.\n6. Set *Maximum Okta global session lifetime* to `18` hours or less. Do **not** set it to `0`, which disables the limit.\n7. Save the rule.",
+      "Terraform": "```hcl\nresource \"okta_policy_rule_signon\" \"<example_resource_name>\" {\n  policy_id          = okta_policy_signon.default.id\n  name               = \"<example_resource_name>\"\n  status             = \"ACTIVE\"\n  priority           = 1       # Critical: rule must sit at Priority 1 before the Default Rule\n  session_lifetime   = 1080    # Critical: 18 hours in minutes; do not use 0 (disables the limit)\n  session_persistent = false   # Critical: avoid persistent global session cookies\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure the Default Global Session Policy so its Priority 1 non-default rule sets the Maximum Okta global session lifetime to 18 hours or less.",
+      "Text": "Configure each active **Global Session Policy** so a non-default rule at **Priority 1**:\n- Sets *Maximum Okta global session lifetime* to `18` hours or less (`1080` minutes)\n- Never sets the lifetime to `0`, which disables the limit\n- Is enabled (`ACTIVE`) and evaluated before the built-in `Default Rule`\n\nReview group assignments to confirm the rule actually governs the intended users.",
       "Url": "https://hub.prowler.com/check/signon_global_session_lifetime_18h"
     }
   },

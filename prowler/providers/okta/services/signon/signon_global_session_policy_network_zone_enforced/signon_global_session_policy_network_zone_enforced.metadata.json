@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "Every active Global Session Policy must use the **IF User's IP is** condition, mapped to a Network Zone, on its **Priority 1 active rule** (DISA STIG V-279691 / OKTA-APP-003242). Okta evaluates rules in priority order, and policies by group assignment, so the zone condition must sit on the rule that fires first for each policy that governs users.",
-  "Risk": "When the Global Session Policy does not restrict access by Network Zone, every authenticated entity is granted session establishment regardless of source IP. Authorization that does not factor in network location lets stolen credentials or out-of-band sessions reach the Okta dashboard from any internet-routable address, undermining the organization's Access Control Policy.",
+  "Description": "Every active Okta **Global Session Policy** must apply the *IF User's IP is* condition, mapped to a **Network Zone**, on its **Priority 1** active rule.\n\nUnlike the idle / lifetime / cookie STIGs, this control does **not** exclude the built-in `Default Rule`. Okta evaluates policies by group assignment. Aligns with **DISA STIG V-279691**.",
+  "Risk": "When the Global Session Policy does not restrict access by **Network Zone**, every authenticated entity establishes a session regardless of source IP.\n\n- **Stolen credentials** reach the Okta dashboard from any internet-routable address\n- **Out-of-band sessions** bypass the organization's Access Control Policy\n- **Network anomalies** cannot become deny decisions at sign-on",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://help.okta.com/oie/en-us/content/topics/security/network/network-zones.htm",
@@ -21,11 +21,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Sign in to the Okta Admin Console as a Super Admin\n2. Go to Security > Networks and define the Network Zones (allow / deny) that match the organization's Access Control Policy\n3. Go to Security > Global Session Policy\n4. Open the Default Policy\n5. Add or edit a non-default rule\n6. In Conditions, set 'IF User's IP is' to In zone (allow) or Not in zone (deny) and select the Network Zone\n7. Save the rule",
-      "Terraform": "resource \"okta_policy_rule_signon\" \"prowler_network_zone\" {\n  policy_id        = okta_policy_signon.default.id\n  name             = \"Prowler-enforced Network Zone\"\n  status           = \"ACTIVE\"\n  network_connection = \"ZONE\"\n  network_includes  = [okta_network_zone.allowed.id]\n}\n"
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Networks** and define the **Network Zones** (allow / deny) that match the organization's Access Control Policy.\n3. Navigate to **Security** > **Global Session Policy**.\n4. Open the **Default Policy** (and repeat for every other active policy).\n5. Edit the rule that sits at **Priority 1**, or add a new one and move it to **Priority 1**.\n6. Under *Conditions*, set *IF User's IP is* to `In zone` (allow) or `Not in zone` (deny) and select the **Network Zone**.\n7. Save the rule.",
+      "Terraform": "```hcl\nresource \"okta_policy_rule_signon\" \"<example_resource_name>\" {\n  policy_id          = okta_policy_signon.default.id\n  name               = \"<example_resource_name>\"\n  status             = \"ACTIVE\"\n  priority           = 1                               # Critical: rule must sit at Priority 1\n  network_connection = \"ZONE\"                          # Critical: bind the rule to a Network Zone\n  network_includes   = [okta_network_zone.allowed.id]  # Critical: zones that reflect the Access Control Policy\n}\n```"
     },
     "Recommendation": {
-      "Text": "Add or update a non-default rule in the Default Global Session Policy so it maps the IF User's IP condition to a Network Zone that reflects the organization's Access Control Policy.",
+      "Text": "Configure the **Priority 1** active rule in each Global Session Policy so it:\n- Maps the *IF User's IP is* condition to a **Network Zone** aligned with the organization's Access Control Policy\n- Uses `In zone` for allow-list zones and `Not in zone` for deny-list zones\n- Is enabled (`ACTIVE`) and evaluated before the built-in `Default Rule`, or *is* the `Default Rule` itself\n\nReview group assignments to confirm the rule actually governs the intended users.",
       "Url": "https://hub.prowler.com/check/signon_global_session_policy_network_zone_enforced"
     }
   },
