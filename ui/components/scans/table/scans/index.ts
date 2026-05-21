@@ -1,4 +1,3 @@
-export * from "./column-get-scans";
-export * from "./data-table-row-actions";
-export * from "./data-table-row-details";
-export * from "./scans-table-with-polling";
+export * from "./scan-jobs-columns";
+export * from "./scan-jobs-row-actions";
+export * from "./scan-jobs-table";
