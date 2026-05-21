@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
-## [0.8.0] (Prowler UNRELEASED)
+## [0.7.1] (Prowler UNRELEASED)
 
 ### 🔐 Security
 
