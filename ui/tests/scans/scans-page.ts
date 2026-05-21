@@ -8,7 +8,10 @@ export class ScansPage extends BasePage {
 
   // Scan provider selection elements
   readonly launchScanButton: Locator;
+  readonly launchScanDialog: Locator;
   readonly scanProviderSelect: Locator;
+  readonly scanProviderSearchInput: Locator;
+  readonly scanProviderOption: Locator;
   readonly scanNoteInput: Locator;
   readonly startNowButton: Locator;
 
@@ -22,15 +25,23 @@ export class ScansPage extends BasePage {
     this.launchScanButton = page.getByRole("button", {
       name: /^Launch Scan$/i,
     });
-    this.scanProviderSelect = page.getByRole("combobox", {
-      name: "Cloud Account",
-    });
+    this.launchScanDialog = page.getByRole("dialog");
+    // The new modal renders the providers picker as a MultiSelect combobox
+    // inside the dialog. Scoping to the dialog avoids matching the search
+    // combobox that appears in the portalled popover when opened.
+    this.scanProviderSelect = this.launchScanDialog.getByRole("combobox");
+    this.scanProviderSearchInput = page.getByPlaceholder("Search accounts...");
+    // The "Select all accounts" pseudo-option also has role="option";
+    // restrict to real provider items via the data-slot attribute.
+    this.scanProviderOption = page.locator(
+      '[data-slot="multiselect-item"]:not([hidden])',
+    );
     this.scanNoteInput = page.getByRole("textbox", {
-      name: "Scan Note",
+      name: "Alias",
     });
-    this.startNowButton = page
-      .getByRole("dialog")
-      .getByRole("button", { name: /^Launch Scan$/i });
+    this.startNowButton = this.launchScanDialog.getByRole("button", {
+      name: /^Launch Scan$/i,
+    });
 
     // Scan state elements
     this.successToast = page.getByRole("alert", {
@@ -57,11 +68,16 @@ export class ScansPage extends BasePage {
   }
 
   async selectProviderByUID(uid: string): Promise<void> {
-    // Select the provider by UID
+    // Open the launch scan modal and pick the provider whose UID matches.
+    // Provider options expose the alias (not the UID) as their accessible
+    // name, so we type the UID into the MultiSelect search — UIDs are part
+    // of each item's cmdk keywords — and click the only matching item.
 
     await this.launchScanButton.click();
+    await expect(this.launchScanDialog).toBeVisible();
     await this.scanProviderSelect.click();
-    await this.page.getByRole("option", { name: new RegExp(uid) }).click();
+    await this.scanProviderSearchInput.fill(uid);
+    await this.scanProviderOption.first().click();
   }
 
   async fillScanNote(note: string): Promise<void> {
