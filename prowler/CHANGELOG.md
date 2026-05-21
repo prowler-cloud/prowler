@@ -17,6 +17,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
 
+### 🐞 Fixed
+
+- OCI Audit service configuration lookup when the configured region differs from the tenancy home region [(#10347)](https://github.com/prowler-cloud/prowler/pull/10347)
+
 ---
 
 ## [5.27.1] (Prowler v5.27.1)
@@ -307,10 +311,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Route53 dangling IP check false positive when using `--region` flag [(#9952)](https://github.com/prowler-cloud/prowler/pull/9952)
 - RBI compliance framework support on Prowler Dashboard for the Azure provider [(#10360)](https://github.com/prowler-cloud/prowler/pull/10360)
 - CheckMetadata strict validators rejecting valid external tool provider data (image, iac, llm) [(#10363)](https://github.com/prowler-cloud/prowler/pull/10363)
-
-### 🐞 Fixed
-
-- OCI Audit service configuration lookup when the configured region differs from the tenancy home region [(#10347)](https://github.com/prowler-cloud/prowler/pull/10347)
 
 ### 🔐 Security
 
