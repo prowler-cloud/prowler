@@ -856,23 +856,36 @@ def _process_finding_micro_batch(
                 # Replaces the original per-resource `upsert_or_delete_tags`
                 # (which did one `update_or_create` + SELECT FOR UPDATE per mapping).
                 if tag_mappings_to_create:
-                    created_tag_mappings = ResourceTagMapping.objects.bulk_create(
+                    # Pre-SELECT existing pairs: `bulk_create(ignore_conflicts=True)`
+                    # does not populate `pk`, so we cannot tell new vs existing from
+                    # the result; we need that to bump `updated_at` only on resources
+                    # that actually gain a mapping.
+                    candidate_resource_ids = {
+                        m.resource_id for m in tag_mappings_to_create
+                    }
+                    candidate_tag_ids = {m.tag_id for m in tag_mappings_to_create}
+                    existing_pairs = set(
+                        ResourceTagMapping.objects.filter(
+                            tenant_id=tenant_id,
+                            resource_id__in=candidate_resource_ids,
+                            tag_id__in=candidate_tag_ids,
+                        ).values_list("resource_id", "tag_id")
+                    )
+                    resource_uid_by_id = {
+                        str(r.id): uid for uid, r in resource_cache.items()
+                    }
+                    for m in tag_mappings_to_create:
+                        if (m.resource_id, m.tag_id) not in existing_pairs:
+                            uid = resource_uid_by_id.get(str(m.resource_id))
+                            if uid is not None:
+                                resources_with_new_tag_mappings.add(uid)
+
+                    ResourceTagMapping.objects.bulk_create(
                         tag_mappings_to_create,
                         batch_size=SCAN_DB_BATCH_SIZE,
                         ignore_conflicts=True,
                         unique_fields=["tenant_id", "resource_id", "tag_id"],
                     )
-                    # Preserve original behavior: bump updated_at on resources that
-                    # actually got NEW mappings (existing mappings have m.pk == None
-                    # after ignore_conflicts, newly created mappings have m.pk set).
-                    resource_uid_by_id = {
-                        str(r.id): uid for uid, r in resource_cache.items()
-                    }
-                    for m in created_tag_mappings:
-                        if m.pk is not None:
-                            uid = resource_uid_by_id.get(str(m.resource_id))
-                            if uid is not None:
-                                resources_with_new_tag_mappings.add(uid)
 
                 # 5) Bulk create Findings
                 if findings_to_create:
