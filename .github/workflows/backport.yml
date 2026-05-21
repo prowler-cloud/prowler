@@ -49,7 +49,7 @@ jobs:
 
       - name: Backport PR
         if: steps.label_check.outputs.label_check == 'success'
-        uses: sorenlouv/backport-github-action@9460b7102fea25466026ce806c9ebf873ac48721 # v11.0.0
+        uses: sorenlouv/backport-github-action@85813678d776774a19ec5af56bd3a04305946f8a # v12.0.0
         with:
           github_token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           auto_backport_label_prefix: ${{ env.BACKPORT_LABEL_PREFIX }}
