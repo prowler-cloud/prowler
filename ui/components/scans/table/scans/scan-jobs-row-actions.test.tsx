@@ -25,6 +25,21 @@ vi.mock("@/lib/helper", () => ({
   downloadScanZip: vi.fn(),
 }));
 
+vi.mock("@/components/scans/edit-alias-modal", () => ({
+  EditAliasModal: ({
+    open,
+    currentAlias,
+  }: {
+    open: boolean;
+    currentAlias: string;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Edit Alias">
+        Editing {currentAlias}
+      </div>
+    ) : null,
+}));
+
 const makeScan = (): ScanProps => ({
   type: "scans",
   id: "scan-1",
@@ -54,9 +69,8 @@ describe("ScanJobsRowActions", () => {
     vi.clearAllMocks();
   });
 
-  it("shows the Prowler Cloud tooltip for edit schedule outside Cloud", async () => {
+  it("opens the Edit modal seeded with the current scan name", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     const user = userEvent.setup();
 
     render(<ScanJobsRowActions scan={makeScan()} />);
@@ -65,21 +79,16 @@ describe("ScanJobsRowActions", () => {
     await user.click(
       screen.getByRole("button", { name: /open actions menu/i }),
     );
-    const editScheduleAction = screen.getByRole("menuitem", {
-      name: /edit scan schedule/i,
-    });
-    await user.hover(editScheduleAction);
+    await user.click(screen.getByRole("menuitem", { name: /^edit$/i }));
 
     // Then
-    expect(editScheduleAction).toHaveAttribute("data-disabled");
     expect(
-      await screen.findAllByText("Available in Prowler Cloud"),
-    ).not.toHaveLength(0);
+      screen.getByRole("dialog", { name: /edit alias/i }),
+    ).toHaveTextContent("Editing Production scan");
   });
 
-  it("does not show the Prowler Cloud tooltip for edit schedule in Cloud", async () => {
+  it("does not render the legacy Edit Scan Schedule option", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
     const user = userEvent.setup();
 
     render(<ScanJobsRowActions scan={makeScan()} />);
@@ -88,15 +97,10 @@ describe("ScanJobsRowActions", () => {
     await user.click(
       screen.getByRole("button", { name: /open actions menu/i }),
     );
-    const editScheduleAction = screen.getByRole("menuitem", {
-      name: /edit scan schedule/i,
-    });
-    await user.hover(editScheduleAction);
 
     // Then
-    expect(editScheduleAction).toHaveAttribute("data-disabled");
     expect(
-      screen.queryByText("Available in Prowler Cloud"),
+      screen.queryByRole("menuitem", { name: /edit scan schedule/i }),
     ).not.toBeInTheDocument();
   });
 

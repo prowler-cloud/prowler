@@ -1,17 +1,14 @@
 "use client";
 
-import { CalendarClock, Download, Eye } from "lucide-react";
+import { Download, Eye, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
+import { EditAliasModal } from "@/components/scans/edit-alias-modal";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
@@ -24,7 +21,7 @@ interface ScanJobsRowActionsProps {
 export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const [editOpen, setEditOpen] = useState(false);
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
   const scanDate = toLocalDateString(scan.attributes.completed_at);
@@ -54,30 +51,21 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
             />
           </>
         )}
-        {isCloudEnvironment ? (
-          <ActionDropdownItem
-            icon={<CalendarClock />}
-            label="Edit Scan Schedule"
-            disabled
-          />
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="block">
-                <ActionDropdownItem
-                  icon={<CalendarClock />}
-                  label="Edit Scan Schedule"
-                  disabled
-                />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              Available in Prowler Cloud
-            </TooltipContent>
-          </Tooltip>
-        )}
+        {/* TODO: Expand Edit to also cover schedule once the backend exposes a schedule update endpoint. */}
+        <ActionDropdownItem
+          icon={<Pencil />}
+          label="Edit"
+          onSelect={() => setEditOpen(true)}
+        />
         {/* TODO: Restore Cancel Scan once the backend exposes a public scan cancellation endpoint. */}
       </ActionDropdown>
+
+      <EditAliasModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        scanId={scan.id}
+        currentAlias={scan.attributes.name ?? ""}
+      />
     </div>
   );
 }
