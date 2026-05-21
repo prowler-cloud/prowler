@@ -31,10 +31,14 @@ export class ScansPage extends BasePage {
     // combobox that appears in the portalled popover when opened.
     this.scanProviderSelect = this.launchScanDialog.getByRole("combobox");
     this.scanProviderSearchInput = page.getByPlaceholder("Search accounts...");
-    // The "Select all accounts" pseudo-option also has role="option";
-    // restrict to real provider items via the data-slot attribute.
+    // MultiSelectContent renders its items twice: once inline (CSS-hidden
+    // mirror used for trigger badges and selection state) and once inside
+    // the portalled PopoverContent. Scoping to the popover container
+    // ([data-slot="multiselect-content"], only mounted when open) targets
+    // the visible copy and skips both inline mirrors from other page-level
+    // MultiSelects and the "Select all accounts" pseudo-option.
     this.scanProviderOption = page.locator(
-      '[data-slot="multiselect-item"]:not([hidden])',
+      '[data-slot="multiselect-content"] [data-slot="multiselect-item"]:not([hidden])',
     );
     this.scanNoteInput = page.getByRole("textbox", {
       name: "Alias",
