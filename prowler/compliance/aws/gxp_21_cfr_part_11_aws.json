@@ -266,6 +266,7 @@
         "ec2_ebs_default_encryption",
         "efs_encryption_at_rest_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_encryption_at_rest_enabled",
         "opensearch_service_domains_node_to_node_encryption_enabled",
