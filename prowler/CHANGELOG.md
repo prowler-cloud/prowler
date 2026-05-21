@@ -19,7 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- Container image now uses an absolute `ENTRYPOINT` (`/home/prowler/.venv/bin/prowler`) so it works under any runtime `--workdir`. The relative entrypoint was breaking the official GitHub Action (`prowler-cloud/prowler@v5.27.0`) and any `docker run` with a custom `-w` [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- Container image now uses an absolute `ENTRYPOINT` (`/home/prowler/.venv/bin/prowler`) so it works under any runtime `--workdir`. The relative entrypoint was breaking the official GitHub Action (`prowler-cloud/prowler@v5.27.0`) and any `docker run` with a custom `-w` [(#11313)](https://github.com/prowler-cloud/prowler/pull/11313)
 
 ---
 
