@@ -133,23 +133,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Refresh prowler SDK pin to latest master commit
-        if: github.event_name == 'push'
+      - name: Refresh prowler SDK pin to current branch tip
         run: |
-          # pyproject.toml stays at `@master`; force uv to re-resolve so uv.lock
-          # captures the current master tip at build time. Dockerfile runs
+          # api/pyproject.toml has `@master` on master and `@v5.X` on release
+          # branches (set by prepare-release.yml). uv lock --upgrade-package
+          # re-resolves whichever ref is present against the current branch tip
+          # and writes the SHA into api/uv.lock. The Dockerfile runs
           # `uv sync --locked`, which is what actually drives the install.
-          pip install --no-cache-dir "uv==0.11.14"
-          (cd api && uv lock --upgrade-package prowler)
-
-      - name: Refresh prowler SDK pin to latest release branch (v5.Y) commit
-        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-        run: |
-          # pyproject.toml is already pinned to `@v5.X` by prepare-release.yml; force uv
-          # to re-resolve so uv.lock captures the current branch tip at deploy time.
-          # The SDK release on prowler-cloud/prowler is published AFTER this release
-          # event, so the matching SDK tag doesn't exist yet here — the v5.X branch
-          # tip is the commit that will become that SDK release.
           pip install --no-cache-dir "uv==0.11.14"
           (cd api && uv lock --upgrade-package prowler)
 
