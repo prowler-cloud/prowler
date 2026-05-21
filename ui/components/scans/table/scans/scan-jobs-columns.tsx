@@ -178,7 +178,7 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
   {
     id: "scanTime",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Scan Time" />
+      <DataTableColumnHeader column={column} title="Duration" />
     ),
     cell: ({ row }) => formatScanDuration(row.original.attributes.duration),
     enableSorting: false,
@@ -186,7 +186,7 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
   {
     id: "scanSchedule",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Scan Schedule" />
+      <DataTableColumnHeader column={column} title="Schedule" />
     ),
     cell: ({ row }) => <ScheduleCell scan={row.original} />,
     enableSorting: false,
@@ -227,7 +227,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
   {
     id: "scanSchedule",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Scan Schedule" />
+      <DataTableColumnHeader column={column} title="Schedule" />
     ),
     cell: ({ row }) => <ScheduleCell scan={row.original} />,
     enableSorting: false,
@@ -237,7 +237,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title="Scan Date"
+        title="Completed"
         param="updated_at"
       />
     ),
@@ -250,10 +250,11 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
 
 const scheduledColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
+  scanNoteColumn,
   {
     id: "scanSchedule",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Scan Schedule" />
+      <DataTableColumnHeader column={column} title="Schedule" />
     ),
     cell: ({ row }) => <ScheduleCell scan={row.original} />,
     enableSorting: false,
@@ -263,7 +264,7 @@ const scheduledColumns = (): ColumnDef<ScanProps>[] => [
    * {
    *   id: "lastScan",
    *   header: ({ column }) => (
-   *     <DataTableColumnHeader column={column} title="Last Scan" />
+   *     <DataTableColumnHeader column={column} title="Last Run" />
    *   ),
    *   cell: ({ row }) => (
    *     <DateWithTime dateTime={row.original.attributes.completed_at} />
@@ -274,7 +275,7 @@ const scheduledColumns = (): ColumnDef<ScanProps>[] => [
   {
     id: "nextScan",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Next Scan" />
+      <DataTableColumnHeader column={column} title="Next Run" />
     ),
     cell: ({ row }) => (
       <DateWithTime

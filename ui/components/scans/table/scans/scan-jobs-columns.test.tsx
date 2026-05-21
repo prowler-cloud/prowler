@@ -123,6 +123,7 @@ describe("getScanJobsColumns", () => {
     ]);
     expect(getColumnIds(SCAN_JOBS_TAB.SCHEDULED)).toEqual([
       "account",
+      "scanNote",
       "scanSchedule",
       "nextScan",
       "actions",
