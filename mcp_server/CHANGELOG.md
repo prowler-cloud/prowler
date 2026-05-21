@@ -11,6 +11,7 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 ### 🔐 Security
 
 - `cryptography` from 46.0.1 to 47.0.0 (transitive) for CVE-2026-39892 and CVE-2026-26007 / CVE-2026-34073 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
+- `fastmcp` from 2.14.0 to 3.3.1 for GHSA-5h2m-4q8j-pqpj, GHSA-rww4-4w9c-7733, and GHSA-vv7q-7jx5-f767, which also pulls fixed `jaraco.context`, `python-multipart`, `starlette`, and drops the vulnerable `lupa`/`urllib3` transitive deps
 
 ---
 
