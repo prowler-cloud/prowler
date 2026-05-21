@@ -474,6 +474,7 @@
         "elbv2_ssl_listeners",
         "elb_insecure_ssl_ciphers",
         "elbv2_insecure_ssl_ciphers",
+        "transfer_server_pqc_ssh_kex_enabled",
         "redshift_cluster_in_transit_encryption_enabled",
         "elasticache_redis_cluster_in_transit_encryption_enabled",
         "dynamodb_accelerator_cluster_in_transit_encryption_enabled",

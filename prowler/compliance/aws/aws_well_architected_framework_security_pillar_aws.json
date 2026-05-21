@@ -1151,6 +1151,7 @@
         "elb_insecure_ssl_ciphers",
         "elb_ssl_listeners",
         "elbv2_insecure_ssl_ciphers",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elbv2_ssl_listeners",
         "s3_bucket_secure_transport_policy"
       ]

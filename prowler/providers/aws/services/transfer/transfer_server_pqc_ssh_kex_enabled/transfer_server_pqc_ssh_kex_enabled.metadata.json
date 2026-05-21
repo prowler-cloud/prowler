@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "transfer_server_pqc_ssh_kex_enabled",
+  "CheckTitle": "AWS Transfer Family server uses a post-quantum hybrid SSH key exchange security policy",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "transfer",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsTransferServer",
+  "ResourceGroup": "network",
+  "Description": "**AWS Transfer Family servers** (SFTP, FTPS, AS2) are assessed for use of a **post-quantum (PQ) hybrid SSH key exchange security policy**. Servers whose `SecurityPolicyName` does not include ML-KEM key exchanges (`mlkem768x25519-sha256`, `mlkem768nistp256-sha256`, `mlkem1024nistp384-sha384`) leave file-transfer sessions exposed to **harvest-now, decrypt-later** attacks.",
+  "Risk": "Without a PQ-ready security policy, SSH/SFTP traffic captured today can be stored and decrypted in the future once a **cryptographically relevant quantum computer** is available. This threatens long-term **confidentiality** of transferred files, credentials, and metadata.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/transfer/latest/userguide/post-quantum-security-policies.html",
+    "https://docs.aws.amazon.com/transfer/latest/userguide/security-policies.html",
+    "https://aws.amazon.com/security/post-quantum-cryptography/",
+    "https://csrc.nist.gov/projects/post-quantum-cryptography"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws transfer update-server --server-id <server_id> --security-policy-name TransferSecurityPolicy-2025-03",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::Transfer::Server\n    Properties:\n      Protocols:\n        - SFTP\n      SecurityPolicyName: TransferSecurityPolicy-2025-03  # FIX: post-quantum hybrid SSH KEX policy\n```",
+      "Other": "1. In the AWS Console, go to AWS Transfer Family > Servers\n2. Select the server and choose Edit on the Additional details panel\n3. Set Cryptographic algorithm options (Security policy) to TransferSecurityPolicy-2025-03 (or another approved PQ policy)\n4. Save the changes",
+      "Terraform": "```hcl\nresource \"aws_transfer_server\" \"<example_resource_name>\" {\n  protocols              = [\"SFTP\"]\n  security_policy_name   = \"TransferSecurityPolicy-2025-03\" # FIX: post-quantum hybrid SSH KEX policy\n  endpoint_type          = \"PUBLIC\"\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Migrate AWS Transfer Family servers to a **post-quantum security policy** (e.g., `TransferSecurityPolicy-2025-03`, `TransferSecurityPolicy-FIPS-2025-03`, `TransferSecurityPolicy-AS2Restricted-2025-07`) that adds ML-KEM hybrid SSH key exchange. Avoid deprecated `*-PQ-SSH-Experimental-2023-04` policies. Review allowed policies regularly as AWS publishes new PQ-ready options.",
+      "Url": "https://hub.prowler.com/check/transfer_server_pqc_ssh_kex_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "transfer_server_in_transit_encryption_enabled"
+  ],
+  "Notes": ""
+}
