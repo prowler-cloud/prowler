@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+- Use single-quoted strings for credential variables in the M365 provider PowerShell session, following PowerShell best practices for literal values [(#9997)](https://github.com/prowler-cloud/prowler/pull/9997)
 
 ---
 
@@ -393,10 +394,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `--provider-uid` CLI flag for IaC provider, used as `cloud.account.uid` in OCSF output and required with `--export-ocsf` [(#10233)](https://github.com/prowler-cloud/prowler/pull/10233)
 - `unmapped.provider_uid` field in OCSF output to match CLI scan results with API provider entities during ingestion [(#10231)](https://github.com/prowler-cloud/prowler/pull/10231)
 - `unmapped.provider` field in OCSF output for provider name availability in non-cloud providers like Kubernetes [(#10240)](https://github.com/prowler-cloud/prowler/pull/10240)
-
-### 🐛 Fixed
-
-- Use single-quoted PowerShell strings for M365 client secrets to prevent silent corruption of secrets containing `$`, `!`, `#` characters [(#9997)](https://github.com/prowler-cloud/prowler/pull/9997)
 
 ### 🔄 Changed
 
