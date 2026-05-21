@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -54,7 +54,7 @@ jobs:
 
       - name: Check for UI changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ui/**
@@ -67,7 +67,7 @@ jobs:
       - name: Get changed source files for targeted tests
         id: changed-source
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ui/**/*.ts
@@ -83,7 +83,7 @@ jobs:
       - name: Check for critical path changes (run all tests)
         id: critical-changes
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ui/lib/**
@@ -113,7 +113,7 @@ jobs:
 
       - name: Setup pnpm and Next.js cache
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             ${{ env.STORE_PATH }}
@@ -162,7 +162,7 @@ jobs:
       - name: Cache Playwright browsers
         if: steps.check-changes.outputs.any_changed == 'true'
         id: playwright-cache
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('ui/pnpm-lock.yaml') }}
