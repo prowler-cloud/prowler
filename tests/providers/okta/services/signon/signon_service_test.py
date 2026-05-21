@@ -1,5 +1,6 @@
 from unittest import mock
 
+from prowler.providers.okta.models import OktaIdentityInfo
 from prowler.providers.okta.services.signon.signon_service import (
     GlobalSessionPolicy,
     GlobalSessionPolicyRule,
@@ -7,7 +8,11 @@ from prowler.providers.okta.services.signon.signon_service import (
     Signon,
     _next_after_cursor,
 )
-from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
+from tests.providers.okta.okta_fixtures import (
+    OKTA_CLIENT_ID,
+    OKTA_ORG_DOMAIN,
+    set_mocked_okta_provider,
+)
 
 
 def _fake_policy(
@@ -183,6 +188,65 @@ class Test_Signon_service:
 
         assert service.global_session_policies == {}
 
+    def test_skips_policy_fetch_when_scope_missing(self):
+        identity = OktaIdentityInfo(
+            org_domain=OKTA_ORG_DOMAIN,
+            client_id=OKTA_CLIENT_ID,
+            granted_scopes=["okta.brands.read"],  # policies scope missing
+        )
+        provider = set_mocked_okta_provider(identity=identity)
+
+        list_policies_called = False
+
+        async def fake_list_policies(*_a, **_k):
+            nonlocal list_policies_called
+            list_policies_called = True
+            return ([], _resp({}), None)
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = fake_list_policies
+            mocked.list_brands = _empty_brands
+            mocked_client_cls.return_value = mocked
+            service = Signon(provider)
+
+        assert list_policies_called is False
+        assert service.global_session_policies == {}
+        assert service.missing_scope["global_session_policies"] == "okta.policies.read"
+        assert service.missing_scope["sign_in_pages"] is None
+
+    def test_unknown_granted_scopes_falls_back_to_attempting_fetch(self):
+        # When the JWT couldn't be decoded, granted_scopes is empty and the
+        # service must still attempt the fetch — preserves prior behavior.
+        identity = OktaIdentityInfo(
+            org_domain=OKTA_ORG_DOMAIN,
+            client_id=OKTA_CLIENT_ID,
+            granted_scopes=[],
+        )
+        provider = set_mocked_okta_provider(identity=identity)
+
+        list_policies_called = False
+
+        async def fake_list_policies(*_a, **_k):
+            nonlocal list_policies_called
+            list_policies_called = True
+            return ([], _resp({}), None)
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = fake_list_policies
+            mocked.list_brands = _empty_brands
+            mocked_client_cls.return_value = mocked
+            service = Signon(provider)
+
+        assert list_policies_called is True
+        assert service.missing_scope["global_session_policies"] is None
+        assert service.missing_scope["sign_in_pages"] is None
+
 
 class Test_Signon_service_brands:
     """Brand sign-in page fetching for the DOD banner check."""
@@ -307,6 +371,38 @@ class Test_Signon_service_brands:
             service = Signon(provider)
 
         assert service.sign_in_pages == {}
+
+    def test_skips_brand_fetch_when_scope_missing(self):
+        identity = OktaIdentityInfo(
+            org_domain=OKTA_ORG_DOMAIN,
+            client_id=OKTA_CLIENT_ID,
+            granted_scopes=["okta.policies.read"],  # brands scope missing
+        )
+        provider = set_mocked_okta_provider(identity=identity)
+
+        async def fake_list_policies(*_a, **_k):
+            return ([], _resp({}), None)
+
+        list_brands_called = False
+
+        async def fake_list_brands(*_a, **_k):
+            nonlocal list_brands_called
+            list_brands_called = True
+            return ([], _resp({}), None)
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = fake_list_policies
+            mocked.list_brands = fake_list_brands
+            mocked_client_cls.return_value = mocked
+            service = Signon(provider)
+
+        assert list_brands_called is False
+        assert service.sign_in_pages == {}
+        assert service.missing_scope["sign_in_pages"] == "okta.brands.read"
+        assert service.missing_scope["global_session_policies"] is None
 
     def test_handles_multiple_brands(self):
         provider = set_mocked_okta_provider()

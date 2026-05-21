@@ -1,4 +1,7 @@
 from prowler.lib.check.models import Check, CheckReportOkta
+from prowler.providers.okta.services.signon.lib.signon_helpers import (
+    missing_brand_scope_finding,
+)
 from prowler.providers.okta.services.signon.signon_client import signon_client
 from prowler.providers.okta.services.signon.signon_service import SignInPage
 
@@ -42,6 +45,12 @@ class signon_dod_warning_banner_configured(Check):
     def execute(self) -> list[CheckReportOkta]:
         org_domain = signon_client.provider.identity.org_domain
         findings: list[CheckReportOkta] = []
+
+        missing_scope = signon_client.missing_scope.get("sign_in_pages")
+        if missing_scope:
+            return [
+                missing_brand_scope_finding(self.metadata(), org_domain, missing_scope)
+            ]
 
         if not signon_client.sign_in_pages:
             placeholder = SignInPage(

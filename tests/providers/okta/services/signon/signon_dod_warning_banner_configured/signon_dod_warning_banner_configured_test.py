@@ -33,6 +33,30 @@ class Test_signon_dod_warning_banner_configured:
             assert findings[0].status == "MANUAL"
             assert "No Okta brands were retrieved" in findings[0].status_extended
 
+    def test_missing_brand_scope_returns_manual_finding_naming_the_scope(self):
+        signon_client = build_signon_client(
+            missing_scope={
+                "global_session_policies": None,
+                "sign_in_pages": "okta.brands.read",
+            }
+        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_okta_provider(),
+            ),
+            mock.patch(CHECK_PATH, new=signon_client),
+        ):
+            from prowler.providers.okta.services.signon.signon_dod_warning_banner_configured.signon_dod_warning_banner_configured import (
+                signon_dod_warning_banner_configured,
+            )
+
+            findings = signon_dod_warning_banner_configured().execute()
+            assert len(findings) == 1
+            assert findings[0].status == "MANUAL"
+            assert "okta.brands.read" in findings[0].status_extended
+            assert "missing the required" in findings[0].status_extended
+
     def test_pass_when_customized_page_contains_banner(self):
         page = sign_in_page(
             brand_id="brand-1",

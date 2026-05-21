@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, CheckReportOkta
 from prowler.providers.okta.services.signon.lib.signon_helpers import (
     active_policies,
+    missing_policy_scope_finding,
     no_active_policies_finding,
     policy_label,
     priority_one_active_rule,
@@ -32,6 +33,12 @@ class signon_global_session_idle_timeout_15min(Check):
             "okta_max_session_idle_minutes", DEFAULT_THRESHOLD_MINUTES
         )
         org_domain = signon_client.provider.identity.org_domain
+
+        missing_scope = signon_client.missing_scope.get("global_session_policies")
+        if missing_scope:
+            return [
+                missing_policy_scope_finding(self.metadata(), org_domain, missing_scope)
+            ]
 
         policies = active_policies(signon_client.global_session_policies)
         if not policies:

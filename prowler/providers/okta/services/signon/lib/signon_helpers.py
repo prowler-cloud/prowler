@@ -13,6 +13,7 @@ from prowler.lib.check.models import CheckReportOkta
 from prowler.providers.okta.services.signon.signon_service import (
     GlobalSessionPolicy,
     GlobalSessionPolicyRule,
+    SignInPage,
 )
 
 
@@ -89,4 +90,57 @@ def no_active_policies_finding(
     )
     report.status = "FAIL"
     report.status_extended = status_extended
+    return report
+
+
+_SCOPE_ADVICE = (
+    "Grant it on the service app's Okta API Scopes tab in the Okta Admin "
+    "Console, then re-run the check."
+)
+
+
+def missing_policy_scope_finding(
+    metadata, org_domain: str, scope: str
+) -> CheckReportOkta:
+    """Build the MANUAL finding for a sign-on policy check when the API scope is not granted."""
+    placeholder = GlobalSessionPolicy(
+        id="signon-policies-scope-missing",
+        name="(scope not granted)",
+        priority=1,
+        status="MISSING",
+        is_default=False,
+        rules=[],
+    )
+    report = CheckReportOkta(
+        metadata=metadata, resource=placeholder, org_domain=org_domain
+    )
+    report.status = "MANUAL"
+    report.status_extended = (
+        f"Could not retrieve Global Session Policies: the Okta service app "
+        f"is missing the required `{scope}` API scope. {_SCOPE_ADVICE}"
+    )
+    return report
+
+
+def missing_brand_scope_finding(
+    metadata, org_domain: str, scope: str
+) -> CheckReportOkta:
+    """Build the MANUAL finding for a brand/sign-in-page check when the API scope is not granted."""
+    placeholder = SignInPage(
+        brand_id="signon-brands-scope-missing",
+        brand_name="(scope not granted)",
+        is_customized=False,
+    )
+    report = CheckReportOkta(
+        metadata=metadata,
+        resource=placeholder,
+        org_domain=org_domain,
+        resource_name=placeholder.brand_name,
+        resource_id=placeholder.brand_id,
+    )
+    report.status = "MANUAL"
+    report.status_extended = (
+        f"Could not retrieve Okta brand sign-in pages: the Okta service app "
+        f"is missing the required `{scope}` API scope. {_SCOPE_ADVICE}"
+    )
     return report

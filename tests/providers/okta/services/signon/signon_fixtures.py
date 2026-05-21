@@ -22,12 +22,18 @@ def build_signon_client(
     policies: dict = None,
     audit_config: dict = None,
     sign_in_pages: dict = None,
+    missing_scope: dict = None,
 ):
     client = mock.MagicMock()
     client.global_session_policies = policies or {}
     client.provider = set_mocked_okta_provider()
     client.audit_config = audit_config or {}
     client.sign_in_pages = sign_in_pages or {}
+    # Default to "all scopes granted" so existing tests keep working.
+    client.missing_scope = missing_scope or {
+        "global_session_policies": None,
+        "sign_in_pages": None,
+    }
     return client
 
 

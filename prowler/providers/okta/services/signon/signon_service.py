@@ -29,6 +29,12 @@ def _next_after_cursor(resp) -> Optional[str]:
     return None
 
 
+REQUIRED_SCOPES: dict[str, str] = {
+    "global_session_policies": "okta.policies.read",
+    "sign_in_pages": "okta.brands.read",
+}
+
+
 class Signon(OktaService):
     """Fetches OKTA_SIGN_ON policies, rules, and brand sign-in pages.
 
@@ -41,14 +47,34 @@ class Signon(OktaService):
     customized page, the service falls back to the default sign-in page
     exposed by the Okta Management API and tracks it with
     `is_customized=False`.
+
+    Before each fetch the service compares its required OAuth scope
+    (see `REQUIRED_SCOPES`) against the access token's granted scopes
+    (`provider.identity.granted_scopes`). When a scope is known to be
+    missing, the fetch is skipped and the resource is recorded in
+    `self.missing_scope` so checks can report the missing scope explicitly
+    instead of emitting a misleading "no resources returned" finding.
+    When granted_scopes is empty (token decode unavailable), the service
+    treats permissions as unknown and attempts the fetch — preserving
+    the prior behavior.
     """
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
+        granted = set(getattr(provider.identity, "granted_scopes", None) or [])
+        self.missing_scope: dict[str, Optional[str]] = {
+            resource: (scope if granted and scope not in granted else None)
+            for resource, scope in REQUIRED_SCOPES.items()
+        }
+
         self.global_session_policies: dict[str, GlobalSessionPolicy] = (
-            self._list_global_session_policies()
+            {}
+            if self.missing_scope["global_session_policies"]
+            else self._list_global_session_policies()
         )
-        self.sign_in_pages: dict[str, SignInPage] = self._list_sign_in_pages()
+        self.sign_in_pages: dict[str, SignInPage] = (
+            {} if self.missing_scope["sign_in_pages"] else self._list_sign_in_pages()
+        )
 
     def _list_global_session_policies(self) -> dict:
         logger.info("Signon - Listing OKTA_SIGN_ON policies and rules...")

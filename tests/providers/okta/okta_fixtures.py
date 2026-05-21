@@ -23,6 +23,7 @@ def set_mocked_okta_provider(
         identity = OktaIdentityInfo(
             org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
+            granted_scopes=["okta.policies.read", "okta.brands.read"],
         )
 
     provider = MagicMock()

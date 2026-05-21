@@ -158,6 +158,20 @@ class Test_signon_global_session_cookies_not_persistent:
         assert findings[0].resource_name == "Default Policy"
         assert findings[0].status == "PASS"
 
+    def test_missing_scope_returns_manual_finding_naming_the_scope(self):
+        findings = _run_check(
+            build_signon_client(
+                missing_scope={
+                    "global_session_policies": "okta.policies.read",
+                    "sign_in_pages": None,
+                }
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "okta.policies.read" in findings[0].status_extended
+        assert "missing the required" in findings[0].status_extended
+
     def test_fail_when_all_policies_inactive(self):
         only_inactive = GlobalSessionPolicy(
             id="pol-default",
