@@ -138,6 +138,11 @@ To keep permissions focused:
 
 4. Continue through the wizard and finish. No principals need to be granted access in step 3 unless you want other identities to impersonate this account.
 
+<Note>
+To use this service account with `--organization-id`, additionally grant `roles/cloudasset.viewer` at the organization node and enable the Cloud Asset API in the service account's host project. See [Scanning a Specific GCP Organization](../organization). Without these, organization-wide scans silently fall back to listing only the projects accessible to the service account.
+
+</Note>
+
 ### Step 3: Generate a JSON Key
 
 1. Open the newly created service account, move to the **Keys** tab, and choose **Add key > Create new key**.

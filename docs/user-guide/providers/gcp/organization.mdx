@@ -11,8 +11,19 @@ prowler gcp --organization-id organization-id
 ```
 
 <Warning>
-Ensure the credentials used have one of the following roles at the organization level:
-Cloud Asset Viewer (`roles/cloudasset.viewer`), or Cloud Asset Owner (`roles/cloudasset.owner`).
+Ensure the credentials used have one of the following roles bound **at the organization node** (not at a project): Cloud Asset Viewer (`roles/cloudasset.viewer`) or Cloud Asset Owner (`roles/cloudasset.owner`). The role must be bound directly on the organization so the Cloud Asset API can enumerate projects across the whole hierarchy.
+
+```bash
+gcloud organizations add-iam-policy-binding <organization-id> \
+  --member="serviceAccount:<service-account-email>" \
+  --role="roles/cloudasset.viewer"
+```
+
+The Cloud Asset API (`cloudasset.googleapis.com`) must also be enabled in the project that owns the credentials (the service account's host project, or the quota project for user credentials):
+
+```bash
+gcloud services enable cloudasset.googleapis.com --project <credentials-project-id>
+```
 
 </Warning>
 <Note>
