@@ -172,7 +172,7 @@
       "@react-aria/ssr>react-dom": "19.2.6",
       "@react-aria/visually-hidden>react": "19.2.6",
       "fast-xml-parser": "5.8.0",
-      "hono": "4.12.18",
+      "hono": "4.12.19",
       "lodash": "4.18.1",
       "lodash-es": "4.18.1",
       "minimatch@>=9 <10": "9.0.7",
