@@ -6,7 +6,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🚀 Added
 
-- Dora compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131) 
+- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
 
 ---
 
