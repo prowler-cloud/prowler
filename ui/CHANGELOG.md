@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - `okta` provider support with OAuth 2.0 private-key JWT credentials form (client ID + PEM private key) [(#11213)](https://github.com/prowler-cloud/prowler/pull/11213)
+- "Resource Metadata / Evidence" tab in the finding detail drawer—reachable from the compliance requirement findings view, the Findings page, and the Resources view—rendering the affected resource's details and metadata as syntax-highlighted JSON with copy-to-clipboard, via a shared `ResourceMetadataPanel` also reused by the resource detail view [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
 ---
 

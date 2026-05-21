@@ -7,7 +7,6 @@ import { useState } from "react";
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
-  Card,
   Tabs,
   TabsContent,
   TabsList,
@@ -23,10 +22,7 @@ import {
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { ExternalResourceLink } from "@/components/shared/external-resource-link";
-import {
-  QUERY_EDITOR_LANGUAGE,
-  QueryCodeEditor,
-} from "@/components/shared/query-code-editor";
+import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
@@ -44,29 +40,6 @@ import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-const parseMetadata = (
-  metadata: Record<string, unknown> | string | null | undefined,
-): Record<string, unknown> | null => {
-  if (!metadata) return null;
-
-  if (typeof metadata === "string") {
-    try {
-      const parsed = JSON.parse(metadata);
-      return typeof parsed === "object" && parsed !== null ? parsed : null;
-    } catch {
-      return null;
-    }
-  }
-
-  // After the !metadata check above, metadata can only be object at this point
-  // (null was already filtered, string was handled)
-  if (typeof metadata === "object") {
-    return metadata as Record<string, unknown>;
-  }
-
-  return null;
 };
 
 const buildCustomBreadcrumbs = (
@@ -202,9 +175,6 @@ export const ResourceDetailContent = ({
     attributes.groups && attributes.groups.length > 0
       ? attributes.groups.map(getGroupLabel).join(", ")
       : "-";
-  const parsedMetadata = parseMetadata(attributes.metadata);
-  const hasMetadata =
-    parsedMetadata !== null && Object.entries(parsedMetadata).length > 0;
   const tagEntries = Object.entries(resourceTags);
   const hasTags = tagEntries.length > 0;
 
@@ -403,38 +373,10 @@ export const ResourceDetailContent = ({
             </TabsContent>
 
             <TabsContent value="metadata" className="flex flex-col gap-4">
-              {attributes.details && attributes.details.trim() !== "" && (
-                <Card variant="inner">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Details:
-                    </span>
-                    <p className="text-text-neutral-primary text-sm break-words whitespace-pre-wrap">
-                      {attributes.details}
-                    </p>
-                  </div>
-                </Card>
-              )}
-
-              {hasMetadata && parsedMetadata && (
-                <QueryCodeEditor
-                  ariaLabel="Resource metadata"
-                  visibleLabel={null}
-                  language={QUERY_EDITOR_LANGUAGE.JSON}
-                  value={JSON.stringify(parsedMetadata, null, 2)}
-                  copyValue={JSON.stringify(parsedMetadata, null, 2)}
-                  editable={false}
-                  minHeight={220}
-                  showCopyButton
-                  onChange={() => {}}
-                />
-              )}
-
-              {!attributes.details?.trim() && !hasMetadata && (
-                <p className="text-text-neutral-tertiary py-8 text-center text-sm">
-                  No metadata available for this resource.
-                </p>
-              )}
+              <ResourceMetadataPanel
+                metadata={attributes.metadata}
+                details={attributes.details}
+              />
             </TabsContent>
 
             <TabsContent value="tags" className="flex flex-col gap-4">
