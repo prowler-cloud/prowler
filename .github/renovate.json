@@ -83,18 +83,6 @@
       ]
     },
     {
-      "description": "Helm charts - single grouped PR, scope=helm",
-      "matchManagers": [
-        "helmv3"
-      ],
-      "groupName": "helm charts",
-      "semanticCommitScope": "helm",
-      "addLabels": [
-        "no-changelog",
-        "helm"
-      ]
-    },
-    {
       "description": "UI - scope=ui",
       "matchFileNames": [
         "ui/**"
