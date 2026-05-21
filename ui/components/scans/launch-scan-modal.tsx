@@ -29,6 +29,9 @@ export function LaunchScanModal({
   const [scanAlias, setScanAlias] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const disconnectedProviderIds = providers
+    .filter((provider) => provider.attributes.connection.connected !== true)
+    .map((provider) => provider.id);
 
   const closeModal = () => {
     setProviderId("");
@@ -94,6 +97,7 @@ export function LaunchScanModal({
           <AccountsSelector
             id="launch-scan-account"
             providers={providers}
+            disabledValues={disconnectedProviderIds}
             onBatchChange={(_, values) => setProviderId(values.at(-1) ?? "")}
             selectedValues={providerId ? [providerId] : []}
           />

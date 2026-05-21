@@ -50,11 +50,13 @@ vi.mock("@/components/ui/entities", () => ({
 
 vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
   AccountsSelector: ({
+    disabledValues = [],
     providers,
     onBatchChange,
     selectedValues,
     id,
   }: {
+    disabledValues?: string[];
     providers: { id: string; attributes: { alias: string; uid: string } }[];
     onBatchChange: (filterKey: string, values: string[]) => void;
     selectedValues: string[];
@@ -72,7 +74,11 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
       >
         <option value="">All accounts</option>
         {providers.map((provider) => (
-          <option key={provider.id} value={provider.id}>
+          <option
+            key={provider.id}
+            value={provider.id}
+            disabled={disabledValues.includes(provider.id)}
+          >
             {provider.attributes.alias || provider.attributes.uid}
           </option>
         ))}
@@ -121,6 +127,20 @@ const provider = {
   },
 };
 
+const disconnectedProvider = {
+  ...provider,
+  id: "provider-2",
+  attributes: {
+    ...provider.attributes,
+    alias: "Disconnected",
+    uid: "210987654321",
+    connection: {
+      connected: false,
+      last_checked_at: "2026-05-20T11:46:38.834045Z",
+    },
+  },
+};
+
 describe("LaunchScanModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -133,6 +153,18 @@ describe("LaunchScanModal", () => {
     );
 
     expect(screen.getByPlaceholderText("Search accounts...")).toBeVisible();
+  });
+
+  it("disables disconnected providers in the launch selector", () => {
+    render(
+      <LaunchScanModal
+        open
+        onOpenChange={vi.fn()}
+        providers={[provider, disconnectedProvider]}
+      />,
+    );
+
+    expect(screen.getByRole("option", { name: "Disconnected" })).toBeDisabled();
   });
 
   it("submits alias as scanName so the API stores it as the scan alias", async () => {

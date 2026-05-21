@@ -44,7 +44,7 @@ export default async function Scans({
         <ScansProvidersEmptyState thereIsNoProviders={thereIsNoProviders} />
       ) : (
         <ScansPageShell
-          providers={connectedProviders}
+          providers={providers}
           hasManageScansPermission={hasManageScansPermission}
         >
           <Suspense fallback={<SkeletonTableScans />}>
