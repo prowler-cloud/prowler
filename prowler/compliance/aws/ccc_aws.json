@@ -49,6 +49,7 @@
         "elb_insecure_ssl_ciphers",
         "elb_ssl_listeners",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "elbv2_ssl_listeners",
         "elbv2_nlb_tls_termination_enabled",
         "s3_bucket_secure_transport_policy",
