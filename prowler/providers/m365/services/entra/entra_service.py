@@ -3,7 +3,7 @@ import json
 from asyncio import gather
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import UUID
 
 from kiota_abstractions.base_request_configuration import RequestConfiguration
@@ -109,6 +109,19 @@ class Entra(M365Service):
         self.service_principals: Dict[str, "ServicePrincipal"] = attributes[10]
         self.app_registrations: Dict[str, "AppRegistration"] = attributes[11]
         self.user_accounts_status = {}
+
+        # Resolve directory-object identifiers referenced by Conditional Access
+        # policies. This runs as a separate phase because it depends on the
+        # main gather having populated ``conditional_access_policies`` first.
+        # The result is cached on the instance so sync checks can read it
+        # without issuing Graph calls of their own.
+        self.unresolved_directory_object_references: Set[Tuple[str, str]] = (
+            loop.run_until_complete(
+                self._resolve_directory_object_references(
+                    self.conditional_access_policies
+                )
+            )
+        )
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -1315,6 +1328,118 @@ OAuthAppInfo
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return app_registrations
+
+    async def _resolve_directory_object_references(
+        self,
+        policies: Dict[str, "ConditionalAccessPolicy"],
+    ) -> Set[Tuple[str, str]]:
+        """Resolve every user/group/role identifier referenced by CA policies.
+
+        Walks the inclusion/exclusion collections of every loaded Conditional
+        Access policy, deduplicates the resulting identifiers per type, and
+        queries Microsoft Graph for each one. Identifiers that return HTTP 404
+        are reported as deleted. Non-404 errors (5xx, throttling, transient
+        network failures) are logged and skipped — they must not be flagged as
+        deletions per the related check's specification.
+
+        The sentinel values ``All``, ``None``, and ``GuestsOrExternalUsers``
+        are not directory identifiers and are excluded before any Graph call.
+
+        Args:
+            policies: Conditional Access policies keyed by policy ID.
+
+        Returns:
+            Set[Tuple[str, str]]: ``(type, identifier)`` pairs where ``type``
+                is one of ``user|group|role`` and ``identifier`` failed to
+                resolve via Graph with HTTP 404.
+        """
+        logger.info(
+            "Entra - Resolving directory-object references in Conditional "
+            "Access policies..."
+        )
+
+        sentinels = {"All", "None", "GuestsOrExternalUsers"}
+        ids_by_type: Dict[str, Set[str]] = {
+            "user": set(),
+            "group": set(),
+            "role": set(),
+        }
+
+        for policy in policies.values():
+            if not getattr(policy, "conditions", None):
+                continue
+            user_conditions = getattr(policy.conditions, "user_conditions", None)
+            if user_conditions is None:
+                continue
+            for ident in (user_conditions.included_users or []) + (
+                user_conditions.excluded_users or []
+            ):
+                if ident and ident not in sentinels:
+                    ids_by_type["user"].add(ident)
+            for ident in (user_conditions.included_groups or []) + (
+                user_conditions.excluded_groups or []
+            ):
+                if ident and ident not in sentinels:
+                    ids_by_type["group"].add(ident)
+            for ident in (user_conditions.included_roles or []) + (
+                user_conditions.excluded_roles or []
+            ):
+                if ident and ident not in sentinels:
+                    ids_by_type["role"].add(ident)
+
+        unresolved: Set[Tuple[str, str]] = set()
+
+        # Resolve types in parallel; within a type, walk identifiers serially
+        # to keep concurrent Graph calls bounded and avoid throttling.
+        await gather(
+            self._resolve_identifiers_for_type("user", ids_by_type["user"], unresolved),
+            self._resolve_identifiers_for_type(
+                "group", ids_by_type["group"], unresolved
+            ),
+            self._resolve_identifiers_for_type("role", ids_by_type["role"], unresolved),
+        )
+        return unresolved
+
+    async def _resolve_identifiers_for_type(
+        self,
+        type_: str,
+        identifiers: Set[str],
+        unresolved: Set[Tuple[str, str]],
+    ) -> None:
+        """Resolve a set of identifiers of a given type, mutating ``unresolved``.
+
+        Only HTTP 404 responses add to the unresolved set; every other error
+        is logged and treated as 'unknown' (the identifier is not flagged).
+        """
+        for identifier in identifiers:
+            try:
+                if type_ == "user":
+                    await self.client.users.by_user_id(identifier).get()
+                elif type_ == "group":
+                    await self.client.groups.by_group_id(identifier).get()
+                elif type_ == "role":
+                    await self.client.role_management.directory.role_definitions.by_unified_role_definition_id(
+                        identifier
+                    ).get()
+                else:
+                    continue
+            except ODataError as error:
+                status_code = getattr(error, "response_status_code", None)
+                error_code = getattr(error.error, "code", None) if error.error else None
+                if status_code == 404 or error_code == "Request_ResourceNotFound":
+                    unresolved.add((type_, identifier))
+                else:
+                    logger.warning(
+                        f"Entra - Could not resolve {type_} '{identifier}' for "
+                        f"Conditional Access reference check: "
+                        f"{error.__class__.__name__}: {error}"
+                    )
+            except Exception as error:
+                logger.warning(
+                    f"Entra - Unexpected error resolving {type_} '{identifier}' "
+                    f"for Conditional Access reference check: "
+                    f"{error.__class__.__name__}: {error}"
+                )
 
 
 class ConditionalAccessPolicyState(Enum):

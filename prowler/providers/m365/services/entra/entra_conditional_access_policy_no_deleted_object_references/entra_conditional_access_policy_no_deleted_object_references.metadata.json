@@ -1,0 +1,42 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_no_deleted_object_references",
+  "CheckTitle": "Conditional Access policies must not reference deleted users, groups, or roles",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Every object identifier referenced by any Conditional Access policy under conditions.users (includeUsers, excludeUsers, includeGroups, excludeGroups, includeRoles, excludeRoles) must resolve to an existing Microsoft Entra object. This check audits all Conditional Access policies regardless of state and reports any whose user, group, or role references no longer resolve in the directory.",
+  "Risk": "When a user, group, or directory role referenced by a Conditional Access policy stops resolving (account or group deleted, role template removed), the reference becomes orphaned. include* references silently shrink the policy's enforcement scope; exclude* references can cause the policy to evaluate unexpectedly. This is a common root cause of MFA-not-applied incidents.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccesspolicy?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessusers?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/user-get?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/group-get?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/unifiedroledefinition-get?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-users-groups"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Navigate to Protection > Conditional Access > Policies\n3. Open each policy reported by this check\n4. Under Assignments > Users, remove every user, group, or role identifier reported as deleted\n5. Save the policy and re-run the audit\n6. For ongoing hygiene, audit Conditional Access policies after any bulk user/group/role cleanup",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Audit each Conditional Access policy quarterly and remove references to deleted users, groups, or directory roles. Stale references in include collections silently shrink enforcement scope; stale references in exclude collections can cause policies to behave unexpectedly. Treat both as misconfigurations regardless of policy state.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_no_deleted_object_references"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The check runs against all Conditional Access policies regardless of state (enabled, disabled, enabledForReportingButNotEnforced) — stale references in disabled policies are a misconfiguration that becomes live the moment the policy is re-enabled. Transient Graph errors (5xx, throttling) are not treated as deletions; only HTTP 404 responses flag an identifier as orphaned."
+}
