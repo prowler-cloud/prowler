@@ -17,6 +17,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
 
+### 🐞 Fixed
+
+- Container image now uses an absolute `ENTRYPOINT` (`/home/prowler/.venv/bin/prowler`) so it works under any runtime `--workdir`. The relative entrypoint was breaking the official GitHub Action (`prowler-cloud/prowler@v5.27.0`) and any `docker run` with a custom `-w` [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
 ---
 
 ## [5.27.1] (Prowler v5.27.1)
