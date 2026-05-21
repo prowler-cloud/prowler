@@ -145,25 +145,16 @@ jobs:
           pip install --no-cache-dir "uv==0.11.14"
           (cd api && uv lock)
 
-      - name: Pin prowler SDK to latest release branch (v5.Y) commit and refresh lockfile
+      - name: Refresh prowler SDK pin to latest release branch (v5.Y) commit
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
-          set -e
-          # RELEASE_TAG looks like "5.14.0"; the SDK release branch is "v5.14".
-          VERSION="${RELEASE_TAG#v}"
-          VERSION_BRANCH="v$(echo "${VERSION}" | cut -d. -f1,2)"
-          LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git "refs/heads/${VERSION_BRANCH}" | cut -f1)
-          if [ -z "${LATEST_SHA}" ]; then
-            echo "ERROR: release branch ${VERSION_BRANCH} not found in prowler-cloud/prowler"
-            exit 1
-          fi
-          echo "Pinning SDK to ${VERSION_BRANCH}@${LATEST_SHA}"
-          sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
-          # Refresh api/uv.lock so it matches the pinned SHA above; the API
-          # Dockerfile runs `uv sync --locked`, which aborts on any drift
-          # between pyproject.toml and uv.lock.
+          # pyproject.toml is already pinned to `@v5.X` by prepare-release.yml; force uv
+          # to re-resolve so uv.lock captures the current branch tip at deploy time.
+          # The SDK release on prowler-cloud/prowler is published AFTER this release
+          # event, so the matching SDK tag doesn't exist yet here — the v5.X branch
+          # tip is the commit that will become that SDK release.
           pip install --no-cache-dir "uv==0.11.14"
-          (cd api && uv lock)
+          (cd api && uv lock --upgrade-package prowler)
 
       - name: Login to DockerHub
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
