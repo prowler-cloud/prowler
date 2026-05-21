@@ -53,7 +53,7 @@ dependencies = [
   "h2 (==4.3.0)",
   "markdown (==3.10.2)",
   "drf-simple-apikey (==2.2.1)",
-  "matplotlib (==3.10.8)",
+  "matplotlib (==3.10.9)",
   "reportlab (==4.4.10)",
   "neo4j (==6.1.0)",
   "cartography (==0.135.0)",
