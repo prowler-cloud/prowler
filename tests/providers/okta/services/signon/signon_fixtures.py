@@ -119,9 +119,9 @@ def sign_in_page(
     )
 
 
-# Two distinctive marker phrases from the DTM-08-060 banner — enough to
-# meet the check's MIN_MARKER_MATCHES=2 threshold without reproducing the
-# full ~1300-char banner verbatim in tests.
+# Condensed DTM-08-060 banner that covers all four marker groups the check
+# requires (see BANNER_MARKER_GROUPS in the check module). Lets PASS tests
+# avoid pasting the full ~1300-char banner verbatim.
 DOD_BANNER_HTML_SNIPPET = (
     "<div>You are accessing a U.S. Government (USG) Information System "
     "(IS) that is provided for USG-authorized use only. "
