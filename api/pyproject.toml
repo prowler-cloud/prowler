@@ -23,7 +23,7 @@ dev = [
 [project]
 authors = [{name = "Prowler Engineering", email = "engineering@prowler.com"}]
 dependencies = [
-  "celery (==5.6.2)",
+  "celery (==5.6.3)",
   "dj-rest-auth[with_social,jwt] (==7.0.1)",
   "django (==5.1.15)",
   "django-allauth[saml] (==65.15.0)",
