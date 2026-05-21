@@ -133,17 +133,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Pin prowler SDK to latest master commit and refresh lockfile
+      - name: Refresh prowler SDK pin to latest master commit
         if: github.event_name == 'push'
         run: |
-          set -e
-          LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git refs/heads/master | cut -f1)
-          sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
-          # Refresh api/uv.lock so it matches the pinned SHA above; the API
-          # Dockerfile runs `uv sync --locked`, which aborts on any drift
-          # between pyproject.toml and uv.lock.
+          # pyproject.toml stays at `@master`; force uv to re-resolve so uv.lock
+          # captures the current master tip at build time. Dockerfile runs
+          # `uv sync --locked`, which is what actually drives the install.
           pip install --no-cache-dir "uv==0.11.14"
-          (cd api && uv lock)
+          (cd api && uv lock --upgrade-package prowler)
 
       - name: Refresh prowler SDK pin to latest release branch (v5.Y) commit
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
