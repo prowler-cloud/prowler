@@ -1,9 +1,7 @@
 from collections.abc import Iterable, Mapping
 
 from api.models import Provider
-from prowler.lib.check.compliance_models import (
-    get_bulk_compliance_frameworks_universal,
-)
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
 
 AVAILABLE_COMPLIANCE_FRAMEWORKS = {}
@@ -96,22 +94,25 @@ PROWLER_CHECKS = LazyChecksMapping()
 
 
 def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[str]:
-    """List compliance framework identifiers available for `provider_type`.
+    """List compliance frameworks the API can load for `provider_type`.
 
-    Includes both per-provider frameworks and universal top-level frameworks
-    (e.g. ``dora``, ``csa_ccm_4.0``).
+    The list is sourced from `Compliance.get_bulk` so that the names
+    returned here are guaranteed to be loadable by the bulk loader. This
+    prevents downstream key mismatches (e.g. CSV report generation iterating
+    framework names and looking them up in the bulk dict).
 
     Args:
-        provider_type (Provider.ProviderChoices): The cloud provider type
-            (e.g., "aws", "azure", "gcp", "m365").
+        provider_type (Provider.ProviderChoices): The cloud provider type for which to retrieve
+            available compliance frameworks (e.g., "aws", "azure", "gcp", "m365").
 
     Returns:
-        list[str]: Framework identifiers (e.g., "cis_1.4_aws", "dora").
+        list[str]: A list of framework identifiers (e.g., "cis_1.4_aws", "mitre_attack_azure") available
+        for the given provider.
     """
     global AVAILABLE_COMPLIANCE_FRAMEWORKS
     if provider_type not in AVAILABLE_COMPLIANCE_FRAMEWORKS:
         AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type] = list(
-            get_bulk_compliance_frameworks_universal(provider_type).keys()
+            Compliance.get_bulk(provider_type).keys()
         )
 
     return AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type]
@@ -138,14 +139,18 @@ def get_prowler_provider_compliance(provider_type: Provider.ProviderChoices) -> 
     """
     Retrieve the Prowler compliance data for a specified provider type.
 
+    This function fetches the compliance frameworks and their associated
+    requirements for the given cloud provider.
+
     Args:
         provider_type (Provider.ProviderChoices): The provider type
             (e.g., 'aws', 'azure') for which to retrieve compliance data.
 
     Returns:
-        dict: Mapping of framework name to `ComplianceFramework` for the provider.
+        dict: A dictionary mapping compliance framework names to their respective
+            Compliance objects for the specified provider.
     """
-    return get_bulk_compliance_frameworks_universal(provider_type)
+    return Compliance.get_bulk(provider_type)
 
 
 def _load_provider_assets(provider_type: Provider.ProviderChoices) -> tuple[dict, dict]:
@@ -204,8 +209,8 @@ def load_prowler_checks(
         for compliance_name, compliance_data in prowler_compliance.get(
             provider_type, {}
         ).items():
-            for requirement in compliance_data.requirements:
-                for check in requirement.checks.get(provider_type, []):
+            for requirement in compliance_data.Requirements:
+                for check in requirement.Checks:
                     try:
                         checks[provider_type][check].add(compliance_name)
                     except KeyError:
@@ -285,33 +290,24 @@ def generate_compliance_overview_template(
             requirements_status = {"passed": 0, "failed": 0, "manual": 0}
             total_requirements = 0
 
-            for requirement in compliance_data.requirements:
+            for requirement in compliance_data.Requirements:
                 total_requirements += 1
-                provider_check_list = list(requirement.checks.get(provider_type, []))
-                total_checks = len(provider_check_list)
-                checks_dict = {check: None for check in provider_check_list}
+                total_checks = len(requirement.Checks)
+                checks_dict = {check: None for check in requirement.Checks}
 
                 req_status_val = "MANUAL" if total_checks == 0 else "PASS"
 
-                # Normalize `attributes` to a list — downstream consumers iterate it.
-                if isinstance(requirement.attributes, dict):
-                    attributes_payload = (
-                        [dict(requirement.attributes)] if requirement.attributes else []
-                    )
-                else:
-                    attributes_payload = [
-                        dict(attribute) for attribute in requirement.attributes
-                    ]
-
                 # Build requirement dictionary
                 requirement_dict = {
-                    "name": requirement.name or requirement.id,
-                    "description": requirement.description,
-                    "tactics": requirement.tactics or [],
-                    "subtechniques": requirement.sub_techniques or [],
-                    "platforms": requirement.platforms or [],
-                    "technique_url": requirement.technique_url or "",
-                    "attributes": attributes_payload,
+                    "name": requirement.Name or requirement.Id,
+                    "description": requirement.Description,
+                    "tactics": getattr(requirement, "Tactics", []),
+                    "subtechniques": getattr(requirement, "SubTechniques", []),
+                    "platforms": getattr(requirement, "Platforms", []),
+                    "technique_url": getattr(requirement, "TechniqueURL", ""),
+                    "attributes": [
+                        dict(attribute) for attribute in requirement.Attributes
+                    ],
                     "checks": checks_dict,
                     "checks_status": {
                         "pass": 0,
@@ -329,15 +325,15 @@ def generate_compliance_overview_template(
                     requirements_status["passed"] += 1
 
                 # Add requirement to compliance requirements
-                compliance_requirements[requirement.id] = requirement_dict
+                compliance_requirements[requirement.Id] = requirement_dict
 
             # Build compliance dictionary
             compliance_dict = {
-                "framework": compliance_data.framework,
-                "name": compliance_data.name,
-                "version": compliance_data.version,
+                "framework": compliance_data.Framework,
+                "name": compliance_data.Name,
+                "version": compliance_data.Version,
                 "provider": provider_type,
-                "description": compliance_data.description,
+                "description": compliance_data.Description,
                 "requirements": compliance_requirements,
                 "requirements_status": requirements_status,
                 "total_requirements": total_requirements,

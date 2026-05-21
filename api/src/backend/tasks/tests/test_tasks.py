@@ -321,7 +321,6 @@ class TestGenerateOutputs:
 
         mock_transformed_stats = {"some": "stats"}
         with (
-            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
                 return_value=mock_transformed_stats,
@@ -440,7 +439,6 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
-            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -596,7 +594,6 @@ class TestGenerateOutputs:
         ]
 
         with (
-            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
             patch(
                 "tasks.tasks.Provider.objects.get",
@@ -671,7 +668,6 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
-            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -1083,7 +1079,6 @@ class TestCheckIntegrationsTask:
             enabled=True,
         )
 
-    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1116,7 +1111,6 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
-        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is generated for AWS providers with SecurityHub integration."""
         # Setup
@@ -1213,7 +1207,6 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
-    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1246,7 +1239,6 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
-        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for AWS providers without SecurityHub integration."""
         # Setup
@@ -1340,7 +1332,6 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
-    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.ScanSummary.objects.filter")
     @patch("tasks.tasks.Provider.objects.get")
     @patch("tasks.tasks.initialize_prowler_provider")
@@ -1369,7 +1360,6 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider,
         mock_provider_get,
         mock_scan_summary,
-        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for non-AWS providers (e.g., Azure, GCP)."""
         # Setup

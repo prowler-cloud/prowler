@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.28.0
+  version: 1.29.0
   description: |-
     Prowler API specification.
 
@@ -373,6 +373,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -389,6 +390,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -412,6 +414,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -430,6 +433,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -1453,6 +1457,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1469,6 +1474,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1491,6 +1497,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -1509,6 +1516,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -1997,6 +2005,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2013,6 +2022,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2035,6 +2045,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -2053,6 +2064,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -2584,6 +2596,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2600,6 +2613,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2622,6 +2636,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -2640,6 +2655,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -3134,6 +3150,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -3150,6 +3167,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3173,6 +3191,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -3191,6 +3210,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -3740,6 +3760,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -3756,6 +3777,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3779,6 +3801,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -3797,6 +3820,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -4254,6 +4278,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4270,6 +4295,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4293,6 +4319,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -4311,6 +4338,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -4766,6 +4794,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4782,6 +4811,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4805,6 +4835,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -4823,6 +4854,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -5266,6 +5298,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5282,6 +5315,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5305,6 +5339,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -5323,6 +5358,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -7156,6 +7192,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7172,6 +7209,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7195,6 +7233,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -7213,6 +7252,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -7335,6 +7375,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7351,6 +7392,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7374,6 +7416,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -7392,6 +7435,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -7503,6 +7547,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7519,6 +7564,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7541,6 +7587,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -7559,6 +7606,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -7702,6 +7750,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7718,6 +7767,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7741,6 +7791,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -7759,6 +7810,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -7915,6 +7967,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7931,6 +7984,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7954,6 +8008,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -7972,6 +8027,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -8122,6 +8178,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8138,6 +8195,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -8160,6 +8218,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -8178,6 +8237,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -8370,6 +8430,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8386,6 +8447,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -8409,6 +8471,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -8427,6 +8490,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -8548,6 +8612,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8564,6 +8629,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -8587,6 +8653,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -8605,6 +8672,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -8750,6 +8818,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8766,6 +8835,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -8789,6 +8859,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -8807,6 +8878,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -9593,6 +9665,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -9609,6 +9682,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider__in]
         schema:
@@ -9632,6 +9706,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -9650,6 +9725,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -9673,6 +9749,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -9689,6 +9766,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -9712,6 +9790,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -9730,6 +9809,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -10400,6 +10480,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -10416,6 +10497,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -10439,6 +10521,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -10457,6 +10540,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -10951,6 +11035,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -10967,6 +11052,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -10990,6 +11076,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -11008,6 +11095,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -11315,6 +11403,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -11331,6 +11420,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -11354,6 +11444,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -11372,6 +11463,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -11685,6 +11777,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -11701,6 +11794,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -11724,6 +11818,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -11742,6 +11837,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -12580,6 +12676,7 @@ paths:
           - openstack
           - oraclecloud
           - vercel
+          - okta
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -12596,6 +12693,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -12619,6 +12717,7 @@ paths:
             - openstack
             - oraclecloud
             - vercel
+            - okta
         description: |-
           Multiple values may be separated by commas.
 
@@ -12637,6 +12736,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -13037,59 +13137,8 @@ paths:
       responses:
         '200':
           description: CSV file containing the compliance report
-        '202':
-          description: The task is in progress
-        '403':
-          description: There is a problem with credentials
         '404':
-          description: Compliance report not found, or the scan has no reports yet
-  /api/v1/scans/{id}/compliance/{name}/ocsf:
-    get:
-      operationId: scans_compliance_ocsf_retrieve
-      description: Download a specific compliance report as an OCSF JSON file. Only
-        universal frameworks that declare an output configuration produce this artifact
-        (currently 'dora' and 'csa_ccm_4.0'); any other framework returns 404.
-      summary: Retrieve compliance report as OCSF JSON
-      parameters:
-      - in: query
-        name: fields[scan-reports]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - name
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scan.
-        required: true
-      - in: path
-        name: name
-        schema:
-          type: string
-        description: The compliance report name, like 'dora'
-        required: true
-      tags:
-      - Scan
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          description: OCSF JSON file containing the compliance report
-        '202':
-          description: The task is in progress
-        '403':
-          description: There is a problem with credentials
-        '404':
-          description: Compliance report not found, the framework does not provide
-            an OCSF export, or the scan has no reports yet
+          description: Compliance report not found
   /api/v1/scans/{id}/csa:
     get:
       operationId: scans_csa_retrieve
@@ -20167,6 +20216,23 @@ components:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
                   - type: object
+                    title: Okta OAuth Credentials
+                    properties:
+                      okta_client_id:
+                        type: string
+                        description: Client ID of the Okta API Services app used for OAuth 2.0 private-key JWT authentication.
+                      okta_private_key:
+                        type: string
+                        description: PEM-encoded private key whose matching public key (JWK) is registered on the Okta service app.
+                      okta_scopes:
+                        type: array
+                        items:
+                          type: string
+                        description: OAuth scopes to request. Optional; defaults to the minimum set required to run the currently enabled Okta checks.
+                    required:
+                      - okta_client_id
+                      - okta_private_key
+                  - type: object
                     title: Vercel API Token
                     properties:
                       api_token:
@@ -21178,6 +21244,7 @@ components:
               - image
               - googleworkspace
               - vercel
+              - okta
               type: string
               description: |-
                 * `aws` - AWS
@@ -21195,6 +21262,7 @@ components:
                 * `image` - Image
                 * `googleworkspace` - Google Workspace
                 * `vercel` - Vercel
+                * `okta` - Okta
               x-spec-enum-id: 91f917e0c3ab97e8
             uid:
               type: string
@@ -21316,6 +21384,7 @@ components:
               - image
               - googleworkspace
               - vercel
+              - okta
               type: string
               x-spec-enum-id: 91f917e0c3ab97e8
               description: |-
@@ -21336,6 +21405,7 @@ components:
                 * `image` - Image
                 * `googleworkspace` - Google Workspace
                 * `vercel` - Vercel
+                * `okta` - Okta
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -21388,6 +21458,7 @@ components:
                   - image
                   - googleworkspace
                   - vercel
+                  - okta
                   type: string
                   x-spec-enum-id: 91f917e0c3ab97e8
                   description: |-
@@ -21408,6 +21479,7 @@ components:
                     * `image` - Image
                     * `googleworkspace` - Google Workspace
                     * `vercel` - Vercel
+                    * `okta` - Okta
                 uid:
                   type: string
                   minLength: 3
@@ -22258,6 +22330,23 @@ components:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
               - type: object
+                title: Okta OAuth Credentials
+                properties:
+                  okta_client_id:
+                    type: string
+                    description: Client ID of the Okta API Services app used for OAuth 2.0 private-key JWT authentication.
+                  okta_private_key:
+                    type: string
+                    description: PEM-encoded private key whose matching public key (JWK) is registered on the Okta service app.
+                  okta_scopes:
+                    type: array
+                    items:
+                      type: string
+                    description: OAuth scopes to request. Optional; defaults to the minimum set required to run the currently enabled Okta checks.
+                required:
+                  - okta_client_id
+                  - okta_private_key
+              - type: object
                 title: Vercel API Token
                 properties:
                   api_token:
@@ -22682,6 +22771,23 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
+                  - type: object
+                    title: Okta OAuth Credentials
+                    properties:
+                      okta_client_id:
+                        type: string
+                        description: Client ID of the Okta API Services app used for OAuth 2.0 private-key JWT authentication.
+                      okta_private_key:
+                        type: string
+                        description: PEM-encoded private key whose matching public key (JWK) is registered on the Okta service app.
+                      okta_scopes:
+                        type: array
+                        items:
+                          type: string
+                        description: OAuth scopes to request. Optional; defaults to the minimum set required to run the currently enabled Okta checks.
+                    required:
+                      - okta_client_id
+                      - okta_private_key
                   - type: object
                     title: Vercel API Token
                     properties:
@@ -23117,6 +23223,23 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
+              - type: object
+                title: Okta OAuth Credentials
+                properties:
+                  okta_client_id:
+                    type: string
+                    description: Client ID of the Okta API Services app used for OAuth 2.0 private-key JWT authentication.
+                  okta_private_key:
+                    type: string
+                    description: PEM-encoded private key whose matching public key (JWK) is registered on the Okta service app.
+                  okta_scopes:
+                    type: array
+                    items:
+                      type: string
+                    description: OAuth scopes to request. Optional; defaults to the minimum set required to run the currently enabled Okta checks.
+                required:
+                  - okta_client_id
+                  - okta_private_key
               - type: object
                 title: Vercel API Token
                 properties:

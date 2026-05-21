@@ -162,30 +162,6 @@ export const pickLatestCisPerProvider = (
 };
 
 /**
- * Compliance IDs that ship a per-framework OCSF JSON export.
- *
- * Only universal compliance frameworks that declare an ``outputs`` block in
- * their schema (see ``prowler/compliance/<name>.json``) produce a dedicated
- * OCSF artifact during scan output generation. Today that is DORA and
- * CSA CCM 4.0. Any other framework only offers CSV (and, for the curated
- * list above, PDF).
- *
- * Keep this Set in lock-step with the backend: ``get_prowler_provider_compliance``
- * + ``ComplianceFramework.outputs`` is the source of truth. The API will
- * 404 on ``GET /scans/{id}/compliance/{name}/ocsf`` for any framework not
- * in this set, so showing the OCSF button for an unsupported framework
- * would surface a broken download — gate every call site through
- * ``isOcsfSupported``.
- */
-const OCSF_SUPPORTED_COMPLIANCE_IDS: ReadonlySet<string> = new Set([
-  "dora",
-  "csa_ccm_4.0",
-]);
-
-export const isOcsfSupported = (complianceId: string | undefined): boolean =>
-  !!complianceId && OCSF_SUPPORTED_COMPLIANCE_IDS.has(complianceId);
-
-/**
  * Resolve the report type for a compliance card.
  *
  * Single-version frameworks (ENS/NIS2/CSA/ThreatScore) resolve via the

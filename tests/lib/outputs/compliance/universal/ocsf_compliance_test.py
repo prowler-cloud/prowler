@@ -202,26 +202,6 @@ class TestOCSFComplianceOutput:
         assert cf.status_code == "MANUAL"
         assert cf.finding_info.uid == "manual-MANUAL-1"
 
-    def test_include_manual_false_skips_manual(self):
-        """``_transform(..., include_manual=False)`` emits check events but
-        NOT manual requirement events. The streaming caller passes ``False``
-        for batches 2..N so manual events are not duplicated."""
-        covered = _simple_requirement("REQ-1", ["check_a"])
-        manual = _simple_requirement("MANUAL-1", checks=[])
-        fw = _make_framework([covered, manual])
-        findings = [_make_finding("check_a")]
-
-        output = OCSFComplianceOutput(findings=findings, framework=fw, provider="aws")
-        # __init__ transforms with include_manual=True (default) → manual present
-        assert any(cf.status_code == "MANUAL" for cf in output.data)
-
-        # A subsequent batch re-transforms with include_manual=False
-        output._data.clear()
-        output._transform(findings, fw, "TestFW-1.0", include_manual=False)
-
-        assert len(output.data) == 1  # only the check event, no manual
-        assert all(cf.status_code != "MANUAL" for cf in output.data)
-
     def test_multi_provider_checks_dict(self):
         req = UniversalComplianceRequirement(
             id="REQ-1",

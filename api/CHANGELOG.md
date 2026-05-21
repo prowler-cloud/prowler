@@ -7,7 +7,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
-- `GET /api/v1/scans/{id}/compliance/{name}/ocsf` endpoint to download the per-framework OCSF JSON export for universal compliance frameworks (DORA, CSA CCM) [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 - `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable; both endpoints centralize the API version on `config/version.py` (read from `pyproject.toml`) and are wired into the Helm charts and the Docker Compose healthcheck [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
 
 ### 🔄 Changed
@@ -20,7 +19,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
 - Attack Paths: `BEDROCK-001` and `BEDROCK-002` now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
-- Universal compliance CSV and OCSF outputs (DORA, CSA CCM) were truncated to the first batch on multi-batch scans; they now stream every finding [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 
 ---
 

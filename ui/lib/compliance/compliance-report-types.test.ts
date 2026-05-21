@@ -4,7 +4,6 @@ import {
   COMPLIANCE_REPORT_TYPES,
   getReportTypeForCompliance,
   getReportTypeForFramework,
-  isOcsfSupported,
   pickLatestCisPerProvider,
 } from "./compliance-report-types";
 
@@ -32,24 +31,6 @@ describe("getReportTypeForFramework", () => {
 
   it("returns undefined when framework is missing", () => {
     expect(getReportTypeForFramework(undefined)).toBeUndefined();
-  });
-});
-
-describe("isOcsfSupported", () => {
-  it("returns true for universal frameworks shipping an OCSF artifact", () => {
-    expect(isOcsfSupported("dora")).toBe(true);
-    expect(isOcsfSupported("csa_ccm_4.0")).toBe(true);
-  });
-
-  it("returns false for legacy/per-provider frameworks without OCSF output", () => {
-    expect(isOcsfSupported("cis_5.0_aws")).toBe(false);
-    expect(isOcsfSupported("ens_rd2022_aws")).toBe(false);
-    expect(isOcsfSupported("nis2_aws")).toBe(false);
-  });
-
-  it("returns false for missing or empty inputs", () => {
-    expect(isOcsfSupported(undefined)).toBe(false);
-    expect(isOcsfSupported("")).toBe(false);
   });
 });
 
