@@ -388,6 +388,13 @@ aws:
     - "ML_DSA_65"
     - "ML_DSA_87"
 
+  # aws.rolesanywhere_trust_anchor_pqc_pki
+  # Allowed post-quantum key algorithms for AWS Private CAs backing IAM Roles Anywhere trust anchors
+  rolesanywhere_pqc_pca_key_algorithms:
+    - "ML_DSA_44"
+    - "ML_DSA_65"
+    - "ML_DSA_87"
+
   # AWS Elasticache Configuration
   # aws.elasticache_redis_cluster_backup_enabled
   # Minimum number of days that a Redis cluster must have backups retention period

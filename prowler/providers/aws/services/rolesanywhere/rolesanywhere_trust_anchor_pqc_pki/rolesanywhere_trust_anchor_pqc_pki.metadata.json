@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "rolesanywhere_trust_anchor_pqc_pki",
+  "CheckTitle": "IAM Roles Anywhere trust anchors are backed by a post-quantum (ML-DSA) PKI",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "rolesanywhere",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsRolesAnywhereTrustAnchor",
+  "ResourceGroup": "security",
+  "Description": "**IAM Roles Anywhere trust anchors** are assessed for use of a **post-quantum digital signature algorithm** (ML-DSA). A trust anchor backed by an AWS Private CA whose `KeyAlgorithm` is RSA or ECC produces signatures vulnerable to forgery by a future quantum attacker, allowing an unintended actor to issue certificates and obtain unauthorized AWS access.",
+  "Risk": "Trust anchors are the root of trust for workloads authenticating to AWS via X.509 certificates. If the signing CA uses RSA or ECC, an attacker with quantum capability could forge end-entity certificates and impersonate workloads. Migrating trust anchors to **ML-DSA-backed PKI** (NIST FIPS 204) protects this control plane in the post-quantum era.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/introduction.html",
+    "https://aws.amazon.com/about-aws/whats-new/2026/03/iam-roles-anywhere-post-quantum-digital-certificates/",
+    "https://aws.amazon.com/security/post-quantum-cryptography/",
+    "https://csrc.nist.gov/pubs/fips/204/final"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rolesanywhere create-trust-anchor --name pqc-trust --source 'sourceType=AWS_ACM_PCA,sourceData={acmPcaArn=<ml_dsa_ca_arn>}' --enabled",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::RolesAnywhere::TrustAnchor\n    Properties:\n      Name: pqc-trust\n      Enabled: true\n      Source:\n        SourceType: AWS_ACM_PCA\n        SourceData:\n          AcmPcaArn: <ml_dsa_ca_arn>   # FIX: PCA must use ML_DSA key algorithm\n```",
+      "Other": "1. Create a new AWS Private CA with a post-quantum KeyAlgorithm (ML_DSA_44/65/87)\n2. Create a new Roles Anywhere trust anchor with sourceType=AWS_ACM_PCA pointing to the new CA\n3. Rotate end-entity certificates issued from the new CA\n4. Delete the legacy trust anchor once workloads have rotated",
+      "Terraform": "```hcl\nresource \"aws_rolesanywhere_trust_anchor\" \"<example_resource_name>\" {\n  name    = \"pqc-trust\"\n  enabled = true\n  source {\n    source_type = \"AWS_ACM_PCA\"\n    source_data {\n      acm_pca_arn = \"<ml_dsa_ca_arn>\" # FIX: PCA must use ML_DSA key algorithm\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Back IAM Roles Anywhere trust anchors with an **AWS Private CA that uses an ML-DSA key algorithm**. For trust anchors backed by an external certificate bundle, ensure the certificates were issued by an ML-DSA CA and re-verify periodically as the cryptographic landscape evolves.",
+      "Url": "https://hub.prowler.com/check/rolesanywhere_trust_anchor_pqc_pki"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [
+    "acmpca_certificate_authority_pqc_key_algorithm"
+  ],
+  "RelatedTo": [],
+  "Notes": "Trust anchors backed by an external CERTIFICATE_BUNDLE cannot be evaluated automatically by this check and are reported as FAIL with guidance to migrate to an AWS Private CA using an ML-DSA key algorithm."
+}

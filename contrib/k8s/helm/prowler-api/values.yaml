@@ -446,6 +446,12 @@ mainConfig:
       - "ML_DSA_87"
 
 
+    # aws.rolesanywhere_trust_anchor_pqc_pki
+    rolesanywhere_pqc_pca_key_algorithms:
+      - "ML_DSA_44"
+      - "ML_DSA_65"
+      - "ML_DSA_87"
+
     # AWS Secrets Configuration
     # Patterns to ignore in the secrets checks
     secrets_ignore_patterns: []
