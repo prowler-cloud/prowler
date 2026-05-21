@@ -2,27 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-## [5.27.1] (Prowler UNRELEASED)
-=======
-## [5.28.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- `entra_app_registration_client_secret_unused` check for M365 provider [(#11232)](https://github.com/prowler-cloud/prowler/pull/11232)
-- `cloudsql_instance_cmek_encryption_enabled` check for GCP provider [(#11023)](https://github.com/prowler-cloud/prowler/pull/11023)
-- Google Workspace Groups service with 3 new checks [(#11186)](https://github.com/prowler-cloud/prowler/pull/11186)
-- `ses_identity_dkim_enabled` check for AWS provider [(#10923)](https://github.com/prowler-cloud/prowler/pull/10923)
-- `sagemaker_models_registry_in_use` check for AWS provider, verifying that at least one SageMaker Model Package Group has an approved model package to enforce ML governance workflows [(#11196)](https://github.com/prowler-cloud/prowler/pull/11196)
-
-### 🔄 Changed
-
-- `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
-
----
-
 ## [5.27.1] (Prowler v5.27.1)
->>>>>>> 10b965e3c (chore: set SDK changelog version for fixes (#11282))
 
 ### 🐞 Fixed
 
