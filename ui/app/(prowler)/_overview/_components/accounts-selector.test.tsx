@@ -56,14 +56,20 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   },
   MultiSelectItem: ({
     children,
+    disabled,
     value,
     keywords,
   }: {
     children: React.ReactNode;
+    disabled?: boolean;
     value: string;
     keywords?: string[];
   }) => (
-    <div data-value={value} data-keywords={keywords?.join("|")}>
+    <div
+      data-value={value}
+      data-keywords={keywords?.join("|")}
+      data-disabled={disabled ? "true" : "false"}
+    >
       {children}
     </div>
   ),
@@ -157,5 +163,19 @@ describe("AccountsSelector", () => {
       screen.getByRole("option", { name: /select all accounts/i }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("All selected")).toBeInTheDocument();
+  });
+
+  it("marks configured account values as disabled", () => {
+    render(
+      <AccountsSelector
+        providers={providers}
+        disabledValues={["provider-1"]}
+      />,
+    );
+
+    expect(
+      screen.getByText("Production AWS").closest("[data-value]"),
+    ).toHaveAttribute("data-disabled", "true");
+    expect(screen.getByText("Disconnected")).toBeInTheDocument();
   });
 });

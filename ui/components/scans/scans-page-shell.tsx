@@ -3,8 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
-import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
+import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import {
   Button,
   Select,
@@ -40,10 +39,6 @@ function getFirstFilterValue(value: string | null): string {
   return value?.split(",")[0] || ALL_VALUE;
 }
 
-function getFilterValues(value: string | null): string[] {
-  return value?.split(",").filter(Boolean) ?? [];
-}
-
 export function ScansPageShell({
   providers,
   hasManageScansPermission,
@@ -56,12 +51,6 @@ export function ScansPageShell({
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
   const triggerFilterOptions = getScanTriggerFilterOptions(isCloudEnvironment);
-  const selectedProviderTypes = getFilterValues(
-    searchParams.get("filter[provider_type__in]"),
-  );
-  const selectedProviderUids = getFilterValues(
-    searchParams.get("filter[provider_uid__in]"),
-  );
   const scheduleType = getFirstFilterValue(searchParams.get("filter[trigger]"));
 
   const updateParams = (updates: Record<string, string | null>) => {
@@ -81,30 +70,21 @@ export function ScansPageShell({
     updateParams({ tab });
   };
 
-  const setFilterValues = (filterKey: string, values: string[]) => {
-    updateParams({
-      [`filter[${filterKey}]`]: values.length > 0 ? values.join(",") : null,
-    });
-  };
-
-  const launchDisabled = !hasManageScansPermission || providers.length === 0;
+  const connectedProviders = providers.filter(
+    (provider) => provider.attributes.connection.connected === true,
+  );
+  const launchDisabled =
+    !hasManageScansPermission || connectedProviders.length === 0;
 
   return (
     <div className="flex flex-col gap-[18px]">
       <div className="flex flex-wrap items-center gap-3">
         <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 lg:w-auto lg:grid-cols-[240px_240px_240px]">
-          <ProviderTypeSelector
+          <ProviderAccountSelectors
             providers={providers}
-            onBatchChange={setFilterValues}
-            selectedValues={selectedProviderTypes}
-          />
-
-          <AccountsSelector
-            providers={providers}
-            filterKey="provider_uid__in"
-            onBatchChange={setFilterValues}
-            selectedValues={selectedProviderUids}
-            selectedProviderTypes={selectedProviderTypes}
+            accountFilterKey="provider_uid__in"
+            accountValue="uid"
+            paramsToDeleteOnChange={["page", "scanId"]}
           />
 
           <Select

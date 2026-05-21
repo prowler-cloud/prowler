@@ -7,9 +7,8 @@ const { pushMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
 }));
 
-const { accountsSelectorSpy, providerTypeSelectorSpy } = vi.hoisted(() => ({
-  accountsSelectorSpy: vi.fn(),
-  providerTypeSelectorSpy: vi.fn(),
+const { providerAccountSelectorsSpy } = vi.hoisted(() => ({
+  providerAccountSelectorsSpy: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -20,17 +19,10 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
-  AccountsSelector: (props: unknown) => {
-    accountsSelectorSpy(props);
-    return <div>Shared accounts selector</div>;
-  },
-}));
-
-vi.mock("@/app/(prowler)/_overview/_components/provider-type-selector", () => ({
-  ProviderTypeSelector: (props: unknown) => {
-    providerTypeSelectorSpy(props);
-    return <div>Shared provider type selector</div>;
+vi.mock("@/components/filters/provider-account-selectors", () => ({
+  ProviderAccountSelectors: (props: unknown) => {
+    providerAccountSelectorsSpy(props);
+    return <div>Shared provider account selectors</div>;
   },
 }));
 
@@ -103,7 +95,7 @@ describe("ScansPageShell", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("uses the shared provider selectors from Findings for scan filters", () => {
+  it("uses the shared provider account selectors for scan filters", () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
 
     render(
@@ -113,21 +105,14 @@ describe("ScansPageShell", () => {
     );
 
     expect(
-      screen.getByText("Shared provider type selector"),
+      screen.getByText("Shared provider account selectors"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Shared accounts selector")).toBeInTheDocument();
-    expect(providerTypeSelectorSpy).toHaveBeenCalledWith(
+    expect(providerAccountSelectorsSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         providers,
-        selectedValues: [],
-      }),
-    );
-    expect(accountsSelectorSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        providers,
-        filterKey: "provider_uid__in",
-        selectedValues: [],
-        selectedProviderTypes: [],
+        accountFilterKey: "provider_uid__in",
+        accountValue: "uid",
+        paramsToDeleteOnChange: ["page", "scanId"],
       }),
     );
   });
