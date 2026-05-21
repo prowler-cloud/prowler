@@ -46,7 +46,7 @@ jobs:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: block
 
@@ -65,7 +65,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 
@@ -108,7 +108,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -122,6 +122,7 @@ jobs:
             github.com:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             pypi.org:443
             registry-1.docker.io:443
             release-assets.githubusercontent.com:443
@@ -132,11 +133,37 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Pin prowler SDK to latest master commit
+      - name: Pin prowler SDK to latest master commit and refresh lockfile
         if: github.event_name == 'push'
         run: |
+          set -e
           LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git refs/heads/master | cut -f1)
           sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
+          # Refresh api/uv.lock so it matches the pinned SHA above; the API
+          # Dockerfile runs `uv sync --locked`, which aborts on any drift
+          # between pyproject.toml and uv.lock.
+          pip install --no-cache-dir "uv==0.11.14"
+          (cd api && uv lock)
+
+      - name: Pin prowler SDK to latest release branch (v5.Y) commit and refresh lockfile
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -e
+          # RELEASE_TAG looks like "5.14.0"; the SDK release branch is "v5.14".
+          VERSION="${RELEASE_TAG#v}"
+          VERSION_BRANCH="v$(echo "${VERSION}" | cut -d. -f1,2)"
+          LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git "refs/heads/${VERSION_BRANCH}" | cut -f1)
+          if [ -z "${LATEST_SHA}" ]; then
+            echo "ERROR: release branch ${VERSION_BRANCH} not found in prowler-cloud/prowler"
+            exit 1
+          fi
+          echo "Pinning SDK to ${VERSION_BRANCH}@${LATEST_SHA}"
+          sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
+          # Refresh api/uv.lock so it matches the pinned SHA above; the API
+          # Dockerfile runs `uv sync --locked`, which aborts on any drift
+          # between pyproject.toml and uv.lock.
+          pip install --no-cache-dir "uv==0.11.14"
+          (cd api && uv lock)
 
       - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
@@ -170,7 +197,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -179,6 +206,7 @@ jobs:
             registry-1.docker.io:443
             auth.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
       - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
@@ -230,7 +258,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 
@@ -277,7 +305,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: block
           allowed-endpoints: >

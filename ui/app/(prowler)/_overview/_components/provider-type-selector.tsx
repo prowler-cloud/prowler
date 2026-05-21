@@ -89,6 +89,11 @@ const VercelProviderBadge = lazy(() =>
     default: m.VercelProviderBadge,
   })),
 );
+const OktaProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OktaProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -159,6 +164,10 @@ const PROVIDER_DATA: Record<
   vercel: {
     label: "Vercel",
     icon: VercelProviderBadge,
+  },
+  okta: {
+    label: "Okta",
+    icon: OktaProviderBadge,
   },
 };
 

@@ -2,97 +2,183 @@
 title: 'Software Security'
 ---
 
-Prowler follows a **security-by-design approach** throughout the software development lifecycle. All changes go through automated checks at every stage, from local development to production deployment.
+Prowler applies security-by-design across the development lifecycle. Every change passes automated checks at each stage: pre-commit hooks locally, multiple CI gates on pull requests, branch protection before merge, container scanning before publish, and registry monitoring after release.
 
-[Pre-commit](https://github.com/prowler-cloud/prowler/blob/master/.pre-commit-config.yaml) validations catch issues early, and [CI/CD pipelines](https://github.com/prowler-cloud/prowler/tree/master/.github) include multiple security gates ensuring code quality, secure configurations, and compliance with internal standards.
+All security tooling and configuration lives in the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler): [pre-commit hooks](https://github.com/prowler-cloud/prowler/blob/master/.pre-commit-config.yaml), [CI/CD workflows](https://github.com/prowler-cloud/prowler/tree/master/.github/workflows), and [Dependabot configuration](https://github.com/prowler-cloud/prowler/blob/master/.github/dependabot.yml).
 
-Container registries are continuously scanned for vulnerabilities, with findings automatically reported to the security team for assessment and remediation. This process evolves alongside the stack as new languages, frameworks, and technologies are adopted, ensuring security practices remain comprehensive, proactive, and adaptable.
+## Coverage
+
+Security controls cover six domains, each detailed below:
+
+| Domain | What It Protects |
+|--------|------------------|
+| [**CI/CD**](#cicd-security) | GitHub Actions workflows, runners, third-party actions |
+| [**SAST**](#static-application-security-testing-sast) | Application source code |
+| [**SCA**](#software-composition-analysis-sca) | Third-party dependencies and their known vulnerabilities |
+| [**Supply-Chain Pinning**](#supply-chain-pinning) | Reproducible installs across Python, npm, GitHub Actions, container base images |
+| [**Containers**](#container-security) | Runtime images for UI, API, SDK, Model Context Protocol (MCP) Server |
+| [**Secrets**](#secrets-detection) | Credentials, tokens, API keys in code and git history |
+
+## CI/CD Security
+
+Every GitHub Actions workflow uses runner hardening, pinned action versions, and audited permissions.
+
+### Runner Hardening With StepSecurity
+
+- [**`step-security/harden-runner`**](https://github.com/step-security/harden-runner) runs as the first step in every workflow, pinned by commit SHA.
+- Workflows are being migrated to explicit egress controls: some already declare an egress allow-list with `egress-policy: block`, while others still run in `egress-policy: audit` until their allowed endpoints are fully defined.
+- **Global Block Policy** (StepSecurity) blocks known-malicious domains and IP addresses across every workflow run. This protection applies even in audit mode, so workflows that have not yet moved to `block` still resist known-bad egress.
+
+### Third-Party Action Pinning
+
+- Every third-party action reference uses a commit SHA with the version as a comment: `uses: org/action@<sha> # v1.2.3`.
+- Dependabot tracks the comment and proposes SHA-pinned upgrades on a monthly cadence.
+
+### Workflow Permissions
+
+- Workflows declare `permissions: {}` at the top level and grant the minimum required scopes per job.
+- Code review covers permission changes; zizmor enforces the rules (see below).
+
+### Workflow Security Audit With Zizmor
+
+- **[zizmor](https://github.com/zizmorcore/zizmor)** audits every workflow file for known security anti-patterns. Runs via [`ci-zizmor.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ci-zizmor.yml).
+- Triggers on every push, every pull request that touches `.github/`, and on a daily schedule.
+- Results upload to the GitHub Security tab via Static Analysis Results Interchange Format (SARIF).
+- Key [audit rules](https://docs.zizmor.sh/audits/) the build gates on:
+  - **[PWN Request](https://docs.zizmor.sh/audits/#dangerous-triggers)** (`dangerous-triggers`): unsafe use of `pull_request_target` with checked-out PR code.
+  - **[Script Injection](https://docs.zizmor.sh/audits/#template-injection)** (`template-injection`): unsanitized `${{ github.event.* }}` expressions in `run:` blocks.
+  - **[artipacked](https://docs.zizmor.sh/audits/#artipacked)**: credential leakage through artifacts.
+  - **[Excessive permissions](https://docs.zizmor.sh/audits/#excessive-permissions)** (`excessive-permissions`): workflows with unneeded `write` scopes.
+
+### Branch Protection
+
+Pull requests to `master` and the active `v5.*` release branches must pass several required workflows before merge. These gates prevent specific classes of supply-chain and pipeline attacks from reaching the main branch:
+
+- **Compromised packages:** the **npm Package Compromised Updates** and **PyPI Package Compromised Updates** checks (StepSecurity) fail any PR that introduces a package version present in the compromised-package feed. Layered on top of osv-scanner.
+- **Premature releases:** the **npm Package Cooldown** and **PyPI Package Cooldown** checks (StepSecurity) fail any PR that introduces a package version published within the cooldown window. Layered on top of pnpm's `minimumReleaseAge`.
+- **Workflow exploitation:** the **PWN Request** and **Script Injection** checks (StepSecurity) reject the corresponding zizmor-detected anti-patterns at PR time. Layered on top of zizmor's audit.
+- **Vulnerable code or dependencies:** CodeQL (UI, API, SDK), osv-scanner (SDK, API, UI), Bandit (SDK, API), and Trivy (container images) must all pass.
 
 ## Static Application Security Testing (SAST)
 
-Multiple SAST tools are employed across the codebase to identify security vulnerabilities, code quality issues, and potential bugs during development.
+Multiple SAST tools run on every push and pull request to catch vulnerabilities and code-quality issues before merge.
 
-### CodeQL Analysis
+### Cross-Language
 
-- **Scope:** UI (JavaScript/TypeScript), API (Python), and SDK (Python)
-- **Frequency:** On every push and pull request, plus daily scheduled scans
-- **Integration:** Results uploaded to GitHub Security tab via SARIF format
-- **Purpose:** Identifies security vulnerabilities, coding errors, and potential exploits in source code
+- **CodeQL:** semantic code analysis for the UI (JavaScript/TypeScript), API (Python), and SDK (Python). Runs on every push and pull request, plus a daily scheduled scan, via [`sdk-codeql.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-codeql.yml), [`api-codeql.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-codeql.yml), and [`ui-codeql.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-codeql.yml). Results upload to the GitHub Security tab via SARIF.
 
-### Python Security Scanners
+### Python (SDK + API)
 
-- **Bandit:** Detects common security issues in Python code (SQL injection, hardcoded passwords, etc.)
-  - Configured to ignore test files and report only high-severity issues
-  - Runs on both SDK and API codebases
-- **Pylint:** Static code analysis with security-focused checks
-  - Integrated into pre-commit hooks and CI/CD pipelines
+- **Bandit:** detects common Python security issues (SQL injection, hardcoded credentials, insecure deserialization). Runs in pre-commit and on every PR/push in [`sdk-security.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-security.yml) and [`api-security.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-security.yml).
+- **Pylint:** analyzes your code without actually running it. It checks for errors, enforces a coding standard, looks for code smells, and can suggest refactors. Runs in pre-commit and on every PR/push in [`sdk-code-quality.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-code-quality.yml) and [`api-code-quality.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-code-quality.yml).
+- **Vulture:** dead-code detection at `--min-confidence 100`. Unused code can hide incomplete implementations or stale security paths. Runs in pre-commit and on every PR/push in `sdk-security.yml` and `api-security.yml`.
+- **Flake8:** style and correctness checks for the SDK. Runs in pre-commit and on every PR/push in [`sdk-code-quality.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-code-quality.yml).
 
-### Code Quality & Dead Code Detection
+### JavaScript/TypeScript (UI)
 
-- **Vulture:** Identifies unused code that could indicate incomplete implementations or security gaps
-- **Flake8:** Style guide enforcement with security-relevant checks
-- **Shellcheck:** Security and correctness checks for shell scripts
+- **TypeScript (`tsc`):** strict type checking for the UI. Catches whole classes of null/undefined and type-confusion bugs at build time. Runs on every PR/push via `pnpm run healthcheck` in [`ui-tests.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-tests.yml).
+- **ESLint:** UI linting with a capped warning budget (`--max-warnings 40`). Runs on every PR/push via `pnpm run healthcheck` in `ui-tests.yml`.
+- **Knip:** dead-code and unused-export detection for the UI. The UI analogue to Vulture.
+
+<Note>
+Knip runs locally on demand via `pnpm run lint:knip` and is not yet wired into CI.
+</Note>
+
+### Shell
+
+- **Shellcheck:** correctness and security checks for shell scripts in `.github/scripts/` and `scripts/`. Runs in pre-commit on staged files.
 
 ## Software Composition Analysis (SCA)
 
-Dependencies are continuously monitored for known vulnerabilities with timely updates ensured.
+Dependencies are scanned against public vulnerability databases on every pull request and push, with results posted directly on the PR.
 
-### Dependency Vulnerability Scanning
+### Cross-Language
 
-- **osv-scanner:** Scans lockfiles against the [OSV.dev](https://osv.dev) vulnerability database
-  - Runs in CI on every pull request and push for SDK, API, and UI
-  - Fails the build on `HIGH`, `CRITICAL`, and `UNKNOWN` severity findings
-  - Posts a per-lockfile report as a PR comment
-  - Per-vulnerability ignores (with reason and expiry) live in `osv-scanner.toml` at the repo root
-- **Trivy:** Multi-purpose scanner for containers and dependencies
-  - Scans all container images (UI, API, SDK, MCP Server)
-  - Checks for vulnerabilities in OS packages and application dependencies
-  - Reports findings to GitHub Security tab
+- **osv-scanner:** scans lockfiles against the [OSV.dev](https://osv.dev) vulnerability database for SDK (`uv.lock`), API (`api/uv.lock`), and UI (`ui/pnpm-lock.yaml`). Runs via [`sdk-security.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-security.yml), [`api-security.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-security.yml), and [`ui-security.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-security.yml).
+  - The action installs the `osv-scanner` binary and verifies its SHA-256 checksum against the upstream-signed `SHA256SUMS` manifest before running. Any mismatch aborts the scan.
+  - Gates the build on `HIGH`, `CRITICAL`, and `UNKNOWN` severity findings.
+  - Posts and updates a per-lockfile report as a pull request comment.
+  - Per-vulnerability ignores live in [`osv-scanner.toml`](https://github.com/prowler-cloud/prowler/blob/master/osv-scanner.toml) at the repo root, each with a reason and an expiry date.
+- **Trivy:** scans container images for OS-package and application-dependency vulnerabilities. Runs in [`sdk-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-container-checks.yml), [`api-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-container-checks.yml), [`ui-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-container-checks.yml), and [`mcp-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/mcp-container-checks.yml). Trivy uploads SARIF to the GitHub Security tab and posts a scan summary on the PR.
+- **Dependabot:** [configured](https://github.com/prowler-cloud/prowler/blob/master/.github/dependabot.yml) for monthly updates of the SDK Python dependencies, GitHub Actions, Docker base images, and pre-commit hooks. Dependabot opens pull requests for known security advisories, so critical patches reach the team without delay. A 7-day default cooldown reduces exposure to compromised package releases.
 
-### Automated Dependency Updates
+### JavaScript/TypeScript (UI)
 
-- **Dependabot:** Automated pull requests for dependency updates
-  - **Python (pip):** Monthly updates for SDK
-  - **GitHub Actions:** Monthly updates for workflow dependencies
-  - **Docker:** Monthly updates for base images
-  - Temporarily paused for API and UI to maintain stability during active development
-  - **Security-first approach:** Even when paused, Dependabot automatically creates pull requests for security vulnerabilities, ensuring critical security patches are never delayed
+- **pnpm audit:** runs `pnpm audit --audit-level critical` on every UI pull request and push as part of `pnpm run audit` in [`ui-tests.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-tests.yml). Cross-checks the npm registry's advisory database in addition to the OSV scan and surfaces npm-specific advisories that may not yet have an OSV identifier.
+
+## Supply-Chain Pinning
+
+Pinning runs across Python, npm, GitHub Actions, and container base images. Every install resolves to the exact set of versions already vetted in CI, and any drift fails loudly instead of slipping in silently.
+
+### Python (uv)
+
+The SDK, API, and MCP Server all use [uv](https://docs.astral.sh/uv/) for dependency management. Each component has its own project manifest and lock file:
+
+| Component | Manifest | Lock File |
+|-----------|----------|-----------|
+| SDK | `pyproject.toml` | `uv.lock` |
+| API | `api/pyproject.toml` | `api/uv.lock` |
+| MCP Server | `mcp_server/pyproject.toml` | `mcp_server/uv.lock` |
+
+The controls applied across all three:
+
+- **Direct dependencies pinned to exact versions** (`==`). No version ranges in dependency lists.
+- **Transitive dependencies pinned** via `[tool.uv].constraint-dependencies` in the SDK and API manifests. The constraint set mirrors the versions locked in the corresponding `uv.lock`. A future `uv lock` preserves these versions instead of silently picking up newer releases, and the resolver fails when a constraint becomes infeasible, signaling that a deliberate bump is needed.
+- **Lock files committed.** CI installs strictly from the lock.
+- **uv itself pinned** in the [`setup-python-uv`](https://github.com/prowler-cloud/prowler/tree/master/.github/actions/setup-python-uv) composite action.
+
+<Note>
+The MCP Server has a small direct-dependency surface and does not yet declare a separate constraint set. Its lock file is the source of truth.
+</Note>
+
+### JavaScript/TypeScript (pnpm)
+
+The UI uses [pnpm](https://pnpm.io) with supply-chain controls configured in [`ui/pnpm-workspace.yaml`](https://github.com/prowler-cloud/prowler/blob/master/ui/pnpm-workspace.yaml).
+
+- **Minimum release age** (`minimumReleaseAge: 1440`): packages must publish at least 24 hours before install. This reduces exposure during the window when a compromised release has not yet been detected and yanked.
+- **Lifecycle script allow-list** (`strictDepBuilds: true` + `allowBuilds`): only explicitly approved packages may run `install` or `postinstall` scripts (currently `sharp`, `esbuild`, `@sentry/cli`, `@heroui/shared-utils`, `unrs-resolver`, `msw`). Any unlisted package with lifecycle scripts fails the install.
+- **Trust policy** (`trustPolicy: no-downgrade`): the install fails when a package's trust evidence drops, for example after a new publisher takes over.
+- **Block exotic subdeps** (`blockExoticSubdeps: true`): transitive dependencies cannot ship as git URLs or tarballs. Every package in the tree resolves from the configured registry.
+- **Transitive overrides** in [`ui/package.json`](https://github.com/prowler-cloud/prowler/blob/master/ui/package.json) force specific versions for transitive packages (`lodash`, `serialize-javascript`, `qs`, `rollup`, `minimatch`, `ajv`, and others).
+- **`pnpm-lock.yaml` committed** and CI installs strictly from the lock.
+- **pnpm itself pinned** via the `packageManager` field in `package.json` with an integrity hash.
+
+### GitHub Actions
+
+- Every third-party action reference uses a commit SHA, with the version in a trailing comment.
+- Dependabot opens monthly PRs to bump pinned SHAs.
+
+### Container Base Images
+
+- Every Dockerfile references base images by digest (`image@sha256:...`).
+- Dependabot opens monthly PRs to bump digests.
 
 ## Container Security
 
-All container images are scanned before deployment.
+Container images get scanned twice: once in CI before they push to a registry, and continuously after publish by the registries themselves.
 
-### Trivy Vulnerability Scanning
+### Pre-Publish (CI)
 
-- Scans images for vulnerabilities and misconfigurations
-- Generates SARIF reports uploaded to GitHub Security tab
-- Creates PR comments with scan summaries
-- Configurable to fail builds on critical findings
-- Reports include CVE counts and remediation guidance
+- **Trivy** scans for OS-package and application-dependency vulnerabilities. Runs in [`sdk-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-container-checks.yml), [`api-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-container-checks.yml), [`ui-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-container-checks.yml), and [`mcp-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/mcp-container-checks.yml). Trivy uploads SARIF to the GitHub Security tab and posts a summary on the PR. Builds can fail on critical findings when configured to.
+- **Hadolint** validates Dockerfile syntax and structure against secure-build best practices. Runs in pre-commit and in the same `*-container-checks.yml` workflows linked above.
 
-### Hadolint
+### Post-Publish (Registries)
 
-- Validates Dockerfile syntax and structure
-- Ensures secure image building practices
+- **Amazon ECR:** ECR continuously scans published images for vulnerabilities. New advisories disclosed after publish surface on the image without requiring a rebuild.
+- **Docker Hub:** Docker Hub continuously scans the same images mirrored from ECR.
+- The security team reviews findings from both registries for triage and remediation.
 
 ## Secrets Detection
 
-Prowler protects against accidental exposure of sensitive credentials.
-
-### TruffleHog
-
-- Scans entire codebase and Git history for secrets
-- Runs on every push and pull request
-- Pre-commit hook prevents committing secrets
-- Detects high-entropy strings, API keys, tokens, and credentials
-- Configured to report verified and unknown findings
+- **[TruffleHog](https://github.com/trufflesecurity/trufflehog)** scans the codebase and git history on every push and pull request via [`find-secrets.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/find-secrets.yml). Detects high-entropy strings, API keys, tokens, and credentials, and reports verified and unknown findings.
+- A pre-commit hook runs the same check locally and blocks secrets before they leave the developer machine.
 
 ## Security Monitoring
 
-- **GitHub Security Tab:** Centralized view of all security findings from CodeQL, Trivy, and other SARIF-compatible tools
-- **Artifact Retention:** Security scan reports retained for post-deployment analysis
-- **PR Comments:** Automated security feedback on pull requests for rapid remediation
+- **GitHub Security tab:** centralized view of findings from CodeQL, Trivy, zizmor, and any other SARIF-compatible tool.
+- **PR comments:** osv-scanner and Trivy post per-PR summaries so issues surface during review, not after merge.
+- **Artifact retention:** the build retains security scan reports for post-deployment analysis.
 
 ## Contact
 
-For questions regarding software security, visit the [Support page](/support).
+For questions about software security, see the [Support page](/support). To report a vulnerability, follow the [responsible disclosure process](https://prowler.com/.well-known/security.txt).

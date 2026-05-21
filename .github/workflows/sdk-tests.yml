@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -46,6 +46,7 @@ jobs:
             schema.ocsf.io:443
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             o26192.ingest.us.sentry.io:443
             management.azure.com:443

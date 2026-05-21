@@ -29,7 +29,7 @@ jobs:
       patch_version: ${{ steps.detect.outputs.patch_version }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 
@@ -75,7 +75,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 
@@ -139,6 +139,17 @@ jobs:
           sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${NEXT_API_VERSION}\"|" api/pyproject.toml
           sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${NEXT_API_VERSION}|" api/src/backend/api/specs/v1.yaml
 
+      - name: Regenerate lockfiles after version bump
+        run: |
+          set -e
+          # The bumps above edit pyproject.toml / api/pyproject.toml but leave
+          # uv.lock / api/uv.lock stale, which makes `uv sync --locked` fail in
+          # the container builds. Refresh both with the uv version the images
+          # pin (plain `uv lock`, no --upgrade: only the version line changes).
+          pip install --no-cache-dir "uv==0.11.14"
+          uv lock
+          (cd api && uv lock)
+
       - name: Bump UI version (.env)
         run: |
           set -e
@@ -191,7 +202,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 
@@ -240,6 +251,17 @@ jobs:
           sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${FIRST_API_PATCH_VERSION}\"|" api/pyproject.toml
           sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${FIRST_API_PATCH_VERSION}|" api/src/backend/api/specs/v1.yaml
 
+      - name: Regenerate lockfiles after version bump
+        run: |
+          set -e
+          # The bumps above edit pyproject.toml / api/pyproject.toml but leave
+          # uv.lock / api/uv.lock stale, which makes `uv sync --locked` fail in
+          # the container builds. Refresh both with the uv version the images
+          # pin (plain `uv lock`, no --upgrade: only the version line changes).
+          pip install --no-cache-dir "uv==0.11.14"
+          uv lock
+          (cd api && uv lock)
+
       - name: Bump UI version (.env)
         run: |
           set -e
@@ -285,7 +307,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           egress-policy: audit
 
@@ -340,6 +362,17 @@ jobs:
           set -e
           sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${NEXT_API_PATCH_VERSION}\"|" api/pyproject.toml
           sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${NEXT_API_PATCH_VERSION}|" api/src/backend/api/specs/v1.yaml
+
+      - name: Regenerate lockfiles after version bump
+        run: |
+          set -e
+          # The bumps above edit pyproject.toml / api/pyproject.toml but leave
+          # uv.lock / api/uv.lock stale, which makes `uv sync --locked` fail in
+          # the container builds. Refresh both with the uv version the images
+          # pin (plain `uv lock`, no --upgrade: only the version line changes).
+          pip install --no-cache-dir "uv==0.11.14"
+          uv lock
+          (cd api && uv lock)
 
       - name: Bump UI version (.env)
         run: |

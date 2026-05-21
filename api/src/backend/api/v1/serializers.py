@@ -1545,6 +1545,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = GCPProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
                 serializer = GoogleWorkspaceProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.OKTA.value:
+                serializer = OktaProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IAC.value:
@@ -1685,6 +1687,15 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
 class GoogleWorkspaceProviderSecret(serializers.Serializer):
     credentials_content = serializers.CharField()
     delegated_user = serializers.EmailField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class OktaProviderSecret(serializers.Serializer):
+    okta_client_id = serializers.CharField()
+    okta_private_key = serializers.CharField()
+    okta_scopes = serializers.ListField(child=serializers.CharField(), required=False)
 
     class Meta:
         resource_name = "provider-secrets"
