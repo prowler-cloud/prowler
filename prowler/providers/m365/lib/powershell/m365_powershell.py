@@ -104,8 +104,11 @@ class M365PowerShell(PowerShellSession):
                 authentication information.
 
         Note:
-            The credentials are sanitized to prevent command injection and
-            stored securely in the PowerShell session.
+            ``client_id`` and ``tenant_id`` are sanitized via ``sanitize()`` since
+            they are UUIDs. ``client_secret`` is intentionally NOT sanitized so that
+            valid special characters (e.g. ``$``, ``!``, ``#``) are preserved; it is
+            wrapped in single quotes with any embedded single quote escaped
+            (``'`` -> ``''``) to prevent PowerShell variable expansion.
         """
         # Certificate Auth
         if credentials.certificate_content and credentials.client_id:

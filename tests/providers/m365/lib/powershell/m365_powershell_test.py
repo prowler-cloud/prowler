@@ -590,6 +590,12 @@ class Testm365PowerShell:
 
         assert result is True
         assert session.execute.call_count == 3
+        # The secret must be referenced as a bare PowerShell variable. Wrapping it
+        # in double quotes ("$clientSecret") would re-expand special chars that were
+        # correctly escaped during assignment, so assert the exact command.
+        session.execute.assert_any_call(
+            "$SecureSecret = ConvertTo-SecureString $clientSecret -AsPlainText -Force"
+        )
         session.execute_connect.assert_called_once_with(
             'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
         )
