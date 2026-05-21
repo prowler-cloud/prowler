@@ -25,7 +25,7 @@ dependencies:
     condition: postgresql.enabled
   # https://valkey.io/valkey-helm/
   - name: valkey
-    version: 0.9.3
+    version: 0.9.4
     repository: https://valkey.io/valkey-helm/
     condition: valkey.enabled
   # https://helm.neo4j.com/neo4j
