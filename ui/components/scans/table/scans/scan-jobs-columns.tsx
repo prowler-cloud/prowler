@@ -16,7 +16,6 @@ import { toLocalDateString } from "@/lib/date-utils";
 import type { ProviderType, ScanProps } from "@/types";
 
 import {
-  formatScanDuration,
   getScanAlias,
   getScanScheduleLabel,
   getScanStatusLabel,
@@ -128,10 +127,20 @@ const accountColumn: ColumnDef<ScanProps> = {
 
 const scanNoteColumn: ColumnDef<ScanProps> = {
   id: "scanNote",
+  accessorFn: (row) => row.attributes.name,
   header: ({ column }) => (
     <DataTableColumnHeader column={column} title="Alias" param="name" />
   ),
   cell: ({ row }) => <ScanNoteCell scan={row.original} />,
+};
+
+const scanScheduleColumn: ColumnDef<ScanProps> = {
+  id: "scanSchedule",
+  accessorFn: (row) => row.attributes.trigger,
+  header: ({ column }) => (
+    <DataTableColumnHeader column={column} title="Schedule" param="trigger" />
+  ),
+  cell: ({ row }) => <ScheduleCell scan={row.original} />,
 };
 
 const resourcesColumn: ColumnDef<ScanProps> = {
@@ -175,22 +184,20 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
     cell: ({ row }) => <ProgressCell scan={row.original} />,
     enableSorting: false,
   },
-  {
-    id: "scanTime",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Duration" />
-    ),
-    cell: ({ row }) => formatScanDuration(row.original.attributes.duration),
-    enableSorting: false,
-  },
-  {
-    id: "scanSchedule",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Schedule" />
-    ),
-    cell: ({ row }) => <ScheduleCell scan={row.original} />,
-    enableSorting: false,
-  },
+  /*
+   * TODO: Restore the Duration column once the API populates `attributes.duration`
+   * for active scans. Currently the field is always null/empty so the column
+   * renders blank, which is more confusing than helpful.
+   * {
+   *   id: "scanTime",
+   *   header: ({ column }) => (
+   *     <DataTableColumnHeader column={column} title="Duration" />
+   *   ),
+   *   cell: ({ row }) => formatScanDuration(row.original.attributes.duration),
+   *   enableSorting: false,
+   * },
+   */
+  scanScheduleColumn,
   {
     id: "launched",
     header: ({ column }) => (
@@ -224,16 +231,10 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
     cell: ({ row }) => <StatusCell scan={row.original} />,
     enableSorting: false,
   },
-  {
-    id: "scanSchedule",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Schedule" />
-    ),
-    cell: ({ row }) => <ScheduleCell scan={row.original} />,
-    enableSorting: false,
-  },
+  scanScheduleColumn,
   {
     id: "scanDate",
+    accessorFn: (row) => row.attributes.completed_at,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -251,14 +252,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
 const scheduledColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanNoteColumn,
-  {
-    id: "scanSchedule",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Schedule" />
-    ),
-    cell: ({ row }) => <ScheduleCell scan={row.original} />,
-    enableSorting: false,
-  },
+  scanScheduleColumn,
   /*
    * TODO: Restore this column when the API exposes the last completed scan date for this schedule.
    * {
@@ -274,8 +268,14 @@ const scheduledColumns = (): ColumnDef<ScanProps>[] => [
    */
   {
     id: "nextScan",
+    accessorFn: (row) =>
+      row.attributes.next_scan_at || row.attributes.scheduled_at,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Next Run" />
+      <DataTableColumnHeader
+        column={column}
+        title="Next Run"
+        param="scheduled_at"
+      />
     ),
     cell: ({ row }) => (
       <DateWithTime
@@ -285,7 +285,6 @@ const scheduledColumns = (): ColumnDef<ScanProps>[] => [
         }
       />
     ),
-    enableSorting: false,
   },
   actionsColumn,
 ];

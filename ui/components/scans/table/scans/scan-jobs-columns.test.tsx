@@ -106,7 +106,6 @@ describe("getScanJobsColumns", () => {
       "account",
       "scanNote",
       "progress",
-      "scanTime",
       "scanSchedule",
       "launched",
       "actions",
