@@ -45,7 +45,7 @@ describe("scans-table.utils", () => {
     );
   });
 
-  it("falls back from imported scans to active scans outside Cloud", () => {
+  it("falls back from imported findings to active scans outside Cloud", () => {
     expect(getEnabledScanJobsTab(SCAN_JOBS_TAB.IMPORTED, false)).toBe(
       SCAN_JOBS_TAB.ACTIVE,
     );

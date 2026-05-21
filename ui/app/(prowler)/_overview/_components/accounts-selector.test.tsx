@@ -140,6 +140,16 @@ describe("AccountsSelector", () => {
     ).toHaveAttribute("data-keywords", expect.stringContaining("123456789012"));
   });
 
+  it("can use provider UID values for pages whose API filters by provider_uid__in", () => {
+    render(
+      <AccountsSelector providers={providers} filterKey="provider_uid__in" />,
+    );
+
+    expect(
+      screen.getByText("Production AWS").closest("[data-value]"),
+    ).toHaveAttribute("data-value", "123456789012");
+  });
+
   it("disables select all when every account is already shown", () => {
     render(<AccountsSelector providers={providers} />);
 

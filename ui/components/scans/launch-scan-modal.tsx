@@ -6,27 +6,17 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 
 import { scanOnDemand } from "@/actions/scans";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn";
+import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
+import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { EntityInfo } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
-import type { ProviderType, ScanProviderInfo } from "@/types";
+import type { ProviderProps } from "@/types/providers";
 
 interface LaunchScanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  providers: ScanProviderInfo[];
+  providers: ProviderProps[];
 }
 
 export function LaunchScanModal({
@@ -36,17 +26,13 @@ export function LaunchScanModal({
 }: LaunchScanModalProps) {
   const router = useRouter();
   const [providerId, setProviderId] = useState("");
-  const [scanNote, setScanNote] = useState("");
+  const [scanAlias, setScanAlias] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const selectedProvider = providers.find(
-    (provider) => provider.providerId === providerId,
-  );
-
   const closeModal = () => {
     setProviderId("");
-    setScanNote("");
+    setScanAlias("");
     setError(null);
     onOpenChange(false);
   };
@@ -55,7 +41,7 @@ export function LaunchScanModal({
     event.preventDefault();
 
     if (!providerId) {
-      setError("Select a cloud account to launch a scan.");
+      setError("Select a provider to launch a scan.");
       return;
     }
 
@@ -64,8 +50,8 @@ export function LaunchScanModal({
 
     const formData = new FormData();
     formData.set("providerId", providerId);
-    if (scanNote.trim()) {
-      formData.set("scanName", scanNote.trim());
+    if (scanAlias.trim()) {
+      formData.set("scanName", scanAlias.trim());
     }
 
     const result = await scanOnDemand(formData);
@@ -99,56 +85,27 @@ export function LaunchScanModal({
         <div className="flex items-center gap-2">
           <CloudCog className="text-text-neutral-secondary size-4" />
           <span className="text-text-neutral-secondary text-sm">
-            Select a Cloud Account you would like to scan
+            Select the provider you would like to scan
           </span>
         </div>
 
         <Field>
-          <FieldLabel htmlFor="launch-scan-account">Cloud Account</FieldLabel>
-          <Select value={providerId} onValueChange={setProviderId}>
-            <SelectTrigger id="launch-scan-account" aria-label="Cloud Account">
-              <SelectValue placeholder="Select one">
-                {selectedProvider ? (
-                  <EntityInfo
-                    cloudProvider={
-                      selectedProvider.providerType as ProviderType
-                    }
-                    entityAlias={selectedProvider.alias}
-                    entityId={selectedProvider.uid}
-                    showCopyAction={false}
-                  />
-                ) : (
-                  "Select one"
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent width="wide" className="z-[60]">
-              {providers.map((provider) => (
-                <SelectItem
-                  key={provider.providerId}
-                  value={provider.providerId}
-                >
-                  <EntityInfo
-                    cloudProvider={provider.providerType as ProviderType}
-                    entityAlias={provider.alias}
-                    entityId={provider.uid}
-                    showCopyAction={false}
-                  />
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FieldLabel htmlFor="launch-scan-account">Providers</FieldLabel>
+          <AccountsSelector
+            id="launch-scan-account"
+            providers={providers}
+            onBatchChange={(_, values) => setProviderId(values.at(-1) ?? "")}
+            selectedValues={providerId ? [providerId] : []}
+          />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="launch-scan-note">
-            Scan Note (optional)
-          </FieldLabel>
+          <FieldLabel htmlFor="launch-scan-alias">Alias (optional)</FieldLabel>
           <Input
-            id="launch-scan-note"
-            aria-label="Scan Note"
-            value={scanNote}
-            onChange={(event) => setScanNote(event.target.value)}
+            id="launch-scan-alias"
+            aria-label="Alias"
+            value={scanAlias}
+            onChange={(event) => setScanAlias(event.target.value)}
           />
         </Field>
 

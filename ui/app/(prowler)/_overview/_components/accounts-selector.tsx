@@ -36,6 +36,14 @@ import {
   type ProviderType,
 } from "@/types/providers";
 
+const ACCOUNT_SELECTOR_FILTER = {
+  PROVIDER_ID: "provider_id__in",
+  PROVIDER_UID: "provider_uid__in",
+} as const;
+
+type AccountSelectorFilter =
+  (typeof ACCOUNT_SELECTOR_FILTER)[keyof typeof ACCOUNT_SELECTOR_FILTER];
+
 const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   aws: <AWSProviderBadge width={18} height={18} />,
   azure: <AzureProviderBadge width={18} height={18} />,
@@ -59,6 +67,8 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
 interface AccountsSelectorBaseProps {
   providers: ProviderProps[];
   search?: MultiSelectSearchProp;
+  filterKey?: AccountSelectorFilter;
+  id?: string;
   /**
    * Currently selected provider types (from the pending ProviderTypeSelector state).
    * Used only for contextual description/empty-state messaging — does NOT narrow
@@ -99,6 +109,8 @@ export function AccountsSelector({
   onBatchChange,
   selectedValues,
   selectedProviderTypes,
+  filterKey = ACCOUNT_SELECTOR_FILTER.PROVIDER_ID,
+  id = "accounts-selector",
   search = {
     placeholder: "Search accounts...",
     emptyMessage: "No accounts found.",
@@ -107,25 +119,30 @@ export function AccountsSelector({
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
 
-  const filterKey = "filter[provider_id__in]";
-  const current = searchParams.get(filterKey) || "";
+  const labelId = `${id}-label`;
+  const urlFilterKey = `filter[${filterKey}]`;
+  const current = searchParams.get(urlFilterKey) || "";
   const urlSelectedIds = current ? current.split(",").filter(Boolean) : [];
 
   // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
   const selectedIds = onBatchChange ? selectedValues : urlSelectedIds;
   const visibleProviders = providers;
   // .filter((p) => p.attributes.connection?.connected)
+  const getProviderValue = (provider: ProviderProps) =>
+    filterKey === ACCOUNT_SELECTOR_FILTER.PROVIDER_UID
+      ? provider.attributes.uid
+      : provider.id;
 
   const handleMultiValueChange = (ids: string[]) => {
     if (onBatchChange) {
-      onBatchChange("provider_id__in", ids);
+      onBatchChange(filterKey, ids);
       return;
     }
     navigateWithParams((params) => {
-      params.delete(filterKey);
+      params.delete(urlFilterKey);
 
       if (ids.length > 0) {
-        params.set(filterKey, ids.join(","));
+        params.set(urlFilterKey, ids.join(","));
       }
     });
   };
@@ -133,7 +150,7 @@ export function AccountsSelector({
   const selectedLabel = () => {
     if (selectedIds.length === 0) return null;
     if (selectedIds.length === 1) {
-      const p = providers.find((pr) => pr.id === selectedIds[0]);
+      const p = providers.find((pr) => getProviderValue(pr) === selectedIds[0]);
       const name = p ? p.attributes.alias || p.attributes.uid : selectedIds[0];
       return <span className="truncate">{name}</span>;
     }
@@ -152,19 +169,12 @@ export function AccountsSelector({
 
   return (
     <div className="relative">
-      <label
-        htmlFor="accounts-selector"
-        className="sr-only"
-        id="accounts-label"
-      >
+      <label htmlFor={id} className="sr-only" id={labelId}>
         Filter by provider account. {filterDescription}. Select one or more
         accounts to view findings.
       </label>
       <MultiSelect values={selectedIds} onValuesChange={handleMultiValueChange}>
-        <MultiSelectTrigger
-          id="accounts-selector"
-          aria-labelledby="accounts-label"
-        >
+        <MultiSelectTrigger id={id} aria-labelledby={labelId}>
           {selectedLabel() || <MultiSelectValue placeholder="All accounts" />}
         </MultiSelectTrigger>
         <MultiSelectContent search={search}>
@@ -192,7 +202,7 @@ export function AccountsSelector({
                 {selectedIds.length === 0 ? "All selected" : "Select All"}
               </div>
               {visibleProviders.map((p) => {
-                const id = p.id;
+                const value = getProviderValue(p);
                 const displayName = p.attributes.alias || p.attributes.uid;
                 const providerType = p.attributes.provider as ProviderType;
                 const icon = PROVIDER_ICON[providerType];
@@ -205,8 +215,8 @@ export function AccountsSelector({
                 ].filter(Boolean);
                 return (
                   <MultiSelectItem
-                    key={id}
-                    value={id}
+                    key={p.id}
+                    value={value}
                     badgeLabel={displayName}
                     keywords={searchKeywords}
                     aria-label={`${displayName} account (${providerType.toUpperCase()})`}

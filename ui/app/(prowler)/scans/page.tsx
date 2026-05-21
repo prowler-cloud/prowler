@@ -26,19 +26,11 @@ export default async function Scans({
 
   const providersData = await getAllProviders();
 
-  const providerInfo =
-    providersData?.data
-      ?.filter(
-        (provider: ProviderProps) =>
-          provider.attributes.connection.connected === true,
-      )
-      .map((provider: ProviderProps) => ({
-        providerId: provider.id,
-        alias: provider.attributes.alias,
-        providerType: provider.attributes.provider,
-        uid: provider.attributes.uid,
-        connected: provider.attributes.connection.connected,
-      })) || [];
+  const connectedProviders =
+    providersData?.data?.filter(
+      (provider: ProviderProps) =>
+        provider.attributes.connection.connected === true,
+    ) || [];
 
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
@@ -47,7 +39,7 @@ export default async function Scans({
   return (
     <ContentLayout title="Scan Jobs" icon="lucide:timer">
       <ScansPageShell
-        providers={providerInfo}
+        providers={connectedProviders}
         hasManageScansPermission={hasManageScansPermission}
       >
         <Suspense fallback={<SkeletonTableScans />}>

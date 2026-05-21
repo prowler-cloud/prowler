@@ -181,7 +181,7 @@ const selectColumn = ({
 const accountColumn: ColumnDef<ScanProps> = {
   id: "account",
   header: ({ column }) => (
-    <DataTableColumnHeader column={column} title="Account" />
+    <DataTableColumnHeader column={column} title="Provider" />
   ),
   cell: ({ row }) => <AccountCell scan={row.original} />,
   enableSorting: false,
@@ -190,7 +190,7 @@ const accountColumn: ColumnDef<ScanProps> = {
 const scanNoteColumn: ColumnDef<ScanProps> = {
   id: "scanNote",
   header: ({ column }) => (
-    <DataTableColumnHeader column={column} title="Scan Note" param="name" />
+    <DataTableColumnHeader column={column} title="Alias" param="name" />
   ),
   cell: ({ row }) => <ScanNoteCell scan={row.original} />,
 };
@@ -328,17 +328,19 @@ const scheduledColumns = (
     cell: ({ row }) => <ScheduleCell scan={row.original} />,
     enableSorting: false,
   },
-  {
-    id: "lastScan",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Scan" />
-    ),
-    // TODO: Replace this with the backend-provided last completed scan date for this provider.
-    cell: ({ row }) => (
-      <DateWithTime dateTime={row.original.attributes.completed_at} />
-    ),
-    enableSorting: false,
-  },
+  /*
+   * TODO: Restore this column when the API exposes the last completed scan date for this schedule.
+   * {
+   *   id: "lastScan",
+   *   header: ({ column }) => (
+   *     <DataTableColumnHeader column={column} title="Last Scan" />
+   *   ),
+   *   cell: ({ row }) => (
+   *     <DateWithTime dateTime={row.original.attributes.completed_at} />
+   *   ),
+   *   enableSorting: false,
+   * },
+   */
   {
     id: "nextScan",
     header: ({ column }) => (

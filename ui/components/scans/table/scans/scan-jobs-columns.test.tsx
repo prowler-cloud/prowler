@@ -1,4 +1,4 @@
-import type { CellContext } from "@tanstack/react-table";
+import type { CellContext, HeaderContext } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -94,6 +94,21 @@ const renderCell = (columnId: string, scan: ScanProps) => {
   );
 };
 
+const renderHeader = (tab: ScanJobsTab, columnId: string) => {
+  const column = getScanJobsColumns({
+    tab,
+    rowSelection: {},
+    selectableRowCount: 1,
+  }).find((item) => item.id === columnId);
+  const header = column?.header;
+
+  if (typeof header !== "function") {
+    throw new Error(`Column ${columnId} does not define a header`);
+  }
+
+  render(<>{header({ column: {} } as HeaderContext<ScanProps, unknown>)}</>);
+};
+
 describe("getScanJobsColumns", () => {
   it("uses the expected columns for each scan tab", () => {
     expect(getColumnIds(SCAN_JOBS_TAB.ACTIVE)).toEqual([
@@ -121,10 +136,17 @@ describe("getScanJobsColumns", () => {
       "select",
       "account",
       "scanSchedule",
-      "lastScan",
       "nextScan",
       "actions",
     ]);
+  });
+
+  it("labels the scan alias column as Alias in scan tables", () => {
+    renderHeader(SCAN_JOBS_TAB.ACTIVE, "scanNote");
+    renderHeader(SCAN_JOBS_TAB.COMPLETED, "scanNote");
+
+    expect(screen.getAllByText("Alias")).toHaveLength(2);
+    expect(screen.queryByText("Scan Note")).not.toBeInTheDocument();
   });
 
   it("renders the completed findings column as a findings link", () => {

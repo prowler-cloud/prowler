@@ -28,7 +28,7 @@ export const SCAN_TAB_LABELS: Record<ScanJobsTab, string> = {
   [SCAN_JOBS_TAB.ACTIVE]: "Active Scans",
   [SCAN_JOBS_TAB.COMPLETED]: "Completed Scans",
   [SCAN_JOBS_TAB.SCHEDULED]: "Scheduled Scans",
-  [SCAN_JOBS_TAB.IMPORTED]: "Imported Scans",
+  [SCAN_JOBS_TAB.IMPORTED]: "Imported Findings",
 };
 
 const SCAN_JOBS_TAB_FILTERS: Record<ScanJobsTab, Record<string, string>> = {

@@ -71,4 +71,20 @@ describe("ScanJobsTable", () => {
       "false",
     );
   });
+
+  it("shows documentation helper in the imported findings tab", () => {
+    render(<ScanJobsTable data={[]} tab={SCAN_JOBS_TAB.IMPORTED} />);
+
+    expect(
+      screen.getByText("There are no scans with imported findings yet"),
+    ).toBeInTheDocument();
+    const docsLink = screen.getByRole("link", {
+      name: /import findings guide/i,
+    });
+
+    expect(docsLink).toHaveAttribute(
+      "href",
+      "https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings",
+    );
+  });
 });
