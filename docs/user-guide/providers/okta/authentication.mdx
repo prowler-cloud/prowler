@@ -30,15 +30,17 @@ If a different authentication method is needed (SSWS API token, OAuth with user 
 
 ### Required OAuth Scopes
 
-For the initial check (`signon_global_session_idle_timeout_15min`) only one scope is required:
+The bundled signon checks require the following read-only scopes:
 
 - `okta.policies.read`
+- `okta.brands.read`
 
-Additional scopes will be needed as more services and checks are added, this are the current ones needed:
+Additional scopes will be needed as more services and checks are added. These are the current ones needed:
 
 | Scope | Used by |
 |---|---|
 | `okta.policies.read` | Sign-on / password / authentication policies |
+| `okta.brands.read` | Sign-in page customizations (DOD Notice and Consent Banner check) |
 
 ### Required Admin Role
 
@@ -96,7 +98,7 @@ Okta displays the private key **only once**. If you close the modal without copy
 
 ### 5. Grant the required OAuth scopes
 
-On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. For the initial release, granting only `okta.policies.read` is sufficient.
+On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled signon checks require `okta.policies.read` and `okta.brands.read`.
 
 ![Okta — grant OAuth scopes](/user-guide/providers/okta/images/grant-permissions.png)
 
@@ -130,8 +132,8 @@ export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
 # or
 export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 
-# Optional — defaults to "okta.policies.read"
-export OKTA_SCOPES="okta.policies.read"
+# Optional — defaults to "okta.policies.read,okta.brands.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read"
 
 uv run python prowler-cli.py okta
 ```
@@ -172,7 +174,7 @@ Prowler validates credentials at startup by listing one sign-on policy. This err
 
 Raised when the credential probe succeeds at the OAuth layer but the request is rejected because the service app lacks the required scope or admin role:
 
-- **`invalid_scope`** — the `okta.policies.read` scope is not granted on the service app. Grant it from **Okta API Scopes**.
+- **`invalid_scope`** — one of the requested scopes (`okta.policies.read` or `okta.brands.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
 - **`Forbidden` / `not authorized`** — the **Read-Only Administrator** role is not assigned to the service app. Assign it from **Admin roles**.
 
 ### `invalid_dpop_proof`

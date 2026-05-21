@@ -15,8 +15,8 @@ from tests.providers.okta.services.signon.signon_fixtures import (
 
 CHECK_PATH = (
     "prowler.providers.okta.services.signon."
-    "signon_global_session_idle_timeout_15min."
-    "signon_global_session_idle_timeout_15min.signon_client"
+    "signon_global_session_cookies_not_persistent."
+    "signon_global_session_cookies_not_persistent.signon_client"
 )
 
 
@@ -28,44 +28,58 @@ def _run_check(signon_client):
         ),
         mock.patch(CHECK_PATH, new=signon_client),
     ):
-        from prowler.providers.okta.services.signon.signon_global_session_idle_timeout_15min.signon_global_session_idle_timeout_15min import (
-            signon_global_session_idle_timeout_15min,
+        from prowler.providers.okta.services.signon.signon_global_session_cookies_not_persistent.signon_global_session_cookies_not_persistent import (
+            signon_global_session_cookies_not_persistent,
         )
 
-        return signon_global_session_idle_timeout_15min().execute()
+        return signon_global_session_cookies_not_persistent().execute()
 
 
-class Test_signon_global_session_idle_timeout_15min:
+class Test_signon_global_session_cookies_not_persistent:
     def test_no_policies(self):
         findings = _run_check(build_signon_client({}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
         assert "No active Okta Global Session Policies" in findings[0].status_extended
 
-    def test_pass_when_priority_one_non_default_rule_is_compliant(self):
+    def test_pass_when_priority_one_rule_disables_persistent_cookies(self):
         policy = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
+                non_default_rule(
+                    "Non-persistent cookies",
+                    use_persistent_cookie=False,
+                    priority=1,
+                ),
                 default_rule(priority=2),
             ]
         )
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "PASS"
-        assert "Strict 15min" in findings[0].status_extended
-        assert "Default Policy" in findings[0].status_extended
+        assert "disables persistent global session cookies" in (
+            findings[0].status_extended
+        )
         assert "priority 99, default" in findings[0].status_extended
 
-    def test_fail_when_only_default_rule(self):
-        policy = default_policy([default_rule(priority=1)])
+    def test_fail_when_priority_one_rule_uses_persistent_cookies(self):
+        policy = default_policy(
+            [
+                non_default_rule(
+                    "Persistent cookies enabled",
+                    use_persistent_cookie=True,
+                    priority=1,
+                ),
+                default_rule(priority=2),
+            ]
+        )
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
-        assert "uses 'Default Rule' as its active Priority 1 rule" in (
+        assert "allows persistent global session cookies" in (
             findings[0].status_extended
         )
 
-    def test_fail_when_priority_one_non_default_rule_has_null_idle(self):
+    def test_fail_when_priority_one_rule_does_not_assert_setting(self):
         policy = default_policy(
             [
                 GlobalSessionPolicyRule(
@@ -74,7 +88,7 @@ class Test_signon_global_session_idle_timeout_15min:
                     priority=1,
                     status="ACTIVE",
                     is_default=False,
-                    max_session_idle_minutes=None,
+                    use_persistent_cookie=None,
                 ),
                 default_rule(priority=2),
             ]
@@ -82,49 +96,26 @@ class Test_signon_global_session_idle_timeout_15min:
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
-        assert "No Session Block" in findings[0].status_extended
-        assert "does not define" in findings[0].status_extended
-
-    def test_fail_when_priority_one_non_default_rule_exceeds_threshold(self):
-        policy = default_policy(
-            [
-                non_default_rule("Loose 60min", idle_min=60, priority=1),
-                default_rule(priority=2),
-            ]
-        )
-        findings = _run_check(build_signon_client({"pol-default": policy}))
-        assert len(findings) == 1
-        assert findings[0].status == "FAIL"
-        assert "Loose 60min" in findings[0].status_extended
-        assert "exceeding the configured threshold" in findings[0].status_extended
-
-    def test_fail_when_compliant_non_default_rule_is_not_priority_one(self):
-        policy = default_policy(
-            [
-                default_rule(priority=1),
-                non_default_rule("Strict 15min", idle_min=15, priority=2),
-            ]
-        )
-        findings = _run_check(build_signon_client({"pol-default": policy}))
-        assert len(findings) == 1
-        assert findings[0].status == "FAIL"
-        assert "uses 'Default Rule' as its active Priority 1 rule" in (
-            findings[0].status_extended
-        )
+        assert "does not assert" in findings[0].status_extended
 
     def test_emits_one_finding_per_policy(self):
-        # Custom policy at priority 1 with a permissive rule + Default Policy
-        # with a strict rule -> two findings, ordered by policy priority.
         admins_policy = custom_policy(
             [
-                non_default_rule("Admin Loose", idle_min=120, priority=1),
-                default_rule(priority=2),
+                non_default_rule(
+                    "Sticky admin",
+                    use_persistent_cookie=True,
+                    priority=1,
+                )
             ],
             name="Admins Policy",
         )
         strict_default = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
+                non_default_rule(
+                    "Non-persistent",
+                    use_persistent_cookie=False,
+                    priority=1,
+                ),
                 default_rule(priority=2),
             ]
         )
@@ -138,7 +129,6 @@ class Test_signon_global_session_idle_timeout_15min:
         assert by_name["Admins Policy"].status == "FAIL"
         assert "priority 1, custom" in by_name["Admins Policy"].status_extended
         assert by_name["Default Policy"].status == "PASS"
-        assert "priority 99, default" in by_name["Default Policy"].status_extended
 
     def test_inactive_policy_is_skipped(self):
         inactive = GlobalSessionPolicy(
@@ -147,11 +137,15 @@ class Test_signon_global_session_idle_timeout_15min:
             priority=1,
             status="INACTIVE",
             is_default=False,
-            rules=[non_default_rule("Loose 120min", idle_min=120, priority=1)],
+            rules=[non_default_rule("Sticky", use_persistent_cookie=True, priority=1)],
         )
         active_default = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
+                non_default_rule(
+                    "Non-persistent",
+                    use_persistent_cookie=False,
+                    priority=1,
+                ),
                 default_rule(priority=2),
             ]
         )
@@ -163,20 +157,6 @@ class Test_signon_global_session_idle_timeout_15min:
         assert len(findings) == 1
         assert findings[0].resource_name == "Default Policy"
         assert findings[0].status == "PASS"
-
-    def test_fail_when_all_policies_inactive(self):
-        only_inactive = GlobalSessionPolicy(
-            id="pol-default",
-            name="Default Policy",
-            priority=99,
-            status="INACTIVE",
-            is_default=True,
-            rules=[non_default_rule("Strict 15min", idle_min=15, priority=1)],
-        )
-        findings = _run_check(build_signon_client({"pol-default": only_inactive}))
-        assert len(findings) == 1
-        assert findings[0].status == "FAIL"
-        assert "No active Okta Global Session Policies" in findings[0].status_extended
 
     def test_missing_scope_returns_manual_finding_naming_the_scope(self):
         findings = _run_check(
@@ -192,19 +172,18 @@ class Test_signon_global_session_idle_timeout_15min:
         assert "okta.policies.read" in findings[0].status_extended
         assert "missing the required" in findings[0].status_extended
 
-    def test_threshold_overridden_via_audit_config(self):
-        policy = default_policy(
-            [
-                non_default_rule("Relaxed 30min", idle_min=30, priority=1),
-                default_rule(priority=2),
-            ]
+    def test_fail_when_all_policies_inactive(self):
+        only_inactive = GlobalSessionPolicy(
+            id="pol-default",
+            name="Default Policy",
+            priority=99,
+            status="INACTIVE",
+            is_default=True,
+            rules=[
+                non_default_rule("Compliant", use_persistent_cookie=False, priority=1)
+            ],
         )
-        findings = _run_check(
-            build_signon_client(
-                {"pol-default": policy},
-                audit_config={"okta_max_session_idle_minutes": 60},
-            )
-        )
+        findings = _run_check(build_signon_client({"pol-default": only_inactive}))
         assert len(findings) == 1
-        assert findings[0].status == "PASS"
-        assert "threshold of 60 minutes" in findings[0].status_extended
+        assert findings[0].status == "FAIL"
+        assert "No active Okta Global Session Policies" in findings[0].status_extended

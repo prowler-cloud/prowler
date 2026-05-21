@@ -15,8 +15,8 @@ from tests.providers.okta.services.signon.signon_fixtures import (
 
 CHECK_PATH = (
     "prowler.providers.okta.services.signon."
-    "signon_global_session_idle_timeout_15min."
-    "signon_global_session_idle_timeout_15min.signon_client"
+    "signon_global_session_lifetime_18h."
+    "signon_global_session_lifetime_18h.signon_client"
 )
 
 
@@ -28,14 +28,14 @@ def _run_check(signon_client):
         ),
         mock.patch(CHECK_PATH, new=signon_client),
     ):
-        from prowler.providers.okta.services.signon.signon_global_session_idle_timeout_15min.signon_global_session_idle_timeout_15min import (
-            signon_global_session_idle_timeout_15min,
+        from prowler.providers.okta.services.signon.signon_global_session_lifetime_18h.signon_global_session_lifetime_18h import (
+            signon_global_session_lifetime_18h,
         )
 
-        return signon_global_session_idle_timeout_15min().execute()
+        return signon_global_session_lifetime_18h().execute()
 
 
-class Test_signon_global_session_idle_timeout_15min:
+class Test_signon_global_session_lifetime_18h:
     def test_no_policies(self):
         findings = _run_check(build_signon_client({}))
         assert len(findings) == 1
@@ -45,27 +45,31 @@ class Test_signon_global_session_idle_timeout_15min:
     def test_pass_when_priority_one_non_default_rule_is_compliant(self):
         policy = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
+                non_default_rule("18h rule", lifetime_min=1080, priority=1),
                 default_rule(priority=2),
             ]
         )
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "PASS"
-        assert "Strict 15min" in findings[0].status_extended
-        assert "Default Policy" in findings[0].status_extended
+        assert "18h rule" in findings[0].status_extended
+        assert "1080 minutes" in findings[0].status_extended
         assert "priority 99, default" in findings[0].status_extended
 
-    def test_fail_when_only_default_rule(self):
-        policy = default_policy([default_rule(priority=1)])
+    def test_fail_when_lifetime_exceeds_threshold(self):
+        policy = default_policy(
+            [
+                non_default_rule("Loose 24h rule", lifetime_min=1440, priority=1),
+                default_rule(priority=2),
+            ]
+        )
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
-        assert "uses 'Default Rule' as its active Priority 1 rule" in (
-            findings[0].status_extended
-        )
+        assert "1440 minutes" in findings[0].status_extended
+        assert "exceeding the configured threshold" in findings[0].status_extended
 
-    def test_fail_when_priority_one_non_default_rule_has_null_idle(self):
+    def test_fail_when_priority_one_rule_has_no_lifetime(self):
         policy = default_policy(
             [
                 GlobalSessionPolicyRule(
@@ -74,7 +78,7 @@ class Test_signon_global_session_idle_timeout_15min:
                     priority=1,
                     status="ACTIVE",
                     is_default=False,
-                    max_session_idle_minutes=None,
+                    max_session_lifetime_minutes=None,
                 ),
                 default_rule(priority=2),
             ]
@@ -82,27 +86,28 @@ class Test_signon_global_session_idle_timeout_15min:
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
-        assert "No Session Block" in findings[0].status_extended
         assert "does not define" in findings[0].status_extended
 
-    def test_fail_when_priority_one_non_default_rule_exceeds_threshold(self):
+    def test_fail_when_lifetime_is_disabled_with_zero(self):
         policy = default_policy(
             [
-                non_default_rule("Loose 60min", idle_min=60, priority=1),
+                non_default_rule("Unlimited Lifetime", lifetime_min=0, priority=1),
                 default_rule(priority=2),
             ]
         )
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
-        assert "Loose 60min" in findings[0].status_extended
-        assert "exceeding the configured threshold" in findings[0].status_extended
+        assert "0 minutes" in findings[0].status_extended
+        assert "disables the maximum Okta global session lifetime" in (
+            findings[0].status_extended
+        )
 
-    def test_fail_when_compliant_non_default_rule_is_not_priority_one(self):
+    def test_fail_when_default_rule_is_priority_one(self):
         policy = default_policy(
             [
-                default_rule(priority=1),
-                non_default_rule("Strict 15min", idle_min=15, priority=2),
+                default_rule(priority=1, lifetime_min=1080),
+                non_default_rule("Compliant", lifetime_min=1080, priority=2),
             ]
         )
         findings = _run_check(build_signon_client({"pol-default": policy}))
@@ -113,18 +118,16 @@ class Test_signon_global_session_idle_timeout_15min:
         )
 
     def test_emits_one_finding_per_policy(self):
-        # Custom policy at priority 1 with a permissive rule + Default Policy
-        # with a strict rule -> two findings, ordered by policy priority.
         admins_policy = custom_policy(
             [
-                non_default_rule("Admin Loose", idle_min=120, priority=1),
+                non_default_rule("Admin Long Lived", lifetime_min=2880, priority=1),
                 default_rule(priority=2),
             ],
             name="Admins Policy",
         )
         strict_default = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
+                non_default_rule("18h rule", lifetime_min=1080, priority=1),
                 default_rule(priority=2),
             ]
         )
@@ -138,7 +141,6 @@ class Test_signon_global_session_idle_timeout_15min:
         assert by_name["Admins Policy"].status == "FAIL"
         assert "priority 1, custom" in by_name["Admins Policy"].status_extended
         assert by_name["Default Policy"].status == "PASS"
-        assert "priority 99, default" in by_name["Default Policy"].status_extended
 
     def test_inactive_policy_is_skipped(self):
         inactive = GlobalSessionPolicy(
@@ -147,11 +149,11 @@ class Test_signon_global_session_idle_timeout_15min:
             priority=1,
             status="INACTIVE",
             is_default=False,
-            rules=[non_default_rule("Loose 120min", idle_min=120, priority=1)],
+            rules=[non_default_rule("Loose", lifetime_min=2880, priority=1)],
         )
         active_default = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
+                non_default_rule("18h rule", lifetime_min=1080, priority=1),
                 default_rule(priority=2),
             ]
         )
@@ -171,7 +173,7 @@ class Test_signon_global_session_idle_timeout_15min:
             priority=99,
             status="INACTIVE",
             is_default=True,
-            rules=[non_default_rule("Strict 15min", idle_min=15, priority=1)],
+            rules=[non_default_rule("18h rule", lifetime_min=1080, priority=1)],
         )
         findings = _run_check(build_signon_client({"pol-default": only_inactive}))
         assert len(findings) == 1
@@ -195,16 +197,16 @@ class Test_signon_global_session_idle_timeout_15min:
     def test_threshold_overridden_via_audit_config(self):
         policy = default_policy(
             [
-                non_default_rule("Relaxed 30min", idle_min=30, priority=1),
+                non_default_rule("Relaxed 24h", lifetime_min=1440, priority=1),
                 default_rule(priority=2),
             ]
         )
         findings = _run_check(
             build_signon_client(
                 {"pol-default": policy},
-                audit_config={"okta_max_session_idle_minutes": 60},
+                audit_config={"okta_max_session_lifetime_minutes": 1440},
             )
         )
         assert len(findings) == 1
         assert findings[0].status == "PASS"
-        assert "threshold of 60 minutes" in findings[0].status_extended
+        assert "threshold of 1440 minutes" in findings[0].status_extended

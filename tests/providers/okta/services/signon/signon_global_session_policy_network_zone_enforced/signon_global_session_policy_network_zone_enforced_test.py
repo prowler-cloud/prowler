@@ -15,8 +15,8 @@ from tests.providers.okta.services.signon.signon_fixtures import (
 
 CHECK_PATH = (
     "prowler.providers.okta.services.signon."
-    "signon_global_session_idle_timeout_15min."
-    "signon_global_session_idle_timeout_15min.signon_client"
+    "signon_global_session_policy_network_zone_enforced."
+    "signon_global_session_policy_network_zone_enforced.signon_client"
 )
 
 
@@ -28,109 +28,129 @@ def _run_check(signon_client):
         ),
         mock.patch(CHECK_PATH, new=signon_client),
     ):
-        from prowler.providers.okta.services.signon.signon_global_session_idle_timeout_15min.signon_global_session_idle_timeout_15min import (
-            signon_global_session_idle_timeout_15min,
+        from prowler.providers.okta.services.signon.signon_global_session_policy_network_zone_enforced.signon_global_session_policy_network_zone_enforced import (
+            signon_global_session_policy_network_zone_enforced,
         )
 
-        return signon_global_session_idle_timeout_15min().execute()
+        return signon_global_session_policy_network_zone_enforced().execute()
 
 
-class Test_signon_global_session_idle_timeout_15min:
+class Test_signon_global_session_policy_network_zone_enforced:
     def test_no_policies(self):
         findings = _run_check(build_signon_client({}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
         assert "No active Okta Global Session Policies" in findings[0].status_extended
 
-    def test_pass_when_priority_one_non_default_rule_is_compliant(self):
+    def test_pass_when_priority_one_non_default_rule_includes_zone(self):
         policy = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
-                default_rule(priority=2),
-            ]
-        )
-        findings = _run_check(build_signon_client({"pol-default": policy}))
-        assert len(findings) == 1
-        assert findings[0].status == "PASS"
-        assert "Strict 15min" in findings[0].status_extended
-        assert "Default Policy" in findings[0].status_extended
-        assert "priority 99, default" in findings[0].status_extended
-
-    def test_fail_when_only_default_rule(self):
-        policy = default_policy([default_rule(priority=1)])
-        findings = _run_check(build_signon_client({"pol-default": policy}))
-        assert len(findings) == 1
-        assert findings[0].status == "FAIL"
-        assert "uses 'Default Rule' as its active Priority 1 rule" in (
-            findings[0].status_extended
-        )
-
-    def test_fail_when_priority_one_non_default_rule_has_null_idle(self):
-        policy = default_policy(
-            [
-                GlobalSessionPolicyRule(
-                    id="rule-no-session",
-                    name="No Session Block",
+                non_default_rule(
+                    "Allow-from-VPN",
+                    network_zones_include=["zone-corp"],
                     priority=1,
-                    status="ACTIVE",
-                    is_default=False,
-                    max_session_idle_minutes=None,
                 ),
                 default_rule(priority=2),
             ]
         )
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
-        assert findings[0].status == "FAIL"
-        assert "No Session Block" in findings[0].status_extended
-        assert "does not define" in findings[0].status_extended
+        assert findings[0].status == "PASS"
+        assert "Allow-from-VPN" in findings[0].status_extended
+        assert "non-default rule" in findings[0].status_extended
+        assert "priority 99, default" in findings[0].status_extended
 
-    def test_fail_when_priority_one_non_default_rule_exceeds_threshold(self):
+    def test_pass_when_priority_one_non_default_rule_excludes_zone(self):
         policy = default_policy(
             [
-                non_default_rule("Loose 60min", idle_min=60, priority=1),
+                non_default_rule(
+                    "Block-blacklist",
+                    network_zones_exclude=["zone-blocked"],
+                    priority=1,
+                ),
+            ]
+        )
+        findings = _run_check(build_signon_client({"pol-default": policy}))
+        assert len(findings) == 1
+        assert findings[0].status == "PASS"
+        assert "Block-blacklist" in findings[0].status_extended
+
+    def test_pass_when_only_default_rule_has_zones(self):
+        policy = default_policy(
+            [
+                GlobalSessionPolicyRule(
+                    id="rule-default-zoned",
+                    name="Default Rule",
+                    priority=1,
+                    status="ACTIVE",
+                    is_default=True,
+                    network_zones_include=["zone-corp"],
+                ),
+            ]
+        )
+        findings = _run_check(build_signon_client({"pol-default": policy}))
+        assert len(findings) == 1
+        assert findings[0].status == "PASS"
+        assert "built-in Default Rule" in findings[0].status_extended
+
+    def test_fail_when_priority_one_rule_has_no_zones(self):
+        policy = default_policy(
+            [
+                non_default_rule("Plain non-default", priority=1),
                 default_rule(priority=2),
             ]
         )
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
-        assert "Loose 60min" in findings[0].status_extended
-        assert "exceeding the configured threshold" in findings[0].status_extended
+        assert "Plain non-default" in findings[0].status_extended
+        assert "does not map" in findings[0].status_extended
 
-    def test_fail_when_compliant_non_default_rule_is_not_priority_one(self):
+    def test_fail_when_only_lower_priority_rule_has_zones(self):
         policy = default_policy(
             [
-                default_rule(priority=1),
-                non_default_rule("Strict 15min", idle_min=15, priority=2),
+                non_default_rule("No-zones top", priority=1),
+                non_default_rule(
+                    "Zoned-but-low",
+                    network_zones_include=["zone-corp"],
+                    priority=2,
+                ),
+                default_rule(priority=3),
             ]
         )
         findings = _run_check(build_signon_client({"pol-default": policy}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
-        assert "uses 'Default Rule' as its active Priority 1 rule" in (
-            findings[0].status_extended
-        )
+        assert "No-zones top" in findings[0].status_extended
+
+    def test_fail_when_only_default_rule_has_no_zones(self):
+        policy = default_policy([default_rule(priority=1)])
+        findings = _run_check(build_signon_client({"pol-default": policy}))
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "built-in Default Rule" in findings[0].status_extended
 
     def test_emits_one_finding_per_policy(self):
-        # Custom policy at priority 1 with a permissive rule + Default Policy
-        # with a strict rule -> two findings, ordered by policy priority.
         admins_policy = custom_policy(
             [
-                non_default_rule("Admin Loose", idle_min=120, priority=1),
+                non_default_rule("No-zones admin", priority=1),
                 default_rule(priority=2),
             ],
             name="Admins Policy",
         )
-        strict_default = default_policy(
+        zoned_default = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
+                non_default_rule(
+                    "Allow-corp",
+                    network_zones_include=["zone-corp"],
+                    priority=1,
+                ),
                 default_rule(priority=2),
             ]
         )
         findings = _run_check(
             build_signon_client(
-                {"pol-custom": admins_policy, "pol-default": strict_default}
+                {"pol-custom": admins_policy, "pol-default": zoned_default}
             )
         )
         assert len(findings) == 2
@@ -138,7 +158,6 @@ class Test_signon_global_session_idle_timeout_15min:
         assert by_name["Admins Policy"].status == "FAIL"
         assert "priority 1, custom" in by_name["Admins Policy"].status_extended
         assert by_name["Default Policy"].status == "PASS"
-        assert "priority 99, default" in by_name["Default Policy"].status_extended
 
     def test_inactive_policy_is_skipped(self):
         inactive = GlobalSessionPolicy(
@@ -147,11 +166,15 @@ class Test_signon_global_session_idle_timeout_15min:
             priority=1,
             status="INACTIVE",
             is_default=False,
-            rules=[non_default_rule("Loose 120min", idle_min=120, priority=1)],
+            rules=[non_default_rule("No-zones", priority=1)],
         )
         active_default = default_policy(
             [
-                non_default_rule("Strict 15min", idle_min=15, priority=1),
+                non_default_rule(
+                    "Allow-corp",
+                    network_zones_include=["zone-corp"],
+                    priority=1,
+                ),
                 default_rule(priority=2),
             ]
         )
@@ -171,7 +194,13 @@ class Test_signon_global_session_idle_timeout_15min:
             priority=99,
             status="INACTIVE",
             is_default=True,
-            rules=[non_default_rule("Strict 15min", idle_min=15, priority=1)],
+            rules=[
+                non_default_rule(
+                    "Allow-corp",
+                    network_zones_include=["zone-corp"],
+                    priority=1,
+                )
+            ],
         )
         findings = _run_check(build_signon_client({"pol-default": only_inactive}))
         assert len(findings) == 1
@@ -191,20 +220,3 @@ class Test_signon_global_session_idle_timeout_15min:
         assert findings[0].status == "MANUAL"
         assert "okta.policies.read" in findings[0].status_extended
         assert "missing the required" in findings[0].status_extended
-
-    def test_threshold_overridden_via_audit_config(self):
-        policy = default_policy(
-            [
-                non_default_rule("Relaxed 30min", idle_min=30, priority=1),
-                default_rule(priority=2),
-            ]
-        )
-        findings = _run_check(
-            build_signon_client(
-                {"pol-default": policy},
-                audit_config={"okta_max_session_idle_minutes": 60},
-            )
-        )
-        assert len(findings) == 1
-        assert findings[0].status == "PASS"
-        assert "threshold of 60 minutes" in findings[0].status_extended
