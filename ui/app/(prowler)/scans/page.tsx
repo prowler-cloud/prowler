@@ -5,10 +5,8 @@ import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import {
-  getEnabledScanJobsTab,
   getScanJobsTab,
   getScanJobsTabFilters,
-  isImportedScansTab,
   isScanStateFilterKey,
 } from "@/components/scans/scans-table.utils";
 import { SkeletonTableScans } from "@/components/scans/table";
@@ -55,15 +53,7 @@ const SSRDataTableScans = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-  const tab = getEnabledScanJobsTab(
-    getScanJobsTab(searchParams.tab),
-    isCloudEnvironment,
-  );
-
-  if (isImportedScansTab(tab)) {
-    return <ScanJobsTable data={[]} tab={tab} />;
-  }
+  const tab = getScanJobsTab(searchParams.tab);
 
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);

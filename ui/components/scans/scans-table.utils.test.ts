@@ -4,13 +4,13 @@ import type { ScanAttributes, ScanProps } from "@/types";
 
 import {
   formatScanDuration,
-  getEnabledScanJobsTab,
   getScanAlias,
   getScanFindingsSummary,
   getScanJobsTab,
   getScanJobsTabFilters,
   getScanScheduleLabel,
   getScanStatusLabel,
+  getScanTriggerFilterOptions,
   SCAN_JOBS_TAB,
 } from "./scans-table.utils";
 
@@ -45,15 +45,6 @@ describe("scans-table.utils", () => {
     );
   });
 
-  it("falls back from imported findings to active scans outside Cloud", () => {
-    expect(getEnabledScanJobsTab(SCAN_JOBS_TAB.IMPORTED, false)).toBe(
-      SCAN_JOBS_TAB.ACTIVE,
-    );
-    expect(getEnabledScanJobsTab(SCAN_JOBS_TAB.IMPORTED, true)).toBe(
-      SCAN_JOBS_TAB.IMPORTED,
-    );
-  });
-
   it("maps scan job tabs to the state filters expected by the API", () => {
     expect(getScanJobsTabFilters(SCAN_JOBS_TAB.ACTIVE)).toEqual({
       "filter[state__in]": "available,executing",
@@ -64,7 +55,6 @@ describe("scans-table.utils", () => {
     expect(getScanJobsTabFilters(SCAN_JOBS_TAB.SCHEDULED)).toEqual({
       "filter[state__in]": "scheduled",
     });
-    expect(getScanJobsTabFilters(SCAN_JOBS_TAB.IMPORTED)).toEqual({});
   });
 
   it("formats scan labels and durations for table display", () => {
@@ -80,8 +70,23 @@ describe("scans-table.utils", () => {
   it("maps trigger and state values to product labels", () => {
     expect(getScanScheduleLabel("manual")).toBe("Single");
     expect(getScanScheduleLabel("scheduled")).toBe("Scheduled");
+    expect(getScanScheduleLabel("imported")).toBe("Imported");
     expect(getScanStatusLabel("available")).toBe("Queued");
     expect(getScanStatusLabel("completed")).toBe("Completed");
+  });
+
+  it("includes imported in the trigger filter only for Cloud", () => {
+    expect(getScanTriggerFilterOptions(false)).toEqual([
+      { value: "all", label: "All Types" },
+      { value: "manual", label: "Single" },
+      { value: "scheduled", label: "Scheduled" },
+    ]);
+    expect(getScanTriggerFilterOptions(true)).toEqual([
+      { value: "all", label: "All Types" },
+      { value: "manual", label: "Single" },
+      { value: "scheduled", label: "Scheduled" },
+      { value: "imported", label: "Imported" },
+    ]);
   });
 
   it("reads findings summary from root or nested API fields", () => {

@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ScansPageShell } from "./scans-page-shell";
@@ -86,10 +85,8 @@ describe("ScansPageShell", () => {
     vi.clearAllMocks();
   });
 
-  it("keeps imported findings tab gated outside Cloud without rendering import actions", async () => {
-    // Given
+  it("does not render an imported findings tab", () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
-    const user = userEvent.setup();
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -97,25 +94,12 @@ describe("ScansPageShell", () => {
       </ScansPageShell>,
     );
 
-    const importedTab = screen.getByRole("tab", {
-      name: /imported findings/i,
-    });
-
-    // When
-    await user.click(importedTab);
-    await user.hover(importedTab);
-
-    // Then
-    expect(importedTab).toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.queryByRole("tab", { name: /imported findings/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /import findings/i }),
     ).not.toBeInTheDocument();
-    expect(pushMock).not.toHaveBeenCalled();
-    await waitFor(() => {
-      expect(
-        screen.getAllByText("Available in Prowler Cloud").length,
-      ).toBeGreaterThan(1);
-    });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
@@ -146,5 +130,17 @@ describe("ScansPageShell", () => {
         selectedProviderTypes: [],
       }),
     );
+  });
+
+  it("uses a generic type filter label in Cloud", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByRole("combobox", { name: /all types/i })).toBeVisible();
   });
 });

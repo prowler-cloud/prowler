@@ -16,16 +16,13 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
 } from "@/components/shadcn";
 import type { ProviderProps } from "@/types/providers";
 
 import { LaunchScanModal } from "./launch-scan-modal";
 import {
-  getEnabledScanJobsTab,
   getScanJobsTab,
+  getScanTriggerFilterOptions,
   SCAN_JOBS_TAB,
   SCAN_TAB_LABELS,
   type ScanJobsTab,
@@ -38,12 +35,6 @@ interface ScansPageShellProps {
 }
 
 const ALL_VALUE = "all";
-
-const SCHEDULE_TYPE_OPTIONS = [
-  { value: ALL_VALUE, label: "All Scheduled Types" },
-  { value: "manual", label: "Single" },
-  { value: "scheduled", label: "Scheduled" },
-] as const;
 
 function getFirstFilterValue(value: string | null): string {
   return value?.split(",")[0] || ALL_VALUE;
@@ -62,12 +53,9 @@ export function ScansPageShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [launchOpen, setLaunchOpen] = useState(false);
-  const [importedTabTooltipOpen, setImportedTabTooltipOpen] = useState(false);
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-  const activeTab = getEnabledScanJobsTab(
-    getScanJobsTab(searchParams.get("tab") ?? undefined),
-    isCloudEnvironment,
-  );
+  const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
+  const triggerFilterOptions = getScanTriggerFilterOptions(isCloudEnvironment);
   const selectedProviderTypes = getFilterValues(
     searchParams.get("filter[provider_type__in]"),
   );
@@ -90,8 +78,6 @@ export function ScansPageShell({
   };
 
   const setTab = (tab: string) => {
-    if (tab === SCAN_JOBS_TAB.IMPORTED && !isCloudEnvironment) return;
-
     updateParams({ tab });
   };
 
@@ -127,11 +113,11 @@ export function ScansPageShell({
               updateParams({ "filter[trigger]": value })
             }
           >
-            <SelectTrigger aria-label="All Scheduled Types">
-              <SelectValue placeholder="All Scheduled Types" />
+            <SelectTrigger aria-label="All Types">
+              <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
-              {SCHEDULE_TYPE_OPTIONS.map((option) => (
+              {triggerFilterOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -158,44 +144,11 @@ export function ScansPageShell({
         className="flex flex-col gap-[18px]"
       >
         <TabsList className="overflow-x-auto">
-          {Object.values(SCAN_JOBS_TAB).map((tab) => {
-            const isImportedTab = tab === SCAN_JOBS_TAB.IMPORTED;
-            const isDisabled = isImportedTab && !isCloudEnvironment;
-            const trigger = (
-              <TabsTrigger
-                key={tab}
-                value={tab}
-                aria-disabled={isDisabled}
-                data-disabled={isDisabled ? "" : undefined}
-                className={isDisabled ? "cursor-not-allowed opacity-50" : ""}
-                onMouseEnter={() => {
-                  if (isDisabled) setImportedTabTooltipOpen(true);
-                }}
-                onMouseLeave={() => {
-                  if (isDisabled) setImportedTabTooltipOpen(false);
-                }}
-                onFocus={() => {
-                  if (isDisabled) setImportedTabTooltipOpen(true);
-                }}
-                onBlur={() => {
-                  if (isDisabled) setImportedTabTooltipOpen(false);
-                }}
-              >
-                {SCAN_TAB_LABELS[tab as ScanJobsTab]}
-              </TabsTrigger>
-            );
-
-            if (!isDisabled) return trigger;
-
-            return (
-              <Tooltip key={tab} open={importedTabTooltipOpen}>
-                <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-                <TooltipContent side="top">
-                  Available in Prowler Cloud
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+          {Object.values(SCAN_JOBS_TAB).map((tab) => (
+            <TabsTrigger key={tab} value={tab}>
+              {SCAN_TAB_LABELS[tab as ScanJobsTab]}
+            </TabsTrigger>
+          ))}
         </TabsList>
         <TabsContent value={activeTab} className="mt-0">
           {children}

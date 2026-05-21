@@ -10,6 +10,7 @@ export interface ScannerArgs {
 export const SCAN_TRIGGER = {
   SCHEDULED: "scheduled",
   MANUAL: "manual",
+  IMPORTED: "imported",
 } as const;
 
 export type ScanTrigger = (typeof SCAN_TRIGGER)[keyof typeof SCAN_TRIGGER];

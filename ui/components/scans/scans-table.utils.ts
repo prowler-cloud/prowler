@@ -1,5 +1,6 @@
 import {
   SCAN_STATE,
+  SCAN_TRIGGER,
   type ScanAttributes,
   type ScanProps,
   type ScanState,
@@ -10,7 +11,6 @@ export const SCAN_JOBS_TAB = {
   ACTIVE: "active",
   COMPLETED: "completed",
   SCHEDULED: "scheduled",
-  IMPORTED: "imported",
 } as const;
 
 export type ScanJobsTab = (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB];
@@ -28,7 +28,6 @@ export const SCAN_TAB_LABELS: Record<ScanJobsTab, string> = {
   [SCAN_JOBS_TAB.ACTIVE]: "Active Scans",
   [SCAN_JOBS_TAB.COMPLETED]: "Completed Scans",
   [SCAN_JOBS_TAB.SCHEDULED]: "Scheduled Scans",
-  [SCAN_JOBS_TAB.IMPORTED]: "Imported Findings",
 };
 
 const SCAN_JOBS_TAB_FILTERS: Record<ScanJobsTab, Record<string, string>> = {
@@ -45,13 +44,35 @@ const SCAN_JOBS_TAB_FILTERS: Record<ScanJobsTab, Record<string, string>> = {
   [SCAN_JOBS_TAB.SCHEDULED]: {
     "filter[state__in]": SCAN_STATE.SCHEDULED,
   },
-  [SCAN_JOBS_TAB.IMPORTED]: {},
 };
 
 export const SCAN_STATE_FILTER_KEYS = [
   "filter[state]",
   "filter[state__in]",
 ] as const;
+
+const ALL_VALUE = "all";
+
+export interface ScanTriggerFilterOption {
+  value: typeof ALL_VALUE | ScanTrigger;
+  label: string;
+}
+
+export function getScanTriggerFilterOptions(
+  isCloudEnvironment: boolean,
+): ScanTriggerFilterOption[] {
+  const options: ScanTriggerFilterOption[] = [
+    { value: ALL_VALUE, label: "All Types" },
+    { value: SCAN_TRIGGER.MANUAL, label: "Single" },
+    { value: SCAN_TRIGGER.SCHEDULED, label: "Scheduled" },
+  ];
+
+  if (isCloudEnvironment) {
+    options.push({ value: SCAN_TRIGGER.IMPORTED, label: "Imported" });
+  }
+
+  return options;
+}
 
 export function isScanStateFilterKey(key: string): boolean {
   return SCAN_STATE_FILTER_KEYS.some((filterKey) => filterKey === key);
@@ -66,25 +87,10 @@ export function getScanJobsTab(value?: string | string[]): ScanJobsTab {
     : DEFAULT_SCAN_JOBS_TAB;
 }
 
-export function getEnabledScanJobsTab(
-  tab: ScanJobsTab,
-  isCloudEnvironment: boolean,
-): ScanJobsTab {
-  if (tab === SCAN_JOBS_TAB.IMPORTED && !isCloudEnvironment) {
-    return DEFAULT_SCAN_JOBS_TAB;
-  }
-
-  return tab;
-}
-
 export function getScanJobsTabFilters(
   tab: ScanJobsTab,
 ): Record<string, string> {
   return { ...SCAN_JOBS_TAB_FILTERS[tab] };
-}
-
-export function isImportedScansTab(tab: ScanJobsTab): boolean {
-  return tab === SCAN_JOBS_TAB.IMPORTED;
 }
 
 export function getScanAlias(scan: ScanProps): string {
