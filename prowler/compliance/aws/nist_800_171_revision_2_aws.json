@@ -653,6 +653,7 @@
         "apigateway_restapi_client_certificate_enabled",
         "ec2_ebs_volume_encryption",
         "elbv2_insecure_ssl_ciphers",
+        "apigateway_domain_name_pqc_tls_enabled",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_default_encryption",
         "s3_bucket_secure_transport_policy"

@@ -474,6 +474,7 @@
         "elbv2_ssl_listeners",
         "elb_insecure_ssl_ciphers",
         "elbv2_insecure_ssl_ciphers",
+        "apigateway_domain_name_pqc_tls_enabled",
         "redshift_cluster_in_transit_encryption_enabled",
         "elasticache_redis_cluster_in_transit_encryption_enabled",
         "dynamodb_accelerator_cluster_in_transit_encryption_enabled",

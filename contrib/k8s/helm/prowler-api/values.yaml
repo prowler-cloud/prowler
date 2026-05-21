@@ -438,6 +438,11 @@ mainConfig:
     # Minimum number of Availability Zones that an ELBv2 must be in
     elbv2_min_azs: 2
 
+    # AWS Post-Quantum TLS Configuration
+    # aws.apigateway_domain_name_pqc_tls_enabled
+    apigateway_pqc_tls_allowed_policies:
+      - "SecurityPolicy_TLS13_1_3_2025_09"
+
 
     # AWS Secrets Configuration
     # Patterns to ignore in the secrets checks

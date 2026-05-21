@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigateway_domain_name_pqc_tls_enabled",
+  "CheckTitle": "API Gateway custom domain names use a post-quantum TLS security policy",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "apigateway",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsApiGatewayDomainName",
+  "ResourceGroup": "network",
+  "Description": "**API Gateway custom domain names** for REST APIs are assessed for use of a **post-quantum (PQ) TLS security policy** (`SecurityPolicy_TLS13_*_2025_09`). Custom domains with legacy policies such as `TLS_1_0` or `TLS_1_2` lack hybrid ML-KEM key exchange, leaving captured traffic vulnerable to future quantum decryption.",
+  "Risk": "Without a PQ-ready TLS policy, traffic to API Gateway custom domains captured today can be decrypted once a **cryptographically relevant quantum computer** exists (**harvest-now, decrypt-later** attack). This threatens long-term **confidentiality** of API payloads, credentials, and bearer tokens.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-custom-domain-tls-version.html",
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-security-policies-list.html",
+    "https://aws.amazon.com/security/post-quantum-cryptography/",
+    "https://csrc.nist.gov/projects/post-quantum-cryptography"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws apigateway update-domain-name --domain-name <domain_name> --patch-operations op=replace,path=/securityPolicy,value=SecurityPolicy_TLS13_1_3_2025_09",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ApiGateway::DomainName\n    Properties:\n      DomainName: api.example.com\n      RegionalCertificateArn: <example_certificate_arn>\n      SecurityPolicy: SecurityPolicy_TLS13_1_3_2025_09  # FIX: enhanced post-quantum security policy\n      EndpointConfiguration:\n        Types:\n          - REGIONAL\n```",
+      "Other": "1. In the AWS Console, go to API Gateway > Custom domain names\n2. Select the custom domain and choose Edit on Domain name configurations\n3. Set Security policy to SecurityPolicy_TLS13_1_3_2025_09 (post-quantum) and Endpoint access mode to Strict\n4. Save the changes",
+      "Terraform": "```hcl\nresource \"aws_api_gateway_domain_name\" \"<example_resource_name>\" {\n  domain_name              = \"api.example.com\"\n  regional_certificate_arn = \"<example_certificate_arn>\"\n  security_policy          = \"SecurityPolicy_TLS13_1_3_2025_09\" # FIX: enhanced post-quantum security policy\n  endpoint_configuration {\n    types = [\"REGIONAL\"]\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Migrate every API Gateway custom domain name to an **enhanced post-quantum TLS policy** (`SecurityPolicy_TLS13_1_3_2025_09`) that enables hybrid ML-KEM key exchange. Note that you must also enable Strict endpoint access mode and that mutual TLS is not supported on enhanced policies. Review allowed policies regularly as AWS publishes new PQ-ready options.",
+      "Url": "https://hub.prowler.com/check/apigateway_domain_name_pqc_tls_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "API Gateway HTTP and WebSocket APIs only support the legacy TLS_1_2 security policy and therefore cannot use post-quantum TLS today; this check evaluates REST API custom domain names only."
+}

@@ -13,11 +13,38 @@ class APIGateway(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.rest_apis = []
+        self.domain_names = []
         self.__threading_call__(self._get_rest_apis)
+        self.__threading_call__(self._get_domain_names)
         self._get_authorizers()
         self._get_rest_api()
         self._get_stages()
         self._get_resources()
+
+    def _get_domain_names(self, regional_client):
+        logger.info("APIGateway - Getting custom domain names...")
+        try:
+            paginator = regional_client.get_paginator("get_domain_names")
+            for page in paginator.paginate():
+                for item in page.get("items", []):
+                    domain_name = item.get("domainName", "")
+                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/domainnames/{domain_name}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        self.domain_names.append(
+                            DomainName(
+                                name=domain_name,
+                                arn=arn,
+                                region=regional_client.region,
+                                security_policy=item.get("securityPolicy", ""),
+                                tags=[item.get("tags", {})],
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _get_rest_apis(self, regional_client):
         logger.info("APIGateway - Getting Rest APIs...")
@@ -249,3 +276,11 @@ class RestAPI(BaseModel):
     stages: list[Stage] = []
     tags: Optional[list] = []
     resources: list[PathResourceMethods] = []
+
+
+class DomainName(BaseModel):
+    name: str
+    arn: str
+    region: str
+    security_policy: str = ""
+    tags: Optional[list] = []
