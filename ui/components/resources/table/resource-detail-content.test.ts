@@ -30,7 +30,9 @@ describe("resource detail content", () => {
   it("renders the external resource link below the resource title row", () => {
     expect(source).toContain(`</div>
           <ExternalResourceLink`);
-    expect(source).toContain('className="self-start justify-start"');
+    expect(source).toMatch(
+      /className="(?:self-start justify-start|justify-start self-start)"/,
+    );
   });
 
   it("keeps resource date fields together on the third details row", () => {
