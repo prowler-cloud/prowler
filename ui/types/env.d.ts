@@ -15,8 +15,8 @@ declare global {
       NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
 
       // Auth (NextAuth)
-      AUTH_URL?: string;
-      AUTH_SECRET?: string;
+      AUTH_URL: string;
+      AUTH_SECRET: string;
       AUTH_TRUST_HOST?: "true" | "false";
       NEXTAUTH_URL?: string;
 
