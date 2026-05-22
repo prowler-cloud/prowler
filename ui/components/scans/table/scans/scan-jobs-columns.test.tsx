@@ -9,18 +9,26 @@ vi.mock("@/components/shadcn", () => ({
     <span>{children}</span>
   ),
   Progress: () => <div />,
-  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: React.ReactNode }) => (
-    <span>{children}</span>
-  ),
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
 }));
 
 vi.mock("@/components/ui/entities", () => ({
   DateWithTime: () => <time />,
-  EntityInfo: () => <span />,
+  EntityInfo: ({
+    entityAlias,
+    entityId,
+    idLabel,
+  }: {
+    entityAlias?: string;
+    entityId?: string;
+    idLabel?: string;
+  }) => (
+    <div>
+      <span>{entityAlias}</span>
+      <span>
+        {idLabel}: {entityId}
+      </span>
+    </div>
+  ),
 }));
 
 vi.mock("@/components/ui/custom", () => ({
@@ -72,9 +80,13 @@ const makeCompletedScan = (): ScanProps => ({
   },
 });
 
-const renderCell = (columnId: string, scan: ScanProps) => {
+const renderCell = (
+  columnId: string,
+  scan: ScanProps,
+  tab: ScanJobsTab = SCAN_JOBS_TAB.COMPLETED,
+) => {
   const column = getScanJobsColumns({
-    tab: SCAN_JOBS_TAB.COMPLETED,
+    tab,
   }).find((item) => item.id === columnId);
   const cell = column?.cell as
     | ((context: CellContext<ScanProps, unknown>) => React.ReactNode)
@@ -104,17 +116,18 @@ describe("getScanJobsColumns", () => {
   it("uses the expected columns for each scan tab", () => {
     expect(getColumnIds(SCAN_JOBS_TAB.ACTIVE)).toEqual([
       "account",
-      "scanNote",
+      "scanInfo",
       "progress",
+      "duration",
       "scanSchedule",
       "launched",
       "actions",
     ]);
     expect(getColumnIds(SCAN_JOBS_TAB.COMPLETED)).toEqual([
       "account",
-      "scanNote",
+      "scanInfo",
       "resources",
-      "findings",
+      "duration",
       "status",
       "scanSchedule",
       "scanDate",
@@ -122,29 +135,38 @@ describe("getScanJobsColumns", () => {
     ]);
     expect(getColumnIds(SCAN_JOBS_TAB.SCHEDULED)).toEqual([
       "account",
-      "scanNote",
+      "scanInfo",
       "scanSchedule",
       "nextScan",
       "actions",
     ]);
   });
 
-  it("labels the scan alias column as Alias in scan tables", () => {
-    renderHeader(SCAN_JOBS_TAB.ACTIVE, "scanNote");
-    renderHeader(SCAN_JOBS_TAB.COMPLETED, "scanNote");
+  it("labels the scan info column as Info in scan tables", () => {
+    renderHeader(SCAN_JOBS_TAB.ACTIVE, "scanInfo");
+    renderHeader(SCAN_JOBS_TAB.COMPLETED, "scanInfo");
 
-    expect(screen.getAllByText("Alias")).toHaveLength(2);
+    expect(screen.getAllByText("Info")).toHaveLength(2);
+    expect(screen.queryByText("Alias")).not.toBeInTheDocument();
     expect(screen.queryByText("Scan Note")).not.toBeInTheDocument();
   });
 
-  it("renders the completed findings column as a findings link", () => {
-    renderCell("findings", makeCompletedScan());
+  it("renders the scan alias with the scan id underneath", () => {
+    renderCell("scanInfo", makeCompletedScan());
 
-    const link = screen.getByRole("link", { name: /view findings/i });
+    expect(screen.getByText("Production scan")).toBeInTheDocument();
+    expect(screen.getByText("ID: scan-1")).toBeInTheDocument();
+  });
 
-    expect(link).toHaveAttribute(
-      "href",
-      "/findings?filter[scan]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
-    );
+  it("renders the completed duration column", () => {
+    renderCell("duration", makeCompletedScan());
+
+    expect(screen.getByText("1 min 13 sec")).toBeInTheDocument();
+  });
+
+  it("renders the active duration column", () => {
+    renderCell("duration", makeCompletedScan(), SCAN_JOBS_TAB.ACTIVE);
+
+    expect(screen.getByText("1 min 13 sec")).toBeInTheDocument();
   });
 });

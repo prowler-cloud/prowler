@@ -2,20 +2,13 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
-import {
-  Badge,
-  Progress,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn";
-import { TableLink } from "@/components/ui/custom";
+import { Badge, Progress } from "@/components/shadcn";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import { toLocalDateString } from "@/lib/date-utils";
 import type { ProviderType, ScanProps } from "@/types";
 
 import {
+  formatScanDuration,
   getScanAlias,
   getScanScheduleLabel,
   getScanStatusLabel,
@@ -46,22 +39,15 @@ function AccountCell({ scan }: { scan: ScanProps }) {
   );
 }
 
-function ScanNoteCell({ scan }: { scan: ScanProps }) {
-  const scanNote = getScanAlias(scan);
-
-  if (scanNote === "-") {
-    return <span className="text-text-neutral-tertiary text-sm">-</span>;
-  }
-
+function ScanInfoCell({ scan }: { scan: ScanProps }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="text-text-neutral-primary block max-w-[180px] truncate text-sm font-medium whitespace-nowrap">
-          {scanNote}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="top">{scanNote}</TooltipContent>
-    </Tooltip>
+    <div className="max-w-[240px] min-w-0">
+      <EntityInfo
+        entityAlias={getScanAlias(scan)}
+        entityId={scan.id}
+        idLabel="ID"
+      />
+    </div>
   );
 }
 
@@ -125,13 +111,13 @@ const accountColumn: ColumnDef<ScanProps> = {
   enableSorting: false,
 };
 
-const scanNoteColumn: ColumnDef<ScanProps> = {
-  id: "scanNote",
+const scanInfoColumn: ColumnDef<ScanProps> = {
+  id: "scanInfo",
   accessorFn: (row) => row.attributes.name,
   header: ({ column }) => (
-    <DataTableColumnHeader column={column} title="Alias" param="name" />
+    <DataTableColumnHeader column={column} title="Info" param="name" />
   ),
-  cell: ({ row }) => <ScanNoteCell scan={row.original} />,
+  cell: ({ row }) => <ScanInfoCell scan={row.original} />,
 };
 
 const scanScheduleColumn: ColumnDef<ScanProps> = {
@@ -154,18 +140,6 @@ const resourcesColumn: ColumnDef<ScanProps> = {
   enableSorting: false,
 };
 
-function FindingsLinkCell({ scan }: { scan: ScanProps }) {
-  const scanDate = toLocalDateString(scan.attributes.completed_at);
-
-  return (
-    <TableLink
-      href={`/findings?filter[scan]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`}
-      isDisabled={scan.attributes.state !== "completed" || !scanDate}
-      label="View Findings"
-    />
-  );
-}
-
 const actionsColumn: ColumnDef<ScanProps> = {
   id: "actions",
   header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
@@ -173,9 +147,18 @@ const actionsColumn: ColumnDef<ScanProps> = {
   enableSorting: false,
 };
 
+const durationColumn: ColumnDef<ScanProps> = {
+  id: "duration",
+  header: ({ column }) => (
+    <DataTableColumnHeader column={column} title="Duration" />
+  ),
+  cell: ({ row }) => formatScanDuration(row.original.attributes.duration),
+  enableSorting: false,
+};
+
 const activeColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
-  scanNoteColumn,
+  scanInfoColumn,
   {
     id: "progress",
     header: ({ column }) => (
@@ -184,19 +167,7 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
     cell: ({ row }) => <ProgressCell scan={row.original} />,
     enableSorting: false,
   },
-  /*
-   * TODO: Restore the Duration column once the API populates `attributes.duration`
-   * for active scans. Currently the field is always null/empty so the column
-   * renders blank, which is more confusing than helpful.
-   * {
-   *   id: "scanTime",
-   *   header: ({ column }) => (
-   *     <DataTableColumnHeader column={column} title="Duration" />
-   *   ),
-   *   cell: ({ row }) => formatScanDuration(row.original.attributes.duration),
-   *   enableSorting: false,
-   * },
-   */
+  durationColumn,
   scanScheduleColumn,
   {
     id: "launched",
@@ -213,16 +184,9 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
 
 const completedColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
-  scanNoteColumn,
+  scanInfoColumn,
   resourcesColumn,
-  {
-    id: "findings",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Findings" />
-    ),
-    cell: ({ row }) => <FindingsLinkCell scan={row.original} />,
-    enableSorting: false,
-  },
+  durationColumn,
   {
     id: "status",
     header: ({ column }) => (
@@ -251,7 +215,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
 
 const scheduledColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
-  scanNoteColumn,
+  scanInfoColumn,
   scanScheduleColumn,
   /*
    * TODO: Restore this column when the API exposes the last completed scan date for this schedule.
