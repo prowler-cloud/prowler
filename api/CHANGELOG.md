@@ -2,12 +2,12 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.29.0] (Prowler UNRELEASED)
+## [1.29.0] (Prowler v5.28.0)
 
 ### 🚀 Added
 
 - `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
-- `metadata` field on resources included in finding responses (`?include=resources`), so finding consumers can read the affected resource's metadata without an extra request [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
+- `resource.metadata` attribute included in `/api/v1/findings?include=resources` [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
 ---
 
