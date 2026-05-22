@@ -71,12 +71,12 @@ export const ExternalResourceLink = (props: ExternalResourceLinkProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          variant="link"
-          size="link-sm"
-          asChild
-          className={props.className}
-        >
+	        <Button
+	          variant="link"
+	          size="link-xs"
+	          asChild
+	          className={props.className}
+	        >
           <a
             href={target.url}
             target="_blank"
