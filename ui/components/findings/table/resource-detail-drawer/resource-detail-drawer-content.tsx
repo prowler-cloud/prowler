@@ -53,6 +53,7 @@ import {
   QueryCodeEditor,
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
+import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -845,6 +846,9 @@ export function ResourceDetailDrawerContent({
             <TabsList>
               <TabsTrigger value="overview">Finding Overview</TabsTrigger>
               <TabsTrigger value="remediation">Remediation</TabsTrigger>
+              <TabsTrigger value="metadata">
+                Resource Metadata / Evidence
+              </TabsTrigger>
               <TabsTrigger value="other-findings">
                 Findings for this resource
               </TabsTrigger>
@@ -1069,6 +1073,21 @@ export function ResourceDetailDrawerContent({
               )
             ) : (
               <OverviewNavigationSkeleton testId="remediation-navigation-skeleton" />
+            )}
+          </TabsContent>
+
+          {/* Metadata */}
+          <TabsContent
+            value="metadata"
+            className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
+          >
+            {isNavigating ? (
+              <MetadataNavigationSkeleton />
+            ) : (
+              <ResourceMetadataPanel
+                metadata={f?.resourceMetadata}
+                details={f?.resourceDetails}
+              />
             )}
           </TabsContent>
 
@@ -1396,6 +1415,21 @@ function EventsNavigationSkeleton() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function MetadataNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="metadata-navigation-skeleton"
+      aria-hidden="true"
+    >
+      <Card variant="inner">
+        <OverviewCardSkeleton lineWidths={["w-20", "w-full", "w-3/4"]} />
+      </Card>
+      <Skeleton className="h-56 w-full rounded" />
     </div>
   );
 }

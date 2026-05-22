@@ -215,6 +215,7 @@ vi.mock("@/components/shared/query-code-editor", () => ({
     HCL: "hcl",
     BICEP: "bicep",
     YAML: "yaml",
+    JSON: "json",
   },
   QueryCodeEditor: ({
     ariaLabel,
@@ -426,6 +427,8 @@ const mockFinding: ResourceDrawerFinding = {
   resourceRegion: "us-east-1",
   resourceType: "Bucket",
   resourceGroup: "default",
+  resourceDetails: null,
+  resourceMetadata: null,
   providerType: "aws",
   providerAlias: "prod",
   providerUid: "123456789",
@@ -1762,5 +1765,162 @@ describe("ResourceDetailDrawerContent — other findings delta/muted indicator",
       mutedReason: "False positive",
       showDeltaWhenMuted: true,
     });
+  });
+});
+
+describe("ResourceDetailDrawerContent — Metadata tab", () => {
+  const getMetadataEditor = () =>
+    screen
+      .queryAllByTestId("query-code-editor")
+      .find(
+        (editor) =>
+          editor.getAttribute("data-aria-label") === "Resource metadata",
+      );
+
+  it("should render a Metadata tab trigger", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Resource Metadata / Evidence" }),
+    ).toBeInTheDocument();
+  });
+
+  it("should render the resource metadata as formatted JSON and copy it to the clipboard", async () => {
+    // Given
+    const user = userEvent.setup();
+    const findingWithMetadata: ResourceDrawerFinding = {
+      ...mockFinding,
+      resourceDetails: "Python",
+      resourceMetadata: {
+        VulnerabilityID: "CVE-2026-0001",
+        PkgName: "requests",
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithMetadata}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then — Details section + JSON editor are rendered
+    expect(screen.getByText("Details:")).toBeInTheDocument();
+    expect(screen.getByText("Python")).toBeInTheDocument();
+
+    const metadataEditor = getMetadataEditor();
+    expect(metadataEditor).toBeDefined();
+    expect(metadataEditor).toHaveAttribute("data-language", "json");
+    expect(metadataEditor?.textContent).toContain("CVE-2026-0001");
+
+    // When — copy the metadata JSON
+    await user.click(
+      screen.getByRole("button", { name: "Copy Resource metadata" }),
+    );
+
+    // Then
+    expect(mockClipboardWriteText).toHaveBeenCalledWith(
+      JSON.stringify(findingWithMetadata.resourceMetadata, null, 2),
+    );
+  });
+
+  it("should parse stringified resource metadata", () => {
+    // Given
+    const findingWithStringMetadata: ResourceDrawerFinding = {
+      ...mockFinding,
+      resourceMetadata: '{"PkgName":"requests"}',
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithStringMetadata}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(getMetadataEditor()?.textContent).toContain("requests");
+  });
+
+  it("should show an empty state when no metadata or details are available", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByText("No metadata available for this resource."),
+    ).toBeInTheDocument();
+    expect(getMetadataEditor()).toBeUndefined();
+  });
+
+  it("should show a metadata skeleton while navigating", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByTestId("metadata-navigation-skeleton"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("No metadata available for this resource."),
+    ).not.toBeInTheDocument();
   });
 });

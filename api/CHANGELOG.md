@@ -2,12 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.29.0] (Prowler UNRELEASED)
+## [1.29.0] (Prowler v5.28.0)
 
 ### 🚀 Added
 
 - `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
 - `DJANGO_CELERY_WORKER_CONCURRENCY` setting (default `4`) bounds the Celery worker prefork pool so memory is predictable regardless of host CPU count [(#11075)](https://github.com/prowler-cloud/prowler/pull/11075)
+- `resource.metadata` attribute included in `/api/v1/findings?include=resources` [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
 ---
 

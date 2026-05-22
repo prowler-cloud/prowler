@@ -100,4 +100,4 @@ RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
 USER prowler
-ENTRYPOINT [".venv/bin/prowler"]
+ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]

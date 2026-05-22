@@ -101,6 +101,28 @@ Dependencies are scanned against public vulnerability databases on every pull re
   - Per-vulnerability ignores live in [`osv-scanner.toml`](https://github.com/prowler-cloud/prowler/blob/master/osv-scanner.toml) at the repo root, each with a reason and an expiry date.
 - **Trivy:** scans container images for OS-package and application-dependency vulnerabilities. Runs in [`sdk-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-container-checks.yml), [`api-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-container-checks.yml), [`ui-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-container-checks.yml), and [`mcp-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/mcp-container-checks.yml). Trivy uploads SARIF to the GitHub Security tab and posts a scan summary on the PR.
 - **Dependabot:** [configured](https://github.com/prowler-cloud/prowler/blob/master/.github/dependabot.yml) for monthly updates of the SDK Python dependencies, GitHub Actions, Docker base images, and pre-commit hooks. Dependabot opens pull requests for known security advisories, so critical patches reach the team without delay. A 7-day default cooldown reduces exposure to compromised package releases.
+- **Renovate:** [configured](https://github.com/prowler-cloud/prowler/blob/master/.github/renovate.json) dependency update automation is transitioning from Dependabot to **Renovate** to gain finer control over update cadence, grouping, and per-component scope. Both tools currently run in parallel during the migration.
+
+#### Renovate (Primary)
+
+Configuration: [`.github/renovate.json`](https://github.com/prowler-cloud/prowler/blob/master/.github/renovate.json)
+
+- **Coverage:** Python (SDK, API, MCP Server), npm (UI), GitHub Actions, Docker images, and Pre-commit hooks
+- **Range Strategy:** Versions are pinned to ensure reproducible builds
+- **Vulnerability Alerts:** GitHub Security Advisories generate immediate pull requests that bypass rate limits and scheduled windows, labeled `security` for prioritized triage
+
+#### Dependabot (Legacy)
+
+Configuration: [`.github/dependabot.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/dependabot.yml)
+
+Dependabot remains active for the SDK and shared automation ecosystems until the Renovate migration completes:
+
+- **Python (pip):** Monthly updates for SDK
+- **GitHub Actions:** Monthly updates for workflow dependencies
+- **Docker:** Monthly updates for base images
+- **Pre-commit:** Monthly updates for hook revisions
+
+Dependabot is paused for the API and UI; Renovate now handles those components. Even when paused, Dependabot continues to open pull requests for security vulnerabilities, ensuring critical patches are never delayed.
 
 ### JavaScript/TypeScript (UI)
 
