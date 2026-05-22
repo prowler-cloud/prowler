@@ -10,6 +10,13 @@ import { parseMetadata } from "@/lib/resource-metadata";
 interface ResourceMetadataPanelProps {
   metadata: Record<string, unknown> | string | null | undefined;
   details: string | null | undefined;
+  /**
+   * When true the metadata editor fills the available height and scrolls
+   * internally. Only enable this when the panel is rendered inside a bounded
+   * flex container; otherwise the editor collapses. Defaults to growing with
+   * its content.
+   */
+  fill?: boolean;
 }
 
 /**
@@ -24,6 +31,7 @@ interface ResourceMetadataPanelProps {
 export function ResourceMetadataPanel({
   metadata,
   details,
+  fill = false,
 }: ResourceMetadataPanelProps) {
   const parsedMetadata = parseMetadata(metadata);
   const hasMetadata =
@@ -58,7 +66,7 @@ export function ResourceMetadataPanel({
           copyValue={formattedMetadata}
           editable={false}
           minHeight={220}
-          fill
+          fill={fill}
           showCopyButton
           onChange={() => {}}
         />

@@ -1087,6 +1087,7 @@ export function ResourceDetailDrawerContent({
               <ResourceMetadataPanel
                 metadata={f?.resourceMetadata}
                 details={f?.resourceDetails}
+                fill
               />
             )}
           </TabsContent>
