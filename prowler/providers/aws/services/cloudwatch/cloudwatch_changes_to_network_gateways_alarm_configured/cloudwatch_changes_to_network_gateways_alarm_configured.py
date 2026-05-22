@@ -13,7 +13,14 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_changes_to_network_gateways_alarm_configured(Check):
     def execute(self):
-        pattern = r"\$\.eventName\s*=\s*.?CreateCustomerGateway.+\$\.eventName\s*=\s*.?DeleteCustomerGateway.+\$\.eventName\s*=\s*.?AttachInternetGateway.+\$\.eventName\s*=\s*.?CreateInternetGateway.+\$\.eventName\s*=\s*.?DeleteInternetGateway.+\$\.eventName\s*=\s*.?DetachInternetGateway.?"
+        pattern = (
+            r"(?=.*\$\.eventName\s*=\s*.?CreateCustomerGateway)"
+            r"(?=.*\$\.eventName\s*=\s*.?DeleteCustomerGateway)"
+            r"(?=.*\$\.eventName\s*=\s*.?AttachInternetGateway)"
+            r"(?=.*\$\.eventName\s*=\s*.?CreateInternetGateway)"
+            r"(?=.*\$\.eventName\s*=\s*.?DeleteInternetGateway)"
+            r"(?=.*\$\.eventName\s*=\s*.?DetachInternetGateway)"
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

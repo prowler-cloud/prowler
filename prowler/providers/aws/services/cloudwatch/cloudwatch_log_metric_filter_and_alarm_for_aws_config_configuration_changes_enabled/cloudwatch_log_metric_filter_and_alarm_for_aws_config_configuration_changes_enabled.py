@@ -15,7 +15,13 @@ class cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_change
     Check
 ):
     def execute(self):
-        pattern = r"\$\.eventSource\s*=\s*.?config.amazonaws.com.+\$\.eventName\s*=\s*.?StopConfigurationRecorder.+\$\.eventName\s*=\s*.?DeleteDeliveryChannel.+\$\.eventName\s*=\s*.?PutDeliveryChannel.+\$\.eventName\s*=\s*.?PutConfigurationRecorder.?"
+        pattern = (
+            r"(?=.*\$\.eventSource\s*=\s*.?config.amazonaws.com)"
+            r"(?=.*\$\.eventName\s*=\s*.?StopConfigurationRecorder)"
+            r"(?=.*\$\.eventName\s*=\s*.?DeleteDeliveryChannel)"
+            r"(?=.*\$\.eventName\s*=\s*.?PutDeliveryChannel)"
+            r"(?=.*\$\.eventName\s*=\s*.?PutConfigurationRecorder)"
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

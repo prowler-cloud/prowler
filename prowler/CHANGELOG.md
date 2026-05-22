@@ -22,6 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - OCI Audit service configuration lookup when the configured region differs from the tenancy home region [(#10347)](https://github.com/prowler-cloud/prowler/pull/10347)
+- AWS CloudWatch log metric filter checks validate combined `filterPattern` strings regardless of `{ (A) || (B) }` clause order by using per-requirement lookahead substrings instead of sequence-dependent chaining
 
 ---
 

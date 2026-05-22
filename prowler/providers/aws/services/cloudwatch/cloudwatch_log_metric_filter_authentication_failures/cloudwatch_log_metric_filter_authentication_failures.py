@@ -13,7 +13,10 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_authentication_failures(Check):
     def execute(self):
-        pattern = r"\$\.eventName\s*=\s*.?ConsoleLogin.+\$\.errorMessage\s*=\s*.?Failed authentication.?"
+        pattern = (
+            r"(?=.*\$\.eventName\s*=\s*.?ConsoleLogin)"
+            r"(?=.*\$\.errorMessage\s*=\s*.?Failed authentication)"
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

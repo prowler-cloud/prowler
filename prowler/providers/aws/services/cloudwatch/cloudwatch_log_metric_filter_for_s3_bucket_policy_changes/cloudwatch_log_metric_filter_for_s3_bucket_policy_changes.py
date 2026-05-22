@@ -13,7 +13,18 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_for_s3_bucket_policy_changes(Check):
     def execute(self):
-        pattern = r"\$\.eventSource\s*=\s*.?s3.amazonaws.com.+\$\.eventName\s*=\s*.?PutBucketAcl.+\$\.eventName\s*=\s*.?PutBucketPolicy.+\$\.eventName\s*=\s*.?PutBucketCors.+\$\.eventName\s*=\s*.?PutBucketLifecycle.+\$\.eventName\s*=\s*.?PutBucketReplication.+\$\.eventName\s*=\s*.?DeleteBucketPolicy.+\$\.eventName\s*=\s*.?DeleteBucketCors.+\$\.eventName\s*=\s*.?DeleteBucketLifecycle.+\$\.eventName\s*=\s*.?DeleteBucketReplication.?"
+        pattern = (
+            r"(?=.*\$\.eventSource\s*=\s*.?s3.amazonaws.com)"
+            r"(?=.*\$\.eventName\s*=\s*.?PutBucketAcl)"
+            r"(?=.*\$\.eventName\s*=\s*.?PutBucketPolicy)"
+            r"(?=.*\$\.eventName\s*=\s*.?PutBucketCors)"
+            r"(?=.*\$\.eventName\s*=\s*.?PutBucketLifecycle)"
+            r"(?=.*\$\.eventName\s*=\s*.?PutBucketReplication)"
+            r"(?=.*\$\.eventName\s*=\s*.?DeleteBucketPolicy)"
+            r"(?=.*\$\.eventName\s*=\s*.?DeleteBucketCors)"
+            r"(?=.*\$\.eventName\s*=\s*.?DeleteBucketLifecycle)"
+            r"(?=.*\$\.eventName\s*=\s*.?DeleteBucketReplication)"
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

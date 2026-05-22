@@ -15,7 +15,13 @@ class cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_change
     Check
 ):
     def execute(self):
-        pattern = r"\$\.eventName\s*=\s*.?CreateTrail.+\$\.eventName\s*=\s*.?UpdateTrail.+\$\.eventName\s*=\s*.?DeleteTrail.+\$\.eventName\s*=\s*.?StartLogging.+\$\.eventName\s*=\s*.?StopLogging.?"
+        pattern = (
+            r"(?=.*\$\.eventName\s*=\s*.?CreateTrail)"
+            r"(?=.*\$\.eventName\s*=\s*.?UpdateTrail)"
+            r"(?=.*\$\.eventName\s*=\s*.?DeleteTrail)"
+            r"(?=.*\$\.eventName\s*=\s*.?StartLogging)"
+            r"(?=.*\$\.eventName\s*=\s*.?StopLogging)"
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(
