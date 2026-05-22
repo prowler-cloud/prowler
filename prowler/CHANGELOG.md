@@ -23,6 +23,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - OCI Audit service configuration lookup when the configured region differs from the tenancy home region [(#10347)](https://github.com/prowler-cloud/prowler/pull/10347)
 
+### 🐞 Fixed
+
+- Container image now uses an absolute `ENTRYPOINT` (`/home/prowler/.venv/bin/prowler`) so it works under any runtime `--workdir`. The relative entrypoint was breaking the official GitHub Action (`prowler-cloud/prowler@v5.27.0`) and any `docker run` with a custom `-w` [(#11313)](https://github.com/prowler-cloud/prowler/pull/11313)
+
 ---
 
 ## [5.27.1] (Prowler v5.27.1)
