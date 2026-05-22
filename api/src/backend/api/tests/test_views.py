@@ -17419,18 +17419,20 @@ class TestFindingGroupViewSet:
         check_ids = [item["id"] for item in data]
         assert check_ids == sorted(check_ids)
 
-    def test_finding_groups_latest_sort_by_check_title(
+    def test_finding_groups_latest_sort_by_check_title_not_supported(
         self, authenticated_client, finding_groups_fixture
     ):
-        """Test /latest supports sorting by check_title."""
+        """check_title is not a sortable field for finding groups.
+
+        Titles live in the TOASTed check_metadata blob and are resolved after
+        pagination from the summary table, so they cannot drive DB-level
+        ordering. Requesting that sort is rejected.
+        """
         response = authenticated_client.get(
             reverse("finding-group-latest"),
             {"sort": "check_title"},
         )
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        check_titles = [item["attributes"]["check_title"] for item in data]
-        assert check_titles == sorted(check_titles)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.parametrize(
         "endpoint_name", ["finding-group-list", "finding-group-latest"]

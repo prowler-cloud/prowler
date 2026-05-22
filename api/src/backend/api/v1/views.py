@@ -7369,6 +7369,15 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
+        # `check_title` / `check_description` are intentionally NOT resolved
+        # here. They live in the large JSONB `check_metadata` blob (TOASTed),
+        # so reading them per finding row is very expensive, and pulling them
+        # in via a correlated subquery makes Django add the subquery to GROUP
+        # BY, which re-evaluates it once per input row. They are identical for
+        # every finding of a `check_id`, so `_post_process_aggregation` fills
+        # them from the summary table's plain columns in a single batched
+        # lookup scoped to the paginated page.
+
         # `pass_count`, `fail_count` and `manual_count` only count non-muted
         # findings. Muted findings are tracked separately via the
         # `*_muted_count` fields.
@@ -7439,15 +7448,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 agg_failing_since=Min(
                     "first_seen_at", filter=Q(status="FAIL", muted=False)
                 ),
-                check_title=Coalesce(
-                    Max(KeyTextTransform("checktitle", "check_metadata")),
-                    Max(KeyTextTransform("CheckTitle", "check_metadata")),
-                    Max(KeyTextTransform("Checktitle", "check_metadata")),
-                ),
-                check_description=Coalesce(
-                    Max(KeyTextTransform("description", "check_metadata")),
-                    Max(KeyTextTransform("Description", "check_metadata")),
-                ),
             )
             .annotate(
                 # Group is muted only if it has zero non-muted findings.
@@ -7503,9 +7503,33 @@ class FindingGroupViewSet(BaseRLSViewSet):
         - Computes aggregated status (FAIL > PASS > MANUAL); the orthogonal
           ``muted`` boolean is already on the row from the SQL aggregation
         - Converts provider string to list
+        - Fills check_title / check_description for the findings path
         """
+        rows = list(aggregated_data)
+
+        # The findings-aggregation path omits check_title / check_description
+        # (they sit in TOASTed JSONB; see _aggregate_findings). Fill them from
+        # the summary table's plain columns in one query scoped to this page.
+        # The summary-aggregation path already carries them, so skip it there.
+        if rows and "check_title" not in rows[0]:
+            check_ids = [row["check_id"] for row in rows]
+            metadata_by_check = {
+                item["check_id"]: item
+                for item in FindingGroupDailySummary.objects.filter(
+                    tenant_id=self.request.tenant_id,
+                    check_id__in=check_ids,
+                )
+                .order_by("check_id", "-inserted_at")
+                .distinct("check_id")
+                .values("check_id", "check_title", "check_description")
+            }
+            for row in rows:
+                metadata = metadata_by_check.get(row["check_id"], {})
+                row["check_title"] = metadata.get("check_title")
+                row["check_description"] = metadata.get("check_description")
+
         results = []
-        for row in aggregated_data:
+        for row in rows:
             # Convert severity order back to string
             severity_order = row.get("severity_order", 1)
             row["severity"] = SEVERITY_ORDER_REVERSE.get(
@@ -7551,7 +7575,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     _FINDING_GROUP_SORT_MAP = {
         "check_id": "check_id",
-        "check_title": "check_title",
         "severity": "severity_order",
         "status": "status_order",
         "muted": "muted",
