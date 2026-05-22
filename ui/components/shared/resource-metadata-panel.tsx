@@ -58,6 +58,7 @@ export function ResourceMetadataPanel({
           copyValue={formattedMetadata}
           editable={false}
           minHeight={220}
+          fill
           showCopyButton
           onChange={() => {}}
         />
