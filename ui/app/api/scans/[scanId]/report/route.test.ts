@@ -56,6 +56,32 @@ describe("GET /api/scans/[scanId]/report", () => {
     expect(response.body).toBe(upstreamBody);
   });
 
+  it("checks report readiness without streaming ready report bytes", async () => {
+    const cancelMock = vi.fn();
+    const upstreamBody = new ReadableStream({
+      cancel: cancelMock,
+      start(controller) {
+        controller.enqueue(new Uint8Array([1, 2, 3]));
+      },
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(upstreamBody, { status: 200 })),
+    );
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+
+    const response = await GET(
+      new Request("http://localhost/api?preflight=1"),
+      {
+        params: Promise.resolve({ scanId: "scan-123" }),
+      },
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.body).toBeNull();
+    expect(cancelMock).toHaveBeenCalledTimes(1);
+  });
+
   it("preserves pending report responses from the API", async () => {
     vi.stubGlobal(
       "fetch",

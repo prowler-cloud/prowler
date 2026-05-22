@@ -12,7 +12,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Resource detail panels: metadata editor now scrolls internally with the minimal scrollbar across the finding drawer and `/resources/:id`, tab labels truncate with tooltips on narrow widths, and "View in AWS Console" moved from the resource UID row to the resource actions menu [(#11325)](https://github.com/prowler-cloud/prowler/pull/11325)
-- Scan report ZIP downloads now stream through a Route Handler instead of buffering the full file in a Server Action, allowing very large reports to download reliably [(#11330)](https://github.com/prowler-cloud/prowler/pull/11330)
 
 ---
 

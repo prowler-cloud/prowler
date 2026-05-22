@@ -40,12 +40,14 @@ const buildDownloadHeaders = (upstreamHeaders: Headers, scanId: string) => {
 };
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: ScanReportRouteContext,
 ) {
   const { scanId } = await params;
   const headers = await getAuthHeaders({ contentType: false });
   const upstreamUrl = `${apiBaseUrl}/scans/${encodeURIComponent(scanId)}/report`;
+  const isPreflight =
+    new URL(request.url).searchParams.get("preflight") === "1";
 
   const upstreamResponse = await fetch(upstreamUrl, {
     headers,
@@ -70,6 +72,14 @@ export async function GET(
         "Content-Type":
           upstreamResponse.headers.get("content-type") || "text/plain",
       },
+    });
+  }
+
+  if (isPreflight) {
+    await upstreamResponse.body?.cancel();
+    return new Response(null, {
+      status: 204,
+      headers: { "Cache-Control": "no-store" },
     });
   }
 

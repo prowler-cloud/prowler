@@ -105,8 +105,41 @@ export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ) => {
+  const reportUrl = `/api/scans/${encodeURIComponent(scanId)}/report`;
+
+  try {
+    const preflightResponse = await fetch(`${reportUrl}?preflight=1`, {
+      cache: "no-store",
+    });
+
+    if (preflightResponse.status === 202) {
+      toast({
+        title: "The report is still being generated",
+        description: "Please try again in a few minutes.",
+      });
+      return;
+    }
+
+    if (!preflightResponse.ok) {
+      const errorMessage = await preflightResponse.text();
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: errorMessage || "An unknown error occurred.",
+      });
+      return;
+    }
+  } catch (_error) {
+    toast({
+      variant: "destructive",
+      title: "Download Failed",
+      description: "Unable to start the report download. Please try again.",
+    });
+    return;
+  }
+
   const a = document.createElement("a");
-  a.href = `/api/scans/${encodeURIComponent(scanId)}/report`;
+  a.href = reportUrl;
   a.download = `scan-${scanId}-report.zip`;
   document.body.appendChild(a);
   a.click();
