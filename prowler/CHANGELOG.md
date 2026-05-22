@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `bedrock_agent_role_least_privilege` check for AWS provider, flagging Bedrock Agent execution roles with full-access managed policies, broad `Resource:*` inline statements, or missing permissions boundaries [(#11335)](https://github.com/prowler-cloud/prowler/pull/11335)
 - `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
 
 ---
@@ -22,7 +23,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `bedrock_agent_role_least_privilege` check for AWS provider, flagging Bedrock Agent execution roles with full-access managed policies, broad `Resource:*` inline statements, or missing permissions boundaries [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 - Sites, Additional Google services, and Marketplace checks for Google Workspace provider using the Cloud Identity Policy API [(#11281)](https://github.com/prowler-cloud/prowler/pull/11281)
 - `entra_app_registration_client_secret_unused` check for M365 provider [(#11232)](https://github.com/prowler-cloud/prowler/pull/11232)
 - `cloudsql_instance_cmek_encryption_enabled` check for GCP provider [(#11023)](https://github.com/prowler-cloud/prowler/pull/11023)
