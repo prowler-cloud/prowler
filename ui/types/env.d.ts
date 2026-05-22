@@ -13,9 +13,6 @@ declare global {
       NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID?: string;
       NEXT_PUBLIC_SENTRY_DSN?: string;
       NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
-      NEXT_PUBLIC_POSTHOG_API_HOST?: string;
-      NEXT_PUBLIC_POSTHOG_UI_HOST?: string;
-      NEXT_PUBLIC_POSTHOG_KEY?: string;
 
       // Auth (NextAuth)
       AUTH_URL?: string;
