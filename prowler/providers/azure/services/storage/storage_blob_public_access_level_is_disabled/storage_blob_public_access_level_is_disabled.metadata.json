@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "microsoft.storage/storageaccounts",
   "ResourceGroup": "storage",
-  "Description": "**Azure Storage accounts** with **blob anonymous (public) access** disabled prevent containers or blobs from being set to a public access level. Setting `allowBlobPublicAccess` to `false` enforces no anonymous reads across the account. This is independent from the account's 'Public Network Access' setting, which is evaluated by storage_public_network_access_disabled.",
+  "Description": "**Azure Storage accounts** with **blob anonymous (public) access** disabled prevent containers or blobs from being set to a public access level. Setting `allowBlobPublicAccess` to `false` enforces no anonymous reads across the account. This is independent from the account's 'Public Network Access' setting, which is evaluated by storage_account_public_network_access_disabled.",
   "Risk": "Allowing public access permits unauthenticated users to read blob data or enumerate container contents when any container is made public, compromising confidentiality.\n\nExposed objects can be scraped at scale, enabling data exfiltration and intelligence gathering without audit attribution.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check evaluates the 'Allow Blob Anonymous Access' (allowBlobPublicAccess) setting. The account's 'Public Network Access' (publicNetworkAccess) setting is evaluated by storage_public_network_access_disabled."
+  "Notes": "This check evaluates the 'Allow Blob Anonymous Access' (allowBlobPublicAccess) setting. The account's 'Public Network Access' (publicNetworkAccess) setting is evaluated by storage_account_public_network_access_disabled."
 }

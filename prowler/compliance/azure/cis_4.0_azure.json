@@ -3021,7 +3021,7 @@
       "Id": "10.3.2.2",
       "Description": "Ensure that 'Public Network Access' is 'Disabled' for storage accounts",
       "Checks": [
-        "storage_public_network_access_disabled"
+        "storage_account_public_network_access_disabled"
       ],
       "Attributes": [
         {

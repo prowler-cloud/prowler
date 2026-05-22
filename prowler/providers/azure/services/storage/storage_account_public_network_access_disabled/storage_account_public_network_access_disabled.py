@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.storage.storage_client import storage_client
 
 
-class storage_public_network_access_disabled(Check):
+class storage_account_public_network_access_disabled(Check):
     """
     Ensure that 'Public Network Access' is 'Disabled' for storage accounts.
 

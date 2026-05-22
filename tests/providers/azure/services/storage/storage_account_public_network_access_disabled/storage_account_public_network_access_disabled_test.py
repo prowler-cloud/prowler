@@ -13,7 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_storage_public_network_access_disabled:
+class Test_storage_account_public_network_access_disabled:
     def test_no_storage_accounts(self):
         storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
@@ -25,15 +25,15 @@ class Test_storage_public_network_access_disabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.storage.storage_public_network_access_disabled.storage_public_network_access_disabled.storage_client",
+                "prowler.providers.azure.services.storage.storage_account_public_network_access_disabled.storage_account_public_network_access_disabled.storage_client",
                 new=storage_client,
             ),
         ):
-            from prowler.providers.azure.services.storage.storage_public_network_access_disabled.storage_public_network_access_disabled import (
-                storage_public_network_access_disabled,
+            from prowler.providers.azure.services.storage.storage_account_public_network_access_disabled.storage_account_public_network_access_disabled import (
+                storage_account_public_network_access_disabled,
             )
 
-            check = storage_public_network_access_disabled()
+            check = storage_account_public_network_access_disabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -69,15 +69,15 @@ class Test_storage_public_network_access_disabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.storage.storage_public_network_access_disabled.storage_public_network_access_disabled.storage_client",
+                "prowler.providers.azure.services.storage.storage_account_public_network_access_disabled.storage_account_public_network_access_disabled.storage_client",
                 new=storage_client,
             ),
         ):
-            from prowler.providers.azure.services.storage.storage_public_network_access_disabled.storage_public_network_access_disabled import (
-                storage_public_network_access_disabled,
+            from prowler.providers.azure.services.storage.storage_account_public_network_access_disabled.storage_account_public_network_access_disabled import (
+                storage_account_public_network_access_disabled,
             )
 
-            check = storage_public_network_access_disabled()
+            check = storage_account_public_network_access_disabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -101,15 +101,15 @@ class Test_storage_public_network_access_disabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.storage.storage_public_network_access_disabled.storage_public_network_access_disabled.storage_client",
+                "prowler.providers.azure.services.storage.storage_account_public_network_access_disabled.storage_account_public_network_access_disabled.storage_client",
                 new=storage_client,
             ),
         ):
-            from prowler.providers.azure.services.storage.storage_public_network_access_disabled.storage_public_network_access_disabled import (
-                storage_public_network_access_disabled,
+            from prowler.providers.azure.services.storage.storage_account_public_network_access_disabled.storage_account_public_network_access_disabled import (
+                storage_account_public_network_access_disabled,
             )
 
-            check = storage_public_network_access_disabled()
+            check = storage_account_public_network_access_disabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -130,15 +130,15 @@ class Test_storage_public_network_access_disabled:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.storage.storage_public_network_access_disabled.storage_public_network_access_disabled.storage_client",
+                "prowler.providers.azure.services.storage.storage_account_public_network_access_disabled.storage_account_public_network_access_disabled.storage_client",
                 new=storage_client,
             ),
         ):
-            from prowler.providers.azure.services.storage.storage_public_network_access_disabled.storage_public_network_access_disabled import (
-                storage_public_network_access_disabled,
+            from prowler.providers.azure.services.storage.storage_account_public_network_access_disabled.storage_account_public_network_access_disabled import (
+                storage_account_public_network_access_disabled,
             )
 
-            check = storage_public_network_access_disabled()
+            check = storage_account_public_network_access_disabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
