@@ -228,19 +228,20 @@ export const ResourceDetailContent = ({
               </TooltipTrigger>
               <TooltipContent>Copy resource link to clipboard</TooltipContent>
             </Tooltip>
-            <ExternalResourceLink
-              providerType={providerData.provider}
-              resourceUid={attributes.uid}
-              providerUid={providerData.uid}
-              resourceName={attributes.name}
-              region={attributes.region}
-            />
           </div>
+          <ExternalResourceLink
+            providerType={providerData.provider}
+            resourceUid={attributes.uid}
+            providerUid={providerData.uid}
+            resourceName={attributes.name}
+            region={attributes.region}
+            className="self-start justify-start"
+          />
         </div>
       </div>
 
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
-        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
+        <div className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
           {providerOrg ? (
             <div className="col-span-2 flex flex-col gap-1">
               <EntityInfo
@@ -258,13 +259,21 @@ export const ResourceDetailContent = ({
               </div>
             </div>
           ) : (
-            <EntityInfo
-              cloudProvider={providerData.provider as ProviderType}
-              entityAlias={providerData.alias ?? undefined}
-              entityId={providerData.uid}
-            />
+            <div className="col-span-2 md:col-span-1">
+              <EntityInfo
+                cloudProvider={providerData.provider as ProviderType}
+                entityAlias={providerData.alias ?? undefined}
+                entityId={providerData.uid}
+              />
+            </div>
           )}
-          <div className={providerOrg ? "self-end" : undefined}>
+          <div
+            className={
+              providerOrg
+                ? "col-span-2 self-end md:col-span-1"
+                : "col-span-2 md:col-span-1"
+            }
+          >
             <EntityInfo
               nameIcon={<Container className="size-4" />}
               entityAlias={resourceName}
@@ -299,10 +308,18 @@ export const ResourceDetailContent = ({
             {renderValue(attributes.partition)}
           </InfoField>
 
-          <InfoField label="Created At" variant="compact">
+          <InfoField
+            label="Created At"
+            variant="compact"
+            className="col-start-1 min-w-0"
+          >
             <DateWithTime inline dateTime={attributes.inserted_at || "-"} />
           </InfoField>
-          <InfoField label="Last Updated" variant="compact">
+          <InfoField
+            label="Last Updated"
+            variant="compact"
+            className="col-start-2 min-w-0"
+          >
             <DateWithTime inline dateTime={attributes.updated_at || "-"} />
           </InfoField>
         </div>
@@ -320,9 +337,15 @@ export const ResourceDetailContent = ({
                   <InfoTooltip content="This table also includes muted findings" />
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="metadata">Metadata</TabsTrigger>
-              <TabsTrigger value="tags">Tags</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
+              <TabsTrigger value="metadata" tooltip="Resource Metadata">
+                Evidence
+              </TabsTrigger>
+              <TabsTrigger value="tags" tooltip="Tags">
+                Tags
+              </TabsTrigger>
+              <TabsTrigger value="events" tooltip="Events">
+                Events
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -372,7 +395,10 @@ export const ResourceDetailContent = ({
               )}
             </TabsContent>
 
-            <TabsContent value="metadata" className="flex flex-col gap-4">
+            <TabsContent
+              value="metadata"
+              className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
+            >
               <ResourceMetadataPanel
                 metadata={attributes.metadata}
                 details={attributes.details}
