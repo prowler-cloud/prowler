@@ -1079,7 +1079,7 @@ export function ResourceDetailDrawerContent({
           {/* Metadata */}
           <TabsContent
             value="metadata"
-            className="minimal-scrollbar flex flex-col gap-4 overflow-y-auto"
+            className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
           >
             {isNavigating ? (
               <MetadataNavigationSkeleton />
