@@ -6,11 +6,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `storage_public_network_access_disabled` check for Azure provider, evaluating the storage account `publicNetworkAccess` property [(#PRNUMBER)](https://github.com/prowler-cloud/prowler/pull/PRNUMBER)
+- `storage_public_network_access_disabled` check for Azure provider, evaluating the storage account `publicNetworkAccess` property [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
 
 ### 🐞 Fixed
 
-- Azure CIS storage mappings for "Ensure that 'Public Network Access' is 'Disabled' for storage accounts" (CIS 2.1 §3.7, 3.0 §4.6, 4.0 §10.3.2.2, 5.0 §9.3.2.2 and Prowler ThreatScore §2.2.6) now point to the new `storage_public_network_access_disabled` check instead of `storage_blob_public_access_level_is_disabled`, which only covers 'Allow Blob Anonymous Access' [(#PRNUMBER)](https://github.com/prowler-cloud/prowler/pull/PRNUMBER)
+- Azure CIS storage mappings for "Ensure that 'Public Network Access' is 'Disabled' for storage accounts" (CIS 2.1 §3.7, 3.0 §4.6, 4.0 §10.3.2.2, 5.0 §9.3.2.2 and Prowler ThreatScore §2.2.6) now point to the new `storage_public_network_access_disabled` check instead of `storage_blob_public_access_level_is_disabled`, which only covers 'Allow Blob Anonymous Access' [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
 
 ---
 
