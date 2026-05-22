@@ -1,7 +1,6 @@
 import {
   getComplianceCsv,
   getCompliancePdfReport,
-  getExportsZip,
   type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
@@ -106,44 +105,17 @@ export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ) => {
-  const result = await getExportsZip(scanId);
+  const a = document.createElement("a");
+  a.href = `/api/scans/${encodeURIComponent(scanId)}/report`;
+  a.download = `scan-${scanId}-report.zip`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-  if (result?.pending) {
-    toast({
-      title: "The report is still being generated",
-      description: "Please try again in a few minutes.",
-    });
-    return;
-  }
-
-  if (result?.success && result.data) {
-    const binaryString = window.atob(result.data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    const blob = new Blob([bytes], { type: "application/zip" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Download Complete",
-      description: "Your scan report has been downloaded successfully.",
-    });
-  } else {
-    toast({
-      variant: "destructive",
-      title: "Download Failed",
-      description: result?.error || "An unknown error occurred.",
-    });
-  }
+  toast({
+    title: "Download Started",
+    description: "Your browser is downloading the scan report.",
+  });
 };
 
 /**
