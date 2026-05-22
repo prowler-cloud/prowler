@@ -7,15 +7,22 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- Sites, Additional Google services, and Marketplace checks for Google Workspace provider using the Cloud Identity Policy API [(#11281)](https://github.com/prowler-cloud/prowler/pull/11281)
 - `entra_app_registration_client_secret_unused` check for M365 provider [(#11232)](https://github.com/prowler-cloud/prowler/pull/11232)
 - `cloudsql_instance_cmek_encryption_enabled` check for GCP provider [(#11023)](https://github.com/prowler-cloud/prowler/pull/11023)
 - Google Workspace Groups service with 3 new checks [(#11186)](https://github.com/prowler-cloud/prowler/pull/11186)
 - `ses_identity_dkim_enabled` check for AWS provider [(#10923)](https://github.com/prowler-cloud/prowler/pull/10923)
 - `sagemaker_models_registry_in_use` check for AWS provider, verifying that at least one SageMaker Model Package Group has an approved model package to enforce ML governance workflows [(#11196)](https://github.com/prowler-cloud/prowler/pull/11196)
+- `signon_dod_warning_banner_configured`, `signon_global_session_lifetime_18h`, `signon_global_session_cookies_not_persistent` and `signon_global_session_policy_network_zone_enforced` checks for Okta provider [(#11224)](https://github.com/prowler-cloud/prowler/pull/11224)
 
 ### 🔄 Changed
 
 - `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+- Use single-quoted strings for credential variables in the M365 provider PowerShell session, following PowerShell best practices for literal values [(#9997)](https://github.com/prowler-cloud/prowler/pull/9997)
+
+### 🐞 Fixed
+
+- OCI Audit service configuration lookup when the configured region differs from the tenancy home region [(#10347)](https://github.com/prowler-cloud/prowler/pull/10347)
 
 ---
 

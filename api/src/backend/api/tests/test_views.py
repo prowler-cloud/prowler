@@ -7158,6 +7158,32 @@ class TestFindingViewSet:
             "id"
         ] == str(finding_1.resources.first().id)
 
+    def test_findings_retrieve_include_resource_metadata(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        resource = finding_1.resources.first()
+        resource.metadata = '{"VulnerabilityID": "CVE-2026-0001"}'
+        resource.details = "Python 3.12 base image"
+        resource.save()
+
+        response = authenticated_client.get(
+            reverse("finding-detail", kwargs={"pk": finding_1.id}),
+            {"include": "resources"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        included_resource = next(
+            item
+            for item in response.json()["included"]
+            if item["type"] == "resources" and item["id"] == str(resource.id)
+        )
+        assert (
+            included_resource["attributes"]["metadata"]
+            == '{"VulnerabilityID": "CVE-2026-0001"}'
+        )
+        assert included_resource["attributes"]["details"] == "Python 3.12 base image"
+
     def test_findings_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
             reverse("finding-detail", kwargs={"pk": "random_id"}),

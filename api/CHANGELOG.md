@@ -8,6 +8,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 - `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+- `metadata` field on resources included in finding responses (`?include=resources`), so finding consumers can read the affected resource's metadata without an extra request [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
 ---
 
