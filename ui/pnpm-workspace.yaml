@@ -39,6 +39,11 @@ overrides:
   # 8.2.2 dropped provenance attestation; 8.3.1+ restored it. Pinned to skip 8.2.2
   # under `trustPolicy: no-downgrade`.
   "express-rate-limit": "8.5.1"
+  # GHSA-w5hq-g745-h8pq: missing bounds check in v3/v5/v6 with buf, fixed in
+  # 11.1.1. Transitive consumers (@sentry/webpack-plugin@9, @langchain/langgraph@10)
+  # use the random v4 generator only, so the bug isn't reachable in practice,
+  # but the override unifies the tree on a patched version.
+  "uuid": "11.1.1"
 
 # --- Level 1: Minimum Release Age ---
 # Packages must be published for at least 1 day before they can be installed.

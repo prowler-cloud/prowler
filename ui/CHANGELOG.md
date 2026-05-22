@@ -16,6 +16,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔐 Security
 
 - `pnpm` upgraded to 11 with supply-chain defaults consolidated in `pnpm-workspace.yaml` and `trustPolicyExclude` entries pinned to exact versions [(#11225)](https://github.com/prowler-cloud/prowler/pull/11225)
+- `uuid` pinned to `11.1.1` via `pnpm-workspace.yaml#overrides` to clear `GHSA-w5hq-g745-h8pq` (missing bounds check in `v3`/`v5`/`v6` name-based generators with `buf`) in the transitive tree [(#11225)](https://github.com/prowler-cloud/prowler/pull/11225)
 
 ---
 

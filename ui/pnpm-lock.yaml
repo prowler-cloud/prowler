@@ -26,6 +26,7 @@ overrides:
   ajv@>=8: 8.18.0
   qs: 6.14.2
   express-rate-limit: 8.5.1
+  uuid: 11.1.1
 
 importers:
 
@@ -8266,18 +8267,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@10.0.0:
-    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-    hasBin: true
-
-  uuid@13.0.2:
-    resolution: {integrity: sha512-vzi9uRZ926x4XV73S/4qQaTwPXM2JBj6/6lI/byHH1jOpCzb0zDbfytgA9LcN/hzb2l7WQSQnxITOVx5un/wGw==}
-    hasBin: true
-
-  uuid@9.0.1:
-    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+  uuid@11.1.1:
+    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
   vary@1.1.2:
@@ -10950,7 +10941,7 @@ snapshots:
   '@langchain/langgraph-checkpoint@1.0.2(@langchain/core@1.1.45(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.4.0(@opentelemetry/api@1.9.0))(openai@6.37.0(ws@8.20.1)(zod@4.4.3))(ws@8.20.1))':
     dependencies:
       '@langchain/core': 1.1.45(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.4.0(@opentelemetry/api@1.9.0))(openai@6.37.0(ws@8.20.1)(zod@4.4.3))(ws@8.20.1)
-      uuid: 10.0.0
+      uuid: 11.1.1
 
   '@langchain/langgraph-sdk@1.9.2(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.4.0(@opentelemetry/api@1.9.0))(openai@6.37.0(ws@8.20.1)(zod@4.4.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(ws@8.20.1)':
     dependencies:
@@ -10959,7 +10950,7 @@ snapshots:
       '@types/json-schema': 7.0.15
       p-queue: 9.2.0
       p-retry: 7.1.1
-      uuid: 13.0.2
+      uuid: 11.1.1
     optionalDependencies:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
@@ -10977,7 +10968,7 @@ snapshots:
       '@langchain/langgraph-sdk': 1.9.2(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.4.0(@opentelemetry/api@1.9.0))(openai@6.37.0(ws@8.20.1)(zod@4.4.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(ws@8.20.1)
       '@langchain/protocol': 0.0.15
       '@standard-schema/spec': 1.1.0
-      uuid: 10.0.0
+      uuid: 11.1.1
       zod: 4.4.3
     optionalDependencies:
       zod-to-json-schema: 3.25.1(zod@4.4.3)
@@ -13497,7 +13488,7 @@ snapshots:
     dependencies:
       '@sentry/bundler-plugin-core': 4.7.0
       unplugin: 1.0.1
-      uuid: 9.0.1
+      uuid: 11.1.1
       webpack: 5.104.1(lightningcss@1.30.2)(postcss@8.5.14)
     transitivePeerDependencies:
       - encoding
@@ -16685,7 +16676,7 @@ snapshots:
       roughjs: 4.6.6
       stylis: 4.3.6
       ts-dedent: 2.2.0
-      uuid: 13.0.2
+      uuid: 11.1.1
 
   micromark-core-commonmark@2.0.3:
     dependencies:
@@ -18435,11 +18426,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  uuid@10.0.0: {}
-
-  uuid@13.0.2: {}
-
-  uuid@9.0.1: {}
+  uuid@11.1.1: {}
 
   vary@1.1.2: {}
 
