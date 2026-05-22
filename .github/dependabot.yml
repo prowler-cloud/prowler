@@ -42,17 +42,18 @@ updates:
     cooldown:
       default-days: 7
 
-  # Dependabot Updates are temporary disabled - 2025/03/19
-  # - package-ecosystem: "npm"
-  #   directory: "/ui"
-  #   schedule:
-  #     interval: "daily"
-  #   open-pull-requests-limit: 10
-  #   target-branch: master
-  #   labels:
-  #     - "dependencies"
-  #     - "npm"
-  #     - "component/ui"
+  - package-ecosystem: "npm"
+    directory: "/ui"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    target-branch: master
+    labels:
+      - "dependencies"
+      - "npm"
+      - "component/ui"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "docker"
     directory: "/"
