@@ -15921,6 +15921,12 @@ class TestFindingGroupViewSet:
         assert attrs["fail_count"] == 0
         assert attrs["resources_total"] == 1
         assert attrs["resources_fail"] == 0
+        # check_title / check_description are resolved post-pagination from the
+        # summary table, not from the finding's check_metadata.
+        assert attrs["check_title"] == "Ensure EC2 instances do not have public IPs"
+        assert (
+            attrs["check_description"] == "EC2 instances should use private IPs only."
+        )
 
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture
@@ -17162,6 +17168,12 @@ class TestFindingGroupViewSet:
         assert attrs["fail_count"] == 0
         assert attrs["resources_total"] == 1
         assert attrs["resources_fail"] == 0
+        # check_title / check_description are resolved post-pagination from the
+        # summary table, not from the finding's check_metadata.
+        assert attrs["check_title"] == "Ensure EC2 instances do not have public IPs"
+        assert (
+            attrs["check_description"] == "EC2 instances should use private IPs only."
+        )
 
     def test_finding_groups_latest_status_in_filter(
         self, authenticated_client, finding_groups_fixture

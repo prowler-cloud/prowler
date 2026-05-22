@@ -7513,13 +7513,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
         # The summary-aggregation path already carries them, so skip it there.
         if rows and "check_title" not in rows[0]:
             check_ids = [row["check_id"] for row in rows]
+            role = get_role(self.request.user, self.request.tenant_id)
+            summaries = FindingGroupDailySummary.objects.filter(
+                tenant_id=self.request.tenant_id,
+                check_id__in=check_ids,
+            )
+            # Scope to the user's providers, mirroring get_queryset(), so titles
+            # are read only from providers the user can see.
+            if not role.unlimited_visibility:
+                summaries = summaries.filter(provider__in=get_providers(role))
             metadata_by_check = {
                 item["check_id"]: item
-                for item in FindingGroupDailySummary.objects.filter(
-                    tenant_id=self.request.tenant_id,
-                    check_id__in=check_ids,
-                )
-                .order_by("check_id", "-inserted_at")
+                for item in summaries.order_by("check_id", "-inserted_at")
                 .distinct("check_id")
                 .values("check_id", "check_title", "check_description")
             }
