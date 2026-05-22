@@ -146,6 +146,7 @@ class BedrockAgent(AWSService):
         self.prompts = {}
         self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
+        self.__threading_call__(self._get_agent, self.agents.values())
         self.__threading_call__(self._list_prompts)
         self.__threading_call__(self._get_prompt, self.prompts.values())
         self.__threading_call__(self._list_tags_for_resource, self.agents.values())
@@ -172,6 +173,24 @@ class BedrockAgent(AWSService):
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_agent(self, agent):
+        """Fetch full agent details to capture the execution role ARN.
+
+        list_agents only returns summaries (no agentResourceRoleArn), so we
+        need a per-agent GetAgent call. Stored on the Agent model for use by
+        checks like bedrock_agent_role_least_privilege.
+        """
+        logger.info("Bedrock Agent - Getting Agent...")
+        try:
+            agent_info = self.regional_clients[agent.region].get_agent(
+                agentId=agent.id
+            )
+            agent.role_arn = agent_info.get("agent", {}).get("agentResourceRoleArn")
+        except Exception as error:
+            logger.error(
+                f"{agent.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_prompts(self, regional_client):
@@ -236,6 +255,7 @@ class Agent(BaseModel):
     name: str
     arn: str
     guardrail_id: Optional[str] = None
+    role_arn: Optional[str] = None
     region: str
     tags: Optional[list] = []
 

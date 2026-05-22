@@ -133,6 +133,7 @@ class IAM(AWSService):
                                 arn=role["Arn"],
                                 assume_role_policy=role["AssumeRolePolicyDocument"],
                                 is_service_role=is_service_role(role),
+                                permissions_boundary=role.get("PermissionsBoundary"),
                             )
                         )
         except ClientError as error:
@@ -1139,6 +1140,7 @@ class Role(BaseModel):
     is_service_role: bool
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
+    permissions_boundary: Optional[dict] = None
     tags: Optional[list]
 
 
