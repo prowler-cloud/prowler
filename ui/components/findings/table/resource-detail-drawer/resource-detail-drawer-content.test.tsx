@@ -1381,12 +1381,8 @@ describe("ResourceDetailDrawerContent — current resource row display", () => {
     expect(
       within(primaryMetadataRow).getByText("Resource"),
     ).toBeInTheDocument();
-    expect(
-      within(primaryMetadataRow).getByText("Service"),
-    ).toBeInTheDocument();
-    expect(
-      within(primaryMetadataRow).getByText("Region"),
-    ).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("Service")).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("Region")).toBeInTheDocument();
     expect(within(primaryMetadataRow).getByText("s3")).toHaveClass(
       "truncate",
       "whitespace-nowrap",

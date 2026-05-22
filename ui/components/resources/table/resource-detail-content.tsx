@@ -235,7 +235,7 @@ export const ResourceDetailContent = ({
             providerUid={providerData.uid}
             resourceName={attributes.name}
             region={attributes.region}
-            className="self-start justify-start"
+            className="justify-start self-start"
           />
         </div>
       </div>

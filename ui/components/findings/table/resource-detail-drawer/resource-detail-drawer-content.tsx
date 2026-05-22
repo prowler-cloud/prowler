@@ -935,7 +935,7 @@ export function ResourceDetailDrawerContent({
                             key={link}
                             variant="link"
                             size="link-xs"
-                            className="h-auto justify-start break-all whitespace-normal! p-0 text-left"
+                            className="h-auto justify-start p-0 text-left break-all whitespace-normal!"
                             asChild
                           >
                             <Link
