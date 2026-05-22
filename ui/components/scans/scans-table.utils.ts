@@ -52,9 +52,23 @@ export const SCAN_STATE_FILTER_KEYS = [
 ] as const;
 
 const ALL_VALUE = "all";
+const SCAN_JOBS_TAB_STATES: Record<ScanJobsTab, ScanState[]> = {
+  [SCAN_JOBS_TAB.ACTIVE]: [SCAN_STATE.AVAILABLE, SCAN_STATE.EXECUTING],
+  [SCAN_JOBS_TAB.COMPLETED]: [
+    SCAN_STATE.COMPLETED,
+    SCAN_STATE.FAILED,
+    SCAN_STATE.CANCELLED,
+  ],
+  [SCAN_JOBS_TAB.SCHEDULED]: [SCAN_STATE.SCHEDULED],
+};
 
 export interface ScanTriggerFilterOption {
   value: typeof ALL_VALUE | ScanTrigger;
+  label: string;
+}
+
+export interface ScanStatusFilterOption {
+  value: typeof ALL_VALUE | ScanState;
   label: string;
 }
 
@@ -63,7 +77,7 @@ export function getScanTriggerFilterOptions(
 ): ScanTriggerFilterOption[] {
   const options: ScanTriggerFilterOption[] = [
     { value: ALL_VALUE, label: "All Types" },
-    { value: SCAN_TRIGGER.MANUAL, label: "Single" },
+    { value: SCAN_TRIGGER.MANUAL, label: "Manual" },
     { value: SCAN_TRIGGER.SCHEDULED, label: "Scheduled" },
   ];
 
@@ -78,6 +92,17 @@ export function isScanStateFilterKey(key: string): boolean {
   return SCAN_STATE_FILTER_KEYS.some((filterKey) => filterKey === key);
 }
 
+function parseStateFilter(value?: string | string[]): ScanState[] {
+  const rawValue = Array.isArray(value) ? value.join(",") : value;
+  if (!rawValue || rawValue === ALL_VALUE) return [];
+
+  return rawValue
+    .split(",")
+    .filter((item): item is ScanState =>
+      Object.values(SCAN_STATE).includes(item as ScanState),
+    );
+}
+
 export function getScanJobsTab(value?: string | string[]): ScanJobsTab {
   const rawValue = Array.isArray(value) ? value[0] : value;
   const tabs = Object.values(SCAN_JOBS_TAB);
@@ -89,8 +114,17 @@ export function getScanJobsTab(value?: string | string[]): ScanJobsTab {
 
 export function getScanJobsTabFilters(
   tab: ScanJobsTab,
+  stateFilter?: string | string[],
 ): Record<string, string> {
-  return { ...SCAN_JOBS_TAB_FILTERS[tab] };
+  const selectedStates = parseStateFilter(stateFilter);
+  const allowedStates = SCAN_JOBS_TAB_STATES[tab];
+  const matchingStates = selectedStates.filter((state) =>
+    allowedStates.includes(state),
+  );
+
+  if (matchingStates.length === 0) return { ...SCAN_JOBS_TAB_FILTERS[tab] };
+
+  return { "filter[state__in]": matchingStates.join(",") };
 }
 
 export function getScanAlias(scan: ScanProps): string {
@@ -116,7 +150,7 @@ export function formatScanDuration(duration?: number | null): string {
 
 export function getScanScheduleLabel(trigger?: ScanTrigger | string): string {
   if (trigger === "scheduled") return "Scheduled";
-  if (trigger === "manual") return "Single";
+  if (trigger === "manual") return "Manual";
   if (trigger === "imported") return "Imported";
   return "-";
 }
@@ -125,6 +159,18 @@ export function getScanStatusLabel(state?: ScanState | string): string {
   if (state === "available") return "Queued";
   if (!state) return "-";
   return state.charAt(0).toUpperCase() + state.slice(1);
+}
+
+export function getScanStatusFilterOptions(
+  tab: ScanJobsTab,
+): ScanStatusFilterOption[] {
+  return [
+    { value: ALL_VALUE, label: "All Statuses" },
+    ...SCAN_JOBS_TAB_STATES[tab].map((state) => ({
+      value: state,
+      label: getScanStatusLabel(state),
+    })),
+  ];
 }
 
 function getNumericValue(

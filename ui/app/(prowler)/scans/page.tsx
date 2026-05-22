@@ -73,7 +73,10 @@ const SSRDataTableScans = async ({
         ([key]) => key.startsWith("filter[") && !isScanStateFilterKey(key),
       ),
     ),
-    ...getScanJobsTabFilters(tab),
+    ...getScanJobsTabFilters(
+      tab,
+      searchParams["filter[state__in]"] ?? searchParams["filter[state]"],
+    ),
   };
 
   const query = (filters["filter[search]"] as string) || "";

@@ -96,6 +96,7 @@ export function LaunchScanModal({
             providers={providers}
             onBatchChange={(_, values) => setProviderId(values.at(-1) ?? "")}
             selectedValues={providerId ? [providerId] : []}
+            closeOnSelect
           />
         </Field>
 

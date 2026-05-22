@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 import {
   AlibabaCloudProviderBadge,
@@ -75,6 +75,7 @@ interface AccountsSelectorBaseProps {
    * the list of available accounts, which remains independent of provider selection.
    */
   selectedProviderTypes?: string[];
+  closeOnSelect?: boolean;
 }
 
 /** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
@@ -115,9 +116,11 @@ export function AccountsSelector({
     placeholder: "Search accounts...",
     emptyMessage: "No accounts found.",
   },
+  closeOnSelect = false,
 }: AccountsSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
+  const [selectorOpen, setSelectorOpen] = useState(false);
 
   const labelId = `${id}-label`;
   const urlFilterKey = `filter[${filterKey}]`;
@@ -136,6 +139,7 @@ export function AccountsSelector({
   const handleMultiValueChange = (ids: string[]) => {
     if (onBatchChange) {
       onBatchChange(filterKey, ids);
+      if (closeOnSelect) setSelectorOpen(false);
       return;
     }
     navigateWithParams((params) => {
@@ -145,6 +149,7 @@ export function AccountsSelector({
         params.set(urlFilterKey, ids.join(","));
       }
     });
+    if (closeOnSelect) setSelectorOpen(false);
   };
 
   const selectedLabel = () => {
@@ -173,7 +178,12 @@ export function AccountsSelector({
         Filter by provider account. {filterDescription}. Select one or more
         accounts to view findings.
       </label>
-      <MultiSelect values={selectedIds} onValuesChange={handleMultiValueChange}>
+      <MultiSelect
+        values={selectedIds}
+        onValuesChange={handleMultiValueChange}
+        open={closeOnSelect ? selectorOpen : undefined}
+        onOpenChange={closeOnSelect ? setSelectorOpen : undefined}
+      >
         <MultiSelectTrigger id={id} aria-labelledby={labelId}>
           {selectedLabel() || <MultiSelectValue placeholder="All accounts" />}
         </MultiSelectTrigger>
@@ -220,6 +230,9 @@ export function AccountsSelector({
                     badgeLabel={displayName}
                     keywords={searchKeywords}
                     aria-label={`${displayName} account (${providerType.toUpperCase()})`}
+                    onSelect={() => {
+                      if (closeOnSelect) setSelectorOpen(false);
+                    }}
                   >
                     <span aria-hidden="true">{icon}</span>
                     <span className="truncate">{displayName}</span>

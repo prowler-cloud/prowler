@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Eye, Pencil } from "lucide-react";
+import { Download, Eye, Pencil, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -33,6 +33,11 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
     );
   };
 
+  const openCompliance = () => {
+    if (!isCompleted) return;
+    router.push(`/compliance?scanId=${scan.id}`);
+  };
+
   return (
     <div className="flex items-center justify-end">
       <ActionDropdown>
@@ -45,8 +50,13 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
               disabled={!scanDate}
             />
             <ActionDropdownItem
+              icon={<ShieldCheck />}
+              label="View Compliance"
+              onSelect={openCompliance}
+            />
+            <ActionDropdownItem
               icon={<Download />}
-              label="Download Findings"
+              label="Download Scan Reports"
               onSelect={() => downloadScanZip(scan.id, toast)}
             />
           </>

@@ -40,7 +40,9 @@ vi.mock("@/components/scans/edit-alias-modal", () => ({
     ) : null,
 }));
 
-const makeScan = (): ScanProps => ({
+const makeScan = (
+  overrides: Partial<ScanProps["attributes"]> = {},
+): ScanProps => ({
   type: "scans",
   id: "scan-1",
   attributes: {
@@ -56,6 +58,7 @@ const makeScan = (): ScanProps => ({
     completed_at: "",
     scheduled_at: "",
     next_scan_at: "",
+    ...overrides,
   },
   relationships: {
     provider: { data: { type: "providers", id: "provider-1" } },
@@ -119,6 +122,56 @@ describe("ScanJobsRowActions", () => {
     // Then
     expect(
       screen.queryByRole("menuitem", { name: /cancel scan/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("links completed scans to compliance from the actions menu", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "completed",
+          completed_at: "2026-01-01T10:05:00Z",
+        })}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    await user.click(
+      screen.getByRole("menuitem", { name: /view compliance/i }),
+    );
+
+    // Then
+    expect(pushMock).toHaveBeenCalledWith("/compliance?scanId=scan-1");
+  });
+
+  it("renames the completed scan report download action", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "completed",
+          completed_at: "2026-01-01T10:05:00Z",
+        })}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("menuitem", { name: /download scan reports/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: /download findings/i }),
     ).not.toBeInTheDocument();
   });
 });

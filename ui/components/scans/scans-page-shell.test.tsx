@@ -41,6 +41,10 @@ vi.mock("./launch-scan-modal", () => ({
     open ? <div role="dialog">Launch scan</div> : null,
 }));
 
+vi.mock("@/components/providers/muted-findings-config-button", () => ({
+  MutedFindingsConfigButton: () => <a href="/mutelist">Configure Mutelist</a>,
+}));
+
 const providers = [
   {
     id: "provider-1",
@@ -164,5 +168,74 @@ describe("ScansPageShell", () => {
     );
 
     expect(screen.getByRole("combobox", { name: /all types/i })).toBeVisible();
+  });
+
+  it("keeps launch scan with filters and mutelist with tabs", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.getByRole("group", { name: /scan filters/i }),
+    ).toContainElement(screen.getByRole("button", { name: /launch scan/i }));
+    expect(
+      screen.getByRole("group", { name: /scan filters/i }),
+    ).not.toContainElement(
+      screen.getByRole("link", { name: /configure mutelist/i }),
+    );
+    expect(screen.getByRole("group", { name: /scan tabs/i })).toContainElement(
+      screen.getByRole("link", { name: /configure mutelist/i }),
+    );
+  });
+
+  it("shows the status filter only on the completed tab", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=completed";
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.getByRole("combobox", { name: /all statuses/i }),
+    ).toBeVisible();
+  });
+
+  it("hides the status filter outside of the completed tab", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.queryByRole("combobox", { name: /all statuses/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears status filter when switching scan tabs", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=completed&filter%5Bstate__in%5D=failed";
+    const user = userEvent.setup();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /active/i }));
+
+    const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
+    expect(calledUrl).toContain("tab=active");
+    expect(calledUrl).not.toContain("filter%5Bstate__in%5D");
   });
 });
