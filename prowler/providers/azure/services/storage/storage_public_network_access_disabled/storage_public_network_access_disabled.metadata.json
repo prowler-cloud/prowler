@@ -10,7 +10,7 @@
   "ResourceType": "microsoft.storage/storageaccounts",
   "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** with **public network access** disabled cannot be reached from public networks. Setting `publicNetworkAccess` to `Disabled` overrides the public access settings of individual containers and forces access through private endpoints or trusted services. This is independent from the 'Allow Blob Anonymous Access' setting.",
-  "Risk": "Leaving public network access enabled exposes the storage account endpoints to the public Internet, widening the attack surface and increasing the risk of unauthorized access, data exfiltration, and reconnaissance against the account.",
+  "Risk": "Leaving **public network access** enabled exposes the storage account endpoints to the **public Internet**, widening the attack surface and undermining **defense in depth**.\n\nThis increases the risk of **unauthorized access**, **data exfiltration**, and reconnaissance against the account, especially when combined with weak network rules or overly permissive access policies.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal#change-the-default-network-access-rule",
