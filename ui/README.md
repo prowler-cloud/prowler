@@ -100,10 +100,18 @@ git clone git@github.com:prowler-cloud/ui.git
 pnpm install
 ```
 
-**Note:** The `pnpm install` command will automatically configure prek Git hooks for code quality checks. If hooks are not installed, run from the repo root:
+**Note:** The `pnpm install` command does not configure Git hooks automatically. To install prek hooks for code quality checks, run one of the following:
+
+From `ui/`:
 
 ```bash
-prek install
+pnpm run setup:hooks
+```
+
+From the monorepo root:
+
+```bash
+cd ui && pnpm run setup:hooks
 ```
 
 #### Run the development server
@@ -124,10 +132,18 @@ pnpm run dev
 
 ## Git Hooks
 
-The UI uses [prek](https://github.com/j178/prek) for pre-commit checks, configured in [`.pre-commit-config.yaml`](.pre-commit-config.yaml). `pnpm install` runs the postinstall script that installs hooks automatically. To re-install manually:
+The UI uses [prek](https://github.com/j178/prek) for pre-commit checks, configured in [`.pre-commit-config.yaml`](.pre-commit-config.yaml). Git hook setup is opt-in so package installs do not mutate shared git state automatically. To install or re-install manually:
+
+From `ui/`:
 
 ```bash
-prek install --overwrite
+pnpm run setup:hooks
+```
+
+From the monorepo root:
+
+```bash
+cd ui && pnpm run setup:hooks
 ```
 
 On each commit, prek runs Prettier and ESLint against the staged files, plus a project-wide TypeScript check and the unit tests related to the staged changes. The full Next.js build runs in CI, not on commit.

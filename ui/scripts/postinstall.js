@@ -5,7 +5,11 @@
  *
  * This script runs after npm install to:
  * 1. Update dependency log (if the script exists)
- * 2. Setup git hooks (if the script exists)
+ * 2. Harden the MSW service worker when present
+ *
+ * Git hook installation is intentionally opt-in because postinstall runs during
+ * normal package installs and should not mutate shared git hook state unless the
+ * developer asked for onboarding setup.
  */
 
 const fs = require("fs");
@@ -89,5 +93,10 @@ runScriptIfExists("./update-dependency-log.js", "deps:log");
 // Keep this before setup-git-hooks because that script can exit the process.
 hardenMswServiceWorker();
 
-// Run git hooks setup
-runScriptIfExists("./setup-git-hooks.js", "setup-git-hooks");
+if (process.env.PROWLER_UI_SETUP_GIT_HOOKS === "1") {
+  runScriptIfExists("./setup-git-hooks.js", "setup-git-hooks");
+} else {
+  console.log(
+    "Skip git hooks setup (run `pnpm run setup:hooks` or set PROWLER_UI_SETUP_GIT_HOOKS=1 to opt in)",
+  );
+}
