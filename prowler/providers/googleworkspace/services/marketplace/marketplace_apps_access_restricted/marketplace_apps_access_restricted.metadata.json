@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "marketplace_apps_access_restricted",
+  "CheckTitle": "Users access to Google Workspace Marketplace apps is restricted",
+  "CheckType": [],
+  "ServiceName": "marketplace",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The domain-wide Google Workspace Marketplace configuration **restricts which apps users can install**. Only admin-approved apps from the Marketplace allowlist are permitted, preventing users from installing unvetted third-party applications.",
+  "Risk": "Allowing unrestricted Marketplace app installation exposes the organization to **unvetted third-party applications** that may request broad OAuth scopes, potentially gaining access to **sensitive organizational data** including emails, documents, and calendar events without proper security review.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/6089179",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace Marketplace apps**\n3. Click **Settings**\n4. Under **Manage Google Workspace Marketplace allowlist access**, select **Allow users to install and run only selected apps from the Marketplace**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict **Marketplace app installation** to only **admin-approved apps** to prevent users from installing unvetted third-party applications that could access sensitive organizational data.",
+      "Url": "https://hub.prowler.com/check/marketplace_apps_access_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

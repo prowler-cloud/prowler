@@ -17,6 +17,11 @@ import {
   GRAPH_EDGE_COLOR_DARK,
 } from "./graph-colors";
 import { layoutWithDagre } from "./layout";
+import {
+  FINDING_NODE_DIMENSIONS,
+  RESOURCE_NODE_DIMENSIONS,
+} from "./node-dimensions";
+import { getNodeLabelDisplay } from "./node-label-lines";
 import { resolveNodeVisual } from "./node-visuals";
 
 interface ExportGraphOptions {
@@ -40,9 +45,7 @@ const BADGE_CENTER_Y = 26;
 const GLOW_RADIUS = 30;
 const LABEL_Y = 66;
 const LABEL_LINE_HEIGHT = 13;
-const TYPE_Y = 94;
-const RESOURCE_NAME_MAX_CHARS = 18;
-const RESOURCE_NAME_MAX_LINES = 2;
+const TYPE_Y = 118;
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
@@ -163,33 +166,6 @@ const getResourcesWithFindings = (
   });
 
   return resourcesWithFindings;
-};
-
-const getLabelLines = (label: string, maxChars: number, maxLines: number) => {
-  const words = label.split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let current = "";
-
-  words.forEach((word) => {
-    const next = current ? `${current} ${word}` : word;
-    if (next.length <= maxChars) {
-      current = next;
-      return;
-    }
-    if (current) lines.push(current);
-    current = word;
-  });
-
-  if (current) lines.push(current);
-  if (lines.length === 0) lines.push(label);
-
-  const visibleLines = lines.slice(0, maxLines);
-  if (lines.length > maxLines && visibleLines.length > 0) {
-    const lastIndex = visibleLines.length - 1;
-    visibleLines[lastIndex] = truncateLabel(visibleLines[lastIndex], maxChars);
-  }
-
-  return visibleLines;
 };
 
 const getFittedLayout = (graphData: AttackPathGraphData) => {
@@ -464,16 +440,21 @@ const drawNode = (
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = "600 11px sans-serif";
-  getLabelLines(
+  const dimensions = isFinding
+    ? FINDING_NODE_DIMENSIONS
+    : RESOURCE_NODE_DIMENSIONS;
+  const labelMaxWidth = dimensions.WIDTH;
+
+  getNodeLabelDisplay(
     visual.displayName,
-    RESOURCE_NAME_MAX_CHARS,
-    RESOURCE_NAME_MAX_LINES,
-  ).forEach((line, index) => {
+    dimensions.LABEL_MAX_CHARS,
+    dimensions.LABEL_MAX_LINES,
+  ).lines.forEach((line, index) => {
     context.fillText(
       line,
       center.x,
       center.y + (LABEL_Y - BADGE_CENTER_Y) + index * LABEL_LINE_HEIGHT,
-      150,
+      labelMaxWidth,
     );
   });
 
@@ -483,7 +464,7 @@ const drawNode = (
     typeLabel,
     center.x,
     center.y + (TYPE_Y - BADGE_CENTER_Y),
-    150,
+    labelMaxWidth,
   );
 };
 

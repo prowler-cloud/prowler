@@ -76,11 +76,11 @@ USER prowler
 WORKDIR /home/prowler
 
 # Copy necessary files
-COPY prowler/  /home/prowler/prowler/
-COPY dashboard/ /home/prowler/dashboard/
-COPY pyproject.toml uv.lock /home/prowler/
-COPY README.md /home/prowler/
-COPY prowler/providers/m365/lib/powershell/m365_powershell.py /home/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py
+COPY --chown=prowler:prowler prowler/  /home/prowler/prowler/
+COPY --chown=prowler:prowler dashboard/ /home/prowler/dashboard/
+COPY --chown=prowler:prowler pyproject.toml uv.lock /home/prowler/
+COPY --chown=prowler:prowler README.md /home/prowler/
+COPY --chown=prowler:prowler prowler/providers/m365/lib/powershell/m365_powershell.py /home/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py
 
 # Install Python dependencies
 ENV HOME='/home/prowler'
@@ -89,7 +89,7 @@ ENV PATH="${HOME}/.local/bin:${PATH}"
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir uv==0.11.14
 
-RUN uv sync --compile-bytecode && \
+RUN uv sync --locked --compile-bytecode && \
     rm -rf ~/.cache/uv
 
 # Install PowerShell modules
@@ -100,4 +100,4 @@ RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
 USER prowler
-ENTRYPOINT [".venv/bin/prowler"]
+ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]

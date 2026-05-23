@@ -2,11 +2,19 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
-## [0.7.0] (Prowler UNRELEASED)
+## [0.7.1] (Prowler v5.28.0)
+
+### 🔐 Security
+
+- `fastmcp` from 2.14.0 to 3.2.4 for GHSA-5h2m-4q8j-pqpj, GHSA-rww4-4w9c-7733, and GHSA-vv7q-7jx5-f767, which also pulls fixed `jaraco.context`, `python-multipart`, `starlette`, and drops the vulnerable `lupa`/`urllib3` transitive deps [(#11284)](https://github.com/prowler-cloud/prowler/pull/11284)
+
+---
+
+## [0.7.0] (Prowler v5.27.0)
 
 ### 🚀 Added
 
-- MCP Server tools for Prowler Finding Groups Management [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
+- Finding Groups tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
 
 ### 🔐 Security
 

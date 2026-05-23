@@ -86,6 +86,8 @@ function makeDrawerFinding(
     resourceRegion: "us-east-1",
     resourceType: "bucket",
     resourceGroup: "default",
+    resourceDetails: null,
+    resourceMetadata: null,
     providerType: "aws",
     providerAlias: "prod",
     providerUid: "123",
