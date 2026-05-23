@@ -34,7 +34,10 @@ class entra_conditional_access_policy_groups_management_restricted(Check):
             if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
-            user_conditions = policy.conditions.user_conditions
+            user_conditions = getattr(policy.conditions, "user_conditions", None)
+            if not user_conditions:
+                continue
+
             for group_id in user_conditions.included_groups:
                 group_usage[group_id]["include"].append(policy)
             for group_id in user_conditions.excluded_groups:

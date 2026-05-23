@@ -124,6 +124,24 @@ class Test_entra_conditional_access_policy_groups_management_restricted:
         assert result[0].resource_name == "Conditional Access Policies"
         assert result[0].location == "global"
 
+    def test_policy_without_user_conditions_is_treated_as_no_referenced_groups(self):
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.groups = []
+        policy = _make_policy(display_name="Policy Without User Conditions")
+        policy.conditions.user_conditions = None
+        entra_client.conditional_access_policies = {"policy-1": policy}
+
+        result = _execute_check(entra_client)
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "No enabled or report-only Conditional Access Policy references groups."
+        )
+
     def test_all_referenced_groups_are_protected(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
