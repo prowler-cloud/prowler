@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- `compute_project_os_login_enabled` and `compute_project_os_login_2fa_enabled` checks for GCP provider no longer false-FAIL on projects where the `enable-oslogin` / `enable-oslogin-2fa` metadata is not set explicitly but is inherited automatically from the `constraints/compute.requireOsLogin` org policy. The policy controller writes the inherited value in lowercase (`"true"`), but the service-layer parser compared it to the uppercase string literal `"TRUE"`. Comparison is now case-insensitive [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- `compute_project_os_login_enabled` and `compute_project_os_login_2fa_enabled` checks for GCP provider no longer false-FAIL on projects where the `enable-oslogin` / `enable-oslogin-2fa` metadata is not set explicitly but is inherited automatically from the `constraints/compute.requireOsLogin` org policy. The policy controller writes the inherited value in lowercase (`"true"`), but the service-layer parser compared it to the uppercase string literal `"TRUE"`. Comparison is now case-insensitive [(#11341)](https://github.com/prowler-cloud/prowler/pull/11341)
 
 ---
 
