@@ -54,4 +54,7 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 CELERY_DEADLOCK_ATTEMPTS = env.int("DJANGO_CELERY_DEADLOCK_ATTEMPTS", default=5)
 
-CELERY_WORKER_CONCURRENCY = env.int("DJANGO_CELERY_WORKER_CONCURRENCY", default=4)
+# Opt-in override for Celery's prefork pool size. When unset, Celery falls back
+# to its default (os.cpu_count()).
+if "DJANGO_CELERY_WORKER_CONCURRENCY" in env.ENVIRON:
+    CELERY_WORKER_CONCURRENCY = env.int("DJANGO_CELERY_WORKER_CONCURRENCY")
