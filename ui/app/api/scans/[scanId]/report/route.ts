@@ -18,6 +18,10 @@ const COPY_RESPONSE_HEADERS = [
   "last-modified",
 ] as const;
 
+const PREFLIGHT_TIMEOUT_MS = 10_000;
+const REPORT_PREPARATION_ERROR =
+  "Unable to prepare the scan report. Please try again in a few minutes.";
+
 const buildAttachmentFilename = (scanId: string) =>
   `scan-${scanId.replace(/[^a-zA-Z0-9._-]/g, "-")}-report.zip`;
 
@@ -39,6 +43,19 @@ const buildDownloadHeaders = (upstreamHeaders: Headers, scanId: string) => {
   return headers;
 };
 
+const isAbortError = (error: unknown) =>
+  error instanceof DOMException &&
+  (error.name === "AbortError" || error.name === "TimeoutError");
+
+const isHtmlResponse = (headers: Headers) =>
+  headers.get("content-type")?.toLowerCase().includes("text/html") ?? false;
+
+const preflightReadyResponse = () =>
+  new Response(null, {
+    status: 204,
+    headers: { "Cache-Control": "no-store" },
+  });
+
 export async function GET(
   request: Request,
   { params }: ScanReportRouteContext,
@@ -49,10 +66,23 @@ export async function GET(
   const isPreflight =
     new URL(request.url).searchParams.get("preflight") === "1";
 
-  const upstreamResponse = await fetch(upstreamUrl, {
-    headers,
-    cache: "no-store",
-  });
+  let upstreamResponse: Response;
+
+  try {
+    upstreamResponse = await fetch(upstreamUrl, {
+      headers,
+      cache: "no-store",
+      signal: isPreflight
+        ? AbortSignal.timeout(PREFLIGHT_TIMEOUT_MS)
+        : undefined,
+    });
+  } catch (error) {
+    if (isPreflight && isAbortError(error)) {
+      return preflightReadyResponse();
+    }
+
+    throw error;
+  }
 
   if (upstreamResponse.status === 202) {
     const body = await upstreamResponse.json().catch(() => ({}));
@@ -63,24 +93,27 @@ export async function GET(
   }
 
   if (!upstreamResponse.ok) {
-    const body = await upstreamResponse.text().catch(() => "");
+    const body =
+      isPreflight && isHtmlResponse(upstreamResponse.headers)
+        ? REPORT_PREPARATION_ERROR
+        : await upstreamResponse.text().catch(() => "");
+
     return new Response(body, {
       status: upstreamResponse.status,
       statusText: upstreamResponse.statusText,
       headers: {
         "Cache-Control": "no-store",
         "Content-Type":
-          upstreamResponse.headers.get("content-type") || "text/plain",
+          isPreflight && isHtmlResponse(upstreamResponse.headers)
+            ? "text/plain"
+            : upstreamResponse.headers.get("content-type") || "text/plain",
       },
     });
   }
 
   if (isPreflight) {
     await upstreamResponse.body?.cancel();
-    return new Response(null, {
-      status: 204,
-      headers: { "Cache-Control": "no-store" },
-    });
+    return preflightReadyResponse();
   }
 
   if (!upstreamResponse.body) {

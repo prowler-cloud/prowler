@@ -101,6 +101,19 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
   return url.toString();
 };
 
+const REPORT_PREPARATION_ERROR =
+  "Unable to prepare the scan report. Please try again in a few minutes.";
+
+const getPreflightErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+
+  if (contentType.includes("text/html")) {
+    return REPORT_PREPARATION_ERROR;
+  }
+
+  return (await response.text()) || "An unknown error occurred.";
+};
+
 export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
@@ -121,11 +134,10 @@ export const downloadScanZip = async (
     }
 
     if (!preflightResponse.ok) {
-      const errorMessage = await preflightResponse.text();
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: errorMessage || "An unknown error occurred.",
+        description: await getPreflightErrorMessage(preflightResponse),
       });
       return;
     }

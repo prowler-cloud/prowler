@@ -100,4 +100,52 @@ describe("GET /api/scans/[scanId]/report", () => {
     expect(response.status).toBe(202);
     await expect(response.json()).resolves.toEqual({ data: { id: "task-1" } });
   });
+
+  it("continues to the browser-native download when preflight times out", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new DOMException("Timed out", "TimeoutError")),
+    );
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+
+    const response = await GET(
+      new Request("http://localhost/api?preflight=1"),
+      {
+        params: Promise.resolve({ scanId: "scan-123" }),
+      },
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.body).toBeNull();
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("does not forward upstream HTML error pages for preflight failures", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          "<html><body><h1>504 Gateway Time-out</h1></body></html>",
+          {
+            status: 504,
+            headers: { "content-type": "text/html" },
+          },
+        ),
+      ),
+    );
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+
+    const response = await GET(
+      new Request("http://localhost/api?preflight=1"),
+      {
+        params: Promise.resolve({ scanId: "scan-123" }),
+      },
+    );
+
+    expect(response.status).toBe(504);
+    expect(response.headers.get("content-type")).toContain("text/plain");
+    await expect(response.text()).resolves.toBe(
+      "Unable to prepare the scan report. Please try again in a few minutes.",
+    );
+  });
 });
