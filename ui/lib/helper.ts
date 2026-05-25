@@ -1,6 +1,7 @@
 import {
   getComplianceCsv,
   getCompliancePdfReport,
+  getExportsZip,
   type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
@@ -105,50 +106,44 @@ export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ) => {
-  const reportUrl = `/api/scans/${encodeURIComponent(scanId)}/report`;
+  const result = await getExportsZip(scanId);
 
-  try {
-    const preflightResponse = await fetch(`${reportUrl}?preflight=1`, {
-      cache: "no-store",
-    });
-
-    if (preflightResponse.status === 202) {
-      toast({
-        title: "The report is still being generated",
-        description: "Please try again in a few minutes.",
-      });
-      return;
-    }
-
-    if (!preflightResponse.ok) {
-      const errorMessage = await preflightResponse.text();
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: errorMessage || "An unknown error occurred.",
-      });
-      return;
-    }
-  } catch (_error) {
+  if (result?.pending) {
     toast({
-      variant: "destructive",
-      title: "Download Failed",
-      description: "Unable to start the report download. Please try again.",
+      title: "The report is still being generated",
+      description: "Please try again in a few minutes.",
     });
     return;
   }
 
-  const a = document.createElement("a");
-  a.href = reportUrl;
-  a.download = `scan-${scanId}-report.zip`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  if (result?.success && result.data) {
+    const binaryString = window.atob(result.data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
 
-  toast({
-    title: "Download Started",
-    description: "Your browser is downloading the scan report.",
-  });
+    const blob = new Blob([bytes], { type: "application/zip" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = result.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download Complete",
+      description: "Your scan report has been downloaded successfully.",
+    });
+  } else {
+    toast({
+      variant: "destructive",
+      title: "Download Failed",
+      description: result?.error || "An unknown error occurred.",
+    });
+  }
 };
 
 /**
