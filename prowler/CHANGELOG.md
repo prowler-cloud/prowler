@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.29.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
+
+---
+
 ## [5.28.0] (Prowler v5.28.0)
 
 ### 🚀 Added
