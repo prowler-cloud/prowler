@@ -2,11 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.29.1] (Prowler UNRELEASED)
+## [1.29.1] (Prowler v5.28.1)
 
 ### 🐞 Fixed
 
-- `finding-groups` slow response with finding-level filters such as `region`; check title and description are now read from the daily summaries, which drops sorting by `check_title` (not used by the UI) [(#11326)](https://github.com/prowler-cloud/prowler/pull/11326)
+- `finding-groups` slow response with finding-level filters such as `region`; check title and description are now read from the daily summaries, which drops sorting by `check_title` [(#11326)](https://github.com/prowler-cloud/prowler/pull/11326)
 
 ---
 
