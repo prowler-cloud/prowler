@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_2sv_enforced",
+  "CheckTitle": "2-Step Verification is enforced for all users",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level policy **enforces 2-Step Verification (Multi-Factor Authentication)** for all users. 2-Step Verification requires users to present a second form of authentication beyond their password, significantly reducing the risk of account compromise.",
+  "Risk": "Without 2-Step Verification enforcement, users can access their accounts with **only a password**. If credentials are compromised through phishing, credential stuffing, or data breaches, attackers gain **immediate access** to the user's account and organizational data without any additional verification.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/175197",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **2-Step Verification**\n3. Check **Allow users to turn on 2-Step Verification**\n4. Set **Enforcement** to **On**\n5. Set **New user enrollment period** to **2 weeks**\n6. Under **Frequency**, uncheck **Allow user to trust device**\n7. Under **Methods**, select **Any except verification codes via text, phone call**\n8. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce **2-Step Verification** for all users to require a second authentication factor beyond passwords, protecting accounts from credential-based attacks.",
+      "Url": "https://hub.prowler.com/check/security_2sv_enforced"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_2sv_hardware_keys_admins"
+  ],
+  "Notes": ""
+}

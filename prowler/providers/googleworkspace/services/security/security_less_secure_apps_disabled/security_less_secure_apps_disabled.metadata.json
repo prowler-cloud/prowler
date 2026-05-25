@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_less_secure_apps_disabled",
+  "CheckTitle": "Less secure app access is disabled",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level policy **disables access to less secure apps** that do not use modern security standards such as OAuth. Blocking these apps helps keep user accounts and organizational data safe.",
+  "Risk": "When less secure app access is enabled, users can allow apps that use **basic authentication** (username and password only) to access their Google account. These apps are more vulnerable to **credential theft** and do not support 2-Step Verification, increasing the risk of account compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/6260879",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Access and Data Control** > **Less secure apps**\n3. Select **Disable access to less secure apps (Recommended)**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable **less secure app access** to prevent users from allowing apps that do not use modern authentication standards to access their accounts.",
+      "Url": "https://hub.prowler.com/check/security_less_secure_apps_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_2sv_hardware_keys_admins",
+  "CheckTitle": "Hardware security keys are required for 2-Step Verification",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level 2-Step Verification policy requires **hardware security keys only** as the allowed sign-in factor, providing the strongest phishing-resistant authentication. **Note**: the Policy API returns domain-wide policies only and cannot verify admin role-specific enforcement.",
+  "Risk": "When 2SV methods include **SMS, phone calls, or software-based authenticators**, users are vulnerable to **SIM swapping, SS7 attacks, and real-time phishing proxies** that can intercept one-time codes. Hardware security keys are resistant to all known remote phishing techniques.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/175197",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Authentication** > **2-Step Verification**\n3. Select the appropriate group with **ALL ADMIN ROLES** (create this group if needed)\n4. Under **Methods**, select **Only security key**\n5. Under **2-Step Verification policy suspension grace period**, select **1 day**\n6. Under **Security codes**, select **Don't allow users to generate security codes**\n7. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require **hardware security keys only** for 2-Step Verification to provide the strongest phishing-resistant authentication for all users, particularly those in administrative roles.",
+      "Url": "https://hub.prowler.com/check/security_2sv_hardware_keys_admins"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_2sv_enforced"
+  ],
+  "Notes": "The Cloud Identity Policy API returns domain-wide policies only. It cannot verify that hardware keys are enforced specifically for admin roles versus all users. This check evaluates the customer-level enforcement factor, which applies to all users including administrators."
+}

@@ -8,7 +8,10 @@
     {
       "Id": "GWS.COMMONCONTROLS.1.1",
       "Description": "Phishing-resistant MFA SHALL be required for all users",
-      "Checks": [],
+      "Checks": [
+        "security_2sv_enforced",
+        "security_2sv_hardware_keys_admins"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -21,7 +24,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.1.2",
       "Description": "If phishing-resistant MFA is not yet tenable, an MFA method from the list of acceptable MFA methods SHALL be used as an interim solution",
-      "Checks": [],
+      "Checks": [
+        "security_2sv_enforced"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -112,7 +117,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.4.1",
       "Description": "Google Workspace sessions SHALL re-authenticate after 12 hours",
-      "Checks": [],
+      "Checks": [
+        "security_session_duration_limited"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -125,7 +132,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.1",
       "Description": "Password strength SHALL be enforced",
-      "Checks": [],
+      "Checks": [
+        "security_password_policy_strong"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -138,7 +147,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.2",
       "Description": "Minimum password length SHALL be at least 12 characters",
-      "Checks": [],
+      "Checks": [
+        "security_password_policy_strong"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -151,7 +162,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.3",
       "Description": "Minimum password length SHOULD be at least 15 characters",
-      "Checks": [],
+      "Checks": [
+        "security_password_policy_strong"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -164,7 +177,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.4",
       "Description": "Password policy SHALL be enforced at next sign-in",
-      "Checks": [],
+      "Checks": [
+        "security_password_policy_strong"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -177,7 +192,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.5",
       "Description": "Password reuse SHALL be restricted",
-      "Checks": [],
+      "Checks": [
+        "security_password_policy_strong"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -244,7 +261,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.8.1",
       "Description": "Account recovery for super admins SHALL be disabled",
-      "Checks": [],
+      "Checks": [
+        "security_super_admin_recovery_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -283,7 +302,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.9.1",
       "Description": "Privileged accounts SHALL be enrolled in the Advanced Protection Program",
-      "Checks": [],
+      "Checks": [
+        "security_advanced_protection_configured"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -296,7 +317,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.9.2",
       "Description": "Sensitive user accounts SHOULD be enrolled in the Advanced Protection Program",
-      "Checks": [],
+      "Checks": [
+        "security_advanced_protection_configured"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -361,7 +384,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.10.5",
       "Description": "Internal apps SHALL be allowed to access restricted Google Workspace APIs",
-      "Checks": [],
+      "Checks": [
+        "security_internal_apps_trusted"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -506,7 +531,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.18.1",
       "Description": "A DLP policy SHALL be configured for Drive",
-      "Checks": [],
+      "Checks": [
+        "security_dlp_drive_rules_configured"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",

@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_super_admin_recovery_disabled",
+  "CheckTitle": "Super Admin account recovery is disabled",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level policy **disables self-service account recovery for Super Admin accounts**. When disabled, Super Admins cannot use recovery options (phone, email) to regain access, reducing the risk of account takeover through compromised recovery channels.",
+  "Risk": "If Super Admin account recovery is enabled, an attacker who compromises a Super Admin's **recovery phone or email** could use the self-service recovery flow to take over the account, gaining **full administrative control** over the entire Google Workspace organization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/9436964",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Authentication** > **Account recovery**\n3. Select **Super admin account recovery**\n4. Uncheck **Allow super admins to recover their account**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable **Super Admin account recovery** to prevent attackers from exploiting the self-service recovery flow to take over privileged accounts.",
+      "Url": "https://hub.prowler.com/check/security_super_admin_recovery_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_user_recovery_enabled"
+  ],
+  "Notes": ""
+}
