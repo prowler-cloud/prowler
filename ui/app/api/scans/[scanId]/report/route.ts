@@ -50,6 +50,8 @@ const isAbortError = (error: unknown) =>
 const isHtmlResponse = (headers: Headers) =>
   headers.get("content-type")?.toLowerCase().includes("text/html") ?? false;
 
+const isRedirect = (status: number) => status >= 300 && status < 400;
+
 const preflightReadyResponse = () =>
   new Response(null, {
     status: 204,
@@ -72,6 +74,10 @@ export async function GET(
     upstreamResponse = await fetch(upstreamUrl, {
       headers,
       cache: "no-store",
+      // The API redirects S3-backed reports to a presigned URL; keep that
+      // redirect instead of following it so the bytes never stream through
+      // this server.
+      redirect: "manual",
       signal: isPreflight
         ? AbortSignal.timeout(PREFLIGHT_TIMEOUT_MS)
         : undefined,
@@ -89,6 +95,27 @@ export async function GET(
     return NextResponse.json(body, {
       status: 202,
       headers: { "Cache-Control": "no-store" },
+    });
+  }
+
+  // S3-backed reports: hand the API's presigned redirect to the browser so it
+  // downloads straight from S3 without proxying the bytes through this server.
+  if (isRedirect(upstreamResponse.status)) {
+    if (isPreflight) {
+      return preflightReadyResponse();
+    }
+
+    const location = upstreamResponse.headers.get("location");
+    if (!location) {
+      return NextResponse.json(
+        { error: "Report redirect did not include a location." },
+        { status: 502, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    return new Response(null, {
+      status: 307,
+      headers: { Location: location, "Cache-Control": "no-store" },
     });
   }
 
@@ -111,6 +138,8 @@ export async function GET(
     });
   }
 
+  // Self-hosted without S3: the API returns the bytes directly, so there is no
+  // presigned URL to redirect to and we stream the response through instead.
   if (isPreflight) {
     await upstreamResponse.body?.cancel();
     return preflightReadyResponse();

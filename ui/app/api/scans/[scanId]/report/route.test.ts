@@ -45,6 +45,7 @@ describe("GET /api/scans/[scanId]/report", () => {
       expect.objectContaining({
         headers: { Authorization: "Bearer token" },
         cache: "no-store",
+        redirect: "manual",
       }),
     );
     expect(response.status).toBe(200);
@@ -80,6 +81,56 @@ describe("GET /api/scans/[scanId]/report", () => {
     expect(response.status).toBe(204);
     expect(response.body).toBeNull();
     expect(cancelMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("redirects the browser to the presigned URL for S3-backed reports", async () => {
+    const presignedUrl = "https://bucket.s3.example.com/report.zip?sig=abc";
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(null, {
+        status: 302,
+        headers: { location: presignedUrl },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+
+    const response = await GET(new Request("http://localhost/api"), {
+      params: Promise.resolve({ scanId: "scan-123" }),
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/v1/scans/scan-123/report",
+      expect.objectContaining({ redirect: "manual" }),
+    );
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(presignedUrl);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.body).toBeNull();
+  });
+
+  it("reports readiness without exposing the presigned URL on preflight", async () => {
+    const presignedUrl = "https://bucket.s3.example.com/report.zip?sig=abc";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 302,
+          headers: { location: presignedUrl },
+        }),
+      ),
+    );
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+
+    const response = await GET(
+      new Request("http://localhost/api?preflight=1"),
+      {
+        params: Promise.resolve({ scanId: "scan-123" }),
+      },
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.body).toBeNull();
   });
 
   it("preserves pending report responses from the API", async () => {
