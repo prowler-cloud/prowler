@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Dark mode: pure-black canvas, pure-white primary text, and brighter border / input tokens for clearer separation between cards, tables, and inputs [(#11073)](https://github.com/prowler-cloud/prowler/pull/11073)
+- ESLint: typed flat config with `typescript-eslint` (type-aware via `projectService`) and `eslint-plugin-import-x`, replacing `eslint-plugin-prettier`, `eslint-plugin-simple-import-sort`, and `eslint-plugin-unused-imports` [(#11352)](https://github.com/prowler-cloud/prowler/pull/11352)
 
 ### 🐞 Fixed
 
@@ -29,10 +30,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - `okta` provider support with OAuth 2.0 private-key JWT credentials form (client ID + PEM private key) [(#11213)](https://github.com/prowler-cloud/prowler/pull/11213)
 - "Resource Metadata / Evidence" tab in the finding detail drawer [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
-
-### 🔄 Changed
-
-- Restructured ESLint config: migrated to flat `eslint.config.ts` using the `typescript-eslint` meta-package with `projectService` enabled for type-aware linting, replaced `eslint-plugin-prettier` with `eslint-config-prettier/flat`, and consolidated `eslint-plugin-simple-import-sort` + `eslint-plugin-unused-imports` into `eslint-plugin-import-x` (recommended + typescript configs) [(#TBD)](https://github.com/prowler-cloud/prowler/pull/TBD)
 
 ### 🐞 Fixed
 
