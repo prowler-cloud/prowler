@@ -2,16 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [5.29.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
-
----
-
 ## [5.28.1] (Prowler v5.28.1)
 
 ### 🐞 Fixed
@@ -20,7 +10,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> 4c59af93e (fix(azure): require all SMB channel encryption algorithms to be secure (storage_smb_channel_encryption_with_secure_algorithm) (#11327))
 ## [5.28.0] (Prowler v5.28.0)
 
 ### 🚀 Added
