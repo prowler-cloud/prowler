@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.28.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Scan report downloads no longer fail when the readiness preflight times out or returns an HTML gateway error page [(#11350)](https://github.com/prowler-cloud/prowler/pull/11350)
+
+---
+
 ## [1.28.1] (Prowler v5.28.1)
 
 ### 🐞 Fixed
