@@ -74,6 +74,12 @@
             ]
           },
           {
+            "group": "Prowler for Claude Code",
+            "pages": [
+              "getting-started/products/prowler-claude-code-plugin"
+            ]
+          },
+          {
             "group": "Prowler MCP Server",
             "pages": [
               "getting-started/products/prowler-mcp",
