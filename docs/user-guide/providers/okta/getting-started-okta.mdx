@@ -26,9 +26,50 @@ Set up authentication for Okta with the [Okta Authentication](/user-guide/provid
 
 ## Prowler Cloud
 
+<VersionBadge version="5.28.0" />
+
+### Step 1: Add the Provider
+
+1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
+2. Navigate to "Configuration" > "Providers".
+
+    ![Providers Page](/images/prowler-app/cloud-providers-page.png)
+
+3. Click "Add Provider".
+
+    ![Add a Provider](/images/prowler-app/add-cloud-provider.png)
+
+4. Select "Okta".
+
+    ![Select Okta](/user-guide/providers/okta/images/select-okta-provider.png)
+
+5. Enter the **Org Domain** of the target Okta organization and an optional alias, then click "Next".
+
+    ![Add Okta Org Domain](/user-guide/providers/okta/images/okta-org-domain-form.png)
+
 <Note>
-Prowler Cloud onboarding for Okta is coming soon. Track the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler) for release updates. Use the [Prowler CLI](#prowler-cli) workflow below in the meantime.
+The Org Domain must be the bare hostname of an Okta-managed organization — for example, `acme.okta.com`, `acme.oktapreview.com`, `acme.okta-emea.com`, `acme.okta-gov.com`, `acme.okta.mil`, `acme.okta-miltest.com`, or `acme.trex-govcloud.com`. Omit the `https://` scheme, any path, and any trailing slash.
 </Note>
+
+### Step 2: Provide Credentials
+
+Prowler Cloud authenticates to Okta with the **OAuth 2.0 Private Key JWT** flow exposed by an Okta **API Services** app. The service application, keypair, scope grants, and Read-Only Administrator role are set up once in the Okta Admin Console — full instructions are in the [Okta Authentication](/user-guide/providers/okta/authentication) guide.
+
+1. Enter the **Client ID** of the Okta API Services app (for example, `0oa123456789abcdef`).
+2. Paste the **Private Key** whose matching public key (JWK) is registered on the service app. Both PEM-encoded RSA keys and JWK JSON documents are accepted.
+3. Click "Next".
+
+    ![Okta Credentials Form](/user-guide/providers/okta/images/okta-credentials-form.png)
+
+<Note>
+The private key is transmitted over TLS and stored as an encrypted secret in the backend. Rotate or revoke the matching public key from the Okta Admin Console at any time to invalidate the credential without changes on the Prowler side.
+</Note>
+
+### Step 3: Launch the Scan
+
+1. Review the connection summary. Prowler Cloud runs a credential probe against the Okta Management API before saving — a failed probe surfaces the underlying Okta error (`invalid_scope`, `Forbidden`, invalid credentials, etc.) so the configuration can be corrected before the first scan.
+2. Choose the scan schedule: run a single scan or set up daily scans (every 24 hours).
+3. Click **Launch Scan** to start auditing the Okta organization.
 
 ---
 
