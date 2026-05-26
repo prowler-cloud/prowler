@@ -9,6 +9,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - `okta` provider support with OAuth 2.0 private-key JWT credentials form (client ID + PEM private key) [(#11213)](https://github.com/prowler-cloud/prowler/pull/11213)
 - "Resource Metadata / Evidence" tab in the finding detail drawer [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
+### ✨ Changed
+
+- Attack Paths graph redesigned: default view groups nodes by resource type with expand-on-click, ends in a terminal Outcome node, removes the account hub, and adds directional arrowheads [(#11357)](https://github.com/prowler-cloud/prowler/pull/11357)
+
 ---
 
 ## [1.27.0] (Prowler v5.27.0)

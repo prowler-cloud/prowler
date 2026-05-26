@@ -9,6 +9,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
 - `resource.metadata` attribute included in `/api/v1/findings?include=resources` [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
+### ✨ Changed
+
+- Attack Paths run-query response strips account/root nodes and returns per-query attack `outcome` metadata; the queries catalog only surfaces real attack paths (inventory queries hidden) [(#11357)](https://github.com/prowler-cloud/prowler/pull/11357)
+
 ---
 
 ## [1.28.0] (Prowler v5.27.0)
