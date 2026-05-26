@@ -167,7 +167,6 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
     cell: ({ row }) => <ProgressCell scan={row.original} />,
     enableSorting: false,
   },
-  durationColumn,
   scanScheduleColumn,
   {
     id: "launched",

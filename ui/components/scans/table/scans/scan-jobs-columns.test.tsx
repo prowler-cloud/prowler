@@ -118,7 +118,6 @@ describe("getScanJobsColumns", () => {
       "account",
       "scanInfo",
       "progress",
-      "duration",
       "scanSchedule",
       "launched",
       "actions",
@@ -160,12 +159,6 @@ describe("getScanJobsColumns", () => {
 
   it("renders the completed duration column", () => {
     renderCell("duration", makeCompletedScan());
-
-    expect(screen.getByText("1 min 13 sec")).toBeInTheDocument();
-  });
-
-  it("renders the active duration column", () => {
-    renderCell("duration", makeCompletedScan(), SCAN_JOBS_TAB.ACTIVE);
 
     expect(screen.getByText("1 min 13 sec")).toBeInTheDocument();
   });
