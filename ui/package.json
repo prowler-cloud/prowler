@@ -11,7 +11,7 @@
     "dev": "next dev",
     "format:check": "./node_modules/.bin/prettier --check .",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write .",
-    "healthcheck": "pnpm run typecheck && pnpm run lint:check",
+    "healthcheck": "pnpm run typecheck && pnpm run lint:check && pnpm run format:check",
     "postinstall": "node scripts/postinstall.js",
     "lint:check": "eslint . --max-warnings 40",
     "lint:fix": "eslint . --fix --max-warnings 40",

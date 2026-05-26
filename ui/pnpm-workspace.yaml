@@ -6,9 +6,8 @@ packages: []
 # Refuse to install on Node/pnpm outside the `engines` block in package.json.
 engineStrict: true
 
-# Hoist NextUI / HeroUI families so legacy peer-dep patterns resolve.
+# Hoist the HeroUI family so its legacy peer-dep pattern resolves.
 publicHoistPattern:
-  - "*@nextui-org/*"
   - "*@heroui/*"
 
 # Default `pnpm add` to exact versions — matches package.json convention.
