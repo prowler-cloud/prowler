@@ -226,24 +226,22 @@ The `CAN_ACCESS` edge stays typed and directed (`-[:CAN_ACCESS]->`); that is its
 
 `AWSPolicyStatement.action`, `resource`, `notaction`, and `notresource` are stored as comma-joined strings on both sinks. The sync converter (`tasks/jobs/attack_paths/sync.py`) normalises lists this way so queries are portable across backends.
 
+### Why not native lists?
+
+Cartography emits these properties as lists, but Neptune openCypher cannot accept list values in `CREATE`/`SET`, and reads of multi-valued properties (Gremlin set cardinality) return one arbitrary value rather than the list. See [openCypher compliance, "Multi-valued properties"](https://docs.aws.amazon.com/neptune/latest/userguide/feature-opencypher-compliance.html#openCypher-compliance-mvp). The sync layer flattens lists to comma strings before any sink writes them, so all read queries operate on strings.
+
 The naive read is `size([x IN split(prop, ',') WHERE pred]) > 0`. On Neptune that operator falls off the DFE fast path and resolves every produced token through the term dictionary, per row, giving a 60-second tail on even a few hundred statements. String predicates over the raw stored value (`=`, `STARTS WITH`, `ENDS WITH`, `CONTAINS`) avoid list materialisation entirely and stay fast on both sinks.
 
-For each predicate intent, prefer the corresponding string-op rewrite. Let `P` be the stored property and `L` the literal needle.
+Each row below maps a per-token intent to a `split`-free rewrite where `P` is the stored property and `L` the literal needle.
 
-| Intent (per token semantics) | Use this on `P` (no `split`) |
+| Intent (per token semantics) | Use this on `P` |
 |---|---|
 | Token equals `L` | `P = 'L' OR P STARTS WITH 'L,' OR P ENDS WITH ',L' OR P CONTAINS ',L,'` |
-| Case-insensitive equality | Wrap `P` in `toLower(P)` on all four clauses; lowercase `L` |
 | Token starts with `'pre'` | `toLower(P) STARTS WITH 'pre' OR toLower(P) CONTAINS ',pre'` |
 | Token contains `'sub'` | `toLower(P) CONTAINS 'sub'` |
 | Token contains a dynamic value | `P CONTAINS <expr>` |
-| At least one disjunct holds | `( … OR … )` over the above |
-| No token matches | `NOT ( … OR … )` |
 
-Two intents do not have a clean `split`-free rewrite:
-
-- **Every token must match** (`size([x IN split WHERE P]) = size(split)`). No string-op equivalent; keep the `split` form when truly needed.
-- **Token-as-needle**, where the loop variable is the needle inside a dynamic haystack such as `<dyn>.arn CONTAINS x`. See the wrapper below.
+For case-insensitive matches, wrap `P` in `toLower(P)` and lowercase `L`. Compose with `( … OR … )` or negate with `NOT ( … OR … )`. The token-as-needle case (loop variable is the needle inside a dynamic haystack such as `<dyn>.arn CONTAINS x`) has no string-op equivalent; see the wrapper below.
 
 ### Worked example
 
@@ -258,7 +256,7 @@ WHERE (
 )
 ```
 
-For an IAM PassRole check combining a specific action, the service wildcard, and `*`, expand each token via the four-clause membership and join with `OR`. The block ends up around twelve `OR`s; wrap in `( … )` so it composes cleanly with adjacent `AND` clauses.
+For multi-token checks (specific action, service wildcard, `*`), expand each token and join with `OR`, wrapped in `( … )` so it composes cleanly with adjacent `AND` clauses.
 
 ---
 
@@ -282,9 +280,7 @@ WHERE (
 )
 ```
 
-`P` is the stored property (e.g. `stmt_passrole.resource`); `<dyn>` is the target node bound earlier (`target_role`, `target_user`, etc.). When any cheap clause holds (the common `*` and exact-name cases), the `size(split)` operand is never evaluated. The fallback runs only on specific-ARN-list policies that did not match the cheap clauses, and even then on a small set anchored by the preceding `TRUSTS_AWS_PRINCIPAL` or `STS_ASSUMEROLE_ALLOW` walk.
-
-The two-disjunct variant (e.g. `target_policy`, which has no name attribute the policy resource would match) drops the `P CONTAINS <dyn>.name` line.
+`P` is the stored property (e.g. `stmt_passrole.resource`); `<dyn>` is the target node bound earlier (`target_role`, `target_user`, etc.). When any cheap clause holds (the common `*` and exact-name cases), the `size(split)` operand is never evaluated. The fallback runs only on specific-ARN-list policies that did not match the cheap clauses, and even then on a small set anchored by the preceding `TRUSTS_AWS_PRINCIPAL` or `STS_ASSUMEROLE_ALLOW` walk. When `<dyn>` has no `.name` attribute (e.g. `target_policy`), drop the `P CONTAINS <dyn>.name` operand.
 
 ---
 
