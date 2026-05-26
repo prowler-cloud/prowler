@@ -1,0 +1,188 @@
+---
+title: 'Okta Authentication in Prowler'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.27.0" />
+
+Prowler authenticates to Okta as a **service application** using **OAuth 2.0 with a private-key JWT** (Client Credentials grant). The integration is read-only by scope and follows DISA STIG guidance for least-privilege access.
+
+## Common Setup
+
+### Prerequisites
+
+- An Okta organization. The UI examples below use **Identity Engine** terminology such as **Global Session Policy**; Classic Engine exposes equivalent sign-on policy concepts under older naming.
+- A **Super Administrator** account on that organization for the one-time service-app setup.
+- An **API Services** app integration created in the Okta Admin Console.
+
+### Authentication Method Overview
+
+| Method | Status | Use Case |
+|---|---|---|
+| **OAuth 2.0 (private-key JWT)** | Supported | Production scans, CI/CD, Prowler App. |
+
+The private-key JWT flow is the only supported authentication method in the initial release. The service application proves possession of a private key on every token request; Okta returns a short-lived access token, refreshed automatically by the SDK.
+
+<Note>
+If a different authentication method is needed (SSWS API token, OAuth with user delegation, etc.), please open a [feature request](https://github.com/prowler-cloud/prowler/issues/new?template=feature-request.yml) describing the use case.
+</Note>
+
+### Required OAuth Scopes
+
+The bundled signon checks require the following read-only scopes:
+
+- `okta.policies.read`
+- `okta.brands.read`
+
+Additional scopes will be needed as more services and checks are added. These are the current ones needed:
+
+| Scope | Used by |
+|---|---|
+| `okta.policies.read` | Sign-on / password / authentication policies |
+| `okta.brands.read` | Sign-in page customizations (DOD Notice and Consent Banner check) |
+
+### Required Admin Role
+
+The service application must be assigned the built-in **Read-Only Administrator** role.
+
+Okta's Management API enforces a two-layer authorization model: an OAuth **scope** decides which API endpoints the token can call, and an **admin role** decides whether the call returns data. With only a scope granted, the token mint succeeds but every read returns `403 Forbidden`. The Read-Only Administrator role is the minimum that lets the granted `okta.*.read` scopes actually return configuration data to Prowler's checks — without it, the credential probe at provider startup fails and the scan never gets to evaluate any check.
+
+Read-Only Administrator is intentionally the narrowest role that satisfies this requirement and aligns with the least-privilege guidance in DISA STIG.
+
+## Step-by-Step Setup
+
+### 1. Go to the admin console
+
+![Okta — admin console page](/user-guide/providers/okta/images/select-admin-console.png)
+
+### 2. [Optional] - Disable the privilege-escalation bypass (org-wide, one-time)
+
+In the Okta Admin Console, go to **Settings → Account → Public client app admins** and ensure it is **off**. When enabled, every API Services app can be auto-assigned the Super Administrator role after scopes are granted, which would invalidate the read-only premise of this integration.
+
+![Okta — disable Public client app admins](/user-guide/providers/okta/images/public-client-app-admins.png)
+
+### 3. Create the API Services app
+
+1. Go to **Applications → Applications**.
+
+![Okta — create API Services app](/user-guide/providers/okta/images/go-to-applications.png)
+
+2. **Create App Integration**
+
+![Okta — create App integration](/user-guide/providers/okta/images/create-new-application.png)
+
+3. Sign-in method: **API Services**. Click **Next**.
+4. Name the app (for example, `Prowler Scanner`) and click **Save**.
+5. Copy the displayed **Client ID** — you'll use it as `OKTA_CLIENT_ID`.
+
+![Okta — copy client id](/user-guide/providers/okta/images/copy-client-id.png)
+
+### 4. Switch to private-key authentication and generate a keypair
+
+On the new app's **General** tab, scroll to **Client Credentials**:
+
+1. Click **Edit**.
+2. Set **Client authentication** to **Public key / Private key**.
+3. Under **Public Keys**, click **Add key**.
+4. In the modal, click **Generate new key**. Okta creates a JWK pair.
+5. Click the **PEM** tab to switch the displayed format (or keep JWK — Prowler accepts both).
+6. Copy the entire `-----BEGIN PRIVATE KEY-----` block (or the JWK JSON).
+7. Click **Done**, then **Save**.
+
+<Warning>
+Okta displays the private key **only once**. If you close the modal without copying, you must generate a new key.
+</Warning>
+
+![Okta — create Public Key](/user-guide/providers/okta/images/create-public-key.png)
+
+### 5. Grant the required OAuth scopes
+
+On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled signon checks require `okta.policies.read` and `okta.brands.read`.
+
+![Okta — grant OAuth scopes](/user-guide/providers/okta/images/grant-permissions.png)
+
+### 6. Assign the Read-Only Administrator role
+
+On the app, open the **Admin roles** tab and click **Edit assignments → Add assignment**:
+
+- **Role:** Read-Only Administrator
+- **Resources:** All resources
+
+Save the changes.
+
+![Okta — grant Read-Only role](/user-guide/providers/okta/images/grant-roles.png)
+
+### 7. [Optional] Verify DPoP setting
+
+Prowler sends DPoP (Demonstrating Proof of Possession) proofs on every token request. The integration works whether the **Require Demonstrating Proof of Possession (DPoP) header in token requests** setting on the service app is on or off — but enabling it is the more secure default.
+
+## Prowler CLI Authentication
+
+### Using Environment Variables (Required for Secrets)
+
+Private key material **must** be supplied via environment variables — Prowler does not accept secrets through CLI flags.
+
+```bash
+export OKTA_ORG_DOMAIN="YOUR-ORG.okta.com"
+export OKTA_CLIENT_ID="0oa1234567890abcdef"
+
+# Either of the two — content takes precedence over file when both are set.
+export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
+# or
+export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
+
+# Optional — defaults to "okta.policies.read,okta.brands.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read"
+
+uv run python prowler-cli.py okta
+```
+
+### Non-Secret CLI Flags
+
+Non-secret values are also available as CLI flags for ergonomic overrides:
+
+| Flag | Equivalent env var |
+|---|---|
+| `--okta-org-domain` | `OKTA_ORG_DOMAIN` |
+| `--okta-client-id` | `OKTA_CLIENT_ID` |
+| `--okta-scopes` | `OKTA_SCOPES` |
+
+Run a single check directly:
+
+```bash
+uv run python prowler-cli.py okta --check signon_global_session_idle_timeout_15min
+```
+
+## Troubleshooting
+
+### `OktaInvalidOrgDomainError`
+
+The org domain must be `<org>.okta.com` (or `.oktapreview.com` / `.okta-emea.com` / `.okta-gov.com` / `.okta.mil` / `.okta-miltest.com` / `.trex-govcloud.com`). Pass the bare hostname only — no `https://` scheme, no path, no trailing slash. Custom (vanity) domains are not currently accepted.
+
+### `OktaPrivateKeyFileError`
+
+The file at `OKTA_PRIVATE_KEY_FILE` is missing, unreadable, or empty. Confirm the path and that the file contains a non-empty PEM block or JWK JSON document.
+
+### `OktaInvalidCredentialsError` at provider init
+
+Prowler validates credentials at startup by listing one sign-on policy. This error indicates the credential material itself was rejected:
+
+- **`invalid_client`** — the public key registered in Okta does not match the private key on disk. Generate a fresh keypair and try again.
+
+### `OktaInsufficientPermissionsError` at provider init
+
+Raised when the credential probe succeeds at the OAuth layer but the request is rejected because the service app lacks the required scope or admin role:
+
+- **`invalid_scope`** — one of the requested scopes (`okta.policies.read` or `okta.brands.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
+- **`Forbidden` / `not authorized`** — the **Read-Only Administrator** role is not assigned to the service app. Assign it from **Admin roles**.
+
+### `invalid_dpop_proof`
+
+The org or the service app requires DPoP. The provider always sends DPoP proofs, so this error indicates the SDK could not build a valid proof — typically because the private key on disk does not match the public key uploaded to Okta. Regenerate the keypair.
+
+## Additional Resources
+
+- [Implement OAuth 2.0 for an Okta service app](https://developer.okta.com/docs/guides/implement-oauth-for-okta-serviceapp/main/)
+- [Okta Policy API reference](https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/)
+- [DISA STIG for Okta (V-273186)](https://stigviewer.com/stigs/okta/)

@@ -2,13 +2,53 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.27.0] (Prowler UNRELEASED)
+## [1.29.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
-- New `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
-- ASD Essential Eight (AWS) compliance framework support [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
+- `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+- `metadata` field on resources included in finding responses (`?include=resources`), so finding consumers can read the affected resource's metadata without an extra request [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
+
+---
+
+## [1.28.0] (Prowler v5.27.0)
+
+### 🚀 Added
+
+- GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+- `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
+
+### 🔄 Changed
+
+- Replace `poetry` with `uv` as package manager [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
+- Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+- PDF compliance reports cap detail tables at 100 failed findings per check (configurable via `DJANGO_PDF_MAX_FINDINGS_PER_CHECK`) to bound worker memory on large scans [(#11160)](https://github.com/prowler-cloud/prowler/pull/11160)
+
+### 🐞 Fixed
+
+- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
+- Attack Paths: `BEDROCK-001` and `BEDROCK-002` now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
+
+
+---
+
+## [1.27.1] (Prowler v5.26.1)
+
+### 🐞 Fixed
+
+- `POST /api/v1/scans` was intermittently failing with `Scan matching query does not exist` in the `scan-perform` worker; the Celery task is now published via `transaction.on_commit` so the worker cannot read the Scan before the dispatch-wide transaction commits [(#11122)](https://github.com/prowler-cloud/prowler/pull/11122)
+
+---
+
+## [1.27.0] (Prowler v5.26.0)
+
+### 🚀 Added
+
 - `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+
+### 🔄 Changed
+
+- ASD Essential Eight (AWS) compliance framework support [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
 
 ### 🔐 Security
 

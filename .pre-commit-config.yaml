@@ -6,7 +6,7 @@
 #   P40 — security scanners
 #   P50 — dependency validation
 
-default_install_hook_types: [pre-commit, pre-push]
+default_install_hook_types: [pre-commit]
 
 repos:
   ## GENERAL (prek built-in — no external repo needed)
@@ -44,8 +44,18 @@ repos:
     rev: v1.24.1
     hooks:
       - id: zizmor
-        files: ^\.github/
+        # zizmor only audits workflows, composite actions and dependabot
+        # config; broader paths trip exit 3 ("no audit was performed").
+        files: ^\.github/(workflows|actions)/.+\.ya?ml$|^\.github/dependabot\.ya?ml$
         priority: 30
+
+  ## RENOVATE
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 43.150.0
+    hooks:
+      - id: renovate-config-validator
+        files: ^\.github/renovate\.json$
+        priority: 10
 
   ## BASH
   - repo: https://github.com/koalaman/shellcheck-precommit
@@ -62,12 +72,7 @@ repos:
       - id: autoflake
         name: "SDK - autoflake"
         files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
-        args:
-          [
-            "--in-place",
-            "--remove-all-unused-imports",
-            "--remove-unused-variable",
-          ]
+        args: ["--in-place", "--remove-all-unused-imports", "--remove-unused-variable"]
         priority: 20
 
   - repo: https://github.com/pycqa/isort
@@ -110,35 +115,21 @@ repos:
         files: { glob: ["{api,mcp_server}/**/*.py"] }
         priority: 20
 
-  ## PYTHON — Poetry
-  - repo: https://github.com/python-poetry/poetry
-    rev: 2.3.4
+  ## PYTHON — uv (API + SDK)
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.14
     hooks:
-      - id: poetry-check
-        name: API - poetry-check
-        args: ["--directory=./api"]
-        files: { glob: ["api/{pyproject.toml,poetry.lock}"] }
+      - id: uv-lock
+        name: API - uv-lock
+        args: ["--check", "--project=./api"]
+        files: { glob: ["api/{pyproject.toml,uv.lock}"] }
         pass_filenames: false
         priority: 50
 
-      - id: poetry-lock
-        name: API - poetry-lock
-        args: ["--directory=./api"]
-        files: { glob: ["api/{pyproject.toml,poetry.lock}"] }
-        pass_filenames: false
-        priority: 50
-
-      - id: poetry-check
-        name: SDK - poetry-check
-        args: ["--directory=./"]
-        files: { glob: ["{pyproject.toml,poetry.lock}"] }
-        pass_filenames: false
-        priority: 50
-
-      - id: poetry-lock
-        name: SDK - poetry-lock
-        args: ["--directory=./"]
-        files: { glob: ["{pyproject.toml,poetry.lock}"] }
+      - id: uv-lock
+        name: SDK - uv-lock
+        args: ["--check", "--project=./"]
+        files: { glob: ["{pyproject.toml,uv.lock}"] }
         pass_filenames: false
         priority: 50
 
@@ -179,27 +170,7 @@ repos:
         language: system
         types: [python]
         files: '.*\.py'
-        exclude:
-          { glob: ["{contrib,skills}/**", "**/.venv/**", "**/*_test.py"] }
-        priority: 40
-
-      - id: safety
-        name: safety
-        description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
-        # Accepted CVEs, severity threshold, and ignore expirations live in .safety-policy.yml
-        entry: safety check --policy-file .safety-policy.yml
-        language: system
-        pass_filenames: false
-        files:
-          {
-            glob:
-              [
-                "**/pyproject.toml",
-                "**/poetry.lock",
-                "**/requirements*.txt",
-                ".safety-policy.yml",
-              ],
-          }
+        exclude: { glob: ["{contrib,skills}/**", "**/.venv/**", "**/*_test.py"] }
         priority: 40
 
       - id: vulture

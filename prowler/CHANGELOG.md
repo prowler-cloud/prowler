@@ -2,15 +2,83 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.26.0] (Prowler UNRELEASED)
+## [5.28.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `entra_app_registration_client_secret_unused` check for M365 provider [(#11232)](https://github.com/prowler-cloud/prowler/pull/11232)
+- `cloudsql_instance_cmek_encryption_enabled` check for GCP provider [(#11023)](https://github.com/prowler-cloud/prowler/pull/11023)
+- Google Workspace Groups service with 3 new checks [(#11186)](https://github.com/prowler-cloud/prowler/pull/11186)
+- `ses_identity_dkim_enabled` check for AWS provider [(#10923)](https://github.com/prowler-cloud/prowler/pull/10923)
+- `sagemaker_models_registry_in_use` check for AWS provider, verifying that at least one SageMaker Model Package Group has an approved model package to enforce ML governance workflows [(#11196)](https://github.com/prowler-cloud/prowler/pull/11196)
+- `signon_dod_warning_banner_configured`, `signon_global_session_lifetime_18h`, `signon_global_session_cookies_not_persistent` and `signon_global_session_policy_network_zone_enforced` checks for Okta provider [(#11224)](https://github.com/prowler-cloud/prowler/pull/11224)
+
+### 🔄 Changed
+
+- `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+
+---
+
+## [5.27.1] (Prowler v5.27.1)
+
+### 🐞 Fixed
+
+- `s3_bucket_shadow_resource_vulnerability` no longer emits a tautological `PASS` finding for every bucket; a finding is now produced only when the bucket name matches one of the predictable service patterns (Glue, SageMaker, EMR, CodeStar) [(#11220)](https://github.com/prowler-cloud/prowler/pull/11220)
+- `sqlserver_tde_encrypted_with_cmk` check for Azure provider no longer reports a false `FAIL` for SQL Servers whose user databases are correctly encrypted with a customer-managed key, by excluding the system `master` database (always reports TDE `Disabled` and is not customer-controllable) from the TDE evaluation [(#11233)](https://github.com/prowler-cloud/prowler/pull/11233)
+
+---
+
+## [5.27.0] (Prowler v5.27.0)
+
+### 🚀 Added
+
+- 6 Chat file sharing, external messaging, spaces, and apps access checks for Google Workspace provider using the Cloud Identity Policy API [(#11126)](https://github.com/prowler-cloud/prowler/pull/11126)
+- `entra_service_principal_no_secrets_for_permanent_tier0_roles` check for M365 provider [(#10788)](https://github.com/prowler-cloud/prowler/pull/10788)
+- `iam_user_access_not_stale_to_sagemaker` check for AWS provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
+- `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
+- Okta provider with OAuth 2.0 authentication and `signon_global_session_idle_timeout_15min` check [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
+- `sagemaker_domain_sso_configured` check for AWS provider [(#11094)](https://github.com/prowler-cloud/prowler/pull/11094)
+- Scaleway provider with `iam_api_keys_no_root_owned` check [(#11166)](https://github.com/prowler-cloud/prowler/pull/11166)
+
+### 🔄 Changed
+
+- `entra_emergency_access_exclusion` check for M365 provider now scopes the exclusion requirement to enabled Conditional Access policies with a `Block` grant control instead of every enabled policy, focusing on the lockout-relevant policy set [(#10849)](https://github.com/prowler-cloud/prowler/pull/10849)
+- AWS IAM customer-managed policy checks no longer emit `FAIL` on unattached policies unless `--scan-unused-services` is enabled [(#11150)](https://github.com/prowler-cloud/prowler/pull/11150)
+- Replace `poetry` with `uv` as package manager [(#11162)](https://github.com/prowler-cloud/prowler/pull/11162)
+- Replace `safety` with `osv-scanner` for dependency vulnerability scanning in SDK CI and pre-commit [(#11167)](https://github.com/prowler-cloud/prowler/pull/11167)
+
+### 🐞 Fixed
+
+- Google Workspace Directory checks sharing a single resource row, causing the service field to be overwritten by the last check executed [(#11176)](https://github.com/prowler-cloud/prowler/pull/11176)
+- Google Workspace Calendar and Drive services sharing a single resource row, causing the service field to be overwritten by the last check executed [(#11161)](https://github.com/prowler-cloud/prowler/pull/11161)
+- `zone_waf_enabled` check for Cloudflare provider now appends a plan-aware hint to the FAIL `status_extended`: a possible-false-positive note on paid plans (Pro, Business, Enterprise) where the legacy `waf` zone setting can read `off` even though WAF managed rulesets are deployed via the dashboard, and a "not available on the Cloudflare Free plan" note on Free zones [(#9896)](https://github.com/prowler-cloud/prowler/pull/9896)
+- Google Workspace Gmail checks sharing a single resource row, causing the service field to be overwritten by the last check executed [(#11169)](https://github.com/prowler-cloud/prowler/pull/11169)
+- Google Workspace Drive and Calendar services missing server-side policy filters [(#11195)](https://github.com/prowler-cloud/prowler/pull/11195)
+- `entra_users_mfa_capable` and `entra_break_glass_account_fido2_security_key_registered` report a preventive FAIL per affected user (with the missing permission named) when the M365 service principal lacks `AuditLog.Read.All`, instead of mass false positives [(#10907)](https://github.com/prowler-cloud/prowler/pull/10907)
+- Duplicated GCP CIS requirements IDs [(#11180)](https://github.com/prowler-cloud/prowler/pull/11180)
+- `VercelSession.token` is now excluded from serialization and representation to prevent the Vercel API token from leaking through `.dict()`, `.json()` or logs [(#11198)](https://github.com/prowler-cloud/prowler/pull/11198)
+
+---
+
+## [5.26.1] (Prowler v5.26.1)
+
+### 🐞 Fixed
+
+- `entra_users_mfa_capable` no longer flags disabled guest users by requesting `accountEnabled` and `userType` from Microsoft Graph via `$select` and using Graph as the source of truth for `account_enabled` (EXO `Get-User` does not return guest users) [(#11002)](https://github.com/prowler-cloud/prowler/pull/11002)
+
+---
+
+## [5.26.0] (Prowler v5.26.0)
 
 ### 🚀 Added
 
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
-- Universal compliance pipeline integrated into the CLI: `--list-compliance` and `--list-compliance-requirements` show universal frameworks, and CSV plus OCSF outputs are generated for any framework declaring a `TableConfig` [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
+- Universal compliance with OCSF support [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 - ASD Essential Eight Maturity Model compliance framework for AWS (Maturity Level One, Nov 2023) [(#10808)](https://github.com/prowler-cloud/prowler/pull/10808)
-- Update Vercel checks to return personalized finding status extended depending on billing plan and classify them with billing-plan categories [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
+- Vercel checks to return personalized finding status extended depending on billing plan and classify them with billing-plan categories [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
 - `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
+- 8 Gmail attachment safety and spoofing protection checks for Google Workspace provider using the Cloud Identity Policy API [(#10980)](https://github.com/prowler-cloud/prowler/pull/10980)
+- `bedrock_prompt_encrypted_with_cmk` check for AWS provider [(#10905)](https://github.com/prowler-cloud/prowler/pull/10905)
 
 ### 🔄 Changed
 
@@ -19,23 +87,27 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - AWS CodeBuild service now batches `BatchGetProjects` and `BatchGetBuilds` calls per region (up to 100 items per call) to reduce API call volume and prevent throttling-induced false positives in `codebuild_project_not_publicly_accessible` [(#10639)](https://github.com/prowler-cloud/prowler/pull/10639)
 - `display_compliance_table` dispatch switched from substring `in` checks to `startswith` to prevent false matches between similarly named frameworks (e.g. `cisa` vs `cis`) [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 - Restore the `ec2-imdsv1` category for EC2 IMDS checks to keep Attack Surface and findings filters aligned [(#10998)](https://github.com/prowler-cloud/prowler/pull/10998)
+- Container image CVE findings and IaC findings now use official CVE, Prowler Hub, or GitHub Security Advisory URLs instead of Aqua advisory URLs in remediation and references; Trivy rule IDs map to Prowler Hub without the `AVD-` prefix so links resolve [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
 
 ### 🐞 Fixed
 
 - AWS SDK test isolation: autouse `mock_aws` fixture and leak detector in `conftest.py` to prevent tests from hitting real AWS endpoints, with idempotent organization setup for tests calling `set_mocked_aws_provider` multiple times [(#10605)](https://github.com/prowler-cloud/prowler/pull/10605)
 - AWS `boto` user agent extra is now applied to every client [(#10944)](https://github.com/prowler-cloud/prowler/pull/10944)
 - Image provider connection check no longer fails with a misleading `host='https'` resolution error when the registry URL includes an `http://` or `https://` scheme prefix [(#10950)](https://github.com/prowler-cloud/prowler/pull/10950)
+- Azure subscriptions sharing the same display name are no longer collapsed into a single identity entry, so every subscription is scanned [(#10718)](https://github.com/prowler-cloud/prowler/pull/10718)
 
 ### 🔐 Security
 
 - Parser-mismatch SSRF in image provider registry auth where crafted bearer-token realms and pagination links could force requests to internal addresses and leak credentials cross-origin [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
 - `cryptography` from 46.0.6 to 46.0.7 and `trivy` binary from 0.69.2 to 0.70.0 in the SDK image for CVE-2026-39892 and CVE-2026-33186 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
 
-## [5.25.3] (Prowler UNRELEASED)
+---
+
+## [5.25.3] (Prowler v5.25.3)
 
 ### 🐞 Fixed
 
-- Oracle cloud identity scans now scan known or supplied regions to better support non ashburn tenancies [(#10529)](https://github.com/prowler-cloud/prowler/pull/10529)
+- Oracle Cloud identity scans known or supplied regions to better support non Ashburn tenancies [(#10529)](https://github.com/prowler-cloud/prowler/pull/10529)
 
 ---
 

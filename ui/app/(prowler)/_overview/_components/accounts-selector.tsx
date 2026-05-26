@@ -16,6 +16,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OktaProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
   VercelProviderBadge,
@@ -51,6 +52,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   cloudflare: <CloudflareProviderBadge width={18} height={18} />,
   openstack: <OpenStackProviderBadge width={18} height={18} />,
   vercel: <VercelProviderBadge width={18} height={18} />,
+  okta: <OktaProviderBadge width={18} height={18} />,
 };
 
 /** Common props shared by both batch and instant modes. */
@@ -171,18 +173,23 @@ export function AccountsSelector({
               <div
                 role="option"
                 aria-selected={selectedIds.length === 0}
+                aria-disabled={selectedIds.length === 0}
                 aria-label="Select all accounts (clears current selection to show all)"
                 tabIndex={0}
-                className="text-text-neutral-secondary flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700/50"
-                onClick={() => handleMultiValueChange([])}
+                className="text-text-neutral-secondary flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-slate-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-slate-700/50"
+                onClick={() => {
+                  if (selectedIds.length === 0) return;
+                  handleMultiValueChange([]);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
+                    if (selectedIds.length === 0) return;
                     handleMultiValueChange([]);
                   }
                 }}
               >
-                Select All
+                {selectedIds.length === 0 ? "All selected" : "Select All"}
               </div>
               {visibleProviders.map((p) => {
                 const id = p.id;

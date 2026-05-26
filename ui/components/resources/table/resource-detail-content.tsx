@@ -1,13 +1,12 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import { Container, CornerDownRight, ExternalLink, Link } from "lucide-react";
+import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
-  Card,
   Tabs,
   TabsContent,
   TabsList,
@@ -22,16 +21,13 @@ import {
 } from "@/components/shadcn/info-field/info-field";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
-import {
-  QUERY_EDITOR_LANGUAGE,
-  QueryCodeEditor,
-} from "@/components/shared/query-code-editor";
+import { ExternalResourceLink } from "@/components/shared/external-resource-link";
+import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
-import { buildGitFileUrl } from "@/lib/iac-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
 
@@ -44,29 +40,6 @@ import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-const parseMetadata = (
-  metadata: Record<string, unknown> | string | null | undefined,
-): Record<string, unknown> | null => {
-  if (!metadata) return null;
-
-  if (typeof metadata === "string") {
-    try {
-      const parsed = JSON.parse(metadata);
-      return typeof parsed === "object" && parsed !== null ? parsed : null;
-    } catch {
-      return null;
-    }
-  }
-
-  // After the !metadata check above, metadata can only be object at this point
-  // (null was already filtered, string was handled)
-  if (typeof metadata === "object") {
-    return metadata as Record<string, unknown>;
-  }
-
-  return null;
 };
 
 const buildCustomBreadcrumbs = (
@@ -190,16 +163,6 @@ export const ResourceDetailContent = ({
     handleMuteComplete,
   );
 
-  const gitUrl =
-    providerData.provider === "iac"
-      ? buildGitFileUrl(
-          providerData.uid,
-          attributes.name,
-          "",
-          attributes.region,
-        )
-      : null;
-
   const findingTitle =
     findingDetails?.attributes?.check_metadata?.checktitle || "Finding Detail";
   const resourceName =
@@ -212,9 +175,6 @@ export const ResourceDetailContent = ({
     attributes.groups && attributes.groups.length > 0
       ? attributes.groups.map(getGroupLabel).join(", ")
       : "-";
-  const parsedMetadata = parseMetadata(attributes.metadata);
-  const hasMetadata =
-    parsedMetadata !== null && Object.entries(parsedMetadata).length > 0;
   const tagEntries = Object.entries(resourceTags);
   const hasTags = tagEntries.length > 0;
 
@@ -268,25 +228,13 @@ export const ResourceDetailContent = ({
               </TooltipTrigger>
               <TooltipContent>Copy resource link to clipboard</TooltipContent>
             </Tooltip>
-            {providerData.provider === "iac" && gitUrl && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a
-                    href={gitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-bg-data-info inline-flex items-center gap-1 text-sm"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} />
-                    View in Repository
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Go to Resource in the Repository
-                </TooltipContent>
-              </Tooltip>
-            )}
+            <ExternalResourceLink
+              providerType={providerData.provider}
+              resourceUid={attributes.uid}
+              providerUid={providerData.uid}
+              resourceName={attributes.name}
+              region={attributes.region}
+            />
           </div>
         </div>
       </div>
@@ -402,10 +350,14 @@ export const ResourceDetailContent = ({
                     }}
                     controlledPage={currentPage}
                     controlledPageSize={pageSize}
-                    onPaginationChange={(nextPage, nextPageSize) => {
+                    onPageChange={(page) => {
                       setRowSelection({});
-                      setCurrentPage(nextPage);
-                      setPageSize(nextPageSize);
+                      setCurrentPage(page);
+                    }}
+                    onPageSizeChange={(size) => {
+                      setRowSelection({});
+                      setCurrentPage(1);
+                      setPageSize(size);
                     }}
                     isLoading={findingsLoading}
                   />
@@ -421,38 +373,10 @@ export const ResourceDetailContent = ({
             </TabsContent>
 
             <TabsContent value="metadata" className="flex flex-col gap-4">
-              {attributes.details && attributes.details.trim() !== "" && (
-                <Card variant="inner">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Details:
-                    </span>
-                    <p className="text-text-neutral-primary text-sm break-words whitespace-pre-wrap">
-                      {attributes.details}
-                    </p>
-                  </div>
-                </Card>
-              )}
-
-              {hasMetadata && parsedMetadata && (
-                <QueryCodeEditor
-                  ariaLabel="Resource metadata"
-                  visibleLabel={null}
-                  language={QUERY_EDITOR_LANGUAGE.JSON}
-                  value={JSON.stringify(parsedMetadata, null, 2)}
-                  copyValue={JSON.stringify(parsedMetadata, null, 2)}
-                  editable={false}
-                  minHeight={220}
-                  showCopyButton
-                  onChange={() => {}}
-                />
-              )}
-
-              {!attributes.details?.trim() && !hasMetadata && (
-                <p className="text-text-neutral-tertiary py-8 text-center text-sm">
-                  No metadata available for this resource.
-                </p>
-              )}
+              <ResourceMetadataPanel
+                metadata={attributes.metadata}
+                details={attributes.details}
+              />
             </TabsContent>
 
             <TabsContent value="tags" className="flex flex-col gap-4">
