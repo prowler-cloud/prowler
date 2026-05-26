@@ -11,7 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- ENS RD 311/2022 (AWS) compliance mapping: `vpc_different_regions` and `vpc_subnet_different_az` were mapped under the `mp.com.4` family (Network segregation), but their `Categories` is `resilience` and they measure multi-region/multi-AZ availability, not network segmentation. Both checks are now mapped to a new `op.cont.2.aws.vpc.1` requirement under the Continuity of Service control [(#PRNUM)](https://github.com/prowler-cloud/prowler/pull/PRNUM)
+- ENS RD 311/2022 (AWS) compliance mapping: `vpc_different_regions` and `vpc_subnet_different_az` were mapped under the `mp.com.4` family (Network segregation), but their `Categories` is `resilience` and they measure multi-region/multi-AZ availability, not network segmentation. Both checks are now mapped to a new `op.cont.2.aws.vpc.1` requirement under the Continuity of Service control [(#11372)](https://github.com/prowler-cloud/prowler/pull/11372)
 
 ---
 
