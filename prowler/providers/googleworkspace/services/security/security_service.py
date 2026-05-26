@@ -172,9 +172,7 @@ class Security(GoogleWorkspaceService):
             self.policies.login_challenge_employee_id = value.get(
                 "enableEmployeeIdChallenge"
             )
-            logger.debug(
-                f"Login challenges employee ID: {self.policies.login_challenge_employee_id}"
-            )
+            logger.debug("Login challenges settings fetched.")
 
         # Password policy
         elif setting_type == "security.password":
