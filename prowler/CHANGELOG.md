@@ -2,10 +2,24 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
 ## [5.28.1] (Prowler v5.28.1)
+=======
+## [5.29.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
+- `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
+
+---
+
+## [5.28.1] (Prowler UNRELEASED)
+>>>>>>> d56002059 (fix(gcp): match enable-oslogin metadata case-insensitively (#11341))
 
 ### 🐞 Fixed
 
+- `compute_project_os_login_enabled` and `compute_project_os_login_2fa_enabled` checks for GCP provider no longer false-FAIL on projects where the `enable-oslogin` / `enable-oslogin-2fa` metadata is not set explicitly but is inherited automatically from the `constraints/compute.requireOsLogin` org policy. The policy controller writes the inherited value in lowercase (`"true"`), but the service-layer parser compared it to the uppercase string literal `"TRUE"`. Comparison is now case-insensitive [(#11341)](https://github.com/prowler-cloud/prowler/pull/11341)
 - `storage_smb_channel_encryption_with_secure_algorithm` check for Azure provider no longer passes when a storage account allows a weak SMB channel encryption algorithm (e.g. `AES-128-CCM`/`AES-128-GCM`) alongside `AES-256-GCM`; it now requires every enabled algorithm to be in the recommended list, configurable via `azure.recommended_smb_channel_encryption_algorithms` (defaults to `AES-256-GCM` only, as required by CIS) [(#11327)](https://github.com/prowler-cloud/prowler/pull/11327)
 
 ---
