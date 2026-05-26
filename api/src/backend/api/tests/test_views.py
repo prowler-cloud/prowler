@@ -1625,6 +1625,21 @@ class TestProviderViewSet:
                     "uid": "C12",
                     "alias": "Google Workspace Minimum Length",
                 },
+                {
+                    "provider": "okta",
+                    "uid": "acme.okta.com",
+                    "alias": "Okta Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta-gov.com",
+                    "alias": "Okta Gov Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta.mil",
+                    "alias": "Okta Mil Org",
+                },
             ]
         ),
     )
@@ -2143,6 +2158,24 @@ class TestProviderViewSet:
                     "googleworkspace-uid",
                     "uid",
                 ),
+                (
+                    {
+                        "provider": "okta",
+                        "uid": "https://acme.okta.com",
+                        "alias": "test",
+                    },
+                    "okta-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "okta",
+                        "uid": "acme.example.com",
+                        "alias": "test",
+                    },
+                    "okta-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -2162,6 +2195,25 @@ class TestProviderViewSet:
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
         )
+
+    @pytest.mark.parametrize(
+        "input_uid,stored_uid",
+        [
+            ("Acme.okta.com", "acme.okta.com"),
+            ("  ACME.OKTA.COM  ", "acme.okta.com"),
+            ("Agency.Okta-Gov.com", "agency.okta-gov.com"),
+        ],
+    )
+    def test_providers_create_okta_uid_normalized(
+        self, authenticated_client, input_uid, stored_uid
+    ):
+        response = authenticated_client.post(
+            reverse("provider-list"),
+            data={"provider": "okta", "uid": input_uid, "alias": "Okta"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.get().uid == stored_uid
 
     def test_providers_partial_update(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -2320,17 +2372,17 @@ class TestProviderViewSet:
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 13),
+                ("inserted_at", TODAY, 14),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    13,
+                    14,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    13,
+                    14,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2963,6 +3015,19 @@ class TestProviderSecretViewSet:
                     "api_token": "fake-vercel-api-token-for-testing",
                 },
             ),
+            # Okta with inline private key credentials
+            (
+                Provider.ProviderChoices.OKTA.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "okta_client_id": "0oa123456789abcdef",
+                    "okta_private_key": "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+                    "okta_scopes": [
+                        "okta.policies.read",
+                        "okta.groups.read",
+                    ],
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -3073,6 +3138,46 @@ class TestProviderSecretViewSet:
         assert (
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
+        )
+
+    def test_provider_secrets_invalid_create_okta_missing_private_key(
+        self,
+        providers_fixture,
+        authenticated_client,
+    ):
+        okta_provider = next(
+            provider
+            for provider in providers_fixture
+            if provider.provider == Provider.ProviderChoices.OKTA.value
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "Okta Secret",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        "okta_client_id": "0oa123456789abcdef",
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(okta_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/okta_private_key"
         )
 
     def test_provider_secrets_partial_update(
@@ -7054,6 +7159,32 @@ class TestFindingViewSet:
         assert response.json()["data"]["relationships"]["resources"]["data"][0][
             "id"
         ] == str(finding_1.resources.first().id)
+
+    def test_findings_retrieve_include_resource_metadata(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        resource = finding_1.resources.first()
+        resource.metadata = '{"VulnerabilityID": "CVE-2026-0001"}'
+        resource.details = "Python 3.12 base image"
+        resource.save()
+
+        response = authenticated_client.get(
+            reverse("finding-detail", kwargs={"pk": finding_1.id}),
+            {"include": "resources"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        included_resource = next(
+            item
+            for item in response.json()["included"]
+            if item["type"] == "resources" and item["id"] == str(resource.id)
+        )
+        assert (
+            included_resource["attributes"]["metadata"]
+            == '{"VulnerabilityID": "CVE-2026-0001"}'
+        )
+        assert included_resource["attributes"]["details"] == "Python 3.12 base image"
 
     def test_findings_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
@@ -15792,6 +15923,12 @@ class TestFindingGroupViewSet:
         assert attrs["fail_count"] == 0
         assert attrs["resources_total"] == 1
         assert attrs["resources_fail"] == 0
+        # check_title / check_description are resolved post-pagination from the
+        # summary table, not from the finding's check_metadata.
+        assert attrs["check_title"] == "Ensure EC2 instances do not have public IPs"
+        assert (
+            attrs["check_description"] == "EC2 instances should use private IPs only."
+        )
 
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture
@@ -17033,6 +17170,12 @@ class TestFindingGroupViewSet:
         assert attrs["fail_count"] == 0
         assert attrs["resources_total"] == 1
         assert attrs["resources_fail"] == 0
+        # check_title / check_description are resolved post-pagination from the
+        # summary table, not from the finding's check_metadata.
+        assert attrs["check_title"] == "Ensure EC2 instances do not have public IPs"
+        assert (
+            attrs["check_description"] == "EC2 instances should use private IPs only."
+        )
 
     def test_finding_groups_latest_status_in_filter(
         self, authenticated_client, finding_groups_fixture
@@ -17290,18 +17433,20 @@ class TestFindingGroupViewSet:
         check_ids = [item["id"] for item in data]
         assert check_ids == sorted(check_ids)
 
-    def test_finding_groups_latest_sort_by_check_title(
+    def test_finding_groups_latest_sort_by_check_title_not_supported(
         self, authenticated_client, finding_groups_fixture
     ):
-        """Test /latest supports sorting by check_title."""
+        """check_title is not a sortable field for finding groups.
+
+        Titles live in the TOASTed check_metadata blob and are resolved after
+        pagination from the summary table, so they cannot drive DB-level
+        ordering. Requesting that sort is rejected.
+        """
         response = authenticated_client.get(
             reverse("finding-group-latest"),
             {"sort": "check_title"},
         )
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        check_titles = [item["attributes"]["check_title"] for item in data]
-        assert check_titles == sorted(check_titles)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.parametrize(
         "endpoint_name", ["finding-group-list", "finding-group-latest"]

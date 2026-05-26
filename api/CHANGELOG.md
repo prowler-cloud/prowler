@@ -2,31 +2,49 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.28.0] (Prowler UNRELEASED)
+## [1.30.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Scan finding ingestion: bulk-resolve `Resource`/`ResourceTag` rows, replace per-mapping `SELECT FOR UPDATE` with deferred `ResourceTagMapping.bulk_create(ignore_conflicts=True)`, wrap each micro-batch in a single `rls_transaction`, and raise `SCAN_DB_BATCH_SIZE` to 1000 [(#11249)](https://github.com/prowler-cloud/prowler/pull/11249)
+- Attack Paths: AWS Neptune is now supported as a persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`). Cartography's per-scan staging database stays on Neo4j.
+
+---
+
+## [1.29.1] (Prowler v5.28.1)
+
+### 🐞 Fixed
+
+- `finding-groups` slow response with finding-level filters such as `region`; check title and description are now read from the daily summaries, which drops sorting by `check_title` [(#11326)](https://github.com/prowler-cloud/prowler/pull/11326)
+
+---
+
+## [1.29.0] (Prowler v5.28.0)
+
+### 🚀 Added
+
+- `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+- `resource.metadata` attribute included in `/api/v1/findings?include=resources` [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
+
+---
+
+## [1.28.0] (Prowler v5.27.0)
 
 ### 🚀 Added
 
 - GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
 - `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable; both endpoints centralize the API version on `config/version.py` (read from `pyproject.toml`) and are wired into the Helm charts and the Docker Compose healthcheck [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
-- Attack Paths: AWS Neptune is now supported as a persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`). Cartography's per-scan staging database stays on Neo4j.
 
 ### 🔄 Changed
 
-- Replace `poetry` with `uv` (`0.11.14`) as the API package manager; migrate `pyproject.toml` to `[dependency-groups]` and regenerate as `uv.lock` [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
+- Replace `poetry` with `uv` as package manager [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
 - PDF compliance reports cap detail tables at 100 failed findings per check (configurable via `DJANGO_PDF_MAX_FINDINGS_PER_CHECK`) to bound worker memory on large scans [(#11160)](https://github.com/prowler-cloud/prowler/pull/11160)
 
 ### 🐞 Fixed
 
-- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` and, in one-shot scan-worker deployments, from burning a fresh container per redelivery [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
-
----
-
-## [1.27.2] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
-- Attack Paths: BEDROCK-001 and BEDROCK-002 now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
+- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
+- Attack Paths: `BEDROCK-001` and `BEDROCK-002` now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
 
 ---
 

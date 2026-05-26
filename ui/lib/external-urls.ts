@@ -100,6 +100,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your Vercel team?",
         link: "https://goto.prowler.com/provider-vercel",
       };
+    case "okta":
+      return {
+        text: "Need help connecting your Okta organization?",
+        link: "https://goto.prowler.com/provider-okta",
+      };
     default:
       return {
         text: "How to setup a provider?",

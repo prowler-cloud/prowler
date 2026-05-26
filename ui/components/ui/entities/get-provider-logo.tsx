@@ -11,6 +11,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OktaProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
   VercelProviderBadge,
@@ -49,6 +50,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <OpenStackProviderBadge width={35} height={35} />;
     case "vercel":
       return <VercelProviderBadge width={35} height={35} />;
+    case "okta":
+      return <OktaProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -86,6 +89,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "OpenStack";
     case "vercel":
       return "Vercel";
+    case "okta":
+      return "Okta";
     default:
       return "Unknown Provider";
   }

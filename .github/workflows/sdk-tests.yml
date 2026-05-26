@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -46,6 +46,7 @@ jobs:
             schema.ocsf.io:443
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             o26192.ingest.us.sentry.io:443
             management.azure.com:443
@@ -69,7 +70,7 @@ jobs:
 
       - name: Check for SDK changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: ./**
           files_ignore: |
@@ -102,7 +103,7 @@ jobs:
       - name: Check if AWS files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-aws
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/aws/**
@@ -232,7 +233,7 @@ jobs:
       - name: Check if Azure files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-azure
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/azure/**
@@ -256,7 +257,7 @@ jobs:
       - name: Check if GCP files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-gcp
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/gcp/**
@@ -280,7 +281,7 @@ jobs:
       - name: Check if Kubernetes files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-kubernetes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/kubernetes/**
@@ -304,7 +305,7 @@ jobs:
       - name: Check if GitHub files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-github
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/github/**
@@ -328,7 +329,7 @@ jobs:
       - name: Check if Okta files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-okta
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/okta/**
@@ -352,7 +353,7 @@ jobs:
       - name: Check if NHN files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-nhn
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/nhn/**
@@ -376,7 +377,7 @@ jobs:
       - name: Check if M365 files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-m365
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/m365/**
@@ -400,7 +401,7 @@ jobs:
       - name: Check if IaC files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-iac
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/iac/**
@@ -424,7 +425,7 @@ jobs:
       - name: Check if MongoDB Atlas files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-mongodbatlas
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/mongodbatlas/**
@@ -448,7 +449,7 @@ jobs:
       - name: Check if OCI files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-oraclecloud
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/oraclecloud/**
@@ -472,7 +473,7 @@ jobs:
       - name: Check if OpenStack files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-openstack
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/openstack/**
@@ -496,7 +497,7 @@ jobs:
       - name: Check if Google Workspace files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-googleworkspace
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/googleworkspace/**
@@ -520,7 +521,7 @@ jobs:
       - name: Check if Vercel files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-vercel
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/vercel/**
@@ -544,7 +545,7 @@ jobs:
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-lib
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/lib/**
@@ -568,7 +569,7 @@ jobs:
       - name: Check if Config files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-config
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/config/**
