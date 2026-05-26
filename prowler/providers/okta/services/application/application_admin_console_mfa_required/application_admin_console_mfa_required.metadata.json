@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "application_admin_console_mfa_required",
+  "CheckTitle": "Okta Admin Console authentication policy enforces multifactor authentication",
+  "CheckType": [],
+  "ServiceName": "application",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "The **Authentication Policy** bound to the **Okta Admin Console** app must require MFA. On its top active rule, *User must authenticate with* must be set to `Password / IdP + Another factor` or `Any 2 factor types` (`factorMode=2FA` in the API).\n\nAligns with **DISA STIG V-273193 / OKTA-APP-000560**.",
+  "Risk": "Single-factor access to the Okta control plane is the highest-impact identity risk in the tenant.\n\n- **Credential compromise** is enough to take over every administrator account\n- **Lateral movement** into every downstream SaaS that trusts Okta SSO\n- **Privileged configuration changes** with no second-factor barrier",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Authentication Policies**.\n3. Open the **Okta Admin Console** policy.\n4. Edit the top active rule.\n5. Set *User must authenticate with* to `Password / IdP + Another factor` or `Any 2 factor types`.\n6. Save the rule.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require MFA on the top active rule of the Okta Admin Console authentication policy. Set *User must authenticate with* to `Password / IdP + Another factor` or `Any 2 factor types`.",
+      "Url": "https://hub.prowler.com/check/application_admin_console_mfa_required"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

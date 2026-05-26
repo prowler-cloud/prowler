@@ -1,0 +1,38 @@
+{
+  "Provider": "okta",
+  "CheckID": "application_authentication_policy_network_zone_enforced",
+  "CheckTitle": "Okta application authentication policies enforce Network Zones",
+  "CheckType": [],
+  "ServiceName": "application",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "Every active Okta application must be bound to an **Authentication Policy** that uses **Network Zones**. Each active non-default rule must map *User's IP* to `In zone` or `Not in zone`, and the active built-in *Catch-all Rule* must set *Access is* to `Denied`.\n\nAligns with **DISA STIG V-279693 / OKTA-APP-003244**.",
+  "Risk": "Applications without network-aware authentication rules can be reached from unauthorized locations and bypass location-based access controls.\n\n- **Unauthorized access paths** from unmanaged or blocked networks\n- **Inconsistent information-flow enforcement** across SSO applications\n- **Residual access** when the fallback rule still allows traffic after policy misses",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Application/",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Networks** and define the allow-list and deny-list zones required by policy.\n3. For each active application, open **Applications** > **Applications** > *Application* > **Sign On**.\n4. In **User Authentication**, bind the appropriate **Authentication Policy** and open **View Policy Details**.\n5. For each active non-default rule, set *User's IP* to `In zone` or `Not in zone` and select the correct **Network Zone**.\n6. Edit the built-in **Catch-all Rule** and set *Access is* to `Denied`.\n7. Save the policy.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require every active application Authentication Policy to use Network Zones on each active non-default rule and to deny access on the Catch-all Rule.",
+      "Url": "https://hub.prowler.com/check/application_authentication_policy_network_zone_enforced"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

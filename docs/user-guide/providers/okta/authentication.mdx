@@ -30,17 +30,19 @@ If a different authentication method is needed (SSWS API token, OAuth with user 
 
 ### Required OAuth Scopes
 
-The bundled signon checks require the following read-only scopes:
+The bundled checks require the following read-only scopes:
 
 - `okta.policies.read`
 - `okta.brands.read`
+- `okta.apps.read`
 
 Additional scopes will be needed as more services and checks are added. These are the current ones needed:
 
 | Scope | Used by |
 |---|---|
-| `okta.policies.read` | Sign-on / password / authentication policies |
+| `okta.policies.read` | Sign-on, password, and authentication policies |
 | `okta.brands.read` | Sign-in page customizations (DOD Notice and Consent Banner check) |
+| `okta.apps.read` | First-party app settings (Okta Admin Console session), integrated app inventory, and the Authentication Policies bound to Okta applications |
 
 ### Required Admin Role
 
@@ -98,7 +100,7 @@ Okta displays the private key **only once**. If you close the modal without copy
 
 ### 5. Grant the required OAuth scopes
 
-On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled signon checks require `okta.policies.read` and `okta.brands.read`.
+On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled checks require `okta.policies.read`, `okta.brands.read`, and `okta.apps.read`.
 
 ![Okta — grant OAuth scopes](/user-guide/providers/okta/images/grant-permissions.png)
 
@@ -132,8 +134,8 @@ export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
 # or
 export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 
-# Optional — defaults to "okta.policies.read,okta.brands.read"
-export OKTA_SCOPES="okta.policies.read,okta.brands.read"
+# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read"
 
 uv run python prowler-cli.py okta
 ```
@@ -174,7 +176,7 @@ Prowler validates credentials at startup by listing one sign-on policy. This err
 
 Raised when the credential probe succeeds at the OAuth layer but the request is rejected because the service app lacks the required scope or admin role:
 
-- **`invalid_scope`** — one of the requested scopes (`okta.policies.read` or `okta.brands.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
+- **`invalid_scope`** — one of the requested scopes (`okta.policies.read`, `okta.brands.read`, or `okta.apps.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
 - **`Forbidden` / `not authorized`** — the **Read-Only Administrator** role is not assigned to the service app. Assign it from **Admin roles**.
 
 ### `invalid_dpop_proof`

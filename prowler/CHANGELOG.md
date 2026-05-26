@@ -2,6 +2,19 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.29.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `application` service for Okta provider with `application_admin_console_session_idle_timeout_15min`, `application_admin_console_mfa_required`, `application_admin_console_phishing_resistant_authentication`, `application_dashboard_mfa_required`, `application_dashboard_phishing_resistant_authentication`, and `application_authentication_policy_network_zone_enforced` checks covering Okta Admin Console and Okta Dashboard session idle timeout, MFA enforcement, phishing-resistant authentication, and per-application Authentication Policy network-zone enforcement (DISA STIG V-273187 / V-273190 / V-273191 / V-273193 / V-273194 / V-279693)
+
+### 🔄 Changed
+
+- Okta provider default OAuth scopes now include `okta.apps.read` so the `application` service can read first-party app settings, list integrated apps, and resolve their Authentication Policies
+- Okta application MFA and phishing-resistant checks now evaluate the top active rule exactly as written in the STIG, including the built-in Catch-all Rule when it is the rule being enforced
+
+---
+
 ## [5.28.0] (Prowler v5.28.0)
 
 ### 🚀 Added
