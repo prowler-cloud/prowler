@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Badge, Progress } from "@/components/shadcn";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
+import { StatusBadge } from "@/components/ui/table/status-badge";
 import {
   type ProviderType,
   SCAN_JOBS_TAB,
@@ -16,7 +17,6 @@ import {
   formatScanDuration,
   getScanAlias,
   getScanScheduleLabel,
-  getScanStatusLabel,
 } from "../../scans-table.utils";
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
@@ -81,15 +81,7 @@ function ProgressCell({ scan }: { scan: ScanProps }) {
 }
 
 function StatusCell({ scan }: { scan: ScanProps }) {
-  const state = scan.attributes.state;
-  const variant =
-    state === "completed"
-      ? "success"
-      : state === "failed" || state === "cancelled"
-        ? "error"
-        : "tag";
-
-  return <Badge variant={variant}>{getScanStatusLabel(state)}</Badge>;
+  return <StatusBadge status={scan.attributes.state} />;
 }
 
 function ScheduleCell({ scan }: { scan: ScanProps }) {
