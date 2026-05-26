@@ -18,6 +18,7 @@ describe("ExternalResourceLink", () => {
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
     expect(link).toHaveTextContent("View in AWS Console");
+    expect(link).toHaveClass("text-xs");
   });
 
   it("renders a repository link for IaC resources", () => {
