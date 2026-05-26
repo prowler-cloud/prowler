@@ -1073,7 +1073,7 @@ class M365Provider(Provider):
             organization_info = await client.organization.get()
             identity.tenant_id = organization_info.value[0].id
 
-        asyncio.get_event_loop().run_until_complete(get_m365_identity(identity))
+        asyncio.run(get_m365_identity(identity))
         return identity
 
     @staticmethod
@@ -1261,9 +1261,7 @@ class M365Provider(Provider):
                     result = await client.domains.get()
                     return result.value
 
-                result = asyncio.get_event_loop().run_until_complete(
-                    verify_certificate()
-                )
+                result = asyncio.run(verify_certificate())
                 if not result:
                     raise M365NotValidCertificateContentError(
                         file=os.path.basename(__file__),
@@ -1284,9 +1282,7 @@ class M365Provider(Provider):
                     result = await client.domains.get()
                     return result.value
 
-                result = asyncio.get_event_loop().run_until_complete(
-                    verify_certificate()
-                )
+                result = asyncio.run(verify_certificate())
                 if not result:
                     raise M365NotValidCertificatePathError(
                         file=os.path.basename(__file__),
