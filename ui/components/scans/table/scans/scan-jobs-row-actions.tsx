@@ -1,10 +1,22 @@
 "use client";
 
-import { Download, Eye, Pencil, ShieldCheck } from "lucide-react";
+import {
+  Download,
+  Eye,
+  Pencil,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { getTask } from "@/actions/task";
+import { getScanErrorDetails } from "@/actions/task/task.adapter";
 import { EditAliasModal } from "@/components/scans/edit-alias-modal";
+import {
+  ScanErrorDetailsModal,
+  type ScanErrorDetailsState,
+} from "@/components/scans/scan-error-details-modal";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -22,8 +34,14 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorState, setErrorState] = useState<ScanErrorDetailsState>({
+    kind: "idle",
+  });
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
+  const isFailed = scanState === "failed";
+  const taskId = scan.relationships.task.data.id;
   const scanDate = toLocalDateString(scan.attributes.completed_at);
 
   const openFindings = () => {
@@ -36,6 +54,46 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const openCompliance = () => {
     if (!isCompleted) return;
     router.push(`/compliance?scanId=${scan.id}`);
+  };
+
+  const openErrorDetails = async () => {
+    setErrorOpen(true);
+    setErrorState({ kind: "loading" });
+
+    if (!taskId) {
+      setErrorState({
+        kind: "error",
+        message: "Task ID is not available for this scan.",
+      });
+      return;
+    }
+
+    const response: unknown = await getTask(taskId);
+
+    if (
+      typeof response === "object" &&
+      response !== null &&
+      "error" in response &&
+      typeof (response as { error: unknown }).error === "string"
+    ) {
+      setErrorState({
+        kind: "error",
+        message: (response as { error: string }).error,
+      });
+      return;
+    }
+
+    const details = getScanErrorDetails(response);
+
+    if (!details) {
+      setErrorState({
+        kind: "error",
+        message: "No error details were found for this failed scan.",
+      });
+      return;
+    }
+
+    setErrorState({ kind: "loaded", details });
   };
 
   return (
@@ -61,6 +119,13 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
             />
           </>
         )}
+        {isFailed && (
+          <ActionDropdownItem
+            icon={<TriangleAlert />}
+            label="View error details"
+            onSelect={() => void openErrorDetails()}
+          />
+        )}
         {/* TODO: Expand Edit to also cover schedule once the backend exposes a schedule update endpoint. */}
         <ActionDropdownItem
           icon={<Pencil />}
@@ -75,6 +140,12 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
         onOpenChange={setEditOpen}
         scanId={scan.id}
         currentAlias={scan.attributes.name ?? ""}
+      />
+
+      <ScanErrorDetailsModal
+        open={errorOpen}
+        onOpenChange={setErrorOpen}
+        state={errorState}
       />
     </div>
   );

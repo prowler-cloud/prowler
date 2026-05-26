@@ -6,7 +6,8 @@ import type { ScanProps } from "@/types";
 
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
-const { pushMock, toastMock } = vi.hoisted(() => ({
+const { getTaskMock, pushMock, toastMock } = vi.hoisted(() => ({
+  getTaskMock: vi.fn(),
   pushMock: vi.fn(),
   toastMock: vi.fn(),
 }));
@@ -19,6 +20,10 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/components/ui", () => ({
   useToast: () => ({ toast: toastMock }),
+}));
+
+vi.mock("@/actions/task", () => ({
+  getTask: getTaskMock,
 }));
 
 vi.mock("@/lib/helper", () => ({
@@ -172,6 +177,75 @@ describe("ScanJobsRowActions", () => {
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("menuitem", { name: /download findings/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens failed scan error details from the actions menu", async () => {
+    // Given
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    getTaskMock.mockResolvedValue({
+      data: {
+        attributes: {
+          result: {
+            exc_type: "ValidationError",
+            exc_message: ["Missing cloud credentials", "Retry scan setup"],
+          },
+        },
+      },
+    });
+
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "failed",
+          completed_at: "2026-01-01T10:05:00Z",
+        })}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    await user.click(
+      screen.getByRole("menuitem", { name: /view error details/i }),
+    );
+
+    // Then
+    expect(getTaskMock).toHaveBeenCalledWith("task-1");
+    expect(
+      await screen.findByRole("dialog", { name: /scan error details/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("ValidationError")).toBeInTheDocument();
+    expect(screen.getByText("Missing cloud credentials")).toBeInTheDocument();
+    expect(screen.getByText("Retry scan setup")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: /copy error details/i }),
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      "ErrorType: ValidationError\nError: Missing cloud credentials\nRetry scan setup",
+    );
+  });
+
+  it("does not show error details for non-failed scans", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(<ScanJobsRowActions scan={makeScan({ state: "completed" })} />);
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("menuitem", { name: /view error details/i }),
     ).not.toBeInTheDocument();
   });
 });
