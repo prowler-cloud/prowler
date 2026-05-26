@@ -10,12 +10,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
-import { useScansFilters } from "@/hooks/use-scans-filters";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import { LaunchScanModal } from "./launch-scan-modal";
 import { ScansFilterBar } from "./scans-filter-bar";
+import { useScansFilters } from "./use-scans-filters";
 
 interface ScansPageShellProps {
   providers: ProviderProps[];
