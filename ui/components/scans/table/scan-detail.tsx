@@ -1,5 +1,7 @@
 "use client";
 
+import { buildScanErrorDetails } from "@/actions/task/task.adapter";
+import { ScanErrorDetailsView } from "@/components/scans/scan-error-details-view";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
@@ -71,23 +73,15 @@ export const ScanDetail = ({
             <CodeSnippet value={scanDetails.id} />
           </InfoField>
 
-          {scan.state === "failed" && taskDetails?.attributes.result && (
-            <>
-              {taskDetails.attributes.result.exc_message && (
-                <InfoField label="Error Message" variant="simple">
-                  <CodeSnippet
-                    value={taskDetails.attributes.result.exc_message.join("\n")}
-                    multiline
-                  />
-                </InfoField>
-              )}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <InfoField label="Error Type">
-                  {renderValue(taskDetails.attributes.result.exc_type)}
-                </InfoField>
-              </div>
-            </>
-          )}
+          {scan.state === "failed" &&
+            (() => {
+              const errorDetails = buildScanErrorDetails(
+                taskDetails?.attributes.result,
+              );
+              return errorDetails ? (
+                <ScanErrorDetailsView details={errorDetails} />
+              ) : null;
+            })()}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <InfoField label="Started At">

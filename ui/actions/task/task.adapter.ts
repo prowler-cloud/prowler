@@ -24,14 +24,11 @@ function getStringList(value: unknown): string[] {
     .filter((item) => item !== "");
 }
 
-export function getScanErrorDetails(
-  taskResponse: unknown,
+export function buildScanErrorDetails(
+  result: unknown,
 ): ScanErrorDetails | null {
-  if (!isRecord(taskResponse) || !isRecord(taskResponse.data)) return null;
-  if (!isRecord(taskResponse.data.attributes)) return null;
-  if (!isRecord(taskResponse.data.attributes.result)) return null;
+  if (!isRecord(result)) return null;
 
-  const result = taskResponse.data.attributes.result;
   const type = getString(result.exc_type) ?? "-";
   const messages = getStringList(result.exc_message);
   const module = getString(result.exc_module);
@@ -46,4 +43,13 @@ export function getScanErrorDetails(
     module,
     copyValue: `ErrorType: ${type}\nError: ${errorText}`,
   };
+}
+
+export function getScanErrorDetails(
+  taskResponse: unknown,
+): ScanErrorDetails | null {
+  if (!isRecord(taskResponse) || !isRecord(taskResponse.data)) return null;
+  if (!isRecord(taskResponse.data.attributes)) return null;
+
+  return buildScanErrorDetails(taskResponse.data.attributes.result);
 }
