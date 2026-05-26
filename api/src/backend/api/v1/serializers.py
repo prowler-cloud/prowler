@@ -1217,12 +1217,22 @@ class AttackPathsQueryParameterSerializer(BaseSerializerV1):
         resource_name = "attack-paths-query-parameters"
 
 
+class AttackPathsQueryOutcomeSerializer(BaseSerializerV1):
+    label = serializers.CharField()
+    description = serializers.CharField()
+    severity = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-outcomes"
+
+
 class AttackPathsQuerySerializer(BaseSerializerV1):
     id = serializers.CharField()
     name = serializers.CharField()
     short_description = serializers.CharField()
     description = serializers.CharField()
     attribution = AttackPathsQueryAttributionSerializer(allow_null=True, required=False)
+    outcome = AttackPathsQueryOutcomeSerializer(allow_null=True, required=False)
     provider = serializers.CharField()
     parameters = AttackPathsQueryParameterSerializer(many=True)
 
@@ -1270,6 +1280,7 @@ class AttackPathsRelationshipSerializer(BaseSerializerV1):
 class AttackPathsQueryResultSerializer(BaseSerializerV1):
     nodes = AttackPathsNodeSerializer(many=True)
     relationships = AttackPathsRelationshipSerializer(many=True)
+    outcome = AttackPathsQueryOutcomeSerializer(allow_null=True, required=False)
     total_nodes = serializers.IntegerField()
     truncated = serializers.BooleanField()
 
