@@ -2,20 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-## [5.28.1] (Prowler v5.28.1)
-=======
-## [5.29.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
-- `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
-
----
-
 ## [5.28.1] (Prowler UNRELEASED)
->>>>>>> d56002059 (fix(gcp): match enable-oslogin metadata case-insensitively (#11341))
 
 ### 🐞 Fixed
 
