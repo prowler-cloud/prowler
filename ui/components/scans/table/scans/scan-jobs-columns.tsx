@@ -2,99 +2,23 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { Badge, Progress } from "@/components/shadcn";
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/table/status-badge";
-import {
-  type ProviderType,
-  SCAN_JOBS_TAB,
-  type ScanJobsTab,
-  type ScanProps,
-} from "@/types";
+import { SCAN_JOBS_TAB, type ScanJobsTab, type ScanProps } from "@/types";
 
+import { formatScanDuration } from "../../scans-table.utils";
 import {
-  formatScanDuration,
-  getScanAlias,
-  getScanScheduleLabel,
-} from "../../scans-table.utils";
+  AccountCell,
+  ProgressCell,
+  ResourceCountCell,
+  ScanInfoCell,
+  ScheduleCell,
+} from "./cells";
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
 interface GetScanJobsColumnsOptions {
   tab: ScanJobsTab;
-}
-
-function AccountCell({ scan }: { scan: ScanProps }) {
-  const providerInfo = scan.providerInfo;
-
-  if (!providerInfo) {
-    return <span className="text-text-neutral-tertiary text-sm">-</span>;
-  }
-
-  return (
-    <div className="max-w-[240px] min-w-0">
-      <EntityInfo
-        cloudProvider={providerInfo.provider as ProviderType}
-        entityAlias={providerInfo.alias}
-        entityId={providerInfo.uid}
-      />
-    </div>
-  );
-}
-
-function ScanInfoCell({ scan }: { scan: ScanProps }) {
-  return (
-    <div className="max-w-[240px] min-w-0">
-      <EntityInfo
-        entityAlias={getScanAlias(scan)}
-        entityId={scan.id}
-        idLabel="ID"
-      />
-    </div>
-  );
-}
-
-function ResourceCountCell({ count }: { count?: number }) {
-  return (
-    <Badge variant="tag" className="rounded text-sm">
-      <span className="font-bold">{(count ?? 0).toLocaleString()}</span>
-    </Badge>
-  );
-}
-
-function ProgressCell({ scan }: { scan: ScanProps }) {
-  const progress = scan.attributes.progress ?? 0;
-  const isQueued = scan.attributes.state === "available";
-
-  if (isQueued) {
-    return <Badge variant="warning">Queued for scan</Badge>;
-  }
-
-  return (
-    <div className="flex min-w-[220px] items-center gap-3">
-      <Progress value={progress} className="h-2 min-w-[140px]" />
-      <span className="text-text-neutral-secondary min-w-9 text-xs font-medium">
-        {progress}%
-      </span>
-    </div>
-  );
-}
-
-function StatusCell({ scan }: { scan: ScanProps }) {
-  return <StatusBadge status={scan.attributes.state} />;
-}
-
-function ScheduleCell({ scan }: { scan: ScanProps }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-text-neutral-primary text-sm">
-        {getScanScheduleLabel(scan.attributes.trigger)}
-      </span>
-      {scan.attributes.scheduled_at && (
-        <DateWithTime dateTime={scan.attributes.scheduled_at} showTime />
-      )}
-    </div>
-  );
 }
 
 const accountColumn: ColumnDef<ScanProps> = {
@@ -186,7 +110,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
-    cell: ({ row }) => <StatusCell scan={row.original} />,
+    cell: ({ row }) => <StatusBadge status={row.original.attributes.state} />,
     enableSorting: false,
   },
   scanScheduleColumn,
