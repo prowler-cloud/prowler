@@ -24,6 +24,14 @@ class TestSecurityService:
             "policies": [
                 {
                     "setting": {
+                        "type": "settings/security.two_step_verification_enrollment",
+                        "value": {
+                            "allowEnrollment": True,
+                        },
+                    }
+                },
+                {
+                    "setting": {
                         "type": "settings/security.two_step_verification_enforcement",
                         "value": {
                             "enforcedFrom": "2026-05-25T15:27:52.352Z",
@@ -40,9 +48,41 @@ class TestSecurityService:
                 },
                 {
                     "setting": {
+                        "type": "settings/security.two_step_verification_device_trust",
+                        "value": {
+                            "allowTrustingDevice": True,
+                        },
+                    }
+                },
+                {
+                    "setting": {
+                        "type": "settings/security.two_step_verification_grace_period",
+                        "value": {
+                            "enrollmentGracePeriod": "0s",
+                        },
+                    }
+                },
+                {
+                    "setting": {
+                        "type": "settings/security.two_step_verification_sign_in_code",
+                        "value": {
+                            "backupCodeExceptionPeriod": "86400s",
+                        },
+                    }
+                },
+                {
+                    "setting": {
                         "type": "settings/security.super_admin_account_recovery",
                         "value": {
                             "enableAccountRecovery": True,
+                        },
+                    }
+                },
+                {
+                    "setting": {
+                        "type": "settings/security.user_account_recovery",
+                        "value": {
+                            "enableAccountRecovery": False,
                         },
                     }
                 },
@@ -92,6 +132,14 @@ class TestSecurityService:
                         },
                     }
                 },
+                {
+                    "setting": {
+                        "type": "settings/security.passkeys_restriction",
+                        "value": {
+                            "allowedPasskeysType": "ANY_DEVICE_OR_PLATFORM",
+                        },
+                    }
+                },
             ]
         }
 
@@ -104,6 +152,17 @@ class TestSecurityService:
                         "type": "settings/api_controls.internal_apps",
                         "value": {
                             "trustInternalApps": True,
+                        },
+                    }
+                },
+                {
+                    "setting": {
+                        "type": "settings/api_controls.google_services",
+                        "value": {
+                            "services": [
+                                {"scopesGroup": "DRIVE_ALL", "isEnabled": True},
+                                {"scopesGroup": "GMAIL_HIGH_RISK", "isEnabled": False},
+                            ],
                         },
                     }
                 },
@@ -151,9 +210,14 @@ class TestSecurityService:
             security = Security(mock_provider)
 
             assert security.policies_fetched is True
+            assert security.policies.two_sv_allow_enrollment is True
             assert security.policies.two_sv_enforced_from == "2026-05-25T15:27:52.352Z"
             assert security.policies.two_sv_allowed_factor_set == "ALL"
+            assert security.policies.two_sv_allow_trusting_device is True
+            assert security.policies.two_sv_enrollment_grace_period == "0s"
+            assert security.policies.two_sv_backup_code_exception_period == "86400s"
             assert security.policies.super_admin_recovery_enabled is True
+            assert security.policies.user_recovery_enabled is False
             assert security.policies.password_minimum_length == 8
             assert security.policies.password_allowed_strength == "STRONG"
             assert security.policies.password_allow_reuse is False
@@ -167,7 +231,9 @@ class TestSecurityService:
                 == "CODES_NOT_ALLOWED"
             )
             assert security.policies.login_challenge_employee_id is False
+            assert security.policies.passkeys_type == "ANY_DEVICE_OR_PLATFORM"
             assert security.policies.trust_internal_apps is True
+            assert security.policies.google_services_restricted is True
             assert security.policies.dlp_drive_rules_exist is True
 
     def test_fetch_policies_empty_response(self):
@@ -270,6 +336,94 @@ class TestSecurityService:
             security = Security(mock_provider)
 
             assert security.policies_fetched is False
+
+    def test_fetch_policies_execute_raises(self):
+        """Test inner except handler when request.execute() raises during pagination"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_request = MagicMock()
+        mock_request.execute.side_effect = Exception("Execute failed")
+        mock_service.policies().list.return_value = mock_request
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies_fetched is False
+
+    def test_fetch_policies_google_services_no_restricted(self):
+        """Test google_services with all services enabled sets restricted to False"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_empty = MagicMock()
+        mock_empty.execute.return_value = {"policies": []}
+
+        mock_api_list = MagicMock()
+        mock_api_list.execute.return_value = {
+            "policies": [
+                {
+                    "setting": {
+                        "type": "settings/api_controls.google_services",
+                        "value": {
+                            "services": [
+                                {"scopesGroup": "DRIVE_ALL", "isEnabled": True},
+                                {"scopesGroup": "GMAIL_ALL", "isEnabled": True},
+                            ],
+                        },
+                    }
+                },
+            ]
+        }
+
+        mock_service.policies().list.side_effect = [
+            mock_empty,
+            mock_api_list,
+            mock_empty,
+        ]
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies_fetched is True
+            assert security.policies.google_services_restricted is False
 
     def test_dlp_rule_without_drive_trigger_ignored(self):
         """Test that DLP rules without Drive triggers don't set dlp_drive_rules_exist"""
