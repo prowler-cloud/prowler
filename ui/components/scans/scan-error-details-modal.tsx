@@ -1,11 +1,10 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
 import type { ScanErrorDetails } from "@/actions/task/task.adapter";
 import { Button, Card, CardContent } from "@/components/shadcn";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Modal } from "@/components/shadcn/modal";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 
 export type ScanErrorDetailsState =
@@ -21,12 +20,7 @@ interface ScanErrorDetailsModalProps {
 }
 
 function LoadingView() {
-  return (
-    <div className="text-text-neutral-secondary flex items-center gap-2 text-sm">
-      <Loader2 className="size-4 animate-spin" />
-      Loading error details...
-    </div>
-  );
+  return <LoadingState label="Loading error details..." />;
 }
 
 function ErrorView({ message }: { message: string }) {
@@ -79,13 +73,12 @@ export function ScanErrorDetailsModal({
       {state.kind === "error" && <ErrorView message={state.message} />}
       {state.kind === "loaded" && <LoadedView details={state.details} />}
 
-      <div className="flex w-full justify-end">
+      <div className="flex w-full justify-end gap-4">
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="lg"
           onClick={() => onOpenChange(false)}
-          className="w-40"
         >
           Close
         </Button>
