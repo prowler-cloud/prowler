@@ -467,6 +467,18 @@ azure:
       "1.3",
     ]
 
+  # Azure Storage
+  # azure.storage_smb_channel_encryption_with_secure_algorithm
+  # List of SMB channel encryption algorithms allowed on file shares. A storage
+  # account passes only if every enabled algorithm is in this list. Defaults to
+  # the value required by CIS (AES-256-GCM only, excluding weaker AES-128 ciphers).
+  recommended_smb_channel_encryption_algorithms:
+    [
+      "AES-256-GCM",
+      # "AES-128-CCM",
+      # "AES-128-GCM",
+    ]
+
   # Azure Virtual Machines
   # azure.vm_desired_sku_size
   # List of desired VM SKU sizes that are allowed in the organization
