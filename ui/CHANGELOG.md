@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Large scan report ZIP downloads now stream through a Next.js Route Handler instead of buffering the full file in a Server Action [(#11330)](https://github.com/prowler-cloud/prowler/pull/11330)
+- Compliance requirement findings table now respects the page size selector [(#11365)](https://github.com/prowler-cloud/prowler/pull/11365)
 
 ---
 
