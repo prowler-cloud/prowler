@@ -48,8 +48,13 @@ class application_admin_console_session_idle_timeout_15min(Check):
             report.status = "MANUAL"
             report.status_extended = (
                 "Could not retrieve the Okta Admin Console first-party app "
-                "settings. STIG V-273187 requires the `Maximum app session "
-                f"idle time` to be set to {threshold} minutes or less."
+                "settings. Okta restricts `GET /api/v1/first-party-app-settings/"
+                "admin-console` to the Super Administrator role; every other "
+                "role — including Read-Only Administrator — receives "
+                "`403 E0000006`. Assign Super Administrator to the service "
+                f"app to evaluate this check. STIG V-273187 requires the "
+                f"`Maximum app session idle time` to be set to {threshold} "
+                "minutes or less."
             )
             return [report]
 

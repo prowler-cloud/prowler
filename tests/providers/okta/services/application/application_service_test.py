@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 from prowler.providers.okta.models import OktaIdentityInfo
@@ -521,3 +522,229 @@ class Test_Application_service:
         assert set(apps.keys()) == {"0oaadminconsole", "0oacustom"}
         assert apps["0oacustom"].label == "Google Workspace"
         assert apps["0oacustom"].access_policy_id == "rst-custom"
+
+
+class Test_Application_service_sdk_validation_fallback:
+    """Verifies the raw-JSON fallback for the Okta SDK enum-validator bug.
+
+    The Okta Management API returns values (e.g. lowercase `"password"`
+    in `KnowledgeConstraint.types`) that the SDK's pydantic field
+    validators reject as ValidationError. Without a fallback the entire
+    policy fetch crashes; with the fallback we evaluate the rules
+    correctly via raw JSON.
+    """
+
+    def _build_service_with_validation_error_then_raw_success(
+        self, raw_rules_payload, app_filter_match="saasure"
+    ):
+        from pydantic import ValidationError
+
+        provider = set_mocked_okta_provider()
+        admin = _fake_app(
+            "0oaadminconsole",
+            "saasure",
+            access_policy_href="https://acme.okta.com/api/v1/policies/rst-admin",
+            label="Okta Admin Console",
+        )
+
+        async def fake_settings(_app_name):
+            return (_fake_admin_console_settings(), _resp({}), None)
+
+        async def fake_apps(*_a, **kwargs):
+            if app_filter_match in (kwargs.get("filter") or ""):
+                return ([admin], _resp({}), None)
+            return ([], _resp({}), None)
+
+        async def failing_list_policy_rules(*_a, **_k):
+            try:
+                # Trigger a real pydantic ValidationError so we exercise
+                # the exact exception type the SDK raises in production.
+                from okta.models.knowledge_constraint import KnowledgeConstraint
+
+                KnowledgeConstraint(types=["password"])
+            except ValidationError as ve:
+                raise ve
+            return ([], _resp({}), None)
+
+        async def fake_raw_create(*_a, **_k):
+            return ({"url": "/api/v1/policies/rst-admin/rules"}, None)
+
+        async def fake_raw_execute(_request):
+            return (None, json.dumps(raw_rules_payload), None)
+
+        sdk_mock = mock.MagicMock()
+        sdk_mock.get_first_party_app_settings = fake_settings
+        sdk_mock.list_applications = fake_apps
+        sdk_mock.list_policy_rules = failing_list_policy_rules
+        sdk_mock._request_executor.create_request = fake_raw_create
+        sdk_mock._request_executor.execute = fake_raw_execute
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient",
+            return_value=sdk_mock,
+        ):
+            from prowler.providers.okta.services.application.application_service import (
+                Application as _Application,
+            )
+
+            return _Application(provider)
+
+    def test_raw_fallback_projects_factor_mode_and_phishing_resistant(self):
+        rules_payload = [
+            {
+                "id": "rul-1",
+                "name": "Top Rule",
+                "priority": 1,
+                "status": "ACTIVE",
+                "system": False,
+                "actions": {
+                    "appSignOn": {
+                        "access": "ALLOW",
+                        "verificationMethod": {
+                            "type": "ASSURANCE",
+                            "factorMode": "2FA",
+                            "constraints": [
+                                {
+                                    "knowledge": {"types": ["password"]},
+                                    "possession": {"phishingResistant": "REQUIRED"},
+                                }
+                            ],
+                        },
+                    }
+                },
+                "conditions": {
+                    "network": {
+                        "connection": "ZONE",
+                        "include": ["nzo-corp"],
+                        "exclude": [],
+                    }
+                },
+            }
+        ]
+        service = self._build_service_with_validation_error_then_raw_success(
+            rules_payload
+        )
+
+        admin = service.built_in_apps["saasure"]
+        assert admin.access_policy is not None
+        assert len(admin.access_policy.rules) == 1
+        rule = admin.access_policy.rules[0]
+        assert rule.factor_mode == "2FA"
+        assert rule.possession_phishing_resistant_required is True
+        assert rule.network_connection == "ZONE"
+        assert rule.network_zones_include == ["nzo-corp"]
+        assert rule.is_default is False
+        assert rule.priority == 1
+
+    def test_raw_fallback_handles_empty_rules(self):
+        service = self._build_service_with_validation_error_then_raw_success([])
+        admin = service.built_in_apps["saasure"]
+        assert admin.access_policy is not None
+        assert admin.access_policy.rules == []
+
+
+class Test_Application_service_per_app_isolation:
+    """One app's fetch failure must not erase the other app's findings."""
+
+    def test_dashboard_still_returned_when_admin_console_policy_fetch_fails(self):
+        provider = set_mocked_okta_provider()
+        admin = _fake_app(
+            "0oaadminconsole",
+            "saasure",
+            access_policy_href="https://acme.okta.com/api/v1/policies/rst-broken",
+            label="Okta Admin Console",
+        )
+        dashboard = _fake_app(
+            "0oadashboard",
+            "okta_enduser",
+            access_policy_href="https://acme.okta.com/api/v1/policies/rst-dash",
+            label="Okta Dashboard",
+        )
+
+        async def fake_settings(_app_name):
+            return (_fake_admin_console_settings(), _resp({}), None)
+
+        async def fake_apps(*_a, **kwargs):
+            f = kwargs.get("filter") or ""
+            if "saasure" in f:
+                return ([admin], _resp({}), None)
+            if "okta_enduser" in f:
+                return ([dashboard], _resp({}), None)
+            return ([], _resp({}), None)
+
+        async def fake_policy_rules(policy_id, **_k):
+            if policy_id == "rst-broken":
+                raise RuntimeError("simulated unexpected SDK failure")
+            return (
+                [
+                    _fake_rule(
+                        name="Top",
+                        priority=1,
+                        factor_mode="2FA",
+                        phishing_resistant="REQUIRED",
+                    )
+                ],
+                _resp({}),
+                None,
+            )
+
+        with _patch_sdk(
+            get_first_party_app_settings=fake_settings,
+            list_applications=fake_apps,
+            list_policy_rules=fake_policy_rules,
+        ):
+            service = Application(provider)
+
+        # Admin Console: app captured, access_policy set to None due to
+        # isolated failure during rule fetch.
+        admin_model = service.built_in_apps["saasure"]
+        assert admin_model.access_policy is None
+        # Dashboard: succeeded — its rule is fully resolved.
+        dashboard_model = service.built_in_apps["okta_enduser"]
+        assert dashboard_model.access_policy is not None
+        assert dashboard_model.access_policy.rules[0].factor_mode == "2FA"
+
+    def test_integrated_apps_one_app_failure_does_not_drop_others(self):
+        provider = set_mocked_okta_provider()
+        good = _fake_app(
+            "0oa-good",
+            "custom_good",
+            access_policy_href="https://acme.okta.com/api/v1/policies/rst-good",
+            label="Good App",
+        )
+        bad = _fake_app(
+            "0oa-bad",
+            "custom_bad",
+            access_policy_href="https://acme.okta.com/api/v1/policies/rst-bad",
+            label="Bad App",
+        )
+
+        async def fake_settings(_):
+            return (_fake_admin_console_settings(), _resp({}), None)
+
+        async def fake_apps(*_a, **kwargs):
+            f = kwargs.get("filter") or ""
+            if f:
+                return ([], _resp({}), None)
+            return ([good, bad], _resp({}), None)
+
+        async def fake_policy_rules(policy_id, **_k):
+            if policy_id == "rst-bad":
+                raise RuntimeError("simulated failure")
+            return (
+                [_fake_rule(name="Top", priority=1, factor_mode="1FA")],
+                _resp({}),
+                None,
+            )
+
+        with _patch_sdk(
+            get_first_party_app_settings=fake_settings,
+            list_applications=fake_apps,
+            list_policy_rules=fake_policy_rules,
+        ):
+            service = Application(provider)
+            apps = service.integrated_apps
+
+        assert set(apps.keys()) == {"0oa-good", "0oa-bad"}
+        assert apps["0oa-good"].access_policy is not None
+        assert apps["0oa-bad"].access_policy is None

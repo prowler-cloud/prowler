@@ -1,7 +1,8 @@
+import json
 from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.service import OktaService
@@ -168,15 +169,33 @@ class Application(OktaService):
             return {}
 
     async def _fetch_built_in_apps_and_policies(self) -> dict:
+        # Per-app try/except: one app's SDK failure (e.g. ValidationError
+        # while deserializing its policy rules) must not erase findings
+        # for the other.
         result: dict[str, OktaBuiltInApp] = {}
         for app_name in (ADMIN_CONSOLE_APP_NAME, DASHBOARD_APP_NAME):
-            built_in_app = await self._fetch_built_in_app(app_name)
+            try:
+                built_in_app = await self._fetch_built_in_app(app_name)
+            except Exception as error:
+                logger.error(
+                    f"Error fetching built-in app {app_name}: "
+                    f"{error.__class__.__name__}: {error}"
+                )
+                continue
             if built_in_app is None:
                 continue
             if built_in_app.access_policy_id:
-                built_in_app.access_policy = await self._fetch_access_policy(
-                    built_in_app.access_policy_id
-                )
+                try:
+                    built_in_app.access_policy = await self._fetch_access_policy(
+                        built_in_app.access_policy_id
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"Error fetching access policy "
+                        f"{built_in_app.access_policy_id} for {app_name}: "
+                        f"{error.__class__.__name__}: {error}"
+                    )
+                    built_in_app.access_policy = None
             result[app_name] = built_in_app
         return result
 
@@ -188,13 +207,32 @@ class Application(OktaService):
             logger.error(f"Error listing integrated apps: {err}")
             return {}
 
+        # Per-app try/except: a single app's policy fetch failure must
+        # not drop the whole inventory.
         result: dict[str, OktaBuiltInApp] = {}
         for app in all_apps:
-            app_model = _to_application_model(app)
-            if app_model.access_policy_id:
-                app_model.access_policy = await self._fetch_access_policy(
-                    app_model.access_policy_id
+            try:
+                app_model = _to_application_model(app)
+            except Exception as error:
+                logger.error(
+                    f"Error projecting Okta app onto pydantic model "
+                    f"(id={getattr(app, 'id', '?')}): "
+                    f"{error.__class__.__name__}: {error}"
                 )
+                continue
+            if app_model.access_policy_id:
+                try:
+                    app_model.access_policy = await self._fetch_access_policy(
+                        app_model.access_policy_id
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"Error fetching access policy "
+                        f"{app_model.access_policy_id} for app "
+                        f"{app_model.name} ({app_model.id}): "
+                        f"{error.__class__.__name__}: {error}"
+                    )
+                    app_model.access_policy = None
             result[app_model.id] = app_model
         return result
 
@@ -222,10 +260,24 @@ class Application(OktaService):
         # policies almost always have <10 rules; a warning is logged if
         # the limit is hit.
         rule_fetch_limit = 100
-        rules_out: list[AuthenticationPolicyRule] = []
-        result = await self.client.list_policy_rules(
-            policy_id, limit=str(rule_fetch_limit)
-        )
+        try:
+            result = await self.client.list_policy_rules(
+                policy_id, limit=str(rule_fetch_limit)
+            )
+        except ValidationError as ve:
+            # Upstream Okta SDK ↔ Management API enum drift: the SDK's
+            # strict pydantic validators (e.g. KnowledgeConstraint.types
+            # uppercase-only) reject values the API returns lowercase
+            # (e.g. ["password"]). Fall back to a raw-JSON fetch so the
+            # STIG evaluation isn't blocked by an upstream SDK bug.
+            logger.warning(
+                f"Okta SDK raised ValidationError parsing rules for policy "
+                f"{policy_id} ({ve.error_count()} error(s)) — falling back "
+                "to raw-JSON parse. This is an okta-sdk-python deserialization "
+                "bug; the workaround should be removed once upstream fixes it."
+            )
+            return await self._fetch_access_policy_raw(policy_id, rule_fetch_limit)
+
         err = result[-1]
         if err is not None:
             logger.error(f"Error listing rules for access policy {policy_id}: {err}")
@@ -244,14 +296,87 @@ class Application(OktaService):
                 "rules beyond this limit are not evaluated by Prowler. Review "
                 "the policy in the Okta Admin Console."
             )
-        for rule in all_rules:
-            rules_out.append(_rule_to_model(rule))
+        rules_out = [_rule_to_model(rule) for rule in all_rules]
         return AuthenticationPolicy(
             id=policy_id,
             name="",
             status="",
             is_default=False,
             rules=rules_out,
+        )
+
+    async def _fetch_access_policy_raw(
+        self, policy_id: str, rule_fetch_limit: int
+    ) -> Optional["AuthenticationPolicy"]:
+        """Raw-JSON fallback for `list_policy_rules`.
+
+        Bypasses the Okta SDK's typed deserialization by calling the
+        request executor directly without a response type. The response
+        body is then `json.loads`-ed and projected onto our own pydantic
+        snapshot, which only validates the fields the STIG checks
+        actually read. This keeps the checks evaluable on tenants where
+        the Management API returns values the SDK validators reject.
+        """
+        request, error = await self.client._request_executor.create_request(
+            method="GET",
+            url=f"/api/v1/policies/{policy_id}/rules?limit={rule_fetch_limit}",
+            body=None,
+            headers={"Accept": "application/json"},
+        )
+        if error is not None:
+            logger.error(
+                f"Raw rules fetch (create_request) failed for {policy_id}: {error}"
+            )
+            return AuthenticationPolicy(
+                id=policy_id, name="", status="", is_default=False, rules=[]
+            )
+
+        _response, response_body, error = await self.client._request_executor.execute(
+            request
+        )
+        if error is not None:
+            logger.error(f"Raw rules fetch (execute) failed for {policy_id}: {error}")
+            return AuthenticationPolicy(
+                id=policy_id, name="", status="", is_default=False, rules=[]
+            )
+
+        if isinstance(response_body, (bytes, bytearray)):
+            try:
+                response_body = response_body.decode("utf-8")
+            except UnicodeDecodeError as decode_err:
+                logger.error(
+                    f"Could not decode rules response for {policy_id}: {decode_err}"
+                )
+                return AuthenticationPolicy(
+                    id=policy_id, name="", status="", is_default=False, rules=[]
+                )
+        try:
+            rules_data = json.loads(response_body) if response_body else []
+        except json.JSONDecodeError as decode_err:
+            logger.error(f"Could not parse rules JSON for {policy_id}: {decode_err}")
+            return AuthenticationPolicy(
+                id=policy_id, name="", status="", is_default=False, rules=[]
+            )
+
+        if not isinstance(rules_data, list):
+            logger.error(
+                f"Unexpected raw rules payload shape for {policy_id}: "
+                f"got {type(rules_data).__name__}, expected list"
+            )
+            return AuthenticationPolicy(
+                id=policy_id, name="", status="", is_default=False, rules=[]
+            )
+
+        if len(rules_data) >= rule_fetch_limit:
+            logger.warning(
+                f"Access policy {policy_id} returned {len(rules_data)} rules "
+                f"via raw-JSON fallback — the per-policy fetch limit "
+                f"({rule_fetch_limit}) was hit; any rules beyond this limit "
+                "are not evaluated by Prowler."
+            )
+        rules_out = [_raw_rule_to_model(rule) for rule in rules_data]
+        return AuthenticationPolicy(
+            id=policy_id, name="", status="", is_default=False, rules=rules_out
         )
 
     @staticmethod
@@ -346,6 +471,48 @@ def _stringify_enum(value) -> Optional[str]:
     if value is None:
         return None
     return getattr(value, "value", None) or str(value)
+
+
+def _raw_rule_to_model(rule_dict: dict) -> "AuthenticationPolicyRule":
+    """Project a raw `/api/v1/policies/{id}/rules` JSON rule onto our model.
+
+    Mirrors `_rule_to_model` but reads camelCase JSON keys (`appSignOn`,
+    `verificationMethod`, `phishingResistant`) instead of the SDK's
+    snake_case attribute names. Used by the raw-JSON fallback that
+    activates when the Okta SDK's strict enum validators reject values
+    the Management API returns.
+    """
+    actions = rule_dict.get("actions") or {}
+    app_sign_on = actions.get("appSignOn") or {}
+    verification_method = app_sign_on.get("verificationMethod") or {}
+    factor_mode = verification_method.get("factorMode")
+    verification_type = verification_method.get("type")
+    constraints = verification_method.get("constraints") or []
+    phishing_resistant_required = False
+    for constraint in constraints:
+        possession = (constraint or {}).get("possession") or {}
+        if possession.get("phishingResistant") == "REQUIRED":
+            phishing_resistant_required = True
+            break
+
+    access_action = app_sign_on.get("access")
+    conditions = rule_dict.get("conditions") or {}
+    network = conditions.get("network") or {}
+    return AuthenticationPolicyRule(
+        id=rule_dict.get("id") or "",
+        name=rule_dict.get("name") or "",
+        priority=rule_dict.get("priority"),
+        status=rule_dict.get("status") or "",
+        is_default=bool(rule_dict.get("system", False)),
+        factor_mode=factor_mode,
+        possession_phishing_resistant_required=phishing_resistant_required,
+        constraints_count=len(constraints),
+        verification_method_type=verification_type,
+        access=access_action,
+        network_connection=network.get("connection"),
+        network_zones_include=list(network.get("include") or []),
+        network_zones_exclude=list(network.get("exclude") or []),
+    )
 
 
 class AdminConsoleAppSettings(BaseModel):

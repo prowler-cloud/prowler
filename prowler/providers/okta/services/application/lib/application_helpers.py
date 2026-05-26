@@ -144,7 +144,12 @@ def missing_admin_console_settings_scope_finding(
 def app_not_found_finding(
     metadata, org_domain: str, app_label_hint: str
 ) -> CheckReportOkta:
-    """Build the MANUAL finding emitted when a built-in OIN app isn't returned."""
+    """Build the MANUAL finding emitted when a built-in OIN app isn't returned.
+
+    Okta filters the first-party apps (`saasure`, `okta_enduser`) out of
+    `/api/v1/apps` for every admin role below Super Administrator, so the
+    check has no way to resolve the app's bound Authentication Policy.
+    """
     placeholder = OktaBuiltInApp(
         id="okta-built-in-app-missing",
         name="(app not found)",
@@ -156,9 +161,12 @@ def app_not_found_finding(
     )
     report.status = "MANUAL"
     report.status_extended = (
-        f"The {app_label_hint} built-in app was not returned by the Okta API. "
-        "Verify the org edition exposes this app and that the service app "
-        "has `okta.apps.read` granted."
+        f"The {app_label_hint} first-party app was not returned by the Okta "
+        "API. Okta restricts the visibility of first-party apps "
+        "(`saasure`, `okta_enduser`) to the Super Administrator role; "
+        "every other role — including Read-Only Administrator — receives "
+        "an empty result. Assign Super Administrator to the service app "
+        "to evaluate this check."
     )
     return report
 
