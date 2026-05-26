@@ -98,6 +98,32 @@ def missing_app_scope_finding(
     return report
 
 
+def missing_integrated_apps_scope_finding(
+    metadata, org_domain: str, scope: str
+) -> CheckReportOkta:
+    """Build the MANUAL finding when the integrated-app inventory scope is not granted."""
+    placeholder = OktaBuiltInApp(
+        id="okta-integrated-apps-scope-missing",
+        name="(scope not granted)",
+        label="Okta integrated applications",
+        status="MISSING",
+    )
+    report = CheckReportOkta(
+        metadata=metadata,
+        resource=placeholder,
+        org_domain=org_domain,
+        resource_name=placeholder.label,
+        resource_id=placeholder.id,
+    )
+    report.status = "MANUAL"
+    report.status_extended = (
+        "Could not retrieve Okta integrated applications and their "
+        f"authentication policies: the Okta service app is missing the "
+        f"required `{scope}` API scope. {_SCOPE_ADVICE}"
+    )
+    return report
+
+
 def missing_admin_console_settings_scope_finding(
     metadata, org_domain: str, scope: str
 ) -> CheckReportOkta:

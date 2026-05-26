@@ -167,6 +167,8 @@ class Test_application_authentication_policy_network_zone_enforced:
         )
         assert findings[0].status == "MANUAL"
         assert "okta.apps.read" in findings[0].status_extended
+        assert findings[0].resource_name == "Okta integrated applications"
+        assert findings[0].resource_id == "okta-integrated-apps-scope-missing"
 
     def test_manual_when_policy_scope_missing(self):
         findings = _run_check(
@@ -181,6 +183,8 @@ class Test_application_authentication_policy_network_zone_enforced:
         )
         assert findings[0].status == "MANUAL"
         assert "okta.policies.read" in findings[0].status_extended
+        assert findings[0].resource_name == "Okta integrated applications"
+        assert findings[0].resource_id == "okta-integrated-apps-scope-missing"
 
     def test_manual_when_no_active_apps_returned(self):
         findings = _run_check(build_application_client(integrated_apps={}))

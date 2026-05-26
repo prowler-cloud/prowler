@@ -91,3 +91,16 @@ class Test_application_dashboard_mfa_required:
         findings = _run_check(client)
         assert findings[0].status == "MANUAL"
         assert "okta.apps.read" in findings[0].status_extended
+
+    def test_manual_when_policies_scope_missing(self):
+        client = build_application_client(
+            missing_scope={
+                "admin_console_app_settings": None,
+                "built_in_apps": None,
+                "integrated_apps": None,
+                "access_policies": "okta.policies.read",
+            }
+        )
+        findings = _run_check(client)
+        assert findings[0].status == "MANUAL"
+        assert "okta.policies.read" in findings[0].status_extended

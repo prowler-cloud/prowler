@@ -9,13 +9,11 @@ from prowler.providers.okta.services.application.application_service import (
 from prowler.providers.okta.services.application.lib.application_helpers import (
     active_apps,
     app_label,
-    missing_app_scope_finding,
+    missing_integrated_apps_scope_finding,
     no_active_apps_finding,
     rule_has_network_zone,
     rule_label,
 )
-
-APPLICATIONS_LABEL_HINT = "Okta integrated applications"
 
 
 class application_authentication_policy_network_zone_enforced(Check):
@@ -34,11 +32,10 @@ class application_authentication_policy_network_zone_enforced(Check):
             missing_scope = application_client.missing_scope.get(scope_key)
             if missing_scope:
                 return [
-                    missing_app_scope_finding(
+                    missing_integrated_apps_scope_finding(
                         self.metadata(),
                         org_domain,
                         missing_scope,
-                        APPLICATIONS_LABEL_HINT,
                     )
                 ]
 

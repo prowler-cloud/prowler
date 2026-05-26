@@ -83,6 +83,19 @@ class Test_application_dashboard_phishing_resistant_authentication:
         assert findings[0].status == "MANUAL"
         assert "not returned by the Okta API" in findings[0].status_extended
 
+    def test_manual_when_apps_scope_missing(self):
+        client = build_application_client(
+            missing_scope={
+                "admin_console_app_settings": None,
+                "built_in_apps": "okta.apps.read",
+                "integrated_apps": None,
+                "access_policies": None,
+            }
+        )
+        findings = _run_check(client)
+        assert findings[0].status == "MANUAL"
+        assert "okta.apps.read" in findings[0].status_extended
+
     def test_manual_when_policies_scope_missing(self):
         client = build_application_client(
             missing_scope={
