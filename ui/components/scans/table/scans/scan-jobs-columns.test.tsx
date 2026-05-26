@@ -51,7 +51,8 @@ vi.mock("./scan-jobs-row-actions", () => ({
   ScanJobsRowActions: () => <button type="button" />,
 }));
 
-import { SCAN_JOBS_TAB, type ScanJobsTab } from "../../scans-table.utils";
+import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
 const getColumnIds = (tab: ScanJobsTab) =>

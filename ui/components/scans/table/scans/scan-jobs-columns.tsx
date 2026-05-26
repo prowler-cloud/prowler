@@ -5,15 +5,18 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Badge, Progress } from "@/components/shadcn";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import type { ProviderType, ScanProps } from "@/types";
+import {
+  type ProviderType,
+  SCAN_JOBS_TAB,
+  type ScanJobsTab,
+  type ScanProps,
+} from "@/types";
 
 import {
   formatScanDuration,
   getScanAlias,
   getScanScheduleLabel,
   getScanStatusLabel,
-  SCAN_JOBS_TAB,
-  type ScanJobsTab,
 } from "../../scans-table.utils";
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 

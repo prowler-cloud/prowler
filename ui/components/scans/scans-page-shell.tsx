@@ -18,6 +18,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
+import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import { LaunchScanModal } from "./launch-scan-modal";
@@ -25,9 +26,6 @@ import {
   getScanJobsTab,
   getScanStatusFilterOptions,
   getScanTriggerFilterOptions,
-  SCAN_JOBS_TAB,
-  SCAN_TAB_LABELS,
-  type ScanJobsTab,
 } from "./scans-table.utils";
 
 interface ScansPageShellProps {

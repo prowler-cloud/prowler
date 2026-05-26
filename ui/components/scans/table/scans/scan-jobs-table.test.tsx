@@ -1,9 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ScanProps } from "@/types";
+import { SCAN_JOBS_TAB, type ScanProps } from "@/types";
 
-import { SCAN_JOBS_TAB } from "../../scans-table.utils";
 import { ScanJobsTable } from "./scan-jobs-table";
 
 vi.mock("@/components/ui/table", () => ({

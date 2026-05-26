@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ScanAttributes, ScanProps } from "@/types";
+import { SCAN_JOBS_TAB, type ScanAttributes, type ScanProps } from "@/types";
 
 import {
   formatScanDuration,
@@ -11,7 +11,6 @@ import {
   getScanScheduleLabel,
   getScanStatusLabel,
   getScanTriggerFilterOptions,
-  SCAN_JOBS_TAB,
 } from "./scans-table.utils";
 
 const makeScan = (name: string | null): ScanProps => ({

@@ -1,34 +1,15 @@
 import {
+  DEFAULT_SCAN_JOBS_TAB,
+  SCAN_JOBS_TAB,
   SCAN_STATE,
   SCAN_TRIGGER,
   type ScanAttributes,
+  type ScanFindingsSummary,
+  type ScanJobsTab,
   type ScanProps,
   type ScanState,
   type ScanTrigger,
 } from "@/types";
-
-export const SCAN_JOBS_TAB = {
-  ACTIVE: "active",
-  COMPLETED: "completed",
-  SCHEDULED: "scheduled",
-} as const;
-
-export type ScanJobsTab = (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB];
-
-export const DEFAULT_SCAN_JOBS_TAB: ScanJobsTab = SCAN_JOBS_TAB.ACTIVE;
-
-export interface ScanFindingsSummary {
-  fail: number;
-  pass: number;
-  failNew?: number;
-  passNew?: number;
-}
-
-export const SCAN_TAB_LABELS: Record<ScanJobsTab, string> = {
-  [SCAN_JOBS_TAB.ACTIVE]: "Active",
-  [SCAN_JOBS_TAB.COMPLETED]: "Completed",
-  [SCAN_JOBS_TAB.SCHEDULED]: "Scheduled",
-};
 
 const SCAN_JOBS_TAB_FILTERS: Record<ScanJobsTab, Record<string, string>> = {
   [SCAN_JOBS_TAB.ACTIVE]: {

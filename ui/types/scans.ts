@@ -26,6 +26,29 @@ export const SCAN_STATE = {
 
 export type ScanState = (typeof SCAN_STATE)[keyof typeof SCAN_STATE];
 
+export const SCAN_JOBS_TAB = {
+  ACTIVE: "active",
+  COMPLETED: "completed",
+  SCHEDULED: "scheduled",
+} as const;
+
+export type ScanJobsTab = (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB];
+
+export const DEFAULT_SCAN_JOBS_TAB: ScanJobsTab = SCAN_JOBS_TAB.ACTIVE;
+
+export const SCAN_TAB_LABELS: Record<ScanJobsTab, string> = {
+  [SCAN_JOBS_TAB.ACTIVE]: "Active",
+  [SCAN_JOBS_TAB.COMPLETED]: "Completed",
+  [SCAN_JOBS_TAB.SCHEDULED]: "Scheduled",
+};
+
+export interface ScanFindingsSummary {
+  fail: number;
+  pass: number;
+  failNew?: number;
+  passNew?: number;
+}
+
 export interface ScanAttributes {
   name: string;
   trigger: ScanTrigger;

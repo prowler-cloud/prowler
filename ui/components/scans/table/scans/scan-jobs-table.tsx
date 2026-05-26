@@ -1,10 +1,9 @@
 "use client";
 
 import { DataTable } from "@/components/ui/table";
-import type { MetaDataProps, ScanProps } from "@/types";
+import type { MetaDataProps, ScanJobsTab, ScanProps } from "@/types";
 
 import { AutoRefresh } from "../../auto-refresh";
-import { type ScanJobsTab } from "../../scans-table.utils";
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
 interface ScanJobsTableProps {
