@@ -24,6 +24,7 @@ import {
 } from "../../_lib/graph-colors";
 import { resolveHiddenFindingIds } from "../../_lib/graph-utils";
 import { NODE_CATEGORY, resolveNodeVisual } from "../../_lib/node-visuals";
+import { ATTACK_PATH_OUTCOME_LABEL } from "../../_lib/template-graph";
 
 const LEGEND_PREVIEW = {
   BADGE_RADIUS: 16,
@@ -270,6 +271,8 @@ const resolveNodeTypeItems = (
 
   for (const node of visibleNodes) {
     if (isFindingNode(node)) continue;
+    // Outcome nodes are conceptual, not a resource type.
+    if (node.labels.includes(ATTACK_PATH_OUTCOME_LABEL)) continue;
 
     const visual = resolveNodeVisual(node);
     if (visual.category === NODE_CATEGORY.ACCOUNT) continue;

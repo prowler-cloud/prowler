@@ -8,7 +8,11 @@ import type {
   GraphState,
 } from "@/types/attack-paths";
 
-import { computeFilteredSubgraph } from "../_lib";
+import {
+  type AttackPathOutcome,
+  buildTemplateGraph,
+  computeFilteredSubgraph,
+} from "../_lib";
 
 interface FilteredViewState {
   isFilteredView: boolean;
@@ -19,10 +23,19 @@ interface FilteredViewState {
   // swaps that happen when entering/exiting filtered view. Reset only on
   // fresh data loads (new query / scan) — see `setGraphData`.
   expandedResources: Set<string>;
+  // Template-graph state: the raw concrete graph + outcome, and which resource
+  // *types* are currently expanded into their concrete members. `data` is the
+  // grouped template derived from these via buildTemplateGraph.
+  templateSource: AttackPathGraphData | null;
+  outcome: AttackPathOutcome | null;
+  expandedTypes: Set<string>;
 }
 
 interface GraphStore extends GraphState, FilteredViewState {
-  setGraphData: (data: AttackPathGraphData) => void;
+  setGraphData: (
+    data: AttackPathGraphData,
+    outcome?: AttackPathOutcome | null,
+  ) => void;
   setSelectedNodeId: (nodeId: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -33,6 +46,7 @@ interface GraphStore extends GraphState, FilteredViewState {
     fullData: AttackPathGraphData | null,
   ) => void;
   toggleExpandedResource: (resourceId: string) => void;
+  toggleExpandedType: (typeKey: string) => void;
   reset: () => void;
 }
 
@@ -45,19 +59,50 @@ const initialState: GraphState & FilteredViewState = {
   filteredNodeId: null,
   fullData: null,
   expandedResources: new Set(),
+  templateSource: null,
+  outcome: null,
+  expandedTypes: new Set(),
 };
 
 export const useGraphStore = create<GraphStore>((set) => ({
   ...initialState,
-  setGraphData: (data) =>
+  setGraphData: (data, outcome = null) =>
     set({
-      data,
+      // Default view is the collapsed template graph; the raw concrete graph
+      // is kept as templateSource for expand/collapse.
+      data: buildTemplateGraph(data, new Set(), outcome),
+      templateSource: data,
+      outcome,
+      expandedTypes: new Set(),
       fullData: null,
       error: null,
       isFilteredView: false,
       filteredNodeId: null,
+      selectedNodeId: null,
       // Fresh data → drop any stale expansion from the previous graph.
       expandedResources: new Set(),
+    }),
+  toggleExpandedType: (typeKey) =>
+    set((state) => {
+      const expandedTypes = new Set(state.expandedTypes);
+      if (expandedTypes.has(typeKey)) {
+        expandedTypes.delete(typeKey);
+      } else {
+        expandedTypes.add(typeKey);
+      }
+      return {
+        expandedTypes,
+        data: buildTemplateGraph(
+          state.templateSource,
+          expandedTypes,
+          state.outcome,
+        ),
+        // Re-deriving the template invalidates any active filtered view.
+        isFilteredView: false,
+        filteredNodeId: null,
+        fullData: null,
+        selectedNodeId: null,
+      };
     }),
   setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
   setLoading: (loading) => set({ loading }),
@@ -88,8 +133,11 @@ export const useGraphState = () => {
   const store = useGraphStore();
 
   // Zustand store methods are stable, no need to memoize
-  const updateGraphData = (data: AttackPathGraphData) => {
-    store.setGraphData(data);
+  const updateGraphData = (
+    data: AttackPathGraphData,
+    outcome: AttackPathOutcome | null = null,
+  ) => {
+    store.setGraphData(data, outcome);
   };
 
   const selectNode = (nodeId: string | null) => {
@@ -171,6 +219,8 @@ export const useGraphState = () => {
     filteredNode: getFilteredNode(),
     expandedResources: store.expandedResources,
     toggleExpandedResource: store.toggleExpandedResource,
+    expandedTypes: store.expandedTypes,
+    toggleExpandedType: store.toggleExpandedType,
     updateGraphData,
     selectNode,
     startLoading,

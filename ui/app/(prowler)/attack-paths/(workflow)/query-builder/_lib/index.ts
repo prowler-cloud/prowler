@@ -24,3 +24,13 @@ export {
   type NodeVisual,
   resolveNodeVisual,
 } from "./node-visuals";
+export {
+  ATTACK_PATH_GROUP_LABEL,
+  ATTACK_PATH_OUTCOME_LABEL,
+  type AttackPathOutcome,
+  buildTemplateGraph,
+  isGroupNode,
+  isOutcomeNode,
+  nodeTypeKey,
+  OUTCOME_NODE_ID,
+} from "./template-graph";

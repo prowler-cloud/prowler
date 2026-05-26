@@ -1,5 +1,6 @@
 import logging
 
+from dataclasses import asdict
 from typing import Any, Iterable
 
 import neo4j
@@ -25,6 +26,22 @@ from tasks.jobs.attack_paths.config import (
 )
 
 logger = logging.getLogger(BackendLogger.API)
+
+
+# Account/root nodes are dropped from the serialized graph: every resource is
+# already scoped to a single account, so the account node only adds a hub of
+# noise edges. It remains the MATCH anchor in Cypher (isolation is unaffected),
+# we only omit it from the output.
+ACCOUNT_NODE_LABELS = frozenset(
+    {
+        "AWSAccount",
+        "AzureSubscription",
+        "AzureTenant",
+        "GCPProject",
+        "KubernetesCluster",
+        "GitHubAccount",
+    }
+)
 
 
 # Predefined query helpers
@@ -110,7 +127,11 @@ def execute_query(
             cypher=definition.cypher,
             parameters=parameters,
         )
-        return _serialize_graph(graph, provider_id)
+        result = _serialize_graph(graph, provider_id)
+        result["outcome"] = (
+            asdict(definition.outcome) if definition.outcome else None
+        )
+        return result
 
     except graph_database.WriteQueryNotAllowedException:
         raise PermissionDenied(
@@ -237,6 +258,11 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     kept_node_ids = set()
     for node in graph.nodes:
         if provider_label not in node.labels:
+            continue
+
+        # Drop account/root nodes (and, below, their relationships): they only
+        # add a noisy hub. Isolation still relies on the account as MATCH anchor.
+        if ACCOUNT_NODE_LABELS.intersection(node.labels):
             continue
 
         kept_node_ids.add(node.element_id)

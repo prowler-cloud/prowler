@@ -4,7 +4,7 @@
  */
 
 import { Graph, layout as dagreLayout } from "@dagrejs/dagre";
-import { type Edge, type Node, Position } from "@xyflow/react";
+import { type Edge, MarkerType, type Node, Position } from "@xyflow/react";
 
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
 
@@ -13,6 +13,10 @@ import {
   INTERNET_NODE_DIMENSIONS,
   RESOURCE_NODE_DIMENSIONS,
 } from "./node-dimensions";
+import {
+  ATTACK_PATH_GROUP_LABEL,
+  ATTACK_PATH_OUTCOME_LABEL,
+} from "./template-graph";
 
 // Container relationships that get reversed for proper hierarchy
 const CONTAINER_RELATIONS = new Set([
@@ -30,6 +34,10 @@ const NODE_TYPE = {
   FINDING: "finding",
   INTERNET: "internet",
   RESOURCE: "resource",
+  // NB: not "group" — that is a reserved React Flow node type that renders a
+  // default gray container box behind the node.
+  GROUP: "attackGroup",
+  OUTCOME: "outcome",
 } as const;
 
 type NodeType = (typeof NODE_TYPE)[keyof typeof NODE_TYPE];
@@ -38,6 +46,8 @@ export const isFindingNode = (labels: string[]): boolean =>
   labels.some((l) => l.toLowerCase().includes("finding"));
 
 const getNodeType = (labels: string[]): NodeType => {
+  if (labels.includes(ATTACK_PATH_OUTCOME_LABEL)) return NODE_TYPE.OUTCOME;
+  if (labels.includes(ATTACK_PATH_GROUP_LABEL)) return NODE_TYPE.GROUP;
   if (isFindingNode(labels)) return NODE_TYPE.FINDING;
   if (labels.some((l) => l.toLowerCase() === "internet"))
     return NODE_TYPE.INTERNET;
@@ -57,6 +67,7 @@ const getNodeDimensions = (
       width: INTERNET_NODE_DIMENSIONS.DIAMETER,
       height: INTERNET_NODE_DIMENSIONS.DIAMETER,
     };
+  // Group and outcome nodes share the resource footprint for consistent ranks.
   return {
     width: RESOURCE_NODE_DIMENSIONS.WIDTH,
     height: RESOURCE_NODE_DIMENSIONS.HEIGHT,
@@ -157,6 +168,9 @@ export const layoutWithDagre = (
         target: e.w,
         animated: hasFinding,
         className: hasFinding ? "finding-edge" : "resource-edge",
+        // Arrowhead makes the attack direction explicit (in addition to the
+        // left-to-right layout).
+        markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 },
         data: {
           pathKey: `${e.v}-${e.w}`,
           originalSource: edgeData.originalSource,

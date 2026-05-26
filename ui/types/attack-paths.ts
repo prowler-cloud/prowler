@@ -212,9 +212,16 @@ export interface AttackPathGraphData {
   relationships?: GraphRelationship[];
 }
 
+export interface AttackPathOutcome {
+  label: string;
+  description: string;
+  severity: string;
+}
+
 export interface QueryResultAttributes {
   nodes: GraphNode[];
   relationships?: GraphRelationship[];
+  outcome?: AttackPathOutcome | null;
 }
 
 export interface QueryResultData {

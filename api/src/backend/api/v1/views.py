@@ -2812,7 +2812,15 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     )
     def attack_paths_queries(self, request, pk=None):
         attack_paths_scan = self.get_object()
-        queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+        # Only surface real attack paths (those with a defined outcome). Inventory
+        # / posture queries without an outcome are hidden from the catalog.
+        queries = [
+            query
+            for query in get_queries_for_provider(
+                attack_paths_scan.provider.provider
+            )
+            if query.outcome is not None
+        ]
 
         if not queries:
             return Response(

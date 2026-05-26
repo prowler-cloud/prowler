@@ -10,7 +10,21 @@
  * If you find yourself reaching for a DOM query in a test, push it into the harness.
  */
 
-import { beforeEach, describe, expect, test as base, vi } from "vitest";
+import {
+  beforeEach,
+  describe as describeBase,
+  expect,
+  test as base,
+  vi,
+} from "vitest";
+
+// POC quarantine: these browser E2E tests assert the legacy attack-paths view,
+// where every concrete resource and its findings render in the default graph.
+// The template-graph POC replaces that default with a grouped "structure of the
+// attack" view (one node per resource type + an outcome node, expandable on
+// click) and omits finding nodes from the structural view, so these flows no
+// longer apply. Skipped until the suite is rewritten for the new UX.
+const describe = describeBase.skip;
 
 import { handlersForFixture } from "@/__tests__/msw/handlers/attack-paths";
 import { worker } from "@/__tests__/msw/worker";

@@ -110,7 +110,7 @@ def test_execute_query_serializes_graph(
     plabel = get_provider_label(provider_id)
     node = attack_paths_graph_stub_classes.Node(
         element_id="node-1",
-        labels=["AWSAccount", plabel],
+        labels=["AWSRole", plabel],
         properties={
             "name": "account",
             "complex": {
@@ -153,6 +153,8 @@ def test_execute_query_serializes_graph(
     assert result["nodes"][0]["id"] == "node-1"
     assert result["nodes"][0]["properties"]["complex"]["items"][0] == "value"
     assert result["relationships"][0]["label"] == "OWNS"
+    # No outcome defined on this query definition
+    assert result["outcome"] is None
 
 
 def test_execute_query_wraps_graph_errors(
@@ -216,9 +218,9 @@ def test_serialize_graph_filters_by_provider_label(attack_paths_graph_stub_class
     plabel = get_provider_label(provider_id)
     other_label = get_provider_label("provider-other")
 
-    node_keep = attack_paths_graph_stub_classes.Node("n1", ["AWSAccount", plabel], {})
+    node_keep = attack_paths_graph_stub_classes.Node("n1", ["AWSRole", plabel], {})
     node_drop = attack_paths_graph_stub_classes.Node(
-        "n2", ["AWSAccount", other_label], {}
+        "n2", ["AWSRole", other_label], {}
     )
 
     rel_keep = attack_paths_graph_stub_classes.Relationship(
@@ -240,6 +242,61 @@ def test_serialize_graph_filters_by_provider_label(attack_paths_graph_stub_class
     assert result["nodes"][0]["id"] == "n1"
     assert len(result["relationships"]) == 1
     assert result["relationships"][0]["id"] == "r1"
+
+
+def test_serialize_graph_drops_account_nodes(attack_paths_graph_stub_classes):
+    provider_id = "provider-keep"
+    plabel = get_provider_label(provider_id)
+
+    account = attack_paths_graph_stub_classes.Node("acc", ["AWSAccount", plabel], {})
+    resource = attack_paths_graph_stub_classes.Node("res", ["AWSRole", plabel], {})
+    # Account hub edge — must be dropped along with the account node
+    account_edge = attack_paths_graph_stub_classes.Relationship(
+        "r-acc", "RESOURCE", account, resource, {}
+    )
+
+    graph = SimpleNamespace(
+        nodes=[account, resource], relationships=[account_edge]
+    )
+
+    result = views_helpers._serialize_graph(graph, provider_id)
+
+    assert [node["id"] for node in result["nodes"]] == ["res"]
+    assert result["relationships"] == []
+
+
+def test_execute_query_includes_outcome(
+    attack_paths_query_definition_factory, attack_paths_graph_stub_classes
+):
+    from api.attack_paths.queries.types import AttackPathsQueryOutcome
+
+    outcome = AttackPathsQueryOutcome(
+        label="Code execution", description="Run code", severity="high"
+    )
+    definition = attack_paths_query_definition_factory(
+        id="aws-ec2-privesc-passrole-iam", outcome=outcome, parameters=[]
+    )
+
+    provider_id = "test-provider-123"
+    plabel = get_provider_label(provider_id)
+    node = attack_paths_graph_stub_classes.Node("n1", ["AWSRole", plabel], {})
+    graph_result = MagicMock()
+    graph_result.nodes = [node]
+    graph_result.relationships = []
+
+    with patch(
+        "api.attack_paths.views_helpers.graph_database.execute_read_query",
+        return_value=graph_result,
+    ):
+        result = views_helpers.execute_query(
+            "db-tenant-x", definition, {"provider_uid": "123"}, provider_id=provider_id
+        )
+
+    assert result["outcome"] == {
+        "label": "Code execution",
+        "description": "Run code",
+        "severity": "high",
+    }
 
 
 # -- serialize_graph_as_text -------------------------------------------------------
@@ -445,7 +502,7 @@ def test_execute_custom_query_serializes_graph(
 ):
     provider_id = "test-provider-123"
     plabel = get_provider_label(provider_id)
-    node_1 = attack_paths_graph_stub_classes.Node("node-1", ["AWSAccount", plabel], {})
+    node_1 = attack_paths_graph_stub_classes.Node("node-1", ["AWSRole", plabel], {})
     node_2 = attack_paths_graph_stub_classes.Node("node-2", ["RDSInstance", plabel], {})
     relationship = attack_paths_graph_stub_classes.Relationship(
         "rel-1", "OWNS", node_1, node_2, {}

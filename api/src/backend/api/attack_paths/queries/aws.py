@@ -1,6 +1,7 @@
 from api.attack_paths.queries.types import (
     AttackPathsQueryAttribution,
     AttackPathsQueryDefinition,
+    AttackPathsQueryOutcome,
     AttackPathsQueryParameterDefinition,
 )
 from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
@@ -3809,3 +3810,43 @@ AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     AWS_SSM_PRIVESC_SEND_COMMAND,
     AWS_STS_PRIVESC_ASSUME_ROLE,
 ]
+
+
+# Attack outcomes
+# ---------------
+# The end impact of each real attack path, rendered as a terminal "Outcome" node
+# in the graph. Outcomes are assigned by query id pattern so the catalog stays in
+# one place. Inventory queries (resource listings, misconfiguration lookups) have
+# no attack chain and intentionally keep `outcome = None`.
+
+_OUTCOME_CODE_EXECUTION = AttackPathsQueryOutcome(
+    label="Code execution",
+    description="Run arbitrary code with the privileges of the role available to the compute service.",
+    severity="high",
+)
+_OUTCOME_PRIVILEGE_ESCALATION = AttackPathsQueryOutcome(
+    label="Privilege escalation",
+    description="Obtain higher privileges by altering IAM policies or trust, or by assuming a more privileged role.",
+    severity="high",
+)
+_OUTCOME_DATA_EXFILTRATION = AttackPathsQueryOutcome(
+    label="Data exfiltration",
+    description="Reach and read sensitive data starting from an internet-exposed entry point.",
+    severity="critical",
+)
+
+
+def _resolve_outcome(query_id: str) -> AttackPathsQueryOutcome | None:
+    if query_id == "aws-internet-exposed-ec2-sensitive-s3-access":
+        return _OUTCOME_DATA_EXFILTRATION
+    if query_id == "aws-sts-privesc-assume-role" or query_id.startswith(
+        "aws-iam-privesc-"
+    ):
+        return _OUTCOME_PRIVILEGE_ESCALATION
+    if "-privesc-" in query_id:
+        return _OUTCOME_CODE_EXECUTION
+    return None
+
+
+for _query in AWS_QUERIES:
+    _query.outcome = _resolve_outcome(_query.id)

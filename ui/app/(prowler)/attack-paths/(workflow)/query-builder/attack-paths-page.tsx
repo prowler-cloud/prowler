@@ -55,7 +55,12 @@ import {
 import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsPNG } from "./_lib";
+import {
+  ATTACK_PATH_GROUP_LABEL,
+  ATTACK_PATH_OUTCOME_LABEL,
+  exportGraphAsPNG,
+  nodeTypeKey,
+} from "./_lib";
 
 /**
  * Attack Paths
@@ -250,7 +255,10 @@ export default function AttackPathsPage() {
         }
       } else if (result?.data?.attributes) {
         const graphData = adaptQueryResultToGraphData(result.data.attributes);
-        graphState.updateGraphData(graphData);
+        graphState.updateGraphData(
+          graphData,
+          result.data.attributes.outcome ?? null,
+        );
         toast({
           title: "Success",
           description: "Query executed successfully",
@@ -287,9 +295,31 @@ export default function AttackPathsPage() {
   };
 
   const handleNodeClick = (node: GraphNode) => {
+    // Template type node → expand/collapse into its concrete resources.
+    if (node.labels.includes(ATTACK_PATH_GROUP_LABEL)) {
+      const typeKey = String(node.properties.typeKey ?? "");
+      if (typeKey) graphState.toggleExpandedType(typeKey);
+      return;
+    }
+
+    // Outcome node is terminal/informational — no drill-down.
+    if (node.labels.includes(ATTACK_PATH_OUTCOME_LABEL)) {
+      return;
+    }
+
     const isFinding = node.labels.some((label) =>
       label.toLowerCase().includes("finding"),
     );
+
+    // A concrete resource that belongs to an expanded type → collapse it back
+    // into its type group.
+    if (!isFinding) {
+      const typeKey = nodeTypeKey(node);
+      if (graphState.expandedTypes.has(typeKey)) {
+        graphState.toggleExpandedType(typeKey);
+        return;
+      }
+    }
 
     if (isFinding) {
       if (findingNavigationInFlightRef.current) {
@@ -365,6 +395,10 @@ export default function AttackPathsPage() {
       showErrorToast("Export failed", description);
     }
   };
+
+  // Remount the graph when the set of expanded types changes so React Flow
+  // re-runs its initial fitView on the new (larger/smaller) template layout.
+  const expansionKey = Array.from(graphState.expandedTypes).sort().join("|");
 
   return (
     <div className="flex flex-col gap-6">
@@ -530,9 +564,10 @@ export default function AttackPathsPage() {
                           💡
                         </span>
                         <span className="flex-1">
-                          Click a finding to focus its connected path, or click
-                          a resource with findings to show or hide its related
-                          findings
+                          The graph reads left to right, following the attack
+                          toward its outcome. Click a resource type to expand it
+                          into its individual resources, and click a resource to
+                          collapse it back.
                         </span>
                       </div>
                     )}
@@ -587,6 +622,7 @@ export default function AttackPathsPage() {
                             <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
                               <div className="flex flex-1 items-center justify-center">
                                 <AttackPathGraph
+                                  key={`fullscreen-${expansionKey}`}
                                   ref={fullscreenGraphRef}
                                   data={graphState.data}
                                   onNodeClick={handleNodeClick}
@@ -610,6 +646,7 @@ export default function AttackPathsPage() {
                     className="h-[calc(100vh-22rem)]"
                   >
                     <AttackPathGraph
+                      key={`main-${expansionKey}`}
                       ref={graphRef}
                       data={graphState.data}
                       onNodeClick={handleNodeClick}
