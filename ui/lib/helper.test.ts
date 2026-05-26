@@ -90,4 +90,31 @@ describe("downloadScanZip", () => {
       description: "not found",
     });
   });
+
+  it("shows a generic error when preflight fails with an HTML gateway page", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          "<html><body><h1>504 Gateway Time-out</h1></body></html>",
+          {
+            status: 504,
+            headers: { "content-type": "text/html" },
+          },
+        ),
+      ),
+    );
+    const { clickMock } = getAnchor();
+    const toast = createToast();
+
+    await downloadScanZip("scan-123", toast);
+
+    expect(clickMock).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith({
+      variant: "destructive",
+      title: "Download Failed",
+      description:
+        "Unable to prepare the scan report. Please try again in a few minutes.",
+    });
+  });
 });
