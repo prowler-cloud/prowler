@@ -7,10 +7,21 @@ import {
 } from "./scan-error-details-modal";
 
 vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
-  CodeSnippet: ({ ariaLabel }: { ariaLabel: string }) => (
-    <button type="button" aria-label={ariaLabel}>
-      copy
-    </button>
+  CodeSnippet: ({
+    value,
+    formatter,
+    ariaLabel,
+  }: {
+    value: string;
+    formatter?: (value: string) => string;
+    ariaLabel?: string;
+  }) => (
+    <>
+      <span>{formatter ? formatter(value) : value}</span>
+      <button type="button" aria-label={ariaLabel ?? "Copy to clipboard"}>
+        copy
+      </button>
+    </>
   ),
 }));
 
@@ -65,8 +76,8 @@ describe("ScanErrorDetailsModal", () => {
     );
     expect(screen.getByText("ValidationError")).toBeInTheDocument();
     expect(screen.getByText("scan.runner")).toBeInTheDocument();
-    expect(screen.getByText("Missing cloud credentials")).toBeInTheDocument();
-    expect(screen.getByText("Retry scan setup")).toBeInTheDocument();
+    expect(screen.getByText(/Missing cloud credentials/)).toBeInTheDocument();
+    expect(screen.getByText(/Retry scan setup/)).toBeInTheDocument();
   });
 
   it("shows the copy action only when state is loaded", () => {

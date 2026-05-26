@@ -1,7 +1,10 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
+
 import type { ScanErrorDetails } from "@/actions/task/task.adapter";
-import { Button } from "@/components/shadcn";
+import { Button, Card, CardContent } from "@/components/shadcn";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Modal } from "@/components/shadcn/modal";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 
@@ -17,44 +20,45 @@ interface ScanErrorDetailsModalProps {
   state: ScanErrorDetailsState;
 }
 
+function LoadingView() {
+  return (
+    <div className="text-text-neutral-secondary flex items-center gap-2 text-sm">
+      <Loader2 className="size-4 animate-spin" />
+      Loading error details...
+    </div>
+  );
+}
+
+function ErrorView({ message }: { message: string }) {
+  return (
+    <Card variant="danger">
+      <CardContent>
+        <p className="text-text-error-primary text-sm">{message}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function LoadedView({ details }: { details: ScanErrorDetails }) {
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1">
-          <p className="text-text-neutral-tertiary text-xs font-medium">
-            Error Type
-          </p>
-          <p className="text-text-neutral-primary text-sm font-medium break-all">
-            {details.type}
-          </p>
+    <Card variant="base" padding="lg">
+      <CardContent className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Error Type">{details.type}</InfoField>
+          {details.module && (
+            <InfoField label="Module">{details.module}</InfoField>
+          )}
         </div>
-        {details.module && (
-          <div className="space-y-1">
-            <p className="text-text-neutral-tertiary text-xs font-medium">
-              Module
-            </p>
-            <p className="text-text-neutral-primary text-sm break-all">
-              {details.module}
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-text-neutral-tertiary text-xs font-medium">Error</p>
-        <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary max-h-72 overflow-auto rounded-md border p-3">
-          {details.messages.map((message, index) => (
-            <p
-              key={`${message}-${index}`}
-              className="text-text-neutral-primary text-sm break-words whitespace-pre-wrap"
-            >
-              {message}
-            </p>
-          ))}
-        </div>
-      </div>
-    </div>
+        <InfoField label="Error" variant="simple">
+          <CodeSnippet
+            value={details.copyValue}
+            formatter={() => details.messages.join("\n")}
+            multiline
+            ariaLabel="Copy error details"
+          />
+        </InfoField>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -67,40 +71,24 @@ export function ScanErrorDetailsModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="Scan error details"
+      title="Scan Error Details"
       description="Failure details returned by the scan task."
       size="2xl"
     >
-      {state.kind === "loading" && (
-        <p className="text-text-neutral-secondary text-sm">
-          Loading error details...
-        </p>
-      )}
-
-      {state.kind === "error" && (
-        <div className="border-border-error-primary bg-bg-fail-secondary text-text-error-primary rounded-md border p-3 text-sm">
-          {state.message}
-        </div>
-      )}
-
+      {state.kind === "loading" && <LoadingView />}
+      {state.kind === "error" && <ErrorView message={state.message} />}
       {state.kind === "loaded" && <LoadedView details={state.details} />}
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div className="flex w-full justify-end">
         <Button
           type="button"
           variant="outline"
+          size="lg"
           onClick={() => onOpenChange(false)}
+          className="w-40"
         >
           Close
         </Button>
-        {state.kind === "loaded" && (
-          <CodeSnippet
-            value={state.details.copyValue}
-            hideCode
-            ariaLabel="Copy error details"
-            className="h-9 px-3"
-          />
-        )}
       </div>
     </Modal>
   );

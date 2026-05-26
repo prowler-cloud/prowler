@@ -222,8 +222,8 @@ describe("ScanJobsRowActions", () => {
       await screen.findByRole("dialog", { name: /scan error details/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("ValidationError")).toBeInTheDocument();
-    expect(screen.getByText("Missing cloud credentials")).toBeInTheDocument();
-    expect(screen.getByText("Retry scan setup")).toBeInTheDocument();
+    expect(screen.getByText(/Missing cloud credentials/)).toBeInTheDocument();
+    expect(screen.getByText(/Retry scan setup/)).toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: /copy error details/i }),
     );
