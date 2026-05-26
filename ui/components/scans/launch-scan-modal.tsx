@@ -1,9 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { CloudCog, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { FormEvent } from "react";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
@@ -13,52 +14,45 @@ import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
 import type { ProviderProps } from "@/types/providers";
 
+const launchScanSchema = z.object({
+  providerId: z.string().min(1, "Select a provider to launch a scan."),
+  scanAlias: z.string().optional(),
+});
+
+type LaunchScanFormValues = z.infer<typeof launchScanSchema>;
+
 interface LaunchScanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   providers: ProviderProps[];
 }
 
-export function LaunchScanModal({
-  open,
-  onOpenChange,
-  providers,
-}: LaunchScanModalProps) {
+interface LaunchScanFormProps {
+  providers: ProviderProps[];
+  onClose: () => void;
+}
+
+function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
   const router = useRouter();
-  const [providerId, setProviderId] = useState("");
-  const [scanAlias, setScanAlias] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const form = useForm<LaunchScanFormValues>({
+    resolver: zodResolver(launchScanSchema),
+    defaultValues: { providerId: "", scanAlias: "" },
+  });
 
-  const closeModal = () => {
-    setProviderId("");
-    setScanAlias("");
-    setError(null);
-    onOpenChange(false);
-  };
+  const providerId = form.watch("providerId");
 
-  const launchScan = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!providerId) {
-      setError("Select a provider to launch a scan.");
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-
+  const onSubmit = form.handleSubmit(async ({ providerId, scanAlias }) => {
     const formData = new FormData();
     formData.set("providerId", providerId);
-    if (scanAlias.trim()) {
-      formData.set("scanName", scanAlias.trim());
+    const trimmedAlias = scanAlias?.trim();
+    if (trimmedAlias) {
+      formData.set("scanName", trimmedAlias);
     }
 
     const result = await scanOnDemand(formData);
-    setSubmitting(false);
 
     if (result?.error) {
-      setError(String(result.error));
+      form.setError("root", { message: String(result.error) });
       return;
     }
 
@@ -66,60 +60,78 @@ export function LaunchScanModal({
       title: "Scan launched",
       description: "The scan was launched successfully.",
     });
-    closeModal();
+    onClose();
     router.refresh();
-  };
+  });
 
+  const providerError = form.formState.errors.providerId?.message;
+  const rootError = form.formState.errors.root?.message;
+  const isSubmitting = form.formState.isSubmitting;
+
+  return (
+    <form onSubmit={onSubmit} className="flex flex-col gap-8">
+      <div className="flex items-center gap-2">
+        <CloudCog className="text-text-neutral-secondary size-4" />
+        <span className="text-text-neutral-secondary text-sm">
+          Select the provider you would like to scan
+        </span>
+      </div>
+
+      <Field>
+        <FieldLabel htmlFor="launch-scan-account">Providers</FieldLabel>
+        <AccountsSelector
+          id="launch-scan-account"
+          providers={providers}
+          onBatchChange={(_, values) =>
+            form.setValue("providerId", values.at(-1) ?? "", {
+              shouldValidate: true,
+            })
+          }
+          selectedValues={providerId ? [providerId] : []}
+          closeOnSelect
+        />
+        {providerError && <FieldError>{providerError}</FieldError>}
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor="launch-scan-alias">Alias (optional)</FieldLabel>
+        <Input
+          id="launch-scan-alias"
+          aria-label="Alias"
+          {...form.register("scanAlias")}
+        />
+      </Field>
+
+      {rootError && <FieldError>{rootError}</FieldError>}
+
+      <FormButtons
+        onCancel={onClose}
+        submitText={isSubmitting ? "Launching..." : "Launch Scan"}
+        loadingText="Launching..."
+        isDisabled={isSubmitting || !providers.length}
+        rightIcon={<Rocket className="size-4" />}
+      />
+    </form>
+  );
+}
+
+export function LaunchScanModal({
+  open,
+  onOpenChange,
+  providers,
+}: LaunchScanModalProps) {
   return (
     <Modal
       open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) closeModal();
-        else onOpenChange(true);
-      }}
+      onOpenChange={onOpenChange}
       title="Launch A Scan"
       size="xl"
       className="gap-8"
     >
-      <form onSubmit={launchScan} className="flex flex-col gap-8">
-        <div className="flex items-center gap-2">
-          <CloudCog className="text-text-neutral-secondary size-4" />
-          <span className="text-text-neutral-secondary text-sm">
-            Select the provider you would like to scan
-          </span>
-        </div>
-
-        <Field>
-          <FieldLabel htmlFor="launch-scan-account">Providers</FieldLabel>
-          <AccountsSelector
-            id="launch-scan-account"
-            providers={providers}
-            onBatchChange={(_, values) => setProviderId(values.at(-1) ?? "")}
-            selectedValues={providerId ? [providerId] : []}
-            closeOnSelect
-          />
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor="launch-scan-alias">Alias (optional)</FieldLabel>
-          <Input
-            id="launch-scan-alias"
-            aria-label="Alias"
-            value={scanAlias}
-            onChange={(event) => setScanAlias(event.target.value)}
-          />
-        </Field>
-
-        {error && <FieldError>{error}</FieldError>}
-
-        <FormButtons
-          onCancel={closeModal}
-          submitText={submitting ? "Launching..." : "Launch Scan"}
-          loadingText="Launching..."
-          isDisabled={submitting || !providers.length}
-          rightIcon={<Rocket className="size-4" />}
-        />
-      </form>
+      <LaunchScanForm
+        providers={providers}
+        onClose={() => onOpenChange(false)}
+      />
     </Modal>
   );
 }

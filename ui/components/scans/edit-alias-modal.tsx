@@ -1,15 +1,39 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { updateScan } from "@/actions/scans";
 import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
+
+const ALIAS_MIN_LENGTH = 3;
+const ALIAS_MAX_LENGTH = 32;
+
+const buildEditAliasSchema = (currentAlias: string) =>
+  z.object({
+    alias: z
+      .string()
+      .max(
+        ALIAS_MAX_LENGTH,
+        `Alias must not exceed ${ALIAS_MAX_LENGTH} characters.`,
+      )
+      .refine(
+        (value) => value.length === 0 || value.length >= ALIAS_MIN_LENGTH,
+        `Alias must be empty or have at least ${ALIAS_MIN_LENGTH} characters.`,
+      )
+      .refine(
+        (value) => value !== currentAlias,
+        "The new alias must be different from the current one.",
+      ),
+  });
+
+type EditAliasFormValues = { alias: string };
 
 interface EditAliasModalProps {
   open: boolean;
@@ -18,67 +42,31 @@ interface EditAliasModalProps {
   currentAlias: string;
 }
 
-const ALIAS_MIN_LENGTH = 3;
-const ALIAS_MAX_LENGTH = 32;
+interface EditAliasFormProps {
+  scanId: string;
+  currentAlias: string;
+  onClose: () => void;
+}
 
-export function EditAliasModal({
-  open,
-  onOpenChange,
-  scanId,
-  currentAlias,
-}: EditAliasModalProps) {
+function EditAliasForm({ scanId, currentAlias, onClose }: EditAliasFormProps) {
   const router = useRouter();
-  const [alias, setAlias] = useState(currentAlias);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const form = useForm<EditAliasFormValues>({
+    resolver: zodResolver(buildEditAliasSchema(currentAlias)),
+    defaultValues: { alias: currentAlias },
+  });
 
-  useEffect(() => {
-    if (open) {
-      setAlias(currentAlias);
-      setError(null);
-    }
-  }, [open, currentAlias]);
-
-  const closeModal = () => {
-    setError(null);
-    onOpenChange(false);
-  };
-
-  const validate = (value: string): string | null => {
-    if (value.length > 0 && value.length < ALIAS_MIN_LENGTH) {
-      return `Alias must be empty or have at least ${ALIAS_MIN_LENGTH} characters.`;
-    }
-    if (value.length > ALIAS_MAX_LENGTH) {
-      return `Alias must not exceed ${ALIAS_MAX_LENGTH} characters.`;
-    }
-    if (value === currentAlias) {
-      return "The new alias must be different from the current one.";
-    }
-    return null;
-  };
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const onSubmit = form.handleSubmit(async ({ alias }) => {
     const trimmed = alias.trim();
-    const validationError = validate(trimmed);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-
     const formData = new FormData();
     formData.set("scanId", scanId);
     formData.set("scanName", trimmed);
 
     const result = await updateScan(formData);
-    setSubmitting(false);
 
     if (result?.errors && result.errors.length > 0) {
-      setError(String(result.errors[0]?.detail ?? "Failed to update alias."));
+      form.setError("alias", {
+        message: String(result.errors[0]?.detail ?? "Failed to update alias."),
+      });
       return;
     }
 
@@ -86,52 +74,65 @@ export function EditAliasModal({
       title: "Alias updated",
       description: "The scan alias was updated successfully.",
     });
-    closeModal();
+    onClose();
     router.refresh();
-  };
+  });
 
+  const aliasError = form.formState.errors.alias?.message;
+  const isSubmitting = form.formState.isSubmitting;
+
+  return (
+    <form onSubmit={onSubmit} className="flex flex-col gap-8">
+      <div className="flex items-center gap-2">
+        <Pencil className="text-text-neutral-secondary size-4" />
+        <span className="text-text-neutral-secondary text-sm">
+          Current alias:{" "}
+          <span className="text-text-neutral-primary font-medium">
+            {currentAlias || "Unnamed"}
+          </span>
+        </span>
+      </div>
+
+      <Field>
+        <FieldLabel htmlFor="edit-alias-input">Alias</FieldLabel>
+        <Input
+          id="edit-alias-input"
+          aria-label="Alias"
+          placeholder={currentAlias || "Enter scan alias"}
+          {...form.register("alias")}
+        />
+        {aliasError && <FieldError>{aliasError}</FieldError>}
+      </Field>
+
+      <FormButtons
+        onCancel={onClose}
+        submitText={isSubmitting ? "Saving..." : "Save"}
+        loadingText="Saving..."
+        isDisabled={isSubmitting}
+      />
+    </form>
+  );
+}
+
+export function EditAliasModal({
+  open,
+  onOpenChange,
+  scanId,
+  currentAlias,
+}: EditAliasModalProps) {
   return (
     <Modal
       open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) closeModal();
-        else onOpenChange(true);
-      }}
+      onOpenChange={onOpenChange}
       title="Edit Alias"
       size="xl"
       className="gap-8"
     >
-      <form onSubmit={submit} className="flex flex-col gap-8">
-        <div className="flex items-center gap-2">
-          <Pencil className="text-text-neutral-secondary size-4" />
-          <span className="text-text-neutral-secondary text-sm">
-            Current alias:{" "}
-            <span className="text-text-neutral-primary font-medium">
-              {currentAlias || "Unnamed"}
-            </span>
-          </span>
-        </div>
-
-        <Field>
-          <FieldLabel htmlFor="edit-alias-input">Alias</FieldLabel>
-          <Input
-            id="edit-alias-input"
-            aria-label="Alias"
-            value={alias}
-            onChange={(event) => setAlias(event.target.value)}
-            placeholder={currentAlias || "Enter scan alias"}
-          />
-        </Field>
-
-        {error && <FieldError>{error}</FieldError>}
-
-        <FormButtons
-          onCancel={closeModal}
-          submitText={submitting ? "Saving..." : "Save"}
-          loadingText="Saving..."
-          isDisabled={submitting}
-        />
-      </form>
+      <EditAliasForm
+        scanId={scanId}
+        currentAlias={currentAlias}
+        onClose={() => onOpenChange(false)}
+      />
     </Modal>
   );
 }
