@@ -147,7 +147,14 @@ class OCSFComplianceOutput:
         findings: List["Finding"],
         framework: ComplianceFramework,
         compliance_name: str,
+        include_manual: bool = True,
     ) -> None:
+        """Transform findings into OCSF ComplianceFinding events.
+
+        Manual requirements are emitted only when ``include_manual=True``. The
+        caller must pass ``False`` for subsequent streaming batches so manual
+        events are not duplicated.
+        """
         # Build check -> requirements map
         check_req_map = {}
         for req in framework.requirements:
@@ -169,6 +176,9 @@ class OCSFComplianceOutput:
                     )
                     if cf:
                         self._data.append(cf)
+
+        if not include_manual:
+            return
 
         # Manual requirements (no checks or empty for current provider)
         for req in framework.requirements:

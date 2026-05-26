@@ -13137,8 +13137,59 @@ paths:
       responses:
         '200':
           description: CSV file containing the compliance report
+        '202':
+          description: The task is in progress
+        '403':
+          description: There is a problem with credentials
         '404':
-          description: Compliance report not found
+          description: Compliance report not found, or the scan has no reports yet
+  /api/v1/scans/{id}/compliance/{name}/ocsf:
+    get:
+      operationId: scans_compliance_ocsf_retrieve
+      description: Download a specific compliance report as an OCSF JSON file. Only
+        universal frameworks that declare an output configuration produce this artifact
+        (currently 'dora' and 'csa_ccm_4.0'); any other framework returns 404.
+      summary: Retrieve compliance report as OCSF JSON
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - name
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: path
+        name: name
+        schema:
+          type: string
+        description: The compliance report name, like 'dora'
+        required: true
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: OCSF JSON file containing the compliance report
+        '202':
+          description: The task is in progress
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: Compliance report not found, the framework does not provide
+            an OCSF export, or the scan has no reports yet
   /api/v1/scans/{id}/csa:
     get:
       operationId: scans_csa_retrieve
