@@ -132,6 +132,19 @@ Before editing any `CHANGELOG.md`, always inspect the active release boundary:
 
 **Do not trust the current topmost matching section name.** A released block can contain the same section heading (`### 🚀 Added`, `### 🔄 Changed`, etc.). Always anchor edits to the `Prowler UNRELEASED` version block first.
 
+## Mandatory Human Confirmation Gate
+
+Before creating or editing any changelog file (`CHANGELOG.md`), the agent MUST stop and get explicit user confirmation. This applies even when the changelog gate is failing, the required edit seems obvious, or the user asked to "fix the changelog".
+
+Present the proposed changelog action before writing:
+
+1. Target file path.
+2. Target version block and section.
+3. Exact entry to add, move, remove, or rewrite.
+4. Reason the changelog is needed.
+
+Only proceed after an explicit approval such as "confirm", "approved", "sí", or equivalent. If the user rejects or does not answer, do not edit or create the changelog. Offer alternatives such as adding `no-changelog` when appropriate.
+
 ## Adding a Changelog Entry
 
 ### Step 1: Determine Affected Component(s)

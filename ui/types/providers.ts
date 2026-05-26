@@ -14,6 +14,7 @@ export const PROVIDER_TYPES = [
   "cloudflare",
   "openstack",
   "vercel",
+  "okta",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
@@ -34,6 +35,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   cloudflare: "Cloudflare",
   openstack: "OpenStack",
   vercel: "Vercel",
+  okta: "Okta",
 };
 
 export function getProviderDisplayName(providerId: string): string {

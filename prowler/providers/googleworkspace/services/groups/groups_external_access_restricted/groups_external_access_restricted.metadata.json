@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "groups_external_access_restricted",
+  "CheckTitle": "Accessing groups from outside the organization is set to private",
+  "CheckType": [],
+  "ServiceName": "groups",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Google Groups for Business **external access** controls whether people outside the organization can view and search for groups. When set to private, only users within the domain can discover and access groups, while external users can still email a group if the group's own settings allow it.",
+  "Risk": "Allowing external access to groups exposes **group names, descriptions, and membership** to anyone outside the organization, increasing the risk of **information disclosure** and enabling external parties to identify targets for **social engineering attacks**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/10308022",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Groups for Business**\n3. Click **Sharing options**\n4. Set **Accessing groups from outside this organization** to **Private**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set **external group access** to **private** to prevent external parties from viewing or searching for organizational groups.",
+      "Url": "https://hub.prowler.com/check/groups_external_access_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "groups_creation_restricted",
+    "groups_view_conversations_restricted"
+  ],
+  "Notes": ""
+}

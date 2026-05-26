@@ -101,9 +101,9 @@ class Testm365PowerShell:
         # Call original init_credential to verify application authentication setup
         M365PowerShell.init_credential(session, credentials)
 
-        session.execute.assert_any_call('$clientID = "test_client_id"')
-        session.execute.assert_any_call('$clientSecret = "test_client_secret"')
-        session.execute.assert_any_call('$tenantID = "test_tenant_id"')
+        session.execute.assert_any_call("$clientID = 'test_client_id'")
+        session.execute.assert_any_call("$clientSecret = 'test_client_secret'")
+        session.execute.assert_any_call("$tenantID = 'test_tenant_id'")
         session.execute.assert_any_call(
             '$graphtokenBody = @{ Grant_Type = "client_credentials"; Scope = "https://graph.microsoft.com/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
         )
@@ -111,6 +111,128 @@ class Testm365PowerShell:
             '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
         )
         session.close()
+
+    @patch("subprocess.Popen")
+    def test_init_credential_special_chars_in_secret(self, mock_popen):
+        """Test that secrets with $, !, #, and ' are preserved via single-quote escaping."""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(
+            client_id="test_client_id",
+            client_secret="Pa$$w0rd!#'",
+            tenant_id="test_tenant_id",
+        )
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Service Principal",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        with patch.object(M365PowerShell, "init_credential"):
+            session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock()
+        M365PowerShell.init_credential(session, credentials)
+
+        # Single quotes prevent PowerShell $$ expansion;
+        # embedded ' is escaped as '' per PowerShell convention
+        session.execute.assert_any_call("$clientSecret = 'Pa$$w0rd!#'''")
+
+    @pytest.mark.parametrize(
+        "secret, expected_command",
+        [
+            # Plain secret: single quotes behave like the old double quotes.
+            ("simplesecret", "$clientSecret = 'simplesecret'"),
+            # $ must NOT expand as a PowerShell variable.
+            ("Pa$$w0rd", "$clientSecret = 'Pa$$w0rd'"),
+            # $(...) subexpression must stay literal and never execute.
+            ("a$(whoami)b", "$clientSecret = 'a$(whoami)b'"),
+            # ${var} expansion must stay literal too.
+            ("a${env:PATH}b", "$clientSecret = 'a${env:PATH}b'"),
+            # Backtick is a literal char inside single quotes (not an escape).
+            ("pass`word", "$clientSecret = 'pass`word'"),
+            # Double quotes are literal inside single quotes.
+            ('pa"ss"word', "$clientSecret = 'pa\"ss\"word'"),
+            # A single quote is doubled per PowerShell escaping rules.
+            ("O'Brien", "$clientSecret = 'O''Brien'"),
+            # Consecutive single quotes each get doubled.
+            ("a''b", "$clientSecret = 'a''''b'"),
+            # A payload with quotes and metacharacters stays a single literal
+            # string and cannot break out of the quoting.
+            (
+                "'; Remove-Item -Recurse -Force; '",
+                "$clientSecret = '''; Remove-Item -Recurse -Force; '''",
+            ),
+            # Other shell metacharacters are preserved verbatim (no sanitize()).
+            ("p@ss!#%&;w0rd", "$clientSecret = 'p@ss!#%&;w0rd'"),
+            # Newline embedded in the secret is preserved verbatim.
+            ("line1\nline2", "$clientSecret = 'line1\nline2'"),
+            # Empty secret renders an empty single-quoted string.
+            ("", "$clientSecret = ''"),
+            # None secret is coerced to an empty single-quoted string.
+            (None, "$clientSecret = ''"),
+        ],
+    )
+    @patch("subprocess.Popen")
+    def test_init_credential_secret_escaping_edge_cases(
+        self, mock_popen, secret, expected_command
+    ):
+        """The client_secret is single-quote escaped, preserving every special
+        character verbatim with no PowerShell expansion or subexpression
+        evaluation."""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(
+            client_id="test_client_id",
+            client_secret=secret,
+            tenant_id="test_tenant_id",
+        )
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Service Principal",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        with patch.object(M365PowerShell, "init_credential"):
+            session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock()
+        M365PowerShell.init_credential(session, credentials)
+
+        session.execute.assert_any_call(expected_command)
+
+    @patch("subprocess.Popen")
+    def test_init_credential_sanitizes_client_and_tenant_id(self, mock_popen):
+        """client_id and tenant_id are sanitized in the Application Auth path,
+        stripping shell metacharacters while keeping UUID-safe characters."""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        credentials = M365Credentials(
+            client_id="abc-123; Remove-Item",
+            client_secret="secret",
+            tenant_id="def-456 && whoami",
+        )
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Service Principal",
+            tenant_id="test_tenant",
+            tenant_domain="example.com",
+            tenant_domains=["example.com"],
+            location="test_location",
+        )
+        with patch.object(M365PowerShell, "init_credential"):
+            session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock()
+        M365PowerShell.init_credential(session, credentials)
+
+        # sanitize() removes ';', spaces and '&' but keeps letters, digits and '-'.
+        session.execute.assert_any_call("$clientID = 'abc-123Remove-Item'")
+        session.execute.assert_any_call("$tenantID = 'def-456whoami'")
 
     @patch("subprocess.Popen")
     def test_remove_ansi(self, mock_popen):
@@ -562,6 +684,12 @@ class Testm365PowerShell:
 
         assert result is True
         assert session.execute.call_count == 3
+        # The secret must be referenced as a bare PowerShell variable. Wrapping it
+        # in double quotes ("$clientSecret") would re-expand special chars that were
+        # correctly escaped during assignment, so assert the exact command.
+        session.execute.assert_any_call(
+            "$SecureSecret = ConvertTo-SecureString $clientSecret -AsPlainText -Force"
+        )
         session.execute_connect.assert_called_once_with(
             'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
         )

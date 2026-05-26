@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "groups_creation_restricted",
+  "CheckTitle": "Group creation is restricted to admins with no external members or incoming email",
+  "CheckType": [],
+  "ServiceName": "groups",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Google Groups for Business **creation settings** control who can create groups and whether group owners can add external members or allow incoming email from outside the organization. Restricting creation to admins and disabling external member and incoming email options limits the attack surface.",
+  "Risk": "Allowing any user to create groups with external members or incoming email from outside increases the risk of **unauthorized data sharing**, **spam delivery**, and **shadow IT** groups that bypass organizational controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/10308022",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Groups for Business**\n3. Click **Creating groups**\n4. Select **Only organization admins can create groups**\n5. Uncheck **Group owners can allow external members**\n6. Uncheck **Group owners can allow incoming email from outside the organization**\n7. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict **group creation** to **organization admins** and disable **external member** and **incoming email** options to maintain control over group membership and communication boundaries.",
+      "Url": "https://hub.prowler.com/check/groups_creation_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "groups_external_access_restricted",
+    "groups_view_conversations_restricted"
+  ],
+  "Notes": ""
+}

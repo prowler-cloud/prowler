@@ -945,6 +945,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "prettier-plugin-packagejson",
+    "from": "2.5.22",
+    "to": "2.5.22",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T14:59:45.730Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "prettier-plugin-tailwindcss",
     "from": "0.6.14",
     "to": "0.6.14",

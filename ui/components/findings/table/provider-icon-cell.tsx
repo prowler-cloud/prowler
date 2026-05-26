@@ -11,6 +11,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OktaProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
   VercelProviderBadge,
@@ -34,6 +35,7 @@ export const PROVIDER_ICONS = {
   cloudflare: CloudflareProviderBadge,
   openstack: OpenStackProviderBadge,
   vercel: VercelProviderBadge,
+  okta: OktaProviderBadge,
 } as const;
 
 interface ProviderIconCellProps {

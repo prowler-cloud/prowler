@@ -44,6 +44,8 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.region
     if finding.check_metadata.Provider == "okta":
         details = finding.region
+    if finding.check_metadata.Provider == "scaleway":
+        details = finding.region
 
     if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:

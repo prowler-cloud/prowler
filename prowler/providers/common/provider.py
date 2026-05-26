@@ -429,6 +429,18 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "scaleway" in provider_class_name.lower():
+                    # Credentials are read from the SCW_ACCESS_KEY /
+                    # SCW_SECRET_KEY env vars by the provider itself; there
+                    # are no credential CLI flags to avoid leaking secrets.
+                    provider_class(
+                        organization_id=getattr(arguments, "organization_id", None),
+                        project_id=getattr(arguments, "project_id", None),
+                        region=getattr(arguments, "region", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(

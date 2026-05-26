@@ -374,7 +374,9 @@
     {
       "Id": "GWS.COMMONCONTROLS.11.1",
       "Description": "Only approved Marketplace apps SHALL be allowed for installation",
-      "Checks": [],
+      "Checks": [
+        "marketplace_apps_access_restricted"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -1626,7 +1628,9 @@
     {
       "Id": "GWS.GROUPS.1.1",
       "Description": "Group access from outside the organization SHALL be disabled unless explicitly granted by the group owner",
-      "Checks": [],
+      "Checks": [
+        "groups_external_access_restricted"
+      ],
       "Attributes": [
         {
           "Section": "Groups",
@@ -1639,7 +1643,9 @@
     {
       "Id": "GWS.GROUPS.1.2",
       "Description": "Group owners' ability to add external members to groups SHOULD be disabled unless necessary for agency mission fulfillment",
-      "Checks": [],
+      "Checks": [
+        "groups_creation_restricted"
+      ],
       "Attributes": [
         {
           "Section": "Groups",
@@ -1652,7 +1658,9 @@
     {
       "Id": "GWS.GROUPS.1.3",
       "Description": "Group owners' ability to allow posting to a group by an external, non-group member SHOULD be disabled unless necessary for agency mission fulfillment",
-      "Checks": [],
+      "Checks": [
+        "groups_creation_restricted"
+      ],
       "Attributes": [
         {
           "Section": "Groups",
@@ -1665,7 +1673,9 @@
     {
       "Id": "GWS.GROUPS.2.1",
       "Description": "Group creation SHOULD be restricted to admins within the organization unless necessary for agency mission fulfillment",
-      "Checks": [],
+      "Checks": [
+        "groups_creation_restricted"
+      ],
       "Attributes": [
         {
           "Section": "Groups",
@@ -1678,7 +1688,9 @@
     {
       "Id": "GWS.GROUPS.3.1",
       "Description": "The default permission to view conversations SHOULD be set to All Group Members",
-      "Checks": [],
+      "Checks": [
+        "groups_view_conversations_restricted"
+      ],
       "Attributes": [
         {
           "Section": "Groups",
@@ -1704,7 +1716,9 @@
     {
       "Id": "GWS.SITES.1.1",
       "Description": "Sites Service SHOULD be disabled for all users",
-      "Checks": [],
+      "Checks": [
+        "sites_service_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Sites",
