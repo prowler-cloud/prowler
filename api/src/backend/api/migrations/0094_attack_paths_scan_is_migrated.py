@@ -4,13 +4,13 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0092_findings_arrays_gin_index_parent"),
+        ("api", "0093_okta_provider"),
     ]
 
     operations = [
         migrations.AddField(
             model_name="attackpathsscan",
-            name="is_neptune",
+            name="is_migrated",
             field=models.BooleanField(default=False),
         ),
     ]

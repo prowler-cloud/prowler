@@ -2,7 +2,7 @@
 
 When the sink is Neptune, each successful scan's data lives in Neptune.
 Pre-cutover scans for the same provider may still live in the Neo4j
-tenant DB; those rows are unreachable via the API (`is_neptune=False`
+tenant DB; those rows are unreachable via the API (`is_migrated=False`
 scans go through a Neo4j backend) but the graph data persists in Neo4j
 until we explicitly delete it.
 

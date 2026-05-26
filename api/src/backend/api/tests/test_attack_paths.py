@@ -145,7 +145,7 @@ def test_execute_query_serializes_graph(
         definition,
         parameters,
         provider_id=provider_id,
-        scan=MagicMock(is_neptune=False),
+        scan=MagicMock(is_migrated=False),
     )
 
     sink_backend_stub.execute_read_query.assert_called_once_with(
@@ -181,7 +181,7 @@ def test_execute_query_wraps_graph_errors(
                 definition,
                 parameters,
                 provider_id="test-provider-123",
-                scan=MagicMock(is_neptune=False),
+                scan=MagicMock(is_migrated=False),
             )
 
     mock_logger.error.assert_called_once()
@@ -214,7 +214,7 @@ def test_execute_query_raises_permission_denied_on_read_only(
             definition,
             parameters,
             provider_id="test-provider-123",
-            scan=MagicMock(is_neptune=False),
+            scan=MagicMock(is_migrated=False),
         )
 
 
@@ -468,7 +468,7 @@ def test_execute_custom_query_serializes_graph(
         "db-tenant-test",
         "MATCH (n) RETURN n",
         provider_id,
-        scan=MagicMock(is_neptune=False),
+        scan=MagicMock(is_migrated=False),
     )
 
     sink_backend_stub.execute_read_query.assert_called_once()
@@ -494,7 +494,7 @@ def test_execute_custom_query_raises_permission_denied_on_write(sink_backend_stu
             "db-tenant-test",
             "CREATE (n) RETURN n",
             "provider-1",
-            scan=MagicMock(is_neptune=False),
+            scan=MagicMock(is_migrated=False),
         )
 
 
@@ -508,7 +508,7 @@ def test_execute_custom_query_wraps_graph_errors(sink_backend_stub):
                 "db-tenant-test",
                 "MATCH (n) RETURN n",
                 "provider-1",
-                scan=MagicMock(is_neptune=False),
+                scan=MagicMock(is_migrated=False),
             )
 
     mock_logger.error.assert_called_once()

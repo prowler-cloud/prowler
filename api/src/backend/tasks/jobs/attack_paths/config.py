@@ -1,9 +1,13 @@
-from dataclasses import dataclass
 from typing import Callable
 from uuid import UUID
 
 from config.env import env
-from tasks.jobs.attack_paths import aws
+from tasks.jobs.attack_paths.provider_config import (  # noqa: F401  (re-exported)
+    AWS_CONFIG,
+    NormalizedList,
+    PROVIDER_CONFIGS,
+    ProviderConfig,
+)
 
 # Batch size for Neo4j write operations (resource labeling, cleanup)
 BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
@@ -27,34 +31,9 @@ PROVIDER_LABEL_PREFIX = "_Provider_"
 DYNAMIC_ISOLATION_PREFIXES = [TENANT_LABEL_PREFIX, PROVIDER_LABEL_PREFIX]
 
 
-@dataclass(frozen=True)
-class ProviderConfig:
-    """Configuration for a cloud provider's Attack Paths integration."""
-
-    name: str
-    root_node_label: str  # e.g., "AWSAccount"
-    uid_field: str  # e.g., "arn"
-    # Label for resources connected to the account node, enabling indexed finding lookups
-    resource_label: str  # e.g., "_AWSResource"
-    ingestion_function: Callable
-    # Maps a Postgres resource UID (e.g. full ARN) to the short-id form Cartography stores on some node types (e.g. `i-xxx` for EC2Instance)
-    short_uid_extractor: Callable[[str], str]
-
-
-# Provider Configurations
-
-AWS_CONFIG = ProviderConfig(
-    name="aws",
-    root_node_label="AWSAccount",
-    uid_field="arn",
-    resource_label="_AWSResource",
-    ingestion_function=aws.start_aws_ingestion,
-    short_uid_extractor=aws.extract_short_uid,
-)
-
-PROVIDER_CONFIGS: dict[str, ProviderConfig] = {
-    "aws": AWS_CONFIG,
-}
+# `ProviderConfig`, `NormalizedList`, `AWS_CONFIG`, and `PROVIDER_CONFIGS` are
+# defined in `provider_config.py` and re-exported above so existing imports
+# (`from tasks.jobs.attack_paths.config import ...`) keep working.
 
 # Labels added by Prowler that should be filtered from API responses
 # Derived from provider configs + common internal labels

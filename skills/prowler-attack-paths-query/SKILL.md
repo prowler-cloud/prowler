@@ -3,8 +3,8 @@ name: prowler-attack-paths-query
 description: >
   Creates Prowler Attack Paths openCypher queries using the Cartography schema as the source of truth
   for node labels, properties, and relationships. Covers Prowler-specific additions (Internet node,
-  ProwlerFinding, internal isolation labels), $provider_uid scoping, and the comma-string predicate
-  shapes that run efficiently on both Neo4j and Amazon Neptune sinks.
+  ProwlerFinding, internal isolation labels), $provider_uid scoping, and list-property item nodes
+  with typed `HAS_*` edges that run efficiently on both Neo4j and Amazon Neptune sinks.
   Trigger: When creating or updating Attack Paths queries.
 license: Apache-2.0
 metadata:
@@ -26,12 +26,12 @@ Attack Paths queries are read-only openCypher queries over a Cartography-ingeste
 
 ## Two query audiences
 
-| | Predefined queries | Custom queries |
-|---|---|---|
-| Where they live | `api/src/backend/api/attack_paths/queries/{provider}.py` | User-supplied via the custom query API endpoint |
+|                    | Predefined queries                                          | Custom queries                                                        |
+| ------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| Where they live    | `api/src/backend/api/attack_paths/queries/{provider}.py`    | User-supplied via the custom query API endpoint                       |
 | Provider isolation | `AWSAccount {id: $provider_uid}` anchor + path connectivity | Automatic `_Provider_{uuid}` label injection by `cypher_sanitizer.py` |
-| What to write | Chain every MATCH from the `aws` variable | Plain Cypher, no isolation boilerplate |
-| Internal labels | Never use | Never use (system-injected) |
+| What to write      | Chain every MATCH from the `aws` variable                   | Plain Cypher, no isolation boilerplate                                |
+| Internal labels    | Never use                                                   | Never use (system-injected)                                           |
 
 **Predefined queries**: every node must be reachable from the `AWSAccount` root via graph traversal. That is the isolation boundary.
 
@@ -69,9 +69,9 @@ Two sources for new queries:
 
 ### Provider scoping parameter
 
-| Parameter | Property | Used on | Purpose |
-|---|---|---|---|
-| `$provider_uid` | `id` | `AWSAccount` | Scopes the query to a specific account |
+| Parameter       | Property | Used on      | Purpose                                |
+| --------------- | -------- | ------------ | -------------------------------------- |
+| `$provider_uid` | `id`     | `AWSAccount` | Scopes the query to a specific account |
 
 The runner binds `$provider_uid` automatically. Every other node is isolated by path connectivity from the `AWSAccount` anchor.
 
@@ -121,31 +121,20 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with {permission}
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE (
-            toLower(stmt.action) = '{permission_lowercase}'
-            OR toLower(stmt.action) STARTS WITH '{permission_lowercase},'
-            OR toLower(stmt.action) ENDS WITH ',{permission_lowercase}'
-            OR toLower(stmt.action) CONTAINS ',{permission_lowercase},'
-            OR toLower(stmt.action) = '{service}:*'
-            OR toLower(stmt.action) STARTS WITH '{service}:*,'
-            OR toLower(stmt.action) ENDS WITH ',{service}:*'
-            OR toLower(stmt.action) CONTAINS ',{service}:*,'
-            OR stmt.action = '*'
-            OR stmt.action STARTS WITH '*,'
-            OR stmt.action ENDS WITH ',*'
-            OR stmt.action CONTAINS ',*,'
-        )
+        WHERE EXISTS {{
+            MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+            WHERE toLower(a.value) IN ['{permission_lowercase}', '{service}:*']
+               OR a.value = '*'
+        }}
 
         // Target resources attached to the same principal (sub-patterns below)
         MATCH path_target = (aws)--(target_policy:AWSPolicy)--(principal)
         WHERE target_policy.arn CONTAINS $provider_uid
-            AND (
-                stmt.resource = '*'
-                OR stmt.resource STARTS WITH '*,'
-                OR stmt.resource ENDS WITH ',*'
-                OR stmt.resource CONTAINS ',*,'
-                OR size([resource IN split(stmt.resource, ",") WHERE target_policy.arn CONTAINS resource]) > 0
-            )
+            AND EXISTS {{
+                MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
+                WHERE r.value = '*'
+                   OR target_policy.arn CONTAINS r.value
+            }}
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -165,7 +154,7 @@ Key points:
 
 - Cartography hops use anonymous `--`. Add a relationship type only where the file's existing queries already use one (`TRUSTS_AWS_PRINCIPAL`, `STS_ASSUMEROLE_ALLOW`, `MEMBER_AWS_GROUP`, `HAS_EXECUTION_ROLE`).
 - The finding probe is typed `:HAS_FINDING` and left undirected. The type lets Neptune apply an inline edge filter; the lack of direction matches the convention of the rest of the file.
-- The `WHERE` uses comma-string predicates (see "Comma-string predicate shapes"). `split()` appears only in the resource clause as the unavoidable token-as-needle fallback.
+- The `WHERE` traverses list-property item nodes via `HAS_ACTION` / `HAS_RESOURCE` edges (see "List-typed properties as child nodes"). Do not use `split(...)` on policy statement properties; the values live on the child item nodes.
 - The `RETURN` shape `paths, dpf, dpfr` is the contract the serializer and visualiser depend on. Do not change it.
 
 ---
@@ -174,21 +163,25 @@ Key points:
 
 Four `path_target` shapes cover the common attack types. Each shares the canonical template's `path_principal`, deduplication tail, and `RETURN`; only the `path_target` MATCH and its resource predicate differ.
 
-| Sub-pattern | Target | `path_target` shape | Example |
-|---|---|---|---|
-| Self-escalation | Principal's own policies | `(aws)--(target_policy:AWSPolicy)--(principal)` | IAM-001 |
-| Lateral to user | Other IAM users | `(aws)--(target_user:AWSUser)` | IAM-002 |
-| Assume-role lateral | Assumable roles | `(aws)--(target_role:AWSRole)-[:STS_ASSUMEROLE_ALLOW]-(principal)` | IAM-014 |
-| PassRole + service | Service-trusting roles | `(aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]-(:AWSPrincipal {arn: '{service}.amazonaws.com'})` | EC2-001 |
+| Sub-pattern         | Target                   | `path_target` shape                                                                                     | Example |
+| ------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------- | ------- |
+| Self-escalation     | Principal's own policies | `(aws)--(target_policy:AWSPolicy)--(principal)`                                                         | IAM-001 |
+| Lateral to user     | Other IAM users          | `(aws)--(target_user:AWSUser)`                                                                          | IAM-002 |
+| Assume-role lateral | Assumable roles          | `(aws)--(target_role:AWSRole)-[:STS_ASSUMEROLE_ALLOW]-(principal)`                                      | IAM-014 |
+| PassRole + service  | Service-trusting roles   | `(aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]-(:AWSPrincipal {arn: '{service}.amazonaws.com'})` | EC2-001 |
 
 **Multi-permission queries** (e.g. PassRole plus a service-create action) add a second walk before `path_target`:
 
 ```cypher
 MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {effect: 'Allow'})
-WHERE <comma-string predicates over stmt2.action>
+WHERE EXISTS {
+    MATCH (stmt2)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+    WHERE toLower(a.value) IN ['service:*', 'service:createsomething']
+       OR a.value = '*'
+}
 ```
 
-Both `stmt.resource` and `stmt2.resource` are then checked against the target via the same wrapper. See IAM-015 or EC2-001 in `aws.py`.
+Both `stmt.resource` and `stmt2.resource` are then checked against the target via the same `HAS_RESOURCE` traversal. See IAM-015 or EC2-001 in `aws.py`.
 
 ---
 
@@ -222,65 +215,52 @@ The `CAN_ACCESS` edge stays typed and directed (`-[:CAN_ACCESS]->`); that is its
 
 ---
 
-## Comma-string predicate shapes
+## List-typed properties as child nodes
 
-`AWSPolicyStatement.action`, `resource`, `notaction`, and `notresource` are stored as comma-joined strings on both sinks. The sync converter (`tasks/jobs/attack_paths/sync.py`) normalises lists this way so queries are portable across backends.
+Some Cartography node properties carry a list of values: `AWSPolicyStatement.action`, `AWSPolicyStatement.resource`, `KMSKey.encryption_algorithms`, `CloudFrontDistribution.aliases`, and many others. The graph models each such property as a set of child item nodes connected to the parent by a typed edge. Queries reach the values by traversing the edge; the parent does not carry the list as a single field.
 
-### Why not native lists?
+### Naming convention
 
-Cartography emits these properties as lists, but Neptune openCypher cannot accept list values in `CREATE`/`SET`, and reads of multi-valued properties (Gremlin set cardinality) return one arbitrary value rather than the list. See [openCypher compliance, "Multi-valued properties"](https://docs.aws.amazon.com/neptune/latest/userguide/feature-opencypher-compliance.html#openCypher-compliance-mvp). The sync layer flattens lists to comma strings before any sink writes them, so all read queries operate on strings.
+For a list-typed parent property the sink stores:
 
-The naive read is `size([x IN split(prop, ',') WHERE pred]) > 0`. On Neptune that operator falls off the DFE fast path and resolves every produced token through the term dictionary, per row, giving a 60-second tail on even a few hundred statements. String predicates over the raw stored value (`=`, `STARTS WITH`, `ENDS WITH`, `CONTAINS`) avoid list materialisation entirely and stay fast on both sinks.
+- **Child label**: `<ParentLabel><PropertyPascal>Item`. Example: `AWSPolicyStatement.resource` → `AWSPolicyStatementResourceItem`.
+- **Edge type**: `HAS_<PROPERTY_UPPER>`. Example: `resource` → `HAS_RESOURCE`.
+- **Child property**: `value` (a single scalar string) for scalar-list properties. For list-of-dict properties (rare; for example `SecretsManagerSecretVersion.tags`) the child carries the dict keys as named fields per the catalog's `field_map`.
 
-Each row below maps a per-token intent to a `split`-free rewrite where `P` is the stored property and `L` the literal needle.
+### Example - action match
 
-| Intent (per token semantics) | Use this on `P` |
-|---|---|
-| Token equals `L` | `P = 'L' OR P STARTS WITH 'L,' OR P ENDS WITH ',L' OR P CONTAINS ',L,'` |
-| Token starts with `'pre'` | `toLower(P) STARTS WITH 'pre' OR toLower(P) CONTAINS ',pre'` |
-| Token contains `'sub'` | `toLower(P) CONTAINS 'sub'` |
-| Token contains a dynamic value | `P CONTAINS <expr>` |
-
-For case-insensitive matches, wrap `P` in `toLower(P)` and lowercase `L`. Compose with `( … OR … )` or negate with `NOT ( … OR … )`. The token-as-needle case (loop variable is the needle inside a dynamic haystack such as `<dyn>.arn CONTAINS x`) has no string-op equivalent; see the wrapper below.
-
-### Worked example
-
-For `size([x IN split(stmt.action, ',') WHERE x = '*']) > 0`:
+Find statements that grant `iam:PassRole`, `iam:*`, or `*`:
 
 ```cypher
-WHERE (
-    stmt.action = '*'
-    OR stmt.action STARTS WITH '*,'
-    OR stmt.action ENDS WITH ',*'
-    OR stmt.action CONTAINS ',*,'
-)
+MATCH (stmt:AWSPolicyStatement {effect: 'Allow'})
+WHERE EXISTS {
+    MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+    WHERE toLower(a.value) IN ['iam:passrole', 'iam:*']
+       OR a.value = '*'
+}
 ```
 
-For multi-token checks (specific action, service wildcard, `*`), expand each token and join with `OR`, wrapped in `( … )` so it composes cleanly with adjacent `AND` clauses.
+The literal-action list is case-folded with `toLower(a.value)` because IAM authors mix case (`iam:PassRole`, `iam:passrole`); the `*` wildcard never lower-cases.
 
----
+### Example - resource ARN match
 
-## When `split` is unavoidable: the short-circuit wrapper
-
-The token-as-needle shape, "does any token of the policy resource appear inside the target ARN", has no equivalent string-op rewrite. Substring containment in either direction is unsafe:
-
-- `<dyn>.arn CONTAINS P` produces false negatives for multi-token resource lists (commas never appear in ARNs).
-- `P CONTAINS <dyn>.arn` produces false positives whenever role names share a prefix (`app` vs `app-admin`).
-
-The correct shape is a short-circuit wrapper that puts the cheap clauses first and isolates the `split` to the last `OR` operand:
+Find statements whose resource can target a specific role:
 
 ```cypher
-WHERE (
-    P = '*'
-    OR P STARTS WITH '*,'
-    OR P ENDS WITH ',*'
-    OR P CONTAINS ',*,'
-    OR P CONTAINS <dyn>.name
-    OR size([resource IN split(P, ",") WHERE <dyn>.arn CONTAINS resource]) > 0
-)
+MATCH path_target = (aws)--(target_role:AWSRole)
+WHERE EXISTS {
+    MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
+    WHERE r.value = '*'
+       OR r.value CONTAINS target_role.name
+       OR target_role.arn CONTAINS r.value
+}
 ```
 
-`P` is the stored property (e.g. `stmt_passrole.resource`); `<dyn>` is the target node bound earlier (`target_role`, `target_user`, etc.). When any cheap clause holds (the common `*` and exact-name cases), the `size(split)` operand is never evaluated. The fallback runs only on specific-ARN-list policies that did not match the cheap clauses, and even then on a small set anchored by the preceding `TRUSTS_AWS_PRINCIPAL` or `STS_ASSUMEROLE_ALLOW` walk. When `<dyn>` has no `.name` attribute (e.g. `target_policy`), drop the `P CONTAINS <dyn>.name` operand.
+Three predicates cover the cases: full wildcard (`*`), pattern containing the role name (`arn:aws:iam::*:role/admin*`), and pattern that is a prefix or component of the actual ARN.
+
+### Catalog of list properties
+
+The provider catalog lives in `api/src/backend/tasks/jobs/attack_paths/provider_config.py` (`AWS_NORMALIZED_LISTS`). Beyond policy statements it includes KMS algorithms, ECS container-definition lists (`entry_point`, `command`, `links`, `dns_servers`, ...), CloudFront aliases, Inspector finding URL and vulnerability lists, RDS event-subscription categories, and others. To query a list property that is not in the catalog, add an entry there first so the sync layer materialises it.
 
 ---
 
@@ -369,14 +349,14 @@ RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
 
 Added by the sync task, not part of the Cartography schema. For everything else, consult the pinned Cartography schema (see "Creation steps").
 
-| Label / Relationship | Description |
-|---|---|
-| `ProwlerFinding` | Finding node (`status`, `severity`, `check_id`) |
-| `Internet` | Internet sentinel node |
-| `CAN_ACCESS` | `(Internet)-[:CAN_ACCESS]->(resource)` exposure edge |
-| `HAS_FINDING` | `(resource)-[:HAS_FINDING]->(:ProwlerFinding)` finding link |
-| `TRUSTS_AWS_PRINCIPAL` | Role trust relationship |
-| `STS_ASSUMEROLE_ALLOW` | Can assume role |
+| Label / Relationship   | Description                                                 |
+| ---------------------- | ----------------------------------------------------------- |
+| `ProwlerFinding`       | Finding node (`status`, `severity`, `check_id`)             |
+| `Internet`             | Internet sentinel node                                      |
+| `CAN_ACCESS`           | `(Internet)-[:CAN_ACCESS]->(resource)` exposure edge        |
+| `HAS_FINDING`          | `(resource)-[:HAS_FINDING]->(:ProwlerFinding)` finding link |
+| `TRUSTS_AWS_PRINCIPAL` | Role trust relationship                                     |
+| `STS_ASSUMEROLE_ALLOW` | Can assume role                                             |
 
 ---
 
@@ -403,19 +383,19 @@ parameters=[
 
 Queries must run on both Neo4j and Amazon Neptune. Avoid these constructs:
 
-| Feature | Use instead |
-|---|---|
-| APOC procedures (`apoc.*`) | Real nodes and relationships in the graph |
-| Neptune extensions | Standard openCypher |
-| `reduce()` | `UNWIND` + `collect()` |
-| `FOREACH` | `WITH` + `UNWIND` + `SET` |
-| Regex `=~` | `toLower()` + exact match, or `STARTS WITH` / `CONTAINS` |
-| `CALL () { UNION }` | Multi-label `OR` in `WHERE` (see pattern above) |
-| `any(x IN list ...)` | `size([x IN list WHERE pred]) > 0` |
-| `all(x IN list ...)` | `size([x IN list WHERE pred]) = size(list)` |
-| `none(x IN list ...)` | `size([x IN list WHERE pred]) = 0` |
+| Feature                    | Use instead                                              |
+| -------------------------- | -------------------------------------------------------- |
+| APOC procedures (`apoc.*`) | Real nodes and relationships in the graph                |
+| Neptune extensions         | Standard openCypher                                      |
+| `reduce()`                 | `UNWIND` + `collect()`                                   |
+| `FOREACH`                  | `WITH` + `UNWIND` + `SET`                                |
+| Regex `=~`                 | `toLower()` + exact match, or `STARTS WITH` / `CONTAINS` |
+| `CALL () { UNION }`        | Multi-label `OR` in `WHERE` (see pattern above)          |
+| `any(x IN list ...)`       | `size([x IN list WHERE pred]) > 0`                       |
+| `all(x IN list ...)`       | `size([x IN list WHERE pred]) = size(list)`              |
+| `none(x IN list ...)`      | `size([x IN list WHERE pred]) = 0`                       |
 
-For comma-string properties, prefer the rewrites in "Comma-string predicate shapes" over the `size([x IN split ...])` form.
+For list-typed properties in the catalog (action, resource, and so on), traverse the `HAS_*` edges to the child item nodes (see "List-typed properties as child nodes"). The parent node does not carry the list as a single field, so `split(...)` and comma-string predicates do not apply.
 
 ---
 
@@ -433,7 +413,7 @@ For comma-string properties, prefer the rewrites in "Comma-string predicate shap
 ## Naming conventions
 
 - **ID**: kebab-case `{provider}-{category}-{description}`, e.g. `aws-ec2-privesc-passrole-iam`.
-- **Constant**: SHOUTING_SNAKE_CASE `{PROVIDER}_{CATEGORY}_{DESCRIPTION}`, e.g. `AWS_EC2_PRIVESC_PASSROLE_IAM`.
+- **Constant**: SHOUTING*SNAKE_CASE `{PROVIDER}*{CATEGORY}\_{DESCRIPTION}`, e.g. `AWS_EC2_PRIVESC_PASSROLE_IAM`.
 
 ---
 
@@ -465,7 +445,7 @@ For comma-string properties, prefer the rewrites in "Comma-string predicate shap
    https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/<TAG>/docs/root/modules/{provider}/schema.md
    ```
 
-3. **Build the query** using the canonical predefined template plus the appropriate sub-pattern (privilege escalation or network exposure). Apply the comma-string predicate shapes for `action` and `resource`; apply the short-circuit wrapper only where the token-as-needle case demands it.
+3. **Build the query** using the canonical predefined template plus the appropriate sub-pattern (privilege escalation or network exposure). For list-typed properties (action/resource/etc.), traverse the exploded child nodes via `[:HAS_ACTION]->(:AWSPolicyStatementActionItem)` etc. (see "List-typed properties as child nodes" and the `AWS_NORMALIZED_LISTS` catalog).
 
 4. **Register** the constant in the `{PROVIDER}_QUERIES` list at the bottom of the provider file.
 
@@ -477,4 +457,4 @@ For comma-string properties, prefer the rewrites in "Comma-string predicate shap
 - **Cartography schema** (per pinned tag): `https://raw.githubusercontent.com/{org}/cartography/refs/tags/{tag}/docs/root/modules/{provider}/schema.md`.
 - **Neptune openCypher compliance**: https://docs.aws.amazon.com/neptune/latest/userguide/feature-opencypher-compliance.html.
 - **openCypher spec**: https://github.com/opencypher/openCypher.
-- **Sync converter** (`tasks/jobs/attack_paths/sync.py`): list values become comma-strings, dicts become JSON strings, applied uniformly to both sinks.
+- **Sync converter** (`tasks/jobs/attack_paths/sync.py`): list-typed node properties listed in `tasks/jobs/attack_paths/provider_config.py::AWS_NORMALIZED_LISTS` are materialised as child item nodes + `HAS_*` edges. Properties that are not in the catalog are serialised to a comma-delimited string and emit a one-time warning. Dict-typed properties become JSON strings. Same shape on both sinks.

@@ -160,6 +160,7 @@ class TestAttackPathsRun:
             target_database="tenant-db",
             tenant_id=str(provider.tenant_id),
             provider_id=str(provider.id),
+            provider_type="aws",
         )
         mock_get_ingestion.assert_called_once_with(provider.provider)
         mock_event_loop.assert_called_once()
@@ -1137,7 +1138,7 @@ class TestFailAttackPathsScan:
         )
 
         # `recover_graph_data_ready` routes `has_provider_data` through
-        # `sink_module.get_backend_for_scan(scan)`. With `is_neptune=False`
+        # `sink_module.get_backend_for_scan(scan)`. With `is_migrated=False`
         # and the default `ATTACK_PATHS_SINK_DATABASE=neo4j`, the factory
         # returns the active backend, which `sink_backend_stub` replaces.
         sink_backend_stub.has_provider_data.return_value = True
@@ -1824,11 +1825,11 @@ class TestSyncNodes:
                 _make_session_ctx(mock_source_2),
             ],
         ):
-            total = sync_module.sync_nodes(
-                "source-db", "target-db", "tenant-1", "prov-1", sink
+            result = sync_module.sync_nodes(
+                "source-db", "target-db", "tenant-1", "prov-1", sink, []
             )
 
-        assert total == 1
+        assert result["parents"] == 1
         sink.write_nodes.assert_called_once()
         target_db, labels, batch = sink.write_nodes.call_args.args
         assert target_db == "target-db"
@@ -1864,7 +1865,7 @@ class TestSyncNodes:
                 _make_session_ctx(src_2, call_order, "source2"),
             ],
         ):
-            sync_module.sync_nodes("src-db", "tgt-db", "t-1", "p-1", sink)
+            sync_module.sync_nodes("src-db", "tgt-db", "t-1", "p-1", sink, [])
 
         assert call_order.index("source1:exit") < call_order.index("sink:write")
 
@@ -1901,9 +1902,9 @@ class TestSyncNodes:
             ),
             patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
         ):
-            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink)
+            result = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink, [])
 
-        assert total == 2
+        assert result["parents"] == 2
         assert sink.write_nodes.call_count == 2
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
@@ -1917,9 +1918,9 @@ class TestSyncNodes:
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[_make_session_ctx(src)],
         ) as mock_get_session:
-            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink)
+            result = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink, [])
 
-        assert total == 0
+        assert result["parents"] == 0
         assert mock_get_session.call_count == 1
         sink.write_nodes.assert_not_called()
 
@@ -2909,7 +2910,7 @@ class TestNormalizeSinkProperties:
         ],
     )
     def test_primitive_list_and_dict_branches(self, raw, expected):
-        sync_module._normalize_sink_properties(raw)
+        sync_module._normalize_sink_properties(raw, labels=None)
         assert raw == expected
 
     def test_temporal_and_spatial_become_strings(self):
@@ -2928,7 +2929,7 @@ class TestNormalizeSinkProperties:
             "created_at": FakeDateTime(),
             "location": FakeSpatialPoint(),
         }
-        sync_module._normalize_sink_properties(props)
+        sync_module._normalize_sink_properties(props, labels=None)
         assert props == {
             "created_at": "2026-05-13T10:00:00+00:00",
             "location": "POINT(1.0 2.0)",

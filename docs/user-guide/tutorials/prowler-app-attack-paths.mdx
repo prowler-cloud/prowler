@@ -147,14 +147,11 @@ LIMIT 25
 ```cypher
 MATCH (principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
 WHERE stmt.effect = 'Allow'
-  AND (
-    stmt.action = '*'
-    OR stmt.action STARTS WITH '*,'
-    OR stmt.action ENDS WITH ',*'
-    OR stmt.action CONTAINS ',*,'
-  )
-RETURN principal.arn AS principal, policy.arn AS policy,
-       stmt.action AS actions, stmt.resource AS resources
+  AND EXISTS {
+    MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+    WHERE a.value = '*'
+  }
+RETURN principal.arn AS principal, policy.arn AS policy
 LIMIT 25
 ```
 
@@ -180,65 +177,68 @@ LIMIT 25
 
 ### Working with List-Typed Properties
 
-Some Cartography properties represent lists of values, such as `action`, `resource`, `notaction`, and `notresource` on `AWSPolicyStatement` nodes. The Attack Paths graph stores list-typed properties as comma-delimited strings to keep the schema portable across graph backends. Two patterns read them back: string operators applied directly to the comma-joined value, and `split(prop, ',')` for the cases that genuinely need to iterate the individual tokens.
+Some Cartography node properties carry a list of values, such as `action`, `resource`, `notaction`, and `notresource` on `AWSPolicyStatement` nodes, the algorithms on `KMSKey`, the container-definition lists on `ECSContainerDefinition`, and many others. The Attack Paths graph models each such property as a set of child item nodes connected to the parent by a typed edge. To read the values, traverse the edge; the parent does not carry the list as a single field.
 
-**Prefer string operators for the common shapes.** `=`, `STARTS WITH`, `ENDS WITH`, and `CONTAINS` run as filters over the raw stored value without materialising a list, which keeps response times low on large graphs. The table below maps each predicate intent to a `split`-free form. Let `P` be the comma-string property and `L` the literal needle.
+The naming convention for any list-typed property on a parent label is:
 
-| Intent (per token)                  | Form on `P`                                                             |
-| ----------------------------------- | ----------------------------------------------------------------------- |
-| Token equals `L`                    | `P = 'L' OR P STARTS WITH 'L,' OR P ENDS WITH ',L' OR P CONTAINS ',L,'` |
-| Case-insensitive equality           | Wrap `P` in `toLower(P)` on all four clauses; lowercase `L`             |
-| Some token starts with `'pre'`      | `toLower(P) STARTS WITH 'pre' OR toLower(P) CONTAINS ',pre'`            |
-| Some token contains `'sub'`         | `toLower(P) CONTAINS 'sub'`                                             |
-| Some token contains a dynamic value | `P CONTAINS <expr>`                                                     |
+- **Child label:** `<ParentLabel><PropertyPascal>Item`. Example: `AWSPolicyStatement.resource` resolves to `AWSPolicyStatementResourceItem`.
+- **Edge type:** `HAS_<PROPERTY_UPPER>`. Example: `resource` resolves to `HAS_RESOURCE`.
+- **Child property:** `value` for scalar lists (one string per list element). List-of-dict properties (rare; for example `SecretsManagerSecretVersion.tags`) carry the original dict keys as named fields on the child node.
 
-Example, finding statements that grant any S3 read action:
+Use `EXISTS { ... }` to express "at least one item in the list satisfies a predicate". The `EXISTS` subquery returns `true` as soon as a matching child is found, which keeps the traversal short on parents with many items.
+
+To find statements that grant any S3 read action:
 
 ```cypher
 MATCH (stmt:AWSPolicyStatement)
 WHERE stmt.effect = 'Allow'
-  AND (
-    toLower(stmt.action) STARTS WITH 's3:get'
-    OR toLower(stmt.action) CONTAINS ',s3:get'
-    OR toLower(stmt.action) STARTS WITH 's3:list'
-    OR toLower(stmt.action) CONTAINS ',s3:list'
-  )
+  AND EXISTS {
+    MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+    WHERE toLower(a.value) STARTS WITH 's3:get'
+       OR toLower(a.value) STARTS WITH 's3:list'
+  }
 RETURN stmt
 LIMIT 25
 ```
 
-**Reach for `split` only when the intent cannot be expressed with string operators.** Two shapes need it.
-
-The "every token must match" case has no string-op equivalent. Hoist the split into a `WITH` clause to avoid evaluating it twice:
+To check whether every item in the list satisfies a predicate, combine `EXISTS` for the positive case with a negated `EXISTS` for the counter-example:
 
 ```cypher
 MATCH (stmt:AWSPolicyStatement)
-WITH stmt, split(stmt.action, ',') AS actions
-WHERE size([action IN actions WHERE action STARTS WITH 's3:']) = size(actions)
+WHERE EXISTS {
+    MATCH (stmt)-[:HAS_ACTION]->(:AWSPolicyStatementActionItem)
+  }
+  AND NOT EXISTS {
+    MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+    WHERE NOT toLower(a.value) STARTS WITH 's3:'
+  }
 RETURN stmt
 LIMIT 25
 ```
 
-The "a token of `P` is a substring of a dynamic value" case, such as "is any resource pattern in this policy a substring of this role's ARN", needs the loop variable as the needle. Put the cheap string clauses first so the `split` runs only when none of them matched:
+For the "is any item of this list a substring of a dynamic value" case, such as "does any resource pattern in this policy match a target role ARN", bind the item value in the subquery and apply the substring check against it:
 
 ```cypher
 MATCH (role:AWSRole), (stmt:AWSPolicyStatement)
 WHERE stmt.effect = 'Allow'
-  AND (
-    stmt.resource = '*'
-    OR stmt.resource STARTS WITH '*,'
-    OR stmt.resource ENDS WITH ',*'
-    OR stmt.resource CONTAINS ',*,'
-    OR stmt.resource CONTAINS role.name
-    OR size([resource IN split(stmt.resource, ',') WHERE role.arn CONTAINS resource]) > 0
-  )
+  AND EXISTS {
+    MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
+    WHERE r.value = '*'
+       OR r.value CONTAINS role.name
+       OR role.arn CONTAINS r.value
+  }
 RETURN stmt, role
 LIMIT 25
 ```
 
-Cypher evaluates `OR` left to right, so the `split` subquery runs only for resources that did not match any of the cheap clauses.
+To return the list of values directly, collect them from the child items:
 
-Returning the raw value (`RETURN stmt.action`) is also valid when the comma-delimited form is acceptable in the output.
+```cypher
+MATCH (stmt:AWSPolicyStatement {effect: 'Allow'})
+OPTIONAL MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+RETURN stmt, collect(a.value) AS actions
+LIMIT 25
+```
 
 ### Working with JSON-Encoded Properties
 
@@ -263,7 +263,7 @@ When a query needs to inspect the structured members of a condition (for example
 ### Tips for Writing Queries
 
 - Start small with `LIMIT` to inspect the shape of the data before broadening the pattern.
-- Prefer string operators (`=`, `STARTS WITH`, `ENDS WITH`, `CONTAINS`) over `split(prop, ',')` when checking comma-string properties such as `action` or `resource`. See [Working with List-Typed Properties](#working-with-list-typed-properties) for the per-shape recommendations.
+- Traverse `HAS_*` edges to reach list-typed property values (for example `action`, `resource`). The parent node does not carry the list as a single field; see [Working with List-Typed Properties](#working-with-list-typed-properties) for the patterns.
 - Use `RETURN` projections (`RETURN n.name, n.region`) instead of returning whole nodes to keep responses compact.
 - Combine resource nodes with `ProwlerFinding` nodes via `HAS_FINDING` to correlate misconfigurations with the affected resources.
 - When a query times out or returns no rows, simplify the pattern step by step until the first variant runs successfully, then add constraints back.
@@ -280,7 +280,7 @@ In addition to the upstream schema, Prowler enriches the graph with:
 
 - **`ProwlerFinding`** nodes representing Prowler check results, linked to affected resources via `HAS_FINDING` relationships.
 - **`Internet`** nodes used to model exposure paths from the public internet to internal resources.
-- **List-typed properties** such as `action` or `resource` on `AWSPolicyStatement` are stored as comma-delimited strings. See [Working with List-Typed Properties](#working-with-list-typed-properties) for the read pattern.
+- **List-typed properties** such as `action` or `resource` on `AWSPolicyStatement`, the algorithm lists on `KMSKey`, and similar lists on other node types are modeled as child item nodes linked by typed `HAS_*` edges. See [Working with List-Typed Properties](#working-with-list-typed-properties) for the read pattern.
 - **Object-typed properties** such as `condition` on `AWSPolicyStatement` are stored as JSON-encoded strings. See [Working with JSON-Encoded Properties](#working-with-json-encoded-properties) for the read pattern.
 
 <Note>

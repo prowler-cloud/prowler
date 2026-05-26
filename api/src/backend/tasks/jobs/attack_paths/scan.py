@@ -299,6 +299,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             target_database=tenant_database_name,
             tenant_id=str(prowler_api_provider.tenant_id),
             provider_id=str(prowler_api_provider.id),
+            provider_type=prowler_api_provider.provider,
         )
         logger.info(
             f"Synced graph in {time.perf_counter() - t0:.3f}s "

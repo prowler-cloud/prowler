@@ -4,6 +4,7 @@ from typing import Any, Iterable
 
 import neo4j
 
+from django.conf import settings
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
@@ -166,9 +167,11 @@ def execute_custom_query(
     # TODO: drop after Neptune cutover
     backend = sink_module.get_backend_for_scan(scan)
 
-    # Neptune enforces a cluster-level query timeout; prepending the hint makes
-    # the limit explicit and matches the client-side read timeout.
-    if scan.is_neptune:
+    # Neptune enforces a cluster-level query timeout; prepending the hint
+    # makes the limit explicit and matches the client-side read timeout.
+    # Applies only when the scan is on the current sink AND that sink is
+    # Neptune (pre-cutover scans always live in legacy Neo4j).
+    if scan.is_migrated and settings.ATTACK_PATHS_SINK_DATABASE == "neptune":
         timeout_ms = _custom_query_timeout_ms()
         cypher = f"USING QUERY:TIMEOUTMILLISECONDS {timeout_ms}\n{cypher}"
 

@@ -136,10 +136,10 @@ class TestSinkFactory:
 
 
 class TestGetBackendForScan:
-    """``get_backend_for_scan`` routes by the row's ``is_neptune`` flag."""
+    """``get_backend_for_scan`` routes by the row's ``is_migrated`` flag."""
 
     @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
-    def test_neo4j_scan_in_neo4j_process_uses_active_backend(
+    def test_legacy_scan_in_neo4j_process_uses_active_backend(
         self, mock_driver, settings
     ):
         from api.attack_paths import sink as sink_module
@@ -156,7 +156,9 @@ class TestGetBackendForScan:
         }
         mock_driver.return_value = MagicMock()
 
-        scan = MagicMock(is_neptune=False)
+        # Pre-cutover scan on a Neo4j-configured process: legacy data lives in
+        # the active Neo4j backend.
+        scan = MagicMock(is_migrated=False)
         backend = sink_module.get_backend_for_scan(scan)
 
         assert backend is sink_module.get_backend()
@@ -417,29 +419,15 @@ class TestSinkHasProviderData:
 
 
 class TestGetBackendForScanCutover:
-    """``get_backend_for_scan`` routes by the row's recorded sink, not the live setting.
+    """``get_backend_for_scan`` keeps pre-cutover scans queryable on a
+    Neptune-configured process.
 
-    During the Neptune cutover, scans written under one backend stay queryable
-    even when the process is later reconfigured. The active backend serves
-    matching scans; a cached secondary serves the rest.
+    Pre-cutover scans live in the legacy Neo4j tenant DB. When the cluster
+    is reconfigured to Neptune, the active backend is Neptune, so reads for
+    those scans need a cached secondary Neo4j backend.
     """
 
-    def test_neptune_scan_on_neo4j_process_uses_neptune_secondary(self, settings):
-        from api.attack_paths.sink import factory
-
-        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
-        active_neo4j = MagicMock(name="neo4j-active")
-        factory._backend = active_neo4j
-
-        secondary_neptune = MagicMock(name="neptune-secondary")
-        with patch.object(factory, "_build_backend", return_value=secondary_neptune):
-            scan = MagicMock(is_neptune=True)
-            backend = factory.get_backend_for_scan(scan)
-
-        assert backend is secondary_neptune
-        assert backend is not active_neo4j
-
-    def test_neo4j_scan_on_neptune_process_uses_neo4j_secondary(self, settings):
+    def test_legacy_scan_on_neptune_process_uses_neo4j_secondary(self, settings):
         from api.attack_paths.sink import factory
 
         settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
@@ -448,7 +436,7 @@ class TestGetBackendForScanCutover:
 
         secondary_neo4j = MagicMock(name="neo4j-secondary")
         with patch.object(factory, "_build_backend", return_value=secondary_neo4j):
-            scan = MagicMock(is_neptune=False)
+            scan = MagicMock(is_migrated=False)
             backend = factory.get_backend_for_scan(scan)
 
         assert backend is secondary_neo4j
