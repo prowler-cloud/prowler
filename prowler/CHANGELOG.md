@@ -11,6 +11,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.28.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Compliance CSV row count now matches the UI per requirement by sourcing rows from the framework JSON's `requirement.Checks` instead of the stale `finding.compliance` snapshot [(#11370)](https://github.com/prowler-cloud/prowler/pull/11370)
+
+---
+
 ## [5.28.1] (Prowler 5.28.1)
 
 ### 🐞 Fixed
