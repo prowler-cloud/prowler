@@ -54,6 +54,23 @@ describe("layoutWithDagre", () => {
     });
   });
 
+  it("adds a directional arrowhead (markerEnd) to every edge", () => {
+    const { rfEdges } = layoutWithDagre(
+      [resourceNode, findingNode],
+      [
+        {
+          id: "e1",
+          source: "resource-1",
+          target: "finding-1",
+          type: "HAS_FINDING",
+        },
+      ],
+    );
+
+    expect(rfEdges).toHaveLength(1);
+    expect(rfEdges[0].markerEnd).toMatchObject({ type: "arrowclosed" });
+  });
+
   it("is deterministic: same input produces equal output across runs", () => {
     const nodes = [findingNode, resourceNode];
     const edges: GraphEdge[] = [

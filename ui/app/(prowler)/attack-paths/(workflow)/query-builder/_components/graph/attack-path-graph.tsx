@@ -31,11 +31,14 @@ import {
   getNodeColor,
   getPathEdges,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
+  isGroupNode,
   resolveHiddenFindingIds,
 } from "../../_lib";
 import { isFindingNode, layoutWithDagre } from "../../_lib/layout";
 import { FindingNode } from "./nodes/finding-node";
+import { GroupNode } from "./nodes/group-node";
 import { InternetNode } from "./nodes/internet-node";
+import { OutcomeNode } from "./nodes/outcome-node";
 import { ResourceNode } from "./nodes/resource-node";
 
 // --- Types ---
@@ -69,6 +72,8 @@ const NODE_TYPES = {
   finding: FindingNode,
   internet: InternetNode,
   resource: ResourceNode,
+  attackGroup: GroupNode,
+  outcome: OutcomeNode,
 } as const;
 
 // --- CSS for animated dashed edges, selected node pulse, and edge highlight ---
@@ -460,7 +465,10 @@ const GraphCanvas = ({
     className: cn(
       node.className,
       isFindingNode(node.data.graphNode.labels) ||
-        resourcesWithFindings.has(node.id)
+        resourcesWithFindings.has(node.id) ||
+        isGroupNode(node.data.graphNode) ||
+        // Expanded type members are clickable to collapse back into their group.
+        node.type === "resource"
         ? "cursor-pointer"
         : "cursor-default",
     ),
