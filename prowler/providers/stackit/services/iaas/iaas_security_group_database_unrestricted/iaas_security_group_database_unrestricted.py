@@ -33,7 +33,7 @@ class iaas_security_group_database_unrestricted(Check):
         for security_group in iaas_client.security_groups:
             if not (iaas_client.scan_unused_services or security_group.in_use):
                 continue
-            exposed_databases = []
+            exposed_databases = set()
             exposing_rule = None
 
             # Check each ingress rule
@@ -43,7 +43,7 @@ class iaas_security_group_database_unrestricted(Check):
                     # Check if rule allows any database ports
                     for port, db_name in DATABASE_PORTS.items():
                         if rule.includes_port(port):
-                            exposed_databases.append(f"{db_name} (port {port})")
+                            exposed_databases.add(f"{db_name} (port {port})")
                     # Track the first exposing rule for the message
                     if exposed_databases and not exposing_rule:
                         exposing_rule = rule
@@ -56,7 +56,7 @@ class iaas_security_group_database_unrestricted(Check):
 
             if exposed_databases:
                 report.status = "FAIL"
-                databases_list = ", ".join(exposed_databases)
+                databases_list = ", ".join(sorted(exposed_databases))
                 report.status_extended = (
                     f"Security group '{security_group.name}' allows unrestricted database access "
                     f"to: {databases_list} from {exposing_rule.get_ip_range_display()} via rule {exposing_rule.get_rule_display_name()}."

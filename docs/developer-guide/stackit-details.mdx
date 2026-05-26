@@ -423,7 +423,7 @@ prowler stackit \
 ### Current Limitations
 
 1. **Single Project Scope**: Only one project can be scanned at a time
-2. **Service Coverage**: Only IaaS service is implemented (objectstorage service is work in progress)
+2. **Service Coverage**: Only the IaaS service is currently implemented
 3. **Check Coverage**: Limited to security group network security checks (4 checks total)
 4. **No Compliance Frameworks**: Compliance framework mappings are not yet implemented
 
@@ -431,7 +431,6 @@ prowler stackit \
 
 - Multi-project scanning capability
 - Additional IaaS checks (volume encryption, server public IP exposure, backup status)
-- ObjectStorage service implementation and checks
 - Compliance framework mappings (CIS, custom StackIT best practices)
 - StackIT CLI remediation examples in metadata
 
@@ -715,7 +714,7 @@ class iaas_security_group_ssh_unrestricted(Check):
 If you'd like to contribute to the StackIT provider:
 
 1. **Add New Checks**: Follow the [check creation guide](/developer-guide/checks#creating-a-check) and use existing StackIT checks as templates
-2. **Enhance Services**: Implement additional IaaS resource discovery or add new services (e.g., ObjectStorage)
+2. **Enhance Services**: Implement additional IaaS resource discovery or add new services
 3. **Improve Documentation**: Add metadata enhancements, CLI remediation examples, or Terraform code samples
 4. **Report Issues**: Submit bug reports or feature requests on [GitHub](https://github.com/prowler-cloud/prowler/issues)
 

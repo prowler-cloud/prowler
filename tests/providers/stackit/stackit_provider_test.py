@@ -12,6 +12,7 @@ from prowler.providers.common.models import Connection
 from prowler.providers.stackit.exceptions.exceptions import (
     StackITAPIError,
     StackITInvalidProjectIdError,
+    StackITInvalidTokenError,
     StackITNonExistentTokenError,
 )
 from prowler.providers.stackit.stackit_provider import StackitProvider
@@ -305,3 +306,76 @@ class TestStackITProviderTestConnection:
                 project_id="12345678-1234-1234-1234-123456789abc",
                 raise_on_exception=True,
             )
+
+
+class TestStackITProviderGetProjectName:
+    @pytest.fixture
+    def fake_resourcemanager(self, monkeypatch):
+        configuration_module = types.ModuleType("stackit.core.configuration")
+        resourcemanager_module = types.ModuleType("stackit.resourcemanager")
+
+        class FakeConfiguration:
+            def __init__(self, service_account_token):
+                self.service_account_token = service_account_token
+
+        class FakeDefaultApi:
+            error = None
+
+            def __init__(self, config):
+                pass
+
+            def get_project(self, id):
+                if self.__class__.error:
+                    raise self.__class__.error
+                return {"name": "My Project"}
+
+        configuration_module.Configuration = FakeConfiguration
+        resourcemanager_module.DefaultApi = FakeDefaultApi
+
+        monkeypatch.setitem(
+            sys.modules, "stackit.core.configuration", configuration_module
+        )
+        monkeypatch.setitem(
+            sys.modules, "stackit.resourcemanager", resourcemanager_module
+        )
+        return FakeDefaultApi
+
+    def _make_provider(self):
+        provider = object.__new__(StackitProvider)
+        provider._api_token = "token"
+        provider._project_id = "12345678-1234-1234-1234-123456789abc"
+        return provider
+
+    def test_get_project_name_403_raises_invalid_token_error(
+        self, fake_resourcemanager
+    ):
+        class Http403Error(Exception):
+            status = 403
+
+        fake_resourcemanager.error = Http403Error()
+        provider = self._make_provider()
+
+        with pytest.raises(StackITInvalidTokenError):
+            provider._get_project_name()
+
+    def test_get_project_name_401_raises_invalid_token_error(
+        self, fake_resourcemanager
+    ):
+        class Http401Error(Exception):
+            status = 401
+
+        fake_resourcemanager.error = Http401Error()
+        provider = self._make_provider()
+
+        with pytest.raises(StackITInvalidTokenError):
+            provider._get_project_name()
+
+    def test_get_project_name_other_error_returns_empty_string(
+        self, fake_resourcemanager
+    ):
+        fake_resourcemanager.error = RuntimeError("network error")
+        provider = self._make_provider()
+
+        result = provider._get_project_name()
+
+        assert result == ""

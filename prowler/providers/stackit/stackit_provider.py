@@ -1,7 +1,7 @@
 import contextlib
+import io
 import os
 import pathlib
-import sys
 from typing import Optional
 from uuid import UUID
 
@@ -32,14 +32,8 @@ STACKIT_REGIONS_JSON_FILE = "stackit_regions_by_service.json"
 
 @contextlib.contextmanager
 def suppress_stderr():
-    """Context manager to suppress stderr output."""
-    original_stderr = sys.stderr
-    try:
-        sys.stderr = open(os.devnull, "w")
+    with contextlib.redirect_stderr(io.StringIO()):
         yield
-    finally:
-        sys.stderr.close()
-        sys.stderr = original_stderr
 
 
 class StackitProvider(Provider):
@@ -349,13 +343,13 @@ class StackitProvider(Provider):
             str: The project name, or empty string if unavailable
 
         Raises:
-            StackITInvalidTokenError: If the API token is invalid or expired
+            StackITInvalidTokenError: If the API token is invalid, expired, or lacks
+                project-level permissions (401 or 403 during identity validation)
         """
         try:
             from stackit.core.configuration import Configuration
             from stackit.resourcemanager import DefaultApi
 
-            # Configure SDK with API token (thread-safe), suppressing warnings
             with suppress_stderr():
                 config = Configuration(service_account_token=self._api_token)
                 client = DefaultApi(config)
@@ -382,12 +376,25 @@ class StackitProvider(Provider):
             )
             return ""
         except Exception as e:
-            # Use centralized error handler for authentication errors
+            # 401: invalid/expired token — hard failure via centralized handler
             try:
                 StackitProvider.handle_api_error(e)
             except StackITInvalidTokenError:
-                # Re-raise authentication errors to fail provider initialization
                 raise
+            except Exception:
+                pass  # handle_api_error re-raised the original; fall through
+            # 403 during identity validation means the SA has no access to this
+            # project at all, so abort rather than silently continuing with no name
+            if hasattr(e, "status") and e.status == 403:
+                logger.critical(
+                    f"StackIT service account lacks permissions for project {self._project_id}. "
+                    "Ensure the service account has the required IAM role on the project."
+                )
+                raise StackITInvalidTokenError(
+                    file="stackit_provider.py",
+                    original_exception=None,
+                    message="Service account lacks permissions for the specified project",
+                )
             # For other errors, log warning and continue
             logger.warning(
                 f"Unable to fetch project name from StackIT API: {e}. "
@@ -408,7 +415,7 @@ class StackitProvider(Provider):
 
         Raises:
             StackITInvalidTokenError: If the error is a 401 Unauthorized
-            Exception: Re-raises the original exception if not a 401
+            Exception: Re-raises the original exception otherwise
         """
         # Check if this is an authentication error (401 Unauthorized)
         if hasattr(exception, "status") and exception.status == 401:

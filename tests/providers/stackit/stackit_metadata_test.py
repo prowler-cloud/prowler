@@ -10,4 +10,6 @@ from prowler.lib.check.models import CheckMetadata
     sorted(Path("prowler/providers/stackit").glob("services/**/*.metadata.json")),
 )
 def test_stackit_check_metadata_is_valid(metadata_file):
-    CheckMetadata.parse_file(metadata_file)
+    metadata = CheckMetadata.parse_file(metadata_file)
+    assert metadata.Provider == "stackit"
+    assert metadata.CheckID == metadata_file.stem.replace(".metadata", "")

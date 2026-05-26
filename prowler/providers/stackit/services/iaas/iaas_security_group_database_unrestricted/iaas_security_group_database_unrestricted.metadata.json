@@ -16,7 +16,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.stackit.cloud/stackit/en/how-to-create-security-groups-10977460.html",
+      "Other": "https://docs.stackit.cloud/products/network/core-networking/security-groups/how-tos/create-and-manage-security-groups-and-rules/",
       "Terraform": ""
     },
     "Recommendation": {
@@ -25,8 +25,8 @@
     }
   },
   "AdditionalURLs": [
-    "https://docs.stackit.cloud/stackit/en/security-groups-10977456.html",
-    "https://docs.stackit.cloud/stackit/en/how-to-create-security-groups-10977460.html"
+    "https://docs.stackit.cloud/products/network/core-networking/security-groups/",
+    "https://docs.stackit.cloud/products/network/core-networking/security-groups/how-tos/create-and-manage-security-groups-and-rules/"
   ],
   "Categories": [
     "internet-exposed"

@@ -6,10 +6,6 @@ class StackITBaseException(ProwlerException):
     """Base class for StackIT Errors."""
 
     STACKIT_ERROR_CODES = {
-        (10000, "StackITEnvironmentVariableError"): {
-            "message": "StackIT environment variable error",
-            "remediation": "Check the StackIT environment variables and ensure they are properly set.",
-        },
         (10001, "StackITNonExistentTokenError"): {
             "message": "A StackIT API token is required to authenticate against StackIT",
             "remediation": "Check the StackIT API token and ensure it is properly set in the STACKIT_API_TOKEN environment variable.",
@@ -55,13 +51,6 @@ class StackITCredentialsError(StackITBaseException):
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         super().__init__(code, file, original_exception, message)
-
-
-class StackITEnvironmentVariableError(StackITCredentialsError):
-    def __init__(self, file=None, original_exception=None, message=None):
-        super().__init__(
-            10000, file=file, original_exception=original_exception, message=message
-        )
 
 
 class StackITNonExistentTokenError(StackITCredentialsError):
