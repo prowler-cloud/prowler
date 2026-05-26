@@ -7,14 +7,24 @@ from pydantic import BaseModel, ValidationError
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.service import OktaService
 
-# Canonical internal `name` values of the two OIN built-in apps the STIG
-# targets. `label` is what the Admin Console displays, but `name` is the
-# stable identifier returned by `/api/v1/apps` and is what we filter on.
+# These three keys are Okta-platform constants, not tenant-configurable:
+#
+# - `saasure` / `okta_enduser` are the `name` fields of the OIN catalog
+#   templates for the Okta Admin Console and Okta Dashboard built-in apps.
+#   The Okta SDK's `OINApplication.name` is documented as "the key name for
+#   the OIN app definition" — tied to the platform-level template, not
+#   editable by customers. The user-facing field is `label`, which we read
+#   only for display purposes in finding text.
+# - `admin-console` is the Okta-defined URL key for
+#   `/api/v1/first-party-app-settings/{appName}`; per the SDK's own
+#   `get_first_party_app_settings` docstring it is the only value Okta
+#   currently supports on that endpoint.
+#
+# If Okta introduces a new first-party app or renames one of these at the
+# platform level, both the constants and the check coverage need updating
+# together.
 ADMIN_CONSOLE_APP_NAME = "saasure"
 DASHBOARD_APP_NAME = "okta_enduser"
-
-# First-party app key used by Okta's `/api/v1/first-party-app-settings/{appName}`
-# endpoint. Only `admin-console` is supported by Okta today.
 ADMIN_CONSOLE_FIRST_PARTY_APP_KEY = "admin-console"
 
 
