@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Info, Maximize2 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
@@ -32,6 +32,9 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { useToast } from "@/components/ui";
+import { attackPathsTour } from "@/lib/tours/attack-paths.tour";
+import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
+import { useDriverTour } from "@/lib/tours/use-driver-tour";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -63,6 +66,8 @@ import { exportGraphAsPNG } from "./_lib";
  */
 export default function AttackPathsPage() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const scanId = searchParams.get("scanId");
   const graphState = useGraphState();
   const finding = useFindingDetails();
@@ -83,6 +88,60 @@ export default function AttackPathsPage() {
 
   // Use custom hook for query builder form state and validation
   const queryBuilder = useQueryBuilder(queries);
+
+  const hasReadyScan = scans.some((scan) => scan.attributes.graph_data_ready);
+  const hasNoScans = scans.length === 0;
+
+  useDriverTour(attackPathsEmptyTour, {
+    enabled: !scansLoading && hasNoScans,
+  });
+
+  useDriverTour(attackPathsTour, {
+    enabled: !scansLoading && hasReadyScan,
+    stepHandlers: {
+      "scan-list": {
+        onNext: async ({ waitForStep }) => {
+          const isReady = (scan: AttackPathScan) =>
+            scan.attributes.graph_data_ready;
+          // Prefer an AWS scan because today's predefined query catalog is
+          // AWS-only (see api/.../queries/registry.py). Fall back to any
+          // ready scan so the rest of the tour still runs.
+          const preferred = scans.find(
+            (scan) => isReady(scan) && scan.attributes.provider_type === "aws",
+          );
+          const fallback = scans.find(isReady);
+          const selected = preferred ?? fallback;
+          if (!selected) return;
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("scanId", selected.id);
+          router.push(`${pathname}?${params.toString()}`);
+          await waitForStep("query-selector");
+        },
+      },
+      "query-selector": {
+        onNext: async ({ waitForStep }) => {
+          // Demo query MUST be runnable without further user input:
+          // skip Custom (needs Cypher) and skip any query with required
+          // parameters (would leave the form invalid). Prefer the IAM
+          // wildcard query — well-known and usually returns findings —
+          // then fall back to the first parameterless predefined query.
+          const isRunnable = (query: AttackPathQuery) =>
+            query.id !== ATTACK_PATH_QUERY_IDS.CUSTOM &&
+            query.attributes.parameters.length === 0;
+          const preferred = queries.find(
+            (query) =>
+              query.id === "aws-iam-statements-allow-all-actions" &&
+              isRunnable(query),
+          );
+          const fallback = queries.find(isRunnable);
+          const selected = preferred ?? fallback;
+          if (!selected) return;
+          queryBuilder.handleQueryChange(selected.id);
+          await waitForStep("execute-button");
+        },
+      },
+    },
+  });
 
   // Reset graph state when component mounts
   useEffect(() => {
@@ -375,7 +434,7 @@ export default function AttackPathsPage() {
       />
 
       {/* Page introduction */}
-      <div>
+      <div data-tour-id="attack-paths-intro">
         <p className="text-text-neutral-secondary text-sm">
           Select a scan, build a query, and visualize Attack Paths in your
           infrastructure.
@@ -390,24 +449,28 @@ export default function AttackPathsPage() {
         <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
           <p className="text-sm">Loading scans...</p>
         </div>
-      ) : scans.length === 0 ? (
-        <Alert variant="info">
-          <Info className="size-4" />
-          <AlertTitle>No scans available</AlertTitle>
-          <AlertDescription>
-            <span>
-              You need to run a scan before you can analyze attack paths.{" "}
-              <Link href="/scans" className="font-medium underline">
-                Go to Scan Jobs
-              </Link>
-            </span>
-          </AlertDescription>
-        </Alert>
+      ) : hasNoScans ? (
+        <div data-tour-id="attack-paths-empty-scans-cta">
+          <Alert variant="info">
+            <Info className="size-4" />
+            <AlertTitle>No scans available</AlertTitle>
+            <AlertDescription>
+              <span>
+                You need to run a scan before you can analyze attack paths.{" "}
+                <Link href="/scans" className="font-medium underline">
+                  Go to Scan Jobs
+                </Link>
+              </span>
+            </AlertDescription>
+          </Alert>
+        </div>
       ) : (
         <>
           {/* Scans Table */}
           <Suspense fallback={<div>Loading scans...</div>}>
-            <ScanListTable scans={scans} />
+            <div data-tour-id="attack-paths-scan-list">
+              <ScanListTable scans={scans} />
+            </div>
           </Suspense>
 
           {/* Banner: viewing data from a previous scan cycle */}
@@ -427,7 +490,10 @@ export default function AttackPathsPage() {
 
           {/* Query Builder Section - shown only after selecting a scan */}
           {scanId && (
-            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+            <div
+              data-tour-id="attack-paths-query-builder"
+              className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4"
+            >
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
@@ -438,11 +504,13 @@ export default function AttackPathsPage() {
               ) : (
                 <>
                   <FormProvider {...queryBuilder.form}>
-                    <QuerySelector
-                      queries={queries}
-                      selectedQueryId={queryBuilder.selectedQuery}
-                      onQueryChange={queryBuilder.handleQueryChange}
-                    />
+                    <div data-tour-id="attack-paths-query-selector">
+                      <QuerySelector
+                        queries={queries}
+                        selectedQueryId={queryBuilder.selectedQuery}
+                        onQueryChange={queryBuilder.handleQueryChange}
+                      />
+                    </div>
 
                     {queryBuilder.selectedQueryData && (
                       <QueryDescription
@@ -457,7 +525,10 @@ export default function AttackPathsPage() {
                     )}
                   </FormProvider>
 
-                  <div className="flex justify-end gap-3">
+                  <div
+                    data-tour-id="attack-paths-execute-button"
+                    className="flex justify-end gap-3"
+                  >
                     <ExecuteButton
                       isLoading={graphState.loading}
                       isDisabled={

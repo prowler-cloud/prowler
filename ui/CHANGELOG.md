@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.30.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- In-product tour for the Attack Paths workflow: opens automatically on a user's first visit, walks through scan selection, the query builder, and the graph view, follows the active light/dark theme, and remembers it has been seen per user across tenants. First-time users who land without any scans see a short two-step intro pointing them at Scan Jobs; the full tour picks up on a later visit once a scan is ready.
+
+---
+
 ## [1.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added

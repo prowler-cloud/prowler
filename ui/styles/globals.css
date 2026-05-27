@@ -2,6 +2,8 @@
 @config "../tailwind.config.js";
 @source "../node_modules/streamdown/dist/*.js";
 
+@import "./tours.css";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ===== LIGHT THEME (ROOT) ===== */
@@ -16,6 +18,7 @@
   --bg-button-tertiary-hover: var(--color-blue-500);
   --bg-button-tertiary-active: var(--color-indigo-600);
   --bg-button-disabled: var(--color-neutral-300);
+  --text-button-primary: #0a0a0a;
 
   /* Radar Map */
   --bg-radar-map: #b51c8033;
@@ -101,6 +104,7 @@
   --bg-button-tertiary-hover: var(--color-blue-400);
   --bg-button-tertiary-active: var(--color-blue-600);
   --bg-button-disabled: var(--color-neutral-700);
+  --text-button-primary: #0a0a0a;
 
   /* Neutral Map */
   --bg-neutral-map: var(--color-gray-800);
