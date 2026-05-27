@@ -6,7 +6,7 @@
   "ServiceName": "iaas",
   "SubServiceName": "security-group",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
   "Description": "Security groups should not allow unrestricted access to database ports from the public internet (0.0.0.0/0 or ::/0). This includes MySQL (3306), PostgreSQL (5432), MongoDB (27017), Redis (6379), SQL Server (1433), and CouchDB (5984). Unrestricted database access can lead to data breaches and unauthorized access.",
