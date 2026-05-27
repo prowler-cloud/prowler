@@ -7,6 +7,7 @@ interface ScansStoreState {
   closeLaunchScanModal: () => void;
 }
 
+// Modal state is ephemeral; intentionally not persisted across reloads.
 export const useScansStore = create<ScansStoreState>((set) => ({
   isLaunchScanModalOpen: false,
   setLaunchScanModalOpen: (open) => set({ isLaunchScanModalOpen: open }),
