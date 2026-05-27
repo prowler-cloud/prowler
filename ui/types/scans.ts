@@ -56,12 +56,12 @@ export interface ScanAttributes {
   unique_resource_count: number;
   progress: number;
   scanner_args: ScannerArgs | null;
-  duration: number;
-  started_at: string;
+  duration: number | null;
+  started_at: string | null;
   inserted_at: string;
-  completed_at: string;
-  scheduled_at: string;
-  next_scan_at: string;
+  completed_at: string | null;
+  scheduled_at: string | null;
+  next_scan_at: string | null;
 }
 
 export interface ScanRelationships {
@@ -99,7 +99,7 @@ export interface ScanEntityProviderInfo {
 
 export interface ScanEntityAttributes {
   name?: string;
-  completed_at: string;
+  completed_at: string | null;
 }
 
 export interface ScanEntity {
