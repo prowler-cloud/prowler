@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- New Scan Jobs view with specific Active, Completed, Scheduled tabs [(#11258)](https://github.com/prowler-cloud/prowler/pull/11258)
+- New Scan Jobs view with specific In Progress, Completed, Scheduled tabs [(#11258)](https://github.com/prowler-cloud/prowler/pull/11258)
 
 ### 🔄 Changed
 
