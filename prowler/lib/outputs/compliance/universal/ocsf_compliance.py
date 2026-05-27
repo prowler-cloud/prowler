@@ -79,30 +79,36 @@ def _to_snake_case(name: str) -> str:
     return s.lower()
 
 
-def _build_requirement_attrs(requirement, framework) -> dict:
-    """Build a dict with requirement attributes for the unmapped section.
+def _build_requirement_attrs(requirement, framework):
+    """Build the requirement attributes payload for the unmapped section.
 
-    Keys are normalized to snake_case for OCSF consistency.
-    Only includes attributes whose AttributeMetadata has output_formats.ocsf=True.
-    When no metadata is declared, all attributes are included.
+    Keys are snake_cased. Filtered by ``AttributeMetadata.output_formats.ocsf``
+    when declared. MITRE-style attrs (``{"_raw_attributes": [...]}``) are
+    unwrapped into a list of per-entry dicts.
     """
     attrs = requirement.attributes
     if not attrs:
         return {}
 
-    # Build set of keys allowed for OCSF output
     metadata = framework.attributes_metadata
     if metadata:
         ocsf_keys = {m.key for m in metadata if m.output_formats.ocsf}
     else:
-        ocsf_keys = None  # No metadata → include all
+        ocsf_keys = None
 
-    result = {}
-    for key, value in attrs.items():
-        if ocsf_keys is not None and key not in ocsf_keys:
-            continue
-        result[_to_snake_case(key)] = value
-    return result
+    def _project(entry: dict) -> dict:
+        out = {}
+        for key, value in entry.items():
+            if ocsf_keys is not None and key not in ocsf_keys:
+                continue
+            out[_to_snake_case(key)] = value
+        return out
+
+    if isinstance(attrs, dict) and "_raw_attributes" in attrs:
+        raw = attrs.get("_raw_attributes") or []
+        return [_project(entry) for entry in raw if isinstance(entry, dict)]
+
+    return _project(attrs)
 
 
 class OCSFComplianceOutput:

@@ -114,7 +114,7 @@ describe("pickLatestCisPerProvider", () => {
     const latest = pickLatestCisPerProvider([
       "ens_rd2022_aws",
       "nis2_aws",
-      "csa_ccm_4.0_aws",
+      "csa_ccm_4.0",
       "prowler_threatscore_aws",
       "cis_5.0_aws",
     ]);

@@ -29,7 +29,10 @@ from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import rls_transaction
 from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
 from api.utils import initialize_prowler_provider
-from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
@@ -571,7 +574,7 @@ def generate_csa_report(
     Args:
         tenant_id: The tenant ID for Row-Level Security context.
         scan_id: ID of the scan executed by Prowler.
-        compliance_id: ID of the compliance framework (e.g., "csa_ccm_4.0_aws").
+        compliance_id: ID of the compliance framework (e.g., "csa_ccm_4.0").
         output_path: Output PDF file path.
         provider_id: Provider ID for the scan.
         only_failed: If True, only include failed requirements in detailed section.
@@ -791,6 +794,10 @@ def generate_compliance_reports(
     frameworks_bulk: dict = {}
     try:
         frameworks_bulk = Compliance.get_bulk(provider_type)
+        # Compliance.get_bulk only scans `compliance/{provider}/`. Universal
+        # top-level JSONs (e.g. csa_ccm_4.0) need the universal loader.
+        for name, fw in get_bulk_compliance_frameworks_universal(provider_type).items():
+            frameworks_bulk.setdefault(name, fw)
     except Exception as e:
         logger.error("Error loading compliance frameworks for %s: %s", provider_type, e)
         # Fall through; individual frameworks will still try and fail
@@ -884,7 +891,7 @@ def generate_compliance_reports(
         )
     if generate_csa:
         pending_checks_by_framework["csa"] = _get_compliance_check_ids(
-            frameworks_bulk.get(f"csa_ccm_4.0_{provider_type}")
+            frameworks_bulk.get("csa_ccm_4.0")
         )
     if generate_cis and latest_cis:
         pending_checks_by_framework["cis"] = _get_compliance_check_ids(
@@ -1183,7 +1190,7 @@ def generate_compliance_reports(
     if generate_csa:
         generated_report_keys.append("csa")
         csa_path = output_paths["csa"]
-        compliance_id_csa = f"csa_ccm_4.0_{provider_type}"
+        compliance_id_csa = "csa_ccm_4.0"
         pdf_path_csa = f"{csa_path}_csa_report.pdf"
         logger.info("Generating CSA CCM report with compliance %s", compliance_id_csa)
 

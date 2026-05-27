@@ -364,26 +364,30 @@ def _get_compliance_check_ids(compliance_obj) -> set[str]:
     framework finishes the entries no other pending framework needs can be
     evicted from the cache (PROWLER-1733).
 
-    Args:
-        compliance_obj: A loaded Compliance framework object exposing a
-            ``Requirements`` iterable, each requirement carrying ``Checks``.
-            ``None`` is treated as "no checks" rather than raising, so the
-            caller can pass ``frameworks_bulk.get(...)`` directly without
-            an extra existence check.
-
-    Returns:
-        Set of check_id strings (empty if ``compliance_obj`` is ``None``).
+    Accepts either the legacy ``Compliance`` shape (``Requirements`` /
+    ``Checks`` lists) or the universal ``ComplianceFramework`` shape
+    (``requirements`` / ``checks`` dict keyed by provider). ``None`` is
+    treated as "no checks" so callers can pass ``frameworks_bulk.get(...)``
+    directly.
     """
     if compliance_obj is None:
         return set()
     checks: set[str] = set()
-    requirements = getattr(compliance_obj, "Requirements", None) or []
+    requirements = (
+        getattr(compliance_obj, "Requirements", None)
+        or getattr(compliance_obj, "requirements", None)
+        or []
+    )
     try:
         # Defensive: Mock objects (used in unit tests) return another Mock
         # for any attribute access, which is truthy but not iterable. Treat
         # any non-iterable Requirements value as "no checks".
         for req in requirements:
-            req_checks = getattr(req, "Checks", None) or []
+            req_checks = getattr(req, "Checks", None)
+            if req_checks is None:
+                # Universal shape: checks is a {provider: [check_ids]} dict.
+                req_checks_dict = getattr(req, "checks", None) or {}
+                req_checks = [cid for ids in req_checks_dict.values() for cid in ids]
             try:
                 checks.update(req_checks)
             except TypeError:
