@@ -1,8 +1,10 @@
-from unittest.mock import patch
+import asyncio
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 from azure.core.credentials import AccessToken
+from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential
 from mock import MagicMock
 
@@ -85,6 +87,7 @@ class TestAzureProvider:
                 "python_latest_version": "3.12",
                 "java_latest_version": "17",
                 "recommended_minimal_tls_versions": ["1.2", "1.3"],
+                "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"],
                 "vm_backup_min_daily_retention_days": 7,
                 "desired_vm_sku_sizes": [
                     "Standard_A8_v2",
@@ -432,8 +435,29 @@ class TestAzureProvider:
             )
 
     def test_test_connection_with_ClientAuthenticationError(self):
-        with pytest.raises(AzureHTTPResponseError) as exception:
-            tenant_id = str(uuid4())
+        tenant_id = str(uuid4())
+        error_message = (
+            "Authentication failed: Unable to get authority configuration for "
+            f"https://login.microsoftonline.com/{tenant_id}."
+        )
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient"
+            ) as mock_subscription_client,
+            pytest.raises(AzureHTTPResponseError) as exception,
+        ):
+            mock_setup_session.return_value = MagicMock()
+            mock_client = MagicMock()
+            mock_client.subscriptions = MagicMock()
+            mock_client.subscriptions.list.side_effect = HttpResponseError(
+                message=error_message
+            )
+            mock_subscription_client.return_value = mock_client
+
             AzureProvider.test_connection(
                 browser_auth=True,
                 tenant_id=tenant_id,
@@ -441,9 +465,8 @@ class TestAzureProvider:
             )
 
         assert exception.type == AzureHTTPResponseError
-        assert (
-            exception.value.args[0]
-            == f"[2010] Error in HTTP response from Azure - Authentication failed: Unable to get authority configuration for https://login.microsoftonline.com/{tenant_id}. Authority would typically be in a format of https://login.microsoftonline.com/your_tenant or https://tenant_name.ciamlogin.com or https://tenant_name.b2clogin.com/tenant.onmicrosoft.com/policy.  Also please double check your tenant name or GUID is correct."
+        assert exception.value.args[0] == (
+            f"[2010] Error in HTTP response from Azure - {error_message}"
         )
 
     def test_test_connection_without_any_method(self):
@@ -527,3 +550,261 @@ class TestAzureProvider:
         regions = azure_provider.get_regions(subscription_ids=subscription_ids)
 
         assert regions == expected_regions
+
+
+class TestAzureProviderSetupIdentitySubscriptions:
+    """Regression tests ensuring identity.subscriptions preserves every
+    subscription even when multiple Azure subscriptions share the same
+    display_name (which is permitted by Azure)."""
+
+    @staticmethod
+    def _mock_subscription(display_name, subscription_id):
+        mock_subscription = MagicMock()
+        mock_subscription.display_name = display_name
+        mock_subscription.subscription_id = subscription_id
+        return mock_subscription
+
+    @staticmethod
+    def _build_subscriptions_client_mock(list_result=None, get_map=None):
+        """Construct a fully explicit SubscriptionClient mock so the tests do
+        not depend on MagicMock auto-attribute behavior, which makes the suite
+        sensitive to shared state across test files."""
+        subscriptions_operations = MagicMock()
+        subscriptions_operations.list = MagicMock(return_value=list_result or [])
+        if get_map is not None:
+            subscriptions_operations.get = MagicMock(
+                side_effect=lambda subscription_id: get_map[subscription_id]
+            )
+        else:
+            subscriptions_operations.get = MagicMock()
+
+        tenants_operations = MagicMock()
+        tenants_operations.list = MagicMock(return_value=[])
+
+        client_instance = MagicMock()
+        client_instance.subscriptions = subscriptions_operations
+        client_instance.tenants = tenants_operations
+
+        client_class = MagicMock(return_value=client_instance)
+        return client_class
+
+    @staticmethod
+    def _build_provider():
+        """Create an AzureProvider instance ready to invoke setup_identity
+        with auth flags left False so the AAD lookup branches are skipped and
+        the test focuses on the subscription resolution logic."""
+        with patch.object(AzureProvider, "__init__", return_value=None):
+            azure_provider = AzureProvider()
+        azure_provider._session = MagicMock()
+        azure_provider._region_config = AzureRegionConfig(
+            name="AzureCloud",
+            authority=None,
+            base_url="https://management.azure.com",
+            credential_scopes=["https://management.azure.com/.default"],
+        )
+        return azure_provider
+
+    def test_setup_identity_auto_discovery_preserves_unique_display_names(self):
+        first_id = str(uuid4())
+        second_id = str(uuid4())
+        client_class = self._build_subscriptions_client_mock(
+            list_result=[
+                self._mock_subscription("Unique Name One", first_id),
+                self._mock_subscription("Unique Name Two", second_id),
+            ]
+        )
+        with patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient",
+            client_class,
+        ):
+            azure_provider = self._build_provider()
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[],
+                client_id=None,
+            )
+
+        assert identity.subscriptions == {
+            first_id: "Unique Name One",
+            second_id: "Unique Name Two",
+        }
+
+    def test_setup_identity_auto_discovery_preserves_duplicate_display_names(
+        self,
+    ):
+        shared_name = "Shared Display Name"
+        first_id = str(uuid4())
+        second_id = str(uuid4())
+        client_class = self._build_subscriptions_client_mock(
+            list_result=[
+                self._mock_subscription(shared_name, first_id),
+                self._mock_subscription(shared_name, second_id),
+            ]
+        )
+        with patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient",
+            client_class,
+        ):
+            azure_provider = self._build_provider()
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[],
+                client_id=None,
+            )
+
+        assert identity.subscriptions == {
+            first_id: shared_name,
+            second_id: shared_name,
+        }
+
+    def test_setup_identity_filtered_preserves_unique_display_names(self):
+        first_id = str(uuid4())
+        second_id = str(uuid4())
+        client_class = self._build_subscriptions_client_mock(
+            get_map={
+                first_id: self._mock_subscription("Unique Name One", first_id),
+                second_id: self._mock_subscription("Unique Name Two", second_id),
+            }
+        )
+        with patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient",
+            client_class,
+        ):
+            azure_provider = self._build_provider()
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[first_id, second_id],
+                client_id=None,
+            )
+
+        assert identity.subscriptions == {
+            first_id: "Unique Name One",
+            second_id: "Unique Name Two",
+        }
+
+    def test_setup_identity_filtered_preserves_duplicate_display_names(self):
+        shared_name = "Shared Display Name"
+        first_id = str(uuid4())
+        second_id = str(uuid4())
+        client_class = self._build_subscriptions_client_mock(
+            get_map={
+                first_id: self._mock_subscription(shared_name, first_id),
+                second_id: self._mock_subscription(shared_name, second_id),
+            }
+        )
+        with patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient",
+            client_class,
+        ):
+            azure_provider = self._build_provider()
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[first_id, second_id],
+                client_id=None,
+            )
+
+        assert identity.subscriptions == {
+            first_id: shared_name,
+            second_id: shared_name,
+        }
+
+
+class TestAzureProviderSetupIdentityEventLoop:
+    """Regression for the Celery worker scenario where
+    asyncio.get_event_loop() raised "There is no current event loop in
+    thread 'MainThread'." on Python 3.12. setup_identity now uses
+    asyncio.run(), which creates its own loop and must work without a
+    pre-existing one in the current thread."""
+
+    @staticmethod
+    def _mock_subscription(display_name, subscription_id):
+        mock_subscription = MagicMock()
+        mock_subscription.display_name = display_name
+        mock_subscription.subscription_id = subscription_id
+        return mock_subscription
+
+    @staticmethod
+    def _build_subscriptions_client_mock(subscriptions):
+        subscriptions_operations = MagicMock()
+        subscriptions_operations.list = MagicMock(return_value=subscriptions)
+        subscriptions_operations.get = MagicMock()
+
+        tenants_operations = MagicMock()
+        tenants_operations.list = MagicMock(return_value=[])
+
+        client_instance = MagicMock()
+        client_instance.subscriptions = subscriptions_operations
+        client_instance.tenants = tenants_operations
+        return MagicMock(return_value=client_instance)
+
+    @staticmethod
+    def _build_provider():
+        with patch.object(AzureProvider, "__init__", return_value=None):
+            azure_provider = AzureProvider()
+        azure_provider._session = MagicMock()
+        azure_provider._region_config = AzureRegionConfig(
+            name="AzureCloud",
+            authority=None,
+            base_url="https://management.azure.com",
+            credential_scopes=["https://management.azure.com/.default"],
+        )
+        return azure_provider
+
+    def test_setup_identity_succeeds_without_active_event_loop(self):
+        sub_id = str(uuid4())
+        subscriptions_client = self._build_subscriptions_client_mock(
+            [self._mock_subscription("Sub", sub_id)]
+        )
+
+        graph_client = MagicMock()
+        graph_client.domains.get = AsyncMock(return_value=MagicMock(value=[]))
+        graph_client.me.get = AsyncMock(return_value=None)
+
+        # Simulate the Celery worker state: no event loop registered for the
+        # current thread. Before the fix this combination triggered
+        # `RuntimeError: There is no current event loop in thread 'MainThread'.`
+        # on Python 3.12 from asyncio.get_event_loop().
+        asyncio.set_event_loop(None)
+        try:
+            with (
+                patch(
+                    "prowler.providers.azure.azure_provider.GraphServiceClient",
+                    return_value=graph_client,
+                ),
+                patch(
+                    "prowler.providers.azure.azure_provider.SubscriptionClient",
+                    subscriptions_client,
+                ),
+            ):
+                azure_provider = self._build_provider()
+                identity = azure_provider.setup_identity(
+                    az_cli_auth=False,
+                    sp_env_auth=True,
+                    browser_auth=False,
+                    managed_identity_auth=False,
+                    subscription_ids=[],
+                    client_id="00000000-0000-0000-0000-000000000000",
+                )
+        finally:
+            # Re-arm a loop for sibling tests that may rely on the default.
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
+        assert isinstance(identity, AzureIdentityInfo)
+        assert identity.subscriptions == {sub_id: "Sub"}
+        graph_client.domains.get.assert_awaited_once()

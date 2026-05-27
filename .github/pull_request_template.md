@@ -36,6 +36,7 @@ Please add a detailed description of how to review this PR.
 
 #### UI
 - [ ] All issue/task requirements work as expected on the UI
+- [ ] If this PR adds or updates npm dependencies, include package-health evidence (maintenance, popularity, known vulnerabilities, license, release age) and explain why existing/native alternatives are insufficient.
 - [ ] Screenshots/Video of the functionality flow (if applicable) - Mobile (X < 640px)
 - [ ] Screenshots/Video of the functionality flow (if applicable) - Table (640px > X < 1024px)
 - [ ] Screenshots/Video of the functionality flow (if applicable) - Desktop (X > 1024px)
@@ -48,7 +49,7 @@ Please add a detailed description of how to review this PR.
 - [ ] Performance test results (if applicable)
 - [ ] Any other relevant evidence of the implementation (if applicable)
 - [ ] Verify if API specs need to be regenerated.
-- [ ] Check if version updates are required (e.g., specs, Poetry, etc.).
+- [ ] Check if version updates are required (e.g., specs, uv, etc.).
 - [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/api/CHANGELOG.md), if applicable.
 
 ### License

@@ -3,86 +3,37 @@ from collections import Counter
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
+    ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
 )
 
 
 class entra_emergency_access_exclusion(Check):
-    """Check if at least one emergency access account or group is excluded from all Conditional Access policies.
+    """Check that at least one emergency access account or group is excluded
+    from every enabled Conditional Access policy with a `Block` grant control.
 
-    This check ensures that the tenant has at least one emergency/break glass account
-    or account exclusion group that is excluded from all Conditional Access policies.
-    This prevents accidental lockout scenarios where misconfigured CA policies could
-    block all administrative access to the tenant.
+    Emergency access (break glass) accounts are, by definition, accounts that
+    cannot be blocked by Conditional Access. Membership of an account in the
+    exclusion list of every enabled blocking policy is therefore the necessary
+    condition for it to act as a true emergency account: if any enabled
+    blocking policy applies to it, a misconfiguration of that policy can lock
+    out the tenant.
 
-    - PASS: At least one user or group is excluded from all enabled Conditional Access policies,
-            or there are no enabled policies.
-    - FAIL: No user or group is excluded from all enabled Conditional Access policies.
+    - PASS: At least one user or group is excluded from every enabled
+            Conditional Access policy with a `Block` grant control, or no
+            enabled blocking Conditional Access policy exists.
+    - FAIL: One or more enabled blocking Conditional Access policies exist and
+            no user or group is excluded from all of them.
     """
 
     def execute(self) -> list[CheckReportM365]:
-        """Execute the check for emergency access account exclusions.
+        """Execute the check for emergency access account exclusions from
+        blocking Conditional Access policies.
 
         Returns:
             list[CheckReportM365]: A list containing the result of the check.
         """
         findings = []
-
-        # Get all enabled CA policies (excluding disabled ones)
-        enabled_policies = [
-            policy
-            for policy in entra_client.conditional_access_policies.values()
-            if policy.state != ConditionalAccessPolicyState.DISABLED
-        ]
-
-        # If there are no enabled policies, there's nothing to exclude from
-        if not enabled_policies:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Conditional Access Policies",
-                resource_id="conditionalAccessPolicies",
-            )
-            report.status = "PASS"
-            report.status_extended = "No enabled Conditional Access policies found. Emergency access exclusions are not required."
-            findings.append(report)
-            return findings
-
-        total_policy_count = len(enabled_policies)
-
-        # Count how many policies exclude each user
-        excluded_users_counter = Counter()
-        for policy in enabled_policies:
-            user_conditions = policy.conditions.user_conditions
-            if user_conditions:
-                for user_id in user_conditions.excluded_users:
-                    excluded_users_counter[user_id] += 1
-
-        # Count how many policies exclude each group
-        excluded_groups_counter = Counter()
-        for policy in enabled_policies:
-            user_conditions = policy.conditions.user_conditions
-            if user_conditions:
-                for group_id in user_conditions.excluded_groups:
-                    excluded_groups_counter[group_id] += 1
-
-        # Find users excluded from ALL policies
-        users_excluded_from_all = [
-            user_id
-            for user_id, count in excluded_users_counter.items()
-            if count == total_policy_count
-        ]
-
-        # Find groups excluded from ALL policies
-        groups_excluded_from_all = [
-            group_id
-            for group_id, count in excluded_groups_counter.items()
-            if count == total_policy_count
-        ]
-
-        has_emergency_exclusion = bool(
-            users_excluded_from_all or groups_excluded_from_all
-        )
 
         report = CheckReportM365(
             metadata=self.metadata(),
@@ -91,27 +42,67 @@ class entra_emergency_access_exclusion(Check):
             resource_id="conditionalAccessPolicies",
         )
 
-        if has_emergency_exclusion:
-            report.status = "PASS"
-            exclusion_details = []
-            if users_excluded_from_all:
-                user_names = []
-                for user_id in users_excluded_from_all:
-                    user = entra_client.users.get(user_id)
-                    user_names.append(user.name if user else user_id)
-                exclusion_details.append(f"user(s): {', '.join(user_names)}")
-            if groups_excluded_from_all:
-                group_names = []
-                groups_by_id = {g.id: g for g in entra_client.groups}
-                for group_id in groups_excluded_from_all:
-                    group = groups_by_id.get(group_id)
-                    group_names.append(group.name if group else group_id)
-                exclusion_details.append(f"group(s): {', '.join(group_names)}")
-            report.status_extended = f"Emergency access {' and '.join(exclusion_details)} excluded from all {total_policy_count} enabled Conditional Access policies."
-        else:
-            report.status = "FAIL"
-            report.status_extended = f"No user or group is excluded as emergency access from all {total_policy_count} enabled Conditional Access policies."
+        blocking_policies = [
+            policy
+            for policy in entra_client.conditional_access_policies.values()
+            if policy.state != ConditionalAccessPolicyState.DISABLED
+            and ConditionalAccessGrantControl.BLOCK
+            in policy.grant_controls.built_in_controls
+        ]
 
+        if not blocking_policies:
+            report.status = "PASS"
+            report.status_extended = "No enabled Conditional Access policies with a Block grant control found. Emergency access exclusions are not required."
+            findings.append(report)
+            return findings
+
+        total_blocking_count = len(blocking_policies)
+
+        excluded_users_counter = Counter()
+        excluded_groups_counter = Counter()
+        for policy in blocking_policies:
+            user_conditions = policy.conditions.user_conditions
+            if not user_conditions:
+                continue
+            for user_id in user_conditions.excluded_users:
+                excluded_users_counter[user_id] += 1
+            for group_id in user_conditions.excluded_groups:
+                excluded_groups_counter[group_id] += 1
+
+        emergency_user_ids = [
+            user_id
+            for user_id, count in excluded_users_counter.items()
+            if count == total_blocking_count
+        ]
+        emergency_group_ids = [
+            group_id
+            for group_id, count in excluded_groups_counter.items()
+            if count == total_blocking_count
+        ]
+
+        if not (emergency_user_ids or emergency_group_ids):
+            report.status = "FAIL"
+            report.status_extended = f"No user or group is excluded as emergency access from all {total_blocking_count} enabled Conditional Access policies with a Block grant control."
+            findings.append(report)
+            return findings
+
+        exclusion_details = []
+        if emergency_user_ids:
+            user_names = []
+            for uid in emergency_user_ids:
+                user = entra_client.users.get(uid)
+                user_names.append(user.name if user else uid)
+            exclusion_details.append(f"user(s): {', '.join(user_names)}")
+        if emergency_group_ids:
+            groups_by_id = {g.id: g for g in entra_client.groups}
+            group_names = []
+            for gid in emergency_group_ids:
+                group = groups_by_id.get(gid)
+                group_names.append(group.name if group else gid)
+            exclusion_details.append(f"group(s): {', '.join(group_names)}")
+
+        report.status = "PASS"
+        report.status_extended = f"Emergency access {' and '.join(exclusion_details)} excluded from all {total_blocking_count} enabled Conditional Access policies with a Block grant control."
         findings.append(report)
 
         return findings

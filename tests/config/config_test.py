@@ -75,6 +75,7 @@ config_aws = {
     "mute_non_default_regions": False,
     "max_unused_access_keys_days": 45,
     "max_console_access_days": 45,
+    "max_unused_sagemaker_access_days": 90,
     "shodan_api_key": None,
     "max_security_group_rules": 50,
     "max_ec2_instance_age_in_days": 180,

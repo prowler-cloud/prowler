@@ -3,9 +3,7 @@ name: 'SDK: Container Build and Push'
 on:
   push:
     branches:
-      - 'v3'      # For v3-latest
-      - 'v4.6'    # For v4-latest
-      - 'master'  # For latest
+      - 'master'
     paths-ignore:
       - '.github/**'
       - '!.github/workflows/sdk-container-build-push.yml'
@@ -56,14 +54,13 @@ jobs:
     timeout-minutes: 5
     outputs:
       prowler_version: ${{ steps.get-prowler-version.outputs.prowler_version }}
-      prowler_version_major: ${{ steps.get-prowler-version.outputs.prowler_version_major }}
       latest_tag: ${{ steps.get-prowler-version.outputs.latest_tag }}
       stable_tag: ${{ steps.get-prowler-version.outputs.stable_tag }}
     permissions:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -76,48 +73,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Python with Poetry
-        uses: ./.github/actions/setup-python-poetry
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          install-dependencies: 'false'
-          enable-cache: 'false'
-
-      - name: Inject poetry-bumpversion plugin
-        run: pipx inject poetry poetry-bumpversion
-
       - name: Get Prowler version and set tags
         id: get-prowler-version
         run: |
-          PROWLER_VERSION="$(poetry version -s 2>/dev/null)"
+          PROWLER_VERSION="$(grep -E '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')"
           echo "prowler_version=${PROWLER_VERSION}" >> "${GITHUB_OUTPUT}"
 
-          # Extract major version
           PROWLER_VERSION_MAJOR="${PROWLER_VERSION%%.*}"
-          echo "prowler_version_major=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_OUTPUT}"
-
-          # Set version-specific tags
-          case ${PROWLER_VERSION_MAJOR} in
-            3)
-              echo "latest_tag=v3-latest" >> "${GITHUB_OUTPUT}"
-              echo "stable_tag=v3-stable" >> "${GITHUB_OUTPUT}"
-              echo "✓ Prowler v3 detected - tags: v3-latest, v3-stable"
-              ;;
-            4)
-              echo "latest_tag=v4-latest" >> "${GITHUB_OUTPUT}"
-              echo "stable_tag=v4-stable" >> "${GITHUB_OUTPUT}"
-              echo "✓ Prowler v4 detected - tags: v4-latest, v4-stable"
-              ;;
-            5)
-              echo "latest_tag=latest" >> "${GITHUB_OUTPUT}"
-              echo "stable_tag=stable" >> "${GITHUB_OUTPUT}"
-              echo "✓ Prowler v5 detected - tags: latest, stable"
-              ;;
-            *)
-              echo "::error::Unsupported Prowler major version: ${PROWLER_VERSION_MAJOR}"
-              exit 1
-              ;;
-          esac
+          if [[ "${PROWLER_VERSION_MAJOR}" != "5" ]]; then
+            echo "::error::Unsupported Prowler major version: ${PROWLER_VERSION_MAJOR}"
+            exit 1
+          fi
+          echo "latest_tag=latest" >> "${GITHUB_OUTPUT}"
+          echo "stable_tag=stable" >> "${GITHUB_OUTPUT}"
 
   notify-release-started:
     if: github.repository == 'prowler-cloud/prowler' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
@@ -130,7 +98,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
@@ -173,7 +141,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -181,6 +149,7 @@ jobs:
             public.ecr.aws:443
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             auth.docker.io:443
             debian.map.fastlydns.net:80
             github.com:443
@@ -199,13 +168,13 @@ jobs:
           persist-credentials: false
 
       - name: Login to DockerHub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: public.ecr.aws
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
@@ -219,7 +188,7 @@ jobs:
       - name: Build and push SDK container for ${{ matrix.arch }}
         id: container-push
         if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: .
           file: ${{ env.DOCKERFILE_PATH }}
@@ -228,7 +197,7 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
   # Create and push multi-architecture manifest
   create-manifest:
@@ -240,7 +209,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -248,19 +217,20 @@ jobs:
             auth.docker.io:443
             public.ecr.aws:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             github.com:443
             release-assets.githubusercontent.com:443
             api.ecr-public.us-east-1.amazonaws.com:443
 
 
       - name: Login to DockerHub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: public.ecr.aws
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
@@ -297,7 +267,7 @@ jobs:
       # Push to toniblyx/prowler only for current version (latest/stable/release tags)
       - name: Login to DockerHub (toniblyx)
         if: needs.setup.outputs.latest_tag == 'latest'
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.TONIBLYX_DOCKERHUB_USERNAME }}
           password: ${{ secrets.TONIBLYX_DOCKERHUB_PASSWORD }}
@@ -322,7 +292,7 @@ jobs:
       # Re-login as prowlercloud for cleanup of intermediate tags
       - name: Login to DockerHub (prowlercloud)
         if: always()
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -350,7 +320,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
@@ -386,39 +356,3 @@ jobs:
           payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
           step-outcome: ${{ steps.outcome.outputs.outcome }}
           update-ts: ${{ needs.notify-release-started.outputs.message-ts }}
-
-  dispatch-v3-deployment:
-    needs: [setup, container-build-push]
-    if: always() && needs.setup.outputs.prowler_version_major == '3' && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
-        with:
-          egress-policy: audit
-
-      - name: Calculate short SHA
-        id: short-sha
-        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-
-      - name: Dispatch v3 deployment (latest)
-        if: github.event_name == 'push'
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
-        with:
-          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}
-          event-type: dispatch
-          client-payload: '{"version":"v3-latest","tag":"${{ steps.short-sha.outputs.short_sha }}"}'
-
-      - name: Dispatch v3 deployment (release)
-        if: github.event_name == 'release'
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
-        with:
-          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}
-          event-type: dispatch
-          client-payload: '{"version":"release","tag":"${{ needs.setup.outputs.prowler_version }}"}'

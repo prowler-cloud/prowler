@@ -31,6 +31,7 @@ vi.mock("@/components/icons/providers-badge", () => ({
   CloudflareProviderBadge: () => <span>Cloudflare</span>,
   OpenStackProviderBadge: () => <span>OpenStack</span>,
   VercelProviderBadge: () => <span>Vercel</span>,
+  OktaProviderBadge: () => <span>Okta</span>,
 }));
 
 vi.mock("@/components/shadcn/select/multiselect", () => ({
@@ -134,5 +135,14 @@ describe("ProviderTypeSelector", () => {
       "data-keywords",
       expect.stringContaining("Amazon Web Services"),
     );
+  });
+
+  it("disables select all when every provider is already shown", () => {
+    render(<ProviderTypeSelector providers={providers} />);
+
+    expect(
+      screen.getByRole("option", { name: /select all providers/i }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("All selected")).toBeInTheDocument();
   });
 });

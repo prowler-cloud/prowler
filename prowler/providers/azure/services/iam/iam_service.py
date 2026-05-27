@@ -23,7 +23,7 @@ class IAM(AzureService):
                 builtin_roles.update({subscription: {}})
                 custom_roles.update({subscription: {}})
                 all_roles = client.role_definitions.list(
-                    scope=f"/subscriptions/{self.subscriptions[subscription]}",
+                    scope=f"/subscriptions/{subscription}",
                 )
                 for role in all_roles:
                     if role.role_type == "CustomRole":
@@ -53,7 +53,7 @@ class IAM(AzureService):
                         )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return builtin_roles, custom_roles
 
@@ -83,7 +83,7 @@ class IAM(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return role_assignments
 

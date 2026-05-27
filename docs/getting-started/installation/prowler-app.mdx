@@ -37,8 +37,8 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     _Requirements_:
 
     - `git` installed.
-    - `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
-    - `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+    - `uv` installed: [uv installation](https://docs.astral.sh/uv/getting-started/installation/).
+    - `pnpm` installed through [Corepack](https://pnpm.io/installation#using-corepack) or the standalone [pnpm installation](https://pnpm.io/installation).
     - `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
     <Warning>
@@ -49,8 +49,8 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     ```bash
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
-    poetry install \
-    eval $(poetry env activate) \
+    uv sync \
+    source .venv/bin/activate \
     set -a \
     source .env \
     docker compose up postgres valkey -d \
@@ -59,11 +59,6 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     gunicorn -c config/guniconf.py config.wsgi:application
     ```
 
-    <Warning>
-      Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
-
-      If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment. In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
-    </Warning>
     > Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
 
     _Commands to run the API Worker_:
@@ -71,8 +66,8 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     ```bash
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
-    poetry install \
-    eval $(poetry env activate) \
+    uv sync \
+    source .venv/bin/activate \
     set -a \
     source .env \
     cd src/backend \
@@ -84,8 +79,8 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     ```bash
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/api \
-    poetry install \
-    eval $(poetry env activate) \
+    uv sync \
+    source .venv/bin/activate \
     set -a \
     source .env \
     cd src/backend \
@@ -97,9 +92,11 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     ```bash
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/ui \
-    npm install \
-    npm run build \
-    npm start
+    corepack enable \
+    corepack install \
+    pnpm install --frozen-lockfile \
+    pnpm run build \
+    pnpm start
     ```
 
     > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
@@ -121,8 +118,8 @@ To update the environment file:
 Edit the `.env` file and change version values:
 
 ```env
-PROWLER_UI_VERSION="5.25.1"
-PROWLER_API_VERSION="5.25.1"
+PROWLER_UI_VERSION="5.28.0"
+PROWLER_API_VERSION="5.28.0"
 ```
 
 <Note>

@@ -89,6 +89,11 @@ const VercelProviderBadge = lazy(() =>
     default: m.VercelProviderBadge,
   })),
 );
+const OktaProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OktaProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -159,6 +164,10 @@ const PROVIDER_DATA: Record<
   vercel: {
     label: "Vercel",
     icon: VercelProviderBadge,
+  },
+  okta: {
+    label: "Okta",
+    icon: OktaProviderBadge,
   },
 };
 
@@ -277,8 +286,7 @@ export const ProviderTypeSelector = ({
         className="sr-only"
         id="provider-type-label"
       >
-        Filter by cloud provider type. Select one or more providers to view
-        findings.
+        Filter by provider type. Select one or more providers to view findings.
       </label>
       <MultiSelect
         values={selectedTypes}
@@ -296,18 +304,23 @@ export const ProviderTypeSelector = ({
               <div
                 role="option"
                 aria-selected={selectedTypes.length === 0}
+                aria-disabled={selectedTypes.length === 0}
                 aria-label="Select all providers (clears current selection to show all)"
                 tabIndex={0}
-                className="text-text-neutral-secondary flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700/50"
-                onClick={() => handleMultiValueChange([])}
+                className="text-text-neutral-secondary flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-slate-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-slate-700/50"
+                onClick={() => {
+                  if (selectedTypes.length === 0) return;
+                  handleMultiValueChange([]);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
+                    if (selectedTypes.length === 0) return;
                     handleMultiValueChange([]);
                   }
                 }}
               >
-                Select All
+                {selectedTypes.length === 0 ? "All selected" : "Select All"}
               </div>
               {availableTypes.map((providerType) => (
                 <MultiSelectItem

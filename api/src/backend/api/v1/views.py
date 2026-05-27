@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import time
+import uuid
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -16,10 +17,11 @@ from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain
+from celery import chain, states
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
+from config.version import RELEASE_ID
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
@@ -60,6 +62,7 @@ from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -422,7 +425,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.27.0"
+        spectacular_settings.VERSION = RELEASE_ID
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2534,28 +2537,45 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+
+        # Broker publish is deferred to on_commit so the worker cannot read
+        # Scan before BaseRLSViewSet's dispatch-wide atomic commits.
+        pre_task_id = str(uuid.uuid4())
+
         with transaction.atomic():
             scan = input_serializer.save()
-        with transaction.atomic():
-            task = perform_scan_task.apply_async(
-                kwargs={
-                    "tenant_id": self.request.tenant_id,
-                    "scan_id": str(scan.id),
-                    "provider_id": str(scan.provider_id),
-                    # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute")
-                },
+            scan.task_id = pre_task_id
+            scan.save(update_fields=["task_id"])
+
+            attack_paths_db_utils.create_attack_paths_scan(
+                tenant_id=self.request.tenant_id,
+                scan_id=str(scan.id),
+                provider_id=str(scan.provider_id),
             )
 
-        attack_paths_db_utils.create_attack_paths_scan(
-            tenant_id=self.request.tenant_id,
-            scan_id=str(scan.id),
-            provider_id=str(scan.provider_id),
-        )
+            task_result, _ = TaskResult.objects.get_or_create(
+                task_id=pre_task_id,
+                defaults={"status": states.PENDING, "task_name": "scan-perform"},
+            )
+            prowler_task, _ = Task.objects.update_or_create(
+                id=pre_task_id,
+                tenant_id=self.request.tenant_id,
+                defaults={"task_runner_task": task_result},
+            )
 
-        prowler_task = Task.objects.get(id=task.id)
-        scan.task_id = task.id
-        scan.save(update_fields=["task_id"])
+            scan_kwargs = {
+                "tenant_id": self.request.tenant_id,
+                "scan_id": str(scan.id),
+                "provider_id": str(scan.provider_id),
+                # Disabled for now
+                # checks_to_execute=scan.scanner_args.get("checks_to_execute")
+            }
+
+            transaction.on_commit(
+                lambda: perform_scan_task.apply_async(
+                    kwargs=scan_kwargs, task_id=pre_task_id
+                )
+            )
 
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)
@@ -7349,6 +7369,15 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
+        # `check_title` / `check_description` are intentionally NOT resolved
+        # here. They live in the large JSONB `check_metadata` blob (TOASTed),
+        # so reading them per finding row is very expensive, and pulling them
+        # in via a correlated subquery makes Django add the subquery to GROUP
+        # BY, which re-evaluates it once per input row. They are identical for
+        # every finding of a `check_id`, so `_post_process_aggregation` fills
+        # them from the summary table's plain columns in a single batched
+        # lookup scoped to the paginated page.
+
         # `pass_count`, `fail_count` and `manual_count` only count non-muted
         # findings. Muted findings are tracked separately via the
         # `*_muted_count` fields.
@@ -7419,15 +7448,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 agg_failing_since=Min(
                     "first_seen_at", filter=Q(status="FAIL", muted=False)
                 ),
-                check_title=Coalesce(
-                    Max(KeyTextTransform("checktitle", "check_metadata")),
-                    Max(KeyTextTransform("CheckTitle", "check_metadata")),
-                    Max(KeyTextTransform("Checktitle", "check_metadata")),
-                ),
-                check_description=Coalesce(
-                    Max(KeyTextTransform("description", "check_metadata")),
-                    Max(KeyTextTransform("Description", "check_metadata")),
-                ),
             )
             .annotate(
                 # Group is muted only if it has zero non-muted findings.
@@ -7483,9 +7503,38 @@ class FindingGroupViewSet(BaseRLSViewSet):
         - Computes aggregated status (FAIL > PASS > MANUAL); the orthogonal
           ``muted`` boolean is already on the row from the SQL aggregation
         - Converts provider string to list
+        - Fills check_title / check_description for the findings path
         """
+        rows = list(aggregated_data)
+
+        # The findings-aggregation path omits check_title / check_description
+        # (they sit in TOASTed JSONB; see _aggregate_findings). Fill them from
+        # the summary table's plain columns in one query scoped to this page.
+        # The summary-aggregation path already carries them, so skip it there.
+        if rows and "check_title" not in rows[0]:
+            check_ids = [row["check_id"] for row in rows]
+            role = get_role(self.request.user, self.request.tenant_id)
+            summaries = FindingGroupDailySummary.objects.filter(
+                tenant_id=self.request.tenant_id,
+                check_id__in=check_ids,
+            )
+            # Scope to the user's providers, mirroring get_queryset(), so titles
+            # are read only from providers the user can see.
+            if not role.unlimited_visibility:
+                summaries = summaries.filter(provider__in=get_providers(role))
+            metadata_by_check = {
+                item["check_id"]: item
+                for item in summaries.order_by("check_id", "-inserted_at")
+                .distinct("check_id")
+                .values("check_id", "check_title", "check_description")
+            }
+            for row in rows:
+                metadata = metadata_by_check.get(row["check_id"], {})
+                row["check_title"] = metadata.get("check_title")
+                row["check_description"] = metadata.get("check_description")
+
         results = []
-        for row in aggregated_data:
+        for row in rows:
             # Convert severity order back to string
             severity_order = row.get("severity_order", 1)
             row["severity"] = SEVERITY_ORDER_REVERSE.get(
@@ -7531,7 +7580,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     _FINDING_GROUP_SORT_MAP = {
         "check_id": "check_id",
-        "check_title": "check_title",
         "severity": "severity_order",
         "status": "status_order",
         "muted": "muted",

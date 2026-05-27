@@ -1,6 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,17 +10,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-button-primary text-black hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50",
+          "border border-transparent bg-button-primary text-black hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50",
         secondary:
-          "bg-button-secondary text-white hover:bg-button-secondary/90 active:bg-button-secondary-press focus-visible:ring-button-secondary/50 dark:text-black",
+          "border border-transparent bg-button-secondary text-white hover:bg-button-secondary/90 active:bg-button-secondary-press focus-visible:ring-button-secondary/50 dark:text-black",
         tertiary:
-          "bg-button-tertiary text-white hover:bg-button-tertiary-hover active:bg-button-tertiary-active focus-visible:ring-button-tertiary/50",
+          "border border-transparent bg-button-tertiary text-white hover:bg-button-tertiary-hover active:bg-button-tertiary-active focus-visible:ring-button-tertiary/50",
         destructive:
-          "bg-bg-fail text-white hover:bg-bg-fail/90 active:bg-bg-fail/80 focus-visible:ring-bg-fail/50",
+          "border border-transparent bg-bg-fail text-white hover:bg-bg-fail/90 active:bg-bg-fail/80 focus-visible:ring-bg-fail/50",
         outline:
           "border border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary text-text-neutral-primary focus-visible:ring-border-neutral-tertiary/50",
         ghost:
-          "text-text-neutral-primary hover:bg-bg-neutral-tertiary active:bg-border-neutral-secondary focus-visible:ring-border-neutral-secondary/50",
+          "border border-transparent text-text-neutral-primary hover:bg-bg-neutral-tertiary active:bg-border-neutral-secondary focus-visible:ring-border-neutral-secondary/50",
         link: "text-button-tertiary underline-offset-4 hover:text-button-tertiary-hover disabled:bg-transparent",
         // Menu variant like secondary but more padding and the back is almost transparent
         menu: "backdrop-blur-xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/10 text-text-neutral-primary dark:text-white shadow-lg hover:bg-white/70 dark:hover:bg-white/10 hover:border-white/90 dark:hover:border-white/30 active:bg-white/80 dark:active:bg-white/15 active:scale-[0.98] focus-visible:ring-button-primary/50 transition-all duration-200",
@@ -37,6 +37,7 @@ const buttonVariants = cva(
         icon: "size-9",
         "icon-sm": "size-8",
         "icon-lg": "size-10",
+        "link-xs": "text-xs",
         "link-sm": "text-sm",
       },
     },

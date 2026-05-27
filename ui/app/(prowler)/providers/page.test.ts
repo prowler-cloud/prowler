@@ -29,7 +29,7 @@ describe("providers page", () => {
     );
     const source = readFileSync(columnsPath, "utf8");
 
-    // Account is fixed, Account Groups is fluid (no explicit size)
+    // Provider is fixed, Provider Groups is fluid (no explicit size)
     expect(source).toContain("size: 420");
     expect(source).toContain("size: 160");
     expect(source).toContain("size: 140");

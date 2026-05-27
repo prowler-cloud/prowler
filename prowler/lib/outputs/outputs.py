@@ -40,6 +40,10 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
         details = finding.location
     elif finding.check_metadata.Provider == "vercel":
         details = finding.region
+    elif finding.check_metadata.Provider == "okta":
+        details = finding.region
+    elif finding.check_metadata.Provider == "scaleway":
+        details = finding.region
     else:
         # Dynamic fallback: any external/custom provider
         if provider is None:

@@ -36,7 +36,7 @@ After running setup, restart your AI coding assistant to load the skills.
 
 Skills are automatically discovered by the AI agent. To manually load a skill during a session:
 
-```
+```text
 Read skills/{skill-name}/SKILL.md
 ```
 
@@ -50,7 +50,7 @@ Reusable patterns for common technologies:
 |-------|-------------|
 | `typescript` | Const types, flat interfaces, utility types |
 | `react-19` | React 19 patterns, React Compiler |
-| `nextjs-15` | App Router, Server Actions, streaming |
+| `nextjs-16` | App Router, Server Actions, proxy.ts, streaming |
 | `tailwind-4` | cn() utility, Tailwind 4 patterns |
 | `playwright` | Page Object Model, selectors |
 | `vitest` | Unit testing, React Testing Library |
@@ -90,7 +90,7 @@ Patterns tailored for Prowler development:
 
 ## Directory Structure
 
-```
+```text
 skills/
 ├── {skill-name}/
 │   ├── SKILL.md              # Required - main instrunsction and metadata
@@ -118,7 +118,7 @@ This reads `metadata.scope` and `metadata.auto_invoke` from each `SKILL.md` and 
 
 Use the `skill-creator` skill for guidance:
 
-```
+```text
 Read skills/skill-creator/SKILL.md
 ```
 

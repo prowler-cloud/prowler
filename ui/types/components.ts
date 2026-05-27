@@ -21,6 +21,8 @@ export type SubmenuProps = {
   active?: boolean;
   icon: IconComponent;
   disabled?: boolean;
+  highlight?: boolean;
+  cloudOnly?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
@@ -387,6 +389,12 @@ export type VercelCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type OktaCredentials = {
+  [ProviderCredentialFields.OKTA_CLIENT_ID]: string;
+  [ProviderCredentialFields.OKTA_PRIVATE_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -404,7 +412,8 @@ export type CredentialsFormSchema =
   | CloudflareCredentials
   | OpenStackCredentials
   | GoogleWorkspaceCredentials
-  | VercelCredentials;
+  | VercelCredentials
+  | OktaCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
@@ -458,6 +467,7 @@ export interface InvitationProps {
         manage_providers?: boolean;
         manage_integrations?: boolean;
         manage_scans?: boolean;
+        manage_alerts?: boolean;
         permission_state?: PermissionState;
       };
     };
@@ -482,6 +492,7 @@ export interface Role {
     manage_providers: boolean;
     manage_integrations: boolean;
     manage_scans: boolean;
+    manage_alerts?: boolean;
     unlimited_visibility: boolean;
     permission_state: PermissionState;
     inserted_at: string;
