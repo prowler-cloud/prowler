@@ -71,7 +71,7 @@ export function ScansPageShell({
     <div className="flex flex-col gap-[18px]">
       <div
         role="group"
-        aria-label="Scan filters"
+        aria-label="Scan filters and actions"
         className="flex flex-wrap items-center gap-3"
       >
         <ScansFilterBar

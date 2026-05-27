@@ -201,10 +201,10 @@ describe("ScansPageShell", () => {
     );
 
     expect(
-      screen.getByRole("group", { name: /scan filters/i }),
+      screen.getByRole("group", { name: /scan filters and actions/i }),
     ).toContainElement(screen.getByRole("button", { name: /launch scan/i }));
     expect(
-      screen.getByRole("group", { name: /scan filters/i }),
+      screen.getByRole("group", { name: /scan filters and actions/i }),
     ).not.toContainElement(
       screen.getByRole("link", { name: /configure mutelist/i }),
     );
