@@ -99,6 +99,36 @@ class TestSecurity2svEnforced:
             assert findings[0].status == "FAIL"
             assert "OFF" in findings[0].status_extended
 
+    def test_fail_epoch_enforcement_off(self):
+        """Test FAIL when API returns epoch zero timestamp (enforcement OFF)"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_2sv_enforced.security_2sv_enforced.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_2sv_enforced.security_2sv_enforced import (
+                security_2sv_enforced,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                two_sv_enforced_from="1970-01-01T00:00:00Z"
+            )
+
+            check = security_2sv_enforced()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "OFF" in findings[0].status_extended
+
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
         mock_provider = set_mocked_googleworkspace_provider()

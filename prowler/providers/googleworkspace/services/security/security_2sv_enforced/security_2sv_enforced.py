@@ -27,8 +27,11 @@ class security_2sv_enforced(Check):
             )
 
             enforced_from = security_client.policies.two_sv_enforced_from
+            # The API returns "1970-01-01T00:00:00Z" (protobuf zero-value
+            # Timestamp) when enforcement is OFF, not null or empty.
+            enforcement_off_epoch = "1970-01-01T00:00:00Z"
 
-            if enforced_from:
+            if enforced_from and enforced_from != enforcement_off_epoch:
                 report.status = "PASS"
                 report.status_extended = (
                     f"2-Step Verification enforcement is active "
