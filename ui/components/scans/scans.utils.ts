@@ -109,10 +109,9 @@ export function getScanJobsTabFilters(
 }
 
 export function getScanAlias(scan: ScanProps): string {
-  const name = scan.attributes.name?.trim();
-  if (!name) return "-";
-  if (name === "Daily scheduled scan") return "scheduled scan";
-  return name;
+  if (scan.attributes.trigger === SCAN_TRIGGER.SCHEDULED)
+    return "scheduled scan";
+  return scan.attributes.name?.trim() || "-";
 }
 
 export function formatScanDuration(duration?: number | null): string {

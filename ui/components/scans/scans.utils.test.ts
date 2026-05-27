@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { SCAN_JOBS_TAB, type ScanAttributes, type ScanProps } from "@/types";
+import {
+  SCAN_JOBS_TAB,
+  type ScanAttributes,
+  type ScanProps,
+  type ScanTrigger,
+} from "@/types";
 
 import {
   formatScanDuration,
@@ -13,12 +18,15 @@ import {
   getScanTriggerFilterOptions,
 } from "./scans.utils";
 
-const makeScan = (name: string | null): ScanProps => ({
+const makeScan = (
+  name: string | null,
+  trigger: ScanTrigger = "manual",
+): ScanProps => ({
   type: "scans",
   id: "scan-1",
   attributes: {
     name: name ?? "",
-    trigger: "manual",
+    trigger,
     state: "completed",
     unique_resource_count: 0,
     progress: 100,
@@ -72,9 +80,10 @@ describe("scans.utils", () => {
 
   it("formats scan labels and durations for table display", () => {
     expect(getScanAlias(makeScan(""))).toBe("-");
-    expect(getScanAlias(makeScan("Daily scheduled scan"))).toBe(
+    expect(getScanAlias(makeScan("Daily scheduled scan", "scheduled"))).toBe(
       "scheduled scan",
     );
+    expect(getScanAlias(makeScan("", "scheduled"))).toBe("scheduled scan");
     expect(getScanAlias(makeScan("Production scan"))).toBe("Production scan");
     expect(formatScanDuration(73)).toBe("1 min 13 sec");
     expect(formatScanDuration(null)).toBe("-");
