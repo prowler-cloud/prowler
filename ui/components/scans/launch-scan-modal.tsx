@@ -108,15 +108,25 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
             <SelectValue placeholder="Select a provider" />
           </SelectTrigger>
           <SelectContent>
-            {providers.map((provider) => (
-              <SelectItem
-                key={provider.id}
-                value={provider.id}
-                disabled={provider.attributes.connection.connected !== true}
-              >
-                {provider.attributes.alias || provider.attributes.uid}
-              </SelectItem>
-            ))}
+            {providers.map((provider) => {
+              const alias = provider.attributes.alias;
+              const uid = provider.attributes.uid;
+              const showUid = Boolean(alias) && alias !== uid;
+              return (
+                <SelectItem
+                  key={provider.id}
+                  value={provider.id}
+                  disabled={provider.attributes.connection.connected !== true}
+                >
+                  <span className="truncate">{alias || uid}</span>
+                  {showUid && (
+                    <span className="text-text-neutral-secondary text-xs">
+                      {uid}
+                    </span>
+                  )}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
         {providerError && <FieldError>{providerError}</FieldError>}

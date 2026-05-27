@@ -53,6 +53,22 @@ vi.mock("@/components/shadcn", async () => {
     "@/components/shadcn",
   );
 
+  const reactChildrenToText = (node: React.ReactNode): string => {
+    if (node === null || node === undefined || typeof node === "boolean")
+      return "";
+    if (typeof node === "string" || typeof node === "number")
+      return String(node);
+    if (Array.isArray(node)) {
+      return node.map(reactChildrenToText).filter(Boolean).join(" ");
+    }
+    if (typeof node === "object" && "props" in node) {
+      return reactChildrenToText(
+        (node as { props: { children?: React.ReactNode } }).props.children,
+      );
+    }
+    return "";
+  };
+
   return {
     ...actual,
     Select: ({
@@ -89,7 +105,7 @@ vi.mock("@/components/shadcn", async () => {
       disabled?: boolean;
     }) => (
       <option value={value} disabled={disabled}>
-        {children}
+        {reactChildrenToText(children)}
       </option>
     ),
     SelectValue: () => null,
@@ -166,8 +182,18 @@ describe("LaunchScanModal", () => {
     );
 
     expect(screen.getByLabelText("Providers")).toBeVisible();
-    expect(screen.getByRole("option", { name: "Production" })).toBeEnabled();
-    expect(screen.getByRole("option", { name: "Disconnected" })).toBeDisabled();
+    expect(screen.getByRole("option", { name: /Production/ })).toBeEnabled();
+    expect(screen.getByRole("option", { name: /Disconnected/ })).toBeDisabled();
+  });
+
+  it("shows the provider UID alongside the alias for unambiguous selection", () => {
+    render(
+      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+    );
+
+    expect(
+      screen.getByRole("option", { name: /Production.*123456789012/ }),
+    ).toBeInTheDocument();
   });
 
   it("disables disconnected providers in the launch selector", () => {
@@ -179,7 +205,7 @@ describe("LaunchScanModal", () => {
       />,
     );
 
-    expect(screen.getByRole("option", { name: "Disconnected" })).toBeDisabled();
+    expect(screen.getByRole("option", { name: /Disconnected/ })).toBeDisabled();
   });
 
   it("submits alias as scanName so the API stores it as the scan alias", async () => {

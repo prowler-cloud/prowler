@@ -10,8 +10,6 @@ export class ScansPage extends BasePage {
   readonly launchScanButton: Locator;
   readonly launchScanDialog: Locator;
   readonly scanProviderSelect: Locator;
-  readonly scanProviderSearchInput: Locator;
-  readonly scanProviderOption: Locator;
   readonly scanNoteInput: Locator;
   readonly startNowButton: Locator;
 
@@ -22,24 +20,19 @@ export class ScansPage extends BasePage {
     super(page);
 
     // Scan provider selection elements
-    this.launchScanButton = page.getByRole("button", {
-      name: /^Launch Scan$/i,
-    });
+    // The sidebar exposes its own icon-button labeled "Launch Scan"
+    // (aria-label, wrapped in a Tooltip), so scoping by accessible name
+    // alone hits a strict-mode duplicate. Scope to the page-shell's
+    // filters-and-actions group, which only contains the visible-text
+    // Launch Scan button.
+    this.launchScanButton = page
+      .getByRole("group", { name: /scan filters and actions/i })
+      .getByRole("button", { name: /^Launch Scan$/i });
     this.launchScanDialog = page.getByRole("dialog");
-    // The new modal renders the providers picker as a MultiSelect combobox
-    // inside the dialog. Scoping to the dialog avoids matching the search
-    // combobox that appears in the portalled popover when opened.
+    // The modal now renders the provider picker as a shadcn Select
+    // (single-select combobox). Scope to the dialog to avoid matching
+    // any other combobox on the page.
     this.scanProviderSelect = this.launchScanDialog.getByRole("combobox");
-    this.scanProviderSearchInput = page.getByPlaceholder("Search accounts...");
-    // MultiSelectContent renders its items twice: once inline (CSS-hidden
-    // mirror used for trigger badges and selection state) and once inside
-    // the portalled PopoverContent. Scoping to the popover container
-    // ([data-slot="multiselect-content"], only mounted when open) targets
-    // the visible copy and skips both inline mirrors from other page-level
-    // MultiSelects and the "Select all accounts" pseudo-option.
-    this.scanProviderOption = page.locator(
-      '[data-slot="multiselect-content"] [data-slot="multiselect-item"]:not([hidden])',
-    );
     this.scanNoteInput = page.getByRole("textbox", {
       name: "Alias",
     });
@@ -73,15 +66,18 @@ export class ScansPage extends BasePage {
 
   async selectProviderByUID(uid: string): Promise<void> {
     // Open the launch scan modal and pick the provider whose UID matches.
-    // Provider options expose the alias (not the UID) as their accessible
-    // name, so we type the UID into the MultiSelect search — UIDs are part
-    // of each item's cmdk keywords — and click the only matching item.
+    // The shadcn Select renders each option with both the alias and the
+    // UID as visible text, so we filter Radix's portalled listbox items
+    // by the UID substring to land on the correct row.
 
     await this.launchScanButton.click();
     await expect(this.launchScanDialog).toBeVisible();
     await this.scanProviderSelect.click();
-    await this.scanProviderSearchInput.fill(uid);
-    await this.scanProviderOption.first().click();
+    await this.page
+      .getByRole("option")
+      .filter({ hasText: uid })
+      .first()
+      .click();
   }
 
   async fillScanNote(note: string): Promise<void> {
