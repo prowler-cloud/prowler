@@ -105,7 +105,7 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
               icon={<Eye />}
               label="View Findings"
               onSelect={openFindings}
-              disabled={!scanDate}
+              disabled={!isCompleted || !scanDate}
             />
             <ActionDropdownItem
               icon={<ShieldCheck />}
