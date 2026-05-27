@@ -21,6 +21,10 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  getInvitationErrorDisplay,
+  isInvitationTokenError,
+} from "@/lib/invitation-errors";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 const AUTH_ERROR_PATHS = {
@@ -86,6 +90,22 @@ export const SignUpForm = ({
         router.push("/sign-in");
       }
     } else {
+      const invitationTokenError = newUser.errors.find((error: ApiError) =>
+        isInvitationTokenError(error),
+      );
+
+      if (invitationToken && invitationTokenError) {
+        const { message } = getInvitationErrorDisplay(
+          { status: newUser.status, errors: [invitationTokenError] },
+          "signup",
+        );
+        form.setError("invitationToken", {
+          type: "server",
+          message,
+        });
+        return;
+      }
+
       newUser.errors.forEach((error: ApiError) => {
         const errorMessage = error.detail;
         const pointer = error.source?.pointer;

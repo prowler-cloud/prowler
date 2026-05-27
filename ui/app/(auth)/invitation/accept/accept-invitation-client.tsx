@@ -8,47 +8,13 @@ import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
 import { Button } from "@/components/shadcn";
+import { getInvitationErrorDisplay } from "@/lib/invitation-errors";
 
 type AcceptState =
   | { kind: "no-token" }
   | { kind: "accepting" }
   | { kind: "error"; message: string; canRetry: boolean; needsSignOut: boolean }
   | { kind: "choose" };
-
-function mapApiError(status: number | undefined): {
-  message: string;
-  canRetry: boolean;
-  needsSignOut: boolean;
-} {
-  switch (status) {
-    case 410:
-      return {
-        message:
-          "This invitation has expired. Please contact your administrator for a new one.",
-        canRetry: false,
-        needsSignOut: false,
-      };
-    case 400:
-      return {
-        message: "This invitation has already been used.",
-        canRetry: false,
-        needsSignOut: false,
-      };
-    case 404:
-      return {
-        message:
-          "This invitation was sent to a different email address. Please sign in with the correct account.",
-        canRetry: false,
-        needsSignOut: true,
-      };
-    default:
-      return {
-        message: "Something went wrong while accepting the invitation.",
-        canRetry: true,
-        needsSignOut: false,
-      };
-  }
-}
 
 export function AcceptInvitationClient({
   isAuthenticated,
@@ -72,7 +38,10 @@ export function AcceptInvitationClient({
     const result = await acceptInvitation(token);
 
     if (result?.error) {
-      const { message, canRetry, needsSignOut } = mapApiError(result.status);
+      const { message, canRetry, needsSignOut } = getInvitationErrorDisplay(
+        result,
+        "accept",
+      );
       setState({ kind: "error", message, canRetry, needsSignOut });
     } else {
       router.push("/");

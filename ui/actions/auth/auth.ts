@@ -78,7 +78,7 @@ export const createNewUser = async (formData: SignUpFormData) => {
 
     const parsedResponse = await response.json();
     if (!response.ok) {
-      return parsedResponse;
+      return { ...parsedResponse, status: response.status };
     }
 
     return parsedResponse;
