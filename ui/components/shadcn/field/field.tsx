@@ -17,7 +17,7 @@ function FieldLabel({ className, ...props }: React.ComponentProps<"label">) {
     <label
       data-slot="field-label"
       className={cn(
-        "text-text-neutral-tertiary text-xs font-light tracking-tight",
+        "text-text-neutral-tertiary text-xs font-medium",
         className,
       )}
       {...props}
