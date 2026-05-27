@@ -379,3 +379,35 @@ class TestStackITProviderGetProjectName:
         result = provider._get_project_name()
 
         assert result == ""
+
+
+class Test_StackitProvider_Handle_API_Error:
+    """Direct coverage for ``StackitProvider.handle_api_error`` so 401 and 403
+    are treated as credential failures by every service call site, not just
+    ``_get_project_name``.
+    """
+
+    def _http(self, status_code: int) -> Exception:
+        err = Exception(f"http {status_code}")
+        err.status = status_code
+        return err
+
+    def test_401_raises_invalid_token_error(self):
+        with pytest.raises(StackITInvalidTokenError):
+            StackitProvider.handle_api_error(self._http(401))
+
+    def test_403_raises_invalid_token_error(self):
+        with pytest.raises(StackITInvalidTokenError):
+            StackitProvider.handle_api_error(self._http(403))
+
+    def test_other_http_status_is_reraised_unchanged(self):
+        original = self._http(500)
+        with pytest.raises(Exception) as excinfo:
+            StackitProvider.handle_api_error(original)
+        assert excinfo.value is original
+
+    def test_exception_without_status_is_reraised_unchanged(self):
+        original = RuntimeError("network error")
+        with pytest.raises(RuntimeError) as excinfo:
+            StackitProvider.handle_api_error(original)
+        assert excinfo.value is original

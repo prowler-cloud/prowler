@@ -376,26 +376,15 @@ class StackitProvider(Provider):
             )
             return ""
         except Exception as e:
-            # 401: invalid/expired token — hard failure via centralized handler
+            # 401/403: invalid token or insufficient permissions — hard failure
+            # via the centralized handler. Any other exception falls through
+            # to a warning so the scan can continue without the project name.
             try:
                 StackitProvider.handle_api_error(e)
             except StackITInvalidTokenError:
                 raise
             except Exception:
                 pass  # handle_api_error re-raised the original; fall through
-            # 403 during identity validation means the SA has no access to this
-            # project at all, so abort rather than silently continuing with no name
-            if hasattr(e, "status") and e.status == 403:
-                logger.critical(
-                    f"StackIT service account lacks permissions for project {self._project_id}. "
-                    "Ensure the service account has the required IAM role on the project."
-                )
-                raise StackITInvalidTokenError(
-                    file="stackit_provider.py",
-                    original_exception=None,
-                    message="Service account lacks permissions for the specified project",
-                )
-            # For other errors, log warning and continue
             logger.warning(
                 f"Unable to fetch project name from StackIT API: {e}. "
                 f"Project name will not be displayed in reports."
@@ -407,18 +396,21 @@ class StackitProvider(Provider):
         """
         Centralized handler for StackIT API errors across all services.
 
-        Detects authentication errors (401) and raises StackITInvalidTokenError.
-        This method should be called by all services when catching API exceptions.
+        Detects credential and permission errors (HTTP 401 and 403) and raises
+        ``StackITInvalidTokenError`` so the scan aborts instead of continuing
+        with partial data. All other exceptions are re-raised unchanged so
+        callers can decide how to handle them (e.g. per-resource ``continue``).
 
         Args:
             exception: The exception caught from a StackIT API call
 
         Raises:
-            StackITInvalidTokenError: If the error is a 401 Unauthorized
+            StackITInvalidTokenError: If the error is a 401 Unauthorized or
+                a 403 Forbidden response
             Exception: Re-raises the original exception otherwise
         """
-        # Check if this is an authentication error (401 Unauthorized)
-        if hasattr(exception, "status") and exception.status == 401:
+        status = getattr(exception, "status", None)
+        if status == 401:
             logger.critical(
                 "StackIT API token is invalid or has expired. "
                 "Generate a new token with: stackit auth activate-service-account "
@@ -429,7 +421,17 @@ class StackitProvider(Provider):
                 original_exception=None,  # Don't include verbose HTTP details
                 message="Invalid or expired API token",
             )
-        # Re-raise other exceptions
+        if status == 403:
+            logger.critical(
+                "StackIT service account lacks the required permissions on this project. "
+                "Ensure the service account has the necessary IAM roles."
+            )
+            raise StackITInvalidTokenError(
+                file="stackit_provider.py",
+                original_exception=None,  # Don't include verbose HTTP details
+                message="Service account lacks required permissions on this project",
+            )
+        # Re-raise other exceptions unchanged
         raise exception
 
     @staticmethod
