@@ -41,7 +41,7 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
   const isFailed = scanState === "failed";
-  const taskId = scan.relationships.task.data.id;
+  const taskId = scan.relationships.task.data?.id;
   const scanDate = toLocalDateString(scan.attributes.completed_at);
 
   const openFindings = () => {
