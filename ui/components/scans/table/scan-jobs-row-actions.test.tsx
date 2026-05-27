@@ -6,11 +6,14 @@ import type { ScanProps } from "@/types";
 
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
-const { getTaskMock, pushMock, toastMock } = vi.hoisted(() => ({
-  getTaskMock: vi.fn(),
-  pushMock: vi.fn(),
-  toastMock: vi.fn(),
-}));
+const { downloadScanZipMock, getTaskMock, pushMock, toastMock } = vi.hoisted(
+  () => ({
+    downloadScanZipMock: vi.fn(),
+    getTaskMock: vi.fn(),
+    pushMock: vi.fn(),
+    toastMock: vi.fn(),
+  }),
+);
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -27,7 +30,12 @@ vi.mock("@/actions/task", () => ({
 }));
 
 vi.mock("@/lib/helper", () => ({
-  downloadScanZip: vi.fn(),
+  downloadScanZip: downloadScanZipMock,
+}));
+
+vi.mock("@/lib/date-utils", () => ({
+  toLocalDateString: (value: string | null | undefined) =>
+    value ? "2026-01-01" : undefined,
 }));
 
 vi.mock("@/components/scans/edit-alias-modal", () => ({
@@ -178,6 +186,54 @@ describe("ScanJobsRowActions", () => {
     expect(
       screen.queryByRole("menuitem", { name: /download findings/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("links completed scans to filtered findings", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "completed",
+          completed_at: "2026-01-01T10:05:00Z",
+        })}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    await user.click(screen.getByRole("menuitem", { name: /view findings/i }));
+
+    // Then
+    expect(pushMock).toHaveBeenCalledWith(
+      "/findings?filter[scan]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
+    );
+  });
+
+  it("triggers downloadScanZip with the scan id when downloading reports", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "completed",
+          completed_at: "2026-01-01T10:05:00Z",
+        })}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    await user.click(
+      screen.getByRole("menuitem", { name: /download scan reports/i }),
+    );
+
+    // Then
+    expect(downloadScanZipMock).toHaveBeenCalledWith("scan-1", toastMock);
   });
 
   it("opens failed scan error details from the actions menu", async () => {
