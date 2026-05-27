@@ -22,6 +22,7 @@ class application_admin_console_session_idle_timeout_15min(Check):
     """
 
     def execute(self) -> list[CheckReportOkta]:
+        findings: list[CheckReportOkta] = []
         audit_config = application_client.audit_config or {}
         threshold = audit_config.get(
             "okta_admin_console_idle_timeout_max_minutes",
@@ -33,11 +34,12 @@ class application_admin_console_session_idle_timeout_15min(Check):
             "admin_console_app_settings"
         )
         if missing_scope:
-            return [
+            findings.append(
                 missing_admin_console_settings_scope_finding(
                     self.metadata(), org_domain, missing_scope
                 )
-            ]
+            )
+            return findings
 
         settings = application_client.admin_console_app_settings
         if settings is None:
@@ -55,7 +57,8 @@ class application_admin_console_session_idle_timeout_15min(Check):
                 f"app to evaluate this check. The `Maximum app session idle "
                 f"time` must be set to {threshold} minutes or less."
             )
-            return [report]
+            findings.append(report)
+            return findings
 
         report = CheckReportOkta(
             metadata=self.metadata(), resource=settings, org_domain=org_domain
@@ -82,4 +85,5 @@ class application_admin_console_session_idle_timeout_15min(Check):
                 f"app session idle time to {idle} minutes, exceeding the "
                 f"configured threshold of {threshold} minutes."
             )
-        return [report]
+        findings.append(report)
+        return findings

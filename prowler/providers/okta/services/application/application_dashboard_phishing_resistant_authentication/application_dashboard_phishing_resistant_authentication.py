@@ -27,28 +27,32 @@ class application_dashboard_phishing_resistant_authentication(Check):
     """
 
     def execute(self) -> list[CheckReportOkta]:
+        findings: list[CheckReportOkta] = []
         org_domain = application_client.provider.identity.org_domain
 
         for scope_key in ("built_in_apps", "access_policies"):
             missing_scope = application_client.missing_scope.get(scope_key)
             if missing_scope:
-                return [
+                findings.append(
                     missing_app_scope_finding(
                         self.metadata(),
                         org_domain,
                         missing_scope,
                         DASHBOARD_LABEL_HINT,
                     )
-                ]
+                )
+                return findings
 
         app = application_client.built_in_apps.get(DASHBOARD_APP_NAME)
         if app is None:
-            return [
+            findings.append(
                 app_not_found_finding(self.metadata(), org_domain, DASHBOARD_LABEL_HINT)
-            ]
+            )
+            return findings
 
         if app.access_policy_id is None or app.access_policy is None:
-            return [policy_missing_finding(self.metadata(), org_domain, app)]
+            findings.append(policy_missing_finding(self.metadata(), org_domain, app))
+            return findings
 
         report = CheckReportOkta(
             metadata=self.metadata(), resource=app, org_domain=org_domain
@@ -76,4 +80,5 @@ class application_dashboard_phishing_resistant_authentication(Check):
                 "`Possession factor constraints are: Phishing resistant` "
                 "on the rule."
             )
-        return [report]
+        findings.append(report)
+        return findings

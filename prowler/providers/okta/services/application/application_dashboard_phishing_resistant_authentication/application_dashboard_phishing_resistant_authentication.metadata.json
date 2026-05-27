@@ -13,7 +13,7 @@
   "Risk": "Phishable possession factors leave end-user SSO sessions exposed to credential phishing and AiTM proxies.\n\n- **Credential phishing** against end users succeeds despite MFA\n- **Session token theft** through reverse-proxy AiTM attacks (Evilginx-class tooling)\n- **Compromise of every downstream SSO app** the user has access to",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-phishing-resistance.htm",
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/phishing-resistant-auth.htm",
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
   ],
   "Remediation": {

@@ -26,24 +26,26 @@ class application_authentication_policy_network_zone_enforced(Check):
     """
 
     def execute(self) -> list[CheckReportOkta]:
+        findings: list[CheckReportOkta] = []
         org_domain = application_client.provider.identity.org_domain
 
         for scope_key in ("integrated_apps", "access_policies"):
             missing_scope = application_client.missing_scope.get(scope_key)
             if missing_scope:
-                return [
+                findings.append(
                     missing_integrated_apps_scope_finding(
                         self.metadata(),
                         org_domain,
                         missing_scope,
                     )
-                ]
+                )
+                return findings
 
         apps = active_apps(application_client.integrated_apps)
         if not apps:
-            return [no_active_apps_finding(self.metadata(), org_domain)]
+            findings.append(no_active_apps_finding(self.metadata(), org_domain))
+            return findings
 
-        findings: list[CheckReportOkta] = []
         for app in apps:
             report = CheckReportOkta(
                 metadata=self.metadata(),

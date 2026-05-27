@@ -13,7 +13,7 @@
   "Risk": "An unattended administrator workstation leaves the Okta control plane open for session hijacking.\n\n- **Privileged session takeover** by anyone with physical or remote access to the workstation\n- **Tenant-wide configuration changes** under the absent administrator's identity\n- **Bypassed reauthentication** for the most sensitive surface of the IdP",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/configure-okta-app-session.htm",
+    "https://developer.okta.com/docs/guides/configure-signon-policy/main/",
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/OktaApplicationSettings/"
   ],
   "Remediation": {
