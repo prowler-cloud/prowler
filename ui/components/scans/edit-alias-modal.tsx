@@ -17,7 +17,7 @@ import { scanAliasSchema } from "./scan-alias-validation";
 const buildEditAliasSchema = (currentAlias: string) =>
   z.object({
     alias: scanAliasSchema.refine(
-      (value) => value !== currentAlias,
+      (value) => value.trim() !== currentAlias.trim(),
       "The new alias must be different from the current one.",
     ),
   });

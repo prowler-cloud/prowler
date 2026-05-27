@@ -80,6 +80,30 @@ describe("EditAliasModal", () => {
     expect(updateScanMock).not.toHaveBeenCalled();
   });
 
+  it("rejects a whitespace-only edit of the current alias", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <EditAliasModal
+        open
+        onOpenChange={vi.fn()}
+        scanId="scan-1"
+        currentAlias="Production audit"
+      />,
+    );
+
+    const input = screen.getByLabelText("Alias");
+    await user.type(input, "   ");
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(
+      await screen.findByText(
+        /new alias must be different from the current one/i,
+      ),
+    ).toBeInTheDocument();
+    expect(updateScanMock).not.toHaveBeenCalled();
+  });
+
   it("submits the new alias as scanName", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
