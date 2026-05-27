@@ -120,22 +120,19 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with {permission}
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE EXISTS {{
-            MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
-            WHERE toLower(a.value) IN ['{permission_lowercase}', '{service}:*']
-               OR a.value = '*'
-        }}
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['{permission_lowercase}', '{service}:*']
+           OR act.value = '*'
 
         // Target resources attached to the same principal (sub-patterns below)
         MATCH path_target = (aws)--(target_policy:AWSPolicy)--(principal)
         WHERE target_policy.arn CONTAINS $provider_uid
-            AND EXISTS {{
-                MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
-                WHERE r.value = '*'
-                   OR target_policy.arn CONTAINS r.value
-            }}
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+           OR target_policy.arn CONTAINS res.value
 
+        WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
@@ -152,9 +149,11 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
 
 Key points:
 
-- Cartography hops use anonymous `--`. Add a relationship type only where the file's existing queries already use one (`TRUSTS_AWS_PRINCIPAL`, `STS_ASSUMEROLE_ALLOW`, `MEMBER_AWS_GROUP`, `HAS_EXECUTION_ROLE`).
+- The principal walk types the `POLICY` and `STATEMENT` hops. Both are low-fan-out (each principal has a handful of policies; each policy a handful of statements), so the typed edge lets the planner cost a cheap inline filter.
+- The `(aws)--` hub hops stay anonymous. `AWSAccount` is a high-degree node that fans out to every principal, role, policy, and resource in the account; typing those edges forces the planner to enumerate from the hub and collapses performance on multi-tenant Neptune.
+- Other relationship types appear only where the file's existing queries already use one (`TRUSTS_AWS_PRINCIPAL`, `STS_ASSUMEROLE_ALLOW`, `MEMBER_AWS_GROUP`, `HAS_EXECUTION_ROLE`).
 - The finding probe is typed `:HAS_FINDING` and left undirected. The type lets Neptune apply an inline edge filter; the lack of direction matches the convention of the rest of the file.
-- The `WHERE` traverses list-property item nodes via `HAS_ACTION` / `HAS_RESOURCE` edges (see "List-typed properties as child nodes"). Do not use `split(...)` on policy statement properties; the values live on the child item nodes.
+- Each `HAS_*` traversal is its own `MATCH` clause with a `WHERE` on the child item node. `WITH DISTINCT path_principal, path_target` precedes `collect(path...)` to dedupe the row multiplication produced by the joins.
 - The `RETURN` shape `paths, dpf, dpfr` is the contract the serializer and visualiser depend on. Do not change it.
 
 ---
@@ -170,18 +169,16 @@ Four `path_target` shapes cover the common attack types. Each shares the canonic
 | Assume-role lateral | Assumable roles          | `(aws)--(target_role:AWSRole)-[:STS_ASSUMEROLE_ALLOW]-(principal)`                                      | IAM-014 |
 | PassRole + service  | Service-trusting roles   | `(aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]-(:AWSPrincipal {arn: '{service}.amazonaws.com'})` | EC2-001 |
 
-**Multi-permission queries** (e.g. PassRole plus a service-create action) add a second walk before `path_target`:
+**Multi-permission queries** (e.g. PassRole plus a service-create action) add a second walk before `path_target`. Reuse the per-query counter for the new variables (`act2`, `policy2`, `stmt2`):
 
 ```cypher
-MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {effect: 'Allow'})
-WHERE EXISTS {
-    MATCH (stmt2)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
-    WHERE toLower(a.value) IN ['service:*', 'service:createsomething']
-       OR a.value = '*'
-}
+MATCH (principal)-[:POLICY]->(policy2:AWSPolicy)-[:STATEMENT]->(stmt2:AWSPolicyStatement {effect: 'Allow'})
+MATCH (stmt2)-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+WHERE toLower(act2.value) IN ['service:*', 'service:createsomething']
+   OR act2.value = '*'
 ```
 
-Both `stmt.resource` and `stmt2.resource` are then checked against the target via the same `HAS_RESOURCE` traversal. See IAM-015 or EC2-001 in `aws.py`.
+Both `stmt.resource` and `stmt2.resource` are then checked against the target via two `HAS_RESOURCE` traversals (`res`, `res2`). See IAM-015 or EC2-001 in `aws.py`.
 
 ---
 
@@ -227,20 +224,31 @@ For a list-typed parent property the sink stores:
 - **Edge type**: `HAS_<PROPERTY_UPPER>`. Example: `resource` → `HAS_RESOURCE`.
 - **Child property**: `value` (a single scalar string) for scalar-list properties. For list-of-dict properties (rare; for example `SecretsManagerSecretVersion.tags`) the child carries the dict keys as named fields per the catalog's `field_map`.
 
+### Variable naming for child-item matches
+
+`aws.py` uses a per-query counter for each `HAS_*` traversal so chained matches stay unambiguous:
+
+| Edge              | First | Second | Third |
+| ----------------- | ----- | ------ | ----- |
+| `HAS_ACTION`      | `act` | `act2` | `act3` |
+| `HAS_RESOURCE`    | `res` | `res2` | `res3` |
+| `HAS_NOTACTION`   | `nact` | `nact2` | `nact3` |
+| `HAS_NOTRESOURCE` | `nres` | `nres2` | `nres3` |
+
+The counter resets at the top of every query.
+
 ### Example - action match
 
-Find statements that grant `iam:PassRole`, `iam:*`, or `*`:
+Find statements that grant `iam:PassRole`, `iam:*`, or `*`. Traverse the `HAS_ACTION` edge in its own `MATCH` clause and apply the predicate in the attached `WHERE`:
 
 ```cypher
 MATCH (stmt:AWSPolicyStatement {effect: 'Allow'})
-WHERE EXISTS {
-    MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
-    WHERE toLower(a.value) IN ['iam:passrole', 'iam:*']
-       OR a.value = '*'
-}
+MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+WHERE toLower(act.value) IN ['iam:passrole', 'iam:*']
+   OR act.value = '*'
 ```
 
-The literal-action list is case-folded with `toLower(a.value)` because IAM authors mix case (`iam:PassRole`, `iam:passrole`); the `*` wildcard never lower-cases.
+The literal-action list is case-folded with `toLower(act.value)` because IAM authors mix case (`iam:PassRole`, `iam:passrole`); the `*` wildcard never lower-cases.
 
 ### Example - resource ARN match
 
@@ -248,12 +256,10 @@ Find statements whose resource can target a specific role:
 
 ```cypher
 MATCH path_target = (aws)--(target_role:AWSRole)
-WHERE EXISTS {
-    MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
-    WHERE r.value = '*'
-       OR r.value CONTAINS target_role.name
-       OR target_role.arn CONTAINS r.value
-}
+MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+WHERE res.value = '*'
+   OR res.value CONTAINS target_role.name
+   OR target_role.arn CONTAINS res.value
 ```
 
 Three predicates cover the cases: full wildcard (`*`), pattern containing the role name (`arn:aws:iam::*:role/admin*`), and pattern that is a prefix or component of the actual ARN.
@@ -269,8 +275,10 @@ The provider catalog lives in `api/src/backend/tasks/jobs/attack_paths/provider_
 ### Match account and principal
 
 ```cypher
-MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {effect: 'Allow'})
+MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {effect: 'Allow'})
 ```
+
+The `(aws)--(principal)` hop stays anonymous; the `POLICY` and `STATEMENT` hops are typed.
 
 ### Roles trusting a service
 
@@ -394,8 +402,9 @@ Queries must run on both Neo4j and Amazon Neptune. Avoid these constructs:
 | `any(x IN list ...)`       | `size([x IN list WHERE pred]) > 0`                       |
 | `all(x IN list ...)`       | `size([x IN list WHERE pred]) = size(list)`              |
 | `none(x IN list ...)`      | `size([x IN list WHERE pred]) = 0`                       |
+| `EXISTS { MATCH (pattern) WHERE pred }` | Standalone `MATCH (pattern)` + `WHERE pred`; precede the downstream `collect(path...)` with `WITH DISTINCT <path-vars>` to dedupe the joins |
 
-For list-typed properties in the catalog (action, resource, and so on), traverse the `HAS_*` edges to the child item nodes (see "List-typed properties as child nodes"). The parent node does not carry the list as a single field, so `split(...)` and comma-string predicates do not apply.
+For list-typed properties in the catalog (action, resource, and so on), traverse the `HAS_*` edges to the child item nodes via the multi-`MATCH` shape shown in "List-typed properties as child nodes". The parent node does not carry the list as a single field, so `split(...)` and comma-string predicates do not apply.
 
 ---
 

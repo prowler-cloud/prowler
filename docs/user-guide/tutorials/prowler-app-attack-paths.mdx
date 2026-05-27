@@ -145,13 +145,10 @@ LIMIT 25
 **IAM principals with wildcard Allow statements:**
 
 ```cypher
-MATCH (principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-WHERE stmt.effect = 'Allow'
-  AND EXISTS {
-    MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
-    WHERE a.value = '*'
-  }
-RETURN principal.arn AS principal, policy.arn AS policy
+MATCH (principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {effect: 'Allow'})
+MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+WHERE a.value = '*'
+RETURN DISTINCT principal.arn AS principal, policy.arn AS policy
 LIMIT 25
 ```
 
@@ -185,49 +182,40 @@ The naming convention for any list-typed property on a parent label is:
 - **Edge type:** `HAS_<PROPERTY_UPPER>`. Example: `resource` resolves to `HAS_RESOURCE`.
 - **Child property:** `value` for scalar lists (one string per list element). List-of-dict properties (rare; for example `SecretsManagerSecretVersion.tags`) carry the original dict keys as named fields on the child node.
 
-Use `EXISTS { ... }` to express "at least one item in the list satisfies a predicate". The `EXISTS` subquery returns `true` as soon as a matching child is found, which keeps the traversal short on parents with many items.
-
-To find statements that grant any S3 read action:
+To express "at least one item in the list satisfies a predicate", traverse the `HAS_*` edge in its own `MATCH` clause and apply the predicate in the attached `WHERE`. `RETURN DISTINCT` collapses duplicate parent rows produced when multiple child items satisfy the filter:
 
 ```cypher
-MATCH (stmt:AWSPolicyStatement)
-WHERE stmt.effect = 'Allow'
-  AND EXISTS {
-    MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
-    WHERE toLower(a.value) STARTS WITH 's3:get'
-       OR toLower(a.value) STARTS WITH 's3:list'
-  }
-RETURN stmt
+MATCH (stmt:AWSPolicyStatement {effect: 'Allow'})
+MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+WHERE toLower(a.value) STARTS WITH 's3:get'
+   OR toLower(a.value) STARTS WITH 's3:list'
+RETURN DISTINCT stmt
 LIMIT 25
 ```
 
-To check whether every item in the list satisfies a predicate, combine `EXISTS` for the positive case with a negated `EXISTS` for the counter-example:
+To check whether every item in the list satisfies a predicate, count the counter-examples and require zero, together with a guard that ensures at least one item is attached. This is the one case where the pattern-comprehension form is the right tool:
 
 ```cypher
 MATCH (stmt:AWSPolicyStatement)
-WHERE EXISTS {
-    MATCH (stmt)-[:HAS_ACTION]->(:AWSPolicyStatementActionItem)
-  }
-  AND NOT EXISTS {
-    MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
+WHERE size([
+    (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
     WHERE NOT toLower(a.value) STARTS WITH 's3:'
-  }
+    | a
+  ]) = 0
+  AND size([(stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem) | a]) > 0
 RETURN stmt
 LIMIT 25
 ```
 
-For the "is any item of this list a substring of a dynamic value" case, such as "does any resource pattern in this policy match a target role ARN", bind the item value in the subquery and apply the substring check against it:
+For the "is any item of this list a substring of a dynamic value" case, such as "does any resource pattern in this policy match a target role ARN", add the `HAS_*` traversal as its own `MATCH` and check the substring relationship between the item value and the dynamic node in `WHERE`:
 
 ```cypher
-MATCH (role:AWSRole), (stmt:AWSPolicyStatement)
-WHERE stmt.effect = 'Allow'
-  AND EXISTS {
-    MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
-    WHERE r.value = '*'
-       OR r.value CONTAINS role.name
-       OR role.arn CONTAINS r.value
-  }
-RETURN stmt, role
+MATCH (role:AWSRole), (stmt:AWSPolicyStatement {effect: 'Allow'})
+MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
+WHERE r.value = '*'
+   OR r.value CONTAINS role.name
+   OR role.arn CONTAINS r.value
+RETURN DISTINCT stmt, role
 LIMIT 25
 ```
 
