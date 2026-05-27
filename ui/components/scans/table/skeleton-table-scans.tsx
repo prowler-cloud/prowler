@@ -79,53 +79,67 @@ const ActionsCellSkeleton = () => (
   </td>
 );
 
-const HeaderLabel = ({ width }: { width: string }) => (
-  <Skeleton className={`h-4 ${width} rounded`} />
+const HeaderLabel = ({
+  width,
+  sortable = false,
+}: {
+  width: string;
+  sortable?: boolean;
+}) => (
+  <div className="flex h-8 items-center gap-1">
+    <Skeleton className={`h-4 ${width} rounded`} />
+    {sortable && <Skeleton className="size-3.5 rounded" />}
+  </div>
 );
 
 interface ColumnDescriptor {
   headerWidth: string;
+  sortable?: boolean;
   Cell: () => React.JSX.Element;
 }
 
 const ACCOUNT_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-16",
+  headerWidth: "w-14",
   Cell: AccountCellSkeleton,
 };
 const SCAN_INFO_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-10",
+  headerWidth: "w-8",
+  sortable: true,
   Cell: ScanInfoCellSkeleton,
 };
 const PROGRESS_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-16",
+  headerWidth: "w-14",
   Cell: ProgressCellSkeleton,
 };
 const SCHEDULE_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-16",
+  headerWidth: "w-14",
+  sortable: true,
   Cell: ScheduleCellSkeleton,
 };
 const LAUNCHED_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-16",
+  headerWidth: "w-14",
   Cell: DateCellSkeleton,
 };
 const RESOURCES_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-20",
+  headerWidth: "w-16",
   Cell: ResourcesCellSkeleton,
 };
 const DURATION_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-16",
+  headerWidth: "w-14",
   Cell: DurationCellSkeleton,
 };
 const STATUS_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-12",
+  headerWidth: "w-10",
   Cell: StatusCellSkeleton,
 };
 const COMPLETED_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-20",
+  headerWidth: "w-16",
+  sortable: true,
   Cell: DateCellSkeleton,
 };
 const NEXT_RUN_COLUMN: ColumnDescriptor = {
-  headerWidth: "w-16",
+  headerWidth: "w-14",
+  sortable: true,
   Cell: DateCellSkeleton,
 };
 
@@ -166,10 +180,13 @@ export const SkeletonTableScans = ({
   const columns = COLUMNS_BY_TAB[tab];
 
   return (
-    <div className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden border p-4">
-      {/* Toolbar: only total entries on the right (scans table has no search) */}
-      <div className="flex items-center justify-end">
-        <Skeleton className="h-4 w-28 rounded" />
+    <div className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col justify-between gap-4 overflow-hidden border p-4">
+      {/* Toolbar — mirrors DataTable's flex-col → md:flex-row layout (no search, only total entries) */}
+      <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="w-full md:w-auto" />
+        <div className="flex w-full flex-col items-start gap-2 md:ml-auto md:w-auto md:flex-row md:items-center md:gap-4">
+          <Skeleton className="h-4 w-28 rounded" />
+        </div>
       </div>
 
       {/* Table */}
@@ -178,7 +195,10 @@ export const SkeletonTableScans = ({
           <tr className="border-border-neutral-secondary border-b">
             {columns.map((column, i) => (
               <th key={i} className="px-3 py-3 text-left">
-                <HeaderLabel width={column.headerWidth} />
+                <HeaderLabel
+                  width={column.headerWidth}
+                  sortable={column.sortable}
+                />
               </th>
             ))}
             {/* Actions - empty header */}
@@ -200,19 +220,21 @@ export const SkeletonTableScans = ({
         </tbody>
       </table>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-24 rounded" />
-          <Skeleton className="h-9 w-16 rounded-md" />
+      {/* Pagination — mirrors DataTablePagination's "justify-end gap-6 py-1.5" */}
+      <div className="flex w-full items-center justify-end gap-6 py-1.5">
+        {/* Rows per page group */}
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-3 w-20 rounded" />
+          <Skeleton className="h-8 w-12 rounded-full" />
         </div>
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-4 w-24 rounded" />
-          <div className="flex gap-1">
-            <Skeleton className="size-9 rounded-md" />
-            <Skeleton className="size-9 rounded-md" />
-            <Skeleton className="size-9 rounded-md" />
-            <Skeleton className="size-9 rounded-md" />
+        {/* Page info + 4 chevron nav buttons */}
+        <div className="flex items-center gap-3">
+          <Skeleton className="hidden h-3 w-20 rounded sm:block" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-6 rounded" />
+            <Skeleton className="size-6 rounded" />
+            <Skeleton className="size-6 rounded" />
+            <Skeleton className="size-6 rounded" />
           </div>
         </div>
       </div>
