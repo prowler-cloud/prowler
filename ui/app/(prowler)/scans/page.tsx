@@ -73,11 +73,14 @@ const SSRDataTableScans = async ({
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
   const sort = searchParams.sort?.toString();
 
+  const userFilters = Object.entries(searchParams).filter(([key]) =>
+    key.startsWith("filter["),
+  );
+  const hasUserFilters = userFilters.length > 0;
+
   const filters = {
     ...Object.fromEntries(
-      Object.entries(searchParams).filter(
-        ([key]) => key.startsWith("filter[") && !isScanStateFilterKey(key),
-      ),
+      userFilters.filter(([key]) => !isScanStateFilterKey(key)),
     ),
     ...getScanJobsTabFilters(
       tab,
@@ -121,5 +124,12 @@ const SSRDataTableScans = async ({
       };
     }) || [];
 
-  return <ScanJobsTable data={expandedScansData} meta={meta} tab={tab} />;
+  return (
+    <ScanJobsTable
+      data={expandedScansData}
+      meta={meta}
+      tab={tab}
+      hasFilters={hasUserFilters}
+    />
+  );
 };

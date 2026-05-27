@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - New Scan Jobs view with tab-specific Active, Completed, Scheduled, and Imported scan workflows [(#11258)](https://github.com/prowler-cloud/prowler/pull/11258)
+- Per-tab empty state on the Scan Jobs view that points users to the other tabs when no scans match the current tab (and no filters are applied) [(#11258)](https://github.com/prowler-cloud/prowler/pull/11258)
 
 ### 🔄 Changed
 

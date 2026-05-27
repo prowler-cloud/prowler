@@ -21,6 +21,12 @@ vi.mock("../auto-refresh", () => ({
   ),
 }));
 
+vi.mock("../no-scans-empty-state", () => ({
+  NoScansEmptyState: ({ tab }: { tab: string }) => (
+    <div data-testid="no-scans-empty-state">{tab}</div>
+  ),
+}));
+
 const makeScan = (state: ScanProps["attributes"]["state"]): ScanProps => ({
   type: "scans",
   id: `scan-${state}`,
@@ -69,5 +75,25 @@ describe("ScanJobsTable", () => {
     expect(screen.getByTestId("scan-jobs-auto-refresh")).toHaveTextContent(
       "false",
     );
+  });
+
+  it("renders the empty state when there are no scans and no filters applied", () => {
+    render(<ScanJobsTable data={[]} tab={SCAN_JOBS_TAB.ACTIVE} />);
+
+    expect(screen.getByTestId("no-scans-empty-state")).toHaveTextContent(
+      SCAN_JOBS_TAB.ACTIVE,
+    );
+    expect(
+      screen.queryByTestId("scan-jobs-data-table"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("falls back to the data table when there are no scans but filters are applied", () => {
+    render(<ScanJobsTable data={[]} tab={SCAN_JOBS_TAB.ACTIVE} hasFilters />);
+
+    expect(screen.getByTestId("scan-jobs-data-table")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("no-scans-empty-state"),
+    ).not.toBeInTheDocument();
   });
 });
