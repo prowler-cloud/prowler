@@ -3,13 +3,13 @@ import { Suspense } from "react";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
-import { ScansPageShell } from "@/components/scans/scans-page-shell";
-import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import {
   getScanJobsTab,
   getScanJobsTabFilters,
   isScanStateFilterKey,
 } from "@/components/scans/scans.utils";
+import { ScansPageShell } from "@/components/scans/scans-page-shell";
+import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/ui";
@@ -47,7 +47,13 @@ export default async function Scans({
           providers={connectedProviders}
           hasManageScansPermission={hasManageScansPermission}
         >
-          <Suspense fallback={<SkeletonTableScans />}>
+          <Suspense
+            fallback={
+              <SkeletonTableScans
+                tab={getScanJobsTab(resolvedSearchParams.tab)}
+              />
+            }
+          >
             <SSRDataTableScans searchParams={resolvedSearchParams} />
           </Suspense>
         </ScansPageShell>
