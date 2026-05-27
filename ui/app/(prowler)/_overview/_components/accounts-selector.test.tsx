@@ -120,8 +120,8 @@ describe("AccountsSelector", () => {
     render(<AccountsSelector providers={providers} />);
 
     expect(multiSelectContentSpy).toHaveBeenCalledWith({
-      placeholder: "Search accounts...",
-      emptyMessage: "No accounts found.",
+      placeholder: "Search Providers...",
+      emptyMessage: "No Providers found.",
     });
     expect(screen.getByText("Production AWS")).toBeInTheDocument();
   });
@@ -160,7 +160,7 @@ describe("AccountsSelector", () => {
     render(<AccountsSelector providers={providers} />);
 
     expect(
-      screen.getByRole("option", { name: /select all accounts/i }),
+      screen.getByRole("option", { name: /select all Providers/i }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("All selected")).toBeInTheDocument();
   });

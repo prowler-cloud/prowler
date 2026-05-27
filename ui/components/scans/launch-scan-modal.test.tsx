@@ -63,7 +63,7 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
     id?: string;
   }) => (
     <div>
-      <input aria-label="Search accounts" placeholder="Search accounts..." />
+      <input aria-label="Search Providers" placeholder="Search Providers..." />
       <select
         id={id}
         aria-label="Providers"
@@ -72,7 +72,7 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
           onBatchChange("provider_id__in", [event.target.value])
         }
       >
-        <option value="">All accounts</option>
+        <option value="">All Providers</option>
         {providers.map((provider) => (
           <option
             key={provider.id}
@@ -152,7 +152,7 @@ describe("LaunchScanModal", () => {
       <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
     );
 
-    expect(screen.getByPlaceholderText("Search accounts...")).toBeVisible();
+    expect(screen.getByPlaceholderText("Search Providers...")).toBeVisible();
   });
 
   it("disables disconnected providers in the launch selector", () => {
