@@ -45,6 +45,20 @@ class TestStackITArguments:
         args = parser.parse_args(["stackit"])
         assert args.stackit_service_account_key_path is None
 
+    def test_service_account_key_argument_is_registered(self, parser):
+        args = parser.parse_args(
+            [
+                "stackit",
+                "--stackit-service-account-key",
+                '{"keyId": "abc"}',
+            ]
+        )
+        assert args.stackit_service_account_key == '{"keyId": "abc"}'
+
+    def test_service_account_key_defaults_to_none(self, parser):
+        args = parser.parse_args(["stackit"])
+        assert args.stackit_service_account_key is None
+
     def test_scan_unused_services_defaults_to_false(self, parser):
         args = parser.parse_args(["stackit"])
         assert args.scan_unused_services is False

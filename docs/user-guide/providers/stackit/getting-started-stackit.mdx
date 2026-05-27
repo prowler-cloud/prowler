@@ -20,14 +20,23 @@ Before running Prowler with the StackIT provider, ensure you have:
 
 ### Step 1: Point Prowler at the Service Account Key
 
-Prowler authenticates by reading a service account key file; the StackIT SDK mints and refreshes access tokens internally for the life of the scan.
+Prowler authenticates with a StackIT service account key. The SDK signs the RSA challenge in the key and refreshes access tokens internally for the life of the scan, so there is no manual token rotation.
+
+**On a workstation or persistent agent** (key on disk):
 
 ```bash
 export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
 ```
 
-CLI flags also work:
+**In CI/CD** (key in a secret manager, never written to disk):
+
+```bash
+export STACKIT_SERVICE_ACCOUNT_KEY="$(vault kv get -field=key stackit/sa)"
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+```
+
+CLI flags work too:
 
 ```bash
 prowler stackit \
@@ -36,6 +45,8 @@ prowler stackit \
 ```
 
 <Note>
+For the inline key, prefer the `STACKIT_SERVICE_ACCOUNT_KEY` env var over the matching CLI flag; passing the secret on the command line leaks it through process listings and shell history.
+
 Keep the key file outside of source control and lock it down with `chmod 600 ~/.stackit/sa-key.json`. Anyone with the JSON can mint access tokens for the service account.
 </Note>
 

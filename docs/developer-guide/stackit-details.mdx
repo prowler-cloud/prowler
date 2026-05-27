@@ -115,9 +115,9 @@ Your StackIT project ID is a UUID that can be found:
 
 ### Passing the Service Account Key to Prowler
 
-Prowler reads the service account key file directly. The StackIT SDK signs the RSA challenge in the key and mints/refreshes short-lived access tokens internally, so there is no manual token rotation.
+Prowler accepts the service account credentials in two equivalent forms; both go through the same StackIT SDK flow and refresh access tokens internally.
 
-#### Option 1: Environment Variables
+#### Option 1: Key File Path (key persisted on disk)
 
 ```bash
 export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
@@ -126,7 +126,7 @@ export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
 prowler stackit
 ```
 
-#### Option 2: CLI Flags
+Or as CLI flags:
 
 ```bash
 prowler stackit \
@@ -134,16 +134,31 @@ prowler stackit \
   --stackit-project-id 12345678-1234-1234-1234-123456789abc
 ```
 
+#### Option 2: Inline Key Content (CI/CD, secret managers)
+
+```bash
+export STACKIT_SERVICE_ACCOUNT_KEY="$(vault kv get -field=key stackit/sa)"
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+
+prowler stackit
+```
+
+Prefer the environment variable over the matching `--stackit-service-account-key` CLI flag; passing the secret on the command line leaks it through process listings and shell history.
+
 ### Credential Lookup Order
 
 Prowler resolves credentials in this order:
 
 1. **Command-line arguments**:
+   - `--stackit-service-account-key`
    - `--stackit-service-account-key-path`
    - `--stackit-project-id`
 2. **Environment variables**:
+   - `STACKIT_SERVICE_ACCOUNT_KEY`
    - `STACKIT_SERVICE_ACCOUNT_KEY_PATH`
    - `STACKIT_PROJECT_ID`
+
+When both the inline key and the key file path are set, the inline content takes precedence.
 
 ## Configuration
 
@@ -154,6 +169,7 @@ StackIT-specific command-line arguments:
 | Argument | Description | Required | Default |
 |----------|-------------|----------|---------|
 | `--stackit-service-account-key-path` | Path to a StackIT service account key JSON file | Yes* | `$STACKIT_SERVICE_ACCOUNT_KEY_PATH` |
+| `--stackit-service-account-key` | Inline JSON content of a StackIT service account key (preferred env var: `STACKIT_SERVICE_ACCOUNT_KEY`) | Yes* | `$STACKIT_SERVICE_ACCOUNT_KEY` |
 | `--stackit-project-id` | StackIT project ID (UUID format) | Yes* | `$STACKIT_PROJECT_ID` |
 | `--stackit-region` | StackIT region(s) to scan | No | All available regions |
 
@@ -163,9 +179,10 @@ StackIT-specific command-line arguments:
 
 The StackIT provider performs comprehensive input validation:
 
-- **Service Account Key Path**:
-  - Must not be empty or whitespace-only
-  - The key file path is logged as-is; the secret material stays in the file on disk
+- **Service Account Credentials**:
+  - At least one of `service_account_key_path` (file path) or `service_account_key` (inline JSON) must be supplied; both empty raises `StackITNonExistentTokenError`
+  - When both are provided the inline content takes precedence
+  - The key file path is logged as-is; the inline content is redacted in the credentials box
 
 - **Project ID**:
   - Must not be empty

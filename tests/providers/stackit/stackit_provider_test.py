@@ -31,17 +31,17 @@ class TestStackITProviderValidation:
     def test_validate_arguments_empty_key_path(self):
         with pytest.raises(StackITNonExistentTokenError) as exc_info:
             StackitProvider.validate_arguments(self.VALID_PROJECT_ID, "")
-        assert "service account key file path is required" in str(exc_info.value)
+        assert "service account credentials are required" in str(exc_info.value)
 
     def test_validate_arguments_none_key_path(self):
         with pytest.raises(StackITNonExistentTokenError) as exc_info:
             StackitProvider.validate_arguments(self.VALID_PROJECT_ID, None)
-        assert "service account key file path is required" in str(exc_info.value)
+        assert "service account credentials are required" in str(exc_info.value)
 
     def test_validate_arguments_whitespace_only_key_path(self):
         with pytest.raises(StackITNonExistentTokenError) as exc_info:
             StackitProvider.validate_arguments(self.VALID_PROJECT_ID, "   ")
-        assert "service account key file path is required" in str(exc_info.value)
+        assert "service account credentials are required" in str(exc_info.value)
 
     def test_validate_arguments_empty_project_id(self):
         with pytest.raises(StackITInvalidProjectIdError) as exc_info:
@@ -105,11 +105,27 @@ class TestStackITProviderValidation:
         with pytest.raises(StackITNonExistentTokenError):
             StackitProvider.validate_arguments(None, None)
 
+    def test_validate_arguments_accepts_inline_key_without_path(self):
+        """Inline key content alone is enough; the path can be omitted."""
+        StackitProvider.validate_arguments(
+            self.VALID_PROJECT_ID, None, '{"keyId": "abc"}'
+        )
+
+    def test_validate_arguments_accepts_inline_key_when_path_is_empty(self):
+        StackitProvider.validate_arguments(
+            self.VALID_PROJECT_ID, "", '{"keyId": "abc"}'
+        )
+
+    def test_validate_arguments_rejects_when_inline_key_is_whitespace(self):
+        with pytest.raises(StackITNonExistentTokenError):
+            StackitProvider.validate_arguments(self.VALID_PROJECT_ID, None, "   ")
+
 
 class TestStackITProviderInitialization:
     def test_init_global_provider_passes_key_path_from_cli(self, monkeypatch):
-        """The service account key path from CLI args is forwarded to the
-        provider constructor; tokens are not part of the API anymore."""
+        """The service account key path and inline key content from CLI args
+        are forwarded to the provider constructor; tokens are not part of
+        the API anymore."""
         captured_kwargs = {}
 
         class FakeStackitProvider:
@@ -121,6 +137,7 @@ class TestStackITProviderInitialization:
             provider="stackit",
             stackit_project_id="12345678-1234-1234-1234-123456789abc",
             stackit_service_account_key_path="/tmp/sa-key.json",
+            stackit_service_account_key='{"keyId": "abc"}',
             stackit_region=None,
             scan_unused_services=False,
             config_file="config.yaml",
@@ -143,6 +160,10 @@ class TestStackITProviderInitialization:
         assert (
             captured_kwargs["service_account_key_path"]
             == arguments.stackit_service_account_key_path
+        )
+        assert (
+            captured_kwargs["service_account_key"]
+            == arguments.stackit_service_account_key
         )
         assert captured_kwargs["scan_unused_services"] is False
 
@@ -181,6 +202,7 @@ class TestStackITProviderInitialization:
 
 class TestStackITProviderTestConnection:
     KEY_PATH = "/tmp/sa-key.json"
+    KEY_CONTENT = '{"keyId": "abc", "publicKey": "..."}'
     PROJECT_ID = "12345678-1234-1234-1234-123456789abc"
 
     @pytest.fixture
@@ -189,8 +211,9 @@ class TestStackITProviderTestConnection:
         resourcemanager_module = types.ModuleType("stackit.resourcemanager")
 
         class FakeConfiguration:
-            def __init__(self, service_account_key_path):
+            def __init__(self, service_account_key_path=None, service_account_key=None):
                 self.service_account_key_path = service_account_key_path
+                self.service_account_key = service_account_key
 
         class FakeDefaultApi:
             error = None
@@ -200,7 +223,13 @@ class TestStackITProviderTestConnection:
                 self.config = config
 
             def get_project(self, id):
-                self.__class__.calls.append((self.config.service_account_key_path, id))
+                self.__class__.calls.append(
+                    (
+                        self.config.service_account_key_path,
+                        self.config.service_account_key,
+                        id,
+                    )
+                )
                 if self.__class__.error:
                     raise self.__class__.error
                 return {"name": "Test Project"}
@@ -216,16 +245,42 @@ class TestStackITProviderTestConnection:
         )
         return FakeDefaultApi
 
-    def test_connection_success_uses_resource_manager_lookup(
-        self, fake_stackit_resourcemanager
-    ):
+    def test_connection_success_with_key_path(self, fake_stackit_resourcemanager):
         connection = StackitProvider.test_connection(
             project_id=self.PROJECT_ID,
             service_account_key_path=self.KEY_PATH,
         )
 
         assert connection == Connection(is_connected=True)
-        assert fake_stackit_resourcemanager.calls == [(self.KEY_PATH, self.PROJECT_ID)]
+        assert fake_stackit_resourcemanager.calls == [
+            (self.KEY_PATH, None, self.PROJECT_ID)
+        ]
+
+    def test_connection_success_with_inline_key(self, fake_stackit_resourcemanager):
+        """The inline key path takes precedence over the file path."""
+        connection = StackitProvider.test_connection(
+            project_id=self.PROJECT_ID,
+            service_account_key=self.KEY_CONTENT,
+        )
+
+        assert connection == Connection(is_connected=True)
+        assert fake_stackit_resourcemanager.calls == [
+            (None, self.KEY_CONTENT, self.PROJECT_ID)
+        ]
+
+    def test_connection_inline_key_overrides_path(self, fake_stackit_resourcemanager):
+        connection = StackitProvider.test_connection(
+            project_id=self.PROJECT_ID,
+            service_account_key_path=self.KEY_PATH,
+            service_account_key=self.KEY_CONTENT,
+        )
+
+        assert connection == Connection(is_connected=True)
+        # When the inline key is present the SDK is configured with it and
+        # the key path is not passed on at all.
+        assert fake_stackit_resourcemanager.calls == [
+            (None, self.KEY_CONTENT, self.PROJECT_ID)
+        ]
 
     def test_connection_returns_error_when_raise_on_exception_is_false(
         self, fake_stackit_resourcemanager
@@ -291,6 +346,7 @@ class TestStackITProviderGetProjectName:
     def _make_provider(self):
         provider = object.__new__(StackitProvider)
         provider._service_account_key_path = "/tmp/sa-key.json"
+        provider._service_account_key = None
         provider._project_id = "12345678-1234-1234-1234-123456789abc"
         return provider
 

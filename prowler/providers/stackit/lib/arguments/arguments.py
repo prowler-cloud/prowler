@@ -26,6 +26,18 @@ def init_parser(self):
             "STACKIT_SERVICE_ACCOUNT_KEY_PATH environment variable."
         ),
     )
+    stackit_auth_subparser.add_argument(
+        "--stackit-service-account-key",
+        nargs="?",
+        default=None,
+        help=(
+            "Inline content of a StackIT service account key (JSON). Useful in "
+            "CI/CD where the secret comes from a secret manager and you do not "
+            "want to write it to disk. Prefer the STACKIT_SERVICE_ACCOUNT_KEY "
+            "environment variable over this flag to avoid leaking the key "
+            "through process listings or shell history."
+        ),
+    )
 
     stackit_parser.add_argument(
         "--stackit-region",

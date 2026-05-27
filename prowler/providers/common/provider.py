@@ -262,6 +262,9 @@ class Provider(ABC):
                         service_account_key_path=getattr(
                             arguments, "stackit_service_account_key_path", None
                         ),
+                        service_account_key=getattr(
+                            arguments, "stackit_service_account_key", None
+                        ),
                         regions=(
                             set(arguments.stackit_region)
                             if arguments.stackit_region

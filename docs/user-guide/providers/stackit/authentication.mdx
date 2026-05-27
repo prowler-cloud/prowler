@@ -35,7 +35,11 @@ Your StackIT project ID is a UUID. You can find it in:
 
 ## Passing Credentials to Prowler
 
-Export the path to the key file and the project ID:
+You can give Prowler either the **path** to the key file on disk or the **inline JSON content** of the key. Both go through the same StackIT SDK flow and refresh access tokens internally.
+
+### Option A: Key File Path (workstation, persistent agents)
+
+Recommended when the key is stored on disk.
 
 ```bash
 export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
@@ -44,7 +48,7 @@ export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
 prowler stackit
 ```
 
-Or pass them as CLI flags:
+Or as CLI flags:
 
 ```bash
 prowler stackit \
@@ -56,12 +60,31 @@ prowler stackit \
 Keep the key file outside of source control and lock it down with `chmod 600 ~/.stackit/sa-key.json`. Anyone with the JSON can mint access tokens for the service account.
 </Note>
 
+### Option B: Inline Key Content (CI/CD, secret managers)
+
+Recommended when the key is fetched at run time from a secret manager (GitHub Actions secret, AWS Secrets Manager, HashiCorp Vault, etc.) and you do not want to write it to disk.
+
+```bash
+export STACKIT_SERVICE_ACCOUNT_KEY="$(vault kv get -field=key stackit/sa)"
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+
+prowler stackit
+```
+
+<Note>
+Prefer the `STACKIT_SERVICE_ACCOUNT_KEY` environment variable over the matching CLI flag (`--stackit-service-account-key`); passing the secret on the command line leaks it through process listings and shell history.
+</Note>
+
+When both the inline content and a key path are set, the inline content wins.
+
 ## Credential Lookup Order
 
 Prowler resolves credentials in this order:
 
-1. CLI arguments: `--stackit-service-account-key-path`, `--stackit-project-id`
-2. Environment variables: `STACKIT_SERVICE_ACCOUNT_KEY_PATH`, `STACKIT_PROJECT_ID`
+1. CLI arguments: `--stackit-service-account-key`, `--stackit-service-account-key-path`, `--stackit-project-id`
+2. Environment variables: `STACKIT_SERVICE_ACCOUNT_KEY`, `STACKIT_SERVICE_ACCOUNT_KEY_PATH`, `STACKIT_PROJECT_ID`
+
+When both the inline key and the key file path are set, the inline content takes precedence.
 
 ## Token Lifetime
 
@@ -74,4 +97,4 @@ Access tokens are minted on demand by the SDK from the key file and refreshed be
 | `401 Unauthorized` during scan | Key file is missing fields, the public key is no longer registered, or the key was revoked | Re-issue the service account key in the StackIT portal and update `STACKIT_SERVICE_ACCOUNT_KEY_PATH` |
 | `403 Forbidden` during scan | Service account lacks role on the project | Re-check role assignment in the StackIT portal; `iaas.viewer` is the minimum for the shipped IaaS checks |
 | `StackIT project ID must be a valid UUID` | The project ID is not in UUID format | Copy the UUID from the portal URL or `stackit project list` |
-| `StackIT service account key file path is required` | Both env var and CLI flag are empty | Export `STACKIT_SERVICE_ACCOUNT_KEY_PATH` or pass `--stackit-service-account-key-path` before running Prowler |
+| `StackIT service account credentials are required` | None of the four credential inputs is set | Export `STACKIT_SERVICE_ACCOUNT_KEY_PATH` or `STACKIT_SERVICE_ACCOUNT_KEY` (or use their CLI counterparts) before running Prowler |
