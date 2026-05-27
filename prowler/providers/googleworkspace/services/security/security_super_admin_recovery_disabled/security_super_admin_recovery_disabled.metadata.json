@@ -13,7 +13,7 @@
   "Risk": "If Super Admin account recovery is enabled, an attacker who compromises a Super Admin's **recovery phone or email** could use the self-service recovery flow to take over the account, gaining **full administrative control** over the entire Google Workspace organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9436964",
+    "https://knowledge.workspace.google.com/admin/users/allow-super-administrators-to-recover-their-password",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

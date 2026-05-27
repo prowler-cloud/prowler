@@ -13,7 +13,7 @@
   "Risk": "When less secure app access is enabled, users can allow apps that use **basic authentication** (username and password only) to access their Google account. These apps are more vulnerable to **credential theft** and do not support 2-Step Verification, increasing the risk of account compromise.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/6260879",
+    "https://knowledge.workspace.google.com/admin/apps/control-access-to-less-secure-apps",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

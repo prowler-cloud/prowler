@@ -13,7 +13,7 @@
   "Risk": "When user account recovery is disabled, users who lose access to their accounts must **contact an administrator** to regain access. This increases helpdesk burden, extends downtime, and may lead to users adopting **insecure workarounds** like sharing credentials.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/33382",
+    "https://knowledge.workspace.google.com/admin/users/set-up-password-recovery-for-users",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

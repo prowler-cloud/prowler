@@ -1,6 +1,7 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportGoogleWorkspace
+from prowler.lib.logger import logger
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
 )
@@ -38,27 +39,38 @@ class security_session_duration_limited(Check):
                     f"in domain {domain}. The default is 14 days. "
                     f"Web session duration should be 12 hours or less."
                 )
-            else:
-                duration_seconds = (
-                    int(duration_str.rstrip("s"))
-                    if duration_str.endswith("s")
-                    else int(duration_str)
-                )
-                duration_hours = duration_seconds / 3600
+                findings.append(report)
+                return findings
 
-                if duration_seconds <= MAX_SESSION_DURATION_SECONDS:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"Google session control is set to {duration_hours:.0f} hours "
-                        f"in domain {domain}."
-                    )
-                else:
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"Google session control is set to {duration_hours:.0f} hours "
-                        f"in domain {domain}. "
-                        f"Web session duration should be 12 hours or less."
-                    )
+            try:
+                duration_seconds = int(duration_str.removesuffix("s"))
+            except ValueError:
+                logger.error(
+                    f"Unparseable web session duration: {duration_str!r}"
+                )
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Web session duration value {duration_str!r} is not parseable "
+                    f"in domain {domain}."
+                )
+                findings.append(report)
+                return findings
+
+            duration_hours = duration_seconds / 3600
+
+            if duration_seconds <= MAX_SESSION_DURATION_SECONDS:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google session control is set to {duration_hours:.0f} hours "
+                    f"in domain {domain}."
+                )
+            else:
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Google session control is set to {duration_hours:.0f} hours "
+                    f"in domain {domain}. "
+                    f"Web session duration should be 12 hours or less."
+                )
 
             findings.append(report)
 

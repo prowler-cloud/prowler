@@ -50,7 +50,13 @@ class Security(GoogleWorkspaceService):
 
             self.policies_fetched = fetch_succeeded
 
-            logger.info("Security policies fetched successfully.")
+            if fetch_succeeded:
+                logger.info("Security policies fetched successfully.")
+            else:
+                logger.warning(
+                    "Security policies fetched with partial failures; "
+                    "some checks may be skipped."
+                )
 
         except Exception as error:
             self._handle_api_error(
@@ -223,7 +229,9 @@ class Security(GoogleWorkspaceService):
         elif setting_type == "rule.dlp":
             state = value.get("state")
             triggers = value.get("triggers", [])
-            if state == "ACTIVE" and "google.workspace.drive.file.v1.share" in triggers:
+            if state == "ACTIVE" and any(
+                trigger.startswith("google.workspace.drive.") for trigger in triggers
+            ):
                 self.policies.dlp_drive_rules_exist = True
             logger.debug(f"DLP rule: state={state}, triggers={triggers}")
 

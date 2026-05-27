@@ -115,6 +115,74 @@ class TestSecurityPasswordPolicyStrong:
             assert findings[0].status == "FAIL"
             assert "does not meet" in findings[0].status_extended
 
+    def test_fail_strength_unset_treated_as_missing(self):
+        """Test FAIL when password_allowed_strength is None even with other fields strong"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong import (
+                security_password_policy_strong,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                password_minimum_length=14,
+                password_allowed_strength=None,
+                password_allow_reuse=False,
+                password_enforce_at_login=True,
+                password_expiration_duration="31536000s",
+            )
+
+            check = security_password_policy_strong()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "password strength is not configured" in findings[0].status_extended
+
+    def test_fail_min_length_unset_reports_not_configured(self):
+        """Test FAIL message uses 'not configured' when password_minimum_length is None"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong import (
+                security_password_policy_strong,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                password_minimum_length=None,
+                password_allowed_strength="STRONG",
+                password_allow_reuse=False,
+                password_enforce_at_login=True,
+                password_expiration_duration="31536000s",
+            )
+
+            check = security_password_policy_strong()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "minimum length is not configured" in findings[0].status_extended
+
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
         mock_provider = set_mocked_googleworkspace_provider()

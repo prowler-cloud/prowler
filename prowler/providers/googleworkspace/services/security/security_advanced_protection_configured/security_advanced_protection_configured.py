@@ -32,8 +32,7 @@ class security_advanced_protection_configured(Check):
             )
             domain = security_client.provider.identity.domain
 
-            # API default: enrollment=true (secure), securityCodeOption=ALLOWED_WITHOUT_REMOTE_ACCESS (insecure)
-            enrollment_ok = enrollment is not False
+            enrollment_ok = enrollment is True
             codes_ok = code_option == "CODES_NOT_ALLOWED"
 
             if enrollment_ok and codes_ok:
@@ -46,7 +45,11 @@ class security_advanced_protection_configured(Check):
                 report.status = "FAIL"
                 issues = []
                 if not enrollment_ok:
-                    issues.append("enrollment is disabled")
+                    issues.append(
+                        "enrollment is not configured"
+                        if enrollment is None
+                        else "enrollment is disabled"
+                    )
                 if not codes_ok:
                     issues.append(
                         f"security codes are "

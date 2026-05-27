@@ -97,6 +97,34 @@ class TestSecuritySessionDurationLimited:
             assert findings[0].status == "FAIL"
             assert "not explicitly configured" in findings[0].status_extended
 
+    def test_fail_unparseable_duration(self):
+        """Test FAIL when session duration has an unexpected format instead of crashing"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_session_duration_limited.security_session_duration_limited.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_session_duration_limited.security_session_duration_limited import (
+                security_session_duration_limited,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(web_session_duration="invalid")
+
+            check = security_session_duration_limited()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "not parseable" in findings[0].status_extended
+
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
         mock_provider = set_mocked_googleworkspace_provider()

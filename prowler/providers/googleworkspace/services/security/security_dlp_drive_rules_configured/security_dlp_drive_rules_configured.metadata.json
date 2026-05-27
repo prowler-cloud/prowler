@@ -13,7 +13,7 @@
   "Risk": "Without DLP policies, users can **freely share files containing sensitive information** through Google Drive without any detection or prevention controls. This increases the risk of **accidental data exposure, regulatory non-compliance**, and data breaches through oversharing.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9646351",
+    "https://knowledge.workspace.google.com/admin/security/about-dlp",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

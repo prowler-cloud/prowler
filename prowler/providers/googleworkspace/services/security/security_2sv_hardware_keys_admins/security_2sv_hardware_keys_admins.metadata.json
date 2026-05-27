@@ -13,7 +13,7 @@
   "Risk": "When 2SV methods include **SMS, phone calls, or software-based authenticators**, users are vulnerable to **SIM swapping, SS7 attacks, and real-time phishing proxies** that can intercept one-time codes. Hardware security keys are resistant to all known remote phishing techniques.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/175197",
+    "https://knowledge.workspace.google.com/admin/security/protect-your-business-with-2-step-verification",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

@@ -105,6 +105,37 @@ class TestSecurityAdvancedProtectionConfigured:
             assert findings[0].status == "FAIL"
             assert "not properly configured" in findings[0].status_extended
 
+    def test_fail_enrollment_unset(self):
+        """Test FAIL when enrollment is None (not configured)"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_advanced_protection_configured.security_advanced_protection_configured.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_advanced_protection_configured.security_advanced_protection_configured import (
+                security_advanced_protection_configured,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                advanced_protection_enrollment=None,
+                advanced_protection_security_code_option="CODES_NOT_ALLOWED",
+            )
+
+            check = security_advanced_protection_configured()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "enrollment is not configured" in findings[0].status_extended
+
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
         mock_provider = set_mocked_googleworkspace_provider()

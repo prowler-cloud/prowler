@@ -34,15 +34,16 @@ class security_password_policy_strong(Check):
             min_length = policies.password_minimum_length
             if min_length is None or min_length < 14:
                 issues.append(
-                    f"minimum length is {8 if min_length is None else min_length} (requires 14+)"
+                    "minimum length is not configured (requires 14+)"
+                    if min_length is None
+                    else f"minimum length is {min_length} (requires 14+)"
                 )
 
-            if (
-                policies.password_allowed_strength is not None
-                and policies.password_allowed_strength != "STRONG"
-            ):
+            if policies.password_allowed_strength != "STRONG":
                 issues.append(
-                    f"password strength is {policies.password_allowed_strength} (requires STRONG)"
+                    "password strength is not configured (requires STRONG)"
+                    if policies.password_allowed_strength is None
+                    else f"password strength is {policies.password_allowed_strength} (requires STRONG)"
                 )
 
             if policies.password_allow_reuse is True:

@@ -13,7 +13,7 @@
   "Risk": "When the employee ID login challenge is enabled without proper configuration, it may create a **false sense of security** or interfere with the login flow. The employee ID challenge is a supplementary verification method that should only be used when specifically required by the organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/6002699",
+    "https://knowledge.workspace.google.com/admin/security/protect-google-workspace-accounts-with-security-challenges",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

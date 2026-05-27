@@ -13,7 +13,7 @@
   "Risk": "The default 14-day session duration means that a compromised session token provides an attacker with **two weeks of uninterrupted access** without re-authentication. Shorter session durations limit the impact of **stolen cookies, session hijacking, and unauthorized access** from shared or untrusted devices.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7576830",
+    "https://knowledge.workspace.google.com/admin/security/set-session-length-for-google-services",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

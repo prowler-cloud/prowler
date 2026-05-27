@@ -13,7 +13,7 @@
   "Risk": "Without 2-Step Verification enforcement, users can access their accounts with **only a password**. If credentials are compromised through phishing, credential stuffing, or data breaches, attackers gain **immediate access** to the user's account and organizational data without any additional verification.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/175197",
+    "https://knowledge.workspace.google.com/admin/security/protect-your-business-with-2-step-verification",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

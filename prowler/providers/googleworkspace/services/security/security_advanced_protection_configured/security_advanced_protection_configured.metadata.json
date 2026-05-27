@@ -13,7 +13,7 @@
   "Risk": "Without the Advanced Protection Program, user accounts rely on standard security controls that are vulnerable to **sophisticated phishing attacks, targeted credential theft, and third-party app data access**. Allowing security codes alongside Advanced Protection weakens its protections by providing an alternative authentication path that can be intercepted.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9378686",
+    "https://knowledge.workspace.google.com/admin/security/protect-users-with-the-advanced-protection-program",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {

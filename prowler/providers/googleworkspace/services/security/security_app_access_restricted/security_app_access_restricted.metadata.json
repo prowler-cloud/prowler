@@ -13,7 +13,7 @@
   "Risk": "When application access to Google services is unrestricted, **any third-party app** that users consent to can access sensitive organizational data through Google APIs. This includes apps that may request **broad OAuth scopes** for Drive, Gmail, and other services, potentially leading to **data exfiltration** through unvetted applications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7281227",
+    "https://knowledge.workspace.google.com/admin/apps/control-which-apps-access-google-workspace-data",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
