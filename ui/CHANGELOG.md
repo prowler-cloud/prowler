@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.28.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Compliance page now loads the most recent scan when opened from the sidebar instead of showing the "no compliance data available" alert [(#11374)](https://github.com/prowler-cloud/prowler/pull/11374)
+
+---
+
 ## [1.28.1] (Prowler v5.28.1)
 
 ### 🐞 Fixed
