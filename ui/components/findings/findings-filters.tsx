@@ -4,8 +4,6 @@ import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
@@ -15,6 +13,7 @@ import {
   FilterChip,
   FilterSummaryStrip,
 } from "@/components/filters/filter-summary-strip";
+import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
@@ -30,7 +29,7 @@ import {
 } from "./findings-filters.utils";
 
 interface FindingsFiltersProps {
-  /** Provider data for ProviderTypeSelector and AccountsSelector */
+  /** Provider data for provider/account filter controls. */
   providers: ProviderProps[];
   completedScanIds: string[];
   scanDetails: { [key: string]: ScanEntity }[];
@@ -96,7 +95,7 @@ export const FindingsFilterBatchControls = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const isAlertsEdit = variant === "alerts-edit";
 
-  // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
+  // Custom filters for the expandable section.
   const customFilters = [
     ...filterFindings
       .filter((filter) => !isAlertsEdit || filter.key !== FilterType.STATUS)
@@ -203,37 +202,23 @@ export const FindingsFilterBatchControls = ({
       ? pendingDateValues[0]
       : undefined;
 
-  const providerTypeControl = (className: string) => (
-    <div className={className}>
-      <ProviderTypeSelector
-        providers={providers}
-        onBatchChange={setPending}
-        selectedValues={getFilterValue("filter[provider_type__in]")}
-      />
-    </div>
-  );
-
-  const accountsControl = (className: string) => (
-    <div className={className}>
-      <AccountsSelector
-        providers={providers}
-        onBatchChange={setPending}
-        selectedValues={getFilterValue("filter[provider_id__in]")}
-        selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
-      />
-    </div>
+  const providerAccountControls = (className: string) => (
+    <ProviderAccountSelectors
+      providers={providers}
+      mode="batch"
+      selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
+      selectedAccounts={getFilterValue("filter[provider_id__in]")}
+      onBatchChange={setPending}
+      providerSelectorClassName={className}
+      accountSelectorClassName={className}
+    />
   );
 
   const alertEditFilterGrid = hasCustomFilters ? (
     <DataTableFilterCustom
       gridClassName="w-full gap-3 xl:grid-cols-3 2xl:grid-cols-3"
       filters={customFilters}
-      prependElement={
-        <>
-          {providerTypeControl(FILTER_GRID_ITEM_CLASS)}
-          {accountsControl(FILTER_GRID_ITEM_CLASS)}
-        </>
-      }
+      prependElement={providerAccountControls(FILTER_GRID_ITEM_CLASS)}
       hideClearButton
       mode={DATA_TABLE_FILTER_MODE.BATCH}
       onBatchChange={setPending}
@@ -303,8 +288,7 @@ export const FindingsFilterBatchControls = ({
           alertEditFilterGrid
         ) : (
           <>
-            {providerTypeControl(FILTER_CONTROL_COLUMN_CLASS)}
-            {accountsControl(FILTER_CONTROL_COLUMN_CLASS)}
+            {providerAccountControls(FILTER_CONTROL_COLUMN_CLASS)}
             {hasCustomFilters && (
               <Button
                 variant="outline"

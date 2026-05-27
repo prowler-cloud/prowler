@@ -40,6 +40,9 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
   });
 
   const providerId = form.watch("providerId");
+  const disconnectedProviderIds = providers
+    .filter((provider) => provider.attributes.connection.connected !== true)
+    .map((provider) => provider.id);
 
   const onSubmit = form.handleSubmit(async ({ providerId, scanAlias }) => {
     const formData = new FormData();
@@ -82,6 +85,7 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
         <AccountsSelector
           id="launch-scan-account"
           providers={providers}
+          disabledValues={disconnectedProviderIds}
           onBatchChange={(_, values) =>
             form.setValue("providerId", values.at(-1) ?? "", {
               shouldValidate: true,

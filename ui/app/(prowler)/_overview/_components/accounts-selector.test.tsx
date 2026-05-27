@@ -74,11 +74,13 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   },
   MultiSelectItem: ({
     children,
+    disabled,
     value,
     keywords,
     onSelect,
   }: {
     children: React.ReactNode;
+    disabled?: boolean;
     value: string;
     keywords?: string[];
     onSelect?: (value: string) => void;
@@ -87,6 +89,7 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
       type="button"
       data-value={value}
       data-keywords={keywords?.join("|")}
+      data-disabled={disabled ? "true" : "false"}
       onClick={() => onSelect?.(value)}
     >
       {children}
@@ -139,8 +142,8 @@ describe("AccountsSelector", () => {
     render(<AccountsSelector providers={providers} />);
 
     expect(multiSelectContentSpy).toHaveBeenCalledWith({
-      placeholder: "Search accounts...",
-      emptyMessage: "No accounts found.",
+      placeholder: "Search Providers...",
+      emptyMessage: "No Providers found.",
     });
     expect(screen.getByText("Production AWS")).toBeInTheDocument();
   });
@@ -179,9 +182,23 @@ describe("AccountsSelector", () => {
     render(<AccountsSelector providers={providers} />);
 
     expect(
-      screen.getByRole("option", { name: /select all accounts/i }),
+      screen.getByRole("option", { name: /select all Providers/i }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("All selected")).toBeInTheDocument();
+  });
+
+  it("marks configured account values as disabled", () => {
+    render(
+      <AccountsSelector
+        providers={providers}
+        disabledValues={["provider-1"]}
+      />,
+    );
+
+    expect(
+      screen.getByText("Production AWS").closest("[data-value]"),
+    ).toHaveAttribute("data-disabled", "true");
+    expect(screen.getByText("Disconnected")).toBeInTheDocument();
   });
 
   it("can close the dropdown after selecting a launch-scan provider", async () => {

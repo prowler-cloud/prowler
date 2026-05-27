@@ -46,7 +46,10 @@ export function ScansPageShell({
     (state) => state.setLaunchScanModalOpen,
   );
   const filters = useScansFilters();
-  const launchDisabled = !hasManageScansPermission || providers.length === 0;
+  const hasConnectedProviders = providers.some(
+    (provider) => provider.attributes.connection.connected === true,
+  );
+  const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
 
   const handleLaunchOpenChange = (open: boolean) => {

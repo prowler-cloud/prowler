@@ -11,9 +11,8 @@ const { pushMock, searchParamsValue } = vi.hoisted(() => ({
   searchParamsValue: { current: "" },
 }));
 
-const { accountsSelectorSpy, providerTypeSelectorSpy } = vi.hoisted(() => ({
-  accountsSelectorSpy: vi.fn(),
-  providerTypeSelectorSpy: vi.fn(),
+const { scansFilterBarSpy } = vi.hoisted(() => ({
+  scansFilterBarSpy: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -24,17 +23,32 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(searchParamsValue.current),
 }));
 
-vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
-  AccountsSelector: (props: unknown) => {
-    accountsSelectorSpy(props);
-    return <div>Shared accounts selector</div>;
-  },
-}));
-
-vi.mock("@/app/(prowler)/_overview/_components/provider-type-selector", () => ({
-  ProviderTypeSelector: (props: unknown) => {
-    providerTypeSelectorSpy(props);
-    return <div>Shared provider type selector</div>;
+vi.mock("./scans-filter-bar", () => ({
+  ScansFilterBar: (props: {
+    showStatusFilter: boolean;
+    onScheduleTypeChange: (value: string) => void;
+    onScanStatusChange: (value: string) => void;
+  }) => {
+    scansFilterBarSpy(props);
+    return (
+      <>
+        <div>Shared scan filters</div>
+        <select
+          aria-label="All Types"
+          onChange={(event) => props.onScheduleTypeChange(event.target.value)}
+        >
+          <option value="all">All Types</option>
+        </select>
+        {props.showStatusFilter && (
+          <select
+            aria-label="All Statuses"
+            onChange={(event) => props.onScanStatusChange(event.target.value)}
+          >
+            <option value="all">All Statuses</option>
+          </select>
+        )}
+      </>
+    );
   },
 }));
 
@@ -126,7 +140,7 @@ describe("ScansPageShell", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("uses the shared provider selectors from Findings for scan filters", () => {
+  it("uses the shared scan filter bar for scan filters", () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
 
     render(
@@ -135,22 +149,13 @@ describe("ScansPageShell", () => {
       </ScansPageShell>,
     );
 
-    expect(
-      screen.getByText("Shared provider type selector"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Shared accounts selector")).toBeInTheDocument();
-    expect(providerTypeSelectorSpy).toHaveBeenCalledWith(
+    expect(screen.getByText("Shared scan filters")).toBeInTheDocument();
+    expect(scansFilterBarSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         providers,
-        selectedValues: [],
-      }),
-    );
-    expect(accountsSelectorSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        providers,
-        filterKey: "provider_uid__in",
-        selectedValues: [],
         selectedProviderTypes: [],
+        selectedProviderUids: [],
+        scheduleType: "all",
       }),
     );
   });
