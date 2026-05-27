@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
@@ -140,6 +141,7 @@ export const scanOnDemand = async (formData: FormData) => {
     const result = await handleApiResponse(response, "/scans");
     if (result?.data?.id) {
       addScanOperation("start", result.data.id);
+      revalidatePath("/scans");
     }
     return result;
   } catch (error) {
