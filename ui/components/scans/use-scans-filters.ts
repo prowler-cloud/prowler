@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { getScanJobsTab } from "@/components/scans/scans-table.utils";
+import { getScanJobsTab } from "@/components/scans/scans.utils";
 import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
 
 const ALL_VALUE = "all";

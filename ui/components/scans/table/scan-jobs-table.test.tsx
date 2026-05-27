@@ -15,7 +15,7 @@ vi.mock("./scan-jobs-columns", () => ({
   getScanJobsColumns: () => [],
 }));
 
-vi.mock("../../auto-refresh", () => ({
+vi.mock("../auto-refresh", () => ({
   AutoRefresh: ({ hasExecutingScan }: { hasExecutingScan: boolean }) => (
     <div data-testid="scan-jobs-auto-refresh">{String(hasExecutingScan)}</div>
   ),

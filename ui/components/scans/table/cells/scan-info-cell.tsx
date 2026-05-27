@@ -1,6 +1,6 @@
 "use client";
 
-import { getScanAlias } from "@/components/scans/scans-table.utils";
+import { getScanAlias } from "@/components/scans/scans.utils";
 import { EntityInfo } from "@/components/ui/entities";
 import type { ScanProps } from "@/types";
 

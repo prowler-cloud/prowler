@@ -1,6 +1,6 @@
 "use client";
 
-import { getScanScheduleLabel } from "@/components/scans/scans-table.utils";
+import { getScanScheduleLabel } from "@/components/scans/scans.utils";
 import { DateWithTime } from "@/components/ui/entities";
 import type { ScanProps } from "@/types";
 

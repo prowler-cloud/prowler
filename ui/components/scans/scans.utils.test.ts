@@ -11,7 +11,7 @@ import {
   getScanScheduleLabel,
   getScanStatusLabel,
   getScanTriggerFilterOptions,
-} from "./scans-table.utils";
+} from "./scans.utils";
 
 const makeScan = (name: string | null): ScanProps => ({
   type: "scans",
@@ -36,7 +36,7 @@ const makeScan = (name: string | null): ScanProps => ({
   },
 });
 
-describe("scans-table.utils", () => {
+describe("scans.utils", () => {
   it("falls back to active tab for unknown tab values", () => {
     expect(getScanJobsTab("unknown")).toBe(SCAN_JOBS_TAB.ACTIVE);
     expect(getScanJobsTab(SCAN_JOBS_TAB.COMPLETED)).toBe(

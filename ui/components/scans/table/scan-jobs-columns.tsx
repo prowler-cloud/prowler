@@ -7,7 +7,7 @@ import { DataTableColumnHeader } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/table/status-badge";
 import { SCAN_JOBS_TAB, type ScanJobsTab, type ScanProps } from "@/types";
 
-import { formatScanDuration } from "../../scans-table.utils";
+import { formatScanDuration } from "../scans.utils";
 import {
   AccountCell,
   ProgressCell,

@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/ui/table";
 import type { MetaDataProps, ScanJobsTab, ScanProps } from "@/types";
 
-import { AutoRefresh } from "../../auto-refresh";
+import { AutoRefresh } from "../auto-refresh";
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
 interface ScanJobsTableProps {

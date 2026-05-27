@@ -15,7 +15,7 @@ import type { ProviderProps } from "@/types/providers";
 import {
   getScanStatusFilterOptions,
   getScanTriggerFilterOptions,
-} from "./scans-table.utils";
+} from "./scans.utils";
 
 interface ScansFilterBarProps {
   providers: ProviderProps[];

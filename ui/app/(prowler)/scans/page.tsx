@@ -9,9 +9,9 @@ import {
   getScanJobsTab,
   getScanJobsTabFilters,
   isScanStateFilterKey,
-} from "@/components/scans/scans-table.utils";
+} from "@/components/scans/scans.utils";
 import { SkeletonTableScans } from "@/components/scans/table";
-import { ScanJobsTable } from "@/components/scans/table/scans/scan-jobs-table";
+import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/ui";
 import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
 
