@@ -11,7 +11,7 @@ interface EmptyStateCopy {
 
 const EMPTY_STATE_COPY: Record<ScanJobsTab, EmptyStateCopy> = {
   [SCAN_JOBS_TAB.ACTIVE]: {
-    title: "No active scans",
+    title: "No scans in progress",
     description:
       "Scans currently running or queued will appear here when available.",
     hint: `Switch to ${SCAN_TAB_LABELS[SCAN_JOBS_TAB.COMPLETED]} to review past results, or to ${SCAN_TAB_LABELS[SCAN_JOBS_TAB.SCHEDULED]} to see upcoming runs.`,

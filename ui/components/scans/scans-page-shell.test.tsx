@@ -306,7 +306,7 @@ describe("ScansPageShell", () => {
       </ScansPageShell>,
     );
 
-    await user.click(screen.getByRole("tab", { name: /active/i }));
+    await user.click(screen.getByRole("tab", { name: /in progress/i }));
 
     const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
     expect(calledUrl).toContain("tab=active");

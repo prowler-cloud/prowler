@@ -37,7 +37,7 @@ export type ScanJobsTab = (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB];
 export const DEFAULT_SCAN_JOBS_TAB: ScanJobsTab = SCAN_JOBS_TAB.ACTIVE;
 
 export const SCAN_TAB_LABELS: Record<ScanJobsTab, string> = {
-  [SCAN_JOBS_TAB.ACTIVE]: "Active",
+  [SCAN_JOBS_TAB.ACTIVE]: "In Progress",
   [SCAN_JOBS_TAB.COMPLETED]: "Completed",
   [SCAN_JOBS_TAB.SCHEDULED]: "Scheduled",
 };
