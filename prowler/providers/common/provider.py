@@ -557,7 +557,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                
+
                 elif "okta" in provider_class_name.lower():
                     provider_class(
                         okta_org_domain=getattr(arguments, "okta_org_domain", ""),
