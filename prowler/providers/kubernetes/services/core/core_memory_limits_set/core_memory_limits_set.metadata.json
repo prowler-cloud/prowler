@@ -1,0 +1,37 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_memory_limits_set",
+  "CheckTitle": "Ensure memory limits are set on all containers",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Pod",
+  "ResourceGroup": "container",
+  "Description": "**Kubernetes Pods** are evaluated for containers without **memory limits** configured in `resources.limits.memory`, indicating unbounded memory consumption is permitted.",
+  "Risk": "Without **memory limits**, a single container can consume all available node memory, causing:\n- **OOM kills** of other workloads (availability)\n- Node instability and cascading failures\n- Noisy-neighbor problems in multi-tenant clusters\nAttackers exploiting a vulnerability can amplify impact by exhausting node resources, enabling **denial of service** across co-located workloads.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+    "https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open your Kubernetes UI (e.g., cloud provider console or Dashboard)\n2. Navigate to the failing workload (Deployment/StatefulSet/DaemonSet) or Pod and choose Edit YAML/Manifest\n3. Set resources.limits.memory for each affected container:\n   - For controllers: spec.template.spec.containers[].resources.limits.memory\n   - For standalone Pods: spec.containers[].resources.limits.memory\n4. Save changes (controllers will roll out new Pods). If it is a standalone Pod, delete and recreate it to apply the change",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"<IMAGE>\"\n      resources {\n        limits = {\n          memory = \"128Mi\" # Critical: sets a memory ceiling to prevent unbounded consumption\n        }\n      }\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set **memory limits** on every container to prevent unbounded consumption and protect node stability.\n\n- Start with observed usage plus headroom; tune with **VPA** recommendations\n- Combine with **LimitRanges** and **ResourceQuotas** at the namespace level for **defense in depth**\n- Monitor memory usage and OOMKill events to right-size limits over time",
+      "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+    }
+  },
+  "Categories": [
+    "container-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Memory limits prevent containers from consuming unbounded memory and protect node stability."
+}
