@@ -1,4 +1,5 @@
-from unittest.mock import patch
+import asyncio
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -86,6 +87,7 @@ class TestAzureProvider:
                 "python_latest_version": "3.12",
                 "java_latest_version": "17",
                 "recommended_minimal_tls_versions": ["1.2", "1.3"],
+                "recommended_smb_channel_encryption_algorithms": ["AES-256-GCM"],
                 "vm_backup_min_daily_retention_days": 7,
                 "desired_vm_sku_sizes": [
                     "Standard_A8_v2",
@@ -721,3 +723,88 @@ class TestAzureProviderSetupIdentitySubscriptions:
             first_id: shared_name,
             second_id: shared_name,
         }
+
+
+class TestAzureProviderSetupIdentityEventLoop:
+    """Regression for the Celery worker scenario where
+    asyncio.get_event_loop() raised "There is no current event loop in
+    thread 'MainThread'." on Python 3.12. setup_identity now uses
+    asyncio.run(), which creates its own loop and must work without a
+    pre-existing one in the current thread."""
+
+    @staticmethod
+    def _mock_subscription(display_name, subscription_id):
+        mock_subscription = MagicMock()
+        mock_subscription.display_name = display_name
+        mock_subscription.subscription_id = subscription_id
+        return mock_subscription
+
+    @staticmethod
+    def _build_subscriptions_client_mock(subscriptions):
+        subscriptions_operations = MagicMock()
+        subscriptions_operations.list = MagicMock(return_value=subscriptions)
+        subscriptions_operations.get = MagicMock()
+
+        tenants_operations = MagicMock()
+        tenants_operations.list = MagicMock(return_value=[])
+
+        client_instance = MagicMock()
+        client_instance.subscriptions = subscriptions_operations
+        client_instance.tenants = tenants_operations
+        return MagicMock(return_value=client_instance)
+
+    @staticmethod
+    def _build_provider():
+        with patch.object(AzureProvider, "__init__", return_value=None):
+            azure_provider = AzureProvider()
+        azure_provider._session = MagicMock()
+        azure_provider._region_config = AzureRegionConfig(
+            name="AzureCloud",
+            authority=None,
+            base_url="https://management.azure.com",
+            credential_scopes=["https://management.azure.com/.default"],
+        )
+        return azure_provider
+
+    def test_setup_identity_succeeds_without_active_event_loop(self):
+        sub_id = str(uuid4())
+        subscriptions_client = self._build_subscriptions_client_mock(
+            [self._mock_subscription("Sub", sub_id)]
+        )
+
+        graph_client = MagicMock()
+        graph_client.domains.get = AsyncMock(return_value=MagicMock(value=[]))
+        graph_client.me.get = AsyncMock(return_value=None)
+
+        # Simulate the Celery worker state: no event loop registered for the
+        # current thread. Before the fix this combination triggered
+        # `RuntimeError: There is no current event loop in thread 'MainThread'.`
+        # on Python 3.12 from asyncio.get_event_loop().
+        asyncio.set_event_loop(None)
+        try:
+            with (
+                patch(
+                    "prowler.providers.azure.azure_provider.GraphServiceClient",
+                    return_value=graph_client,
+                ),
+                patch(
+                    "prowler.providers.azure.azure_provider.SubscriptionClient",
+                    subscriptions_client,
+                ),
+            ):
+                azure_provider = self._build_provider()
+                identity = azure_provider.setup_identity(
+                    az_cli_auth=False,
+                    sp_env_auth=True,
+                    browser_auth=False,
+                    managed_identity_auth=False,
+                    subscription_ids=[],
+                    client_id="00000000-0000-0000-0000-000000000000",
+                )
+        finally:
+            # Re-arm a loop for sibling tests that may rely on the default.
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
+        assert isinstance(identity, AzureIdentityInfo)
+        assert identity.subscriptions == {sub_id: "Sub"}
+        graph_client.domains.get.assert_awaited_once()

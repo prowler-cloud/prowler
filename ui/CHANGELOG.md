@@ -8,6 +8,19 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Dark mode: pure-black canvas, pure-white primary text, and brighter border / input tokens for clearer separation between cards, tables, and inputs [(#11073)](https://github.com/prowler-cloud/prowler/pull/11073)
 
+### 🐞 Fixed
+
+- Compliance page now loads the most recent scan when opened from the sidebar instead of showing the "no compliance data available" alert [(#11374)](https://github.com/prowler-cloud/prowler/pull/11374)
+
+---
+
+## [1.28.1] (Prowler v5.28.1)
+
+### 🐞 Fixed
+
+- Large scan report ZIP downloads now stream through a Next.js Route Handler instead of buffering the full file in a Server Action [(#11330)](https://github.com/prowler-cloud/prowler/pull/11330)
+- Compliance requirement findings table now respects the page size selector [(#11365)](https://github.com/prowler-cloud/prowler/pull/11365)
+
 ---
 
 ## [1.28.0] (Prowler v5.28.0)

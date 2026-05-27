@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "application_admin_console_session_idle_timeout_15min",
+  "CheckTitle": "Okta Admin Console app session idle timeout is 15 minutes or less",
+  "CheckType": [],
+  "ServiceName": "application",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "The integrated **Okta Admin Console** app must close idle privileged sessions. *Maximum app session idle time* on the **Sign On** tab must be `15` minutes or less.\n\nThreshold override: `okta_admin_console_idle_timeout_max_minutes`.",
+  "Risk": "An unattended administrator workstation leaves the Okta control plane open for session hijacking.\n\n- **Privileged session takeover** by anyone with physical or remote access to the workstation\n- **Tenant-wide configuration changes** under the absent administrator's identity\n- **Bypassed reauthentication** for the most sensitive surface of the IdP",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developer.okta.com/docs/guides/configure-signon-policy/main/",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/OktaApplicationSettings/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Applications** > **Applications** > **Okta Admin Console**.\n3. Open the **Sign On** tab.\n4. Under **Okta Admin Console session**, set *Maximum app session idle time* to `15` minutes or less.\n5. Save the changes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the *Maximum app session idle time* of the Okta Admin Console first-party app to `15` minutes or less so privileged administrator sessions terminate on inactivity.",
+      "Url": "https://hub.prowler.com/check/application_admin_console_session_idle_timeout_15min"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Aligns with DISA STIG V-273187 / OKTA-APP-000025."
+}
