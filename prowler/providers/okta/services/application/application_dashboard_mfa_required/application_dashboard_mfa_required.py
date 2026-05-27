@@ -10,8 +10,8 @@ from prowler.providers.okta.services.application.lib.application_helpers import 
     app_not_found_finding,
     missing_app_scope_finding,
     policy_missing_finding,
-    priority_one_active_rule,
     rule_label,
+    top_active_rule,
 )
 
 DASHBOARD_LABEL_HINT = "Okta Dashboard"
@@ -54,26 +54,26 @@ class application_dashboard_mfa_required(Check):
         report = CheckReportOkta(
             metadata=self.metadata(), resource=app, org_domain=org_domain
         )
-        rule = priority_one_active_rule(app)
+        rule = top_active_rule(app)
         if rule is None:
             report.status = "FAIL"
             report.status_extended = (
-                f"{app_label(app)} has no Priority 1 active rule on its "
-                "Authentication Policy. STIG V-273194 requires the top rule "
-                "to set `User must authenticate with` to "
+                f"{app_label(app)} has no active rules on its Authentication "
+                "Policy. STIG V-273194 requires the top rule to set "
+                "`User must authenticate with` to "
                 "`Password / IdP + Another factor` or `Any 2 factor types`."
             )
         elif rule.factor_mode == "2FA":
             report.status = "PASS"
             report.status_extended = (
-                f"Priority 1 active {rule_label(rule)} on {app_label(app)} "
-                "enforces multifactor authentication (`factorMode=2FA`)."
+                f"Top active {rule_label(rule)} on {app_label(app)} enforces "
+                "multifactor authentication (`factorMode=2FA`)."
             )
         else:
             report.status = "FAIL"
             report.status_extended = (
-                f"Priority 1 active {rule_label(rule)} on {app_label(app)} "
-                f"does not enforce multifactor authentication "
+                f"Top active {rule_label(rule)} on {app_label(app)} does not "
+                f"enforce multifactor authentication "
                 f"(`factorMode={rule.factor_mode or 'unset'}`). "
                 "Set `User must authenticate with` to `Password / IdP + Another "
                 "factor` or `Any 2 factor types`."

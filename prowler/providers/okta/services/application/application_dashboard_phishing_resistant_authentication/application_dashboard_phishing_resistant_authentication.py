@@ -10,8 +10,8 @@ from prowler.providers.okta.services.application.lib.application_helpers import 
     app_not_found_finding,
     missing_app_scope_finding,
     policy_missing_finding,
-    priority_one_active_rule,
     rule_label,
+    top_active_rule,
 )
 
 DASHBOARD_LABEL_HINT = "Okta Dashboard"
@@ -22,7 +22,7 @@ class application_dashboard_phishing_resistant_authentication(Check):
 
     The Authentication Policy bound to the Okta Dashboard app must
     restrict possession factors to phishing-resistant authenticators on
-    its Priority 1 active non-default rule
+    its top active rule
     (`possession.phishingResistant=REQUIRED`).
     """
 
@@ -53,27 +53,27 @@ class application_dashboard_phishing_resistant_authentication(Check):
         report = CheckReportOkta(
             metadata=self.metadata(), resource=app, org_domain=org_domain
         )
-        rule = priority_one_active_rule(app)
+        rule = top_active_rule(app)
         if rule is None:
             report.status = "FAIL"
             report.status_extended = (
-                f"{app_label(app)} has no Priority 1 active rule on its "
-                "Authentication Policy. STIG V-273190 requires the top rule "
-                "to mark `Possession factor constraints are: Phishing resistant`."
+                f"{app_label(app)} has no active rules on its Authentication "
+                "Policy. STIG V-273190 requires the top rule to mark "
+                "`Possession factor constraints are: Phishing resistant`."
             )
         elif rule.possession_phishing_resistant_required:
             report.status = "PASS"
             report.status_extended = (
-                f"Priority 1 active {rule_label(rule)} on {app_label(app)} "
-                "enforces phishing-resistant possession factors "
+                f"Top active {rule_label(rule)} on {app_label(app)} enforces "
+                "phishing-resistant possession factors "
                 "(`possession.phishingResistant=REQUIRED`)."
             )
         else:
             report.status = "FAIL"
             report.status_extended = (
-                f"Priority 1 active {rule_label(rule)} on {app_label(app)} "
-                "does not enforce phishing-resistant possession factors. "
-                "Enable `Possession factor constraints are: Phishing resistant` "
+                f"Top active {rule_label(rule)} on {app_label(app)} does not "
+                "enforce phishing-resistant possession factors. Enable "
+                "`Possession factor constraints are: Phishing resistant` "
                 "on the rule."
             )
         return [report]

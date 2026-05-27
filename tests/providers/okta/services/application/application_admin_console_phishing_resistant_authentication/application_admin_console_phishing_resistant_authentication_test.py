@@ -72,7 +72,10 @@ class Test_application_admin_console_phishing_resistant_authentication:
         assert "Catch-all Rule" in findings[0].status_extended
         assert "built-in Catch-all Rule" in findings[0].status_extended
 
-    def test_fail_when_no_priority_one_rule(self):
+    def test_pass_when_top_active_rule_is_not_priority_one(self):
+        # The check does not pin to `priority == 1` — Okta indexes Access
+        # Policy rule priorities inconsistently. The top active rule is
+        # whichever has the lowest priority value among active rules.
         app = admin_console_app(
             rules=[
                 auth_policy_rule(
@@ -83,8 +86,8 @@ class Test_application_admin_console_phishing_resistant_authentication:
         )
         client = build_application_client(built_in_apps={ADMIN_CONSOLE_APP_NAME: app})
         findings = _run_check(client)
-        assert findings[0].status == "FAIL"
-        assert "no Priority 1 active rule" in findings[0].status_extended
+        assert findings[0].status == "PASS"
+        assert "Phishing Resistant" in findings[0].status_extended
 
     def test_fail_when_no_access_policy_bound(self):
         app = admin_console_app(rules=[], access_policy_id=None)

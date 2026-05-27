@@ -22,14 +22,21 @@ def active_apps(apps: dict[str, OktaBuiltInApp]) -> list[OktaBuiltInApp]:
     )
 
 
-def priority_one_active_rule(
+def top_active_rule(
     app: OktaBuiltInApp,
 ) -> Optional[AuthenticationPolicyRule]:
-    """Return the app's Authentication Policy Priority 1 active rule, or None.
+    """Return the topmost active rule on the app's Authentication Policy.
 
-    Mirrors `signon_helpers.priority_one_active_rule`. Inactive rules
-    are skipped before priority ranking; the candidate must sit at
-    `priority == 1` (the STIG fix text targets "the top rule").
+    Mirrors the STIG fix text — *"Click the 'Actions' button next to the
+    top rule and select 'Edit'"* — by returning the active rule with the
+    lowest `priority` value (= highest precedence). Downstream checks
+    separately reject the rule when it is the built-in Catch-all Rule.
+
+    The priority value itself is intentionally not pinned to a specific
+    integer. Okta indexes Access Policy rule priorities inconsistently
+    across tenants and policy types (some responses report `0` for the
+    top rule, others `1`); the STIG only requires that the topmost rule
+    satisfy the predicate, not that it carry any specific priority literal.
     """
     if app.access_policy is None:
         return None
@@ -46,10 +53,7 @@ def priority_one_active_rule(
     )
     if not active_rules:
         return None
-    candidate = active_rules[0]
-    if candidate.priority != 1:
-        return None
-    return candidate
+    return active_rules[0]
 
 
 def app_label(app: OktaBuiltInApp) -> str:

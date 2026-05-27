@@ -69,7 +69,11 @@ class Test_application_admin_console_mfa_required:
         assert "Catch-all Rule" in findings[0].status_extended
         assert "built-in Catch-all Rule" in findings[0].status_extended
 
-    def test_fail_when_no_priority_one_rule(self):
+    def test_pass_when_top_active_rule_is_not_priority_one(self):
+        # Top active rule is whichever has the lowest priority value; the
+        # check does not pin to `priority == 1` specifically because Okta
+        # indexes Access Policy rule priorities inconsistently. Here the
+        # only non-default rule sits at priority=2 and is still the top.
         app = admin_console_app(
             rules=[
                 auth_policy_rule(name="MFA Required", priority=2, factor_mode="2FA"),
@@ -78,8 +82,9 @@ class Test_application_admin_console_mfa_required:
         )
         client = build_application_client(built_in_apps={ADMIN_CONSOLE_APP_NAME: app})
         findings = _run_check(client)
-        assert findings[0].status == "FAIL"
-        assert "no Priority 1 active rule" in findings[0].status_extended
+        assert findings[0].status == "PASS"
+        assert "MFA Required" in findings[0].status_extended
+        assert "factorMode=2FA" in findings[0].status_extended
 
     def test_fail_when_no_access_policy_bound(self):
         app = admin_console_app(rules=[], access_policy_id=None)
@@ -121,6 +126,9 @@ class Test_application_admin_console_mfa_required:
         assert "okta.policies.read" in findings[0].status_extended
 
     def test_inactive_rule_skipped(self):
+        # An inactive custom rule must be skipped; the active Catch-all
+        # then becomes the top rule. The check evaluates the catch-all
+        # directly (no `factor_mode` set on it in the fixture) and FAILs.
         app = admin_console_app(
             rules=[
                 auth_policy_rule(
@@ -134,6 +142,8 @@ class Test_application_admin_console_mfa_required:
         )
         client = build_application_client(built_in_apps={ADMIN_CONSOLE_APP_NAME: app})
         findings = _run_check(client)
-        # Top active rule is now the catch-all at priority=2 → no priority 1 rule.
         assert findings[0].status == "FAIL"
-        assert "no Priority 1 active rule" in findings[0].status_extended
+        assert "Catch-all Rule" in findings[0].status_extended
+        assert "does not enforce multifactor authentication" in (
+            findings[0].status_extended
+        )

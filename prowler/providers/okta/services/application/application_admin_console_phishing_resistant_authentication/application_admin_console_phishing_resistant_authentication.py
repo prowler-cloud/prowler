@@ -10,8 +10,8 @@ from prowler.providers.okta.services.application.lib.application_helpers import 
     app_not_found_finding,
     missing_app_scope_finding,
     policy_missing_finding,
-    priority_one_active_rule,
     rule_label,
+    top_active_rule,
 )
 
 ADMIN_CONSOLE_LABEL_HINT = "Okta Admin Console"
@@ -57,27 +57,27 @@ class application_admin_console_phishing_resistant_authentication(Check):
         report = CheckReportOkta(
             metadata=self.metadata(), resource=app, org_domain=org_domain
         )
-        rule = priority_one_active_rule(app)
+        rule = top_active_rule(app)
         if rule is None:
             report.status = "FAIL"
             report.status_extended = (
-                f"{app_label(app)} has no Priority 1 active rule on its "
-                "Authentication Policy. STIG V-273191 requires the top rule "
-                "to mark `Possession factor constraints are: Phishing resistant`."
+                f"{app_label(app)} has no active rules on its Authentication "
+                "Policy. STIG V-273191 requires the top rule to mark "
+                "`Possession factor constraints are: Phishing resistant`."
             )
         elif rule.possession_phishing_resistant_required:
             report.status = "PASS"
             report.status_extended = (
-                f"Priority 1 active {rule_label(rule)} on {app_label(app)} "
-                "enforces phishing-resistant possession factors "
+                f"Top active {rule_label(rule)} on {app_label(app)} enforces "
+                "phishing-resistant possession factors "
                 "(`possession.phishingResistant=REQUIRED`)."
             )
         else:
             report.status = "FAIL"
             report.status_extended = (
-                f"Priority 1 active {rule_label(rule)} on {app_label(app)} "
-                "does not enforce phishing-resistant possession factors. "
-                "Enable `Possession factor constraints are: Phishing resistant` "
+                f"Top active {rule_label(rule)} on {app_label(app)} does not "
+                "enforce phishing-resistant possession factors. Enable "
+                "`Possession factor constraints are: Phishing resistant` "
                 "on the rule."
             )
         return [report]
