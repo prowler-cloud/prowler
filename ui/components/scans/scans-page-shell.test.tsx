@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { useScansStore } from "@/store";
+
 import { ScansPageShell } from "./scans-page-shell";
 
 const { pushMock, searchParamsValue } = vi.hoisted(() => ({
@@ -37,8 +39,21 @@ vi.mock("@/app/(prowler)/_overview/_components/provider-type-selector", () => ({
 }));
 
 vi.mock("./launch-scan-modal", () => ({
-  LaunchScanModal: ({ open }: { open: boolean }) =>
-    open ? <div role="dialog">Launch scan</div> : null,
+  LaunchScanModal: ({
+    open,
+    onOpenChange,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <div role="dialog">
+        Launch scan
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/components/providers/muted-findings-config-button", () => ({
@@ -90,6 +105,7 @@ describe("ScansPageShell", () => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
     searchParamsValue.current = "";
+    useScansStore.getState().closeLaunchScanModal();
   });
 
   it("does not render an imported findings tab", () => {
@@ -190,6 +206,55 @@ describe("ScansPageShell", () => {
     expect(screen.getByRole("group", { name: /scan tabs/i })).toContainElement(
       screen.getByRole("link", { name: /configure mutelist/i }),
     );
+  });
+
+  it("opens the launch scan modal from the URL", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "launchScan=true";
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
+  });
+
+  it("closes the URL-opened launch scan modal without navigation", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=completed&launchScan=true";
+    const user = userEvent.setup();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("opens and closes the launch scan modal from client state without navigation", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    const user = userEvent.setup();
+    useScansStore.getState().openLaunchScanModal();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
+
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("shows the status filter only on the completed tab", () => {

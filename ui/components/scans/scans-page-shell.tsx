@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
@@ -10,6 +11,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
+import {
+  LAUNCH_SCAN_SEARCH_PARAM,
+  LAUNCH_SCAN_SEARCH_VALUE,
+} from "@/lib/scans-navigation";
+import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
@@ -28,9 +34,25 @@ export function ScansPageShell({
   hasManageScansPermission,
   children,
 }: ScansPageShellProps) {
-  const [launchOpen, setLaunchOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const [urlLaunchOpen, setUrlLaunchOpen] = useState(
+    () =>
+      searchParams.get(LAUNCH_SCAN_SEARCH_PARAM) === LAUNCH_SCAN_SEARCH_VALUE,
+  );
+  const isLaunchScanModalOpen = useScansStore(
+    (state) => state.isLaunchScanModalOpen,
+  );
+  const setLaunchScanModalOpen = useScansStore(
+    (state) => state.setLaunchScanModalOpen,
+  );
   const filters = useScansFilters();
   const launchDisabled = !hasManageScansPermission || providers.length === 0;
+  const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
+
+  const handleLaunchOpenChange = (open: boolean) => {
+    setLaunchScanModalOpen(open);
+    if (!open) setUrlLaunchOpen(false);
+  };
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -55,7 +77,7 @@ export function ScansPageShell({
         <Button
           type="button"
           size="lg"
-          onClick={() => setLaunchOpen(true)}
+          onClick={() => handleLaunchOpenChange(true)}
           disabled={launchDisabled}
           className="w-full md:w-auto"
         >
@@ -91,7 +113,7 @@ export function ScansPageShell({
 
       <LaunchScanModal
         open={launchOpen}
-        onOpenChange={setLaunchOpen}
+        onOpenChange={handleLaunchOpenChange}
         providers={providers}
       />
     </div>
