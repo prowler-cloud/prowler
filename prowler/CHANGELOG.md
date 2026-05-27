@@ -7,15 +7,18 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `application` service for Okta provider with `application_admin_console_session_idle_timeout_15min`, `application_admin_console_mfa_required`, `application_admin_console_phishing_resistant_authentication`, `application_dashboard_mfa_required`, `application_dashboard_phishing_resistant_authentication`, and `application_authentication_policy_network_zone_enforced` checks [(#11358)](https://github.com/prowler-cloud/prowler/pull/11358)
+- AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
 - `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
 
 ---
 
-## [5.28.1] (Prowler v5.28.1)
+## [5.28.1] (Prowler 5.28.1)
 
 ### 🐞 Fixed
 
+- `compute_project_os_login_enabled` and `compute_project_os_login_2fa_enabled` checks for GCP provider no longer false-FAIL on projects where the `enable-oslogin` / `enable-oslogin-2fa` metadata is not set explicitly but is inherited automatically from the `constraints/compute.requireOsLogin` org policy. The policy controller writes the inherited value in lowercase (`"true"`), but the service-layer parser compared it to the uppercase string literal `"TRUE"`. Comparison is now case-insensitive [(#11341)](https://github.com/prowler-cloud/prowler/pull/11341)
 - `storage_smb_channel_encryption_with_secure_algorithm` check for Azure provider no longer passes when a storage account allows a weak SMB channel encryption algorithm (e.g. `AES-128-CCM`/`AES-128-GCM`) alongside `AES-256-GCM`; it now requires every enabled algorithm to be in the recommended list, configurable via `azure.recommended_smb_channel_encryption_algorithms` (defaults to `AES-256-GCM` only, as required by CIS) [(#11327)](https://github.com/prowler-cloud/prowler/pull/11327)
+- Azure and M365 providers crashing with `RuntimeError: There is no current event loop` on Python 3.12 when called from threads without an active event loop (e.g. Celery workers) [(#11360)](https://github.com/prowler-cloud/prowler/pull/11360)
 
 ---
 

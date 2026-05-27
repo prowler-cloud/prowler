@@ -1,0 +1,1160 @@
+{
+  "Framework": "AWS-AI-Security-Framework",
+  "Name": "AWS AI Security Framework",
+  "Version": "1.0",
+  "Provider": "AWS",
+  "Description": "Security compliance framework based on the AWS AI Security Framework blog post (2025). Organizes controls across three security layers (Infrastructure, Identity & Data, AI Application), three deployment phases (Foundational, Enhanced, Advanced), and three AI use cases (AI that Answers, AI that Connects, AI that Acts). Maps existing Prowler checks to AI workload security requirements and identifies gaps requiring new checks.",
+  "Requirements": [
+    {
+      "Id": "AISF-INFRA-01",
+      "Description": "Ensure VPC endpoints provide private connectivity for Bedrock APIs, preventing AI traffic from traversing the public internet.",
+      "Name": "Bedrock VPC Private Connectivity",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Network Isolation",
+          "Service": "bedrock",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "bedrock_vpc_endpoints_configured"
+      ]
+    },
+    {
+      "Id": "AISF-INFRA-02",
+      "Description": "Ensure VPCs have Network Firewall enabled to inspect and filter AI workload traffic, with logging, multi-AZ deployment, and proper default actions for both full and fragmented packets.",
+      "Name": "Network Firewall for AI Workloads",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Network Firewall",
+          "Service": "networkfirewall",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "networkfirewall_in_all_vpc",
+        "networkfirewall_logging_enabled",
+        "networkfirewall_multi_az",
+        "networkfirewall_policy_default_action_full_packets",
+        "networkfirewall_policy_default_action_fragmented_packets",
+        "networkfirewall_policy_rule_group_associated",
+        "networkfirewall_deletion_protection"
+      ]
+    },
+    {
+      "Id": "AISF-INFRA-03",
+      "Description": "Ensure WAFv2 Web ACLs are configured with rules and logging to protect AI application endpoints from HTTP-based attacks including prompt injection patterns at the perimeter.",
+      "Name": "WAF Protection for AI Endpoints",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Web Application Firewall",
+          "Service": "wafv2",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "wafv2_webacl_with_rules",
+        "wafv2_webacl_logging_enabled",
+        "wafv2_webacl_rule_logging_enabled",
+        "apigateway_restapi_waf_acl_attached",
+        "cognito_user_pool_waf_acl_attached"
+      ]
+    },
+    {
+      "Id": "AISF-INFRA-04",
+      "Description": "Ensure AWS Shield Advanced is enabled to protect internet-facing AI application infrastructure from DDoS attacks.",
+      "Name": "DDoS Protection for AI Infrastructure",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "DDoS Protection",
+          "Service": "shield",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "shield_advanced_protection_in_cloudfront_distributions",
+        "shield_advanced_protection_in_internet_facing_load_balancers",
+        "shield_advanced_protection_in_classic_load_balancers",
+        "shield_advanced_protection_in_route53_hosted_zones",
+        "shield_advanced_protection_in_associated_elastic_ips",
+        "shield_advanced_protection_in_global_accelerators"
+      ]
+    },
+    {
+      "Id": "AISF-INFRA-05",
+      "Description": "Ensure all data at rest is encrypted with AES-256 across AI workload storage including S3 buckets, EBS volumes, RDS instances, SageMaker notebooks, and Bedrock prompts using customer-managed KMS keys where possible.",
+      "Name": "Encryption at Rest for AI Data",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Encryption at Rest",
+          "Service": "kms",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption",
+        "ec2_ebs_default_encryption",
+        "ec2_ebs_volume_encryption",
+        "rds_instance_storage_encrypted",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+        "bedrock_model_invocation_logs_encryption_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "sqs_queues_server_side_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-INFRA-06",
+      "Description": "Ensure all data in transit uses TLS 1.2 or higher, including API communications, inter-container traffic for ML training, and connections between AI application components.",
+      "Name": "Encryption in Transit for AI Workloads",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Encryption in Transit",
+          "Service": "multiple",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_secure_transport_policy",
+        "sagemaker_training_jobs_intercontainer_encryption_enabled",
+        "elbv2_ssl_listeners",
+        "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_https_enabled",
+        "cloudfront_distributions_using_deprecated_ssl_protocols",
+        "opensearch_service_domains_https_communications_enforced",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "apigateway_restapi_client_certificate_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-INFRA-07",
+      "Description": "Ensure customer-managed KMS keys are in use, rotation is enabled, and keys are not scheduled for unintentional deletion to maintain control over AI data encryption.",
+      "Name": "Customer-Managed Key Governance",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Key Management",
+          "Service": "kms",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "kms_cmk_are_used",
+        "kms_cmk_rotation_enabled",
+        "kms_cmk_not_deleted_unintentionally",
+        "kms_key_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "AISF-INFRA-08",
+      "Description": "Ensure VPC endpoints enforce trust boundaries, subnets do not assign public IPs by default, and flow logs are enabled for all VPCs hosting AI workloads.",
+      "Name": "VPC Security for AI Workloads",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "VPC Security",
+          "Service": "vpc",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "vpc_subnet_no_public_ip_by_default",
+        "vpc_subnet_separate_private_public",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_services_allowed_principals_trust_boundaries",
+        "vpc_endpoint_for_ec2_enabled",
+        "vpc_peering_routing_tables_with_least_privilege"
+      ]
+    },
+    {
+      "Id": "AISF-INFRA-09",
+      "Description": "Ensure hardware-enforced compute isolation is in use for AI workloads. AWS Nitro System provides isolation with no operator access to customer data during model inference and training.",
+      "Name": "Hardware-Enforced Compute Isolation",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Compute Isolation",
+          "Service": "ec2",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-IAM-01",
+      "Description": "Ensure MFA is enforced for all users accessing AI services, including root account hardware MFA, IAM user MFA for console access, and Cognito user pool MFA for AI application end users.",
+      "Name": "Multi-Factor Authentication for AI Access",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Authentication",
+          "Service": "iam",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_hardware_mfa_enabled",
+        "iam_administrator_access_with_mfa",
+        "cognito_user_pool_mfa_enabled",
+        "cognito_user_pool_advanced_security_enabled",
+        "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
+        "cognito_user_pool_blocks_potential_malicious_sign_in_attempts"
+      ]
+    },
+    {
+      "Id": "AISF-IAM-02",
+      "Description": "Ensure least-privilege access is enforced for all AI service identities. No administrative privileges should be attached to IAM entities that interact with Bedrock, SageMaker, or other AI services.",
+      "Name": "Least Privilege for AI Identities",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Authorization",
+          "Service": "iam",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_role_administratoraccess_policy",
+        "iam_user_administrator_access_policy",
+        "iam_group_administrator_access_policy",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "bedrock_full_access_policy_attached",
+        "bedrock_api_key_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "AISF-IAM-03",
+      "Description": "Ensure temporary and scoped credentials are used for AI service access. Long-term access keys should be avoided, rotated within 90 days when necessary, and unused keys should be disabled.",
+      "Name": "Temporary Scoped Credentials",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Credential Management",
+          "Service": "iam",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_user_with_temporary_credentials",
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_no_setup_initial_access_key",
+        "iam_user_two_active_access_key",
+        "iam_user_console_access_unused",
+        "bedrock_api_key_no_long_term_credentials"
+      ]
+    },
+    {
+      "Id": "AISF-IAM-04",
+      "Description": "Ensure root account is properly secured with no active access keys and minimal usage, as root credentials in AI environments could grant unrestricted access to all AI models, data, and agent configurations.",
+      "Name": "Root Account Security",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Root Account",
+          "Service": "iam",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_no_root_access_key",
+        "iam_avoid_root_usage",
+        "iam_root_credentials_management_enabled",
+        "cloudwatch_log_metric_filter_root_usage"
+      ]
+    },
+    {
+      "Id": "AISF-IAM-05",
+      "Description": "Ensure IAM roles used for AI services prevent cross-service confused deputy attacks and stale access to Bedrock and SageMaker is reviewed regularly.",
+      "Name": "AI Service Role Security",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Service Roles",
+          "Service": "iam",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_role_cross_service_confused_deputy_prevention",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_role_cross_account_readonlyaccess_policy"
+      ]
+    },
+    {
+      "Id": "AISF-IAM-06",
+      "Description": "Ensure strong password policies are enforced with minimum length, complexity requirements, expiration, and reuse prevention for all human identities accessing AI services.",
+      "Name": "Password Policy for AI Service Access",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Password Policy",
+          "Service": "iam",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_uppercase",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "cognito_user_pool_password_policy_minimum_length_14",
+        "cognito_user_pool_password_policy_lowercase",
+        "cognito_user_pool_password_policy_uppercase",
+        "cognito_user_pool_password_policy_number",
+        "cognito_user_pool_password_policy_symbol"
+      ]
+    },
+    {
+      "Id": "AISF-IAM-07",
+      "Description": "Ensure Cognito user pools are properly configured for AI application user authentication with advanced security features, token revocation, self-registration controls, and WAF protection.",
+      "Name": "Cognito User Authentication for AI Apps",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "User Authentication",
+          "Service": "cognito",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "cognito_user_pool_mfa_enabled",
+        "cognito_user_pool_advanced_security_enabled",
+        "cognito_user_pool_self_registration_disabled",
+        "cognito_user_pool_deletion_protection_enabled",
+        "cognito_user_pool_client_token_revocation_enabled",
+        "cognito_user_pool_client_prevent_user_existence_errors",
+        "cognito_user_pool_temporary_password_expiration",
+        "cognito_user_pool_waf_acl_attached",
+        "cognito_identity_pool_guest_access_disabled"
+      ]
+    },
+    {
+      "Id": "AISF-IAM-08",
+      "Description": "Ensure API Gateway endpoints serving AI applications have proper authorization configured to authenticate and authorize every request to the model layer.",
+      "Name": "API Authorization for AI Endpoints",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "API Authorization",
+          "Service": "apigateway",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_authorizers_enabled",
+        "apigateway_restapi_public_with_authorizer",
+        "apigatewayv2_api_authorizers_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-DATA-01",
+      "Description": "Ensure Amazon Macie is enabled with automated sensitive data discovery to classify and protect enterprise data before it is made available to AI systems through RAG or other patterns.",
+      "Name": "Data Classification for AI",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Data Classification",
+          "Service": "macie",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "macie_is_enabled",
+        "macie_automated_sensitive_data_discovery_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-DATA-02",
+      "Description": "Ensure IAM Access Analyzer is enabled to validate access policies and identify unintended access to resources used by AI workloads.",
+      "Name": "Access Analysis for AI Resources",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Access Analysis",
+          "Service": "accessanalyzer",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "accessanalyzer_enabled",
+        "accessanalyzer_enabled_without_findings"
+      ]
+    },
+    {
+      "Id": "AISF-DATA-03",
+      "Description": "Ensure Secrets Manager is used for AI application credentials with automatic rotation enabled, restrictive resource policies, and no public access.",
+      "Name": "Secrets Management for AI Workloads",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Secrets Management",
+          "Service": "secretsmanager",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "secretsmanager_automatic_rotation_enabled",
+        "secretsmanager_secret_rotated_periodically",
+        "secretsmanager_has_restrictive_resource_policy",
+        "secretsmanager_not_publicly_accessible",
+        "secretsmanager_secret_unused"
+      ]
+    },
+    {
+      "Id": "AISF-DATA-04",
+      "Description": "Ensure S3 buckets used for AI training data, model artifacts, RAG knowledge bases, and inference logs have public access blocked, encryption enabled, secure transport enforced, and access logging configured.",
+      "Name": "S3 Data Protection for AI",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Storage Security",
+          "Service": "s3",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_level_public_access_block",
+        "s3_bucket_public_access",
+        "s3_bucket_policy_public_write_access",
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_server_access_logging_enabled",
+        "s3_bucket_object_versioning",
+        "s3_bucket_acl_prohibited",
+        "s3_bucket_cross_account_access"
+      ]
+    },
+    {
+      "Id": "AISF-DATA-05",
+      "Description": "Ensure no secrets or credentials are hardcoded in Lambda functions, ECS task definitions, or EC2 instances used as part of AI application architectures.",
+      "Name": "No Hardcoded Secrets in AI Workloads",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Secret Hygiene",
+          "Service": "multiple",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "awslambda_function_no_secrets_in_code",
+        "awslambda_function_no_secrets_in_variables",
+        "ecs_task_definitions_no_environment_secrets",
+        "ec2_instance_secrets_user_data",
+        "cloudwatch_log_group_no_secrets_in_logs"
+      ]
+    },
+    {
+      "Id": "AISF-DATA-06",
+      "Description": "Ensure the AWS Organization has opted out of all AI services data usage and child accounts cannot override this policy, preventing AWS from using customer data for AI service improvement.",
+      "Name": "AI Services Data Opt-Out",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Data Governance",
+          "Service": "organizations",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "organizations_opt_out_ai_services_policy"
+      ]
+    },
+    {
+      "Id": "AISF-AI-01",
+      "Description": "Ensure Amazon Bedrock has at least one guardrail configured to provide content filtering, prompt injection defense, PII filtering, and topic restrictions for foundation model interactions.",
+      "Name": "Bedrock Guardrails Configuration",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Content Filtering",
+          "Service": "bedrock",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "bedrock_guardrails_configured"
+      ]
+    },
+    {
+      "Id": "AISF-AI-02",
+      "Description": "Ensure Bedrock guardrails have prompt attack filter strength set to HIGH to detect and block prompt injection attempts, the #1 risk in OWASP Top 10 for LLM Applications.",
+      "Name": "Prompt Injection Defense",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Prompt Security",
+          "Service": "bedrock",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "bedrock_guardrail_prompt_attack_filter_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-AI-03",
+      "Description": "Ensure Bedrock guardrails block or mask sensitive information (PII) in both model inputs and outputs to prevent data leakage through AI responses.",
+      "Name": "PII and Sensitive Data Filtering",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Output Filtering",
+          "Service": "bedrock",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "bedrock_guardrail_sensitive_information_filter_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-AI-04",
+      "Description": "Ensure all Bedrock agents have guardrails enabled to protect agent sessions from prompt injection, data exfiltration, and unauthorized actions during agentic workflows.",
+      "Name": "Agent Guardrail Protection",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Security",
+          "Service": "bedrock",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "bedrock_agent_guardrail_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-AI-05",
+      "Description": "Ensure Bedrock model invocation logging is enabled to maintain an immutable audit trail of all model interactions, enabling incident investigation and behavioral analysis.",
+      "Name": "Model Invocation Logging",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "AI Audit Logging",
+          "Service": "bedrock",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "bedrock_model_invocation_logging_enabled",
+        "bedrock_model_invocation_logs_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-AI-06",
+      "Description": "Ensure CloudTrail is configured to log all Bedrock API calls for security auditing, enabling detection of unauthorized model access, configuration changes, and potential LLM jacking.",
+      "Name": "Bedrock API Audit Trail",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "AI Audit Logging",
+          "Service": "cloudtrail",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking"
+      ]
+    },
+    {
+      "Id": "AISF-AI-07",
+      "Description": "Ensure Bedrock prompts are encrypted at rest with customer-managed KMS keys and Prompt Management is used for centralized prompt governance.",
+      "Name": "Prompt Encryption and Management",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Prompt Management",
+          "Service": "bedrock",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "bedrock_prompt_encrypted_with_cmk",
+        "bedrock_prompt_management_exists"
+      ]
+    },
+    {
+      "Id": "AISF-AI-08",
+      "Description": "Ensure Bedrock Automated Reasoning Checks are configured to provide formal verification of model responses against source documents, achieving up to 99% verification accuracy against hallucinations.",
+      "Name": "Automated Reasoning for Output Validation",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Output Validation",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AI-09",
+      "Description": "Ensure Bedrock Contextual Grounding is configured to validate semantic consistency of model responses against sanctioned source documents, preventing hallucinated or fabricated outputs.",
+      "Name": "Contextual Grounding for RAG Validation",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Output Validation",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AI-10",
+      "Description": "Ensure Bedrock Knowledge Bases used for RAG patterns have proper security controls including encryption with customer-managed keys and VPC configuration for private data access.",
+      "Name": "Knowledge Base Security for RAG",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "RAG Security",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AI-11",
+      "Description": "Ensure WAF AI Activity Dashboard is configured to monitor and analyze AI-specific traffic patterns, providing visibility into potential attacks targeting AI endpoints.",
+      "Name": "WAF AI Activity Monitoring",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "AI Traffic Monitoring",
+          "Service": "wafv2",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AGENT-01",
+      "Description": "Ensure every AI agent has its own identity with scoped credentials and independent authorization per request, following zero-trust principles. Agent identities must be separate from human user identities.",
+      "Name": "Agent Identity and Authentication",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AGENT-02",
+      "Description": "Ensure Bedrock AgentCore Cedar Policies enforce provable least-privilege authorization on every tool call and data access made by AI agents.",
+      "Name": "Agent Least-Privilege Authorization",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AGENT-03",
+      "Description": "Ensure AI agents have behavioral monitoring and observability configured to detect scope violations, anomalous actions, and drift from expected behavior patterns.",
+      "Name": "Agent Behavioral Monitoring",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AGENT-04",
+      "Description": "Ensure a central agent registry exists to catalog all AI agents, their permissions, data access patterns, and operational boundaries for governance at scale.",
+      "Name": "Agent Registry and Catalog",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AGENT-05",
+      "Description": "Ensure human-in-the-loop approval is required for high-consequence agent actions such as financial transactions, data deletion, or privilege changes.",
+      "Name": "Human Approval for Critical Agent Actions",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-ML-01",
+      "Description": "Ensure SageMaker models have network isolation enabled to prevent models from making unauthorized network calls during inference.",
+      "Name": "ML Model Network Isolation",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "ML Platform Security",
+          "Service": "sagemaker",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "sagemaker_models_network_isolation_enabled",
+        "sagemaker_models_vpc_settings_configured"
+      ]
+    },
+    {
+      "Id": "AISF-ML-02",
+      "Description": "Ensure SageMaker notebook instances are secured with encryption, VPC settings, no direct internet access, and root access disabled.",
+      "Name": "SageMaker Notebook Security",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "ML Platform Security",
+          "Service": "sagemaker",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sagemaker_notebook_instance_vpc_settings_configured",
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "sagemaker_notebook_instance_root_access_disabled"
+      ]
+    },
+    {
+      "Id": "AISF-ML-03",
+      "Description": "Ensure SageMaker training jobs have network isolation, VPC configuration, inter-container traffic encryption, and volume encryption enabled to protect training data and model weights.",
+      "Name": "ML Training Job Security",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "ML Platform Security",
+          "Service": "sagemaker",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "sagemaker_training_jobs_network_isolation_enabled",
+        "sagemaker_training_jobs_vpc_settings_configured",
+        "sagemaker_training_jobs_intercontainer_encryption_enabled",
+        "sagemaker_training_jobs_volume_and_output_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-ML-04",
+      "Description": "Ensure SageMaker Model Registry is in use with approved model packages and SSO authentication is configured for SageMaker domains.",
+      "Name": "Model Governance and Registry",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "ML Platform Security",
+          "Service": "sagemaker",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "sagemaker_models_registry_in_use",
+        "sagemaker_domain_sso_configured"
+      ]
+    },
+    {
+      "Id": "AISF-ML-05",
+      "Description": "Ensure SageMaker Model Monitor is configured for continuous model quality and bias monitoring, and SageMaker Clarify is used for bias detection in AI/ML workloads.",
+      "Name": "Model Monitoring and Bias Detection",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "ML Platform Security",
+          "Service": "sagemaker",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-DETECT-01",
+      "Description": "Ensure CloudTrail is enabled in all regions with multi-region logging, management event recording, log file validation, and CloudWatch integration for comprehensive AI workload audit trails.",
+      "Name": "Comprehensive Audit Logging",
+      "Attributes": [
+        {
+          "Section": "Threat Detection and Monitoring",
+          "SubSection": "Audit Logging",
+          "Service": "cloudtrail",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cloudtrail_insights_exist"
+      ]
+    },
+    {
+      "Id": "AISF-DETECT-02",
+      "Description": "Ensure GuardDuty is enabled across all regions with delegated admin, S3 protection, EKS monitoring, Lambda protection, and malware protection to detect AI-specific threat patterns.",
+      "Name": "GuardDuty Threat Detection",
+      "Attributes": [
+        {
+          "Section": "Threat Detection and Monitoring",
+          "SubSection": "Threat Detection",
+          "Service": "guardduty",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "guardduty_centrally_managed",
+        "guardduty_delegated_admin_enabled_all_regions",
+        "guardduty_s3_protection_enabled",
+        "guardduty_eks_audit_log_enabled",
+        "guardduty_eks_runtime_monitoring_enabled",
+        "guardduty_lambda_protection_enabled",
+        "guardduty_rds_protection_enabled",
+        "guardduty_ec2_malware_protection_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-DETECT-03",
+      "Description": "Ensure CloudTrail-based threat detection is monitoring for LLM jacking, privilege escalation, and enumeration activity that could indicate attacks against AI infrastructure.",
+      "Name": "AI-Specific Threat Detection",
+      "Attributes": [
+        {
+          "Section": "Threat Detection and Monitoring",
+          "SubSection": "AI Threat Detection",
+          "Service": "cloudtrail",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_enumeration"
+      ]
+    },
+    {
+      "Id": "AISF-DETECT-04",
+      "Description": "Ensure Security Hub is enabled with standards and integrations configured to aggregate and prioritize security findings across all AI workload services.",
+      "Name": "Security Hub Centralized Findings",
+      "Attributes": [
+        {
+          "Section": "Threat Detection and Monitoring",
+          "SubSection": "Security Aggregation",
+          "Service": "securityhub",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-DETECT-05",
+      "Description": "Ensure CloudWatch metric filters and alarms are configured for critical security events including IAM policy changes, unauthorized API calls, console sign-in without MFA, KMS key deletion, and network changes.",
+      "Name": "Security Event Alerting",
+      "Attributes": [
+        {
+          "Section": "Threat Detection and Monitoring",
+          "SubSection": "Security Alerting",
+          "Service": "cloudwatch",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes"
+      ]
+    },
+    {
+      "Id": "AISF-DETECT-06",
+      "Description": "Ensure Amazon Detective is enabled for AI security incident investigation, providing full decision chain reconstruction from prompt to data access to action.",
+      "Name": "AI Incident Investigation",
+      "Attributes": [
+        {
+          "Section": "Threat Detection and Monitoring",
+          "SubSection": "Incident Investigation",
+          "Service": "detective",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-DETECT-07",
+      "Description": "Ensure GuardDuty Extended Threat Detection is enabled for AI-specific patterns including anomalous Bedrock API usage, model access from unusual locations, and potential data exfiltration through AI channels.",
+      "Name": "GuardDuty AI Threat Patterns",
+      "Attributes": [
+        {
+          "Section": "Threat Detection and Monitoring",
+          "SubSection": "AI Threat Detection",
+          "Service": "guardduty",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-GOV-01",
+      "Description": "Ensure AWS Config recorder is enabled in all regions to continuously monitor and record AI resource configurations, detect drift, and enforce compliance rules.",
+      "Name": "Configuration Compliance Monitoring",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "Configuration Management",
+          "Service": "config",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role"
+      ]
+    },
+    {
+      "Id": "AISF-GOV-02",
+      "Description": "Ensure the AWS account is part of an AWS Organization with proper governance controls including SCPs to restrict operations to approved regions and delegated administrators are trusted.",
+      "Name": "Organization Governance",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "Account Governance",
+          "Service": "organizations",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "organizations_account_part_of_organizations",
+        "organizations_scp_check_deny_regions",
+        "organizations_delegated_administrators",
+        "organizations_tags_policies_enabled_and_attached"
+      ]
+    },
+    {
+      "Id": "AISF-GOV-03",
+      "Description": "Ensure security contact information is registered and current for AI workload incident response communication.",
+      "Name": "Security Contact Information",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "Incident Response",
+          "Service": "account",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "account_maintain_current_contact_details",
+        "account_maintain_different_contact_details_to_security_billing_and_operations",
+        "account_security_contact_information_is_registered"
+      ]
+    },
+    {
+      "Id": "AISF-GOV-04",
+      "Description": "Ensure AWS Control Tower is enabled with landing zone configured to automate account governance and enforce security baselines across all accounts hosting AI workloads.",
+      "Name": "Control Tower Automated Governance",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "Automated Governance",
+          "Service": "controltower",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-GOV-05",
+      "Description": "Maintain an inventory of all AI workloads including approved and shadow AI usage. Document model selections, their governance requirements, and security evaluations.",
+      "Name": "AI Workload Inventory and Audit",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "AI Governance",
+          "Service": "multiple",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-GOV-06",
+      "Description": "Ensure AI-specific threat models are developed before production deployment, covering prompt injection, jailbreaks, data exfiltration, model poisoning, and adversarial attacks.",
+      "Name": "AI Threat Modeling",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "AI Governance",
+          "Service": "multiple",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-GOV-07",
+      "Description": "Ensure incident response plans include AI-specific scenarios covering prompt injection, model manipulation, data exfiltration through AI, LLM jacking, and agent scope violations.",
+      "Name": "AI Incident Response Planning",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "Incident Response",
+          "Service": "multiple",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-RUNTIME-01",
+      "Description": "Ensure EKS clusters used for AI agent runtimes are properly secured with private endpoints, network policies, supported versions, control plane logging, and secrets encryption.",
+      "Name": "EKS Security for AI Runtimes",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Container Runtime Security",
+          "Service": "eks",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "eks_cluster_not_publicly_accessible",
+        "eks_cluster_private_nodes_enabled",
+        "eks_cluster_network_policy_enabled",
+        "eks_cluster_uses_a_supported_version",
+        "eks_control_plane_logging_all_types_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "eks_cluster_deletion_protection_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-RUNTIME-02",
+      "Description": "Ensure ECS tasks used for AI workloads have no public IPs, no privileged containers, read-only root filesystems, logging enabled, and no secrets in environment variables.",
+      "Name": "ECS Security for AI Workloads",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Container Runtime Security",
+          "Service": "ecs",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "ecs_service_no_assign_public_ip",
+        "ecs_task_set_no_assign_public_ip",
+        "ecs_task_definitions_no_privileged_containers",
+        "ecs_task_definitions_containers_readonly_access",
+        "ecs_task_definitions_logging_enabled",
+        "ecs_task_definitions_no_environment_secrets",
+        "ecs_task_definitions_host_namespace_not_shared",
+        "ecs_cluster_container_insights_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-RUNTIME-03",
+      "Description": "Ensure Lambda functions used in AI architectures are deployed in VPCs, not publicly accessible, use supported runtimes, have no secrets in code or variables, and use CMK-encrypted environment variables.",
+      "Name": "Lambda Security for AI Functions",
+      "Attributes": [
+        {
+          "Section": "Infrastructure Security",
+          "SubSection": "Serverless Runtime Security",
+          "Service": "awslambda",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "awslambda_function_inside_vpc",
+        "awslambda_function_not_publicly_accessible",
+        "awslambda_function_url_public",
+        "awslambda_function_no_secrets_in_code",
+        "awslambda_function_no_secrets_in_variables",
+        "awslambda_function_using_supported_runtimes",
+        "awslambda_function_env_vars_not_encrypted_with_cmk",
+        "awslambda_function_url_cors_policy",
+        "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled"
+      ]
+    },
+    {
+      "Id": "AISF-MODEL-01",
+      "Description": "Perform security evaluation of foundation models before deployment, including assessment of input sanitization, access controls, bias audits, privacy disclosure, data poisoning resilience, adversarial resilience, and prompt injection defenses.",
+      "Name": "Model Security Evaluation",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Model Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-MODEL-02",
+      "Description": "Ensure model selection is appropriate for the use case with CISO involvement in evaluation. Customer-facing agents require different model security profiles than internal summarization tools.",
+      "Name": "Model Selection Governance",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Model Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}
