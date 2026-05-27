@@ -107,6 +107,53 @@ describe("EditAliasModal", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("accepts aliases up to the API limit of 100 characters", async () => {
+    const user = userEvent.setup();
+    const alias = "a".repeat(100);
+
+    render(
+      <EditAliasModal
+        open
+        onOpenChange={vi.fn()}
+        scanId="scan-1"
+        currentAlias="Old name"
+      />,
+    );
+
+    const input = screen.getByLabelText("Alias");
+    await user.clear(input);
+    await user.type(input, alias);
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(updateScanMock).toHaveBeenCalled());
+
+    const formData = updateScanMock.mock.calls[0][0] as FormData;
+    expect(formData.get("scanName")).toBe(alias);
+  });
+
+  it("rejects aliases over the API limit of 100 characters", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <EditAliasModal
+        open
+        onOpenChange={vi.fn()}
+        scanId="scan-1"
+        currentAlias="Old name"
+      />,
+    );
+
+    const input = screen.getByLabelText("Alias");
+    await user.clear(input);
+    await user.type(input, "a".repeat(101));
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(
+      await screen.findByText(/alias must not exceed 100 characters/i),
+    ).toBeInTheDocument();
+    expect(updateScanMock).not.toHaveBeenCalled();
+  });
+
   it("surfaces server-side errors on the alias field", async () => {
     const user = userEvent.setup();
     updateScanMock.mockResolvedValueOnce({

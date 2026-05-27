@@ -13,10 +13,11 @@ import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
 import type { ProviderProps } from "@/types/providers";
+import { scanAliasSchema } from "./scan-alias-validation";
 
 const launchScanSchema = z.object({
   providerId: z.string().min(1, "Select a provider to launch a scan."),
-  scanAlias: z.string().optional(),
+  scanAlias: scanAliasSchema.optional(),
 });
 
 type LaunchScanFormValues = z.infer<typeof launchScanSchema>;
@@ -68,6 +69,7 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
   });
 
   const providerError = form.formState.errors.providerId?.message;
+  const aliasError = form.formState.errors.scanAlias?.message;
   const rootError = form.formState.errors.root?.message;
   const isSubmitting = form.formState.isSubmitting;
 
@@ -104,6 +106,7 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
           aria-label="Alias"
           {...form.register("scanAlias")}
         />
+        {aliasError && <FieldError>{aliasError}</FieldError>}
       </Field>
 
       {rootError && <FieldError>{rootError}</FieldError>}

@@ -186,6 +186,41 @@ describe("LaunchScanModal", () => {
     expect(formData.get("scanNote")).toBeNull();
   });
 
+  it("accepts scan aliases up to the API limit of 100 characters", async () => {
+    const user = userEvent.setup();
+    const alias = "a".repeat(100);
+
+    render(
+      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+    await user.type(screen.getByLabelText("Alias"), alias);
+    await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+    await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalled());
+
+    const formData = scanOnDemandMock.mock.calls[0][0] as FormData;
+    expect(formData.get("scanName")).toBe(alias);
+  });
+
+  it("rejects scan aliases over the API limit of 100 characters", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+    await user.type(screen.getByLabelText("Alias"), "a".repeat(101));
+    await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+    expect(
+      await screen.findByText(/alias must not exceed 100 characters/i),
+    ).toBeInTheDocument();
+    expect(scanOnDemandMock).not.toHaveBeenCalled();
+  });
+
   it("does not show the old scan note label", () => {
     render(
       <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,

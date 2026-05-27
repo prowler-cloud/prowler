@@ -11,26 +11,14 @@ import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
-
-const ALIAS_MIN_LENGTH = 3;
-const ALIAS_MAX_LENGTH = 32;
+import { scanAliasSchema } from "./scan-alias-validation";
 
 const buildEditAliasSchema = (currentAlias: string) =>
   z.object({
-    alias: z
-      .string()
-      .max(
-        ALIAS_MAX_LENGTH,
-        `Alias must not exceed ${ALIAS_MAX_LENGTH} characters.`,
-      )
-      .refine(
-        (value) => value.length === 0 || value.length >= ALIAS_MIN_LENGTH,
-        `Alias must be empty or have at least ${ALIAS_MIN_LENGTH} characters.`,
-      )
-      .refine(
-        (value) => value !== currentAlias,
-        "The new alias must be different from the current one.",
-      ),
+    alias: scanAliasSchema.refine(
+      (value) => value !== currentAlias,
+      "The new alias must be different from the current one.",
+    ),
   });
 
 type EditAliasFormValues = { alias: string };
