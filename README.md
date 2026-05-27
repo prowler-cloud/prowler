@@ -293,7 +293,7 @@ python prowler-cli.py -v
 
 # 🛡️ GitHub Action
 
-The official **Prowler GitHub Action** runs Prowler scans in your GitHub workflows using the official [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) Docker image. Scans run on any [supported provider](https://docs.prowler.com/user-guide/providers/), with optional [`--push-to-cloud`](https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings) to send findings to Prowler Cloud and optional SARIF upload so findings show up in the repo's **Security → Code scanning** tab and as inline PR annotations.
+The official **Prowler GitHub Action** runs Prowler scans in your GitHub workflows using the official [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) Docker image. Scans run on any [supported provider](https://docs.prowler.com/user-guide/providers/), with optional [`--push-to-cloud`](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings) to send findings to Prowler Cloud and optional SARIF upload so findings show up in the repo's **Security → Code scanning** tab and as inline PR annotations.
 
 ```yaml
 name: Prowler IaC Scan
