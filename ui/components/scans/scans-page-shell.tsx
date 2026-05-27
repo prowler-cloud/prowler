@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
@@ -34,6 +34,8 @@ export function ScansPageShell({
   hasManageScansPermission,
   children,
 }: ScansPageShellProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [urlLaunchOpen, setUrlLaunchOpen] = useState(
     () =>
@@ -54,7 +56,15 @@ export function ScansPageShell({
 
   const handleLaunchOpenChange = (open: boolean) => {
     setLaunchScanModalOpen(open);
-    if (!open) setUrlLaunchOpen(false);
+    if (open) return;
+    setUrlLaunchOpen(false);
+    if (!searchParams.has(LAUNCH_SCAN_SEARCH_PARAM)) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(LAUNCH_SCAN_SEARCH_PARAM);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
   };
 
   return (

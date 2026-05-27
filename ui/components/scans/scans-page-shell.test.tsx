@@ -6,8 +6,9 @@ import { useScansStore } from "@/store";
 
 import { ScansPageShell } from "./scans-page-shell";
 
-const { pushMock, searchParamsValue } = vi.hoisted(() => ({
+const { pushMock, replaceMock, searchParamsValue } = vi.hoisted(() => ({
   pushMock: vi.fn(),
+  replaceMock: vi.fn(),
   searchParamsValue: { current: "" },
 }));
 
@@ -19,6 +20,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/scans",
   useRouter: () => ({
     push: pushMock,
+    replace: replaceMock,
   }),
   useSearchParams: () => new URLSearchParams(searchParamsValue.current),
 }));
@@ -224,7 +226,7 @@ describe("ScansPageShell", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
   });
 
-  it("closes the URL-opened launch scan modal without navigation", async () => {
+  it("strips the launchScan URL param when closing the URL-opened modal", async () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     searchParamsValue.current = "tab=completed&launchScan=true";
     const user = userEvent.setup();
@@ -238,6 +240,10 @@ describe("ScansPageShell", () => {
     await user.click(screen.getByRole("button", { name: /close/i }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(replaceMock).toHaveBeenCalledWith(
+      "/scans?tab=completed",
+      expect.objectContaining({ scroll: false }),
+    );
     expect(pushMock).not.toHaveBeenCalled();
   });
 
