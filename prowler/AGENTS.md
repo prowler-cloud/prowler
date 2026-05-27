@@ -7,7 +7,7 @@
 > - [`prowler-compliance`](../skills/prowler-compliance/SKILL.md) - Compliance framework structure
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
 
-### Auto-invoke Skills
+## Auto-invoke Skills
 
 When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
@@ -44,7 +44,7 @@ The Prowler SDK is the core Python engine powering cloud security assessments ac
 
 ### Provider Architecture
 
-```
+```text
 prowler/providers/{provider}/
 ├── {provider}_provider.py      # Main provider class
 ├── models.py                   # Provider-specific models
@@ -91,7 +91,7 @@ Python 3.10+ | uv | pytest | moto (AWS mocking) | Pre-commit hooks (black, flake
 
 ## PROJECT STRUCTURE
 
-```
+```text
 prowler/
 ├── __main__.py                # CLI entry point
 ├── config/                    # Global configuration
