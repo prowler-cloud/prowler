@@ -794,10 +794,6 @@ def generate_compliance_reports(
     frameworks_bulk: dict = {}
     try:
         frameworks_bulk = Compliance.get_bulk(provider_type)
-        # Compliance.get_bulk only scans `compliance/{provider}/`. Universal
-        # top-level JSONs (e.g. csa_ccm_4.0) need the universal loader.
-        for name, fw in get_bulk_compliance_frameworks_universal(provider_type).items():
-            frameworks_bulk.setdefault(name, fw)
     except Exception as e:
         logger.error("Error loading compliance frameworks for %s: %s", provider_type, e)
         # Fall through; individual frameworks will still try and fail
@@ -890,9 +886,11 @@ def generate_compliance_reports(
             frameworks_bulk.get(f"nis2_{provider_type}")
         )
     if generate_csa:
-        pending_checks_by_framework["csa"] = _get_compliance_check_ids(
-            frameworks_bulk.get("csa_ccm_4.0")
-        )
+        # csa_ccm_4.0 lives at the top level, not under compliance/{provider}/.
+        csa_framework = frameworks_bulk.get(
+            "csa_ccm_4.0"
+        ) or get_bulk_compliance_frameworks_universal(provider_type).get("csa_ccm_4.0")
+        pending_checks_by_framework["csa"] = _get_compliance_check_ids(csa_framework)
     if generate_cis and latest_cis:
         pending_checks_by_framework["cis"] = _get_compliance_check_ids(
             frameworks_bulk.get(latest_cis)

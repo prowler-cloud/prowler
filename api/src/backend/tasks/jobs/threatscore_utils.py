@@ -359,39 +359,40 @@ def _load_findings_for_requirement_checks(
 def _get_compliance_check_ids(compliance_obj) -> set[str]:
     """Return the union of all check_ids referenced by a compliance framework.
 
-    Used by the master report orchestrator to know which checks each
-    framework consumes from the shared ``findings_cache``, so that once a
-    framework finishes the entries no other pending framework needs can be
-    evicted from the cache (PROWLER-1733).
+    Used by the master report orchestrator to evict entries from
+    ``findings_cache`` once no pending framework needs them (PROWLER-1733).
 
-    Accepts either the legacy ``Compliance`` shape (``Requirements`` /
-    ``Checks`` lists) or the universal ``ComplianceFramework`` shape
-    (``requirements`` / ``checks`` dict keyed by provider). ``None`` is
-    treated as "no checks" so callers can pass ``frameworks_bulk.get(...)``
-    directly.
+    Accepts the legacy ``Compliance`` shape (``Requirements`` / ``Checks``
+    lists) and the universal ``ComplianceFramework`` shape (``requirements``
+    / ``checks`` dict keyed by provider). ``None`` returns an empty set so
+    callers can pass ``frameworks_bulk.get(...)`` directly.
     """
     if compliance_obj is None:
         return set()
-    checks: set[str] = set()
-    requirements = (
-        getattr(compliance_obj, "Requirements", None)
-        or getattr(compliance_obj, "requirements", None)
-        or []
+
+    requirements = getattr(compliance_obj, "Requirements", None) or getattr(
+        compliance_obj, "requirements", None
     )
+    if not requirements:
+        return set()
+
+    check_ids: set[str] = set()
     try:
-        # Defensive: Mock objects (used in unit tests) return another Mock
-        # for any attribute access, which is truthy but not iterable. Treat
-        # any non-iterable Requirements value as "no checks".
-        for req in requirements:
-            req_checks = getattr(req, "Checks", None)
-            if req_checks is None:
-                # Universal shape: checks is a {provider: [check_ids]} dict.
-                req_checks_dict = getattr(req, "checks", None) or {}
-                req_checks = [cid for ids in req_checks_dict.values() for cid in ids]
+        # Mock objects in unit tests return another Mock for any attribute
+        # access — truthy but not iterable. Treat that as "no checks".
+        for requirement in requirements:
+            requirement_checks = getattr(requirement, "Checks", None)
+            if requirement_checks is None:
+                checks_by_provider = getattr(requirement, "checks", None) or {}
+                requirement_checks = [
+                    check_id
+                    for check_ids_list in checks_by_provider.values()
+                    for check_id in check_ids_list
+                ]
             try:
-                checks.update(req_checks)
+                check_ids.update(requirement_checks)
             except TypeError:
                 continue
     except TypeError:
         return set()
-    return checks
+    return check_ids

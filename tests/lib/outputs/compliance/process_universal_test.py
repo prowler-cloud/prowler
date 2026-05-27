@@ -905,33 +905,32 @@ class TestStreamingBatches:
         assert (tmp_path / "compliance" / "out_fw.ocsf.json").exists()
 
 
-class TestMultiProviderUniversalFramework:
-    """A top-level CSA-CCM-style framework must produce a CSV+OCSF pair
-    scoped to the provider it is invoked with."""
+def _csa_like_framework() -> ComplianceFramework:
+    """Build a CSA CCM-style universal framework with checks across providers."""
+    requirement = UniversalComplianceRequirement(
+        id="A&A-01",
+        description="Audit and Assurance",
+        attributes={"Section": "Audit"},
+        checks={
+            "aws": ["aws_check"],
+            "azure": ["azure_check"],
+            "gcp": ["gcp_check"],
+        },
+    )
+    return ComplianceFramework(
+        framework="CSA_CCM",
+        name="CSA Cloud Controls Matrix",
+        version="4.0",
+        description="Multi-provider framework",
+        requirements=[requirement],
+        attributes_metadata=[AttributeMetadata(key="Section", type="str")],
+        outputs=OutputsConfig(table_config=TableConfig(group_by="Section")),
+    )
 
-    def _make_csa_like_framework(self):
-        reqs = [
-            UniversalComplianceRequirement(
-                id="A&A-01",
-                description="Audit and Assurance",
-                attributes={"Section": "Audit"},
-                checks={
-                    "aws": ["aws_check"],
-                    "azure": ["azure_check"],
-                    "gcp": ["gcp_check"],
-                },
-            ),
-        ]
-        outputs = OutputsConfig(table_config=TableConfig(group_by="Section"))
-        return ComplianceFramework(
-            framework="CSA_CCM",
-            name="CSA Cloud Controls Matrix",
-            version="4.0",
-            description="Multi-provider framework",
-            requirements=reqs,
-            attributes_metadata=[AttributeMetadata(key="Section", type="str")],
-            outputs=outputs,
-        )
+
+class TestMultiProviderUniversalFramework:
+    """A top-level CSA-CCM-style framework produces a CSV+OCSF pair scoped
+    to the provider it is invoked with."""
 
     @pytest.mark.parametrize(
         "provider,check_id",
@@ -942,12 +941,12 @@ class TestMultiProviderUniversalFramework:
         ],
     )
     def test_per_provider_outputs_isolated(self, tmp_path, provider, check_id):
-        fw = self._make_csa_like_framework()
+        framework = _csa_like_framework()
         generated = {"compliance": []}
 
         process_universal_compliance_frameworks(
             input_compliance_frameworks={"csa_ccm_4.0"},
-            universal_frameworks={"csa_ccm_4.0": fw},
+            universal_frameworks={"csa_ccm_4.0": framework},
             finding_outputs=[_make_finding(check_id, provider=provider)],
             output_directory=str(tmp_path),
             output_filename="prowler_output",
@@ -956,9 +955,9 @@ class TestMultiProviderUniversalFramework:
         )
 
         ocsf_path = tmp_path / "compliance" / "prowler_output_csa_ccm_4.0.ocsf.json"
-        data = json.loads(ocsf_path.read_text())
-        assert isinstance(data, list)
-        non_manual = [d for d in data if d.get("status_code") != "MANUAL"]
+        events = json.loads(ocsf_path.read_text())
+        assert isinstance(events, list)
+        non_manual = [event for event in events if event.get("status_code") != "MANUAL"]
         assert len(non_manual) == 1
         assert non_manual[0]["compliance"]["checks"][0]["uid"] == check_id
 
@@ -968,32 +967,27 @@ class TestMitreStyleOCSFOutput:
     the marker key through the OCSF pipeline."""
 
     def test_mitre_raw_attributes_pass_through_pipeline(self, tmp_path):
-        reqs = [
-            UniversalComplianceRequirement(
-                id="T1078",
-                description="Valid Accounts",
-                attributes={
-                    "_raw_attributes": [
-                        {"AWSService": "IAM", "Category": "Initial Access"},
-                    ]
-                },
-                checks={"aws": ["check_a"]},
-            ),
-        ]
-        outputs = OutputsConfig(table_config=TableConfig(group_by="AWSService"))
-        fw = ComplianceFramework(
+        mitre_requirement = UniversalComplianceRequirement(
+            id="T1078",
+            description="Valid Accounts",
+            attributes={
+                "_raw_attributes": [{"AWSService": "IAM", "Category": "Initial Access"}]
+            },
+            checks={"aws": ["check_a"]},
+        )
+        framework = ComplianceFramework(
             framework="MITRE",
             name="MITRE ATT&CK",
             version="14",
             description="Mitre",
-            requirements=reqs,
-            outputs=outputs,
+            requirements=[mitre_requirement],
+            outputs=OutputsConfig(table_config=TableConfig(group_by="AWSService")),
         )
         generated = {"compliance": []}
 
         process_universal_compliance_frameworks(
             input_compliance_frameworks={"mitre_attack_aws"},
-            universal_frameworks={"mitre_attack_aws": fw},
+            universal_frameworks={"mitre_attack_aws": framework},
             finding_outputs=[_make_finding("check_a", "PASS")],
             output_directory=str(tmp_path),
             output_filename="out",
@@ -1002,9 +996,11 @@ class TestMitreStyleOCSFOutput:
         )
 
         ocsf_path = tmp_path / "compliance" / "out_mitre_attack_aws.ocsf.json"
-        data = json.loads(ocsf_path.read_text())
-        assert isinstance(data, list) and len(data) >= 1
-        for event in data:
-            attrs = (event.get("unmapped") or {}).get("requirement_attributes", {})
-            assert "_raw_attributes" not in attrs
-            assert "raw_attributes" not in attrs
+        events = json.loads(ocsf_path.read_text())
+        assert isinstance(events, list) and len(events) >= 1
+        for event in events:
+            requirement_attrs = (event.get("unmapped") or {}).get(
+                "requirement_attributes", {}
+            )
+            assert "_raw_attributes" not in requirement_attrs
+            assert "raw_attributes" not in requirement_attrs

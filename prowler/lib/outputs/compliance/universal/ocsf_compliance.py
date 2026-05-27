@@ -82,33 +82,40 @@ def _to_snake_case(name: str) -> str:
 def _build_requirement_attrs(requirement, framework):
     """Build the requirement attributes payload for the unmapped section.
 
-    Keys are snake_cased. Filtered by ``AttributeMetadata.output_formats.ocsf``
+    Keys are snake_cased and filtered by ``AttributeMetadata.output_formats.ocsf``
     when declared. MITRE-style attrs (``{"_raw_attributes": [...]}``) are
     unwrapped into a list of per-entry dicts.
     """
-    attrs = requirement.attributes
-    if not attrs:
+    requirement_attributes = requirement.attributes
+    if not requirement_attributes:
         return {}
 
     metadata = framework.attributes_metadata
-    if metadata:
-        ocsf_keys = {m.key for m in metadata if m.output_formats.ocsf}
-    else:
-        ocsf_keys = None
+    allowed_keys = (
+        {entry.key for entry in metadata if entry.output_formats.ocsf}
+        if metadata
+        else None
+    )
 
-    def _project(entry: dict) -> dict:
-        out = {}
-        for key, value in entry.items():
-            if ocsf_keys is not None and key not in ocsf_keys:
-                continue
-            out[_to_snake_case(key)] = value
-        return out
+    def _to_snake_case_dict(entry: dict) -> dict:
+        return {
+            _to_snake_case(key): value
+            for key, value in entry.items()
+            if allowed_keys is None or key in allowed_keys
+        }
 
-    if isinstance(attrs, dict) and "_raw_attributes" in attrs:
-        raw = attrs.get("_raw_attributes") or []
-        return [_project(entry) for entry in raw if isinstance(entry, dict)]
+    if (
+        isinstance(requirement_attributes, dict)
+        and "_raw_attributes" in requirement_attributes
+    ):
+        raw_entries = requirement_attributes.get("_raw_attributes") or []
+        return [
+            _to_snake_case_dict(entry)
+            for entry in raw_entries
+            if isinstance(entry, dict)
+        ]
 
-    return _project(attrs)
+    return _to_snake_case_dict(requirement_attributes)
 
 
 class OCSFComplianceOutput:

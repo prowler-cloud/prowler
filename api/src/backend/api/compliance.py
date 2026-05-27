@@ -293,15 +293,22 @@ def generate_compliance_overview_template(
 
                 req_status_val = "MANUAL" if total_checks == 0 else "PASS"
 
-                # MITRE attrs are wrapped as `{"_raw_attributes": [...]}` by
-                # the universal adapter; unwrap so consumers get the flat list.
-                attrs = requirement.attributes
-                if isinstance(attrs, dict) and "_raw_attributes" in attrs:
-                    attributes_payload = list(attrs["_raw_attributes"])
-                elif isinstance(attrs, dict):
-                    attributes_payload = [dict(attrs)] if attrs else []
+                # MITRE attrs are wrapped under `_raw_attributes` by the
+                # universal adapter — unwrap so consumers see the flat list.
+                requirement_attributes = requirement.attributes
+                if (
+                    isinstance(requirement_attributes, dict)
+                    and "_raw_attributes" in requirement_attributes
+                ):
+                    attributes_payload = list(requirement_attributes["_raw_attributes"])
+                elif isinstance(requirement_attributes, dict):
+                    attributes_payload = (
+                        [dict(requirement_attributes)] if requirement_attributes else []
+                    )
                 else:
-                    attributes_payload = [dict(attribute) for attribute in attrs]
+                    attributes_payload = [
+                        dict(attribute) for attribute in requirement_attributes
+                    ]
 
                 # Build requirement dictionary
                 requirement_dict = {
