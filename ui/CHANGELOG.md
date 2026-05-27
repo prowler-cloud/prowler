@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.29.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- New Scan Jobs view with tab-specific Active, Completed, Scheduled, and Imported scan workflows [(#11258)](https://github.com/prowler-cloud/prowler/pull/11258)
+
 ### 🔄 Changed
 
 - Dark mode: pure-black canvas, pure-white primary text, and brighter border / input tokens for clearer separation between cards, tables, and inputs [(#11073)](https://github.com/prowler-cloud/prowler/pull/11073)
@@ -27,7 +31,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- New Scan Jobs view with tab-specific Active, Completed, Scheduled, and Imported scan workflows [(#11258)](https://github.com/prowler-cloud/prowler/pull/11258)
 - `okta` provider support with OAuth 2.0 private-key JWT credentials form (client ID + PEM private key) [(#11213)](https://github.com/prowler-cloud/prowler/pull/11213)
 - "Resource Metadata / Evidence" tab in the finding detail drawer [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
