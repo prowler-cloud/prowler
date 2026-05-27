@@ -93,7 +93,12 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
       <DataTableColumnHeader column={column} title="Launched" />
     ),
     cell: ({ row }) => (
-      <DateWithTime dateTime={row.original.attributes.started_at} />
+      <DateWithTime
+        dateTime={
+          row.original.attributes.started_at ||
+          row.original.attributes.inserted_at
+        }
+      />
     ),
     enableSorting: false,
   },
