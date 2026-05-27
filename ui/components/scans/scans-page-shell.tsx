@@ -67,12 +67,9 @@ export function ScansPageShell({
         <ScansFilterBar
           providers={providers}
           activeTab={filters.activeTab}
-          selectedProviderTypes={filters.selectedProviderTypes}
-          selectedProviderUids={filters.selectedProviderUids}
           scheduleType={filters.scheduleType}
           scanStatus={filters.scanStatus}
           showStatusFilter={filters.showStatusFilter}
-          onFilterChange={filters.setFilterValues}
           onScheduleTypeChange={filters.setScheduleType}
           onScanStatusChange={filters.setScanStatus}
         />

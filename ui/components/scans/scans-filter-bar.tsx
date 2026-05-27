@@ -1,7 +1,6 @@
 "use client";
 
-import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
+import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import {
   Select,
   SelectContent,
@@ -20,12 +19,9 @@ import {
 interface ScansFilterBarProps {
   providers: ProviderProps[];
   activeTab: ScanJobsTab;
-  selectedProviderTypes: string[];
-  selectedProviderUids: string[];
   scheduleType: string;
   scanStatus: string;
   showStatusFilter: boolean;
-  onFilterChange: (filterKey: string, values: string[]) => void;
   onScheduleTypeChange: (value: string) => void;
   onScanStatusChange: (value: string) => void;
 }
@@ -35,12 +31,9 @@ const filterItemClass = "w-full md:w-[calc(50%-0.375rem)] xl:w-60";
 export function ScansFilterBar({
   providers,
   activeTab,
-  selectedProviderTypes,
-  selectedProviderUids,
   scheduleType,
   scanStatus,
   showStatusFilter,
-  onFilterChange,
   onScheduleTypeChange,
   onScanStatusChange,
 }: ScansFilterBarProps) {
@@ -50,23 +43,14 @@ export function ScansFilterBar({
 
   return (
     <>
-      <div className={filterItemClass}>
-        <ProviderTypeSelector
-          providers={providers}
-          onBatchChange={onFilterChange}
-          selectedValues={selectedProviderTypes}
-        />
-      </div>
-
-      <div className={filterItemClass}>
-        <AccountsSelector
-          providers={providers}
-          filterKey="provider_uid__in"
-          onBatchChange={onFilterChange}
-          selectedValues={selectedProviderUids}
-          selectedProviderTypes={selectedProviderTypes}
-        />
-      </div>
+      <ProviderAccountSelectors
+        providers={providers}
+        accountFilterKey="provider_uid__in"
+        accountValue="uid"
+        paramsToDeleteOnChange={["page", "scanId"]}
+        providerSelectorClassName={filterItemClass}
+        accountSelectorClassName={filterItemClass}
+      />
 
       <Select value={scheduleType} onValueChange={onScheduleTypeChange}>
         <SelectTrigger aria-label="All Types" className={filterItemClass}>

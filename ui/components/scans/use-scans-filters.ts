@@ -11,19 +11,12 @@ function getFirstFilterValue(value: string | null): string {
   return value?.split(",")[0] || ALL_VALUE;
 }
 
-function getFilterValues(value: string | null): string[] {
-  return value?.split(",").filter(Boolean) ?? [];
-}
-
 export interface UseScansFiltersReturn {
   activeTab: ScanJobsTab;
-  selectedProviderTypes: string[];
-  selectedProviderUids: string[];
   scheduleType: string;
   scanStatus: string;
   showStatusFilter: boolean;
   setTab: (tab: string) => void;
-  setFilterValues: (filterKey: string, values: string[]) => void;
   setScheduleType: (value: string) => void;
   setScanStatus: (value: string) => void;
 }
@@ -35,12 +28,6 @@ export function useScansFilters(): UseScansFiltersReturn {
 
   const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
   const showStatusFilter = activeTab === SCAN_JOBS_TAB.COMPLETED;
-  const selectedProviderTypes = getFilterValues(
-    searchParams.get("filter[provider_type__in]"),
-  );
-  const selectedProviderUids = getFilterValues(
-    searchParams.get("filter[provider_uid__in]"),
-  );
   const scheduleType = getFirstFilterValue(searchParams.get("filter[trigger]"));
   const scanStatus = getFirstFilterValue(
     searchParams.get("filter[state__in]") ?? searchParams.get("filter[state]"),
@@ -67,11 +54,6 @@ export function useScansFilters(): UseScansFiltersReturn {
       "filter[state__in]": null,
     });
 
-  const setFilterValues = (filterKey: string, values: string[]) =>
-    updateParams({
-      [`filter[${filterKey}]`]: values.length > 0 ? values.join(",") : null,
-    });
-
   const setScheduleType = (value: string) =>
     updateParams({ "filter[trigger]": value });
 
@@ -80,13 +62,10 @@ export function useScansFilters(): UseScansFiltersReturn {
 
   return {
     activeTab,
-    selectedProviderTypes,
-    selectedProviderUids,
     scheduleType,
     scanStatus,
     showStatusFilter,
     setTab,
-    setFilterValues,
     setScheduleType,
     setScanStatus,
   };

@@ -153,8 +153,6 @@ describe("ScansPageShell", () => {
     expect(scansFilterBarSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         providers,
-        selectedProviderTypes: [],
-        selectedProviderUids: [],
         scheduleType: "all",
       }),
     );
