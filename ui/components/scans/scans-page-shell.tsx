@@ -52,16 +52,15 @@ export function ScansPageShell({
           onScanStatusChange={filters.setScanStatus}
         />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Button
-            type="button"
-            size="lg"
-            onClick={() => setLaunchOpen(true)}
-            disabled={launchDisabled}
-          >
-            Launch Scan
-          </Button>
-        </div>
+        <Button
+          type="button"
+          size="lg"
+          onClick={() => setLaunchOpen(true)}
+          disabled={launchDisabled}
+          className="w-full md:w-auto"
+        >
+          Launch Scan
+        </Button>
       </div>
 
       <Tabs

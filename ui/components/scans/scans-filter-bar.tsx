@@ -30,6 +30,8 @@ interface ScansFilterBarProps {
   onScanStatusChange: (value: string) => void;
 }
 
+const filterItemClass = "w-full md:w-[calc(50%-0.375rem)] xl:w-60";
+
 export function ScansFilterBar({
   providers,
   activeTab,
@@ -47,23 +49,27 @@ export function ScansFilterBar({
   const statusFilterOptions = getScanStatusFilterOptions(activeTab);
 
   return (
-    <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2 xl:w-auto xl:grid-cols-[240px_240px_240px_240px]">
-      <ProviderTypeSelector
-        providers={providers}
-        onBatchChange={onFilterChange}
-        selectedValues={selectedProviderTypes}
-      />
+    <>
+      <div className={filterItemClass}>
+        <ProviderTypeSelector
+          providers={providers}
+          onBatchChange={onFilterChange}
+          selectedValues={selectedProviderTypes}
+        />
+      </div>
 
-      <AccountsSelector
-        providers={providers}
-        filterKey="provider_uid__in"
-        onBatchChange={onFilterChange}
-        selectedValues={selectedProviderUids}
-        selectedProviderTypes={selectedProviderTypes}
-      />
+      <div className={filterItemClass}>
+        <AccountsSelector
+          providers={providers}
+          filterKey="provider_uid__in"
+          onBatchChange={onFilterChange}
+          selectedValues={selectedProviderUids}
+          selectedProviderTypes={selectedProviderTypes}
+        />
+      </div>
 
       <Select value={scheduleType} onValueChange={onScheduleTypeChange}>
-        <SelectTrigger aria-label="All Types">
+        <SelectTrigger aria-label="All Types" className={filterItemClass}>
           <SelectValue placeholder="All Types" />
         </SelectTrigger>
         <SelectContent>
@@ -77,7 +83,7 @@ export function ScansFilterBar({
 
       {showStatusFilter && (
         <Select value={scanStatus} onValueChange={onScanStatusChange}>
-          <SelectTrigger aria-label="All Statuses">
+          <SelectTrigger aria-label="All Statuses" className={filterItemClass}>
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -89,6 +95,6 @@ export function ScansFilterBar({
           </SelectContent>
         </Select>
       )}
-    </div>
+    </>
   );
 }
