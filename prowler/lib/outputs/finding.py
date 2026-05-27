@@ -343,7 +343,9 @@ class Finding(BaseModel):
                 output_data["region"] = check_output.location
 
             elif provider.type == "stackit":
-                output_data["auth_method"] = "api_token"
+                output_data["auth_method"] = getattr(
+                    provider, "auth_method", "api_token"
+                )
                 output_data["account_uid"] = get_nested_attribute(
                     provider, "identity.project_id"
                 )

@@ -7,12 +7,12 @@ class StackITBaseException(ProwlerException):
 
     STACKIT_ERROR_CODES = {
         (10001, "StackITNonExistentTokenError"): {
-            "message": "A StackIT API token is required to authenticate against StackIT",
-            "remediation": "Check the StackIT API token and ensure it is properly set in the STACKIT_API_TOKEN environment variable.",
+            "message": "A StackIT service account key file is required to authenticate against StackIT",
+            "remediation": "Set --stackit-service-account-key-path or the STACKIT_SERVICE_ACCOUNT_KEY_PATH environment variable to a valid service account key JSON file.",
         },
         (10002, "StackITInvalidTokenError"): {
-            "message": "StackIT API token provided is not valid",
-            "remediation": "Check the StackIT API token and ensure it is valid. Verify that the token has not expired.",
+            "message": "StackIT service account key was rejected or lacks permissions",
+            "remediation": "Verify the service account key file is current, has not been revoked, and that the service account has the required roles on the project.",
         },
         (10003, "StackITSetUpSessionError"): {
             "message": "Error setting up StackIT session",

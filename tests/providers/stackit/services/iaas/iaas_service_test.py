@@ -27,7 +27,7 @@ class Test_IaaS_Service:
         iaas_service = IaaSService(set_mocked_stackit_provider())
 
         assert iaas_service.project_id == STACKIT_PROJECT_ID
-        assert iaas_service.api_token is not None
+        assert iaas_service.service_account_key_path is not None
         assert isinstance(iaas_service.security_groups, list)
         assert isinstance(iaas_service.server_nics, list)
         assert isinstance(iaas_service.in_use_sg_ids, set)
@@ -38,12 +38,12 @@ class Test_IaaS_Service:
         iaas_service = IaaSService(set_mocked_stackit_provider())
         assert iaas_service.project_id == STACKIT_PROJECT_ID
 
-    def test_service_api_token(self):
-        """Test that the service correctly extracts API token from provider."""
-        custom_token = "custom-test-token"
-        provider = set_mocked_stackit_provider(api_token=custom_token)
+    def test_service_service_account_key_path(self):
+        """Test that the service correctly extracts the SA key path from provider."""
+        custom_path = "/tmp/custom-sa.json"
+        provider = set_mocked_stackit_provider(service_account_key_path=custom_path)
         iaas_service = IaaSService(provider)
-        assert iaas_service.api_token == custom_token
+        assert iaas_service.service_account_key_path == custom_path
 
     def test_security_groups_list_structure(self):
         """Test that security_groups is properly initialized as a list."""

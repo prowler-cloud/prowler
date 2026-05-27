@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
 - `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
+- StackIT provider now authenticates with a service account key file (`--stackit-service-account-key-path` / `STACKIT_SERVICE_ACCOUNT_KEY_PATH`); the StackIT SDK refreshes access tokens internally, replacing the short-lived `STACKIT_API_TOKEN` flow [(#9237)](https://github.com/prowler-cloud/prowler/pull/9237)
 
 ---
 

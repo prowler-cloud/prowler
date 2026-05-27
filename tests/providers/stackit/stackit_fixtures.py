@@ -7,12 +7,12 @@ from prowler.providers.stackit.stackit_provider import StackitProvider
 
 # StackIT Test Constants
 STACKIT_PROJECT_ID = str(uuid4())
-STACKIT_API_TOKEN = "test-api-token-" + str(uuid4())
+STACKIT_SERVICE_ACCOUNT_KEY_PATH = "/tmp/stackit-sa-key.json"
 STACKIT_PROJECT_NAME = "Test Project"
 
 
 def set_mocked_stackit_provider(
-    api_token: str = STACKIT_API_TOKEN,
+    service_account_key_path: str = STACKIT_SERVICE_ACCOUNT_KEY_PATH,
     project_id: str = STACKIT_PROJECT_ID,
     identity: StackITIdentityInfo = None,
     audit_config: dict = None,
@@ -23,7 +23,8 @@ def set_mocked_stackit_provider(
     Create a mocked StackIT provider for testing.
 
     Args:
-        api_token: The API token to use (default: STACKIT_API_TOKEN)
+        service_account_key_path: Path to the service account key file
+            (default: ``STACKIT_SERVICE_ACCOUNT_KEY_PATH`` constant)
         project_id: The project ID to use (default: STACKIT_PROJECT_ID)
         identity: Custom identity info (default: creates new StackITIdentityInfo)
         audit_config: Audit configuration dict (default: None)
@@ -42,11 +43,12 @@ def set_mocked_stackit_provider(
     provider.type = "stackit"
     provider.identity = identity
     provider.session = {
-        "api_token": api_token,
         "project_id": project_id,
+        "service_account_key_path": service_account_key_path,
     }
     provider.audit_config = audit_config if audit_config else {}
     provider.fixer_config = fixer_config if fixer_config else {}
     provider.scan_unused_services = scan_unused_services
+    provider.auth_method = "service_account_key"
 
     return provider

@@ -1,1 +1,0 @@
-# StackIT IaaS Service Tests

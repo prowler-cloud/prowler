@@ -259,6 +259,9 @@ class Provider(ABC):
                 elif "stackit" in provider_class_name.lower():
                     provider_class(
                         project_id=arguments.stackit_project_id,
+                        service_account_key_path=getattr(
+                            arguments, "stackit_service_account_key_path", None
+                        ),
                         regions=(
                             set(arguments.stackit_region)
                             if arguments.stackit_region

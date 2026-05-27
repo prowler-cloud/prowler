@@ -21,152 +21,95 @@ from prowler.providers.stackit.stackit_provider import StackitProvider
 class TestStackITProviderValidation:
     """Test suite for StackIT Provider input validation."""
 
-    def test_validate_arguments_valid_uuid(self):
-        """Test validation passes with valid UUID and token."""
-        valid_token = "test-api-token-12345"
-        valid_project_id = "12345678-1234-1234-1234-123456789abc"
+    KEY_PATH = "/tmp/sa-key.json"
+    VALID_PROJECT_ID = "12345678-1234-1234-1234-123456789abc"
 
-        # Should not raise any exception
-        StackitProvider.validate_arguments(valid_token, valid_project_id)
+    def test_validate_arguments_valid(self):
+        """Test validation passes with a key path and a valid UUID."""
+        StackitProvider.validate_arguments(self.VALID_PROJECT_ID, self.KEY_PATH)
 
-    def test_validate_arguments_empty_token(self):
-        """Test validation fails with empty API token."""
-        valid_project_id = "12345678-1234-1234-1234-123456789abc"
-
+    def test_validate_arguments_empty_key_path(self):
         with pytest.raises(StackITNonExistentTokenError) as exc_info:
-            StackitProvider.validate_arguments("", valid_project_id)
+            StackitProvider.validate_arguments(self.VALID_PROJECT_ID, "")
+        assert "service account key file path is required" in str(exc_info.value)
 
-        assert "API token is required" in str(exc_info.value)
-
-    def test_validate_arguments_none_token(self):
-        """Test validation fails with None API token."""
-        valid_project_id = "12345678-1234-1234-1234-123456789abc"
-
+    def test_validate_arguments_none_key_path(self):
         with pytest.raises(StackITNonExistentTokenError) as exc_info:
-            StackitProvider.validate_arguments(None, valid_project_id)
+            StackitProvider.validate_arguments(self.VALID_PROJECT_ID, None)
+        assert "service account key file path is required" in str(exc_info.value)
 
-        assert "API token is required" in str(exc_info.value)
-
-    def test_validate_arguments_whitespace_only_token(self):
-        """Test validation fails with whitespace-only API token."""
-        valid_project_id = "12345678-1234-1234-1234-123456789abc"
-
+    def test_validate_arguments_whitespace_only_key_path(self):
         with pytest.raises(StackITNonExistentTokenError) as exc_info:
-            StackitProvider.validate_arguments("   ", valid_project_id)
-
-        assert "API token is required" in str(exc_info.value)
+            StackitProvider.validate_arguments(self.VALID_PROJECT_ID, "   ")
+        assert "service account key file path is required" in str(exc_info.value)
 
     def test_validate_arguments_empty_project_id(self):
-        """Test validation fails with empty project ID."""
-        valid_token = "test-api-token-12345"
-
         with pytest.raises(StackITInvalidProjectIdError) as exc_info:
-            StackitProvider.validate_arguments(valid_token, "")
-
+            StackitProvider.validate_arguments("", self.KEY_PATH)
         assert "project ID is required" in str(exc_info.value)
 
     def test_validate_arguments_none_project_id(self):
-        """Test validation fails with None project ID."""
-        valid_token = "test-api-token-12345"
-
         with pytest.raises(StackITInvalidProjectIdError) as exc_info:
-            StackitProvider.validate_arguments(valid_token, None)
-
+            StackitProvider.validate_arguments(None, self.KEY_PATH)
         assert "project ID is required" in str(exc_info.value)
 
     def test_validate_arguments_whitespace_only_project_id(self):
-        """Test validation fails with whitespace-only project ID."""
-        valid_token = "test-api-token-12345"
-
         with pytest.raises(StackITInvalidProjectIdError) as exc_info:
-            StackitProvider.validate_arguments(valid_token, "   ")
-
+            StackitProvider.validate_arguments("   ", self.KEY_PATH)
         assert "project ID is required" in str(exc_info.value)
 
     def test_validate_arguments_invalid_uuid_format(self):
-        """Test validation fails with invalid UUID format for project ID."""
-        valid_token = "test-api-token-12345"
-        invalid_project_id = "not-a-valid-uuid"
-
         with pytest.raises(StackITInvalidProjectIdError) as exc_info:
-            StackitProvider.validate_arguments(valid_token, invalid_project_id)
-
+            StackitProvider.validate_arguments("not-a-valid-uuid", self.KEY_PATH)
         assert "must be a valid UUID format" in str(exc_info.value)
         assert "not-a-valid-uuid" in str(exc_info.value)
 
     def test_validate_arguments_invalid_uuid_too_short(self):
-        """Test validation fails with too short project ID."""
-        valid_token = "test-api-token-12345"
-        invalid_project_id = "1234-5678"
-
         with pytest.raises(StackITInvalidProjectIdError) as exc_info:
-            StackitProvider.validate_arguments(valid_token, invalid_project_id)
-
+            StackitProvider.validate_arguments("1234-5678", self.KEY_PATH)
         assert "must be a valid UUID format" in str(exc_info.value)
 
     def test_validate_arguments_uuid_without_hyphens(self):
-        """Test validation passes with UUID without hyphens (Python's UUID() normalizes it)."""
-        valid_token = "test-api-token-12345"
-        # Missing hyphens - Python's UUID() accepts this and normalizes it
-        valid_project_id = "12345678123412341234123456789abc"
-
-        # Should not raise exception - Python's UUID() handles this
-        StackitProvider.validate_arguments(valid_token, valid_project_id)
+        """Python's UUID() accepts compact form."""
+        StackitProvider.validate_arguments(
+            "12345678123412341234123456789abc", self.KEY_PATH
+        )
 
     def test_validate_arguments_numeric_only_project_id(self):
-        """Test validation fails with numeric-only project ID (not UUID)."""
-        valid_token = "test-api-token-12345"
-        # AWS-style numeric account ID (not valid UUID)
-        invalid_project_id = "123456789012"
-
         with pytest.raises(StackITInvalidProjectIdError) as exc_info:
-            StackitProvider.validate_arguments(valid_token, invalid_project_id)
-
+            StackitProvider.validate_arguments("123456789012", self.KEY_PATH)
         assert "must be a valid UUID format" in str(exc_info.value)
 
     def test_validate_arguments_uuid_with_uppercase(self):
-        """Test validation passes with uppercase UUID (should be normalized)."""
-        valid_token = "test-api-token-12345"
-        # UUIDs are case-insensitive
-        valid_project_id = "12345678-1234-1234-1234-123456789ABC"
-
-        # Should not raise any exception
-        StackitProvider.validate_arguments(valid_token, valid_project_id)
+        StackitProvider.validate_arguments(
+            "12345678-1234-1234-1234-123456789ABC", self.KEY_PATH
+        )
 
     def test_validate_arguments_uuid_with_braces(self):
-        """Test validation fails with UUID in braces (not standard format)."""
-        valid_token = "test-api-token-12345"
-        # Some systems use {UUID} format, but Python's UUID() should handle it
-        valid_project_id = "{12345678-1234-1234-1234-123456789abc}"
-
-        # Should not raise exception - Python's UUID() handles braces
-        StackitProvider.validate_arguments(valid_token, valid_project_id)
+        StackitProvider.validate_arguments(
+            "{12345678-1234-1234-1234-123456789abc}", self.KEY_PATH
+        )
 
     def test_validate_arguments_uuid_v4_format(self):
-        """Test validation passes with valid UUID v4 format."""
-        valid_token = "test-api-token-12345"
-        # Standard UUID v4 format
-        valid_project_id = "550e8400-e29b-41d4-a716-446655440000"
-
-        # Should not raise any exception
-        StackitProvider.validate_arguments(valid_token, valid_project_id)
+        StackitProvider.validate_arguments(
+            "550e8400-e29b-41d4-a716-446655440000", self.KEY_PATH
+        )
 
     def test_validate_arguments_both_invalid(self):
-        """Test validation fails with both token and project_id invalid."""
-        # Should fail on token first (checked first in the method)
+        """Key path is checked first."""
         with pytest.raises(StackITNonExistentTokenError):
-            StackitProvider.validate_arguments("", "not-a-uuid")
+            StackitProvider.validate_arguments("not-a-uuid", "")
 
     def test_validate_arguments_both_none(self):
-        """Test validation fails with both token and project_id None."""
-        # Should fail on token first (checked first in the method)
+        """Key path is checked first."""
         with pytest.raises(StackITNonExistentTokenError):
             StackitProvider.validate_arguments(None, None)
 
 
 class TestStackITProviderInitialization:
-    def test_init_global_provider_uses_environment_token(self, monkeypatch):
-        """StackIT API tokens are env-only and not read from CLI arguments."""
+    def test_init_global_provider_passes_key_path_from_cli(self, monkeypatch):
+        """The service account key path from CLI args is forwarded to the
+        provider constructor; tokens are not part of the API anymore."""
         captured_kwargs = {}
 
         class FakeStackitProvider:
@@ -177,6 +120,7 @@ class TestStackITProviderInitialization:
         arguments = Namespace(
             provider="stackit",
             stackit_project_id="12345678-1234-1234-1234-123456789abc",
+            stackit_service_account_key_path="/tmp/sa-key.json",
             stackit_region=None,
             scan_unused_services=False,
             config_file="config.yaml",
@@ -184,7 +128,6 @@ class TestStackITProviderInitialization:
             fixer_config="fixer_config.yaml",
         )
 
-        monkeypatch.setenv("STACKIT_API_TOKEN", "env-token")
         monkeypatch.setattr(common_provider.Provider, "_global", None)
 
         with (
@@ -197,6 +140,10 @@ class TestStackITProviderInitialization:
 
         assert "api_token" not in captured_kwargs
         assert captured_kwargs["project_id"] == arguments.stackit_project_id
+        assert (
+            captured_kwargs["service_account_key_path"]
+            == arguments.stackit_service_account_key_path
+        )
         assert captured_kwargs["scan_unused_services"] is False
 
     def test_init_global_provider_passes_scan_unused_services_true(self, monkeypatch):
@@ -211,6 +158,7 @@ class TestStackITProviderInitialization:
         arguments = Namespace(
             provider="stackit",
             stackit_project_id="12345678-1234-1234-1234-123456789abc",
+            stackit_service_account_key_path="/tmp/sa-key.json",
             stackit_region=None,
             scan_unused_services=True,
             config_file="config.yaml",
@@ -218,7 +166,6 @@ class TestStackITProviderInitialization:
             fixer_config="fixer_config.yaml",
         )
 
-        monkeypatch.setenv("STACKIT_API_TOKEN", "env-token")
         monkeypatch.setattr(common_provider.Provider, "_global", None)
 
         with (
@@ -233,14 +180,17 @@ class TestStackITProviderInitialization:
 
 
 class TestStackITProviderTestConnection:
+    KEY_PATH = "/tmp/sa-key.json"
+    PROJECT_ID = "12345678-1234-1234-1234-123456789abc"
+
     @pytest.fixture
     def fake_stackit_resourcemanager(self, monkeypatch):
         configuration_module = types.ModuleType("stackit.core.configuration")
         resourcemanager_module = types.ModuleType("stackit.resourcemanager")
 
         class FakeConfiguration:
-            def __init__(self, service_account_token):
-                self.service_account_token = service_account_token
+            def __init__(self, service_account_key_path):
+                self.service_account_key_path = service_account_key_path
 
         class FakeDefaultApi:
             error = None
@@ -250,7 +200,7 @@ class TestStackITProviderTestConnection:
                 self.config = config
 
             def get_project(self, id):
-                self.__class__.calls.append((self.config.service_account_token, id))
+                self.__class__.calls.append((self.config.service_account_key_path, id))
                 if self.__class__.error:
                     raise self.__class__.error
                 return {"name": "Test Project"}
@@ -270,14 +220,12 @@ class TestStackITProviderTestConnection:
         self, fake_stackit_resourcemanager
     ):
         connection = StackitProvider.test_connection(
-            api_token="token",
-            project_id="12345678-1234-1234-1234-123456789abc",
+            project_id=self.PROJECT_ID,
+            service_account_key_path=self.KEY_PATH,
         )
 
         assert connection == Connection(is_connected=True)
-        assert fake_stackit_resourcemanager.calls == [
-            ("token", "12345678-1234-1234-1234-123456789abc")
-        ]
+        assert fake_stackit_resourcemanager.calls == [(self.KEY_PATH, self.PROJECT_ID)]
 
     def test_connection_returns_error_when_raise_on_exception_is_false(
         self, fake_stackit_resourcemanager
@@ -285,8 +233,8 @@ class TestStackITProviderTestConnection:
         fake_stackit_resourcemanager.error = RuntimeError("denied")
 
         connection = StackitProvider.test_connection(
-            api_token="token",
-            project_id="12345678-1234-1234-1234-123456789abc",
+            project_id=self.PROJECT_ID,
+            service_account_key_path=self.KEY_PATH,
             raise_on_exception=False,
         )
 
@@ -302,8 +250,8 @@ class TestStackITProviderTestConnection:
 
         with pytest.raises(StackITAPIError):
             StackitProvider.test_connection(
-                api_token="token",
-                project_id="12345678-1234-1234-1234-123456789abc",
+                project_id=self.PROJECT_ID,
+                service_account_key_path=self.KEY_PATH,
                 raise_on_exception=True,
             )
 
@@ -315,8 +263,8 @@ class TestStackITProviderGetProjectName:
         resourcemanager_module = types.ModuleType("stackit.resourcemanager")
 
         class FakeConfiguration:
-            def __init__(self, service_account_token):
-                self.service_account_token = service_account_token
+            def __init__(self, service_account_key_path):
+                self.service_account_key_path = service_account_key_path
 
         class FakeDefaultApi:
             error = None
@@ -342,7 +290,7 @@ class TestStackITProviderGetProjectName:
 
     def _make_provider(self):
         provider = object.__new__(StackitProvider)
-        provider._api_token = "token"
+        provider._service_account_key_path = "/tmp/sa-key.json"
         provider._project_id = "12345678-1234-1234-1234-123456789abc"
         return provider
 

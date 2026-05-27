@@ -15,6 +15,17 @@ def init_parser(self):
         default=None,
         help="StackIT Project ID to audit (alternatively set via STACKIT_PROJECT_ID environment variable)",
     )
+    stackit_auth_subparser.add_argument(
+        "--stackit-service-account-key-path",
+        nargs="?",
+        default=None,
+        help=(
+            "Path to a StackIT service account key JSON file. The SDK signs the RSA "
+            "challenge in the key and mints/refreshes access tokens internally for "
+            "the life of the scan. Alternatively set via the "
+            "STACKIT_SERVICE_ACCOUNT_KEY_PATH environment variable."
+        ),
+    )
 
     stackit_parser.add_argument(
         "--stackit-region",

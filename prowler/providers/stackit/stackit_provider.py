@@ -42,8 +42,9 @@ class StackitProvider(Provider):
 
     Attributes:
     - _type: str -> The type of the provider, which is set to "stackit".
-    - _api_token: str -> The API token for authentication with StackIT.
     - _project_id: str -> The StackIT project ID to audit.
+    - _service_account_key_path: str -> Path to a StackIT service account key
+      JSON file. The SDK mints and refreshes access tokens internally.
     - _identity: StackITIdentityInfo -> The identity information for the StackIT provider.
     - _audit_config: dict -> The audit configuration for the StackIT provider.
     - _mutelist: StackITMutelist -> The mutelist object associated with the StackIT provider.
@@ -57,15 +58,15 @@ class StackitProvider(Provider):
     - audit_config: Returns the audit configuration for the StackIT provider.
     - fixer_config: Returns the fixer configuration.
     - mutelist: Returns the mutelist object associated with the StackIT provider.
-    - validate_arguments: Validates the StackIT provider arguments (ex: api_token, project_id).
+    - validate_arguments: Validates the StackIT provider arguments (key path, project_id).
     - print_credentials: Prints the StackIT credentials information (ex: project_id).
     - setup_session: Set up the StackIT session with the specified authentication method.
     - test_connection: Tests the provider connection.
     """
 
     _type: str = "stackit"
-    _api_token: Optional[str]
     _project_id: Optional[str]
+    _service_account_key_path: Optional[str]
     _session: Optional[dict]
     _identity: StackITIdentityInfo
     _audit_config: dict
@@ -75,8 +76,8 @@ class StackitProvider(Provider):
 
     def __init__(
         self,
-        api_token: str = None,
         project_id: str = None,
+        service_account_key_path: str = None,
         regions: set = None,
         scan_unused_services: bool = False,
         config_path: str = None,
@@ -88,9 +89,12 @@ class StackitProvider(Provider):
         Initializes the StackIT provider.
 
         Args:
-            - api_token: The StackIT API token for authentication
-            - project_id: The StackIT project ID to audit
-            - regions: The list of regions to audit
+            - project_id: The StackIT project ID to audit.
+            - service_account_key_path: Path to a StackIT service account key
+              JSON file. The SDK mints and refreshes access tokens internally
+              from this key. Read from ``STACKIT_SERVICE_ACCOUNT_KEY_PATH``
+              when not provided.
+            - regions: The list of regions to audit.
             - config_path: The path to the configuration file.
             - fixer_config: The fixer configuration.
             - mutelist_path: The path to the mutelist file.
@@ -99,17 +103,24 @@ class StackitProvider(Provider):
         logger.info("Initializing StackIT Provider...")
 
         # 1) Store argument values
-        self._api_token = api_token or os.getenv("STACKIT_API_TOKEN")
         self._project_id = project_id or os.getenv("STACKIT_PROJECT_ID")
+        self._service_account_key_path = service_account_key_path or os.getenv(
+            "STACKIT_SERVICE_ACCOUNT_KEY_PATH"
+        )
         self._audited_regions = regions if regions else self.get_regions()
         self._scan_unused_services = scan_unused_services
 
         # 2) Validate credentials format (following Azure's validation pattern)
         try:
-            self.validate_arguments(self._api_token, self._project_id)
+            self.validate_arguments(
+                self._project_id,
+                self._service_account_key_path,
+            )
         except StackITNonExistentTokenError:
             logger.critical(
-                "StackIT API token is required. Provide it via the STACKIT_API_TOKEN environment variable."
+                "StackIT service account key is required. Provide it via "
+                "--stackit-service-account-key-path or the "
+                "STACKIT_SERVICE_ACCOUNT_KEY_PATH environment variable."
             )
             raise
         except StackITInvalidProjectIdError:
@@ -193,7 +204,6 @@ class StackitProvider(Provider):
 
         Returns dict: {"eu01": DefaultApi_client, "eu02": DefaultApi_client}
         """
-        from stackit.core.configuration import Configuration
         from stackit.iaas import DefaultApi
 
         regional_clients = {}
@@ -203,12 +213,26 @@ class StackitProvider(Provider):
 
         for region in service_regions:
             with suppress_stderr():
-                config = Configuration(service_account_token=self._api_token)
+                config = self._build_sdk_configuration(self._service_account_key_path)
                 client = DefaultApi(config)
                 client.region = region  # Attach region attribute
                 regional_clients[region] = client
 
         return regional_clients
+
+    @staticmethod
+    def _build_sdk_configuration(service_account_key_path: str):
+        """Build a ``stackit.core.configuration.Configuration`` from the
+        service account key file. The SDK reads the JSON, signs the RSA
+        challenge and refreshes access tokens internally for the life of
+        the scan.
+
+        Kept as a static helper so ``test_connection`` (which has no provider
+        instance) can reuse it.
+        """
+        from stackit.core.configuration import Configuration
+
+        return Configuration(service_account_key_path=service_account_key_path)
 
     @property
     def type(self) -> str:
@@ -258,26 +282,34 @@ class StackitProvider(Provider):
         return self._mutelist
 
     @staticmethod
-    def validate_arguments(api_token: str, project_id: str) -> None:
+    def validate_arguments(
+        project_id: str,
+        service_account_key_path: str,
+    ) -> None:
         """
         Validates StackIT static arguments format before use.
 
-        This method follows the same pattern as Azure provider validation,
-        validating format before attempting API calls for better error messages
-        and faster failure on invalid input.
+        The service account key path and the project ID are both required;
+        the project ID must be a valid UUID. This mirrors Azure's pattern of
+        failing fast on input format issues before making any API calls.
 
         Args:
-            api_token: The StackIT API token
             project_id: The StackIT project ID (must be valid UUID format)
+            service_account_key_path: Path to a service account key JSON file
 
         Raises:
-            StackITNonExistentTokenError: If api_token is missing or invalid
-            StackITInvalidProjectIdError: If project_id is missing or not a valid UUID
+            StackITNonExistentTokenError: If ``service_account_key_path`` is
+                missing or empty
+            StackITInvalidProjectIdError: If ``project_id`` is missing or not a
+                valid UUID
         """
-        # Validate API token is not empty
-        if not api_token or not api_token.strip():
+        if not service_account_key_path or not service_account_key_path.strip():
             raise StackITNonExistentTokenError(
-                message="StackIT API token is required for authentication"
+                message=(
+                    "StackIT service account key file path is required "
+                    "(set --stackit-service-account-key-path or "
+                    "STACKIT_SERVICE_ACCOUNT_KEY_PATH)"
+                )
             )
 
         # Validate project_id is not empty
@@ -296,6 +328,15 @@ class StackitProvider(Provider):
                 message=f"StackIT project ID must be a valid UUID format, got: {project_id}",
             )
 
+    @property
+    def auth_method(self) -> str:
+        """Auth method label used for findings and credentials box.
+
+        StackIT authenticates with a service account key; the SDK signs
+        the RSA challenge and refreshes access tokens internally.
+        """
+        return "service_account_key"
+
     def print_credentials(self) -> None:
         """
         Prints the StackIT credentials in a simple box format.
@@ -305,7 +346,8 @@ class StackitProvider(Provider):
         if self._identity.project_name:
             lines.append(f"  Project Name: {self._identity.project_name}")
         lines.append(f"  Project ID: {self._project_id}")
-        lines.append("  API Token: ***REDACTED***")
+        lines.append(f"  Service Account Key: {self._service_account_key_path}")
+        lines.append("  Auth Method: service account key (auto-refresh)")
 
         report_lines = ["\n".join(lines)]
 
@@ -318,14 +360,13 @@ class StackitProvider(Provider):
         """
         Set up the StackIT session configuration.
 
-        This creates a session dictionary containing credentials
-        that will be used by service clients.
+        This creates a session dictionary containing the credentials
+        used by service clients to build SDK ``Configuration`` objects.
         """
         try:
-            # Store session configuration for use by service clients
             self._session = {
-                "api_token": self._api_token,
                 "project_id": self._project_id,
+                "service_account_key_path": self._service_account_key_path,
             }
             logger.info("StackIT session configuration set up successfully.")
         except Exception as e:
@@ -347,14 +388,13 @@ class StackitProvider(Provider):
                 project-level permissions (401 or 403 during identity validation)
         """
         try:
-            from stackit.core.configuration import Configuration
             from stackit.resourcemanager import DefaultApi
 
             with suppress_stderr():
-                config = Configuration(service_account_token=self._api_token)
+                config = self._build_sdk_configuration(self._service_account_key_path)
                 client = DefaultApi(config)
 
-                # Fetch project details - this validates the token
+                # Fetch project details - this validates the credentials
                 response = client.get_project(id=self._project_id)
 
             # Extract project name from response
@@ -412,14 +452,14 @@ class StackitProvider(Provider):
         status = getattr(exception, "status", None)
         if status == 401:
             logger.critical(
-                "StackIT API token is invalid or has expired. "
-                "Generate a new token with: stackit auth activate-service-account "
-                "--service-account-key-path <path> --only-print-access-token"
+                "StackIT service account key was rejected. Verify the key "
+                "file referenced by STACKIT_SERVICE_ACCOUNT_KEY_PATH is the "
+                "current one and has not been revoked in the StackIT portal."
             )
             raise StackITInvalidTokenError(
                 file="stackit_provider.py",
                 original_exception=None,  # Don't include verbose HTTP details
-                message="Invalid or expired API token",
+                message="StackIT service account key was rejected (401)",
             )
         if status == 403:
             logger.critical(
@@ -436,19 +476,22 @@ class StackitProvider(Provider):
 
     @staticmethod
     def test_connection(
-        api_token: str,
-        project_id: str,
+        project_id: str = None,
+        service_account_key_path: str = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """
         Test connection to StackIT by validating credentials.
 
-        This method attempts to validate the API token and project ID
-        by making a simple API call to StackIT services using the SDK.
+        This method validates the service account key path and project ID by
+        making a Resource Manager ``get_project`` call. The SDK signs the RSA
+        challenge in the key file and mints a short-lived access token
+        internally.
 
         Args:
-            api_token (str): StackIT API token
             project_id (str): StackIT project ID
+            service_account_key_path (str): Path to a StackIT service account
+                key JSON file
             raise_on_exception (bool): If True, raise the caught exception;
                                        if False, return Connection(error=exception).
 
@@ -460,7 +503,7 @@ class StackitProvider(Provider):
         try:
             # 1) Validate arguments using the same static checks as provider init.
             try:
-                StackitProvider.validate_arguments(api_token, project_id)
+                StackitProvider.validate_arguments(project_id, service_account_key_path)
             except Exception as validation_error:
                 logger.error(f"StackIT test_connection error: {validation_error}")
                 if raise_on_exception:
@@ -470,11 +513,12 @@ class StackitProvider(Provider):
             # 2) Test connection with the same Resource Manager lookup used
             # during provider identity initialization.
             try:
-                from stackit.core.configuration import Configuration
                 from stackit.resourcemanager import DefaultApi
 
                 with suppress_stderr():
-                    config = Configuration(service_account_token=api_token)
+                    config = StackitProvider._build_sdk_configuration(
+                        service_account_key_path
+                    )
                     client = DefaultApi(config)
                     client.get_project(id=project_id)
 

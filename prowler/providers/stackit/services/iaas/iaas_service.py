@@ -10,8 +10,10 @@ class IaaSService:
     """
     StackIT IaaS Service class to handle security group operations.
 
-    This service uses the StackIT Python SDK to access IaaS resources
-    using API token authentication.
+    This service uses the StackIT Python SDK to access IaaS resources.
+    Authentication is delegated to the SDK, which signs the RSA challenge
+    in the configured service account key and refreshes access tokens
+    internally for the life of the scan.
     """
 
     def __init__(self, provider: StackitProvider):
@@ -23,7 +25,7 @@ class IaaSService:
         """
         self.provider = provider
         self.project_id = provider.identity.project_id
-        self.api_token = provider.session.get("api_token")
+        self.service_account_key_path = provider.session.get("service_account_key_path")
         self.scan_unused_services = provider.scan_unused_services
 
         # Generate regional clients (AWS pattern)

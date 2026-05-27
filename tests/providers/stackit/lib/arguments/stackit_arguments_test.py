@@ -27,8 +27,23 @@ class TestStackITArguments:
         assert args.stackit_project_id == "12345678-1234-1234-1234-123456789abc"
 
     def test_api_token_argument_is_not_registered(self, parser):
+        """Tokens were removed in favour of the service account key file."""
         with pytest.raises(SystemExit):
             parser.parse_args(["stackit", "--stackit-api-token", "secret-token"])
+
+    def test_service_account_key_path_argument_is_registered(self, parser):
+        args = parser.parse_args(
+            [
+                "stackit",
+                "--stackit-service-account-key-path",
+                "/tmp/sa-key.json",
+            ]
+        )
+        assert args.stackit_service_account_key_path == "/tmp/sa-key.json"
+
+    def test_service_account_key_path_defaults_to_none(self, parser):
+        args = parser.parse_args(["stackit"])
+        assert args.stackit_service_account_key_path is None
 
     def test_scan_unused_services_defaults_to_false(self, parser):
         args = parser.parse_args(["stackit"])

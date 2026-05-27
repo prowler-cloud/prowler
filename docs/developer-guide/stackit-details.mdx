@@ -4,7 +4,7 @@ title: 'StackIT Provider'
 
 This page details the [StackIT Cloud](https://www.stackit.de/) provider implementation in Prowler.
 
-By default, Prowler will audit a single StackIT project per scan. To configure it, you'll need to provide both an API token and project ID.
+By default, Prowler will audit a single StackIT project per scan. To configure it, you'll need to provide both a service account key file path and the project ID.
 
 ## StackIT Provider Classes Architecture
 
@@ -16,8 +16,8 @@ The StackIT provider implementation follows the general [Provider structure](/de
 - **Base Class:** Inherits from `Provider` (see [base class details](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py)).
 - **Purpose:** Central orchestrator for StackIT-specific logic, API authentication, credential validation, and configuration.
 - **Key StackIT Responsibilities:**
-    - Initializes and manages StackIT API authentication using service account tokens.
-    - Validates API token and project ID (UUID format validation).
+    - Initializes and manages StackIT API authentication via a service account key file (the SDK mints and refreshes access tokens internally).
+    - Validates the service account key path and project ID (UUID format validation).
     - Loads and manages configuration, mutelist, and fixer settings.
     - Provides properties and methods for downstream StackIT service classes to access credentials, identity, and configuration data.
     - Implements thread-safe credential handling (no environment variable pollution).
@@ -113,54 +113,37 @@ Your StackIT project ID is a UUID that can be found:
 2. In the project settings page
 3. Using the StackIT CLI: `stackit project list`
 
-### Generating Access Tokens from Service Account Keys
+### Passing the Service Account Key to Prowler
 
-Prowler requires an access token for authentication, which can be generated from your service account key file using the StackIT CLI.
+Prowler reads the service account key file directly. The StackIT SDK signs the RSA challenge in the key and mints/refreshes short-lived access tokens internally, so there is no manual token rotation.
 
-**Important**: Prowler does not directly use the service account key file (`.json`). You must first generate an access token from the key file.
-
-#### Step 1: Install StackIT CLI
+#### Option 1: Environment Variables
 
 ```bash
-# Follow installation instructions at:
-# https://github.com/stackitcloud/stackit-cli
-```
-
-#### Step 2: Generate Access Token
-
-```bash
-# Generate an access token from your service account key
-stackit auth activate-service-account \
-  --service-account-key-path ~/Downloads/sa-key-ae9ede46-2c81-4663-ad04-3dd992d6c565.json \
-  --only-print-access-token
-```
-
-This will output a temporary access token that you can use with Prowler.
-
-#### Step 3: Use the Access Token with Prowler
-
-##### Option 1: Environment Variables
-
-```bash
-export STACKIT_API_TOKEN="<access-token-from-step-2>"
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
 
 prowler stackit
 ```
 
-**Note**: Access tokens are short-lived. If your scan fails with authentication errors, regenerate a new access token using the CLI command above.
+#### Option 2: CLI Flags
+
+```bash
+prowler stackit \
+  --stackit-service-account-key-path ~/.stackit/sa-key.json \
+  --stackit-project-id 12345678-1234-1234-1234-123456789abc
+```
 
 ### Credential Lookup Order
 
-Prowler searches for credentials in the following order:
+Prowler resolves credentials in this order:
 
-1. **Environment variables**:
-   - `STACKIT_API_TOKEN`
-   - `STACKIT_PROJECT_ID`
-2. **Command-line arguments**:
+1. **Command-line arguments**:
+   - `--stackit-service-account-key-path`
    - `--stackit-project-id`
-
-**Note**: The StackIT API token is only read from the environment.
+2. **Environment variables**:
+   - `STACKIT_SERVICE_ACCOUNT_KEY_PATH`
+   - `STACKIT_PROJECT_ID`
 
 ## Configuration
 
@@ -170,6 +153,7 @@ StackIT-specific command-line arguments:
 
 | Argument | Description | Required | Default |
 |----------|-------------|----------|---------|
+| `--stackit-service-account-key-path` | Path to a StackIT service account key JSON file | Yes* | `$STACKIT_SERVICE_ACCOUNT_KEY_PATH` |
 | `--stackit-project-id` | StackIT project ID (UUID format) | Yes* | `$STACKIT_PROJECT_ID` |
 | `--stackit-region` | StackIT region(s) to scan | No | All available regions |
 
@@ -179,10 +163,9 @@ StackIT-specific command-line arguments:
 
 The StackIT provider performs comprehensive input validation:
 
-- **API Token**:
-  - Must not be empty
-  - Must not be whitespace-only
-  - Complete token redaction in logs (`***REDACTED***`)
+- **Service Account Key Path**:
+  - Must not be empty or whitespace-only
+  - The key file path is logged as-is; the secret material stays in the file on disk
 
 - **Project ID**:
   - Must not be empty
@@ -357,7 +340,7 @@ As StackIT adds more regions, they can be easily added to Prowler by updating th
 Scan only the `eu01` region:
 
 ```bash
-export STACKIT_API_TOKEN="your-token"
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 
 prowler stackit \
   --stackit-project-id "your-project-id" \
@@ -367,7 +350,7 @@ prowler stackit \
 Scan multiple regions:
 
 ```bash
-export STACKIT_API_TOKEN="your-token"
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 
 prowler stackit \
   --stackit-project-id "your-project-id" \
@@ -379,7 +362,7 @@ prowler stackit \
 Run only SSH unrestricted check:
 
 ```bash
-export STACKIT_API_TOKEN="your-token"
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 
 prowler stackit \
   --stackit-project-id "your-project-id" \
@@ -389,7 +372,7 @@ prowler stackit \
 ### Scan All Security Group Checks
 
 ```bash
-export STACKIT_API_TOKEN="your-token"
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 
 prowler stackit \
   --stackit-project-id "your-project-id" \
@@ -401,7 +384,7 @@ prowler stackit \
 Generate JSON output:
 
 ```bash
-export STACKIT_API_TOKEN="your-token"
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 
 prowler stackit \
   --stackit-project-id "your-project-id" \
@@ -411,7 +394,7 @@ prowler stackit \
 Generate HTML report:
 
 ```bash
-export STACKIT_API_TOKEN="your-token"
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 
 prowler stackit \
   --stackit-project-id "your-project-id" \
@@ -501,7 +484,7 @@ prowler stackit \
 Enable debug logging for detailed troubleshooting:
 
 ```bash
-export STACKIT_API_TOKEN="your-token"
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
 
 prowler stackit \
   --stackit-project-id "your-project-id" \
@@ -721,7 +704,7 @@ If you'd like to contribute to the StackIT provider:
 ### Quick Start for Contributors
 
 1. **Install dependencies**: `poetry install` (includes stackit-core and stackit-iaas)
-2. **Set credentials**: Export `STACKIT_API_TOKEN` and `STACKIT_PROJECT_ID`
+2. **Set credentials**: Export `STACKIT_SERVICE_ACCOUNT_KEY_PATH` and `STACKIT_PROJECT_ID`
 3. **Run checks**: `prowler stackit`
 4. **View code**: Start in `prowler/providers/stackit/`
 5. **Add checks**: Create new check directories under `services/iaas/`

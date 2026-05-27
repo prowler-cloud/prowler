@@ -1515,6 +1515,7 @@ class TestFinding:
     def test_generate_output_stackit(self):
         provider = MagicMock()
         provider.type = "stackit"
+        provider.auth_method = "service_account_key"
         provider.identity.project_id = "test-project-id"
         provider.identity.project_name = "test-project-name"
 
@@ -1536,7 +1537,7 @@ class TestFinding:
         finding_output = Finding.generate_output(provider, check_output, output_options)
 
         assert isinstance(finding_output, Finding)
-        assert finding_output.auth_method == "api_token"
+        assert finding_output.auth_method == "service_account_key"
         assert finding_output.account_uid == "test-project-id"
         assert finding_output.account_name == "test-project-name"
         assert finding_output.resource_name == "test_resource_name"
@@ -1548,6 +1549,7 @@ class TestFinding:
     def test_transform_api_finding_stackit(self):
         provider = MagicMock()
         provider.type = "stackit"
+        provider.auth_method = "service_account_key"
         provider.identity.project_id = "stackit-project-id"
         provider.identity.project_name = "stackit-project-name"
         dummy_finding = DummyAPIFinding()
@@ -1602,7 +1604,7 @@ class TestFinding:
         dummy_finding.resources = DummyResources(resource)
         dummy_finding.muted = False
         finding_obj = Finding.transform_api_finding(dummy_finding, provider)
-        assert finding_obj.auth_method == "api_token"
+        assert finding_obj.auth_method == "service_account_key"
         assert finding_obj.account_uid == "stackit-project-id"
         assert finding_obj.account_name == "stackit-project-name"
         assert finding_obj.resource_name == "stackit-resource-name"
