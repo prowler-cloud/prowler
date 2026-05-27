@@ -71,12 +71,6 @@ interface AccountsSelectorBaseProps {
   filterKey?: AccountSelectorFilter;
   id?: string;
   disabledValues?: string[];
-  /**
-   * Currently selected provider types (from the pending ProviderTypeSelector state).
-   * Used only for contextual description/empty-state messaging — does NOT narrow
-   * the list of available accounts, which remains independent of provider selection.
-   */
-  selectedProviderTypes?: string[];
   closeOnSelect?: boolean;
 }
 
