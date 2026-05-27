@@ -46,6 +46,31 @@ class IaaSService:
             self._list_server_nics(client, region)
             self._list_security_groups(client, region)
 
+    @staticmethod
+    def _extract_items(response, endpoint_name: str) -> list:
+        """Extract the items list from a StackIT SDK response.
+
+        Handles three response shapes safely:
+            - SDK model exposing an ``items`` attribute (not the ``dict.items`` method)
+            - Raw ``dict`` with an ``"items"`` key
+            - Plain ``list``
+
+        ``isinstance(response, dict)`` is checked first because ``dict`` has an
+        ``items`` *method*; ``hasattr(response, "items")`` is otherwise True for
+        plain dicts and silently returns the bound method.
+        """
+        if isinstance(response, dict):
+            return response.get("items", [])
+        if isinstance(response, list):
+            return response
+        items_attr = getattr(response, "items", None)
+        if items_attr is not None and not callable(items_attr):
+            return items_attr
+        logger.warning(
+            f"Unexpected response type from {endpoint_name}: {type(response)}"
+        )
+        return []
+
     def _handle_api_call(self, api_function, *args, **kwargs):
         """
         Centralized API call handler with authentication error detection.
@@ -89,17 +114,7 @@ class IaaSService:
         )
 
         # Extract security groups from response
-        if hasattr(response, "items"):
-            security_groups_list = response.items
-        elif isinstance(response, dict):
-            security_groups_list = response.get("items", [])
-        elif isinstance(response, list):
-            security_groups_list = response
-        else:
-            logger.warning(
-                f"Unexpected response type from list_security_groups: {type(response)}"
-            )
-            security_groups_list = []
+        security_groups_list = self._extract_items(response, "list_security_groups")
 
         # Process each security group
         for sg_data in security_groups_list:
@@ -163,14 +178,7 @@ class IaaSService:
         )
 
         # Extract rules from response
-        if hasattr(response, "items"):
-            rules_list = response.items
-        elif isinstance(response, dict):
-            rules_list = response.get("items", [])
-        elif isinstance(response, list):
-            rules_list = response
-        else:
-            rules_list = []
+        rules_list = self._extract_items(response, "list_security_group_rules")
 
         # Process each rule
         for rule_data in rules_list:
@@ -268,17 +276,7 @@ class IaaSService:
         )
 
         # Extract NICs from response
-        if hasattr(response, "items"):
-            nics_list = response.items
-        elif isinstance(response, dict):
-            nics_list = response.get("items", [])
-        elif isinstance(response, list):
-            nics_list = response
-        else:
-            logger.warning(
-                f"Unexpected response type from list_project_nics: {type(response)}"
-            )
-            nics_list = []
+        nics_list = self._extract_items(response, "list_project_nics")
 
         self.server_nics.extend(nics_list)
 

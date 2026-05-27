@@ -298,3 +298,44 @@ class Test_SecurityGroupRule:
         assert rule.includes_port(22) is True
         assert rule.includes_port(443) is True
         assert rule.includes_port(65535) is True
+
+
+class Test_IaaS_Service_Extract_Items:
+    """Cover ``IaaSService._extract_items`` against the three response shapes the
+    StackIT SDK can return. The previous implementation matched ``dict`` via
+    ``hasattr(response, "items")`` and returned the bound method instead of the
+    items field.
+    """
+
+    def test_extract_items_from_sdk_model(self):
+        """SDK models expose ``items`` as a non-callable attribute."""
+        response = MagicMock(spec=["items"])
+        sentinel = [{"id": "sg-1"}, {"id": "sg-2"}]
+        response.items = sentinel
+        assert IaaSService._extract_items(response, "endpoint") is sentinel
+
+    def test_extract_items_from_dict_with_items_key(self):
+        """Dict responses must use the ``items`` key, not ``dict.items()``."""
+        response = {"items": [{"id": "sg-1"}]}
+        assert IaaSService._extract_items(response, "endpoint") == [{"id": "sg-1"}]
+
+    def test_extract_items_from_empty_dict(self):
+        """An empty dict yields an empty list, not the ``dict.items`` method."""
+        assert IaaSService._extract_items({}, "endpoint") == []
+
+    def test_extract_items_from_list(self):
+        """A plain list response is returned as-is."""
+        response = [{"id": "sg-1"}]
+        assert IaaSService._extract_items(response, "endpoint") is response
+
+    def test_extract_items_unknown_shape_returns_empty(self):
+        """Unknown shapes fall back to an empty list and log a warning."""
+        assert IaaSService._extract_items(42, "endpoint") == []
+
+    def test_extract_items_ignores_dict_items_method(self):
+        """Regression: ``dict`` exposes ``items`` as a method; ensure the
+        ``isinstance(dict)`` branch wins and we do not return the bound method.
+        """
+        result = IaaSService._extract_items({"items": ["ok"]}, "endpoint")
+        assert result == ["ok"]
+        assert not callable(result)
