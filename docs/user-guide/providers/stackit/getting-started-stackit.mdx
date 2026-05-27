@@ -1,0 +1,133 @@
+---
+title: 'Getting Started With StackIT'
+---
+
+Prowler supports [StackIT](https://www.stackit.de/) from the CLI. This guide walks you through the requirements and how to run scans.
+
+<Note>
+StackIT support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
+## Prerequisites
+
+Before running Prowler with the StackIT provider, ensure you have:
+
+1. A StackIT account with at least one project
+2. A StackIT service account key with permissions on the project (`iaas.viewer` is enough for the currently shipped IaaS checks; `project.owner` works for any future service). See the [Authentication guide](/user-guide/providers/stackit/authentication) for the full setup.
+3. The [StackIT CLI](https://github.com/stackitcloud/stackit-cli) installed locally to generate short lived access tokens from the service account key
+4. Access to Prowler CLI (see [Installation](/getting-started/installation/prowler-cli))
+
+## Prowler CLI
+
+### Step 1: Generate an Access Token
+
+Prowler authenticates with a short-lived access token derived from your StackIT service account key. See the [Authentication guide](/user-guide/providers/stackit/authentication) for how to obtain the key and project ID.
+
+```bash
+export STACKIT_API_TOKEN=$(stackit auth activate-service-account \
+  --service-account-key-path ~/.stackit/sa-key.json \
+  --only-print-access-token)
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+```
+
+<Note>
+The API token is read **only** from the `STACKIT_API_TOKEN` environment variable to avoid leaking it through shell history or process listings. The project ID can also be passed with the `--stackit-project-id` flag.
+</Note>
+
+### Step 2: Run Your First Scan
+
+```bash
+prowler stackit
+```
+
+Prowler will discover and audit the project's IaaS security groups across the available StackIT regions.
+
+**Scan specific regions:**
+
+```bash
+prowler stackit --stackit-region eu01 eu02
+```
+
+**Run specific security checks:**
+
+```bash
+prowler stackit --checks iaas_security_group_ssh_unrestricted
+
+# List all available checks
+prowler stackit --list-checks
+```
+
+**Filter by check severity:**
+
+```bash
+prowler stackit --severity critical high
+```
+
+**Generate specific output formats:**
+
+```bash
+# JSON only
+prowler stackit --output-modes json
+
+# CSV and HTML
+prowler stackit --output-modes csv html
+
+# Custom output directory
+prowler stackit --output-directory /path/to/reports/
+```
+
+**Use a mutelist to suppress findings:**
+
+```yaml
+# mutelist.yaml
+Mutelist:
+  Accounts:
+    "12345678-1234-1234-1234-123456789abc":
+      Checks:
+        iaas_security_group_ssh_unrestricted:
+          Regions:
+            - "*"
+          Resources:
+            - "test-sg-id"
+          Tags: []
+```
+
+```bash
+prowler stackit --mutelist-file mutelist.yaml
+```
+
+### Step 3: Review the Results
+
+Prowler outputs findings to the console and writes reports to the `output/` directory by default:
+
+- CSV: `output/prowler-output-stackit-{project_id}-{timestamp}.csv`
+- JSON: `output/prowler-output-stackit-{project_id}-{timestamp}.json`
+- HTML: `output/prowler-output-stackit-{project_id}-{timestamp}.html`
+
+## Supported StackIT Services
+
+| Service | StackIT API | Description | Example Checks |
+|---------|-------------|-------------|----------------|
+| **IaaS** | `iaas` | Virtual machines, network interfaces, security groups | `iaas_security_group_ssh_unrestricted`, `iaas_security_group_rdp_unrestricted`, `iaas_security_group_database_unrestricted`, `iaas_security_group_all_traffic_unrestricted` |
+
+Additional services will be added in future releases. Track progress in the [Prowler release notes](https://github.com/prowler-cloud/prowler/releases).
+
+## Troubleshooting
+
+### Authentication Errors
+
+If the scan fails with an authentication error:
+
+1. Regenerate the access token (it is short lived):
+   ```bash
+   export STACKIT_API_TOKEN=$(stackit auth activate-service-account \
+     --service-account-key-path ~/.stackit/sa-key.json \
+     --only-print-access-token)
+   ```
+2. Verify the project ID is a valid UUID matching the one in your StackIT portal URL.
+
+### Permission Errors
+
+If checks fail with a permission error, your service account is missing the required role on the project. Re-check the role assignment in the [StackIT portal](https://portal.stackit.cloud/) (`iaas.viewer` is the minimum for the shipped IaaS checks).
+
+For detailed setup steps, see the [Authentication guide](/user-guide/providers/stackit/authentication).

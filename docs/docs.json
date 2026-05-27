@@ -340,6 +340,13 @@
                 ]
               },
               {
+                "group": "StackIT",
+                "pages": [
+                  "user-guide/providers/stackit/getting-started-stackit",
+                  "user-guide/providers/stackit/authentication"
+                ]
+              },
+              {
                 "group": "Vercel",
                 "pages": [
                   "user-guide/providers/vercel/getting-started-vercel",

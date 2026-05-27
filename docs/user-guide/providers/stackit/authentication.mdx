@@ -1,0 +1,83 @@
+---
+title: 'StackIT Authentication'
+---
+
+Prowler authenticates with StackIT using a short-lived **access token** derived from a service account key. This page walks through creating the service account, locating the project ID, and exchanging the key for an access token.
+
+## Service Account Key
+
+StackIT uses RSA key-pair based service account keys. They are issued once, must be stored securely, and are used to mint access tokens on demand.
+
+### Option 1: Create the Key via the StackIT Portal
+
+1. Open the [StackIT Portal](https://portal.stackit.cloud/) and select your project.
+2. In the left sidebar, click **Service Accounts**.
+3. Create a service account if you do not have one already. Assign:
+    - `iaas.viewer` for the IaaS security group checks currently shipped, or
+    - `project.owner` if you want to cover any future service Prowler adds.
+4. Open the service account and go to **Service Account Keys**.
+5. Click **Create key** and choose **STACKIT-generated key pair** (recommended). Download the resulting JSON file and store it securely (for example, `~/.stackit/sa-key.json`). The private material is only shown once.
+
+### Option 2: Create the Key via the StackIT CLI
+
+```bash
+# Install the StackIT CLI from https://github.com/stackitcloud/stackit-cli first
+stackit service-account key create --email my-service-account@example.com
+```
+
+## Project ID
+
+Your StackIT project ID is a UUID. You can find it in:
+
+1. The portal URL when viewing the project: `https://portal.stackit.cloud/projects/{PROJECT_ID}/...`
+2. The project settings page
+3. `stackit project list`
+
+## Generating an Access Token
+
+Prowler does **not** read the service account JSON directly. Generate an access token from the key with the StackIT CLI:
+
+```bash
+stackit auth activate-service-account \
+  --service-account-key-path ~/.stackit/sa-key.json \
+  --only-print-access-token
+```
+
+The command prints a short-lived bearer token to standard output.
+
+## Passing Credentials to Prowler
+
+Export the token and the project ID before running Prowler:
+
+```bash
+export STACKIT_API_TOKEN=$(stackit auth activate-service-account \
+  --service-account-key-path ~/.stackit/sa-key.json \
+  --only-print-access-token)
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+
+prowler stackit
+```
+
+<Note>
+The API token is intentionally only accepted through `STACKIT_API_TOKEN`. CLI flags are not supported for the token to avoid leaking it via process listings or shell history. The project ID can also be passed with `--stackit-project-id` if you prefer flags.
+</Note>
+
+## Credential Lookup Order
+
+Prowler resolves credentials in this order:
+
+1. Environment variables: `STACKIT_API_TOKEN`, `STACKIT_PROJECT_ID`
+2. CLI argument: `--stackit-project-id` (token only via env var)
+
+## Token Lifetime
+
+Access tokens are short lived. If a scan fails with a credential error, regenerate the token with the same `stackit auth activate-service-account` command and rerun Prowler.
+
+## Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---------|--------------|-----|
+| `401 Unauthorized` during scan | Token expired or invalid | Regenerate the access token |
+| `403 Forbidden` during scan | Service account lacks role on the project | Re-check role assignment in the StackIT portal; `iaas.viewer` is the minimum |
+| `StackIT project ID must be a valid UUID` | The project ID is not in UUID format | Copy the UUID from the portal URL or `stackit project list` |
+| `StackIT API token is required` | `STACKIT_API_TOKEN` is unset or empty | Export the token before running Prowler |
