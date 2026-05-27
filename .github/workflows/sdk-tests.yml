@@ -552,11 +552,11 @@ jobs:
             ./prowler/config/**
             ./prowler/lib/**
             ./tests/providers/external/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run External Provider tests
         if: steps.changed-external.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/common --cov=./prowler/config --cov=./prowler/lib --cov-report=xml:external_coverage.xml tests/providers/external
+        run: uv run pytest -n auto --cov=./prowler/providers/common --cov=./prowler/config --cov=./prowler/lib --cov-report=xml:external_coverage.xml tests/providers/external
 
       - name: Upload External Provider coverage to Codecov
         if: steps.changed-external.outputs.any_changed == 'true'
