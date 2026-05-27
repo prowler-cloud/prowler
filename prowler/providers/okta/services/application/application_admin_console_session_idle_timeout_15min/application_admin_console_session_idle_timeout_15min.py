@@ -52,9 +52,8 @@ class application_admin_console_session_idle_timeout_15min(Check):
                 "admin-console` to the Super Administrator role; every other "
                 "role — including Read-Only Administrator — receives "
                 "`403 E0000006`. Assign Super Administrator to the service "
-                f"app to evaluate this check. STIG V-273187 requires the "
-                f"`Maximum app session idle time` to be set to {threshold} "
-                "minutes or less."
+                f"app to evaluate this check. The `Maximum app session idle "
+                f"time` must be set to {threshold} minutes or less."
             )
             return [report]
 
@@ -66,8 +65,8 @@ class application_admin_console_session_idle_timeout_15min(Check):
             report.status = "FAIL"
             report.status_extended = (
                 "The Okta Admin Console first-party app does not define a "
-                "`Maximum app session idle time`. STIG V-273187 requires "
-                f"this value to be {threshold} minutes or less."
+                "`Maximum app session idle time`. This value must be "
+                f"{threshold} minutes or less."
             )
         elif idle <= threshold:
             report.status = "PASS"

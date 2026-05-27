@@ -62,7 +62,7 @@ class application_admin_console_phishing_resistant_authentication(Check):
             report.status = "FAIL"
             report.status_extended = (
                 f"{app_label(app)} has no active rules on its Authentication "
-                "Policy. STIG V-273191 requires the top rule to mark "
+                "Policy. The top rule must mark "
                 "`Possession factor constraints are: Phishing resistant`."
             )
         elif rule.possession_phishing_resistant_required:

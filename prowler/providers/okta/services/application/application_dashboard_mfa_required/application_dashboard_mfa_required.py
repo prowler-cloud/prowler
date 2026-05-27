@@ -59,8 +59,7 @@ class application_dashboard_mfa_required(Check):
             report.status = "FAIL"
             report.status_extended = (
                 f"{app_label(app)} has no active rules on its Authentication "
-                "Policy. STIG V-273194 requires the top rule to set "
-                "`User must authenticate with` to "
+                "Policy. The top rule must set `User must authenticate with` to "
                 "`Password / IdP + Another factor` or `Any 2 factor types`."
             )
         elif rule.factor_mode == "2FA":

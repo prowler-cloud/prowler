@@ -194,7 +194,7 @@ def no_active_apps_finding(metadata, org_domain: str) -> CheckReportOkta:
     report.status_extended = (
         "No active Okta applications were returned by the API. Verify the "
         "tenant exposes applications to the Read-Only Administrator role and "
-        "review the application inventory manually for STIG V-279693."
+        "review the application inventory manually."
     )
     return report
 

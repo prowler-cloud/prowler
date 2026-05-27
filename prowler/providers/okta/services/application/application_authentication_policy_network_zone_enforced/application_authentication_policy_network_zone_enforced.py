@@ -89,8 +89,8 @@ def _evaluate_app(app: OktaBuiltInApp) -> tuple[str, str]:
         return (
             "FAIL",
             f"{label} has no active rules on its Authentication Policy. "
-            "STIG V-279693 requires Network Zones on every active non-default "
-            "rule and `Access is: Denied` on the Catch-all Rule.",
+            "Every active non-default rule must enforce a Network Zone "
+            "condition, and the Catch-all Rule must set `Access is: Denied`.",
         )
 
     nondefault_rules = [
@@ -102,9 +102,9 @@ def _evaluate_app(app: OktaBuiltInApp) -> tuple[str, str]:
         return (
             "FAIL",
             f"{label} has no active non-default rules on its Authentication "
-            "Policy. STIG V-279693 requires applications to define Network "
-            "Zones on active non-default rules and to use the Catch-all Rule "
-            "only as the final deny path.",
+            "Policy. Define at least one non-default rule that maps `User's "
+            "IP` to a Network Zone, and use the Catch-all Rule only as the "
+            "final deny path.",
         )
 
     missing_zone_rules = [
@@ -130,8 +130,8 @@ def _evaluate_app(app: OktaBuiltInApp) -> tuple[str, str]:
     if catch_all_rule is None:
         return (
             "FAIL",
-            f"{label} has no active Catch-all Rule. STIG V-279693 requires the "
-            "Catch-all Rule to deny access after the zoned non-default rules.",
+            f"{label} has no active Catch-all Rule. The Catch-all Rule must "
+            "deny access after the zoned non-default rules.",
         )
 
     if catch_all_rule.access != "DENY":

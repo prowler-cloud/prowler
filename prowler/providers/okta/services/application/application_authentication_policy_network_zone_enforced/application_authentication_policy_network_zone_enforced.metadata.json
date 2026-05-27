@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "Every active Okta application must be bound to an **Authentication Policy** that uses **Network Zones**. Each active non-default rule must map *User's IP* to `In zone` or `Not in zone`, and the active built-in *Catch-all Rule* must set *Access is* to `Denied`.\n\nAligns with **DISA STIG V-279693 / OKTA-APP-003244**.",
+  "Description": "Every active Okta application must be bound to an **Authentication Policy** that uses **Network Zones**. Each active non-default rule must map *User's IP* to `In zone` or `Not in zone`, and the active built-in *Catch-all Rule* must set *Access is* to `Denied`.",
   "Risk": "Applications without network-aware authentication rules can be reached from unauthorized locations and bypass location-based access controls.\n\n- **Unauthorized access paths** from unmanaged or blocked networks\n- **Inconsistent information-flow enforcement** across SSO applications\n- **Residual access** when the fallback rule still allows traffic after policy misses",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -34,5 +34,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Aligns with DISA STIG V-279693 / OKTA-APP-003244."
 }

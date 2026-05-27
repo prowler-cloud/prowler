@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Authentication Policy** bound to the **Okta Admin Console** app must require MFA. On its top active rule, *User must authenticate with* must be set to `Password / IdP + Another factor` or `Any 2 factor types` (`factorMode=2FA` in the API).\n\nAligns with **DISA STIG V-273193 / OKTA-APP-000560**.",
+  "Description": "The **Authentication Policy** bound to the **Okta Admin Console** app must require MFA. On its top active rule, *User must authenticate with* must be set to `Password / IdP + Another factor` or `Any 2 factor types` (`factorMode=2FA` in the API).",
   "Risk": "Single-factor access to the Okta control plane is the highest-impact identity risk in the tenant.\n\n- **Credential compromise** is enough to take over every administrator account\n- **Lateral movement** into every downstream SaaS that trusts Okta SSO\n- **Privileged configuration changes** with no second-factor barrier",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Aligns with DISA STIG V-273193 / OKTA-APP-000560."
 }

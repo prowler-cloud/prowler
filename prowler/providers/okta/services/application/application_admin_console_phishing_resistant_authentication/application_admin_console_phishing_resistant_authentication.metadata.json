@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Authentication Policy** bound to the **Okta Admin Console** app must restrict possession factors to phishing-resistant authenticators (FIDO2/WebAuthn, PIV/CAC, Okta FastPass with biometrics). On the top active rule, *Possession factor constraints are: Phishing resistant* must be checked (`possession.phishingResistant=REQUIRED`).\n\nAligns with **DISA STIG V-273191 / OKTA-APP-000190**.",
+  "Description": "The **Authentication Policy** bound to the **Okta Admin Console** app must restrict possession factors to phishing-resistant authenticators (FIDO2/WebAuthn, PIV/CAC, Okta FastPass with biometrics). On the top active rule, *Possession factor constraints are: Phishing resistant* must be checked (`possession.phishingResistant=REQUIRED`).",
   "Risk": "Phishable possession factors (SMS, voice, standard push, OTP delivered via reverse-proxy AiTM) leave the most privileged surface of the IdP exposed.\n\n- **Credential phishing** against administrators succeeds despite MFA\n- **Adversary-in-the-Middle attacks** capture session tokens through fake login pages\n- **Account takeover** of the tenant control plane",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Aligns with DISA STIG V-273191 / OKTA-APP-000190."
 }

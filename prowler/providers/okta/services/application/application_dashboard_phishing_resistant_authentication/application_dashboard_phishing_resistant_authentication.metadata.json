@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Authentication Policy** bound to the **Okta Dashboard** app must restrict possession factors to phishing-resistant authenticators. On the top active rule, *Possession factor constraints are: Phishing resistant* must be checked (`possession.phishingResistant=REQUIRED`).\n\nAligns with **DISA STIG V-273190 / OKTA-APP-000180**.",
+  "Description": "The **Authentication Policy** bound to the **Okta Dashboard** app must restrict possession factors to phishing-resistant authenticators. On the top active rule, *Possession factor constraints are: Phishing resistant* must be checked (`possession.phishingResistant=REQUIRED`).",
   "Risk": "Phishable possession factors leave end-user SSO sessions exposed to credential phishing and AiTM proxies.\n\n- **Credential phishing** against end users succeeds despite MFA\n- **Session token theft** through reverse-proxy AiTM attacks (Evilginx-class tooling)\n- **Compromise of every downstream SSO app** the user has access to",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Aligns with DISA STIG V-273190 / OKTA-APP-000180."
 }

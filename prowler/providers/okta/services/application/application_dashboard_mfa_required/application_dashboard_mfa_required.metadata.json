@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Authentication Policy** bound to the **Okta Dashboard** app must require MFA for end users. On its top active rule, *User must authenticate with* must be set to `Password / IdP + Another factor` or `Any 2 factor types` (`factorMode=2FA` in the API).\n\nAligns with **DISA STIG V-273194 / OKTA-APP-000570**.",
-  "Risk": "Single-factor access to the Okta Dashboard lets an attacker pivot from one compromised password into every downstream SSO app.\n\n- **Credential stuffing** and password reuse attacks succeed in one step\n- **Lateral movement** into every SaaS the user has access to via Okta SSO\n- **Compliance violation** against NIST SP 800-63B AAL2 and DISA STIG SRG-APP-000150",
+  "Description": "The **Authentication Policy** bound to the **Okta Dashboard** app must require MFA for end users. On its top active rule, *User must authenticate with* must be set to `Password / IdP + Another factor` or `Any 2 factor types` (`factorMode=2FA` in the API).",
+  "Risk": "Single-factor access to the Okta Dashboard lets an attacker pivot from one compromised password into every downstream SSO app.\n\n- **Credential stuffing** and password reuse attacks succeed in one step\n- **Lateral movement** into every SaaS the user has access to via Okta SSO\n- **Weakened identity assurance** for every user signing in to the end-user portal",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm",
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Aligns with DISA STIG V-273194 / OKTA-APP-000570."
 }

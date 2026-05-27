@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The integrated **Okta Admin Console** app must close idle privileged sessions. *Maximum app session idle time* on the **Sign On** tab must be `15` minutes or less.\n\nThreshold override: `okta_admin_console_idle_timeout_max_minutes`. Aligns with **DISA STIG V-273187 / OKTA-APP-000025**.",
+  "Description": "The integrated **Okta Admin Console** app must close idle privileged sessions. *Maximum app session idle time* on the **Sign On** tab must be `15` minutes or less.\n\nThreshold override: `okta_admin_console_idle_timeout_max_minutes`.",
   "Risk": "An unattended administrator workstation leaves the Okta control plane open for session hijacking.\n\n- **Privileged session takeover** by anyone with physical or remote access to the workstation\n- **Tenant-wide configuration changes** under the absent administrator's identity\n- **Bypassed reauthentication** for the most sensitive surface of the IdP",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Aligns with DISA STIG V-273187 / OKTA-APP-000025."
 }
