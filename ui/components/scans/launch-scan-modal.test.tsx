@@ -229,4 +229,31 @@ describe("LaunchScanModal", () => {
     expect(screen.queryByLabelText("Scan Note")).not.toBeInTheDocument();
     expect(screen.queryByText("Scan Note (optional)")).not.toBeInTheDocument();
   });
+
+  it("surfaces JSON:API errors from scanOnDemand and skips the success toast", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const { toast } = await import("@/components/ui/toast");
+    scanOnDemandMock.mockResolvedValueOnce({
+      errors: [{ detail: "Provider already has a scan in progress" }],
+    });
+
+    render(
+      <LaunchScanModal
+        open
+        onOpenChange={onOpenChange}
+        providers={[provider]}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+    await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+    expect(
+      await screen.findByText("Provider already has a scan in progress"),
+    ).toBeInTheDocument();
+    expect(toast).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
 });

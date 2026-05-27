@@ -61,6 +61,13 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
       return;
     }
 
+    if (result?.errors && result.errors.length > 0) {
+      form.setError("root", {
+        message: String(result.errors[0]?.detail ?? "Failed to launch scan."),
+      });
+      return;
+    }
+
     toast({
       title: "Scan launched",
       description: "The scan was launched successfully.",
