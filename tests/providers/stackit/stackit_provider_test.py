@@ -350,17 +350,24 @@ class TestStackITProviderGetProjectName:
         provider._project_id = "12345678-1234-1234-1234-123456789abc"
         return provider
 
-    def test_get_project_name_403_raises_invalid_token_error(
+    def test_get_project_name_403_returns_empty_string_and_does_not_abort(
         self, fake_resourcemanager
     ):
+        """The Resource Manager lookup is cosmetic; a 403 there must NOT
+        abort the scan because the service account can legitimately hold
+        IaaS roles on the project without holding Resource Manager roles.
+        """
+
         class Http403Error(Exception):
             status = 403
 
         fake_resourcemanager.error = Http403Error()
         provider = self._make_provider()
 
-        with pytest.raises(StackITInvalidTokenError):
-            provider._get_project_name()
+        # Must not raise; returns an empty project name so the scan can
+        # continue and the IaaS service can decide whether *its* endpoints
+        # are forbidden too.
+        assert provider._get_project_name() == ""
 
     def test_get_project_name_401_raises_invalid_token_error(
         self, fake_resourcemanager

@@ -415,15 +415,26 @@ class StackitProvider(Provider):
         """
         Fetch the project name from the StackIT Resource Manager API.
 
-        This also serves as a credential validation check - if the API token is
-        invalid or expired, this will fail during provider initialization.
+        The project name is cosmetic (shown in the credentials box and in
+        the ``account_name`` field of findings); a missing or unauthorized
+        Resource Manager endpoint must not abort an otherwise valid IaaS
+        scan. A service account can legitimately hold IaaS roles on a
+        project without holding Resource Manager roles on it.
+
+        Failure semantics:
+            - HTTP 401 -> hard failure via :class:`StackITInvalidTokenError`
+              (the credentials cannot mint a usable token).
+            - HTTP 403 (or any other non-401 error) -> warning, returns
+              an empty project name; the scan continues and per-service
+              ``handle_api_error`` will abort later if the IaaS endpoints
+              are also forbidden.
 
         Returns:
-            str: The project name, or empty string if unavailable
+            str: The project name, or empty string if unavailable.
 
         Raises:
-            StackITInvalidTokenError: If the API token is invalid, expired, or lacks
-                project-level permissions (401 or 403 during identity validation)
+            StackITInvalidTokenError: If the credentials are rejected with a
+                401 response when contacting Resource Manager.
         """
         try:
             from stackit.resourcemanager import DefaultApi
@@ -435,7 +446,9 @@ class StackitProvider(Provider):
                 )
                 client = DefaultApi(config)
 
-                # Fetch project details - this validates the credentials
+                # Fetch project details - validates that the credentials
+                # can mint a token; permission to read this specific
+                # project is checked but optional.
                 response = client.get_project(id=self._project_id)
 
             # Extract project name from response
@@ -457,15 +470,30 @@ class StackitProvider(Provider):
             )
             return ""
         except Exception as e:
-            # 401/403: invalid token or insufficient permissions — hard failure
-            # via the centralized handler. Any other exception falls through
-            # to a warning so the scan can continue without the project name.
-            try:
-                StackitProvider.handle_api_error(e)
-            except StackITInvalidTokenError:
-                raise
-            except Exception:
-                pass  # handle_api_error re-raised the original; fall through
+            status = getattr(e, "status", None)
+            if status == 401:
+                # Bad credentials are a hard failure even at the cosmetic
+                # Resource Manager lookup; keep the same behaviour as
+                # ``handle_api_error`` so the user sees the same message.
+                logger.critical(
+                    "StackIT service account key was rejected by Resource "
+                    "Manager (401). Verify the key file is current and has "
+                    "not been revoked in the StackIT portal."
+                )
+                raise StackITInvalidTokenError(
+                    file="stackit_provider.py",
+                    original_exception=None,
+                    message="StackIT service account key was rejected (401)",
+                )
+            if status == 403:
+                logger.warning(
+                    f"StackIT service account lacks the Resource Manager "
+                    f"role on project {self._project_id} (403). The project "
+                    f"name will not be displayed in reports, but IaaS "
+                    f"checks will still run if the service account has the "
+                    f"relevant IaaS role."
+                )
+                return ""
             logger.warning(
                 f"Unable to fetch project name from StackIT API: {e}. "
                 f"Project name will not be displayed in reports."
