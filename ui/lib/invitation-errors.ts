@@ -15,7 +15,7 @@ const INVITATION_ERROR_CODE = {
   TOKEN_EXPIRED: "token_expired",
 } as const;
 
-const INVITATION_ERROR_FLOW = {
+export const INVITATION_ERROR_FLOW = {
   ACCEPT: "accept",
   SIGNUP: "signup",
 } as const;

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import {
   getInvitationErrorDisplay,
+  INVITATION_ERROR_FLOW,
   isInvitationTokenError,
 } from "@/lib/invitation-errors";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
@@ -33,6 +34,10 @@ const AUTH_ERROR_PATHS = {
   PASSWORD: "/data/attributes/password",
   COMPANY_NAME: "/data/attributes/company_name",
   INVITATION_TOKEN: "/data",
+} as const;
+
+const FORM_ERROR_TYPE = {
+  SERVER: "server",
 } as const;
 
 export const SignUpForm = ({
@@ -97,10 +102,10 @@ export const SignUpForm = ({
       if (invitationToken && invitationTokenError) {
         const { message } = getInvitationErrorDisplay(
           { status: newUser.status, errors: [invitationTokenError] },
-          "signup",
+          INVITATION_ERROR_FLOW.SIGNUP,
         );
         form.setError("invitationToken", {
-          type: "server",
+          type: FORM_ERROR_TYPE.SERVER,
           message,
         });
         return;
@@ -111,26 +116,32 @@ export const SignUpForm = ({
         const pointer = error.source?.pointer;
         switch (pointer) {
           case AUTH_ERROR_PATHS.NAME:
-            form.setError("name", { type: "server", message: errorMessage });
+            form.setError("name", {
+              type: FORM_ERROR_TYPE.SERVER,
+              message: errorMessage,
+            });
             break;
           case AUTH_ERROR_PATHS.EMAIL:
-            form.setError("email", { type: "server", message: errorMessage });
+            form.setError("email", {
+              type: FORM_ERROR_TYPE.SERVER,
+              message: errorMessage,
+            });
             break;
           case AUTH_ERROR_PATHS.COMPANY_NAME:
             form.setError("company", {
-              type: "server",
+              type: FORM_ERROR_TYPE.SERVER,
               message: errorMessage,
             });
             break;
           case AUTH_ERROR_PATHS.PASSWORD:
             form.setError("password", {
-              type: "server",
+              type: FORM_ERROR_TYPE.SERVER,
               message: errorMessage,
             });
             break;
           case AUTH_ERROR_PATHS.INVITATION_TOKEN:
             form.setError("invitationToken", {
-              type: "server",
+              type: FORM_ERROR_TYPE.SERVER,
               message: errorMessage,
             });
             break;

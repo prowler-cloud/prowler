@@ -8,7 +8,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
 import { Button } from "@/components/shadcn";
-import { getInvitationErrorDisplay } from "@/lib/invitation-errors";
+import {
+  getInvitationErrorDisplay,
+  INVITATION_ERROR_FLOW,
+} from "@/lib/invitation-errors";
 
 type AcceptState =
   | { kind: "no-token" }
@@ -40,7 +43,7 @@ export function AcceptInvitationClient({
     if (result?.error) {
       const { message, canRetry, needsSignOut } = getInvitationErrorDisplay(
         result,
-        "accept",
+        INVITATION_ERROR_FLOW.ACCEPT,
       );
       setState({ kind: "error", message, canRetry, needsSignOut });
     } else {
