@@ -11,28 +11,13 @@ import {
   type ScanTrigger,
 } from "@/types";
 
-const SCAN_JOBS_TAB_FILTERS: Record<ScanJobsTab, Record<string, string>> = {
-  [SCAN_JOBS_TAB.ACTIVE]: {
-    "filter[state__in]": `${SCAN_STATE.AVAILABLE},${SCAN_STATE.EXECUTING}`,
-  },
-  [SCAN_JOBS_TAB.COMPLETED]: {
-    "filter[state__in]": [
-      SCAN_STATE.COMPLETED,
-      SCAN_STATE.FAILED,
-      SCAN_STATE.CANCELLED,
-    ].join(","),
-  },
-  [SCAN_JOBS_TAB.SCHEDULED]: {
-    "filter[state__in]": SCAN_STATE.SCHEDULED,
-  },
-};
-
 export const SCAN_STATE_FILTER_KEYS = [
   "filter[state]",
   "filter[state__in]",
 ] as const;
 
 const ALL_VALUE = "all";
+
 const SCAN_JOBS_TAB_STATES: Record<ScanJobsTab, ScanState[]> = {
   [SCAN_JOBS_TAB.ACTIVE]: [SCAN_STATE.AVAILABLE, SCAN_STATE.EXECUTING],
   [SCAN_JOBS_TAB.COMPLETED]: [
@@ -42,6 +27,17 @@ const SCAN_JOBS_TAB_STATES: Record<ScanJobsTab, ScanState[]> = {
   ],
   [SCAN_JOBS_TAB.SCHEDULED]: [SCAN_STATE.SCHEDULED],
 };
+
+const toStateFilter = (states: ScanState[]): Record<string, string> => ({
+  "filter[state__in]": states.join(","),
+});
+
+const SCAN_JOBS_TAB_FILTERS = Object.fromEntries(
+  Object.entries(SCAN_JOBS_TAB_STATES).map(([tab, states]) => [
+    tab,
+    toStateFilter(states),
+  ]),
+) as Record<ScanJobsTab, Record<string, string>>;
 
 export interface ScanTriggerFilterOption {
   value: typeof ALL_VALUE | ScanTrigger;
