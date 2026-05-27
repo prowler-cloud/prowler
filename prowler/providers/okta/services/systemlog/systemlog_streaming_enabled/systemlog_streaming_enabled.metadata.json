@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "systemlog_streaming_enabled",
+  "CheckTitle": "Okta off-loads audit records to a central log server via Log Streaming",
+  "CheckType": [],
+  "ServiceName": "systemlog",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "monitoring",
+  "Description": "Okta must off-load audit records to a central log server. At least one **Log Stream** (AWS EventBridge, Splunk Cloud, etc.) must be configured and `ACTIVE` in the tenant. Alternatively, an external SIEM pulling the System Log API can satisfy the requirement, but that pull-based path is verified manually.",
+  "Risk": "Audit records stored only inside the Okta tenant are exposed to accidental or incidental deletion or alteration.\n\n- **No central retention** of authentication events for incident investigations\n- **Single point of failure** for the audit trail\n- **No correlation** with other identity, network, and endpoint telemetry in the SIEM",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/reports/log-streaming/log-streaming.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/LogStream/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Reports** > **Log Streaming**.\n3. Click **Add Log Stream** and select **AWS EventBridge**, **Splunk Cloud**, or another supported destination.\n4. Complete the connection fields and save.\n5. Activate the stream and verify the destination receives events.\n6. If the destination SIEM is not natively supported, document the pull-based ingestion that uses the System Log API.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure at least one ACTIVE Okta Log Stream that off-loads audit records to a central SIEM (AWS EventBridge, Splunk Cloud, or another supported destination). Document any alternative pull-based ingestion via the System Log API.",
+      "Url": "https://hub.prowler.com/check/systemlog_streaming_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Aligns with DISA STIG V-273202 / OKTA-APP-001430."
+}
