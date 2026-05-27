@@ -37,9 +37,9 @@ class ASDEssentialEightAWS(ComplianceOutput):
             - None
         """
         for finding in findings:
-            finding_requirements = finding.compliance.get(compliance_name, [])
             for requirement in compliance.Requirements:
-                if requirement.Id in finding_requirements:
+                # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
+                if finding.check_id in requirement.Checks:
                     for attribute in requirement.Attributes:
                         compliance_row = ASDEssentialEightAWSModel(
                             Provider=finding.provider,

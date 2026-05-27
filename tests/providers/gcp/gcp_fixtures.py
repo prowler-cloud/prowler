@@ -126,7 +126,11 @@ def mock_api_projects_calls(client: MagicMock):
         "etag": "BwWWja0YfJA=",
         "version": 3,
     }
-    # Used by compute client and cloudresourcemanager
+    # Used by compute client and cloudresourcemanager.
+    # `enable-oslogin` covers the documented uppercase form (TRUE);
+    # `enable-oslogin-2fa` covers the lowercase form (true) that GCP's
+    # `constraints/compute.requireOsLogin` org-policy controller writes
+    # in production. The service-layer parser must handle both casings.
     client.projects().get().execute.return_value = {
         "projectNumber": "123456789012",
         "commonInstanceMetadata": {
@@ -138,6 +142,10 @@ def mock_api_projects_calls(client: MagicMock):
                 {
                     "key": "enable-oslogin",
                     "value": "FALSE",
+                },
+                {
+                    "key": "enable-oslogin-2fa",
+                    "value": "true",
                 },
                 {
                     "key": "testing-key",
