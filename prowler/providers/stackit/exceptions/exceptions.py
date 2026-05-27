@@ -34,8 +34,12 @@ class StackITBaseException(ProwlerException):
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         provider = "StackIT"
-        error_info = self.STACKIT_ERROR_CODES.get((code, self.__class__.__name__))
-        if message:
+        # Clone the catalog entry so per-instance message overrides do not
+        # mutate the class-level dict and bleed into later exceptions raised
+        # in the same process.
+        base_info = self.STACKIT_ERROR_CODES.get((code, self.__class__.__name__))
+        error_info = dict(base_info) if base_info else None
+        if message and error_info is not None:
             error_info["message"] = message
         super().__init__(
             code=code,
