@@ -155,22 +155,16 @@ const scheduledColumns = (): ColumnDef<ScanProps>[] => [
    */
   {
     id: "nextScan",
-    accessorFn: (row) =>
-      row.attributes.next_scan_at || row.attributes.scheduled_at,
+    accessorFn: (row) => row.attributes.next_scan_at,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
         title="Next Run"
-        param="scheduled_at"
+        param="next_scan_at"
       />
     ),
     cell: ({ row }) => (
-      <DateWithTime
-        dateTime={
-          row.original.attributes.next_scan_at ||
-          row.original.attributes.scheduled_at
-        }
-      />
+      <DateWithTime dateTime={row.original.attributes.next_scan_at} />
     ),
   },
   actionsColumn,
