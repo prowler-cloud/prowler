@@ -7,8 +7,17 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
-import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
@@ -42,9 +51,6 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
   });
 
   const providerId = form.watch("providerId");
-  const disconnectedProviderIds = providers
-    .filter((provider) => provider.attributes.connection.connected !== true)
-    .map((provider) => provider.id);
 
   const onSubmit = form.handleSubmit(async ({ providerId, scanAlias }) => {
     const formData = new FormData();
@@ -92,18 +98,27 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
 
       <Field>
         <FieldLabel htmlFor="launch-scan-account">Providers</FieldLabel>
-        <AccountsSelector
-          id="launch-scan-account"
-          providers={providers}
-          disabledValues={disconnectedProviderIds}
-          onBatchChange={(_, values) =>
-            form.setValue("providerId", values.at(-1) ?? "", {
-              shouldValidate: true,
-            })
+        <Select
+          value={providerId}
+          onValueChange={(value) =>
+            form.setValue("providerId", value, { shouldValidate: true })
           }
-          selectedValues={providerId ? [providerId] : []}
-          closeOnSelect
-        />
+        >
+          <SelectTrigger id="launch-scan-account" aria-label="Providers">
+            <SelectValue placeholder="Select a provider" />
+          </SelectTrigger>
+          <SelectContent>
+            {providers.map((provider) => (
+              <SelectItem
+                key={provider.id}
+                value={provider.id}
+                disabled={provider.attributes.connection.connected !== true}
+              >
+                {provider.attributes.alias || provider.attributes.uid}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {providerError && <FieldError>{providerError}</FieldError>}
       </Field>
 

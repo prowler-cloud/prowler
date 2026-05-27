@@ -48,44 +48,53 @@ vi.mock("@/components/ui/entities", () => ({
   }) => <>{entityAlias || entityId}</>,
 }));
 
-vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
-  AccountsSelector: ({
-    disabledValues = [],
-    providers,
-    onBatchChange,
-    selectedValues,
-    id,
-  }: {
-    disabledValues?: string[];
-    providers: { id: string; attributes: { alias: string; uid: string } }[];
-    onBatchChange: (filterKey: string, values: string[]) => void;
-    selectedValues: string[];
-    id?: string;
-  }) => (
-    <div>
-      <input aria-label="Search Providers" placeholder="Search Providers..." />
+vi.mock("@/components/shadcn", async () => {
+  const actual = await vi.importActual<typeof import("@/components/shadcn")>(
+    "@/components/shadcn",
+  );
+
+  return {
+    ...actual,
+    Select: ({
+      children,
+      value = "",
+      onValueChange,
+    }: {
+      children: React.ReactNode;
+      value?: string;
+      onValueChange?: (value: string) => void;
+    }) => (
       <select
-        id={id}
         aria-label="Providers"
-        value={selectedValues[0] ?? ""}
-        onChange={(event) =>
-          onBatchChange("provider_id__in", [event.target.value])
-        }
+        value={value}
+        onChange={(event) => onValueChange?.(event.target.value)}
       >
-        <option value="">All Providers</option>
-        {providers.map((provider) => (
-          <option
-            key={provider.id}
-            value={provider.id}
-            disabled={disabledValues.includes(provider.id)}
-          >
-            {provider.attributes.alias || provider.attributes.uid}
-          </option>
-        ))}
+        <option value="" hidden disabled>
+          Select a provider
+        </option>
+        {children}
       </select>
-    </div>
-  ),
-}));
+    ),
+    SelectTrigger: () => null,
+    SelectContent: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+    SelectItem: ({
+      children,
+      value,
+      disabled,
+    }: {
+      children: React.ReactNode;
+      value: string;
+      disabled?: boolean;
+    }) => (
+      <option value={value} disabled={disabled}>
+        {children}
+      </option>
+    ),
+    SelectValue: () => null,
+  };
+});
 
 import { LaunchScanModal } from "./launch-scan-modal";
 
@@ -147,12 +156,18 @@ describe("LaunchScanModal", () => {
     scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
   });
 
-  it("shows a searchable provider selector", () => {
+  it("renders a single-select provider picker with each provider as an option", () => {
     render(
-      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+      <LaunchScanModal
+        open
+        onOpenChange={vi.fn()}
+        providers={[provider, disconnectedProvider]}
+      />,
     );
 
-    expect(screen.getByPlaceholderText("Search Providers...")).toBeVisible();
+    expect(screen.getByLabelText("Providers")).toBeVisible();
+    expect(screen.getByRole("option", { name: "Production" })).toBeEnabled();
+    expect(screen.getByRole("option", { name: "Disconnected" })).toBeDisabled();
   });
 
   it("disables disconnected providers in the launch selector", () => {
