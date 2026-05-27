@@ -11,6 +11,7 @@ import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
+
 import { scanAliasSchema } from "./scan-alias-validation";
 
 const buildEditAliasSchema = (currentAlias: string) =>

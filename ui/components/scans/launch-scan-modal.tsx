@@ -13,6 +13,7 @@ import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
 import type { ProviderProps } from "@/types/providers";
+
 import { scanAliasSchema } from "./scan-alias-validation";
 
 const launchScanSchema = z.object({
