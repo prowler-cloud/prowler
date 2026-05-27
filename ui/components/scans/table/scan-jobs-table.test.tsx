@@ -1,9 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ScanProps } from "@/types";
+import { SCAN_JOBS_TAB, type ScanProps } from "@/types";
 
-import { SCAN_JOBS_TAB } from "../../scans-table.utils";
 import { ScanJobsTable } from "./scan-jobs-table";
 
 vi.mock("@/components/ui/table", () => ({
@@ -16,7 +15,7 @@ vi.mock("./scan-jobs-columns", () => ({
   getScanJobsColumns: () => [],
 }));
 
-vi.mock("../../auto-refresh", () => ({
+vi.mock("../auto-refresh", () => ({
   AutoRefresh: ({ hasExecutingScan }: { hasExecutingScan: boolean }) => (
     <div data-testid="scan-jobs-auto-refresh">{String(hasExecutingScan)}</div>
   ),

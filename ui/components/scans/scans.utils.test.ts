@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ScanAttributes, ScanProps } from "@/types";
+import { SCAN_JOBS_TAB, type ScanAttributes, type ScanProps } from "@/types";
 
 import {
   formatScanDuration,
@@ -11,8 +11,7 @@ import {
   getScanScheduleLabel,
   getScanStatusLabel,
   getScanTriggerFilterOptions,
-  SCAN_JOBS_TAB,
-} from "./scans-table.utils";
+} from "./scans.utils";
 
 const makeScan = (name: string | null): ScanProps => ({
   type: "scans",
@@ -37,7 +36,7 @@ const makeScan = (name: string | null): ScanProps => ({
   },
 });
 
-describe("scans-table.utils", () => {
+describe("scans.utils", () => {
   it("falls back to active tab for unknown tab values", () => {
     expect(getScanJobsTab("unknown")).toBe(SCAN_JOBS_TAB.ACTIVE);
     expect(getScanJobsTab(SCAN_JOBS_TAB.COMPLETED)).toBe(
@@ -57,6 +56,20 @@ describe("scans-table.utils", () => {
     });
   });
 
+  it("narrows tab state filters when a matching status is selected", () => {
+    expect(getScanJobsTabFilters(SCAN_JOBS_TAB.COMPLETED, "failed")).toEqual({
+      "filter[state__in]": "failed",
+    });
+    expect(
+      getScanJobsTabFilters(SCAN_JOBS_TAB.COMPLETED, "failed,cancelled"),
+    ).toEqual({
+      "filter[state__in]": "failed,cancelled",
+    });
+    expect(getScanJobsTabFilters(SCAN_JOBS_TAB.ACTIVE, "failed")).toEqual({
+      "filter[state__in]": "available,executing",
+    });
+  });
+
   it("formats scan labels and durations for table display", () => {
     expect(getScanAlias(makeScan(""))).toBe("-");
     expect(getScanAlias(makeScan("Daily scheduled scan"))).toBe(
@@ -68,7 +81,7 @@ describe("scans-table.utils", () => {
   });
 
   it("maps trigger and state values to product labels", () => {
-    expect(getScanScheduleLabel("manual")).toBe("Single");
+    expect(getScanScheduleLabel("manual")).toBe("Manual");
     expect(getScanScheduleLabel("scheduled")).toBe("Scheduled");
     expect(getScanScheduleLabel("imported")).toBe("Imported");
     expect(getScanStatusLabel("available")).toBe("Queued");
@@ -78,12 +91,12 @@ describe("scans-table.utils", () => {
   it("includes imported in the trigger filter only for Cloud", () => {
     expect(getScanTriggerFilterOptions(false)).toEqual([
       { value: "all", label: "All Types" },
-      { value: "manual", label: "Single" },
+      { value: "manual", label: "Manual" },
       { value: "scheduled", label: "Scheduled" },
     ]);
     expect(getScanTriggerFilterOptions(true)).toEqual([
       { value: "all", label: "All Types" },
-      { value: "manual", label: "Single" },
+      { value: "manual", label: "Manual" },
       { value: "scheduled", label: "Scheduled" },
       { value: "imported", label: "Imported" },
     ]);

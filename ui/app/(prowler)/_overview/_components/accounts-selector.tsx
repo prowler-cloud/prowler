@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 import {
   AlibabaCloudProviderBadge,
@@ -71,6 +71,13 @@ interface AccountsSelectorBaseProps {
   filterKey?: AccountSelectorFilter;
   id?: string;
   disabledValues?: string[];
+  /**
+   * Currently selected provider types (from the pending ProviderTypeSelector state).
+   * Used only for contextual description/empty-state messaging — does NOT narrow
+   * the list of available accounts, which remains independent of provider selection.
+   */
+  selectedProviderTypes?: string[];
+  closeOnSelect?: boolean;
 }
 
 /** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
@@ -111,9 +118,11 @@ export function AccountsSelector({
     placeholder: "Search Providers...",
     emptyMessage: "No Providers found.",
   },
+  closeOnSelect = false,
 }: AccountsSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
+  const [selectorOpen, setSelectorOpen] = useState(false);
 
   const labelId = `${id}-label`;
   const urlFilterKey = `filter[${filterKey}]`;
@@ -137,6 +146,7 @@ export function AccountsSelector({
 
     if (onBatchChange) {
       onBatchChange(filterKey, enabledIds);
+      if (closeOnSelect) setSelectorOpen(false);
       return;
     }
     navigateWithParams((params) => {
@@ -146,6 +156,7 @@ export function AccountsSelector({
         params.set(urlFilterKey, enabledIds.join(","));
       }
     });
+    if (closeOnSelect) setSelectorOpen(false);
   };
 
   const selectedLabel = () => {
@@ -165,7 +176,12 @@ export function AccountsSelector({
       <label htmlFor={id} className="sr-only" id={labelId}>
         Filter by Provider. Select one or more Providers to filter results.
       </label>
-      <MultiSelect values={selectedIds} onValuesChange={handleMultiValueChange}>
+      <MultiSelect
+        values={selectedIds}
+        onValuesChange={handleMultiValueChange}
+        open={closeOnSelect ? selectorOpen : undefined}
+        onOpenChange={closeOnSelect ? setSelectorOpen : undefined}
+      >
         <MultiSelectTrigger id={id} aria-labelledby={labelId}>
           {selectedLabel() || <MultiSelectValue placeholder="All Providers" />}
         </MultiSelectTrigger>
@@ -214,6 +230,9 @@ export function AccountsSelector({
                     keywords={searchKeywords}
                     disabled={isDisabled}
                     aria-label={`${displayName} Provider (${providerType.toUpperCase()})`}
+                    onSelect={() => {
+                      if (closeOnSelect) setSelectorOpen(false);
+                    }}
                   >
                     <span aria-hidden="true">{icon}</span>
                     <span className="flex min-w-0 flex-1 items-center gap-2">

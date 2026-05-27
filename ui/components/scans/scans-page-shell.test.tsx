@@ -1,14 +1,18 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { useScansStore } from "@/store";
 
 import { ScansPageShell } from "./scans-page-shell";
 
-const { pushMock } = vi.hoisted(() => ({
+const { pushMock, searchParamsValue } = vi.hoisted(() => ({
   pushMock: vi.fn(),
+  searchParamsValue: { current: "" },
 }));
 
-const { providerAccountSelectorsSpy } = vi.hoisted(() => ({
-  providerAccountSelectorsSpy: vi.fn(),
+const { scansFilterBarSpy } = vi.hoisted(() => ({
+  scansFilterBarSpy: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -16,19 +20,58 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: pushMock,
   }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(searchParamsValue.current),
 }));
 
-vi.mock("@/components/filters/provider-account-selectors", () => ({
-  ProviderAccountSelectors: (props: unknown) => {
-    providerAccountSelectorsSpy(props);
-    return <div>Shared provider account selectors</div>;
+vi.mock("./scans-filter-bar", () => ({
+  ScansFilterBar: (props: {
+    showStatusFilter: boolean;
+    onScheduleTypeChange: (value: string) => void;
+    onScanStatusChange: (value: string) => void;
+  }) => {
+    scansFilterBarSpy(props);
+    return (
+      <>
+        <div>Shared scan filters</div>
+        <select
+          aria-label="All Types"
+          onChange={(event) => props.onScheduleTypeChange(event.target.value)}
+        >
+          <option value="all">All Types</option>
+        </select>
+        {props.showStatusFilter && (
+          <select
+            aria-label="All Statuses"
+            onChange={(event) => props.onScanStatusChange(event.target.value)}
+          >
+            <option value="all">All Statuses</option>
+          </select>
+        )}
+      </>
+    );
   },
 }));
 
 vi.mock("./launch-scan-modal", () => ({
-  LaunchScanModal: ({ open }: { open: boolean }) =>
-    open ? <div role="dialog">Launch scan</div> : null,
+  LaunchScanModal: ({
+    open,
+    onOpenChange,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <div role="dialog">
+        Launch scan
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
+}));
+
+vi.mock("@/components/providers/muted-findings-config-button", () => ({
+  MutedFindingsConfigButton: () => <a href="/mutelist">Configure Mutelist</a>,
 }));
 
 const providers = [
@@ -75,6 +118,8 @@ describe("ScansPageShell", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+    searchParamsValue.current = "";
+    useScansStore.getState().closeLaunchScanModal();
   });
 
   it("does not render an imported findings tab", () => {
@@ -95,7 +140,7 @@ describe("ScansPageShell", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("uses the shared provider account selectors for scan filters", () => {
+  it("uses the shared scan filter bar for scan filters", () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
 
     render(
@@ -104,17 +149,34 @@ describe("ScansPageShell", () => {
       </ScansPageShell>,
     );
 
-    expect(
-      screen.getByText("Shared provider account selectors"),
-    ).toBeInTheDocument();
-    expect(providerAccountSelectorsSpy).toHaveBeenCalledWith(
+    expect(screen.getByText("Shared scan filters")).toBeInTheDocument();
+    expect(scansFilterBarSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         providers,
-        accountFilterKey: "provider_uid__in",
-        accountValue: "uid",
-        paramsToDeleteOnChange: ["page", "scanId"],
+        selectedProviderTypes: [],
+        selectedProviderUids: [],
+        scheduleType: "all",
       }),
     );
+  });
+
+  it("clears the active sort when switching tabs", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=active&sort=trigger";
+    const user = userEvent.setup();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /completed/i }));
+
+    expect(pushMock).toHaveBeenCalled();
+    const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
+    expect(calledUrl).toContain("tab=completed");
+    expect(calledUrl).not.toContain("sort=");
   });
 
   it("uses a generic type filter label in Cloud", () => {
@@ -127,5 +189,123 @@ describe("ScansPageShell", () => {
     );
 
     expect(screen.getByRole("combobox", { name: /all types/i })).toBeVisible();
+  });
+
+  it("keeps launch scan with filters and mutelist with tabs", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.getByRole("group", { name: /scan filters/i }),
+    ).toContainElement(screen.getByRole("button", { name: /launch scan/i }));
+    expect(
+      screen.getByRole("group", { name: /scan filters/i }),
+    ).not.toContainElement(
+      screen.getByRole("link", { name: /configure mutelist/i }),
+    );
+    expect(screen.getByRole("group", { name: /scan tabs/i })).toContainElement(
+      screen.getByRole("link", { name: /configure mutelist/i }),
+    );
+  });
+
+  it("opens the launch scan modal from the URL", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "launchScan=true";
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
+  });
+
+  it("closes the URL-opened launch scan modal without navigation", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=completed&launchScan=true";
+    const user = userEvent.setup();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("opens and closes the launch scan modal from client state without navigation", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    const user = userEvent.setup();
+    useScansStore.getState().openLaunchScanModal();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
+
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the status filter only on the completed tab", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=completed";
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.getByRole("combobox", { name: /all statuses/i }),
+    ).toBeVisible();
+  });
+
+  it("hides the status filter outside of the completed tab", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.queryByRole("combobox", { name: /all statuses/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears status filter when switching scan tabs", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=completed&filter%5Bstate__in%5D=failed";
+    const user = userEvent.setup();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /active/i }));
+
+    const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
+    expect(calledUrl).toContain("tab=active");
+    expect(calledUrl).not.toContain("filter%5Bstate__in%5D");
   });
 });
