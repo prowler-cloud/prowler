@@ -20,4 +20,16 @@ describe("Button", () => {
       "font-semibold",
     );
   });
+
+  it("supports extra-small link buttons", () => {
+    render(
+      <Button variant="link" size="link-xs">
+        Open link
+      </Button>,
+    );
+
+    expect(screen.getByRole("button", { name: "Open link" })).toHaveClass(
+      "text-xs",
+    );
+  });
 });

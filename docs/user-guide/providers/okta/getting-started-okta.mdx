@@ -12,7 +12,7 @@ Set up authentication for Okta with the [Okta Authentication](/user-guide/provid
 
 - An Okta organization. The UI examples below use **Identity Engine** terminology such as **Global Session Policy**; Classic Engine exposes the equivalent sign-on policy concepts under older names.
 - A **Super Administrator** account on that organization for the one-time service-app setup.
-- An **API Services** app integration in the Okta Admin Console with the `okta.policies.read` scope granted and the **Read-Only Administrator** role assigned.
+- An **API Services** app integration in the Okta Admin Console with the `okta.policies.read`, `okta.brands.read`, and `okta.apps.read` scopes granted and an admin role assigned. **Read-Only Administrator** covers every `signon` check and runs the per-app network-zone check against the apps the service app can see (under Read-Only Administrator that is typically only the service app's own row — the rest of the org's app inventory stays invisible). **Super Administrator** is required additionally to evaluate the five first-party application checks (Okta Admin Console / Okta Dashboard idle timeout, MFA, phishing-resistant authentication) and to widen the network-zone check to the full app inventory — see [Okta Authentication](/user-guide/providers/okta/authentication#required-admin-role) for the full breakdown.
 - Python 3.10+ and Prowler 5.27.0 or later installed locally.
 
 <CardGroup cols={2}>
@@ -26,9 +26,50 @@ Set up authentication for Okta with the [Okta Authentication](/user-guide/provid
 
 ## Prowler Cloud
 
+<VersionBadge version="5.28.0" />
+
+### Step 1: Add the Provider
+
+1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
+2. Navigate to "Configuration" > "Providers".
+
+    ![Providers Page](/images/prowler-app/cloud-providers-page.png)
+
+3. Click "Add Provider".
+
+    ![Add a Provider](/images/prowler-app/add-cloud-provider.png)
+
+4. Select "Okta".
+
+    ![Select Okta](/user-guide/providers/okta/images/select-okta-provider.png)
+
+5. Enter the **Org Domain** of the target Okta organization and an optional alias, then click "Next".
+
+    ![Add Okta Org Domain](/user-guide/providers/okta/images/okta-org-domain-form.png)
+
 <Note>
-Prowler Cloud onboarding for Okta is coming soon. Track the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler) for release updates. Use the [Prowler CLI](#prowler-cli) workflow below in the meantime.
+The Org Domain must be the bare hostname of an Okta-managed organization — for example, `acme.okta.com`, `acme.oktapreview.com`, `acme.okta-emea.com`, `acme.okta-gov.com`, `acme.okta.mil`, `acme.okta-miltest.com`, or `acme.trex-govcloud.com`. Omit the `https://` scheme, any path, and any trailing slash.
 </Note>
+
+### Step 2: Provide Credentials
+
+Prowler Cloud authenticates to Okta with the **OAuth 2.0 Private Key JWT** flow exposed by an Okta **API Services** app. The service application, keypair, scope grants, and Read-Only Administrator role are set up once in the Okta Admin Console — full instructions are in the [Okta Authentication](/user-guide/providers/okta/authentication) guide.
+
+1. Enter the **Client ID** of the Okta API Services app (for example, `0oa123456789abcdef`).
+2. Paste the **Private Key** whose matching public key (JWK) is registered on the service app. Both PEM-encoded RSA keys and JWK JSON documents are accepted.
+3. Click "Next".
+
+    ![Okta Credentials Form](/user-guide/providers/okta/images/okta-credentials-form.png)
+
+<Note>
+The private key is transmitted over TLS and stored as an encrypted secret in the backend. Rotate or revoke the matching public key from the Okta Admin Console at any time to invalidate the credential without changes on the Prowler side.
+</Note>
+
+### Step 3: Launch the Scan
+
+1. Review the connection summary. Prowler Cloud runs a credential probe against the Okta Management API before saving — a failed probe surfaces the underlying Okta error (`invalid_scope`, `Forbidden`, invalid credentials, etc.) so the configuration can be corrected before the first scan.
+2. Choose the scan schedule: run a single scan or set up daily scans (every 24 hours).
+3. Click **Launch Scan** to start auditing the Okta organization.
 
 ---
 
@@ -44,8 +85,8 @@ Follow the [Okta Authentication](/user-guide/providers/okta/authentication) guid
 export OKTA_ORG_DOMAIN="acme.okta.com"
 export OKTA_CLIENT_ID="0oa1234567890abcdef"
 export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
-# Optional — defaults to "okta.policies.read"
-export OKTA_SCOPES="okta.policies.read"
+# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read"
 ```
 
 The private key file may contain either a PEM-encoded RSA key or a JWK JSON document.
@@ -87,6 +128,9 @@ okta:
   # okta.signon_global_session_idle_timeout_15min
   # Defaults to 15 minutes per DISA STIG V-273186.
   okta_max_session_idle_minutes: 15
+  # okta.application_admin_console_session_idle_timeout_15min
+  # Defaults to 15 minutes per DISA STIG V-273187.
+  okta_admin_console_idle_timeout_max_minutes: 15
 ```
 
 To use a custom configuration:
@@ -99,9 +143,10 @@ prowler okta --config-file /path/to/config.yaml
 
 Prowler for Okta includes security checks across the following services:
 
-| Service     | Description                                                                         |
-| ----------- | ----------------------------------------------------------------------------------- |
-| **Sign-On** | Global session policy controls (idle timeout, lifetime, rule priority and ordering) |
+| Service         | Description                                                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sign-On**     | Global session policy controls (idle timeout, lifetime, rule priority and ordering)                                                    |
+| **Application** | Okta Admin Console sign-on settings plus Authentication Policy controls for Okta applications (session idle, MFA, phishing resistance, network zones) |
 
 ## Troubleshooting
 
@@ -113,20 +158,22 @@ This is stricter than simply finding the same timeout value somewhere else in th
 
 ### Default Scopes
 
-Prowler requests a fixed set of OAuth scopes on every token exchange. The default is a single scope that covers the bundled initial check:
+Prowler requests a fixed set of OAuth scopes on every token exchange. The defaults cover every bundled check across the Sign-On and Application services:
 
 - `okta.policies.read`
+- `okta.brands.read`
+- `okta.apps.read`
 
-The service app must have that scope granted in the **Okta API Scopes** tab. When the granted set is narrower than the requested set, the token request fails with an `invalid_scope` error and the scan stops at provider initialization.
+The service app must have these scopes granted in the **Okta API Scopes** tab. When the granted set is narrower than the requested set, the token request fails with an `invalid_scope` error and the scan stops at provider initialization.
 
 When additional checks are enabled — or when running against a service app that exposes a different scope set — override the default with `OKTA_SCOPES` (comma-separated string for the env var) or `--okta-scopes` (space-separated list for the CLI):
 
 ```bash
 # Environment variable — comma-separated
-export OKTA_SCOPES="okta.policies.read,okta.apps.read,okta.users.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.users.read"
 
 # CLI flag — space-separated
-prowler okta --okta-scopes okta.policies.read okta.apps.read okta.users.read
+prowler okta --okta-scopes okta.policies.read okta.brands.read okta.apps.read okta.users.read
 ```
 
 For the full catalog of OAuth scopes exposed by the Okta Management API, refer to the [Okta OAuth 2.0 scopes documentation](https://developer.okta.com/docs/api/oauth2/).

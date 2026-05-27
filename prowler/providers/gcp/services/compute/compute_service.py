@@ -87,9 +87,15 @@ class Compute(GCPService):
                     .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                 )
                 for item in response["commonInstanceMetadata"].get("items", []):
-                    if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
+                    if (
+                        item["key"] == "enable-oslogin"
+                        and item["value"].lower() == "true"
+                    ):
                         enable_oslogin = True
-                    if item["key"] == "enable-oslogin-2fa" and item["value"] == "TRUE":
+                    if (
+                        item["key"] == "enable-oslogin-2fa"
+                        and item["value"].lower() == "true"
+                    ):
                         enable_oslogin_2fa = True
                 self.compute_projects.append(
                     Project(

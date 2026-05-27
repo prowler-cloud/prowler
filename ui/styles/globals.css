@@ -86,7 +86,10 @@
   --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
 }
 
-/* ===== DARK THEME ===== */
+/* ===== DARK THEME =====
+ * Editorial contrast tweaks: pure-black canvas, pure-white primary text,
+ * and one tier brighter primary border for clearer element separation.
+ */
 .dark {
   /* Button Colors */
   --bg-button-primary: var(--color-emerald-300);
@@ -103,30 +106,30 @@
   --bg-neutral-map: var(--color-gray-800);
 
   /* Input Colors */
-  --bg-input-primary: var(--color-neutral-900);
-  --border-input-primary: var(--color-neutral-800);
-  --border-input-primary-press: var(--color-neutral-800);
+  --bg-input-primary: #111111;
+  --border-input-primary: var(--color-zinc-700);
+  --border-input-primary-press: var(--color-zinc-500);
   --border-input-primary-pressed: #a7f3d0;
-  --border-input-primary-fill: var(--color-neutral-300);
+  --border-input-primary-fill: var(--color-zinc-200);
 
   /* Text Colors */
-  --text-neutral-primary: var(--color-zinc-100);
-  --text-neutral-secondary: var(--color-zinc-300);
+  --text-neutral-primary: #ffffff;
+  --text-neutral-secondary: var(--color-zinc-200);
   --text-neutral-tertiary: var(--color-zinc-400);
-  --text-error-primary: var(--color-red-500);
-  --text-warning-primary: var(--color-orange-500);
+  --text-error-primary: var(--color-red-400);
+  --text-warning-primary: var(--color-orange-400);
   --text-success-primary: var(--color-green-500);
 
   /* Border Colors */
   --border-error-primary: var(--color-red-400);
-  --border-neutral-primary: var(--color-zinc-800);
-  --border-neutral-secondary: var(--color-zinc-900);
-  --border-neutral-tertiary: var(--color-zinc-900);
+  --border-neutral-primary: var(--color-zinc-700);
+  --border-neutral-secondary: var(--color-zinc-800);
+  --border-neutral-tertiary: var(--color-zinc-700);
   --border-tag-primary: var(--color-slate-700);
-  --border-data-emphasis: rgba(255, 255, 255, 0.1);
+  --border-data-emphasis: rgba(255, 255, 255, 0.14);
 
   /* Background Colors */
-  --bg-neutral-primary: var(--color-zinc-950);
+  --bg-neutral-primary: #000000;
   --bg-neutral-secondary: var(--color-stone-950);
   --bg-neutral-tertiary: #121110;
   --bg-tag-primary: var(--color-slate-950);
@@ -332,49 +335,65 @@
     display: none; /* Chrome, Safari, Opera */
   }
 
-  /* Minimal scrollbar styles */
-  .minimal-scrollbar {
+  /* Minimal scrollbar styles
+   *
+   * The descendant selectors target `.cm-scroller` so that CodeMirror
+   * editors which receive `.minimal-scrollbar` on their `.cm-editor`
+   * wrapper also style their inner scroller (the element that actually
+   * overflows when the editor fills a bounded container).
+   */
+  .minimal-scrollbar,
+  .minimal-scrollbar .cm-scroller {
     scrollbar-width: thin; /* Firefox */
     scrollbar-color: rgb(203 213 225 / 0.5) transparent; /* thumb and track for Firefox */
   }
 
-  .minimal-scrollbar:hover {
+  .minimal-scrollbar:hover,
+  .minimal-scrollbar .cm-scroller:hover {
     scrollbar-color: rgb(148 163 184 / 0.7) transparent; /* darker thumb on hover */
   }
 
   /* Webkit browsers (Chrome, Safari, Edge) */
-  .minimal-scrollbar::-webkit-scrollbar {
+  .minimal-scrollbar::-webkit-scrollbar,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar {
     width: 6px;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-track {
+  .minimal-scrollbar::-webkit-scrollbar-track,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-thumb {
+  .minimal-scrollbar::-webkit-scrollbar-thumb,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb {
     background-color: rgb(203 213 225 / 0.5);
     border-radius: 3px;
     transition: background-color 0.2s ease;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+  .minimal-scrollbar::-webkit-scrollbar-thumb:hover,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: rgb(148 163 184 / 0.7);
   }
 
   /* Dark mode */
-  .dark .minimal-scrollbar {
+  .dark .minimal-scrollbar,
+  .dark .minimal-scrollbar .cm-scroller {
     scrollbar-color: rgb(71 85 105 / 0.5) transparent;
   }
 
-  .dark .minimal-scrollbar:hover {
+  .dark .minimal-scrollbar:hover,
+  .dark .minimal-scrollbar .cm-scroller:hover {
     scrollbar-color: rgb(100 116 139 / 0.7) transparent;
   }
 
-  .dark .minimal-scrollbar::-webkit-scrollbar-thumb {
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb,
+  .dark .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb {
     background-color: rgb(71 85 105 / 0.5);
   }
 
-  .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dark .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: rgb(100 116 139 / 0.7);
   }
 
