@@ -26,7 +26,7 @@ export function ScanJobsTable({ data, meta, tab }: ScanJobsTableProps) {
     <>
       <AutoRefresh hasExecutingScan={hasRefreshingScan} />
       <DataTable
-        key={`scan-jobs-${tab}-${data.length}-${meta?.pagination?.page ?? 1}`}
+        key={`scan-jobs-${tab}-${meta?.pagination?.page ?? 1}`}
         columns={columns}
         data={data}
         metadata={meta}
