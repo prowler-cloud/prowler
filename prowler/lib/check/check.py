@@ -797,7 +797,7 @@ def execute(
                 is_finding_muted_args["org_domain"] = (
                     global_provider.identity.org_domain
                 )
-            else:
+            elif not is_builtin_provider(global_provider.type):
                 # External/custom provider — delegate identity args
                 is_finding_muted_args = global_provider.get_mutelist_finding_args()
 
