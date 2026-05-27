@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   getInvitationErrorDisplay,
+  INVITATION_ERROR_FLOW,
   INVITATION_ERROR_MESSAGES,
   isInvitationTokenError,
 } from "./invitation-errors";
@@ -22,12 +23,14 @@ describe("getInvitationErrorDisplay", () => {
       };
 
       // When
-      const result = getInvitationErrorDisplay(response, "accept");
+      const result = getInvitationErrorDisplay(
+        response,
+        INVITATION_ERROR_FLOW.ACCEPT,
+      );
 
       // Then
-      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.expired);
+      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.EXPIRED);
       expect(result.canRetry).toBe(false);
-      expect(result.needsSignOut).toBe(false);
     });
 
     it("should show no-longer-valid message for already accepted or revoked invitations", () => {
@@ -44,12 +47,14 @@ describe("getInvitationErrorDisplay", () => {
       };
 
       // When
-      const result = getInvitationErrorDisplay(response, "accept");
+      const result = getInvitationErrorDisplay(
+        response,
+        INVITATION_ERROR_FLOW.ACCEPT,
+      );
 
       // Then
-      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.noLongerValid);
+      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.NO_LONGER_VALID);
       expect(result.canRetry).toBe(false);
-      expect(result.needsSignOut).toBe(false);
     });
 
     it("should show not-valid message for missing invitation tokens", () => {
@@ -66,22 +71,41 @@ describe("getInvitationErrorDisplay", () => {
       };
 
       // When
-      const result = getInvitationErrorDisplay(response, "accept");
+      const result = getInvitationErrorDisplay(
+        response,
+        INVITATION_ERROR_FLOW.ACCEPT,
+      );
 
       // Then
-      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.notValid);
+      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.NOT_VALID);
       expect(result.canRetry).toBe(false);
-      expect(result.needsSignOut).toBe(false);
+    });
+
+    it("should not allow retry for client-side malformed tokens", () => {
+      // Given
+      const response = {
+        error: "Invalid invitation token",
+      };
+
+      // When
+      const result = getInvitationErrorDisplay(
+        response,
+        INVITATION_ERROR_FLOW.ACCEPT,
+      );
+
+      // Then
+      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.INVALID_FALLBACK);
+      expect(result.canRetry).toBe(false);
     });
   });
 
   describe("when mapping invitation signup errors", () => {
-    it("should identify invitation token data errors", () => {
+    it("should not identify generic data errors as invitation token errors", () => {
       // Given
       const error = {
         status: "400",
         code: "invalid",
-        detail: "Invalid invitation code.",
+        detail: "Invalid request data.",
         source: { pointer: "/data" },
       };
 
@@ -89,7 +113,7 @@ describe("getInvitationErrorDisplay", () => {
       const result = isInvitationTokenError(error);
 
       // Then
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it("should identify invitation token field errors", () => {
@@ -123,10 +147,13 @@ describe("getInvitationErrorDisplay", () => {
       };
 
       // When
-      const result = getInvitationErrorDisplay(response, "signup");
+      const result = getInvitationErrorDisplay(
+        response,
+        INVITATION_ERROR_FLOW.SIGNUP,
+      );
 
       // Then
-      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.invalidFallback);
+      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.INVALID_FALLBACK);
       expect(result.canRetry).toBe(false);
     });
 
@@ -145,12 +172,14 @@ describe("getInvitationErrorDisplay", () => {
       };
 
       // When
-      const result = getInvitationErrorDisplay(response, "signup");
+      const result = getInvitationErrorDisplay(
+        response,
+        INVITATION_ERROR_FLOW.SIGNUP,
+      );
 
       // Then
-      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.notValid);
+      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.NOT_VALID);
       expect(result.canRetry).toBe(false);
-      expect(result.needsSignOut).toBe(false);
     });
   });
 
@@ -169,10 +198,13 @@ describe("getInvitationErrorDisplay", () => {
       };
 
       // When
-      const result = getInvitationErrorDisplay(response, "accept");
+      const result = getInvitationErrorDisplay(
+        response,
+        INVITATION_ERROR_FLOW.ACCEPT,
+      );
 
       // Then
-      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.invalidFallback);
+      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.INVALID_FALLBACK);
       expect(result.canRetry).toBe(false);
     });
 
@@ -190,10 +222,13 @@ describe("getInvitationErrorDisplay", () => {
       };
 
       // When
-      const result = getInvitationErrorDisplay(response, "accept");
+      const result = getInvitationErrorDisplay(
+        response,
+        INVITATION_ERROR_FLOW.ACCEPT,
+      );
 
       // Then
-      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.unexpected);
+      expect(result.message).toBe(INVITATION_ERROR_MESSAGES.UNEXPECTED);
       expect(result.canRetry).toBe(true);
     });
   });

@@ -3,20 +3,19 @@
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
-import { Button } from "@/components/shadcn";
 import {
   getInvitationErrorDisplay,
   INVITATION_ERROR_FLOW,
-} from "@/lib/invitation-errors";
+} from "@/app/(auth)/invitation/_lib/invitation-errors";
+import { Button } from "@/components/shadcn";
 
 type AcceptState =
   | { kind: "no-token" }
   | { kind: "accepting" }
-  | { kind: "error"; message: string; canRetry: boolean; needsSignOut: boolean }
+  | { kind: "error"; message: string; canRetry: boolean }
   | { kind: "choose" };
 
 export function AcceptInvitationClient({
@@ -41,21 +40,14 @@ export function AcceptInvitationClient({
     const result = await acceptInvitation(token);
 
     if (result?.error) {
-      const { message, canRetry, needsSignOut } = getInvitationErrorDisplay(
+      const { message, canRetry } = getInvitationErrorDisplay(
         result,
         INVITATION_ERROR_FLOW.ACCEPT,
       );
-      setState({ kind: "error", message, canRetry, needsSignOut });
+      setState({ kind: "error", message, canRetry });
     } else {
       router.push("/");
     }
-  }
-
-  async function handleSignOutAndRedirect() {
-    if (!token) return;
-    const callbackPath = `/invitation/accept?invitation_token=${encodeURIComponent(token)}`;
-    await signOut({ redirect: false });
-    router.push(`/sign-in?callbackUrl=${encodeURIComponent(callbackPath)}`);
   }
 
   useEffect(() => {
@@ -125,15 +117,9 @@ export function AcceptInvitationClient({
             <p className="text-default-500">{state.message}</p>
             <div className="flex gap-3">
               {state.canRetry && <Button onClick={doAccept}>Retry</Button>}
-              {state.needsSignOut ? (
-                <Button variant="outline" onClick={handleSignOutAndRedirect}>
-                  Sign in with a different account
-                </Button>
-              ) : (
-                <Button asChild variant="outline">
-                  <Link href="/sign-in">Go to Sign In</Link>
-                </Button>
-              )}
+              <Button asChild variant="outline">
+                <Link href="/sign-in">Go to Sign In</Link>
+              </Button>
             </div>
           </div>
         )}

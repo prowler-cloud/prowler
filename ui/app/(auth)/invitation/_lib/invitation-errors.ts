@@ -1,11 +1,14 @@
 import type { ApiError, ApiResponse } from "@/types";
 
+const CLIENT_INVITATION_ERROR = {
+  INVALID_TOKEN: "Invalid invitation token",
+} as const;
+
 const INVITATION_ERROR_DETAIL = {
   NO_LONGER_VALID: "This invitation is no longer valid.",
 } as const;
 
 const INVITATION_ERROR_POINTER = {
-  DATA: "/data",
   INVITATION_TOKEN: "/data/attributes/invitation_token",
 } as const;
 
@@ -24,20 +27,20 @@ type InvitationErrorFlow =
   (typeof INVITATION_ERROR_FLOW)[keyof typeof INVITATION_ERROR_FLOW];
 
 export const INVITATION_ERROR_MESSAGES = {
-  expired:
+  EXPIRED:
     "This invitation has expired. Please contact your administrator for a new one.",
-  noLongerValid:
+  NO_LONGER_VALID:
     "This invitation is no longer valid. Please contact your administrator for a new invitation.",
-  notValid: "This invitation is not valid. Please check the link you received.",
-  invalidFallback:
+  NOT_VALID:
+    "This invitation is not valid. Please check the link you received.",
+  INVALID_FALLBACK:
     "This invitation is invalid. Please check the link or contact your administrator.",
-  unexpected: "Something went wrong while accepting the invitation.",
+  UNEXPECTED: "Something went wrong while accepting the invitation.",
 } as const;
 
 interface InvitationErrorDisplay {
   message: string;
   canRetry: boolean;
-  needsSignOut: boolean;
 }
 
 interface InvitationErrorResponse
@@ -52,10 +55,7 @@ function getFirstError(
 }
 
 export function isInvitationTokenError(error: ApiError): boolean {
-  return (
-    error.source?.pointer === INVITATION_ERROR_POINTER.DATA ||
-    error.source?.pointer === INVITATION_ERROR_POINTER.INVITATION_TOKEN
-  );
+  return error.source?.pointer === INVITATION_ERROR_POINTER.INVITATION_TOKEN;
 }
 
 export function getInvitationErrorDisplay(
@@ -66,11 +66,17 @@ export function getInvitationErrorDisplay(
   const code = firstError?.code;
   const detail = firstError?.detail;
 
+  if (response.error === CLIENT_INVITATION_ERROR.INVALID_TOKEN) {
+    return {
+      message: INVITATION_ERROR_MESSAGES.INVALID_FALLBACK,
+      canRetry: false,
+    };
+  }
+
   if (response.status === 410 && code === INVITATION_ERROR_CODE.TOKEN_EXPIRED) {
     return {
-      message: INVITATION_ERROR_MESSAGES.expired,
+      message: INVITATION_ERROR_MESSAGES.EXPIRED,
       canRetry: false,
-      needsSignOut: false,
     };
   }
 
@@ -80,17 +86,15 @@ export function getInvitationErrorDisplay(
     detail === INVITATION_ERROR_DETAIL.NO_LONGER_VALID
   ) {
     return {
-      message: INVITATION_ERROR_MESSAGES.noLongerValid,
+      message: INVITATION_ERROR_MESSAGES.NO_LONGER_VALID,
       canRetry: false,
-      needsSignOut: false,
     };
   }
 
   if (response.status === 404 && code === INVITATION_ERROR_CODE.NOT_FOUND) {
     return {
-      message: INVITATION_ERROR_MESSAGES.notValid,
+      message: INVITATION_ERROR_MESSAGES.NOT_VALID,
       canRetry: false,
-      needsSignOut: false,
     };
   }
 
@@ -102,23 +106,20 @@ export function getInvitationErrorDisplay(
     isInvitationTokenError(firstError)
   ) {
     return {
-      message: INVITATION_ERROR_MESSAGES.notValid,
+      message: INVITATION_ERROR_MESSAGES.NOT_VALID,
       canRetry: false,
-      needsSignOut: false,
     };
   }
 
   if (code === INVITATION_ERROR_CODE.INVALID) {
     return {
-      message: INVITATION_ERROR_MESSAGES.invalidFallback,
+      message: INVITATION_ERROR_MESSAGES.INVALID_FALLBACK,
       canRetry: false,
-      needsSignOut: false,
     };
   }
 
   return {
-    message: INVITATION_ERROR_MESSAGES.unexpected,
+    message: INVITATION_ERROR_MESSAGES.UNEXPECTED,
     canRetry: true,
-    needsSignOut: false,
   };
 }

@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 
 import { createNewUser } from "@/actions/auth";
+import {
+  getInvitationErrorDisplay,
+  INVITATION_ERROR_FLOW,
+  isInvitationTokenError,
+} from "@/app/(auth)/invitation/_lib/invitation-errors";
 import { AuthDivider } from "@/components/auth/oss/auth-divider";
 import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
@@ -21,11 +26,6 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  getInvitationErrorDisplay,
-  INVITATION_ERROR_FLOW,
-  isInvitationTokenError,
-} from "@/lib/invitation-errors";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 const AUTH_ERROR_PATHS = {
@@ -33,7 +33,6 @@ const AUTH_ERROR_PATHS = {
   EMAIL: "/data/attributes/email",
   PASSWORD: "/data/attributes/password",
   COMPANY_NAME: "/data/attributes/company_name",
-  INVITATION_TOKEN: "/data",
 } as const;
 
 const FORM_ERROR_TYPE = {
@@ -135,12 +134,6 @@ export const SignUpForm = ({
             break;
           case AUTH_ERROR_PATHS.PASSWORD:
             form.setError("password", {
-              type: FORM_ERROR_TYPE.SERVER,
-              message: errorMessage,
-            });
-            break;
-          case AUTH_ERROR_PATHS.INVITATION_TOKEN:
-            form.setError("invitationToken", {
               type: FORM_ERROR_TYPE.SERVER,
               message: errorMessage,
             });
