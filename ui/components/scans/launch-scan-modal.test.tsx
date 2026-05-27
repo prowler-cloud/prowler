@@ -48,69 +48,44 @@ vi.mock("@/components/ui/entities", () => ({
   }) => <>{entityAlias || entityId}</>,
 }));
 
-vi.mock("@/components/shadcn", async () => {
-  const actual = await vi.importActual<typeof import("@/components/shadcn")>(
-    "@/components/shadcn",
-  );
-
-  const reactChildrenToText = (node: React.ReactNode): string => {
-    if (node === null || node === undefined || typeof node === "boolean")
-      return "";
-    if (typeof node === "string" || typeof node === "number")
-      return String(node);
-    if (Array.isArray(node)) {
-      return node.map(reactChildrenToText).filter(Boolean).join(" ");
-    }
-    if (typeof node === "object" && "props" in node) {
-      return reactChildrenToText(
-        (node as { props: { children?: React.ReactNode } }).props.children,
-      );
-    }
-    return "";
-  };
-
-  return {
-    ...actual,
-    Select: ({
-      children,
-      value = "",
-      onValueChange,
-    }: {
-      children: React.ReactNode;
-      value?: string;
-      onValueChange?: (value: string) => void;
-    }) => (
+vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
+  AccountsSelector: ({
+    disabledValues = [],
+    providers,
+    onBatchChange,
+    selectedValues,
+    id,
+  }: {
+    disabledValues?: string[];
+    providers: { id: string; attributes: { alias: string; uid: string } }[];
+    onBatchChange: (filterKey: string, values: string[]) => void;
+    selectedValues: string[];
+    id?: string;
+  }) => (
+    <div>
+      <input aria-label="Search Providers" placeholder="Search Providers..." />
       <select
+        id={id}
         aria-label="Providers"
-        value={value}
-        onChange={(event) => onValueChange?.(event.target.value)}
+        value={selectedValues[0] ?? ""}
+        onChange={(event) =>
+          onBatchChange("provider_id__in", [event.target.value])
+        }
       >
-        <option value="" hidden disabled>
-          Select a provider
-        </option>
-        {children}
+        <option value="">All Providers</option>
+        {providers.map((provider) => (
+          <option
+            key={provider.id}
+            value={provider.id}
+            disabled={disabledValues.includes(provider.id)}
+          >
+            {provider.attributes.alias || provider.attributes.uid}
+          </option>
+        ))}
       </select>
-    ),
-    SelectTrigger: () => null,
-    SelectContent: ({ children }: { children: React.ReactNode }) => (
-      <>{children}</>
-    ),
-    SelectItem: ({
-      children,
-      value,
-      disabled,
-    }: {
-      children: React.ReactNode;
-      value: string;
-      disabled?: boolean;
-    }) => (
-      <option value={value} disabled={disabled}>
-        {reactChildrenToText(children)}
-      </option>
-    ),
-    SelectValue: () => null,
-  };
-});
+    </div>
+  ),
+}));
 
 import { LaunchScanModal } from "./launch-scan-modal";
 
@@ -172,28 +147,12 @@ describe("LaunchScanModal", () => {
     scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
   });
 
-  it("renders a single-select provider picker with each provider as an option", () => {
-    render(
-      <LaunchScanModal
-        open
-        onOpenChange={vi.fn()}
-        providers={[provider, disconnectedProvider]}
-      />,
-    );
-
-    expect(screen.getByLabelText("Providers")).toBeVisible();
-    expect(screen.getByRole("option", { name: /Production/ })).toBeEnabled();
-    expect(screen.getByRole("option", { name: /Disconnected/ })).toBeDisabled();
-  });
-
-  it("shows the provider UID alongside the alias for unambiguous selection", () => {
+  it("shows a searchable provider selector", () => {
     render(
       <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
     );
 
-    expect(
-      screen.getByRole("option", { name: /Production.*123456789012/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search Providers...")).toBeVisible();
   });
 
   it("disables disconnected providers in the launch selector", () => {
@@ -205,7 +164,7 @@ describe("LaunchScanModal", () => {
       />,
     );
 
-    expect(screen.getByRole("option", { name: /Disconnected/ })).toBeDisabled();
+    expect(screen.getByRole("option", { name: "Disconnected" })).toBeDisabled();
   });
 
   it("submits alias as scanName so the API stores it as the scan alias", async () => {

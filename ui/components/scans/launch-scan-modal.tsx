@@ -7,17 +7,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn";
+import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
+import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
@@ -51,6 +42,9 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
   });
 
   const providerId = form.watch("providerId");
+  const disconnectedProviderIds = providers
+    .filter((provider) => provider.attributes.connection.connected !== true)
+    .map((provider) => provider.id);
 
   const onSubmit = form.handleSubmit(async ({ providerId, scanAlias }) => {
     const formData = new FormData();
@@ -98,37 +92,18 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
 
       <Field>
         <FieldLabel htmlFor="launch-scan-account">Providers</FieldLabel>
-        <Select
-          value={providerId}
-          onValueChange={(value) =>
-            form.setValue("providerId", value, { shouldValidate: true })
+        <AccountsSelector
+          id="launch-scan-account"
+          providers={providers}
+          disabledValues={disconnectedProviderIds}
+          onBatchChange={(_, values) =>
+            form.setValue("providerId", values.at(-1) ?? "", {
+              shouldValidate: true,
+            })
           }
-        >
-          <SelectTrigger id="launch-scan-account" aria-label="Providers">
-            <SelectValue placeholder="Select a provider" />
-          </SelectTrigger>
-          <SelectContent>
-            {providers.map((provider) => {
-              const alias = provider.attributes.alias;
-              const uid = provider.attributes.uid;
-              const showUid = Boolean(alias) && alias !== uid;
-              return (
-                <SelectItem
-                  key={provider.id}
-                  value={provider.id}
-                  disabled={provider.attributes.connection.connected !== true}
-                >
-                  <span className="truncate">{alias || uid}</span>
-                  {showUid && (
-                    <span className="text-text-neutral-secondary text-xs">
-                      {uid}
-                    </span>
-                  )}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+          selectedValues={providerId ? [providerId] : []}
+          closeOnSelect
+        />
         {providerError && <FieldError>{providerError}</FieldError>}
       </Field>
 
