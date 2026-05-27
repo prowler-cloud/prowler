@@ -2591,7 +2591,10 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vpc_different_regions",
+        "vpc_subnet_different_az"
+      ]
     },
     {
       "Id": "mp.si.2.aws.kms.1",
