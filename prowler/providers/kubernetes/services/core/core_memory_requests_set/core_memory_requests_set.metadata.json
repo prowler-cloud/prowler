@@ -1,0 +1,37 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_memory_requests_set",
+  "CheckTitle": "Ensure memory requests are set on all containers",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Pod",
+  "ResourceGroup": "container",
+  "Description": "**Kubernetes Pods** are evaluated for containers without **memory requests** configured in `resources.requests.memory`, indicating the scheduler cannot guarantee memory allocation.",
+  "Risk": "Without **memory requests**, the scheduler cannot make informed placement decisions, leading to:\n- Overcommitted nodes that trigger **OOM kills** (availability)\n- Unpredictable performance under load\n- Inability to enforce **ResourceQuotas** effectively\nMissing requests weaken cluster stability and make capacity planning unreliable, increasing blast radius during incidents.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+    "https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open your Kubernetes UI (e.g., cloud provider console or Dashboard)\n2. Navigate to the failing workload (Deployment/StatefulSet/DaemonSet) or Pod and choose Edit YAML/Manifest\n3. Set resources.requests.memory for each affected container:\n   - For controllers: spec.template.spec.containers[].resources.requests.memory\n   - For standalone Pods: spec.containers[].resources.requests.memory\n4. Save changes (controllers will roll out new Pods). If it is a standalone Pod, delete and recreate it to apply the change",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"<IMAGE>\"\n      resources {\n        requests = {\n          memory = \"64Mi\" # Critical: guarantees memory for the scheduler to make informed placement\n        }\n      }\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set **memory requests** on every container so the scheduler can guarantee memory allocation and place pods effectively.\n\n- Base requests on observed steady-state usage; use **VPA** for data-driven sizing\n- Enforce minimum requests via **LimitRanges** at the namespace level\n- Combine with **ResourceQuotas** for **defense in depth** against overcommitment",
+      "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+    }
+  },
+  "Categories": [
+    "container-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Memory requests enable the scheduler to guarantee memory allocation and prevent overcommitment."
+}

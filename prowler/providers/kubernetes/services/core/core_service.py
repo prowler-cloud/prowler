@@ -65,6 +65,11 @@ class Core(KubernetesService):
                                 if container.security_context
                                 else {}
                             ),
+                            resources=(
+                                container.resources.to_dict()
+                                if container.resources
+                                else None
+                            ),
                         )
                     self.pods[pod.metadata.uid] = Pod(
                         name=pod.metadata.name,
@@ -156,6 +161,7 @@ class Container(BaseModel):
     ports: Optional[List[dict]]
     env: Optional[List[dict]]
     security_context: dict
+    resources: Optional[dict]
 
 
 class Pod(BaseModel):
