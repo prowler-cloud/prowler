@@ -17,6 +17,7 @@ export class ScansPage extends BasePage {
 
   // Scan state elements
   readonly successToast: Locator;
+  readonly viewScanLink: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -56,6 +57,13 @@ export class ScansPage extends BasePage {
     // Scan state elements
     this.successToast = page.getByRole("alert", {
       name: /The scan was launched successfully\.?/i,
+    });
+    // The success toast renders a ToastAction wrapping a Next.js Link whose
+    // visible text — and therefore its accessible name — is "View scan".
+    // (The longer "View scan in progress" is only the ToastAction altText,
+    // not the link's accessible name.)
+    this.viewScanLink = page.getByRole("link", {
+      name: /^View scan$/i,
     });
 
     // Main content elements
@@ -101,6 +109,16 @@ export class ScansPage extends BasePage {
 
     await expect(this.startNowButton).toBeVisible();
     await this.startNowButton.click();
+  }
+
+  async viewLaunchedScan(): Promise<void> {
+    // Newly launched scans land in the "In Progress" (active) tab, but /scans
+    // defaults to the "Completed" tab. Use the toast's "View scan" action to
+    // navigate to ?tab=active where the available/executing scan is listed.
+    await expect(this.viewScanLink).toBeVisible({ timeout: 5000 });
+    await this.viewScanLink.click();
+    await expect(this.page).toHaveURL(/\/scans\?tab=active/);
+    await expect(this.scanTable).toBeVisible();
   }
 
   async verifyScanLaunched(accountId: string): Promise<void> {
