@@ -18,6 +18,7 @@ export class ScansPage extends BasePage {
   // Scan state elements
   readonly successToast: Locator;
   readonly viewInProgressLink: Locator;
+  readonly scheduledTab: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -61,6 +62,7 @@ export class ScansPage extends BasePage {
     this.viewInProgressLink = page.getByRole("link", {
       name: /^View in progress$/i,
     });
+    this.scheduledTab = page.getByRole("tab", { name: /^Scheduled$/i });
 
     // Main content elements
     this.scanTable = page.locator("table");
@@ -115,6 +117,14 @@ export class ScansPage extends BasePage {
     await expect(this.scanTable).toBeVisible();
   }
 
+  async viewScheduledScans(): Promise<void> {
+    // Scheduled scans are no longer visible on the default Completed tab.
+    await expect(this.scheduledTab).toBeVisible();
+    await this.scheduledTab.click();
+    await expect(this.page).toHaveURL(/\/scans\?tab=scheduled/);
+    await expect(this.scanTable).toBeVisible();
+  }
+
   async verifyScanLaunched(accountId: string): Promise<void> {
     // Verify the scan was launched
 
@@ -153,8 +163,7 @@ export class ScansPage extends BasePage {
     // 1. The provider exists in the table (by account ID/UID)
     // 2. The scan name field contains "scheduled scan"
 
-    // Scan Table exists
-    await expect(this.scanTable).toBeVisible();
+    await this.viewScheduledScans();
 
     // Find a row that contains the account ID (provider UID in Provider column)
     // Note: Use a more specific locator strategy if possible in the future
