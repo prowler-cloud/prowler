@@ -13,7 +13,7 @@
   "Risk": "Without this alert enabled, administrators will not be notified of potential **employee spoofing via email**. Attackers may impersonate internal employees using external email addresses to conduct phishing attacks against the organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://knowledge.workspace.google.com/admin/reports/view-and-edit-system-defined-rules",
+    "https://support.google.com/a/answer/3230421",
     "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
@@ -29,7 +29,8 @@
     }
   },
   "Categories": [
-    "forensics-ready"
+    "logging",
+    "email-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -23,7 +23,7 @@ class rules_suspicious_programmatic_login_alert_configured(Check):
                 report = CheckReportGoogleWorkspace(
                     metadata=self.metadata(),
                     resource=alert,
-                    resource_id="system_defined_alert",
+                    resource_id=f"systemDefinedAlert/{RULE_NAME}",
                     resource_name=RULE_NAME,
                     customer_id=rules_client.provider.identity.customer_id,
                 )
