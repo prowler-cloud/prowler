@@ -60,3 +60,22 @@ variable "s3_integration_bucket_account_id" {
     error_message = "s3_integration_bucket_account_id must be a valid 12-digit AWS Account ID or empty."
   }
 }
+
+variable "enable_events_integration" {
+  type        = bool
+  description = "Enable real-time event detection. Forwards selected CloudTrail management events to Prowler Cloud via EventBridge API Destination."
+  default     = false
+}
+
+variable "prowler_webhook_url" {
+  type        = string
+  description = "Prowler Cloud webhook URL that will receive events. Provided in Prowler Cloud onboarding. Required if enable_events_integration is true."
+  default     = ""
+}
+
+variable "prowler_api_key" {
+  type        = string
+  description = "Per-tenant API key used to authenticate events sent to Prowler Cloud. Provided in Prowler Cloud onboarding. Required if enable_events_integration is true."
+  default     = ""
+  sensitive   = true
+}

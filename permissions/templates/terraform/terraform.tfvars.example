@@ -29,3 +29,19 @@ external_id = "your-unique-external-id-here"
 
 # AWS Account ID that owns the S3 bucket (usually your account)
 # s3_integration_bucket_account_id = "123456789012"
+
+# =============================================================================
+# Real-Time Events Integration Configuration
+# =============================================================================
+# Uncomment the following lines to forward selected CloudTrail management
+# events (SG, IAM, S3, CloudTrail, KMS, RDS, Lambda) to Prowler Cloud in
+# near real-time via EventBridge API Destination.
+
+# Enable real-time events integration
+# enable_events_integration = true
+
+# Prowler Cloud webhook URL (provided in Prowler Cloud onboarding)
+# prowler_webhook_url = "https://api.prowler.com/v1/events/ingest"
+
+# Per-tenant API key (provided in Prowler Cloud onboarding)
+# prowler_api_key = "your-prowler-api-key-here"

@@ -63,10 +63,33 @@ Parameters:
       The AWS Account ID owner of the S3 Bucket.
     Type: String
     Default: ""
+  EnableEventsIntegration:
+    Description: |
+      Enable real-time event detection. Forwards selected CloudTrail management events
+      (Security Group, IAM, S3 changes) to Prowler Cloud via EventBridge API Destination.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+  ProwlerWebhookUrl:
+    Description: |
+      Prowler Cloud webhook URL that will receive events. Provided in Prowler Cloud onboarding.
+      Required if EnableEventsIntegration is true.
+    Type: String
+    Default: ""
+  ProwlerApiKey:
+    Description: |
+      Per-tenant API key used to authenticate events sent to Prowler Cloud.
+      Provided in Prowler Cloud onboarding. Required if EnableEventsIntegration is true.
+    Type: String
+    Default: ""
+    NoEcho: true
 
 Conditions:
   OrganizationsEnabled: !Equals [!Ref EnableOrganizations, true]
   S3IntegrationEnabled: !Equals [!Ref EnableS3Integration, true]
+  EventsIntegrationEnabled: !Equals [!Ref EnableEventsIntegration, true]
 
 
 Resources:
@@ -215,6 +238,161 @@ Resources:
         - Key: "Name"
           Value: "ProwlerScan"
 
+  ProwlerEventsConnection:
+    Type: AWS::Events::Connection
+    Condition: EventsIntegrationEnabled
+    Properties:
+      Name: ProwlerEventsConnection
+      AuthorizationType: API_KEY
+      AuthParameters:
+        ApiKeyAuthParameters:
+          ApiKeyName: x-api-key
+          ApiKeyValue: !Ref ProwlerApiKey
+
+  ProwlerEventsApiDestination:
+    Type: AWS::Events::ApiDestination
+    Condition: EventsIntegrationEnabled
+    Properties:
+      Name: ProwlerEventsApiDestination
+      ConnectionArn: !GetAtt ProwlerEventsConnection.Arn
+      InvocationEndpoint: !Ref ProwlerWebhookUrl
+      HttpMethod: POST
+
+  ProwlerEventsInvokeRole:
+    Type: AWS::IAM::Role
+    Condition: EventsIntegrationEnabled
+    Properties:
+      RoleName: ProwlerEventsInvoke
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: InvokeApiDestination
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "events:InvokeApiDestination"
+                Resource: !GetAtt ProwlerEventsApiDestination.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerEventsInvoke"
+
+  ProwlerSecurityChangesRule:
+    Type: AWS::Events::Rule
+    Condition: EventsIntegrationEnabled
+    Properties:
+      Name: ProwlerSecurityChanges
+      Description: Forwards CloudTrail management events (SG, IAM, S3) to Prowler Cloud.
+      State: ENABLED
+      EventPattern:
+        detail-type:
+          - "AWS API Call via CloudTrail"
+        detail:
+          eventSource:
+            - ec2.amazonaws.com
+            - iam.amazonaws.com
+            - s3.amazonaws.com
+            - s3control.amazonaws.com
+            - cloudtrail.amazonaws.com
+            - kms.amazonaws.com
+            - rds.amazonaws.com
+            - lambda.amazonaws.com
+          eventName:
+            # EC2 / Security Groups
+            - AuthorizeSecurityGroupIngress
+            - AuthorizeSecurityGroupEgress
+            - RevokeSecurityGroupIngress
+            - RevokeSecurityGroupEgress
+            - CreateSecurityGroup
+            - DeleteSecurityGroup
+            - ModifySecurityGroupRules
+            - ModifySnapshotAttribute
+            - ModifyImageAttribute
+            # IAM
+            - AttachRolePolicy
+            - DetachRolePolicy
+            - PutRolePolicy
+            - DeleteRolePolicy
+            - AttachUserPolicy
+            - DetachUserPolicy
+            - PutUserPolicy
+            - DeleteUserPolicy
+            - AttachGroupPolicy
+            - DetachGroupPolicy
+            - PutGroupPolicy
+            - DeleteGroupPolicy
+            - CreatePolicy
+            - CreatePolicyVersion
+            - DeletePolicy
+            - UpdateAssumeRolePolicy
+            - CreateRole
+            - DeleteRole
+            - CreateUser
+            - DeleteUser
+            - CreateAccessKey
+            - DeleteAccessKey
+            - CreateLoginProfile
+            - UpdateLoginProfile
+            - DeleteLoginProfile
+            - DeactivateMFADevice
+            - EnableMFADevice
+            - UpdateAccountPasswordPolicy
+            - DeleteAccountPasswordPolicy
+            # S3 (bucket-level + account-level via s3control)
+            - PutBucketPolicy
+            - DeleteBucketPolicy
+            - PutBucketEncryption
+            - DeleteBucketEncryption
+            - PutBucketPublicAccessBlock
+            - DeleteBucketPublicAccessBlock
+            - PutBucketAcl
+            - PutBucketVersioning
+            - PutBucketLogging
+            - CreateBucket
+            - DeleteBucket
+            - PutPublicAccessBlock
+            - DeletePublicAccessBlock
+            # CloudTrail tampering
+            - StopLogging
+            - DeleteTrail
+            - UpdateTrail
+            - PutEventSelectors
+            # KMS
+            - DisableKey
+            - ScheduleKeyDeletion
+            - CancelKeyDeletion
+            - PutKeyPolicy
+            - CreateGrant
+            # RDS
+            - ModifyDBInstance
+            - ModifyDBCluster
+            - CreateDBInstance
+            - DeleteDBInstance
+            - DeleteDBCluster
+            - AuthorizeDBSecurityGroupIngress
+            - ModifyDBSnapshotAttribute
+            # Lambda
+            - AddPermission
+            - RemovePermission
+            - CreateFunctionUrlConfig
+            - UpdateFunctionUrlConfig
+            - DeleteFunctionUrlConfig
+      Targets:
+        - Id: ProwlerCloud
+          Arn: !GetAtt ProwlerEventsApiDestination.Arn
+          RoleArn: !GetAtt ProwlerEventsInvokeRole.Arn
+
 Metadata:
   AWS::CloudFormation::StackName: "Prowler"
   AWS::CloudFormation::Interface:
@@ -227,11 +405,14 @@ Metadata:
           - IAMPrincipal
           - EnableOrganizations
           - EnableS3Integration
+          - EnableEventsIntegration
       - Label:
           default: Optional
         Parameters:
           - S3IntegrationBucketName
           - S3IntegrationBucketAccountId
+          - ProwlerWebhookUrl
+          - ProwlerApiKey
 
 Outputs:
   ProwlerScanRoleArn:
@@ -239,3 +420,15 @@ Outputs:
     Value: !GetAtt ProwlerScan.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ProwlerScanRoleArn"
+  ProwlerEventsRuleArn:
+    Description: "ARN of the EventBridge rule forwarding events to Prowler Cloud"
+    Condition: EventsIntegrationEnabled
+    Value: !GetAtt ProwlerSecurityChangesRule.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerEventsRuleArn"
+  ProwlerEventsApiDestinationArn:
+    Description: "ARN of the EventBridge API Destination targeting Prowler Cloud"
+    Condition: EventsIntegrationEnabled
+    Value: !GetAtt ProwlerEventsApiDestination.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerEventsApiDestinationArn"
