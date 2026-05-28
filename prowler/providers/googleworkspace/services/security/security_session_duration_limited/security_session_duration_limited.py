@@ -45,9 +45,7 @@ class security_session_duration_limited(Check):
             try:
                 duration_seconds = int(duration_str.removesuffix("s"))
             except ValueError:
-                logger.error(
-                    f"Unparseable web session duration: {duration_str!r}"
-                )
+                logger.error(f"Unparseable web session duration: {duration_str!r}")
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Web session duration value {duration_str!r} is not parseable "
