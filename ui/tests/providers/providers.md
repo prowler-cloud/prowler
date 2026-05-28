@@ -3,8 +3,6 @@
 **Suite ID:** `PROVIDER-E2E`
 **Feature:** AWS Provider Management.
 
-**Scans View Note:** Provider tests that verify the initial scheduled scan switch to the Scans page `Scheduled` tab before checking the provider row.
-
 ---
 
 ## Test Case: `PROVIDER-E2E-001` - Add AWS Provider with Static Credentials
