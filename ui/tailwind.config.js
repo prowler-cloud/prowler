@@ -178,7 +178,8 @@ module.exports = {
               foreground: "#000000",
             },
             focus: "#6ee7b7",
-            background: "#09090B",
+            background: "#000000",
+            foreground: "#ffffff",
           },
         },
         light: {

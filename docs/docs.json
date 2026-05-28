@@ -124,8 +124,8 @@
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-import-findings",
-              "user-guide/tutorials/prowler-app-alerts",
+              "user-guide/tutorials/prowler-import-findings",
+              "user-guide/tutorials/prowler-alerts",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -584,6 +584,14 @@
     {
       "source": "/contact",
       "destination": "/support"
+    },
+    {
+      "source": "/user-guide/tutorials/prowler-app-import-findings",
+      "destination": "/user-guide/tutorials/prowler-import-findings"
+    },
+    {
+      "source": "/user-guide/tutorials/prowler-app-alerts",
+      "destination": "/user-guide/tutorials/prowler-alerts"
     }
   ]
 }
