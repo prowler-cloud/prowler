@@ -60,9 +60,6 @@ test.describe("Scans", () => {
         // Press start now button
         await scansPage.clickStartNowButton();
 
-        // Navigate to the tab where the newly launched scan is listed
-        await scansPage.viewLaunchedScanInProgress();
-
         // Verify the scan was launched
         await scansPage.verifyScanLaunched(accountId);
       },

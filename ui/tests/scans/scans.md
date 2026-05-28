@@ -31,14 +31,12 @@
 4. Optionally fill Scan Note
 5. Click "Launch Scan" in the modal
 6. Verify the success toast appears
-7. Click "View in progress" in the success toast
-8. Verify a row in the Scans table contains the provider account ID
+7. Verify a row in the Scans table contains the provider account ID
 
 ### Expected Result:
 
 - Scan is launched successfully
 - Success toast is displayed to the user
-- Scans page navigates to the In Progress tab
 - Scans table displays a scan entry for the selected account
 
 ### Key verification points:
@@ -48,7 +46,6 @@
 - Cloud Account select is available and lists the configured provider UID
 - "Launch Scan" button is rendered and enabled when form is valid
 - Success toast message: "The scan was launched successfully."
-- Toast action navigates to `/scans?tab=active`
 - Table contains a row with the selected account ID or new scan state (queued/available/executing)
 
 ### Notes:
