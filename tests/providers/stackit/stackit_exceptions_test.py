@@ -16,14 +16,14 @@ class Test_StackIT_Exception_Catalog_Immutability:
         return StackITBaseException.STACKIT_ERROR_CODES[(code, class_name)]["message"]
 
     def test_message_override_does_not_mutate_class_catalog(self):
-        default = self._default_message(10002, "StackITInvalidTokenError")
+        default = self._default_message(16002, "StackITInvalidTokenError")
         StackITInvalidTokenError(message="instance-specific message")
-        assert self._default_message(10002, "StackITInvalidTokenError") == default
+        assert self._default_message(16002, "StackITInvalidTokenError") == default
 
     def test_sequential_overrides_do_not_leak(self):
         """An override on instance A must not affect instance B."""
-        default = self._default_message(10002, "StackITInvalidTokenError")
+        default = self._default_message(16002, "StackITInvalidTokenError")
         StackITInvalidTokenError(message="A")
         StackITInvalidTokenError(message="B")
-        second_default = self._default_message(10002, "StackITInvalidTokenError")
+        second_default = self._default_message(16002, "StackITInvalidTokenError")
         assert second_default == default

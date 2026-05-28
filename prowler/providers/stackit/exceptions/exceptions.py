@@ -1,32 +1,32 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 10000 to 10999 are reserved for StackIT exceptions
+# Exceptions codes from 16000 to 16999 are reserved for StackIT exceptions
 class StackITBaseException(ProwlerException):
     """Base class for StackIT Errors."""
 
     STACKIT_ERROR_CODES = {
-        (10001, "StackITNonExistentTokenError"): {
+        (16001, "StackITNonExistentTokenError"): {
             "message": "A StackIT service account key file is required to authenticate against StackIT",
             "remediation": "Set --stackit-service-account-key-path or the STACKIT_SERVICE_ACCOUNT_KEY_PATH environment variable to a valid service account key JSON file.",
         },
-        (10002, "StackITInvalidTokenError"): {
+        (16002, "StackITInvalidTokenError"): {
             "message": "StackIT service account key was rejected or lacks permissions",
             "remediation": "Verify the service account key file is current, has not been revoked, and that the service account has the required roles on the project.",
         },
-        (10003, "StackITSetUpSessionError"): {
+        (16003, "StackITSetUpSessionError"): {
             "message": "Error setting up StackIT session",
             "remediation": "Check the session setup and ensure the StackIT SDK is properly configured.",
         },
-        (10004, "StackITSetUpIdentityError"): {
+        (16004, "StackITSetUpIdentityError"): {
             "message": "StackIT identity setup error due to bad credentials",
             "remediation": "Check credentials and ensure they are properly set up for StackIT.",
         },
-        (10005, "StackITInvalidProjectIdError"): {
+        (16005, "StackITInvalidProjectIdError"): {
             "message": "The provided project ID is not valid or not accessible",
             "remediation": "Check the project ID and ensure you have access to it with the provided credentials.",
         },
-        (10006, "StackITAPIError"): {
+        (16006, "StackITAPIError"): {
             "message": "Error calling StackIT API",
             "remediation": "Check the API endpoint and ensure the service is accessible. Verify network connectivity.",
         },
@@ -60,40 +60,40 @@ class StackITCredentialsError(StackITBaseException):
 class StackITNonExistentTokenError(StackITCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            10001, file=file, original_exception=original_exception, message=message
+            16001, file=file, original_exception=original_exception, message=message
         )
 
 
 class StackITInvalidTokenError(StackITCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            10002, file=file, original_exception=original_exception, message=message
+            16002, file=file, original_exception=original_exception, message=message
         )
 
 
 class StackITSetUpSessionError(StackITCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            10003, file=file, original_exception=original_exception, message=message
+            16003, file=file, original_exception=original_exception, message=message
         )
 
 
 class StackITSetUpIdentityError(StackITCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            10004, file=file, original_exception=original_exception, message=message
+            16004, file=file, original_exception=original_exception, message=message
         )
 
 
 class StackITInvalidProjectIdError(StackITCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            10005, file=file, original_exception=original_exception, message=message
+            16005, file=file, original_exception=original_exception, message=message
         )
 
 
 class StackITAPIError(StackITBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            10006, file=file, original_exception=original_exception, message=message
+            16006, file=file, original_exception=original_exception, message=message
         )
