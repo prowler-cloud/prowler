@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_user_recovery_enabled",
+  "CheckTitle": "User account recovery is enabled",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level policy **enables self-service account recovery for non-Super Admin users**. When enabled, users can recover access to their accounts if their password is forgotten, reducing helpdesk burden and downtime.",
+  "Risk": "When user account recovery is disabled, users who lose access to their accounts must **contact an administrator** to regain access. This increases helpdesk burden, extends downtime, and may lead to users adopting **insecure workarounds** like sharing credentials.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/users/set-up-password-recovery-for-users",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Authentication** > **Account recovery**\n3. Select **User account recovery**\n4. Check **Allow users and non-super admins to recover their account**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **user account recovery** to allow non-admin users to regain access to their accounts through self-service, reducing helpdesk burden and user downtime.",
+      "Url": "https://hub.prowler.com/check/security_user_recovery_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_super_admin_recovery_disabled"
+  ],
+  "Notes": ""
+}

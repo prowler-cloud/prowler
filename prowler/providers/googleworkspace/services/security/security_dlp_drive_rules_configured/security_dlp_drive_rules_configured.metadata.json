@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_dlp_drive_rules_configured",
+  "CheckTitle": "DLP policies for Google Drive are configured",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "At least one active **Data Loss Prevention (DLP) rule** targeting Google Drive file sharing is configured. DLP policies detect and prevent users from sharing sensitive information such as credit card numbers, identity numbers, and other regulated data through Drive.",
+  "Risk": "Without DLP policies, users can **freely share files containing sensitive information** through Google Drive without any detection or prevention controls. This increases the risk of **accidental data exposure, regulatory non-compliance**, and data breaches through oversharing.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/security/about-dlp",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Access and Data Control** > **Data protection**\n3. Click **Manage Rules**\n4. Click **ADD RULE** and select **New rule** or **New rule from template**\n5. Set the rule name and scope\n6. Set triggers by checking **File modified** under **Google Drive**\n7. Add conditions (Field, Comparison Operator, Content to match)\n8. Under **Actions**, select the desired action for each incident\n9. Under **Alerting**, set severity and select **Send to alert center**\n10. Click **Create**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure **DLP policies for Google Drive** to detect and prevent sharing of sensitive information such as credit card numbers, identity numbers, and other regulated data.",
+      "Url": "https://hub.prowler.com/check/security_dlp_drive_rules_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
