@@ -53,6 +53,7 @@
 
 ### Notes:
 
+- The scans view is tabbed (In Progress / Completed / Scheduled) and `/scans` defaults to Completed. Each empty tab renders an empty-state card instead of a table, so page-loaded checks assert the tabs shell, not the table.
 - The table may take a short time to reflect the new scan; assertions look for a row containing the account ID.
 - Provider cleanup performed before each test to ensure clean state
 - Tests should run serially to avoid state conflicts.

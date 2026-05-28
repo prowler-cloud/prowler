@@ -5,6 +5,7 @@ import { BasePage } from "../base-page";
 export class ScansPage extends BasePage {
   // Main content elements
   readonly scanTable: Locator;
+  readonly scanTabs: Locator;
 
   // Scan provider selection elements
   readonly launchScanButton: Locator;
@@ -68,11 +69,20 @@ export class ScansPage extends BasePage {
 
     // Main content elements
     this.scanTable = page.locator("table");
+    // The scans view renders each tab with its own empty state, so a <table>
+    // is NOT guaranteed (an empty tab shows a NoScansEmptyState card instead).
+    // The tabs group is always present once providers exist, so it is the
+    // reliable "page loaded" signal regardless of the active tab's contents.
+    this.scanTabs = page.getByRole("group", { name: /scan tabs/i });
   }
 
   // Navigation methods
   async goto(): Promise<void> {
     await super.goto("/scans");
+  }
+
+  async gotoTab(tab: "active" | "completed" | "scheduled"): Promise<void> {
+    await super.goto(`/scans?tab=${tab}`);
   }
 
   async verifyPageLoaded(): Promise<void> {
@@ -82,7 +92,9 @@ export class ScansPage extends BasePage {
     }
 
     await expect(this.page).toHaveTitle(/Prowler/);
-    await expect(this.scanTable).toBeVisible();
+    // Assert the always-present tabs shell rather than the table, which only
+    // renders when the active tab actually has scans (empty tabs show a card).
+    await expect(this.scanTabs).toBeVisible();
   }
 
   async selectProviderByUID(uid: string): Promise<void> {
@@ -159,8 +171,10 @@ export class ScansPage extends BasePage {
     // 1. The provider exists in the table (by account ID/UID)
     // 2. The scan name field contains "scheduled scan"
 
-    // Scan Table exists
-    await expect(this.scanTable).toBeVisible();
+    // Scheduled scans live in the Scheduled tab; /scans defaults to Completed,
+    // which would show an empty-state card (no table) in a fresh environment.
+    await this.gotoTab("scheduled");
+    await this.verifyPageLoaded();
 
     // Find a row that contains the account ID (provider UID in Provider column)
     // Note: Use a more specific locator strategy if possible in the future
