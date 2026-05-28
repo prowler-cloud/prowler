@@ -21,7 +21,7 @@ const badgeVariants = cva(
         success:
           "border-transparent bg-bg-pass-secondary text-text-success-primary",
         warning:
-          "border-bg-warning/30 bg-bg-warning-secondary text-text-warning-primary",
+          "border-bg-warning/30 bg-bg-warning-secondary/20 text-text-warning-primary",
         error:
           "border-transparent bg-bg-fail-secondary text-text-error-primary",
       },
