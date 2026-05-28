@@ -9,6 +9,7 @@ import {
   type ScanProps,
   type ScanState,
   type ScanTrigger,
+  type SearchParamsProps,
 } from "@/types";
 
 export const SCAN_STATE_FILTER_KEYS = [
@@ -67,6 +68,29 @@ export function getScanTriggerFilterOptions(
 
 export function isScanStateFilterKey(key: string): boolean {
   return SCAN_STATE_FILTER_KEYS.some((filterKey) => filterKey === key);
+}
+
+function isSearchParamValue(value: unknown): value is string | string[] {
+  return typeof value === "string" || Array.isArray(value);
+}
+
+export function getScanJobsUserFilters(
+  searchParams: SearchParamsProps,
+): Record<string, string | string[]> {
+  return Object.entries(searchParams).reduce<Record<string, string | string[]>>(
+    (filters, [key, value]) => {
+      if (
+        key.startsWith("filter[") &&
+        !isScanStateFilterKey(key) &&
+        isSearchParamValue(value)
+      ) {
+        filters[key] = value;
+      }
+
+      return filters;
+    },
+    {},
+  );
 }
 
 function parseStateFilter(value?: string | string[]): ScanState[] {

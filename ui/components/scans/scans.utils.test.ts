@@ -13,6 +13,7 @@ import {
   getScanFindingsSummary,
   getScanJobsTab,
   getScanJobsTabFilters,
+  getScanJobsUserFilters,
   getScanScheduleLabel,
   getScanStatusLabel,
   getScanTriggerFilterOptions,
@@ -45,8 +46,8 @@ const makeScan = (
 });
 
 describe("scans.utils", () => {
-  it("falls back to active tab for unknown tab values", () => {
-    expect(getScanJobsTab("unknown")).toBe(SCAN_JOBS_TAB.ACTIVE);
+  it("falls back to completed tab for unknown tab values", () => {
+    expect(getScanJobsTab("unknown")).toBe(SCAN_JOBS_TAB.COMPLETED);
     expect(getScanJobsTab(SCAN_JOBS_TAB.COMPLETED)).toBe(
       SCAN_JOBS_TAB.COMPLETED,
     );
@@ -75,6 +76,21 @@ describe("scans.utils", () => {
     });
     expect(getScanJobsTabFilters(SCAN_JOBS_TAB.ACTIVE, "failed")).toEqual({
       "filter[state__in]": "available,executing",
+    });
+  });
+
+  it("keeps user filters while excluding scan state filters", () => {
+    expect(
+      getScanJobsUserFilters({
+        tab: "completed",
+        page: "2",
+        "filter[provider_uid]": "123456789012",
+        "filter[state__in]": "failed,cancelled",
+        "filter[search]": "production",
+      }),
+    ).toEqual({
+      "filter[provider_uid]": "123456789012",
+      "filter[search]": "production",
     });
   });
 

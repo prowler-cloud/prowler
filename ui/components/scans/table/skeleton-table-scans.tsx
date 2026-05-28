@@ -1,5 +1,9 @@
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import {
+  DEFAULT_SCAN_JOBS_TAB,
+  SCAN_JOBS_TAB,
+  type ScanJobsTab,
+} from "@/types";
 
 const AccountCellSkeleton = () => (
   <td className="px-3 py-4">
@@ -174,7 +178,7 @@ interface SkeletonTableScansProps {
 }
 
 export const SkeletonTableScans = ({
-  tab = SCAN_JOBS_TAB.ACTIVE,
+  tab = DEFAULT_SCAN_JOBS_TAB,
   rows = 6,
 }: SkeletonTableScansProps = {}) => {
   const columns = COLUMNS_BY_TAB[tab];
