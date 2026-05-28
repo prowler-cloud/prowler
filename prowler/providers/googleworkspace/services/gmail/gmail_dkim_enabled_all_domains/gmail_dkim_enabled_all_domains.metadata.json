@@ -1,0 +1,41 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_dkim_enabled_all_domains",
+  "CheckTitle": "DKIM ensures email authenticity and integrity for all mail-enabled domains",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "DKIM (DomainKeys Identified Mail) adds a **cryptographic signature** to outgoing email headers, allowing receiving servers to verify that messages originate from the domain and were not altered in transit.\n\nThis check evaluates whether every mail-enabled domain in the Google Workspace tenant has a DKIM signing key generated and authentication started.",
+  "Risk": "Without DKIM, attackers can more easily **spoof the organization's domains**, increasing the risk of **phishing, business email compromise, and reduced mail deliverability**. Receiving servers that require DKIM may reject or flag legitimate messages, harming trusted communication.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/174124",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **Authenticate email**\n4. Select the domain to configure\n5. Click **Generate new record** (select 2048-bit key length if your DNS host supports it)\n6. Add the generated TXT record to your domain's DNS configuration at the selector shown (default: `google._domainkey`)\n7. Wait for DNS propagation, then click **Start authentication**\n8. Repeat for every mail-enabled domain and secondary domain",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Generate and activate a DKIM signing key for every mail-enabled domain. Use a **2048-bit key** where the DNS host supports it to ensure stronger cryptographic protection against message forgery.",
+      "Url": "https://hub.prowler.com/check/gmail_dkim_enabled_all_domains"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_domain_spoofing_protection_enabled",
+    "gmail_inbound_domain_spoofing_protection_enabled",
+    "gmail_unauthenticated_email_protection_enabled"
+  ],
+  "Notes": "This check is Manual because no public Google Admin SDK/API endpoint exposes the Gmail DKIM authentication status. Verification requires inspecting the Admin Console and performing a DNS TXT record lookup (e.g., dig TXT google._domainkey.<domain>)."
+}

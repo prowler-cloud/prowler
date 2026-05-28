@@ -600,7 +600,9 @@
     {
       "Id": "GWS.GMAIL.2.1",
       "Description": "DKIM SHOULD be enabled for all domains",
-      "Checks": [],
+      "Checks": [
+        "gmail_dkim_enabled_all_domains"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
