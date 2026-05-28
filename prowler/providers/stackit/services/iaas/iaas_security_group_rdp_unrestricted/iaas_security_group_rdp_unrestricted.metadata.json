@@ -4,30 +4,30 @@
   "CheckTitle": "IaaS security groups do not allow unrestricted RDP access",
   "CheckType": [],
   "ServiceName": "iaas",
-  "SubServiceName": "security-group",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Security groups should not allow unrestricted RDP access (port 3389) from the public internet (0.0.0.0/0 or ::/0). Unrestricted RDP access increases the attack surface and can lead to unauthorized access, brute force attacks, and potential system compromise.",
-  "Risk": "Allowing unrestricted RDP access from the internet exposes Windows servers to potential unauthorized access attempts, brute force attacks, ransomware, and security breaches. Attackers can exploit weak credentials or vulnerabilities.",
+  "Description": "Security groups should not allow unrestricted RDP access (port `3389`) from the public internet (`0.0.0.0/0` or `::/0`). Unrestricted RDP access increases the attack surface and can lead to **unauthorized access**, **brute force attacks**, and potential system compromise.",
+  "Risk": "Allowing unrestricted RDP access from the internet exposes Windows servers to potential **unauthorized access attempts**, **brute force attacks**, **ransomware**, and security breaches. Attackers can exploit weak credentials or vulnerabilities.",
   "RelatedUrl": "",
-  "Remediation": {
-    "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.stackit.cloud/products/network/core-networking/security-groups/how-tos/create-and-manage-security-groups-and-rules/",
-      "Terraform": ""
-    },
-    "Recommendation": {
-      "Text": "Restrict RDP access to specific IP addresses or ranges that require administrative access. Use bastion hosts, VPN connections, or Azure Bastion for secure remote access instead of exposing RDP directly to the internet.",
-      "Url": "https://hub.prowler.com/check/iaas_security_group_rdp_unrestricted"
-    }
-  },
   "AdditionalURLs": [
     "https://docs.stackit.cloud/products/network/core-networking/security-groups/",
     "https://docs.stackit.cloud/products/network/core-networking/security-groups/how-tos/create-and-manage-security-groups-and-rules/"
   ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the StackIT Portal open Networking > Security Groups and select the affected security group. 2. Locate the ingress rule that allows TCP port 3389 from 0.0.0.0/0 or ::/0. 3. Delete that rule or edit its source to the specific IP ranges that require RDP access. 4. If administration from anywhere is required, expose RDP only through a bastion host or VPN instead of the public internet. 5. Re-run Prowler to confirm the finding is resolved.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "**Restrict RDP access** to specific IP addresses or ranges that require administrative access. Use **bastion hosts** or **VPN connections** for secure remote access instead of exposing RDP directly to the internet.",
+      "Url": "https://hub.prowler.com/check/iaas_security_group_rdp_unrestricted"
+    }
+  },
   "Categories": [
     "internet-exposed"
   ],

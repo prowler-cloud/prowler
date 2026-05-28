@@ -4,30 +4,30 @@
   "CheckTitle": "IaaS security groups do not allow unrestricted access to all ports",
   "CheckType": [],
   "ServiceName": "iaas",
-  "SubServiceName": "security-group",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Security groups should not allow unrestricted access to all ports from the public internet (0.0.0.0/0 or ::/0). This includes rules with no port range specified or rules covering the full port range (0-65535 or 1-65535). Allowing all ports creates a security risk by exposing all services running on the instances to potential attacks.",
-  "Risk": "Allowing unrestricted access to all ports from the internet exposes all services and applications to potential attacks, unauthorized access, and security breaches. This effectively bypasses the security group's purpose as a firewall.",
+  "Description": "Security groups should not allow unrestricted access to all ports from the public internet (`0.0.0.0/0` or `::/0`). This includes rules with no port range specified or rules covering the full port range (`0-65535` or `1-65535`). Allowing all ports **exposes every service** running on the instances to potential attacks.",
+  "Risk": "Allowing unrestricted access to all ports from the internet exposes **all services and applications** to potential attacks, **unauthorized access**, and security breaches. This effectively **bypasses the security group's purpose** as a firewall.",
   "RelatedUrl": "",
-  "Remediation": {
-    "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.stackit.cloud/products/network/core-networking/security-groups/how-tos/create-and-manage-security-groups-and-rules/",
-      "Terraform": ""
-    },
-    "Recommendation": {
-      "Text": "Follow the principle of least privilege by only allowing specific ports that are required. Create granular rules for each service and restrict access to trusted IP addresses or ranges.",
-      "Url": "https://hub.prowler.com/check/iaas_security_group_all_traffic_unrestricted"
-    }
-  },
   "AdditionalURLs": [
     "https://docs.stackit.cloud/products/network/core-networking/security-groups/",
     "https://docs.stackit.cloud/products/network/core-networking/security-groups/how-tos/create-and-manage-security-groups-and-rules/"
   ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the StackIT Portal open Networking > Security Groups and select the affected security group. 2. Locate the ingress rule that allows all ports and protocols from 0.0.0.0/0 or ::/0. 3. Delete the broad rule and replace it with granular rules that open only the specific ports each service needs. 4. Restrict the source of every rule to trusted IP ranges following least privilege. 5. Re-run Prowler to confirm the finding is resolved.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Follow the **principle of least privilege** by only allowing the specific ports that are required. Create **granular rules** for each service and restrict access to trusted IP addresses or ranges.",
+      "Url": "https://hub.prowler.com/check/iaas_security_group_all_traffic_unrestricted"
+    }
+  },
   "Categories": [
     "internet-exposed"
   ],
