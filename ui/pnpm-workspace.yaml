@@ -33,7 +33,14 @@ allowBuilds:
 # --- Level 3: Trust Policy + Exotic Subdeps ---
 # Fail when a package's trust evidence is downgraded (e.g., new publisher).
 trustPolicy: no-downgrade
-trustPolicyExclude: []
+trustPolicyExclude:
+  # next-auth: real beta releases currently do not publish provenance, while an
+  # earlier one-off manual test release did. Keep this scoped to the exact
+  # reviewed version so a bump fails until re-reviewed.
+  - "next-auth@5.0.0-beta.30"
+  # semver: legacy 6.x releases predate modern npm provenance. Keep this scoped
+  # to the exact transitive version so a bump fails until re-reviewed.
+  - "semver@6.3.1"
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true

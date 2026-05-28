@@ -16,7 +16,7 @@ deps = "uv sync"
 [[pre-start]]
 reminder = "echo '>> Reminder: activate the venv in this shell with: source .venv/bin/activate'"
 
-# Background: pnpm install runs while you start working.
-# Tail logs via `wt config state logs`.
+# Background: avoid running UI package lifecycle scripts before the branch is reviewed.
+# Run `cd ui && pnpm install` explicitly when UI dependencies are needed.
 [post-start]
-ui = "cd ui && pnpm install"
+ui = "echo '>> UI dependencies were not installed automatically. Run: cd ui && pnpm install'"

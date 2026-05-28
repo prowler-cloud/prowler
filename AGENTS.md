@@ -48,6 +48,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-commit` | Professional commits (conventional-commits) | [SKILL.md](skills/prowler-commit/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
+| `prowler-npm-security-audit` | npm/pnpm supply-chain audit patterns | [SKILL.md](skills/prowler-npm-security-audit/SKILL.md) |
 | `django-migration-psql` | Django migration best practices for PostgreSQL | [SKILL.md](skills/django-migration-psql/SKILL.md) |
 | `postgresql-indexing` | PostgreSQL indexing, EXPLAIN, monitoring, maintenance | [SKILL.md](skills/postgresql-indexing/SKILL.md) |
 | `prowler-attack-paths-query` | Create Attack Paths openCypher queries | [SKILL.md](skills/prowler-attack-paths-query/SKILL.md) |
@@ -70,6 +71,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-16` |
 | Auditing check-to-requirement mappings as a cloud auditor | `prowler-compliance` |
+| Auditing npm/pnpm package security | `prowler-npm-security-audit` |
 | Building AI chat features | `ai-sdk-5` |
 | Committing changes | `prowler-commit` |
 | Configuring MCP servers in agentic workflows | `gh-aw` |
@@ -109,6 +111,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
+| Reviewing npm supply-chain policy | `prowler-npm-security-audit` |
 | Running makemigrations or pgmakemigrations | `django-migration-psql` |
 | Syncing compliance framework with upstream catalog | `prowler-compliance` |
 | Testing RLS tenant isolation | `prowler-test-api` |
@@ -126,6 +129,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Using Zustand stores | `zustand-5` |
 | Working on MCP server tools | `prowler-mcp` |
 | Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
+| Working on npm package, lockfile, or pnpm configuration | `prowler-npm-security-audit` |
 | Working on task | `tdd` |
 | Working with Prowler UI test helpers/pages | `prowler-test-ui` |
 | Working with Tailwind classes | `tailwind-4` |
