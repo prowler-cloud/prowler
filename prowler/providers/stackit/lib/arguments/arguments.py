@@ -1,5 +1,7 @@
 from prowler.providers.stackit.stackit_provider import StackitProvider
 
+SENSITIVE_ARGUMENTS = frozenset({"--stackit-service-account-key"})
+
 
 def init_parser(self):
     """Init the StackIT Provider CLI parser"""

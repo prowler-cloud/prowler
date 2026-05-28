@@ -571,57 +571,47 @@ class StackitProvider(Provider):
                 otherwise Connection(error=Exception or custom error).
         """
         try:
-            # 1) Validate arguments using the same static checks as provider init.
-            try:
-                StackitProvider.validate_arguments(
-                    project_id, service_account_key_path, service_account_key
+            StackitProvider.validate_arguments(
+                project_id, service_account_key_path, service_account_key
+            )
+
+            with suppress_stderr():
+                config = StackitProvider._build_sdk_configuration(
+                    service_account_key_path,
+                    service_account_key,
                 )
-            except Exception as validation_error:
-                logger.error(f"StackIT test_connection error: {validation_error}")
-                if raise_on_exception:
-                    raise validation_error
-                return Connection(error=validation_error)
+                client = ResourceManagerDefaultApi(config)
+                client.get_project(id=project_id)
 
-            # 2) Test connection with the same Resource Manager lookup used
-            # during provider identity initialization.
-            try:
-                with suppress_stderr():
-                    config = StackitProvider._build_sdk_configuration(
-                        service_account_key_path,
-                        service_account_key,
-                    )
-                    client = ResourceManagerDefaultApi(config)
-                    client.get_project(id=project_id)
-
-                logger.info(
-                    "StackIT test_connection: Successfully connected using StackIT Resource Manager."
-                )
-                return Connection(is_connected=True)
-            except Exception as test_error:
-                try:
-                    StackitProvider.handle_api_error(test_error)
-                    if raise_on_exception:
-                        raise test_error
-                    return Connection(error=test_error)
-                except StackITInvalidTokenError as auth_error:
-                    if raise_on_exception:
-                        raise auth_error
-                    return Connection(error=auth_error)
-                except Exception as api_error:
-                    error_msg = (
-                        "Failed to connect to StackIT using Resource Manager: "
-                        f"{str(api_error)}"
-                    )
-                    logger.error(error_msg)
-                    connection_error = StackITAPIError(
-                        original_exception=api_error, message=error_msg
-                    )
-                    if raise_on_exception:
-                        raise connection_error
-                    return Connection(error=connection_error)
-
-        except Exception as e:
-            logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
+            logger.info(
+                "StackIT test_connection: Successfully connected using StackIT Resource Manager."
+            )
+            return Connection(is_connected=True)
+        except (StackITNonExistentTokenError, StackITInvalidProjectIdError) as error:
+            logger.error(f"StackIT test_connection error: {error}")
             if raise_on_exception:
-                raise e
-            return Connection(error=e)
+                raise error
+            return Connection(error=error)
+        except Exception as test_error:
+            try:
+                StackitProvider.handle_api_error(test_error)
+            except StackITInvalidTokenError as auth_error:
+                if raise_on_exception:
+                    raise auth_error
+                return Connection(error=auth_error)
+            except Exception as api_error:
+                error_msg = (
+                    "Failed to connect to StackIT using Resource Manager: "
+                    f"{str(api_error)}"
+                )
+                logger.error(error_msg)
+                connection_error = StackITAPIError(
+                    original_exception=api_error, message=error_msg
+                )
+                if raise_on_exception:
+                    raise connection_error
+                return Connection(error=connection_error)
+
+            if raise_on_exception:
+                raise test_error
+            return Connection(error=test_error)

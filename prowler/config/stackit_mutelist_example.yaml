@@ -13,8 +13,8 @@ Mutelist:
           Regions:
             - "*"
           Resources:
-            - "bucket_name_1"
-            - "bucket_name_2"
+            - "sg-production-ssh"
+            - "sg-development-rdp"
           Tags:
             - "environment=dev"
     "project_id_2":
