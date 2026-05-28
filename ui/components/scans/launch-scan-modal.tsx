@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CloudCog, Rocket } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -11,10 +12,12 @@ import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts
 import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { FormButtons } from "@/components/ui/form";
-import { toast } from "@/components/ui/toast";
+import { toast, ToastAction } from "@/components/ui/toast";
+import { SCAN_JOBS_TAB } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import { scanAliasSchema } from "./scan-alias-validation";
+import { getScanJobsTab } from "./scans.utils";
 
 const launchScanSchema = z.object({
   providerId: z.string().min(1, "Select a provider to launch a scan."),
@@ -36,12 +39,15 @@ interface LaunchScanFormProps {
 
 function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const form = useForm<LaunchScanFormValues>({
     resolver: zodResolver(launchScanSchema),
     defaultValues: { providerId: "", scanAlias: "" },
   });
 
   const providerId = form.watch("providerId");
+  const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
+  const shouldShowActiveTabAction = activeTab !== SCAN_JOBS_TAB.ACTIVE;
   const disconnectedProviderIds = providers
     .filter((provider) => provider.attributes.connection.connected !== true)
     .map((provider) => provider.id);
@@ -71,6 +77,11 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
     toast({
       title: "Scan launched",
       description: "The scan was launched successfully.",
+      action: shouldShowActiveTabAction ? (
+        <ToastAction altText="View scan in progress" asChild>
+          <Link href="/scans?tab=active">View scan</Link>
+        </ToastAction>
+      ) : undefined,
     });
     onClose();
     router.refresh();

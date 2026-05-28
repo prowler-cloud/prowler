@@ -1,16 +1,21 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { refreshMock, scanOnDemandMock } = vi.hoisted(() => ({
-  refreshMock: vi.fn(),
-  scanOnDemandMock: vi.fn(),
-}));
+const { refreshMock, scanOnDemandMock, searchParamsValue, toastMock } =
+  vi.hoisted(() => ({
+    refreshMock: vi.fn(),
+    scanOnDemandMock: vi.fn(),
+    searchParamsValue: { current: "" },
+    toastMock: vi.fn(),
+  }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: refreshMock,
   }),
+  useSearchParams: () => new URLSearchParams(searchParamsValue.current),
 }));
 
 vi.mock("@/actions/scans", () => ({
@@ -18,7 +23,10 @@ vi.mock("@/actions/scans", () => ({
 }));
 
 vi.mock("@/components/ui/toast", () => ({
-  toast: vi.fn(),
+  ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
+    <button {...props}>{children}</button>
+  ),
+  toast: toastMock,
 }));
 
 vi.mock("@/components/shadcn/modal", () => ({
@@ -144,6 +152,7 @@ const disconnectedProvider = {
 describe("LaunchScanModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    searchParamsValue.current = "";
     scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
   });
 
@@ -204,6 +213,45 @@ describe("LaunchScanModal", () => {
     expect(formData.get("scanName")).toBe(alias);
   });
 
+  it("adds a toast action to view the scan in progress when another tab is active", async () => {
+    const user = userEvent.setup();
+    searchParamsValue.current =
+      "tab=completed&filter%5Bstate__in%5D=failed&page=3";
+
+    render(
+      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+    await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+    await waitFor(() => expect(toastMock).toHaveBeenCalled());
+
+    const toastPayload = toastMock.mock.calls[0]?.[0];
+    expect(toastPayload.action).toBeDefined();
+    expect(toastPayload.action.props.children.props.href).toBe(
+      "/scans?tab=active",
+    );
+    expect(toastPayload.action.props.children.props.children).toBe("View scan");
+  });
+
+  it("does not add a toast action when the in progress tab is active", async () => {
+    const user = userEvent.setup();
+    searchParamsValue.current = "tab=active";
+
+    render(
+      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+    await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+    await waitFor(() => expect(toastMock).toHaveBeenCalled());
+
+    const toastPayload = toastMock.mock.calls[0]?.[0];
+    expect(toastPayload.action).toBeUndefined();
+  });
+
   it("rejects scan aliases over the API limit of 100 characters", async () => {
     const user = userEvent.setup();
 
@@ -233,7 +281,6 @@ describe("LaunchScanModal", () => {
   it("surfaces JSON:API errors from scanOnDemand and skips the success toast", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
-    const { toast } = await import("@/components/ui/toast");
     scanOnDemandMock.mockResolvedValueOnce({
       errors: [{ detail: "Provider already has a scan in progress" }],
     });
@@ -252,7 +299,7 @@ describe("LaunchScanModal", () => {
     expect(
       await screen.findByText("Provider already has a scan in progress"),
     ).toBeInTheDocument();
-    expect(toast).not.toHaveBeenCalled();
+    expect(toastMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
