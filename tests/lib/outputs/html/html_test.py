@@ -962,6 +962,43 @@ class TestHTML:
 
         assert summary == image_list_html_assessment_summary
 
+    def test_stackit_get_assessment_summary(self):
+        """Test StackIT HTML assessment summary shows the project ID."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "stackit"
+        provider.identity.project_id = "f033ea6d-8697-40eb-a60e-acfa9128480d"
+        provider.identity.project_name = "ProwlerDev"
+        provider.identity.audited_regions = {"eu01", "eu02"}
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "StackIT Assessment Summary" in summary
+        assert "StackIT Credentials" in summary
+        assert "<b>Project ID:</b> f033ea6d-8697-40eb-a60e-acfa9128480d" in summary
+        assert "<b>Project Name:</b> ProwlerDev" in summary
+        assert "<b>Regions:</b> eu01, eu02" in summary
+        assert "<b>Authentication Type:</b> Service Account Key" in summary
+
+    def test_stackit_get_assessment_summary_without_project_name(self):
+        """Project ID is always shown; the Project Name line is omitted when
+        the service account cannot read it from Resource Manager."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "stackit"
+        provider.identity.project_id = "f033ea6d-8697-40eb-a60e-acfa9128480d"
+        provider.identity.project_name = ""
+        provider.identity.audited_regions = {"eu01"}
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "<b>Project ID:</b> f033ea6d-8697-40eb-a60e-acfa9128480d" in summary
+        assert "<b>Project Name:</b>" not in summary
+
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""
         test_text = "This is **bold text** and this is **also bold**"
