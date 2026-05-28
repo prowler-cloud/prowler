@@ -171,9 +171,13 @@ export class ScansPage extends BasePage {
     // 1. The provider exists in the table (by account ID/UID)
     // 2. The scan name field contains "scheduled scan"
 
-    // Scheduled scans live in the Scheduled tab; /scans defaults to Completed,
-    // which would show an empty-state card (no table) in a fresh environment.
-    await this.gotoTab("scheduled");
+    // Adding a provider first creates a scheduled-trigger scan in the
+    // AVAILABLE state (the immediate first run), which the tabbed view lists
+    // under "In Progress" — not "Scheduled" (that tab only shows state=scheduled,
+    // a later run created asynchronously). /scans defaults to Completed, which
+    // would show an empty-state card (no table) in a fresh environment, so
+    // navigate to the active tab where this row actually appears.
+    await this.gotoTab("active");
     await this.verifyPageLoaded();
 
     // Find a row that contains the account ID (provider UID in Provider column)
