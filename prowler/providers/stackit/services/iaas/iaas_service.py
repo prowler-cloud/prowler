@@ -193,7 +193,10 @@ class IaaSService:
                 project_id=self.project_id,
                 region=region,
                 rules=rules,
-                in_use=sg_id in self.in_use_sg_ids,
+                # in_use_sg_ids is normalized to str; the SDK returns the NIC
+                # security group references as uuid.UUID while the security
+                # group id is a str, so compare on the string form.
+                in_use=str(sg_id) in self.in_use_sg_ids,
             )
             self.security_groups.append(security_group)
 
@@ -347,18 +350,24 @@ class IaaSService:
 
         for nic in nics_list:
             try:
-                # Extract security groups from NIC
+                # Extract security groups from NIC. The SDK model exposes them
+                # as ``security_groups``; a raw dict uses the camelCase
+                # ``securityGroups`` key (falling back to snake_case).
                 if hasattr(nic, "security_groups"):
                     sg_list = nic.security_groups
                 elif isinstance(nic, dict):
-                    sg_list = nic.get("security_groups", [])
+                    sg_list = nic.get("securityGroups", nic.get("security_groups", []))
                 else:
                     continue
 
                 if sg_list:
                     for sg_id in sg_list:
                         if sg_id:
-                            used_sg_ids.add(sg_id)
+                            # The SDK returns these references as uuid.UUID
+                            # while the security group id is a str; normalize
+                            # to str so the membership test in
+                            # _list_security_groups matches.
+                            used_sg_ids.add(str(sg_id))
 
             except Exception as e:
                 logger.debug(f"Error extracting security groups from NIC: {e}")

@@ -341,6 +341,70 @@ class Test_IaaS_Service_Extract_Items:
         assert not callable(result)
 
 
+class Test_IaaS_Service_Used_Security_Group_Ids:
+    """Cover ``_get_used_security_group_ids``. The SDK returns NIC security
+    group references as ``uuid.UUID`` while a security group id is a ``str``;
+    they must be normalized to ``str`` so the in-use membership test matches.
+    """
+
+    def _service(self):
+        return object.__new__(IaaSService)
+
+    def test_uuid_references_are_normalized_to_str(self):
+        from uuid import UUID
+
+        sg_uuid = UUID("2040c1fa-72a6-47bc-a53b-f62075ae6d35")
+        nic = MagicMock(spec=["security_groups"])
+        nic.security_groups = [sg_uuid]
+
+        used = self._service()._get_used_security_group_ids([nic])
+
+        # Stored as the string form so `str(sg.id) in used` matches.
+        assert used == {"2040c1fa-72a6-47bc-a53b-f62075ae6d35"}
+        assert all(isinstance(x, str) for x in used)
+
+    def test_dict_nic_camelcase_security_groups_key(self):
+        nic = {"securityGroups": ["sg-aaaa", "sg-bbbb"]}
+        used = self._service()._get_used_security_group_ids([nic])
+        assert used == {"sg-aaaa", "sg-bbbb"}
+
+    def test_empty_nic_security_groups(self):
+        nic = MagicMock(spec=["security_groups"])
+        nic.security_groups = []
+        assert self._service()._get_used_security_group_ids([nic]) == set()
+
+    def test_in_use_matches_uuid_reference_end_to_end(self):
+        """A security group whose id (str) matches a NIC reference (UUID) must
+        be flagged in_use=True after a full region fetch.
+        """
+        from uuid import UUID
+
+        sg_id = "2040c1fa-72a6-47bc-a53b-f62075ae6d35"
+        client = MagicMock()
+        nic = MagicMock(spec=["security_groups"])
+        nic.security_groups = [UUID(sg_id)]
+        client.list_project_nics.return_value = {"items": [nic]}
+        client.list_security_groups.return_value = {"items": [{"id": sg_id}]}
+        client.list_security_group_rules.return_value = {"items": []}
+
+        from prowler.providers.stackit.stackit_provider import StackitProvider
+
+        service = object.__new__(IaaSService)
+        service.provider = MagicMock()
+        service.provider.handle_api_error = StackitProvider.handle_api_error
+        service.project_id = STACKIT_PROJECT_ID
+        service.scan_unused_services = False
+        service.regional_clients = {"eu01": client}
+        service.security_groups = []
+        service.server_nics = []
+        service.in_use_sg_ids = set()
+
+        service._fetch_all_regions()
+
+        assert len(service.security_groups) == 1
+        assert service.security_groups[0].in_use is True
+
+
 class Test_IaaS_Service_Fetch_All_Regions:
     """Cover ``_fetch_all_regions`` multi-region behaviour. A project is not
     provisioned in every StackIT region; the region where it is absent answers
