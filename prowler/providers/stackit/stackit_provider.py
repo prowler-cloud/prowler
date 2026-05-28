@@ -7,6 +7,16 @@ from uuid import UUID
 
 from colorama import Style
 
+# The StackIT SDK is a hard dependency of the provider (declared in
+# pyproject.toml). Import it at module level, like every other Prowler
+# provider, so a missing SDK fails immediately when the provider module is
+# imported and is reported by Provider.init_global_provider as a critical
+# error and a non-zero exit, instead of being swallowed later by the check
+# loader and surfacing as a misleading empty report.
+from stackit.core.configuration import Configuration
+from stackit.iaas import DefaultApi as IaasDefaultApi
+from stackit.resourcemanager import DefaultApi as ResourceManagerDefaultApi
+
 from prowler.config.config import (
     default_config_file_path,
     get_default_mute_file_path,
@@ -219,8 +229,6 @@ class StackitProvider(Provider):
 
         Returns dict: {"eu01": DefaultApi_client, "eu02": DefaultApi_client}
         """
-        from stackit.iaas import DefaultApi
-
         regional_clients = {}
         service_regions = self.get_available_service_regions(
             service, self._audited_regions
@@ -232,7 +240,7 @@ class StackitProvider(Provider):
                     self._service_account_key_path,
                     self._service_account_key,
                 )
-                client = DefaultApi(config)
+                client = IaasDefaultApi(config)
                 client.region = region  # Attach region attribute
                 regional_clients[region] = client
 
@@ -254,8 +262,6 @@ class StackitProvider(Provider):
         Kept as a static helper so ``test_connection`` (which has no provider
         instance) can reuse it.
         """
-        from stackit.core.configuration import Configuration
-
         if service_account_key:
             return Configuration(service_account_key=service_account_key)
         return Configuration(service_account_key_path=service_account_key_path)
@@ -437,14 +443,12 @@ class StackitProvider(Provider):
                 401 response when contacting Resource Manager.
         """
         try:
-            from stackit.resourcemanager import DefaultApi
-
             with suppress_stderr():
                 config = self._build_sdk_configuration(
                     self._service_account_key_path,
                     self._service_account_key,
                 )
-                client = DefaultApi(config)
+                client = ResourceManagerDefaultApi(config)
 
                 # Fetch project details - validates that the credentials
                 # can mint a token; permission to read this specific
@@ -462,13 +466,6 @@ class StackitProvider(Provider):
             logger.info(f"Successfully retrieved project name: {project_name}")
             return project_name
 
-        except ImportError:
-            logger.warning(
-                "stackit-resourcemanager package not available. "
-                "Project name will not be displayed in reports. "
-                "Install with: pip install stackit-resourcemanager"
-            )
-            return ""
         except Exception as e:
             status = getattr(e, "status", None)
             if status == 401:
@@ -588,26 +585,18 @@ class StackitProvider(Provider):
             # 2) Test connection with the same Resource Manager lookup used
             # during provider identity initialization.
             try:
-                from stackit.resourcemanager import DefaultApi
-
                 with suppress_stderr():
                     config = StackitProvider._build_sdk_configuration(
                         service_account_key_path,
                         service_account_key,
                     )
-                    client = DefaultApi(config)
+                    client = ResourceManagerDefaultApi(config)
                     client.get_project(id=project_id)
 
                 logger.info(
                     "StackIT test_connection: Successfully connected using StackIT Resource Manager."
                 )
                 return Connection(is_connected=True)
-            except ImportError as e:
-                error_msg = f"StackIT SDK not available: {e}. Please ensure stackit-core and stackit-resourcemanager are installed."
-                logger.error(error_msg)
-                if raise_on_exception:
-                    raise ImportError(error_msg)
-                return Connection(error=ImportError(error_msg))
             except Exception as test_error:
                 try:
                     StackitProvider.handle_api_error(test_error)

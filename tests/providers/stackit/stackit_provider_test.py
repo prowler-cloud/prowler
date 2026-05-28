@@ -1,6 +1,5 @@
 """Tests for StackIT Provider input validation."""
 
-import sys
 import types
 from argparse import Namespace
 from unittest.mock import patch
@@ -8,6 +7,7 @@ from unittest.mock import patch
 import pytest
 
 import prowler.providers.common.provider as common_provider
+import prowler.providers.stackit.stackit_provider as stackit_provider_module
 from prowler.providers.common.models import Connection
 from prowler.providers.stackit.exceptions.exceptions import (
     StackITAPIError,
@@ -207,9 +207,6 @@ class TestStackITProviderTestConnection:
 
     @pytest.fixture
     def fake_stackit_resourcemanager(self, monkeypatch):
-        configuration_module = types.ModuleType("stackit.core.configuration")
-        resourcemanager_module = types.ModuleType("stackit.resourcemanager")
-
         class FakeConfiguration:
             def __init__(self, service_account_key_path=None, service_account_key=None):
                 self.service_account_key_path = service_account_key_path
@@ -234,14 +231,11 @@ class TestStackITProviderTestConnection:
                     raise self.__class__.error
                 return {"name": "Test Project"}
 
-        configuration_module.Configuration = FakeConfiguration
-        resourcemanager_module.DefaultApi = FakeDefaultApi
-
-        monkeypatch.setitem(
-            sys.modules, "stackit.core.configuration", configuration_module
-        )
-        monkeypatch.setitem(
-            sys.modules, "stackit.resourcemanager", resourcemanager_module
+        # The SDK is imported at module level, so patch the names bound in the
+        # provider module rather than sys.modules.
+        monkeypatch.setattr(stackit_provider_module, "Configuration", FakeConfiguration)
+        monkeypatch.setattr(
+            stackit_provider_module, "ResourceManagerDefaultApi", FakeDefaultApi
         )
         return FakeDefaultApi
 
@@ -314,12 +308,10 @@ class TestStackITProviderTestConnection:
 class TestStackITProviderGetProjectName:
     @pytest.fixture
     def fake_resourcemanager(self, monkeypatch):
-        configuration_module = types.ModuleType("stackit.core.configuration")
-        resourcemanager_module = types.ModuleType("stackit.resourcemanager")
-
         class FakeConfiguration:
-            def __init__(self, service_account_key_path):
+            def __init__(self, service_account_key_path=None, service_account_key=None):
                 self.service_account_key_path = service_account_key_path
+                self.service_account_key = service_account_key
 
         class FakeDefaultApi:
             error = None
@@ -332,14 +324,11 @@ class TestStackITProviderGetProjectName:
                     raise self.__class__.error
                 return {"name": "My Project"}
 
-        configuration_module.Configuration = FakeConfiguration
-        resourcemanager_module.DefaultApi = FakeDefaultApi
-
-        monkeypatch.setitem(
-            sys.modules, "stackit.core.configuration", configuration_module
-        )
-        monkeypatch.setitem(
-            sys.modules, "stackit.resourcemanager", resourcemanager_module
+        # The SDK is imported at module level, so patch the names bound in the
+        # provider module rather than sys.modules.
+        monkeypatch.setattr(stackit_provider_module, "Configuration", FakeConfiguration)
+        monkeypatch.setattr(
+            stackit_provider_module, "ResourceManagerDefaultApi", FakeDefaultApi
         )
         return FakeDefaultApi
 
