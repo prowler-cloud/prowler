@@ -3,14 +3,6 @@
 The product-tour abstraction lives under [`ui/lib/tours/`](../../../ui/lib/tours/).
 This skill operates on tour definitions that follow this architecture.
 
-## Source of truth
-
-- **Design rationale (decisions, alternatives, trade-offs):**
-  [`openspec/changes/add-product-tour-driverjs-poc/design.md`](../../../openspec/changes/add-product-tour-driverjs-poc/design.md)
-- **Spec requirements (binding rules + scenarios):**
-  [`openspec/specs/ui-product-tour/spec.md`](../../../openspec/specs/ui-product-tour/spec.md)
-  (delta in `openspec/changes/add-product-tour-driverjs-poc/specs/ui-product-tour/spec.md` until archived)
-
 ## Code map
 
 | File | Purpose |

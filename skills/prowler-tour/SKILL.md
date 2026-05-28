@@ -15,14 +15,14 @@ metadata:
     - "Renaming or removing a data-tour-id attribute value"
     - "Changing button labels or section headings on a tour-covered page"
     - "Restructuring routes or layouts covered by a tour"
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash
+allowed-tools: Read, Glob, Grep
 ---
 
 # prowler-tour
 
-Keeps product-tour definitions under `ui/lib/tours/*.tour.ts` aligned with the
-UI surfaces they describe. **Report-only in v1.** This skill never edits tour
-files; it reports the drift it finds and recommends actions.
+**Report-only.** This skill never edits tour files or UI files; it inspects
+the change, reports drift it finds between tours and the covered UI, and
+recommends actions for the developer to apply.
 
 ## Early-exit rule
 
@@ -41,7 +41,7 @@ Run this check first. Most UI edits are not tour-related — exit cheaply.
 ## Drift checklist
 
 For each affected tour, evaluate every item. Skip items that obviously do
-not apply, but state clearly which ones you checked.
+not apply, but list explicitly which items were checked.
 
 1. **Orphan selectors** — every step's `target` (which composes to
    `data-tour-id="<tour-id>-<step.target>"`) must resolve to a real element
@@ -75,36 +75,15 @@ Apply per tour after listing drift:
 When in doubt, ask: "Would a user who already saw the previous version
 miss something useful by not seeing this one?" If yes, bump.
 
-## Mandatory output format
+## Output format
 
-Use this exact structure. Skipping fields or reordering them prevents
-the report from being machine-readable downstream.
+When emitting a report, follow the exact structure in
+`references/output-format.md`. The structure is mandatory because the
+report is consumed downstream and tolerates no field reordering.
 
-```
-## Tour Alignment Report
-**Tour:** `<tour-id>@v<version>`
-**Files touched:** <comma-separated list of files in the change>
+## What this skill MUST NOT do
 
-### Drift detected
-- <one bullet per drift item; include file:line where available>
-
-### Recommended actions
-1. <numbered, actionable steps the developer should take>
-
-### Version bump verdict
-- <BUMP | NO bump> — <one-line rationale>
-```
-
-If multiple tours are affected, emit one report per tour, separated by `---`.
-
-If no drift is detected for an affected tour, still emit the report with
-"No drift detected." under "Drift detected" and "None required." under
-"Recommended actions". The verdict line is still mandatory.
-
-## What this skill MUST NOT do (v1)
-
-- Do not edit `*.tour.ts` files. The skill is report-only until the
-  report-only mode proves itself in practice.
+- Do not edit `*.tour.ts` files. This skill is report-only.
 - Do not edit UI files to add or rename `data-tour-id` attributes.
 - Do not invent new tours. Authoring a new tour is a separate, deliberate
   decision — the developer makes it, not the skill.
@@ -113,6 +92,8 @@ If no drift is detected for an affected tour, still emit the report with
 
 ## See also
 
-- `references/tours-architecture.md` — design context and links to the
-  abstraction layer source.
+- `references/output-format.md` — exact report template (read when
+  emitting a report).
+- `references/tours-architecture.md` — code map for the tour abstraction
+  under `ui/lib/tours/`.
 - `assets/tour-template.ts` — boilerplate for authoring a new `*.tour.ts`.
