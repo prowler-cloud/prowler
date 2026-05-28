@@ -225,7 +225,7 @@ Rebuild invalid indexes without locking writes:
 REINDEX INDEX CONCURRENTLY index_name;
 ```
 
-### Understanding _ccnew and _ccold artifacts
+### Understanding _ccnew and_ccold artifacts
 
 When `CREATE INDEX CONCURRENTLY` or `REINDEX INDEX CONCURRENTLY` is interrupted, temporary indexes may remain:
 
@@ -377,7 +377,8 @@ VACUUM (ANALYZE) table_name;
 | PostgreSQL | `/websites/postgresql_org_docs_current` | Index types, EXPLAIN, partitioned table indexing, REINDEX |
 
 **Example queries:**
-```
+
+```text
 mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="CREATE INDEX CONCURRENTLY partitioned table")
 mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="EXPLAIN ANALYZE BUFFERS query plan")
 mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="partial index WHERE clause")

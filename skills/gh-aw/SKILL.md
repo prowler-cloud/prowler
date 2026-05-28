@@ -30,7 +30,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch
 
 ## File Layout
 
-```
+```text
 .github/
 ├── workflows/
 │   ├── {name}.md              # Frontmatter + thin context dispatcher
@@ -308,7 +308,7 @@ After modifying any `.github/workflows/*.md`:
 
 Add to repo root so lock files auto-resolve on merge:
 
-```
+```text
 .github/workflows/*.lock.yml linguist-generated=true merge=ours
 ```
 

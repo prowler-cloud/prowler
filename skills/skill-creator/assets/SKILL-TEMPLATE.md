@@ -38,7 +38,7 @@ Use this skill when:
 
 ## Decision Tree
 
-```
+```text
 {Question 1}? → {Action A}
 {Question 2}? → {Action B}
 Otherwise    → {Default action}

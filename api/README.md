@@ -2,7 +2,7 @@
 
 This repository contains the JSON API and Task Runner components for Prowler, which facilitate a complete backend that interacts with the Prowler SDK and is used by the Prowler UI.
 
-# Components
+## Components
 The Prowler API is composed of the following components:
 
 - The JSON API, which is an API built with Django Rest Framework.
@@ -10,13 +10,13 @@ The Prowler API is composed of the following components:
 - The PostgreSQL database, which is used to store the data.
 - The Valkey database, which is an in-memory database which is used as a message broker for the Celery workers.
 
-## Note about Valkey
+### Note about Valkey
 
 [Valkey](https://valkey.io/) is an open source (BSD) high performance key/value datastore.
 
 Valkey exposes a Redis 7.2 compliant API. Any service that exposes the Redis API can be used with Prowler API.
 
-# Modify environment variables
+## Modify environment variables
 
 Under the root path of the project, you can find a file called `.env`. This file shows all the environment variables that the project uses. You should review it and set the values for the variables you want to change.
 
@@ -24,7 +24,7 @@ If you don’t set `DJANGO_TOKEN_SIGNING_KEY` or `DJANGO_TOKEN_VERIFYING_KEY`, t
 
 **Important note**: Every Prowler version (or repository branches and tags) could have different variables set in its `.env` file. Please use the `.env` file that corresponds with each version.
 
-## Local deployment
+### Local deployment
 Keep in mind if you export the `.env` file to use it with local deployment that you will have to do it within the context of the virtual environment, not before. Otherwise, variables will not be loaded properly.
 
 To do this, you can run:
@@ -34,12 +34,12 @@ set -a
 source .env
 ```
 
-# 🚀 Production deployment
-## Docker deployment
+## 🚀 Production deployment
+### Docker deployment
 
 This method requires `docker` and `docker compose`.
 
-### Clone the repository
+#### Clone the repository
 
 ```console
 # HTTPS
@@ -50,13 +50,13 @@ git clone git@github.com:prowler-cloud/api.git
 
 ```
 
-### Build the base image
+#### Build the base image
 
 ```console
 docker compose --profile prod build
 ```
 
-### Run the production service
+#### Run the production service
 
 This command will start the Django production server and the Celery worker and also the Valkey and PostgreSQL databases.
 
@@ -68,7 +68,7 @@ You can access the server in `http://localhost:8080`.
 
 > **NOTE:** notice how the port is different. When developing using docker, the port will be `8080` to prevent conflicts.
 
-### View the Production Server Logs
+#### View the Production Server Logs
 
 To view the logs for any component (e.g., Django, Celery worker), you can use the following command with a wildcard. This command will follow logs for any container that matches the specified pattern:
 
@@ -133,13 +133,13 @@ gunicorn -c config/guniconf.py config.wsgi:application
 
 > By default, the Gunicorn server will try to use as many workers as your machine can handle. You can manually change that in the `src/backend/config/guniconf.py` file.
 
-# 🧪 Development guide
+## 🧪 Development guide
 
-## Local deployment
+### Local deployment
 
 To use this method, you'll need to set up a Python virtual environment (version ">=3.11,<3.13") and keep dependencies updated. Additionally, ensure that `uv` and `docker compose` are installed.
 
-### Clone the repository
+#### Clone the repository
 
 ```console
 # HTTPS
@@ -150,7 +150,7 @@ git clone git@github.com:prowler-cloud/api.git
 
 ```
 
-### Start the PostgreSQL Database and Valkey
+#### Start the PostgreSQL Database and Valkey
 
 The PostgreSQL database (version 16.3) and Valkey (version 7) are required for the development environment. To make development easier, we have provided a `docker-compose` file that will start these components for you.
 
@@ -161,7 +161,7 @@ The PostgreSQL database (version 16.3) and Valkey (version 7) are required for t
 docker compose up postgres valkey -d
 ```
 
-### Install the Python dependencies
+#### Install the Python dependencies
 
 > You must have uv installed
 
@@ -169,7 +169,7 @@ docker compose up postgres valkey -d
 uv sync
 ```
 
-### Apply migrations
+#### Apply migrations
 
 For migrations, you need to force the `admin` database router. Assuming you have the correct environment variables and Python virtual environment, run:
 
@@ -178,7 +178,7 @@ cd src/backend
 python manage.py migrate --database admin
 ```
 
-### Run the Django development server
+#### Run the Django development server
 
 ```console
 cd src/backend
@@ -188,7 +188,7 @@ python manage.py runserver
 You can access the server in `http://localhost:8000`.
 All changes in the code will be automatically reloaded in the server.
 
-### Run the Celery worker
+#### Run the Celery worker
 
 ```console
 python -m celery -A config.celery worker -l info -E
@@ -196,11 +196,11 @@ python -m celery -A config.celery worker -l info -E
 
 The Celery worker does not detect and reload changes in the code, so you need to restart it manually when you make changes.
 
-## Docker deployment
+### Docker deployment
 
 This method requires `docker` and `docker compose`.
 
-### Clone the repository
+#### Clone the repository
 
 ```console
 # HTTPS
@@ -211,13 +211,13 @@ git clone git@github.com:prowler-cloud/api.git
 
 ```
 
-### Build the base image
+#### Build the base image
 
 ```console
 docker compose --profile dev build
 ```
 
-### Run the development service
+#### Run the development service
 
 This command will start the Django development server and the Celery worker and also the Valkey and PostgreSQL databases.
 
@@ -230,7 +230,7 @@ All changes in the code will be automatically reloaded in the server.
 
 > **NOTE:** notice how the port is different. When developing using docker, the port will be `8080` to prevent conflicts.
 
-### View the development server logs
+#### View the development server logs
 
 To view the logs for any component (e.g., Django, Celery worker), you can use the following command with a wildcard. This command will follow logs for any container that matches the specified pattern:
 
@@ -238,7 +238,7 @@ To view the logs for any component (e.g., Django, Celery worker), you can use th
 docker logs -f $(docker ps --format "{{.Names}}" | grep 'api-')
 ```
 
-## Applying migrations
+### Applying migrations
 
 For migrations, you need to force the `admin` database router. Assuming you have the correct environment variables and Python virtual environment, run:
 
@@ -247,7 +247,7 @@ cd src/backend
 uv run python manage.py migrate --database admin
 ```
 
-## Apply fixtures
+### Apply fixtures
 
 Fixtures are used to populate the database with initial development data.
 
@@ -258,7 +258,7 @@ uv run python manage.py loaddata api/fixtures/0_dev_users.json --database admin
 
 > The default credentials are `dev@prowler.com:Thisisapassword123@` or `dev2@prowler.com:Thisisapassword123@`
 
-## Run tests
+### Run tests
 
 Note that the tests will fail if you use the same `.env` file as the development environment.
 
@@ -269,7 +269,7 @@ cd src/backend
 uv run pytest
 ```
 
-# Custom commands
+## Custom commands
 
 Django provides a way to create custom commands that can be run from the command line.
 
@@ -281,7 +281,7 @@ To run a custom command, you need to be in the `prowler/api/src/backend` directo
 uv run python manage.py <command_name>
 ```
 
-## Generate dummy data
+### Generate dummy data
 
 ```console
 python manage.py findings --tenant
@@ -298,7 +298,7 @@ This command creates, for a given tenant, a provider, scan and a set of findings
 >
 > The last step is required to access the findings details, since the UI needs that to print all the information.
 
-### Example
+#### Example
 
 ```console
 ~/backend $ uv run python manage.py findings --tenant

@@ -419,13 +419,15 @@ export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
 }
 
+export interface ApiErrorSource {
+  pointer?: string;
+}
+
 export interface ApiError {
   detail: string;
-  status: string;
-  source: {
-    pointer: string;
-  };
-  code: string;
+  status?: string;
+  source?: ApiErrorSource;
+  code?: string;
 }
 
 export type ApiResponse = {

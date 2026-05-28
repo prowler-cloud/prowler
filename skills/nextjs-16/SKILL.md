@@ -14,7 +14,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## App Router File Conventions
 
-```
+```text
 app/
 ├── layout.tsx           # Root layout (required)
 ├── page.tsx             # Home page (/)
