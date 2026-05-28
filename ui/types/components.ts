@@ -228,22 +228,6 @@ export interface FindingsSeverityOverview {
   };
 }
 
-export interface TaskDetails {
-  attributes: {
-    state: string;
-    completed_at: string;
-    result: {
-      exc_type?: string;
-      exc_message?: string[];
-      exc_module?: string;
-    };
-    task_args: {
-      scan_id: string;
-      provider_id: string;
-      checks_to_execute: string[];
-    };
-  };
-}
 export const AWS_CREDENTIALS_TYPE = {
   AWS_SDK_DEFAULT: "aws-sdk-default",
   ACCESS_SECRET_KEY: "access-secret-key",
