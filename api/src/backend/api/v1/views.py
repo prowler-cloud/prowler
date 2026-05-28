@@ -7484,9 +7484,9 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     def _get_latest_findings_per_provider(self, filtered_queryset):
         """Keep only findings from each provider's most recent completed scan."""
-      # Materialize to a literal IN list. Left as a subquery, Postgres can't
-      # estimate the match count and picks a serial nested loop on
-      # resource_finding_mappings when one scan dominates findings
+        # Materialize to a literal IN list. Left as a subquery, Postgres can't
+        # estimate the match count and picks a serial nested loop on
+        # resource_finding_mappings when one scan dominates findings
         latest_scan_ids = list(
             Scan.objects.filter(
                 tenant_id=self.request.tenant_id,
