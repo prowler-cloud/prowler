@@ -1,13 +1,8 @@
-/**
- * Prowler-themed driver.js popover.
- *
- * Every color, border, and background MUST resolve to an existing Prowler
- * design token (defined in :root and .dark within globals.css). Adding a
- * raw hex value or rgba() to this file is a spec violation — extend the
- * design tokens instead. The exception is the box-shadow stack, where
- * raw rgb()/color-mix values describe shadow geometry, not theme color.
- *
- * Bundled with the abstraction layer at `ui/lib/tours/`.
+/*
+ * Every color, border, and background MUST resolve to a Prowler design token
+ * defined in globals.css. Raw hex or rgba() in this file is a spec violation
+ * — extend the tokens instead. Exception: the box-shadow stack uses raw
+ * rgb()/color-mix values to describe shadow geometry, not theme color.
  */
 
 .driver-popover.prowler-theme {

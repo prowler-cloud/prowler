@@ -1,16 +1,8 @@
 #!/usr/bin/env node
-/**
- * Tour alignment check (syntactic).
- *
- * Loads every `ui/lib/tours/*.tour.ts`, extracts the `data-tour-id` values
- * each step references, and greps `ui/` for matching `data-tour-id="..."`
- * attributes. Fails on any orphan selector with a clear pointer.
- *
- * Complement to the semantic `prowler-tour` skill: this catches drift
- * even when developers don't invoke Claude Code.
- *
- * Run via `pnpm tour:check` from `ui/`.
- */
+// Tour alignment check (syntactic). Extracts `data-tour-id` values from every
+// `ui/lib/tours/*.tour.ts` and verifies a matching `data-tour-id="..."`
+// attribute exists under `ui/`. Complements the semantic `prowler-tour` skill
+// for CI/local runs without invoking Claude Code.
 import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join, dirname, relative, resolve } from "node:path";

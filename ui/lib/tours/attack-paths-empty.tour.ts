@@ -4,20 +4,8 @@ import {
   type TourDefinition,
 } from "./tour-types";
 
-/**
- * Attack Paths empty-state mini-tour.
- *
- * Fires when the user lands on Attack Paths with zero scans (after the
- * scans request has resolved — not while loading). Two steps: a short
- * modal pitch of what Attack Paths does, then an anchored highlight on
- * the "No scans available" alert pointing at the CTA. Persists separately
- * from the full `attack-paths` tour so completing one does not suppress
- * the other.
- *
- * Pairs with `attack-paths.tour.ts`: this one sets expectations before
- * the user has data; the full tour walks them through the workflow once
- * a scan is ready.
- */
+// Companion to `attack-paths.tour.ts` with a distinct id so completing one
+// does not suppress the other.
 export const attackPathsEmptyTour: TourDefinition = {
   id: "attack-paths-empty",
   version: 1,

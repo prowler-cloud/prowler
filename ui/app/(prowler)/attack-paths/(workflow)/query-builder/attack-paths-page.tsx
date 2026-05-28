@@ -103,9 +103,7 @@ export default function AttackPathsPage() {
         onNext: async ({ waitForStep }) => {
           const isReady = (scan: AttackPathScan) =>
             scan.attributes.graph_data_ready;
-          // Prefer an AWS scan because today's predefined query catalog is
-          // AWS-only (see api/.../queries/registry.py). Fall back to any
-          // ready scan so the rest of the tour still runs.
+          // Predefined queries are AWS-only; fall back to any ready scan.
           const preferred = scans.find(
             (scan) => isReady(scan) && scan.attributes.provider_type === "aws",
           );
@@ -120,11 +118,9 @@ export default function AttackPathsPage() {
       },
       "query-selector": {
         onNext: async ({ waitForStep }) => {
-          // Demo query MUST be runnable without further user input:
-          // skip Custom (needs Cypher) and skip any query with required
-          // parameters (would leave the form invalid). Prefer the IAM
-          // wildcard query — well-known and usually returns findings —
-          // then fall back to the first parameterless predefined query.
+          // Demo query must run with no further input: skip Custom (needs
+          // Cypher) and any query with required parameters. Prefer the IAM
+          // wildcard — well-known and usually returns findings.
           const isRunnable = (query: AttackPathQuery) =>
             query.id !== ATTACK_PATH_QUERY_IDS.CUSTOM &&
             query.attributes.parameters.length === 0;

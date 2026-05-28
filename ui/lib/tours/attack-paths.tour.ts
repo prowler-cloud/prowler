@@ -4,21 +4,6 @@ import {
   type TourDefinition,
 } from "./tour-types";
 
-/**
- * Attack Paths in-product tour.
- *
- * Six steps walk a first-time user through the workflow: a modal welcome,
- * one anchored step on the page intro, then three anchored steps on the
- * scan-list table, the query selector, and the execute button. The tour
- * auto-drives the underlying UI between those anchors (host provides the
- * `onNext` handlers) so the user always sees the real interface, not just
- * descriptions of it. Final step is a modal outro.
- *
- * Bump `version` only when the user-visible flow changes materially.
- * Cosmetic edits (typos, copy clarification, selector renames that don't
- * change the journey) keep the same version. The `prowler-tour` skill
- * enforces this distinction.
- */
 export const attackPathsTour: TourDefinition = {
   id: "attack-paths",
   version: 1,

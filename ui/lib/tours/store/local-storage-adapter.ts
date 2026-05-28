@@ -3,10 +3,7 @@ import type { TourCompletionStore } from "./tour-completion-store";
 
 const KEY_PREFIX = "prowler.tour";
 
-/**
- * Key composition lives in the adapter (not in `TourId`) so that callers
- * pass the structured identity around and never hand-build storage keys.
- */
+// Key composition stays in the adapter so callers never hand-build storage keys.
 export function buildStorageKey({ id, version }: TourId): string {
   return `${KEY_PREFIX}.${id}.v${version}`;
 }
@@ -47,8 +44,7 @@ function writeSafely(key: string, record: TourCompletionRecord): void {
   try {
     window.localStorage.setItem(key, JSON.stringify(record));
   } catch {
-    // Quota or privacy-mode failures are non-fatal: a re-shown tour is
-    // strictly better than a thrown render.
+    // Non-fatal: a re-shown tour beats a thrown render.
   }
 }
 
@@ -57,7 +53,7 @@ function clearSafely(key: string): void {
   try {
     window.localStorage.removeItem(key);
   } catch {
-    // Same rationale as writeSafely.
+    // Non-fatal: see writeSafely.
   }
 }
 

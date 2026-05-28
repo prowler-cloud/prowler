@@ -23,31 +23,19 @@ const AUTO_OPEN_DELAY_MS = 50;
 const DEFAULT_WAIT_TIMEOUT_MS = 8000;
 
 export interface UseDriverTourOptions {
-  /** Auto-open the tour on mount when no completion record exists. Defaults to true. */
+  /** Auto-open on mount when no completion record exists. Defaults to true. */
   autoOpen?: boolean;
-  /**
-   * Gate that delays initialization until the host says it's ready. Use this
-   * when anchored steps target DOM that depends on async data (e.g. wait
-   * until `!isLoading && items.length > 0`). Defaults to `true`.
-   */
+  /** Gate that delays initialization until anchored DOM is ready. Defaults to true. */
   enabled?: boolean;
-  /** Custom completion store. Defaults to `localStorageAdapter`. */
+  /** Defaults to `localStorageAdapter`. */
   store?: TourCompletionStore;
-  /** Optional driver.js config overrides for this tour. */
   configOverrides?: Partial<Config>;
-  /**
-   * Per-step async hooks indexed by step `target`. When provided for a
-   * step, overrides driver.js's default Next/Back behaviour and delegates
-   * progression to the handler. The handler receives a context with a
-   * `waitForStep` helper for waiting on async DOM.
-   */
+  /** Indexed by step `target`; overrides driver.js's default Next/Back for that step. */
   stepHandlers?: Record<string, TourStepHandlers>;
 }
 
 export interface UseDriverTourResult {
-  /** Open the tour programmatically (e.g. from a "Show me how" button). */
   start: () => void;
-  /** Close the tour programmatically. */
   stop: () => void;
   /** True if a completion record exists for `(tour.id, tour.version)`. */
   hasCompleted: boolean;
@@ -140,15 +128,7 @@ function buildHandlerContext(tourId: string): TourStepHandlerContext {
   };
 }
 
-/**
- * React hook that drives a single `TourDefinition`. Initializes driver.js in
- * a client-only `useEffect`, derives `overlayColor` from `useTheme()`, and
- * rebuilds the driver instance when the active theme changes. Completion,
- * skip, and dismiss are persisted via the configured store.
- *
- * Returns imperative `start`/`stop` controls plus the boolean
- * `hasCompleted` so consumers can decide whether to render a replay CTA.
- */
+// Rebuilds the driver instance when the active theme changes.
 export function useDriverTour(
   tour: TourDefinition,
   options: UseDriverTourOptions = {},
@@ -205,8 +185,8 @@ export function useDriverTour(
       const target = step.target;
       if (!target) return driveStep;
 
-      // Wire onNextClick / onPrevClick lazily via the ref so handler
-      // identity changes between renders never recreate the driver.
+      // Wire next/prev via the ref so handler identity changes never recreate
+      // the driver between renders.
       driveStep.popover = {
         ...driveStep.popover,
         onNextClick: (_element, _step, { driver: instance }) => {
