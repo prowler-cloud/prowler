@@ -26,12 +26,14 @@ import { useScansFilters } from "./use-scans-filters";
 interface ScansPageShellProps {
   providers: ProviderProps[];
   hasManageScansPermission: boolean;
+  activeScanCount?: number;
   children: ReactNode;
 }
 
 export function ScansPageShell({
   providers,
   hasManageScansPermission,
+  activeScanCount = 0,
   children,
 }: ScansPageShellProps) {
   const router = useRouter();
@@ -53,6 +55,13 @@ export function ScansPageShell({
   );
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
+
+  const getTabLabel = (tab: ScanJobsTab) => {
+    const label = SCAN_TAB_LABELS[tab];
+    if (tab !== SCAN_JOBS_TAB.ACTIVE) return label;
+
+    return `${label} (${activeScanCount})`;
+  };
 
   const handleLaunchOpenChange = (open: boolean) => {
     setLaunchScanModalOpen(open);
@@ -108,7 +117,7 @@ export function ScansPageShell({
           <TabsList className="overflow-x-auto">
             {Object.values(SCAN_JOBS_TAB).map((tab) => (
               <TabsTrigger key={tab} value={tab}>
-                {SCAN_TAB_LABELS[tab as ScanJobsTab]}
+                {getTabLabel(tab as ScanJobsTab)}
               </TabsTrigger>
             ))}
           </TabsList>

@@ -213,6 +213,25 @@ describe("ScansPageShell", () => {
     );
   });
 
+  it("shows the active scans count in the in progress tab", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        activeScanCount={3}
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.getByRole("tab", { name: /in progress \(3\)/i }),
+    ).toBeVisible();
+    expect(screen.getByRole("tab", { name: /^completed$/i })).toBeVisible();
+  });
+
   it("opens the launch scan modal from the URL", () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     searchParamsValue.current = "launchScan=true";
@@ -283,6 +302,7 @@ describe("ScansPageShell", () => {
 
   it("hides the status filter outside of the completed tab", () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=active";
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>

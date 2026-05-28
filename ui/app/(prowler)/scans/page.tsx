@@ -6,14 +6,50 @@ import { auth } from "@/auth.config";
 import {
   getScanJobsTab,
   getScanJobsTabFilters,
-  isScanStateFilterKey,
+  getScanJobsUserFilters,
 } from "@/components/scans/scans.utils";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/ui";
-import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
+import {
+  ProviderProps,
+  SCAN_JOBS_TAB,
+  ScanProps,
+  SearchParamsProps,
+} from "@/types";
+
+const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
+
+const getFilterSearchQuery = (
+  filters: Record<string, string | string[]>,
+): string => {
+  const value = filters["filter[search]"];
+  if (Array.isArray(value)) return value[0] ?? "";
+
+  return value ?? "";
+};
+
+const getActiveScanCount = async (
+  searchParams: SearchParamsProps,
+): Promise<number> => {
+  const userFilters = getScanJobsUserFilters(searchParams);
+  const filters = {
+    ...userFilters,
+    ...getScanJobsTabFilters(SCAN_JOBS_TAB.ACTIVE),
+  };
+
+  const scansData = await getScans({
+    query: getFilterSearchQuery(filters),
+    page: 1,
+    pageSize: ACTIVE_SCAN_COUNT_PAGE_SIZE,
+    filters,
+    fields: { scans: "state" },
+  });
+
+  return scansData && "meta" in scansData ? scansData.meta.pagination.count : 0;
+};
 
 export default async function Scans({
   searchParams,
@@ -37,6 +73,10 @@ export default async function Scans({
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
   );
+  const activeScanCount =
+    thereIsNoProviders || thereIsNoProvidersConnected
+      ? 0
+      : await getActiveScanCount(resolvedSearchParams);
 
   return (
     <ContentLayout title="Scan Jobs" icon="lucide:timer">
@@ -46,6 +86,7 @@ export default async function Scans({
         <ScansPageShell
           providers={providers}
           hasManageScansPermission={hasManageScansPermission}
+          activeScanCount={activeScanCount}
         >
           <Suspense
             fallback={
@@ -79,9 +120,7 @@ const SSRDataTableScans = async ({
   const hasUserFilters = userFilters.length > 0;
 
   const filters = {
-    ...Object.fromEntries(
-      userFilters.filter(([key]) => !isScanStateFilterKey(key)),
-    ),
+    ...getScanJobsUserFilters(searchParams),
     ...getScanJobsTabFilters(
       tab,
       searchParams["filter[state__in]"] ?? searchParams["filter[state]"],
