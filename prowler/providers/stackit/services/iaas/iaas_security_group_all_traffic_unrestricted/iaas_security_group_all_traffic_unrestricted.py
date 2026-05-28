@@ -53,10 +53,10 @@ class iaas_security_group_all_traffic_unrestricted(Check):
             if unrestricted_rules:
                 report.status = "FAIL"
                 rules_list = "; ".join(unrestricted_rules)
-                report.status_extended = f"Security group '{security_group.name}' allows unrestricted access to all traffic: {rules_list}."
+                report.status_extended = f"Security group {security_group.name} allows unrestricted access to all traffic: {rules_list}."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Security group '{security_group.name}' does not allow unrestricted access to all traffic."
+                report.status_extended = f"Security group {security_group.name} does not allow unrestricted access to all traffic."
 
             report.resource_id = security_group.id
             report.resource_name = security_group.name

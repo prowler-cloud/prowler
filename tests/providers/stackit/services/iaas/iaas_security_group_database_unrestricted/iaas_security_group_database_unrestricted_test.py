@@ -131,7 +131,7 @@ class Test_iaas_security_group_database_unrestricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security group '{security_group_name}' does not allow unrestricted database access."
+                == f"Security group {security_group_name} does not allow unrestricted database access."
             )
             assert result[0].resource_id == security_group_id
             assert result[0].resource_name == security_group_name

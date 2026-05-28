@@ -452,8 +452,8 @@ class SecurityGroupRule(BaseModel):
             str: Rule description if available, otherwise rule ID
         """
         if self.description:
-            return f"'{self.description}' ({self.id})"
-        return f"'{self.id}'"
+            return f"{self.description} ({self.id})"
+        return f"{self.id}"
 
 
 class SecurityGroup(BaseModel):

@@ -27,7 +27,7 @@ class iaas_security_group_ssh_unrestricted(Check):
                 resource=security_group,
             )
             report.status = "PASS"
-            report.status_extended = f"Security group '{security_group.name}' does not allow unrestricted SSH access."
+            report.status_extended = f"Security group {security_group.name} does not allow unrestricted SSH access."
             report.resource_id = security_group.id
             report.resource_name = security_group.name
             report.location = security_group.region
@@ -41,7 +41,7 @@ class iaas_security_group_ssh_unrestricted(Check):
                 ):
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"Security group '{security_group.name}' allows unrestricted SSH access (port 22) "
+                        f"Security group {security_group.name} allows unrestricted SSH access (port 22) "
                         f"from {rule.get_ip_range_display()} via rule {rule.get_rule_display_name()}."
                     )
                     break
