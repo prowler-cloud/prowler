@@ -1,10 +1,10 @@
 import {
+  defineTour,
   TOUR_STEP_ALIGNMENTS,
   TOUR_STEP_SIDES,
-  type TourDefinition,
 } from "./tour-types";
 
-export const attackPathsTour: TourDefinition = {
+export const attackPathsTour = defineTour({
   id: "attack-paths",
   version: 1,
   coversFiles: [
@@ -55,4 +55,4 @@ export const attackPathsTour: TourDefinition = {
         "Explore the attack paths and dig into anything that looks risky.",
     },
   ],
-};
+});

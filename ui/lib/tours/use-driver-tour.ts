@@ -22,7 +22,7 @@ import {
 const AUTO_OPEN_DELAY_MS = 50;
 const DEFAULT_WAIT_TIMEOUT_MS = 8000;
 
-export interface UseDriverTourOptions {
+export interface UseDriverTourOptions<TTarget extends string = string> {
   /** Auto-open on mount when no completion record exists. Defaults to true. */
   autoOpen?: boolean;
   /** Gate that delays initialization until anchored DOM is ready. Defaults to true. */
@@ -31,7 +31,7 @@ export interface UseDriverTourOptions {
   store?: TourCompletionStore;
   configOverrides?: Partial<Config>;
   /** Indexed by step `target`; overrides driver.js's default Next/Back for that step. */
-  stepHandlers?: Record<string, TourStepHandlers>;
+  stepHandlers?: { [K in TTarget]?: TourStepHandlers<TTarget> };
 }
 
 export interface UseDriverTourResult {
@@ -84,7 +84,10 @@ function waitForElement(
   });
 }
 
-function adaptStep(tourId: string, step: TourStep): DriveStep {
+function adaptStep<TTarget extends string>(
+  tourId: string,
+  step: TourStep<TTarget>,
+): DriveStep {
   const driveStep: DriveStep = {
     popover: {
       title: step.title,
@@ -121,17 +124,22 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-function buildHandlerContext(tourId: string): TourStepHandlerContext {
+function buildHandlerContext<TTarget extends string>(
+  tourId: string,
+): TourStepHandlerContext<TTarget> {
   return {
     waitForStep: (target, options) =>
       waitForElement(toSelector(`${tourId}-${target}`), options),
   };
 }
 
-// Rebuilds the driver instance when the active theme changes.
-export function useDriverTour(
-  tour: TourDefinition,
-  options: UseDriverTourOptions = {},
+// Rebuilds the driver instance when the active theme changes. Generic over
+// `TTarget` so `stepHandlers` keys and `waitForStep` calls are validated
+// against the literal union declared by `tour` (when authored via
+// `defineTour`).
+export function useDriverTour<TTarget extends string>(
+  tour: TourDefinition<TTarget>,
+  options: UseDriverTourOptions<TTarget> = {},
 ): UseDriverTourResult {
   const {
     autoOpen = true,
@@ -148,12 +156,16 @@ export function useDriverTour(
   const finalStateRef = useRef<TourCompletionRecord["state"]>(
     TOUR_COMPLETION_STATES.DISMISSED,
   );
-  // Hold handlers in a ref so closures inside driver.js read the latest
-  // version each step — without recreating the driver every render.
-  const stepHandlersRef = useRef<Record<string, TourStepHandlers> | undefined>(
-    stepHandlers,
-  );
-  stepHandlersRef.current = stepHandlers;
+  // Ref so driver.js closures read the latest handler each step without
+  // recreating the driver every render. Widened internally because indexing
+  // `{ [K in TTarget]?: ... }` by a generic `TTarget` resolves to `never`;
+  // the outer prop is the type-safe surface.
+  const stepHandlersRef = useRef<
+    Record<string, TourStepHandlers<TTarget> | undefined> | undefined
+  >(stepHandlers as Record<string, TourStepHandlers<TTarget> | undefined>);
+  stepHandlersRef.current = stepHandlers as
+    | Record<string, TourStepHandlers<TTarget> | undefined>
+    | undefined;
 
   const tourId = tour.id;
   const tourVersion = tour.version;
@@ -185,8 +197,8 @@ export function useDriverTour(
       const target = step.target;
       if (!target) return driveStep;
 
-      // Wire next/prev via the ref so handler identity changes never recreate
-      // the driver between renders.
+      // Wire next/prev via the ref so handler identity changes don't
+      // recreate the driver between renders.
       driveStep.popover = {
         ...driveStep.popover,
         onNextClick: (_element, _step, { driver: instance }) => {

@@ -1,12 +1,12 @@
 import {
+  defineTour,
   TOUR_STEP_ALIGNMENTS,
   TOUR_STEP_SIDES,
-  type TourDefinition,
 } from "./tour-types";
 
 // Companion to `attack-paths.tour.ts` with a distinct id so completing one
 // does not suppress the other.
-export const attackPathsEmptyTour: TourDefinition = {
+export const attackPathsEmptyTour = defineTour({
   id: "attack-paths-empty",
   version: 1,
   coversFiles: [
@@ -28,4 +28,4 @@ export const attackPathsEmptyTour: TourDefinition = {
         "Open Scan Jobs to launch one. The Attack Paths tour will pick up here once a scan is ready.",
     },
   ],
-};
+});

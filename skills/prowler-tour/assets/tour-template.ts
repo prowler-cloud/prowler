@@ -5,6 +5,9 @@
  * design context.
  *
  * Conventions:
+ *   - Declare via `defineTour({...})` (NOT `: TourDefinition`) so TS
+ *     preserves the literal union of `target` values. `useDriverTour` uses
+ *     that union to validate `stepHandlers` keys and `waitForStep` args.
  *   - `id` is kebab-case and unique across all tours.
  *   - Anchored steps reference DOM via `data-tour-id="<id>-<step.target>"`;
  *     the hook composes the CSS selector automatically.
@@ -14,12 +17,12 @@
  *   - Material flow changes bump `version`; cosmetic edits do not.
  */
 import {
+  defineTour,
   TOUR_STEP_ALIGNMENTS,
   TOUR_STEP_SIDES,
-  type TourDefinition,
 } from "@/lib/tours/tour-types";
 
-export const yourTour: TourDefinition = {
+export const yourTour = defineTour({
   id: "your-tour-id",
   version: 1,
   coversFiles: [
@@ -45,4 +48,4 @@ export const yourTour: TourDefinition = {
       description: "Tell the user what to look at here and why.",
     },
   ],
-};
+});

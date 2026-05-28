@@ -43,10 +43,10 @@ export interface TourCompletionRecord {
 }
 
 // Modal step omits `target`; anchored step provides the `data-tour-id` value
-// (no brackets). The hook composes the `[data-tour-id="..."]` selector and
-// resolves the element lazily.
-export interface TourStep {
-  target?: string;
+// (no brackets). `TTarget` narrows `target` to the literal union declared
+// by a specific tour.
+export interface TourStep<TTarget extends string = string> {
+  target?: TTarget;
   title?: string;
   description?: string;
   side?: TourStepSide;
@@ -55,19 +55,18 @@ export interface TourStep {
 }
 
 // `coversFiles` is consumed by the `prowler-tour` skill to scope drift checks.
-export interface TourDefinition {
+export interface TourDefinition<TTarget extends string = string> {
   id: string;
   version: number;
-  coversFiles: string[];
-  steps: TourStep[];
+  coversFiles: readonly string[];
+  steps: ReadonlyArray<TourStep<TTarget>>;
 }
 
-// The hook advances driver.js once the handler's promise settles.
-// `waitForStep` resolves when an element with `data-tour-id="<tour-id>-<target>"`
-// exists in the document.
-export interface TourStepHandlerContext {
+// `waitForStep` resolves when an element with
+// `data-tour-id="<tour-id>-<target>"` appears in the document.
+export interface TourStepHandlerContext<TTarget extends string = string> {
   waitForStep: (
-    target: string,
+    target: TTarget,
     options?: WaitForStepOptions,
   ) => Promise<Element>;
 }
@@ -76,9 +75,17 @@ export interface WaitForStepOptions {
   timeoutMs?: number;
 }
 
-// Indexed by step `target`. When provided, overrides driver.js's default
-// Next/Back for that step and delegates progression to the handler.
-export interface TourStepHandlers {
-  onNext?: (context: TourStepHandlerContext) => void | Promise<void>;
-  onPrev?: (context: TourStepHandlerContext) => void | Promise<void>;
+// Overrides driver.js's default Next/Back for the step it's registered on.
+export interface TourStepHandlers<TTarget extends string = string> {
+  onNext?: (context: TourStepHandlerContext<TTarget>) => void | Promise<void>;
+  onPrev?: (context: TourStepHandlerContext<TTarget>) => void | Promise<void>;
+}
+
+// Use instead of `: TourDefinition` so the inferred type preserves literal
+// step targets and `useDriverTour` can validate `stepHandlers` keys and
+// `waitForStep` arguments against them.
+export function defineTour<const TTarget extends string>(
+  definition: TourDefinition<TTarget>,
+): TourDefinition<TTarget> {
+  return definition;
 }

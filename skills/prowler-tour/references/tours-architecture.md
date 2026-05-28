@@ -7,12 +7,12 @@ This skill operates on tour definitions that follow this architecture.
 
 | File | Purpose |
 |---|---|
-| `ui/lib/tours/tour-types.ts` | Public type surface: `TourDefinition`, `TourStep`, `TourId`, `TourCompletionRecord`, completion-state const map. |
+| `ui/lib/tours/tour-types.ts` | Public type surface: `TourDefinition`, `TourStep`, `TourId`, `TourCompletionRecord`, completion-state const map. Also exports `defineTour(...)` — the required authoring helper that preserves literal step `target`s so `useDriverTour` can type-check `stepHandlers` keys and `waitForStep` arguments. |
 | `ui/lib/tours/tour-config.ts` | `baseDriverConfig`, `getDriverConfig(theme, overrides?)`, overlay-color map. |
 | `ui/lib/tours/store/tour-completion-store.ts` | Persistence interface — the swap point for future API adapters. |
 | `ui/lib/tours/store/local-storage-adapter.ts` | The only adapter in the PoC. Key format: `prowler.tour.<id>.v<version>`. |
 | `ui/lib/tours/use-driver-tour.ts` | React hook. Initializes driver.js, derives `overlayColor` from `useTheme()`, persists completion. |
-| `ui/lib/tours/<id>.tour.ts` | One file per tour. Exports a `TourDefinition` and is imported by the page that opts the user in. |
+| `ui/lib/tours/<id>.tour.ts` | One file per tour. Declared via `defineTour({...})` (not `: TourDefinition`) and imported by the page that opts the user in. |
 | `ui/styles/tours.css` | `.driver-popover.prowler-theme` — every color resolved via `var(--...)` from `globals.css`. |
 
 ## Selector convention
