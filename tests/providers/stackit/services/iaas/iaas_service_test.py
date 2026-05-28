@@ -339,3 +339,64 @@ class Test_IaaS_Service_Extract_Items:
         result = IaaSService._extract_items({"items": ["ok"]}, "endpoint")
         assert result == ["ok"]
         assert not callable(result)
+
+
+class Test_IaaS_Service_Fetch_All_Regions:
+    """Cover ``_fetch_all_regions`` multi-region behaviour. A project is not
+    provisioned in every StackIT region; the region where it is absent answers
+    with HTTP 404. That must be skipped, not abort the whole scan (which
+    previously left every check failing to load with an empty report).
+    """
+
+    class _NotFound(Exception):
+        status = 404
+
+    class _Forbidden(Exception):
+        status = 403
+
+    def _service(self, regional_clients):
+        from prowler.providers.stackit.stackit_provider import StackitProvider
+
+        service = object.__new__(IaaSService)
+        service.provider = MagicMock()
+        # Reuse the real centralized error handler so 401/403/404 semantics
+        # match production.
+        service.provider.handle_api_error = StackitProvider.handle_api_error
+        service.project_id = STACKIT_PROJECT_ID
+        service.scan_unused_services = True
+        service.regional_clients = regional_clients
+        service.security_groups = []
+        service.server_nics = []
+        service.in_use_sg_ids = set()
+        return service
+
+    def _good_client(self, sg_id="sg-eu01"):
+        client = MagicMock()
+        client.list_project_nics.return_value = {"items": []}
+        client.list_security_groups.return_value = {"items": [{"id": sg_id}]}
+        client.list_security_group_rules.return_value = {"items": []}
+        return client
+
+    def _missing_region_client(self):
+        client = MagicMock()
+        client.list_project_nics.side_effect = self._NotFound()
+        client.list_security_groups.side_effect = self._NotFound()
+        return client
+
+    def test_skips_region_where_project_is_absent(self):
+        service = self._service(
+            {"eu01": self._good_client(), "eu02": self._missing_region_client()}
+        )
+
+        service._fetch_all_regions()
+
+        # eu01 security group is collected; the eu02 404 is skipped silently.
+        assert [sg.id for sg in service.security_groups] == ["sg-eu01"]
+
+    def test_403_still_aborts(self):
+        bad = MagicMock()
+        bad.list_project_nics.side_effect = self._Forbidden()
+        service = self._service({"eu01": bad})
+
+        with pytest.raises(StackITInvalidTokenError):
+            service._fetch_all_regions()

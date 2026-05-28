@@ -43,10 +43,31 @@ class IaaSService:
         self._fetch_all_regions()
 
     def _fetch_all_regions(self):
-        """Fetch resources from all audited regions."""
+        """Fetch resources from all audited regions.
+
+        A project is not necessarily provisioned in every StackIT region. A
+        region where the project does not exist answers the IaaS endpoints
+        with HTTP 404 (``resource not found: project``). That is expected, so
+        the region is skipped and the scan continues with the remaining
+        regions instead of aborting (which previously left every check
+        failing to load and produced an empty, misleading report).
+
+        Credential and permission failures (401/403) still propagate via
+        ``handle_api_error`` so a misconfigured account fails loudly.
+        """
         for region, client in self.regional_clients.items():
-            self._list_server_nics(client, region)
-            self._list_security_groups(client, region)
+            try:
+                self._list_server_nics(client, region)
+                self._list_security_groups(client, region)
+            except Exception as error:
+                if getattr(error, "status", None) == 404:
+                    logger.info(
+                        f"StackIT project {self.project_id} has no IaaS "
+                        f"presence in region {region} (404 resource not "
+                        f"found); skipping this region."
+                    )
+                    continue
+                raise
 
     @staticmethod
     def _extract_items(response, endpoint_name: str) -> list:
