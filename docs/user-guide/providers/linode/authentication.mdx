@@ -1,0 +1,109 @@
+---
+title: "Linode Authentication in Prowler"
+---
+
+Prowler for Linode uses a **Personal Access Token** (PAT) for authentication. This is the only authentication method currently supported.
+
+## Required Permissions
+
+Prowler requires read-only access to your Linode account. The following OAuth scopes are needed on the Personal Access Token:
+
+| Scope | Access | Description |
+|-------|--------|-------------|
+| `account` | `Read Only` | Required to list users and verify account identity |
+| `linodes` | `Read Only` | Required to list instances, their configurations, and firewalls |
+| `firewall` | `Read Only` | Required to list firewalls and their rules |
+
+<Warning>
+Ensure the token has all required scopes. Missing permissions will cause some checks to fail or return incomplete results.
+</Warning>
+
+---
+
+## Personal Access Token
+
+### Step 1: Create a Personal Access Token
+
+1. Log into the [Linode Cloud Manager](https://cloud.linode.com).
+2. Click on your username in the top-right corner, then select **API Tokens** under the "My Profile" section.
+3. Click **Create a Personal Access Token**.
+4. Configure the token:
+   - **Label:** A descriptive name (e.g., "Prowler Security Scanner")
+   - **Expiry:** Set an appropriate expiration (e.g., 6 months)
+   - **Permissions:** Set the following scopes to **Read Only**:
+     - Account
+     - Linodes
+     - Firewall
+   - All other scopes can be set to **No Access**
+5. Click **Create Token**.
+6. Copy the token immediately — it will not be shown again.
+
+### Step 2: Configure Authentication
+
+Choose one of the following methods:
+
+#### Environment Variable (Recommended)
+
+Set the `LINODE_TOKEN` environment variable:
+
+```bash
+export LINODE_TOKEN="your-personal-access-token"
+```
+
+Then run Prowler without the token flag:
+
+```bash
+prowler linode
+```
+
+#### CLI Argument
+
+Pass the token directly on the command line:
+
+```bash
+prowler linode --linode-token "your-personal-access-token"
+```
+
+<Warning>
+Passing secrets directly on the command line may expose them in shell history and process listings. The environment variable method is strongly recommended for production and CI/CD use.
+</Warning>
+
+---
+
+## Verifying Authentication
+
+To verify that Prowler can connect to your Linode account, run:
+
+```bash
+prowler linode --list-checks
+```
+
+If authentication succeeds, you will see a list of available checks. If it fails, Prowler will display an error message indicating the credentials issue.
+
+---
+
+## CI/CD Integration
+
+For automated pipelines, set the token as a secret environment variable:
+
+**GitHub Actions:**
+
+```yaml
+env:
+  LINODE_TOKEN: ${{ secrets.LINODE_TOKEN }}
+
+steps:
+  - name: Run Prowler
+    run: prowler linode
+```
+
+**GitLab CI:**
+
+```yaml
+variables:
+  LINODE_TOKEN: $LINODE_TOKEN
+
+prowler_scan:
+  script:
+    - prowler linode
+```

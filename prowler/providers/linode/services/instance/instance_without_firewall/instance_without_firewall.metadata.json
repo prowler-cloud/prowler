@@ -1,0 +1,36 @@
+{
+  "Provider": "linode",
+  "CheckID": "instance_without_firewall",
+  "CheckTitle": "Linode Instance has a Cloud Firewall attached",
+  "CheckType": [],
+  "ServiceName": "instance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Instance",
+  "ResourceGroup": "network",
+  "Description": "Linode instances are assessed for Cloud Firewall attachment. Instances without a firewall are exposed to all network traffic without filtering, increasing the risk of unauthorized access.",
+  "Risk": "Without a Cloud Firewall, the instance is directly exposed to the internet with no network-level filtering. Attackers can probe and exploit any listening service.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "linode-cli firewalls create --label my-firewall && linode-cli firewalls device-create <firewall_id> --id <linode_id> --type linode",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to the Firewalls section\n3. Create a new firewall or select an existing one\n4. Add the instance as a device to the firewall",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach a Cloud Firewall to this instance to control inbound and outbound traffic. Configure rules to allow only necessary traffic.",
+      "Url": "https://hub.prowler.com/checks/linode/instance_without_firewall"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "instance_public_ip_without_firewall"
+  ],
+  "Notes": ""
+}

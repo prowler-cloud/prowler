@@ -1,0 +1,37 @@
+{
+  "Provider": "linode",
+  "CheckID": "firewall_blocks_rdp_from_internet",
+  "CheckTitle": "Linode Cloud Firewall does not allow RDP from the internet",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Firewall",
+  "ResourceGroup": "network",
+  "Description": "Linode Cloud Firewalls are assessed for inbound rules allowing RDP (TCP port 3389) from 0.0.0.0/0 or ::/0. Unrestricted RDP access exposes instances to brute-force attacks, credential stuffing, and known RDP protocol vulnerabilities.",
+  "Risk": "Allowing RDP from the internet enables attackers to exploit RDP vulnerabilities (such as BlueKeep), perform brute-force password attacks, or leverage stolen credentials for unauthorized remote desktop access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to the Firewalls section\n3. Edit the firewall rules\n4. Restrict RDP (port 3389) inbound rules to specific trusted IP addresses or CIDR ranges\n5. Consider using a VPN for remote desktop access",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict RDP access to specific trusted IP addresses. Use a VPN or jump host for remote desktop connectivity instead of exposing RDP directly to the internet.",
+      "Url": "https://hub.prowler.com/checks/linode/firewall_blocks_rdp_from_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "firewall_blocks_ssh_from_internet",
+    "firewall_inbound_rules_restricted"
+  ],
+  "Notes": ""
+}

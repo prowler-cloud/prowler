@@ -1,0 +1,34 @@
+{
+  "Provider": "linode",
+  "CheckID": "instance_watchdog_enabled",
+  "CheckTitle": "Linode Instance has Watchdog (Lassie) enabled",
+  "CheckType": [],
+  "ServiceName": "instance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Instance",
+  "ResourceGroup": "compute",
+  "Description": "Linode instances are assessed for Watchdog (Lassie) status. Watchdog is Linode's automatic instance recovery feature that monitors instances and automatically reboots them if they power off unexpectedly. Disabling Watchdog removes this safety net.",
+  "Risk": "Without Watchdog enabled, an instance that crashes or powers off unexpectedly will remain offline until manually restarted. This increases downtime risk and may delay detection of availability issues.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "linode-cli linodes update <linode_id> --watchdog_enabled true",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Select the Linode instance\n3. Navigate to the Settings tab\n4. Enable the Shutdown Watchdog (Lassie) toggle",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Watchdog (Lassie) on this instance to ensure automatic recovery from unexpected shutdowns. This provides an additional layer of availability protection.",
+      "Url": "https://hub.prowler.com/checks/linode/instance_watchdog_enabled"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

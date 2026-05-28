@@ -78,6 +78,7 @@ dependencies = [
   "google-auth-httplib2==0.2.0",
   "jsonschema==4.23.0",
   "kubernetes==32.0.1",
+  "linode-api4==5.44.0",
   "markdown==3.10.2",
   "microsoft-kiota-abstractions==1.9.2",
   "msgraph-sdk==1.55.0",

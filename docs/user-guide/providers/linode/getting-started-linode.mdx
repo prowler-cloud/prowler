@@ -1,0 +1,70 @@
+---
+title: 'Getting Started With Linode on Prowler'
+---
+
+Prowler for Linode scans your Linode infrastructure for security misconfigurations, including instance settings, firewall rules, user account security, and more.
+
+## Prerequisites
+
+Set up authentication for Linode with the [Linode Authentication](/user-guide/providers/linode/authentication) guide before starting:
+
+- Create a Linode Personal Access Token with read-only permissions
+- The token requires at minimum: `account:read_only`, `linodes:read_only`, and `firewall:read_only` scopes
+
+## Prowler CLI
+
+### Run Prowler for Linode
+
+Once you have your Personal Access Token, you can run Prowler for Linode using either an environment variable or CLI argument:
+
+**Option 1: Environment Variable (Recommended)**
+
+```bash
+export LINODE_TOKEN="your-personal-access-token"
+prowler linode
+```
+
+**Option 2: CLI Argument**
+
+```bash
+prowler linode --linode-token "your-personal-access-token"
+```
+
+<Warning>
+Passing the token directly on the command line may expose it in shell history and process listings. Using the environment variable is recommended.
+</Warning>
+
+### Run Specific Checks
+
+```bash
+prowler linode --checks instance_backups_enabled instance_watchdog_enabled
+```
+
+### Run a Specific Service
+
+```bash
+prowler linode --services firewall
+```
+
+## Available Services
+
+Prowler for Linode currently supports the following services:
+
+| Service | Description |
+|---------|-------------|
+| `account` | User account settings (2FA enforcement) |
+| `instance` | Linode instance configuration (backups, encryption, watchdog, firewalls) |
+| `firewall` | Cloud firewall rules (SSH, RDP, overly permissive inbound rules) |
+
+## Available Checks
+
+| Check ID | Service | Description |
+|----------|---------|-------------|
+| `account_user_2fa_enabled` | Account | Ensures all users have two-factor authentication enabled |
+| `instance_backups_enabled` | Instance | Ensures instances have the Linode Backup service enabled |
+| `instance_disk_encryption_enabled` | Instance | Ensures instances have disk encryption enabled |
+| `instance_watchdog_enabled` | Instance | Ensures instances have Watchdog (Lassie) enabled for auto-recovery |
+| `instance_firewall_attached` | Instance | Ensures public-facing instances have a firewall attached |
+| `firewall_blocks_ssh_from_internet` | Firewall | Ensures firewalls do not allow SSH (port 22) from the internet |
+| `firewall_blocks_rdp_from_internet` | Firewall | Ensures firewalls do not allow RDP (port 3389) from the internet |
+| `firewall_inbound_rules_restricted` | Firewall | Ensures firewalls do not allow all ports from the internet |

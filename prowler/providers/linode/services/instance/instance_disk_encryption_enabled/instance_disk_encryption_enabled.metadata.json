@@ -1,0 +1,34 @@
+{
+  "Provider": "linode",
+  "CheckID": "instance_disk_encryption_enabled",
+  "CheckTitle": "Linode Instance has disk encryption enabled",
+  "CheckType": [],
+  "ServiceName": "instance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Instance",
+  "ResourceGroup": "compute",
+  "Description": "Linode instances are assessed for disk encryption status. Disk encryption protects data at rest on the instance's disks from unauthorized physical access to the underlying hardware. Without encryption, data on disks could be exposed if physical security is compromised.",
+  "Risk": "Without disk encryption, sensitive data stored on the instance's disks is unprotected at rest. This increases the risk of data exposure in the event of physical access to storage media or through certain hypervisor-level vulnerabilities.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Disk encryption must be enabled at instance creation time or by rebuilding the instance\n2. Create a new instance with disk_encryption set to 'enabled'\n3. Migrate data from the unencrypted instance to the new encrypted instance",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable disk encryption for this instance. Since disk encryption cannot be toggled on existing instances, you may need to rebuild or migrate to a new instance with encryption enabled.",
+      "Url": "https://hub.prowler.com/checks/linode/instance_disk_encryption_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -429,6 +429,14 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
 
+                elif "linode" in provider_class_name.lower():
+                    provider_class(
+                        token=getattr(arguments, "linode_token", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+
         except TypeError as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

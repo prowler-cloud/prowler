@@ -352,6 +352,13 @@
                   "user-guide/providers/okta/getting-started-okta",
                   "user-guide/providers/okta/authentication"
                 ]
+              },
+              {
+                "group": "Linode",
+                "pages": [
+                  "user-guide/providers/linode/getting-started-linode",
+                  "user-guide/providers/linode/authentication"
+                ]
               }
             ]
           },

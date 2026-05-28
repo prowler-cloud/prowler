@@ -1,0 +1,34 @@
+{
+  "Provider": "linode",
+  "CheckID": "account_user_without_2fa",
+  "CheckTitle": "Linode account user has two-factor authentication enabled",
+  "CheckType": [],
+  "ServiceName": "account",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "User",
+  "ResourceGroup": "IAM",
+  "Description": "Linode account users are assessed for two-factor authentication (2FA) enablement. Users without 2FA are vulnerable to account takeover through credential theft or brute-force attacks.",
+  "Risk": "Without two-factor authentication, a compromised password is sufficient for an attacker to gain full access to the user's Linode account, potentially leading to data exfiltration, resource destruction, or cryptocurrency mining abuse.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to My Profile > Password & Authentication\n3. Under Two-Factor Authentication, click Enable\n4. Scan the QR code with an authenticator app\n5. Enter the verification code to confirm",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable two-factor authentication for all Linode account users. Use an authenticator app (TOTP) for the second factor. Store backup codes securely.",
+      "Url": "https://hub.prowler.com/checks/linode/account_user_without_2fa"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

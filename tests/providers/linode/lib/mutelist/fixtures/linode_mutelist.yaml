@@ -1,0 +1,9 @@
+Mutelist:
+  Accounts:
+    "E1AF1B6C-1111-2222-3333-444455556666":
+      Checks:
+        "account_user_2fa_enabled":
+          Regions:
+            - "*"
+          Resources:
+            - "admin"

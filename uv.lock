@@ -1705,6 +1705,18 @@ wheels = [
 ]
 
 [[package]]
+name = "deprecated"
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "wrapt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/49/85/12f0a49a7c4ffb70572b6c2ef13c90c88fd190debda93b23f026b25f9634/deprecated-1.3.1.tar.gz", hash = "sha256:b1b50e0ff0c1fddaa5708a2c6b0a6588bb09b892825ab2b214ac9ea9d92a5223", size = 2932523, upload-time = "2025-10-30T08:19:02.757Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/d0/205d54408c08b13550c733c4b85429e7ead111c7f0014309637425520a9a/deprecated-1.3.1-py2.py3-none-any.whl", hash = "sha256:597bfef186b6f60181535a29fbe44865ce137a5079f295b479886c82729d5f3f", size = 11298, upload-time = "2025-10-30T08:19:00.758Z" },
+]
+
+[[package]]
 name = "detect-secrets"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2381,6 +2393,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/78/be/15f8f5a0b0b2e668e756a152257d26370132c97f2f1943329b08f057eff0/lazy_object_proxy-1.12.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:563d2ec8e4d4b68ee7848c5ab4d6057a6d703cb7963b342968bb8758dda33a23", size = 70690, upload-time = "2025-08-22T13:42:42.51Z" },
     { url = "https://files.pythonhosted.org/packages/5d/aa/f02be9bbfb270e13ee608c2b28b8771f20a5f64356c6d9317b20043c6129/lazy_object_proxy-1.12.0-cp312-cp312-win_amd64.whl", hash = "sha256:53c7fd99eb156bbb82cbc5d5188891d8fdd805ba6c1e3b92b90092da2a837073", size = 26563, upload-time = "2025-08-22T13:42:43.685Z" },
     { url = "https://files.pythonhosted.org/packages/41/a0/b91504515c1f9a299fc157967ffbd2f0321bce0516a3d5b89f6f4cad0355/lazy_object_proxy-1.12.0-pp39.pp310.pp311.graalpy311-none-any.whl", hash = "sha256:c3b2e0af1f7f77c4263759c4824316ce458fabe0fceadcd24ef8ca08b2d1e402", size = 15072, upload-time = "2025-08-22T13:50:05.498Z" },
+]
+
+[[package]]
+name = "linode-api4"
+version = "5.44.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "deprecated" },
+    { name = "polling" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/74/e0/b7b593a8ee0b9d353830152934016773fc14eacebf6c3e354779ad94ef45/linode_api4-5.44.0.tar.gz", hash = "sha256:f5da3d787172a3d4fea3973e17d797f1bbef0e53ec3762169c1fc277bc74e02d", size = 264427, upload-time = "2026-05-13T17:41:25.568Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/82/4ff17f10e16b148ea681ce19f4daf33a635a9fefda48fdada39bea9a7c86/linode_api4-5.44.0-py3-none-any.whl", hash = "sha256:891175d65341ae5218d0da331c8e9ffe007e4298c465b95fd85e43d582db8c79", size = 153144, upload-time = "2026-05-13T17:41:23.621Z" },
 ]
 
 [[package]]
@@ -3129,6 +3155,12 @@ wheels = [
 ]
 
 [[package]]
+name = "polling"
+version = "0.3.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/c5/4249317962180d97ec7a60fe38aa91f86216533bd478a427a5468945c5c9/polling-0.3.2.tar.gz", hash = "sha256:3afd62320c99b725c70f379964bf548b302fc7f04d4604e6c315d9012309cc9a", size = 5189, upload-time = "2021-05-22T19:48:41.466Z" }
+
+[[package]]
 name = "prek"
 version = "0.3.9"
 source = { registry = "https://pypi.org/simple" }
@@ -3301,6 +3333,7 @@ dependencies = [
     { name = "h2" },
     { name = "jsonschema" },
     { name = "kubernetes" },
+    { name = "linode-api4" },
     { name = "markdown" },
     { name = "microsoft-kiota-abstractions" },
     { name = "msgraph-sdk" },
@@ -3406,6 +3439,7 @@ requires-dist = [
     { name = "h2", specifier = "==4.3.0" },
     { name = "jsonschema", specifier = "==4.23.0" },
     { name = "kubernetes", specifier = "==32.0.1" },
+    { name = "linode-api4", specifier = "==5.44.0" },
     { name = "markdown", specifier = "==3.10.2" },
     { name = "microsoft-kiota-abstractions", specifier = "==1.9.2" },
     { name = "msgraph-sdk", specifier = "==1.55.0" },

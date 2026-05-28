@@ -122,6 +122,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | Vercel | 26 | 6 | 0 | 8 | Official | UI, API, CLI |
 | Okta | 1 | 1 | 0 | 1 | Official | CLI |
 | Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 0 | 1 | Unofficial | CLI |
+| Linode | 8 | 3 | 0 | 4 | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]

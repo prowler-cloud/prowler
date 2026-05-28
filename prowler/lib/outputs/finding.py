@@ -454,6 +454,18 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "linode":
+                output_data["auth_method"] = "api_token"
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.account_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.username"
+                ) or get_nested_attribute(provider, "identity.email")
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(
                     provider, "identity.identity_arn"
