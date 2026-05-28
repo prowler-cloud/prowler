@@ -30,7 +30,7 @@ export const attackPathsTour: TourDefinition = {
     {
       title: "Welcome to Attack Paths",
       description:
-        "Attack Paths visualizes how a compromise in one resource could propagate through your cloud. We'll walk you through the workflow on your real data — no fake screenshots.",
+        "Attack Paths visualizes how a compromise in one resource could spread through your cloud — on your real data.",
     },
     {
       target: "intro",
@@ -38,7 +38,7 @@ export const attackPathsTour: TourDefinition = {
       align: TOUR_STEP_ALIGNMENTS.START,
       title: "Start with a scan",
       description:
-        "Attack Paths analyses are generated from your existing scans. Each scan is a point-in-time snapshot of one cloud account.",
+        "Attack Paths analyses are generated from your existing scans. Each scan is a point-in-time snapshot of one provider.",
     },
     {
       target: "scan-list",
@@ -46,7 +46,7 @@ export const attackPathsTour: TourDefinition = {
       align: TOUR_STEP_ALIGNMENTS.START,
       title: "Pick a scan",
       description:
-        "Each row is one of your scans. Normally you'd click the radio button on the left to pick one with graph data ready. To keep the tour moving, we'll auto-select the first ready scan when you click Next.",
+        "Each row is a scan. Click the radio button on the left to select one.",
     },
     {
       target: "query-selector",
@@ -54,7 +54,7 @@ export const attackPathsTour: TourDefinition = {
       align: TOUR_STEP_ALIGNMENTS.START,
       title: "Choose a query",
       description:
-        "Predefined queries cover common risk patterns (privilege escalation, public exposure, lateral movement). You can also write your own openCypher. We'll pick the first one for you when you click Next.",
+        "Predefined queries cover common risk patterns (privilege escalation, public exposure, lateral movement). You can also write your own openCypher.",
     },
     {
       target: "execute-button",
@@ -62,12 +62,12 @@ export const attackPathsTour: TourDefinition = {
       align: TOUR_STEP_ALIGNMENTS.END,
       title: "Run it whenever you're ready",
       description:
-        "Clicking this renders the result as an interactive graph. We'll stop the tour here so you can run it on your own data — or change the query first.",
+        "Click Execute Query to see the graph with the possible attack paths.",
     },
     {
-      title: "You're set",
+      title: "You're all set",
       description:
-        "That's the whole loop: pick a scan, pick a query, execute. Clear browser storage if you want to see this tour again.",
+        "Explore the attack paths and dig into anything that looks risky.",
     },
   ],
 };

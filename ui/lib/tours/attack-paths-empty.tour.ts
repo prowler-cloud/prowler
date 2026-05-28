@@ -29,7 +29,7 @@ export const attackPathsEmptyTour: TourDefinition = {
     {
       title: "Welcome to Attack Paths",
       description:
-        "Attack Paths visualises how a compromise in one resource could spread through your cloud — on your real data, not a sample. To explore yours, you'll need a completed scan first.",
+        "Attack Paths visualizes how a compromise in one resource could spread through your cloud — on your real data. To explore yours, you'll need a completed scan first.",
     },
     {
       target: "scans-cta",
