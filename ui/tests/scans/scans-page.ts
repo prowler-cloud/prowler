@@ -17,6 +17,7 @@ export class ScansPage extends BasePage {
 
   // Scan state elements
   readonly successToast: Locator;
+  readonly viewInProgressLink: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -56,6 +57,9 @@ export class ScansPage extends BasePage {
     // Scan state elements
     this.successToast = page.getByRole("alert", {
       name: /The scan was launched successfully\.?/i,
+    });
+    this.viewInProgressLink = page.getByRole("link", {
+      name: /^View in progress$/i,
     });
 
     // Main content elements
@@ -101,6 +105,14 @@ export class ScansPage extends BasePage {
 
     await expect(this.startNowButton).toBeVisible();
     await this.startNowButton.click();
+  }
+
+  async viewLaunchedScanInProgress(): Promise<void> {
+    // Newly launched scans appear under In Progress while /scans defaults to Completed.
+    await expect(this.viewInProgressLink).toBeVisible({ timeout: 5000 });
+    await this.viewInProgressLink.click();
+    await expect(this.page).toHaveURL(/\/scans\?tab=active/);
+    await expect(this.scanTable).toBeVisible();
   }
 
   async verifyScanLaunched(accountId: string): Promise<void> {
