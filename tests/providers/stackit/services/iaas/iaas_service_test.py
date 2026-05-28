@@ -400,3 +400,52 @@ class Test_IaaS_Service_Fetch_All_Regions:
 
         with pytest.raises(StackITInvalidTokenError):
             service._fetch_all_regions()
+
+
+class Test_IaaS_Service_Log_Skipped_Security_Groups:
+    """``_log_skipped_security_groups`` should emit a hint only when groups
+    exist, none are in use, and ``scan_unused_services`` is off.
+    """
+
+    def _service(self, security_groups, scan_unused_services):
+        service = object.__new__(IaaSService)
+        service.scan_unused_services = scan_unused_services
+        service.security_groups = security_groups
+        return service
+
+    def _sg(self, in_use):
+        sg = MagicMock()
+        sg.in_use = in_use
+        return sg
+
+    def test_logs_when_all_skipped(self, caplog):
+        import logging
+
+        service = self._service([self._sg(False), self._sg(False)], False)
+        with caplog.at_level(logging.INFO):
+            service._log_skipped_security_groups()
+        assert "scan-unused-services" in caplog.text
+
+    def test_no_log_when_scan_unused_services_enabled(self, caplog):
+        import logging
+
+        service = self._service([self._sg(False)], True)
+        with caplog.at_level(logging.INFO):
+            service._log_skipped_security_groups()
+        assert "scan-unused-services" not in caplog.text
+
+    def test_no_log_when_a_group_is_in_use(self, caplog):
+        import logging
+
+        service = self._service([self._sg(False), self._sg(True)], False)
+        with caplog.at_level(logging.INFO):
+            service._log_skipped_security_groups()
+        assert "scan-unused-services" not in caplog.text
+
+    def test_no_log_when_no_security_groups(self, caplog):
+        import logging
+
+        service = self._service([], False)
+        with caplog.at_level(logging.INFO):
+            service._log_skipped_security_groups()
+        assert "scan-unused-services" not in caplog.text

@@ -41,6 +41,30 @@ class IaaSService:
 
         # Fetch resources from all regions
         self._fetch_all_regions()
+        self._log_skipped_security_groups()
+
+    def _log_skipped_security_groups(self):
+        """Explain an empty report when every security group is skipped.
+
+        Following the same convention as the rest of Prowler, security group
+        checks only evaluate groups that are in use (attached to a network
+        interface) unless ``--scan-unused-services`` is set. When a project
+        has security groups but none are attached, every check returns no
+        finding, which looks like "nothing was scanned". Emit an explicit
+        hint so the empty report is not mistaken for a failure.
+        """
+        if (
+            not self.scan_unused_services
+            and self.security_groups
+            and not any(sg.in_use for sg in self.security_groups)
+        ):
+            logger.info(
+                f"{len(self.security_groups)} StackIT security group(s) were "
+                f"found but none are attached to a network interface, so all "
+                f"of them are skipped and no finding is produced. Re-run with "
+                f"--scan-unused-services to audit security groups that are "
+                f"not currently in use."
+            )
 
     def _fetch_all_regions(self):
         """Fetch resources from all audited regions.
