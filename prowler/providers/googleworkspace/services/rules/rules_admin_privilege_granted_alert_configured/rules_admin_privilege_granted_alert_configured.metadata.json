@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "rules_admin_privilege_granted_alert_configured",
+  "CheckTitle": "User granted Admin privilege alert rule is configured",
+  "CheckType": [],
+  "ServiceName": "rules",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "monitoring",
+  "Description": "The **User granted Admin privilege** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when a user is given elevated admin privileges.",
+  "Risk": "Without this alert enabled, administrators will not be notified when users receive **elevated admin privileges**. Unauthorized privilege escalation could indicate account compromise or insider threats and requires immediate verification.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/reports/view-and-edit-system-defined-rules",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Select **Rules**\n3. Under **Google protects you by default** select **View list**\n4. Scroll to **User granted Admin privilege** and select it\n5. Within the Actions pane, click the edit pencil\n6. Select **Send to alert center** to set the alert to ON\n7. Set the alert severity to **Medium**\n8. Select **Send email notifications**\n9. Ensure **All super administrators** is selected as recipients\n10. Click **Review** to confirm the values\n11. Click **Update Rule**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the **User granted Admin privilege** alert rule with alert center ON, email notifications ON, and recipients set to **all super administrators**.",
+      "Url": "https://hub.prowler.com/check/rules_admin_privilege_granted_alert_configured"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

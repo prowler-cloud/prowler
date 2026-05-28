@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "rules_gmail_employee_spoofing_alert_configured",
+  "CheckTitle": "Gmail potential employee spoofing alert rule is configured",
+  "CheckType": [],
+  "ServiceName": "rules",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "monitoring",
+  "Description": "The **Gmail potential employee spoofing** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when incoming messages have a sender name matching the directory but from an external domain.",
+  "Risk": "Without this alert enabled, administrators will not be notified of potential **employee spoofing via email**. Attackers may impersonate internal employees using external email addresses to conduct phishing attacks against the organization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/reports/view-and-edit-system-defined-rules",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Select **Rules**\n3. Under **Google protects you by default** select **View list**\n4. Scroll to **Gmail potential employee spoofing** and select it\n5. Within the Actions pane, click the edit pencil\n6. Select **Send to alert center** to set the alert to ON\n7. Set the alert severity to **Medium**\n8. Select **Send email notifications**\n9. Ensure **All super administrators** is selected as recipients\n10. Click **Review** to confirm the values\n11. Click **Update Rule**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the **Gmail potential employee spoofing** alert rule with alert center ON, email notifications ON, and recipients set to **all super administrators**.",
+      "Url": "https://hub.prowler.com/check/rules_gmail_employee_spoofing_alert_configured"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

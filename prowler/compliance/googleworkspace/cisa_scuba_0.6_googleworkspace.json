@@ -402,7 +402,16 @@
     {
       "Id": "GWS.COMMONCONTROLS.13.1",
       "Description": "All system-defined alerting rules SHALL be enabled with alerts sent to admin email addresses",
-      "Checks": [],
+      "Checks": [
+        "rules_password_changed_alert_configured",
+        "rules_government_backed_attacks_alert_configured",
+        "rules_suspicious_activity_suspension_alert_configured",
+        "rules_admin_privilege_granted_alert_configured",
+        "rules_suspicious_programmatic_login_alert_configured",
+        "rules_suspicious_login_alert_configured",
+        "rules_leaked_password_alert_configured",
+        "rules_gmail_employee_spoofing_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "Common Controls",
