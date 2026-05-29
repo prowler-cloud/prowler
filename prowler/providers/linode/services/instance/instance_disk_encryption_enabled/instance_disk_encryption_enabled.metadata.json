@@ -12,7 +12,10 @@
   "Description": "Linode instances are assessed for disk encryption status. Disk encryption protects data at rest on the instance's disks from unauthorized physical access to the underlying hardware. Without encryption, data on disks could be exposed if physical security is compromised.",
   "Risk": "Without disk encryption, sensitive data stored on the instance's disks is unprotected at rest. This increases the risk of data exposure in the event of physical access to storage media or through certain hypervisor-level vulnerabilities.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/local-disk-encryption",
+    "https://techdocs.akamai.com/cloud-computing/docs/create-a-compute-instance#enable-or-disable-disk-encryption"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

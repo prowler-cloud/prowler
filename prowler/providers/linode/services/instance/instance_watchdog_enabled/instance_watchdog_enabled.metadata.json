@@ -12,7 +12,9 @@
   "Description": "Linode instances are assessed for Watchdog (Lassie) status. Watchdog is Linode's automatic instance recovery feature that monitors instances and automatically reboots them if they power off unexpectedly. Disabling Watchdog removes this safety net.",
   "Risk": "Without Watchdog enabled, an instance that crashes or powers off unexpectedly will remain offline until manually restarted. This increases downtime risk and may delay detection of availability issues.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/recover-from-unexpected-shutdowns-with-lassie"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "linode-cli linodes update <linode_id> --watchdog_enabled true",

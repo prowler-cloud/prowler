@@ -12,7 +12,10 @@
   "Description": "Linode instances are assessed for Backup service enrollment. The Linode Backup service provides automatic daily and weekly backups of your instance's disks. Without backups, data loss from accidental deletion, disk corruption, or security incidents cannot be recovered.",
   "Risk": "Without the Backup service enabled, there is no automated recovery point for the instance. Data loss events such as accidental deletion, ransomware, or disk failure may result in permanent loss of data and extended downtime.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/enable-backups",
+    "https://techdocs.akamai.com/cloud-computing/docs/create-a-compute-instance#configure-additional-options"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "linode-cli linodes backups-enable <linode_id>",

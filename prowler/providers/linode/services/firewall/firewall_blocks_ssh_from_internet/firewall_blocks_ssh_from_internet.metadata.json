@@ -12,12 +12,15 @@
   "Description": "Linode Cloud Firewalls are assessed for inbound rules allowing SSH (TCP port 22) from 0.0.0.0/0 or ::/0. Unrestricted SSH access exposes instances to brute-force attacks and credential stuffing.",
   "Risk": "Allowing SSH from the internet enables attackers to attempt brute-force password attacks, exploit SSH vulnerabilities, or leverage stolen credentials for unauthorized access.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules",
+    "https://techdocs.akamai.com/cloud-computing/docs/apply-firewall-rules-to-a-service"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to the Firewalls section\n3. Edit the firewall rules\n4. Restrict SSH (port 22) inbound rules to specific trusted IP addresses or CIDR ranges\n5. Consider using a VPN or bastion host for SSH access",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to the Firewalls section\n3. Click on the Firewall that you'd like to manage & edit the firewall rules\n4. Restrict SSH (port 22) inbound rules to specific trusted IP addresses or CIDR ranges",
       "Terraform": ""
     },
     "Recommendation": {

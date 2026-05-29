@@ -12,12 +12,15 @@
   "Description": "Linode Cloud Firewalls are assessed for inbound rules that allow all ports and protocols from the internet (0.0.0.0/0 or ::/0). Such rules effectively negate the purpose of having a firewall.",
   "Risk": "Overly permissive inbound rules expose all services on attached instances to the internet. This negates the security benefit of the firewall and allows attackers to exploit any vulnerability on any port.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules",
+    "https://techdocs.akamai.com/cloud-computing/docs/apply-firewall-rules-to-a-service"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to the Firewalls section\n3. Edit the firewall rules\n4. Replace overly permissive rules with specific rules allowing only required ports and protocols\n5. Restrict source IPs to known trusted ranges where possible",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to the Firewalls section\n3. Click on the Firewall that you'd like to manage & edit the firewall rules\n4. Replace overly permissive rules with specific rules allowing only required ports and protocols\n5. Restrict source IPs to known trusted ranges where possible",
       "Terraform": ""
     },
     "Recommendation": {

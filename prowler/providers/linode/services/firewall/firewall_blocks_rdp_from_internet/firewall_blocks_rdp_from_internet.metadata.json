@@ -12,12 +12,15 @@
   "Description": "Linode Cloud Firewalls are assessed for inbound rules allowing RDP (TCP port 3389) from 0.0.0.0/0 or ::/0. Unrestricted RDP access exposes instances to brute-force attacks, credential stuffing, and known RDP protocol vulnerabilities.",
   "Risk": "Allowing RDP from the internet enables attackers to exploit RDP vulnerabilities (such as BlueKeep), perform brute-force password attacks, or leverage stolen credentials for unauthorized remote desktop access.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules",
+    "https://techdocs.akamai.com/cloud-computing/docs/apply-firewall-rules-to-a-service"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to the Firewalls section\n3. Edit the firewall rules\n4. Restrict RDP (port 3389) inbound rules to specific trusted IP addresses or CIDR ranges\n5. Consider using a VPN for remote desktop access",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to the Firewalls section\n3. Click on the Firewall that you'd like to manage & edit the firewall rules\n4. Restrict RDP (port 3389) inbound rules to specific trusted IP addresses or CIDR ranges",
       "Terraform": ""
     },
     "Recommendation": {

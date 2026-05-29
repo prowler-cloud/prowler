@@ -12,7 +12,10 @@
   "Description": "Linode instances with public IPv4 addresses are assessed for Cloud Firewall attachment. Publicly accessible instances without a firewall have no network-level access controls, making them directly vulnerable to internet-based attacks.",
   "Risk": "A publicly accessible instance without a firewall allows unrestricted inbound traffic from the internet. All running services are exposed to port scanning, brute-force attacks, and exploitation of vulnerabilities.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/create-a-cloud-firewall",
+    "https://techdocs.akamai.com/cloud-computing/docs/apply-firewall-rules-to-a-service"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "linode-cli firewalls create --label my-firewall && linode-cli firewalls device-create <firewall_id> --id <linode_id> --type linode",

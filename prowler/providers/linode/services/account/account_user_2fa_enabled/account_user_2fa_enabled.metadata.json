@@ -12,12 +12,14 @@
   "Description": "Linode account users are assessed for two-factor authentication (2FA) enablement. Users without 2FA are vulnerable to account takeover through credential theft or brute-force attacks.",
   "Risk": "Without two-factor authentication, a compromised password is sufficient for an attacker to gain full access to the user's Linode account, potentially leading to data exfiltration, resource destruction, or cryptocurrency mining abuse.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/manage-2fa"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to My Profile > Password & Authentication\n3. Under Two-Factor Authentication, click Enable\n4. Scan the QR code with an authenticator app\n5. Enter the verification code to confirm",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to My Profile > Login & Authentication\n3. Under Security Settings, configure all 3 security questions\n4. Enable Two-Factor Authentication",
       "Terraform": ""
     },
     "Recommendation": {
