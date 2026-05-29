@@ -18,9 +18,7 @@
   "Risk": "Without default encryption, older objects may remain unencrypted and new uploads won't be forced to use `SSE-KMS`. This reduces confidentiality and governance by limiting key audit logs, rotation, and cross-account controls, and increases exposure if data is copied, replicated, or accessed outside intended paths.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.amazonaws.cn/en_us/AmazonS3/latest/userguide/bucket-encryption.html",
-    "https://aws.amazon.com/blogs/security/how-to-prevent-uploads-of-unencrypted-objects-to-amazon-s3/",
-    "https://docs.aws.amazon.com/us_en/AmazonS3/latest/userguide/default-encryption-faq.html"
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-encryption-faq.html"
   ],
   "Remediation": {
     "Code": {
