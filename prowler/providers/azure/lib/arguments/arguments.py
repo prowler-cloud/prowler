@@ -29,6 +29,12 @@ def init_parser(self):
         action="store_true",
         help="Use managed identity authentication to log in against Azure ",
     )
+    azure_auth_modes_group.add_argument(
+        "--oidc-auth",
+        action="store_true",
+        help="Use OIDC/Workload Identity Federation authentication to log in against Azure. "
+        "Requires AZURE_CLIENT_ID, AZURE_TENANT_ID, and AZURE_FEDERATED_TOKEN (or AZURE_OIDC_TOKEN) environment variables.",
+    )
     # Subscriptions
     azure_subscriptions_subparser = azure_parser.add_argument_group("Subscriptions")
     azure_subscriptions_subparser.add_argument(

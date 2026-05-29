@@ -11,6 +11,7 @@ from uuid import UUID
 import requests
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import (
+    ClientAssertionCredential,
     ClientSecretCredential,
     CredentialUnavailableError,
     DefaultAzureCredential,
@@ -46,6 +47,7 @@ from prowler.providers.azure.exceptions.exceptions import (
     AzureNotValidClientIdError,
     AzureNotValidClientSecretError,
     AzureNotValidTenantIdError,
+    AzureOIDCTokenMissingError,
     AzureSetUpIdentityError,
     AzureSetUpRegionConfigError,
     AzureSetUpSessionError,
@@ -112,6 +114,7 @@ class AzureProvider(Provider):
         sp_env_auth: bool = False,
         browser_auth: bool = False,
         managed_identity_auth: bool = False,
+        oidc_auth: bool = False,
         tenant_id: str = None,
         region: str = "AzureCloud",
         subscription_ids: list = [],
@@ -131,6 +134,7 @@ class AzureProvider(Provider):
             sp_env_auth (bool): Flag indicating whether to use Service Principal environment authentication.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
+            oidc_auth (bool): Flag indicating whether to use OIDC/Workload Identity Federation authentication.
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
             subscription_ids (list): List of subscription IDs.
@@ -229,6 +233,7 @@ class AzureProvider(Provider):
             sp_env_auth,
             browser_auth,
             managed_identity_auth,
+            oidc_auth,
             tenant_id,
             client_id,
             client_secret,
@@ -250,6 +255,7 @@ class AzureProvider(Provider):
             sp_env_auth,
             browser_auth,
             managed_identity_auth,
+            oidc_auth,
             tenant_id,
             azure_credentials,
             self._region_config,
@@ -261,6 +267,7 @@ class AzureProvider(Provider):
             sp_env_auth,
             browser_auth,
             managed_identity_auth,
+            oidc_auth,
             subscription_ids,
             client_id,
         )
@@ -341,6 +348,7 @@ class AzureProvider(Provider):
         sp_env_auth: bool,
         browser_auth: bool,
         managed_identity_auth: bool,
+        oidc_auth: bool,
         tenant_id: str,
         client_id: str,
         client_secret: str,
@@ -353,16 +361,18 @@ class AzureProvider(Provider):
             sp_env_auth (bool): Flag indicating whether Service Principal environment authentication is enabled.
             browser_auth (bool): Flag indicating whether browser authentication is enabled.
             managed_identity_auth (bool): Flag indicating whether managed identity authentication is enabled.
+            oidc_auth (bool): Flag indicating whether OIDC/Workload Identity Federation authentication is enabled.
             tenant_id (str): The Azure Tenant ID.
             client_id (str): The Azure Client ID.
             client_secret (str): The Azure Client Secret.
 
         Raises:
             AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
+            AzureOIDCTokenMissingError: If OIDC authentication is enabled but required env vars are missing.
         """
 
         if not client_id and not client_secret:
-            if not browser_auth and tenant_id:
+            if not browser_auth and tenant_id and not oidc_auth:
                 raise AzureTenantIDNoBrowserAuthError(
                     file=os.path.basename(__file__),
                     message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
@@ -372,10 +382,11 @@ class AzureProvider(Provider):
                 and not sp_env_auth
                 and not browser_auth
                 and not managed_identity_auth
+                and not oidc_auth
             ):
                 raise AzureNoAuthenticationMethodError(
                     file=os.path.basename(__file__),
-                    message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
+                    message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth | --oidc-auth]",
                 )
             elif browser_auth and not tenant_id:
                 raise AzureBrowserAuthNoTenantIDError(
@@ -463,6 +474,7 @@ class AzureProvider(Provider):
         sp_env_auth: bool,
         browser_auth: bool,
         managed_identity_auth: bool,
+        oidc_auth: bool,
         tenant_id: str,
         azure_credentials: dict,
         region_config: AzureRegionConfig,
@@ -476,6 +488,7 @@ class AzureProvider(Provider):
             sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
+            oidc_auth (bool): Flag indicating whether to use OIDC/Workload Identity Federation authentication.
             tenant_id (str): The Azure Active Directory tenant ID.
             azure_credentials (dict): The Azure configuration object. It contains the following keys:
                 - tenant_id: The Azure Active Directory tenant ID.
@@ -490,6 +503,38 @@ class AzureProvider(Provider):
             Exception: If failed to retrieve Azure credentials.
 
         """
+        # OIDC / Workload Identity Federation auth
+        if oidc_auth:
+            try:
+                AzureProvider.check_oidc_creds_env_vars()
+                oidc_tenant_id = getenv("AZURE_TENANT_ID")
+                oidc_client_id = getenv("AZURE_CLIENT_ID")
+
+                def get_oidc_token():
+                    """Return the current OIDC JWT, preferring AZURE_FEDERATED_TOKEN."""
+                    token = getenv("AZURE_FEDERATED_TOKEN") or getenv("AZURE_OIDC_TOKEN")
+                    return token
+
+                credentials = ClientAssertionCredential(
+                    tenant_id=oidc_tenant_id,
+                    client_id=oidc_client_id,
+                    func=get_oidc_token,
+                )
+                return credentials
+            except AzureOIDCTokenMissingError as oidc_error:
+                logger.critical(
+                    f"{oidc_error.__class__.__name__}[{oidc_error.__traceback__.tb_lineno}] -- {oidc_error}"
+                )
+                raise oidc_error
+            except Exception as error:
+                logger.critical("Failed to retrieve azure credentials using OIDC authentication")
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+                raise AzureSetUpSessionError(
+                    file=os.path.basename(__file__), original_exception=error
+                )
+
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
@@ -593,12 +638,14 @@ class AzureProvider(Provider):
 
         return credentials
 
+
     @staticmethod
     def test_connection(
         az_cli_auth=False,
         sp_env_auth=False,
         browser_auth=False,
         managed_identity_auth=False,
+        oidc_auth=False,
         tenant_id=None,
         region="AzureCloud",
         raise_on_exception=True,
@@ -615,6 +662,7 @@ class AzureProvider(Provider):
             sp_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
             browser_auth (bool): Flag indicating if browser authentication is used.
             managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
+            oidc_auth (bool): Flag indicating if OIDC/Workload Identity Federation authentication is used.
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
@@ -649,6 +697,7 @@ class AzureProvider(Provider):
                 sp_env_auth,
                 browser_auth,
                 managed_identity_auth,
+                oidc_auth,
                 tenant_id,
                 client_id,
                 client_secret,
@@ -670,6 +719,7 @@ class AzureProvider(Provider):
                 sp_env_auth,
                 browser_auth,
                 managed_identity_auth,
+                oidc_auth,
                 tenant_id,
                 azure_credentials,
                 region_config,
@@ -857,12 +907,48 @@ class AzureProvider(Provider):
                     message=f"Missing environment variable {env_var} required to authenticate.",
                 )
 
+    @staticmethod
+    def check_oidc_creds_env_vars():
+        """
+        Checks the presence of required environment variables for OIDC/Workload Identity Federation
+        authentication against Azure.
+
+        This method checks for the presence of the following environment variables:
+        - AZURE_CLIENT_ID: Azure client ID
+        - AZURE_TENANT_ID: Azure tenant ID
+        - AZURE_FEDERATED_TOKEN or AZURE_OIDC_TOKEN: OIDC JWT token
+
+        If any of the required environment variables is missing, it logs a critical error and raises
+        an AzureOIDCTokenMissingError.
+        """
+        logger.info(
+            "Azure provider: checking OIDC/Workload Identity Federation environment variables ..."
+        )
+        for env_var in ["AZURE_CLIENT_ID", "AZURE_TENANT_ID"]:
+            if not getenv(env_var):
+                logger.critical(
+                    f"Azure provider: Missing environment variable {env_var} needed for OIDC authentication"
+                )
+                raise AzureOIDCTokenMissingError(
+                    file=os.path.basename(__file__),
+                    message=f"Missing environment variable {env_var} required for OIDC authentication.",
+                )
+        if not getenv("AZURE_FEDERATED_TOKEN") and not getenv("AZURE_OIDC_TOKEN"):
+            logger.critical(
+                "Azure provider: Missing OIDC token. Set AZURE_FEDERATED_TOKEN or AZURE_OIDC_TOKEN."
+            )
+            raise AzureOIDCTokenMissingError(
+                file=os.path.basename(__file__),
+                message="Missing OIDC token. Set AZURE_FEDERATED_TOKEN or AZURE_OIDC_TOKEN environment variable.",
+            )
+
     def setup_identity(
         self,
         az_cli_auth,
         sp_env_auth,
         browser_auth,
         managed_identity_auth,
+        oidc_auth,
         subscription_ids,
         client_id,
     ):
@@ -874,7 +960,9 @@ class AzureProvider(Provider):
             sp_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
             browser_auth (bool): Flag indicating if browser authentication is used.
             managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
+            oidc_auth (bool): Flag indicating if OIDC/Workload Identity Federation authentication is used.
             subscription_ids (list): List of subscription IDs.
+            client_id (str): The Azure client ID (for static credentials).
 
         Returns:
             AzureIdentityInfo: An instance of AzureIdentityInfo containing the identity information.
@@ -887,7 +975,7 @@ class AzureProvider(Provider):
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, azure python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
-        if sp_env_auth or browser_auth or az_cli_auth or client_id:
+        if sp_env_auth or browser_auth or az_cli_auth or client_id or oidc_auth:
 
             async def get_azure_identity():
                 # Trying to recover tenant domain info
@@ -924,10 +1012,10 @@ class AzureProvider(Provider):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
-                if sp_env_auth or client_id:
+                if sp_env_auth or client_id or oidc_auth:
                     # The id of the sp can be retrieved from environment variables
                     identity.identity_id = getenv("AZURE_CLIENT_ID", default=client_id)
-                    identity.identity_type = "Service Principal"
+                    identity.identity_type = "Service Principal" if not oidc_auth else "Service Principal (OIDC)"
                 # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
                 # should work but it doesn't, pending issue
                 else:
