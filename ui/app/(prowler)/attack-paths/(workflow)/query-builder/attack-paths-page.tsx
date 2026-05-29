@@ -486,10 +486,7 @@ export default function AttackPathsPage() {
 
           {/* Query Builder Section - shown only after selecting a scan */}
           {scanId && (
-            <div
-              data-tour-id="attack-paths-query-builder"
-              className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4"
-            >
+            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
