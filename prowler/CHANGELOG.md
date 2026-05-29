@@ -27,6 +27,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Google Workspace Gmail checks sharing a single resource row, causing the service field to be overwritten by the last check executed [(#11169)](https://github.com/prowler-cloud/prowler/pull/11169)
 - Google Workspace Drive and Calendar services missing server-side policy filters [(#11195)](https://github.com/prowler-cloud/prowler/pull/11195)
 - `VercelSession.token` is now excluded from serialization and representation to prevent the Vercel API token from leaking through `.dict()`, `.json()` or logs [(#11198)](https://github.com/prowler-cloud/prowler/pull/11198)
+- `logging_sink_created` GCP check no longer false-FAILs projects covered by an organisation-level aggregated sink with `includeChildren=True`; the service now also queries `organizations/{id}/sinks` and passes any project whose org has a matching aggregated sink [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
 
 ---
 

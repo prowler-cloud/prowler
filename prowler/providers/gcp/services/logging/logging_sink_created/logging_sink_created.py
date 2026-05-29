@@ -24,7 +24,9 @@ class logging_sink_created(Check):
             # Determine whether this project is covered by an org-level sink
             org = getattr(project_obj, "organization", None) if project_obj else None
             org_resource = f"organizations/{org.id}" if org else None
-            covering_sink = covering_org_sinks.get(org_resource) if org_resource else None
+            covering_sink = (
+                covering_org_sinks.get(org_resource) if org_resource else None
+            )
 
             if project in projects_with_logging_sink:
                 sink = projects_with_logging_sink[project]
