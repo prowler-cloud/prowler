@@ -18,7 +18,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - ENS RD 311/2022 (AWS) compliance mapping: `vpc_different_regions` was uncorrectly mapped under the `mp.com.4` family (Network segregation). That check is now mapped to a new `op.cont.2.aws.vpc.1` requirement under the Continuity of Service control [(#11372)](https://github.com/prowler-cloud/prowler/pull/11372)
 - Compliance CSV row count now matches the UI per requirement by sourcing rows from the framework JSON's `requirement.Checks` instead of the stale `finding.compliance` snapshot [(#11370)](https://github.com/prowler-cloud/prowler/pull/11370)
 - OpenStack provider exception codes moved from the `10000-10999` range, shared with the AlibabaCloud provider, to the free `17000-17999` range to keep error codes unambiguous [(#11382)](https://github.com/prowler-cloud/prowler/pull/11382)
-- Azure provider authentication against sovereign clouds (`AzureChinaCloud`, `AzureUSGovernment`) now works for every authentication method; `ClientSecretCredential`, `InteractiveBrowserCredential`, `verify_client`, the `SubscriptionClient` calls in `test_connection` and `get_locations`, and the `GraphServiceClient` and `LogsQueryClient` in the service base all derive their endpoints from `region_config` instead of hardcoding public-cloud hosts [(#10284)](https://github.com/prowler-cloud/prowler/pull/10284)
+- Azure provider now supports authentication against sovereign clouds (`AzureChinaCloud`, `AzureUSGovernment`) [(#10284)](https://github.com/prowler-cloud/prowler/pull/10284)
 
 ---
 
