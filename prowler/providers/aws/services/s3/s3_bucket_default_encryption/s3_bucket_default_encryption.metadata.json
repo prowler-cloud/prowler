@@ -39,5 +39,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check is being deprecated since AWS automatically applies SSE-S3 to every S3 bucket (both new buckets and previously-unencrypted existing buckets) as of January 5, 2023, and encryption can no longer be disabled. For SSE-KMS validation, use `s3_bucket_kms_encryption` instead. See https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-encryption-faq.html"
+  "Notes": "This check is being deprecated since AWS automatically applies SSE-S3 to every S3 bucket (both new buckets and previously-unencrypted existing buckets) as of January 5, 2023, and encryption can no longer be disabled. For SSE-KMS validation, use `s3_bucket_kms_encryption` instead."
 }
