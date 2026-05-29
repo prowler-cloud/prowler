@@ -15,7 +15,7 @@
 > - [`vitest`](../skills/vitest/SKILL.md) - Unit testing with React Testing Library
 > - [`tdd`](../skills/tdd/SKILL.md) - TDD workflow (MANDATORY for UI tasks)
 
-### Auto-invoke Skills
+## Auto-invoke Skills
 
 When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
@@ -89,7 +89,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 ### Component Placement
 
-```
+```text
 New/Existing UI? → shadcn/ui + Tailwind (NEVER HeroUI for new code)
 Used 1 feature? → features/{feature}/components | Used 2+? → components/{domain}/
 Needs state/hooks? → "use client" | Server component? → No directive
@@ -97,7 +97,7 @@ Needs state/hooks? → "use client" | Server component? → No directive
 
 ### Code Location
 
-```
+```text
 Server action → actions/{feature}/{feature}.ts
 Data transform → actions/{feature}/{feature}.adapter.ts
 Types (shared 2+) → types/{domain}.ts | Types (local 1) → {feature}/types.ts
@@ -193,7 +193,7 @@ Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.30 | R
 
 ## PROJECT STRUCTURE
 
-```
+```text
 ui/
 ├── app/(auth)/          # Auth pages
 ├── app/(prowler)/       # Main app: compliance, findings, providers, scans
@@ -225,9 +225,9 @@ pnpm run test:e2e:ui
 
 ## QA CHECKLIST BEFORE COMMIT
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint:fix` passes
-- [ ] `npm run format:write` passes
+- [ ] `pnpm run typecheck` passes
+- [ ] `pnpm run lint:fix` passes
+- [ ] `pnpm run format:write` passes
 - [ ] Relevant E2E tests pass
 - [ ] All UI states handled (loading, error, empty)
 - [ ] No secrets in code (use `.env.local`)

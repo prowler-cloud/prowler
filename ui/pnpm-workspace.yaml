@@ -1,6 +1,48 @@
+# pnpm 11+ workspace config. .npmrc is auth/registry only; everything else lives here.
 # Reference: https://pnpm.io/supply-chain-security
 
 packages: []
+
+# Refuse to install on Node/pnpm outside the `engines` block in package.json.
+engineStrict: true
+
+# Hoist the HeroUI family so its legacy peer-dep pattern resolves.
+publicHoistPattern:
+  - "*@heroui/*"
+
+# Default `pnpm add` to exact versions — matches package.json convention.
+saveExact: true
+
+# --- Dependency overrides ---
+overrides:
+  "@react-types/shared": "3.26.0"
+  "@internationalized/date": "3.10.0"
+  "@react-aria/ssr>react": "19.2.6"
+  "@react-aria/ssr>react-dom": "19.2.6"
+  "@react-aria/visually-hidden>react": "19.2.6"
+  "@react-aria/interactions>react": "19.2.6"
+  "lodash": "4.18.1"
+  "lodash-es": "4.18.1"
+  "hono": "4.12.18"
+  "@hono/node-server": "1.19.14"
+  "@isaacs/brace-expansion": "5.0.1"
+  "fast-xml-parser": "5.8.0"
+  "serialize-javascript": "7.0.5"
+  "rollup@>=4": "4.59.0"
+  "minimatch@<4": "3.1.4"
+  "minimatch@>=9 <10": "9.0.7"
+  "minimatch@>=10": "10.2.3"
+  "ajv@<7": "6.14.0"
+  "ajv@>=8": "8.18.0"
+  "qs": "6.14.2"
+  # 8.2.2 dropped provenance attestation; 8.3.1+ restored it. Pinned to skip 8.2.2
+  # under `trustPolicy: no-downgrade`.
+  "express-rate-limit": "8.5.1"
+  # GHSA-w5hq-g745-h8pq: missing bounds check in v3/v5/v6 with buf, fixed in
+  # 11.1.1. Transitive consumers (@sentry/webpack-plugin@9, @langchain/langgraph@10)
+  # use the random v4 generator only, so the bug isn't reachable in practice,
+  # but the override unifies the tree on a patched version.
+  "uuid": "11.1.1"
 
 # --- Level 1: Minimum Release Age ---
 # Packages must be published for at least 1 day before they can be installed.
@@ -33,7 +75,15 @@ allowBuilds:
 # --- Level 3: Trust Policy + Exotic Subdeps ---
 # Fail when a package's trust evidence is downgraded (e.g., new publisher).
 trustPolicy: no-downgrade
-trustPolicyExclude: []
+# False positives — packages that don't publish provenance for real releases.
+# Pin to the version range that lacks provenance so a bump fails until reviewed.
+trustPolicyExclude:
+  # next-auth: only one one-off manual test release (`0.0.0-manual.2824fa11`) has
+  # provenance; real beta/stable releases don't. Scoped to current beta line.
+  - "next-auth@5.0.0-beta.30"
+  # semver: legacy major 6.x never had provenance (added in 7.5.1+). Pinned
+  # to the exact 6.x version pulled transitively (via @babel/helper-compilation-targets).
+  - "semver@6.3.1"
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true

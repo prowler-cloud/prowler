@@ -116,6 +116,84 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
     expect(result[0].checkId).toBe("s3_check");
   });
 
+  it("should extract resource metadata and details from the included resource", () => {
+    // Given — finding with an included resource exposing metadata + details
+    createDictMock.mockImplementation((type: string) =>
+      type === "resources"
+        ? {
+            "resource-1": {
+              id: "resource-1",
+              attributes: {
+                uid: "image:python:3.12",
+                name: "python",
+                type: "Python",
+                details: "Python 3.12 base image",
+                metadata: '{"PkgName":"requests","Versions":["2.0"]}',
+              },
+            },
+          }
+        : {},
+    );
+
+    const input = {
+      data: {
+        id: "finding-1",
+        attributes: {
+          uid: "uid-1",
+          check_id: "image_vulnerability",
+          status: "FAIL",
+          severity: "critical",
+          check_metadata: { checktitle: "Image Vulnerability" },
+        },
+        relationships: {
+          resources: { data: [{ id: "resource-1" }] },
+          scan: { data: null },
+        },
+      },
+      included: [],
+    };
+
+    // When
+    const result = adaptFindingsByResourceResponse(input);
+
+    // Then
+    expect(result).toHaveLength(1);
+    expect(result[0].resourceDetails).toBe("Python 3.12 base image");
+    expect(result[0].resourceMetadata).toBe(
+      '{"PkgName":"requests","Versions":["2.0"]}',
+    );
+  });
+
+  it("should default resource metadata and details to null when absent", () => {
+    // Given — valid finding without an included resource
+    const input = {
+      data: [
+        {
+          id: "finding-1",
+          attributes: {
+            uid: "uid-1",
+            check_id: "s3_check",
+            status: "FAIL",
+            severity: "critical",
+            check_metadata: { checktitle: "S3 Check" },
+          },
+          relationships: {
+            resources: { data: [] },
+            scan: { data: null },
+          },
+        },
+      ],
+      included: [],
+    };
+
+    // When
+    const result = adaptFindingsByResourceResponse(input);
+
+    // Then
+    expect(result[0].resourceDetails).toBeNull();
+    expect(result[0].resourceMetadata).toBeNull();
+  });
+
   it("should normalize a single finding response into a one-item drawer array", () => {
     // Given — getFindingById returns a single JSON:API resource object
     const input = {

@@ -89,6 +89,11 @@ const VercelProviderBadge = lazy(() =>
     default: m.VercelProviderBadge,
   })),
 );
+const OktaProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OktaProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -160,6 +165,10 @@ const PROVIDER_DATA: Record<
     label: "Vercel",
     icon: VercelProviderBadge,
   },
+  okta: {
+    label: "Okta",
+    icon: OktaProviderBadge,
+  },
 };
 
 /** Common props shared by both batch and instant modes. */
@@ -201,8 +210,8 @@ export const ProviderTypeSelector = ({
   onBatchChange,
   selectedValues,
   search = {
-    placeholder: "Search providers...",
-    emptyMessage: "No providers found.",
+    placeholder: "Search Provider Types...",
+    emptyMessage: "No Provider Types found.",
   },
 }: ProviderTypeSelectorProps) => {
   const searchParams = useSearchParams();
@@ -265,7 +274,7 @@ export const ProviderTypeSelector = ({
     }
     return (
       <span className="min-w-0 truncate">
-        {selectedTypes.length} providers selected
+        {selectedTypes.length} Provider Types selected
       </span>
     );
   };
@@ -277,7 +286,8 @@ export const ProviderTypeSelector = ({
         className="sr-only"
         id="provider-type-label"
       >
-        Filter by provider type. Select one or more providers to view findings.
+        Filter by Provider Type. Select one or more Provider Types to view
+        findings.
       </label>
       <MultiSelect
         values={selectedTypes}
@@ -287,7 +297,9 @@ export const ProviderTypeSelector = ({
           id="provider-type-selector"
           aria-labelledby="provider-type-label"
         >
-          {selectedLabel() || <MultiSelectValue placeholder="All providers" />}
+          {selectedLabel() || (
+            <MultiSelectValue placeholder="All Provider Types" />
+          )}
         </MultiSelectTrigger>
         <MultiSelectContent search={search}>
           {availableTypes.length > 0 ? (
@@ -296,7 +308,7 @@ export const ProviderTypeSelector = ({
                 role="option"
                 aria-selected={selectedTypes.length === 0}
                 aria-disabled={selectedTypes.length === 0}
-                aria-label="Select all providers (clears current selection to show all)"
+                aria-label="Select all Provider Types (clears current selection to show all)"
                 tabIndex={0}
                 className="text-text-neutral-secondary flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-slate-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-slate-700/50"
                 onClick={() => {
@@ -319,7 +331,7 @@ export const ProviderTypeSelector = ({
                   value={providerType}
                   badgeLabel={PROVIDER_DATA[providerType].label}
                   keywords={[providerType, PROVIDER_DATA[providerType].label]}
-                  aria-label={`${PROVIDER_DATA[providerType].label} provider`}
+                  aria-label={`${PROVIDER_DATA[providerType].label} Provider Type`}
                 >
                   <span aria-hidden="true">{renderIcon(providerType)}</span>
                   <span>{PROVIDER_DATA[providerType].label}</span>
@@ -328,7 +340,7 @@ export const ProviderTypeSelector = ({
             </>
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-              No connected providers available
+              No connected Provider Types available
             </div>
           )}
         </MultiSelectContent>
