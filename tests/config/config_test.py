@@ -6,6 +6,7 @@ from unittest import mock
 from requests import Response
 
 from prowler.config.config import (
+    Provider,
     check_current_version,
     get_available_compliance_frameworks,
     load_and_validate_config_file,
@@ -15,6 +16,12 @@ from prowler.config.config import (
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
 MOCK_PROWLER_MASTER_VERSION = "3.4.0"
+
+
+def test_provider_enum_includes_stackit_for_global_discovery():
+    providers = [provider.value for provider in Provider]
+
+    assert "stackit" in providers
 
 
 def mock_prowler_get_latest_release(_, **_kwargs):

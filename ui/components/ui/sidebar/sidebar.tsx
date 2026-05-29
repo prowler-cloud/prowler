@@ -20,7 +20,7 @@ export function Sidebar() {
     <aside
       className={cn(
         "fixed top-0 left-0 z-20 h-screen -translate-x-full transition-[width] duration-300 ease-in-out lg:translate-x-0",
-        !getOpenState() ? "w-[90px]" : "w-72",
+        !getOpenState() ? "w-[90px]" : "w-[248px]",
         settings.disabled && "hidden",
       )}
     >

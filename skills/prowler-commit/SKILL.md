@@ -28,7 +28,7 @@ metadata:
 
 ## Commit Format
 
-```
+```text
 type(scope): concise description
 
 - Key change 1
@@ -68,7 +68,7 @@ type(scope): concise description
 
 ### Title Line
 
-```
+```text
 # GOOD - Concise and clear
 feat(api): add provider connection retry logic
 fix(ui): resolve dashboard loading state
@@ -83,7 +83,7 @@ fix(ui): fix the bug in dashboard component on line 45
 
 ### Body (Bullet Points)
 
-```
+```text
 # GOOD - High-level changes
 - Add retry mechanism for failed connections
 - Document task composition patterns
@@ -132,7 +132,7 @@ fix(ui): fix the bug in dashboard component on line 45
 
 ## Decision Tree
 
-```
+```text
 Single file changed?
 ├─ Yes → May omit body, title only
 └─ No → Include body with key changes

@@ -25,7 +25,7 @@ Use this skill when:
 
 Every provider MUST follow this structure:
 
-```
+```text
 prowler/providers/{provider}/
 ├── __init__.py
 ├── {provider}_provider.py      # Main provider class
