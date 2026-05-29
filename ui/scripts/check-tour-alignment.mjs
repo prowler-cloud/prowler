@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 // Tour alignment check (syntactic). Extracts `data-tour-id` values from every
 // `ui/lib/tours/*.tour.ts` and verifies a matching `data-tour-id="..."`
-// attribute exists under `ui/`. Complements the semantic `prowler-tour` skill
-// for CI/local runs without invoking Claude Code.
+// attribute exists under `ui/`. Two directions:
+//   - Tour → DOM: fails on any tour `target` with no matching attribute.
+//   - DOM → tour: warns on any `data-tour-id` not referenced by any tour
+//     (does not fail — staged anchors during multi-PR rollouts are OK).
+// Complements the semantic `prowler-tour` skill for CI/local runs without
+// invoking Claude Code.
 import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join, dirname, relative, resolve } from "node:path";
@@ -105,16 +109,46 @@ async function main() {
   const tours = await Promise.all(tourFiles.map(parseTour));
   const attrValues = await collectAttributeValues();
 
-  const orphans = [];
+  const tourOrphans = [];
   for (const tour of tours) {
     for (const selector of tour.selectors) {
       if (!attrValues.has(selector)) {
-        orphans.push({ tour: tour.file, selector });
+        tourOrphans.push({ tour: tour.file, selector });
       }
     }
   }
 
-  if (orphans.length === 0) {
+  const referencedSelectors = new Set(tours.flatMap((t) => t.selectors));
+  const domOrphans = [];
+  for (const [value, files] of attrValues) {
+    if (referencedSelectors.has(value)) continue;
+    domOrphans.push({
+      value,
+      files: [...files].sort((a, b) => a.localeCompare(b)),
+    });
+  }
+  domOrphans.sort((a, b) => a.value.localeCompare(b.value));
+  tourOrphans.sort(
+    (a, b) =>
+      a.tour.localeCompare(b.tour) || a.selector.localeCompare(b.selector),
+  );
+
+  if (domOrphans.length > 0) {
+    console.warn(
+      `⚠ ${domOrphans.length} data-tour-id attribute(s) not referenced by any tour:`,
+    );
+    for (const orphan of domOrphans) {
+      const locations = orphan.files
+        .map((file) => relative(UI_DIR, file))
+        .join(", ");
+      console.warn(`  data-tour-id="${orphan.value}" — ${locations}`);
+    }
+    console.warn(
+      "  Wire it into a tour step or remove the attribute (warning only, does not fail).\n",
+    );
+  }
+
+  if (tourOrphans.length === 0) {
     const referenced = tours.reduce((sum, t) => sum + t.selectors.length, 0);
     console.log(
       `✓ Tour alignment OK — ${tours.length} tour(s), ${referenced} anchored step(s).`,
@@ -123,7 +157,7 @@ async function main() {
   }
 
   console.error("✗ Tour alignment failed.\n");
-  for (const orphan of orphans) {
+  for (const orphan of tourOrphans) {
     console.error(
       `  ${orphan.tour} references data-tour-id="${orphan.selector}" but no element carries that attribute.`,
     );
