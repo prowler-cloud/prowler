@@ -2,20 +2,26 @@
 # Runs automatically on `wt switch --create`.
 
 # Block 1: setup + copy gitignored env files (.envrc, ui/.env.local)
-# from the primary worktree — patterns selected via .worktreeinclude.
+# from the primary worktree - patterns selected via .worktreeinclude.
 [[pre-start]]
 skills = "./skills/setup.sh --claude"
-python = "poetry env use python3.12"
 envs = "wt step copy-ignored"
 
-# Block 2: install Python deps (requires `poetry env use` from block 1).
+# Block 2: install Python deps (uv manages the venv on `uv sync`).
 [[pre-start]]
-deps = "poetry install --with dev"
+deps = "uv sync"
 
-# Block 3: reminder — last visible output before `wt switch` returns.
+# Block 3: prepare pnpm via corepack.
+[[pre-start]]
+corepack-enable = "corepack enable"
+
+[[pre-start]]
+corepack-install = "cd ui && corepack install"
+
+# Block 4: reminder - last visible output before `wt switch` returns.
 # Hooks can't mutate the parent shell, so venv activation is manual.
 [[pre-start]]
-reminder = "echo '>> Reminder: activate the venv in this shell with: eval $(poetry env activate)'"
+reminder = "echo '>> Reminder: activate the venv in this shell with: source .venv/bin/activate'"
 
 # Background: pnpm install runs while you start working.
 # Tail logs via `wt config state logs`.

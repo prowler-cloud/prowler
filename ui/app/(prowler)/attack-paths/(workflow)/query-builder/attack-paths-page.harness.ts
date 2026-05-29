@@ -276,13 +276,28 @@ export class AttackPathPageHarness {
 
   // --- Sync helpers ---
 
-  /** Wait until React Flow has rendered at least `expected` node elements. */
-  async waitForLayoutStable(expected = 1, timeoutMs = 3000): Promise<void> {
+  /**
+   * Wait until React Flow has rendered at least `expectedNodes` node elements
+   * and `expectedEdges` edge elements. React Flow renders edges asynchronously
+   * after nodes are measured via ResizeObserver, so tests that assert on edge
+   * state must opt in to waiting for them — node-only waits race against the
+   * edge measurement pass.
+   */
+  async waitForGraphStable(
+    expectedNodes = 1,
+    expectedEdges = 0,
+    timeoutMs = 3000,
+  ): Promise<void> {
     await vi.waitFor(
       () => {
-        if (this.nodes.length < expected) {
+        if (this.nodes.length < expectedNodes) {
           throw new Error(
-            `expected ${expected} nodes, got ${this.nodes.length}`,
+            `expected ${expectedNodes} nodes, got ${this.nodes.length}`,
+          );
+        }
+        if (this.edges.length < expectedEdges) {
+          throw new Error(
+            `expected ${expectedEdges} edges, got ${this.edges.length}`,
           );
         }
       },
@@ -397,7 +412,7 @@ export class AttackPathPageHarness {
       10000,
     );
     await this.user.click(button);
-    await this.waitForLayoutStable(1, 10000);
+    await this.waitForGraphStable(1, 0, 10000);
   }
 
   async clickNode(nodeId: string): Promise<void> {

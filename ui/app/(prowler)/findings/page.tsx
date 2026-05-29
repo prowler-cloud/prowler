@@ -6,7 +6,7 @@ import {
   getLatestFindingGroups,
 } from "@/actions/finding-groups";
 import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import { getScan, getScans } from "@/actions/scans";
 import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
 import { FindingsFilters } from "@/components/findings/findings-filters";
@@ -37,7 +37,7 @@ export default async function Findings({
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   const [providersData, scansData] = await Promise.all([
-    getProviders({ pageSize: 50 }),
+    getAllProviders(),
     getScans({ pageSize: 50 }),
   ]);
 

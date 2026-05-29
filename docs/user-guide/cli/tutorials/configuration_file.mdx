@@ -91,6 +91,7 @@ The following list includes all the Azure checks with configurable variables tha
 | `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
 | `vm_sufficient_daily_backup_retention_period`                 | `vm_backup_min_daily_retention_days`             | Integer         |
 | `vm_desired_sku_size`                                         | `desired_vm_sku_sizes`                           | List of Strings |
+| `storage_smb_channel_encryption_with_secure_algorithm`        | `recommended_smb_channel_encryption_algorithms`  | List of Strings |
 | `defender_attack_path_notifications_properly_configured`      | `defender_attack_path_minimal_risk_level`        | String          |
 | `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_threshold`    | Float           |
 | `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_minutes`      | Integer         |
@@ -157,6 +158,16 @@ The following list includes all the Vercel checks with configurable variables th
 | `team_member_role_least_privilege`                   | `max_owner_percentage`             | Integer         |
 | `team_member_role_least_privilege`                   | `max_owners`                       | Integer         |
 | `team_no_stale_invitations`                         | `stale_invitation_threshold_days`  | Integer         |
+
+## Okta
+
+### Configurable Checks
+The following list includes all the Okta checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                                                    | Value                              | Type    |
+|---------------------------------------------------------------|------------------------------------|---------|
+| `application_admin_console_session_idle_timeout_15min`        | `okta_admin_console_idle_timeout_max_minutes` | Integer |
+| `signon_global_session_idle_timeout_15min`                    | `okta_max_session_idle_minutes`    | Integer |
 
 ## Config YAML File Structure
 
@@ -523,6 +534,18 @@ azure:
     [
       "1.2",
       "1.3"
+    ]
+
+  # Azure Storage
+  # azure.storage_smb_channel_encryption_with_secure_algorithm
+  # List of SMB channel encryption algorithms allowed on file shares. A storage
+  # account passes only if every enabled algorithm is in this list. Defaults to
+  # the value required by CIS (AES-256-GCM only, excluding weaker AES-128 ciphers).
+  recommended_smb_channel_encryption_algorithms:
+    [
+      "AES-256-GCM",
+      # "AES-128-CCM",
+      # "AES-128-GCM",
     ]
 
   # Azure Virtual Machines

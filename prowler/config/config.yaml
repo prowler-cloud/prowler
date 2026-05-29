@@ -467,6 +467,18 @@ azure:
       "1.3",
     ]
 
+  # Azure Storage
+  # azure.storage_smb_channel_encryption_with_secure_algorithm
+  # List of SMB channel encryption algorithms allowed on file shares. A storage
+  # account passes only if every enabled algorithm is in this list. Defaults to
+  # the value required by CIS (AES-256-GCM only, excluding weaker AES-128 ciphers).
+  recommended_smb_channel_encryption_algorithms:
+    [
+      "AES-256-GCM",
+      # "AES-128-CCM",
+      # "AES-128-GCM",
+    ]
+
   # Azure Virtual Machines
   # azure.vm_desired_sku_size
   # List of desired VM SKU sizes that are allowed in the organization
@@ -649,3 +661,17 @@ vercel:
     - "_PASSWORD"
     - "_API_KEY"
     - "_PRIVATE_KEY"
+
+okta:
+  # Okta Sign-On Policies
+  # okta.signon_global_session_idle_timeout_15min
+  # Maximum acceptable Global Session idle timeout, in minutes. Defaults to
+  # 15 per DISA STIG V-273186 (OKTA-APP-000020); raise it only with an
+  # explicit risk acceptance.
+  okta_max_session_idle_minutes: 15
+  # Okta Applications
+  # okta.application_admin_console_session_idle_timeout_15min
+  # Maximum acceptable Okta Admin Console app idle timeout, in minutes.
+  # Defaults to 15 per DISA STIG V-273187 (OKTA-APP-000025); raise it only
+  # with an explicit risk acceptance.
+  okta_admin_console_idle_timeout_max_minutes: 15

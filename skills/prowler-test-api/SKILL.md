@@ -28,7 +28,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## 1. Fixture Dependency Chain
 
-```
+```text
 create_test_user (session) ─► tenants_fixture (function) ─► authenticated_client
                                      │
                                      └─► providers_fixture ─► scans_fixture ─► findings_fixture
@@ -153,9 +153,9 @@ api_key = "sk-fake-test-key-for-unit-testing-only"
 ## Commands
 
 ```bash
-cd api && poetry run pytest -x --tb=short
-cd api && poetry run pytest -k "test_provider"
-cd api && poetry run pytest api/src/backend/api/tests/test_rbac.py
+cd api && uv run pytest -x --tb=short
+cd api && uv run pytest -k "test_provider"
+cd api && uv run pytest api/src/backend/api/tests/test_rbac.py
 ```
 
 ---

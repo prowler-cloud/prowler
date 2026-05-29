@@ -256,6 +256,25 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "stackit" in provider_class_name.lower():
+                    provider_class(
+                        project_id=arguments.stackit_project_id,
+                        service_account_key_path=getattr(
+                            arguments, "stackit_service_account_key_path", None
+                        ),
+                        service_account_key=getattr(
+                            arguments, "stackit_service_account_key", None
+                        ),
+                        regions=(
+                            set(arguments.stackit_region)
+                            if arguments.stackit_region
+                            else None
+                        ),
+                        scan_unused_services=arguments.scan_unused_services,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "github" in provider_class_name.lower():
                     orgs = []
                     repos = []
@@ -399,6 +418,31 @@ class Provider(ABC):
                 elif "vercel" in provider_class_name.lower():
                     provider_class(
                         projects=getattr(arguments, "project", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "okta" in provider_class_name.lower():
+                    provider_class(
+                        okta_org_domain=getattr(arguments, "okta_org_domain", ""),
+                        okta_client_id=getattr(arguments, "okta_client_id", ""),
+                        okta_private_key=getattr(arguments, "okta_private_key", ""),
+                        okta_private_key_file=getattr(
+                            arguments, "okta_private_key_file", ""
+                        ),
+                        okta_scopes=getattr(arguments, "okta_scopes", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "scaleway" in provider_class_name.lower():
+                    # Credentials are read from the SCW_ACCESS_KEY /
+                    # SCW_SECRET_KEY env vars by the provider itself; there
+                    # are no credential CLI flags to avoid leaking secrets.
+                    provider_class(
+                        organization_id=getattr(arguments, "organization_id", None),
+                        project_id=getattr(arguments, "project_id", None),
+                        region=getattr(arguments, "region", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

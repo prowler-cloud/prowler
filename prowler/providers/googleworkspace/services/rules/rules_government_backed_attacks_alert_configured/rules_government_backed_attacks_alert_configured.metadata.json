@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "rules_government_backed_attacks_alert_configured",
+  "CheckTitle": "Government-backed attacks alert rule is configured",
+  "CheckType": [],
+  "ServiceName": "rules",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "monitoring",
+  "Description": "The **Government-backed attacks** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google believes users are being targeted by a government-backed attacker.",
+  "Risk": "Without this alert enabled, administrators will not be notified of potential **government-backed attacks** targeting their users. These attacks are sophisticated and require immediate response to protect affected accounts and investigate the threat.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/3230421",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Select **Rules**\n3. Under **Google protects you by default** select **View list**\n4. Scroll to **Government-backed attacks** and select it\n5. Within the Actions pane, click the edit pencil\n6. Select **Send to alert center** to set the alert to ON\n7. Set the alert severity to **High**\n8. Select **Send email notifications**\n9. Ensure **All super administrators** is selected as recipients\n10. Click **Review** to confirm the values\n11. Click **Update Rule**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the **Government-backed attacks** alert rule with alert center ON, email notifications ON, and recipients set to **all super administrators**.",
+      "Url": "https://hub.prowler.com/check/rules_government_backed_attacks_alert_configured"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

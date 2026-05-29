@@ -1,0 +1,30 @@
+# osv-scanner per-vulnerability ignore list.
+#
+# Each [[IgnoredVulns]] entry must include a `reason` explaining why the
+# finding is accepted and an `ignoreUntil` date so the suppression auto-expires
+# and gets re-evaluated. See https://github.com/google/osv-scanner for the
+# config schema.
+
+[[IgnoredVulns]]
+id = "PYSEC-2025-183"
+ignoreUntil = 2026-08-20T00:00:00Z
+reason = """
+CVE-2025-45768 is disputed by the pyjwt maintainers. The advisory describes
+weak encryption, but the underlying issue is that callers may pick a short
+HMAC secret — key-length enforcement is the application's responsibility, not
+a defect in the library. We are on pyjwt 2.12.1 (latest at pin time) and
+enforce key strength in our own auth code, so this advisory does not apply.
+Re-evaluate when a non-disputed advisory or upstream fix lands.
+"""
+
+[[IgnoredVulns]]
+id = "PYSEC-2026-89"
+ignoreUntil = 2026-08-20T00:00:00Z
+reason = """
+False positive caused by a malformed PYSEC record. The equivalent GitHub
+Security Advisory (GHSA-5wmx-573v-2qwq) for CVE-2025-69534 declares the issue
+fixed in markdown 3.8.1. We are on markdown==3.10.2 (latest release, includes
+the fix), but the PYSEC entry's range is [{introduced: "0"}, {}] with no
+closing "fixed" event, so osv-scanner flags every version. There is no newer
+release to upgrade to. Re-evaluate once the PYSEC record is corrected upstream.
+"""

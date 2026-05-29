@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_advanced_protection_configured",
+  "CheckTitle": "Advanced Protection Program is configured",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level policy enables the **Advanced Protection Program** with user self-enrollment and **blocks the use of security codes**. The Advanced Protection Program is Google's strongest account security offering, requiring hardware security keys and applying a curated set of high-security policies.",
+  "Risk": "Without the Advanced Protection Program, user accounts rely on standard security controls that are vulnerable to **sophisticated phishing attacks, targeted credential theft, and third-party app data access**. Allowing security codes alongside Advanced Protection weakens its protections by providing an alternative authentication path that can be intercepted.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/security/protect-users-with-the-advanced-protection-program",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Advanced Protection Program**\n3. Under **Enrollment**, select **Enable user enrollment**\n4. Under **Security Codes**, select **Do not allow users to generate security codes**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the **Advanced Protection Program** with user self-enrollment and block **security codes** to enforce the strongest available account protection.",
+      "Url": "https://hub.prowler.com/check/security_advanced_protection_configured"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_2sv_enforced",
+    "security_2sv_hardware_keys_admins"
+  ],
+  "Notes": ""
+}

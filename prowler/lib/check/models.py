@@ -934,6 +934,41 @@ class CheckReportGithub(Check_Report):
 
 
 @dataclass
+class CheckReportOkta(Check_Report):
+    """Contains the Okta Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    org_domain: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        org_domain: str = None,
+        region: str = "global",
+    ) -> None:
+        """Initialize the Okta Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            org_domain: The Okta organization domain related with the finding.
+            region: Always "global" — Okta has no regional concept.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.org_domain = org_domain or getattr(resource, "org_domain", "")
+        self.region = region
+
+
+@dataclass
 class CheckReportGoogleWorkspace(Check_Report):
     """Contains the Google Workspace Check's finding information."""
 
@@ -1196,6 +1231,31 @@ class CheckReportNHN(Check_Report):
 
 
 @dataclass
+class CheckReportStackIT(Check_Report):
+    """Contains the StackIT Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the StackIT Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.location = getattr(resource, "region", getattr(resource, "location", ""))
+
+
+@dataclass
 class CheckReportOpenStack(Check_Report):
     """Contains the OpenStack Check's finding information."""
 
@@ -1281,6 +1341,54 @@ class CheckReportVercel(Check_Report):
     def region(self) -> str:
         """Vercel is global - return 'global'."""
         return "global"
+
+
+@dataclass
+class CheckReportScaleway(Check_Report):
+    """Contains the Scaleway Check's finding information.
+
+    Scaleway scans run at the organization level. Most IAM/account-level
+    resources are global; regional resources expose a ``region`` attribute
+    on the underlying object, which we surface as the report ``region``.
+    """
+
+    resource_name: str
+    resource_id: str
+    organization_id: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        organization_id: str = None,
+    ) -> None:
+        """Initialize the Scaleway Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary.
+            resource: The Scaleway resource being checked.
+            resource_name: Override for resource name.
+            resource_id: Override for resource ID.
+            organization_id: Override for the organization ID.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.organization_id = organization_id or getattr(
+            resource, "organization_id", ""
+        )
+        self._region = getattr(resource, "region", None) or "global"
+
+    @property
+    def region(self) -> str:
+        """Scaleway regional resources expose their own region; IAM is global."""
+        return self._region
 
 
 # Testing Pending

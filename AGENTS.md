@@ -11,6 +11,7 @@
 Use these skills for detailed patterns on-demand:
 
 ### Generic Skills (Any Project)
+
 | Skill | Description | URL |
 |-------|-------------|-----|
 | `typescript` | Const types, flat interfaces, utility types | [SKILL.md](skills/typescript/SKILL.md) |
@@ -28,6 +29,7 @@ Use these skills for detailed patterns on-demand:
 | `tdd` | Test-Driven Development workflow | [SKILL.md](skills/tdd/SKILL.md) |
 
 ### Prowler-Specific Skills
+
 | Skill | Description | URL |
 |-------|-------------|-----|
 | `prowler` | Project overview, component navigation | [SKILL.md](skills/prowler/SKILL.md) |
@@ -148,7 +150,7 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 | Component | Location | Tech Stack |
 |-----------|----------|------------|
-| SDK | `prowler/` | Python 3.10+, Poetry 2.3+ |
+| SDK | `prowler/` | Python 3.10+, uv |
 | API | `api/` | Django 5.1, DRF, Celery |
 | UI | `ui/` | Next.js 16, React 19, Tailwind 4 |
 | MCP Server | `mcp_server/` | FastMCP, Python 3.12+ |
@@ -160,13 +162,13 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 ```bash
 # Setup
-poetry install --with dev
-poetry run prek install
+uv sync
+uv run prek install
 
 # Code quality
-poetry run make lint
-poetry run make format
-poetry run prek run --all-files
+uv run make lint
+uv run make format
+uv run prek run --all-files
 ```
 
 ---
