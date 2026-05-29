@@ -9,7 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `application` service for Okta provider with `application_admin_console_session_idle_timeout_15min`, `application_admin_console_mfa_required`, `application_admin_console_phishing_resistant_authentication`, `application_dashboard_mfa_required`, `application_dashboard_phishing_resistant_authentication`, and `application_authentication_policy_network_zone_enforced` checks [(#11358)](https://github.com/prowler-cloud/prowler/pull/11358)
 - AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
 - `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
-- StackIT provider now authenticates with a service account key, either as a file path (`--stackit-service-account-key-path` / `STACKIT_SERVICE_ACCOUNT_KEY_PATH`) or as inline JSON content (`--stackit-service-account-key` / `STACKIT_SERVICE_ACCOUNT_KEY`, intended for CI/CD with a secret manager); the StackIT SDK refreshes access tokens internally, replacing the short-lived `STACKIT_API_TOKEN` flow [(#9237)](https://github.com/prowler-cloud/prowler/pull/9237)
+- StackIT provider with service account key authentication [(#9237)](https://github.com/prowler-cloud/prowler/pull/9237)
 - 8 Rules service checks for Google Workspace provider using the Cloud Identity Policy API [(#11379)](https://github.com/prowler-cloud/prowler/pull/11379)
 - 12 Security service checks for Google Workspace provider using the Cloud Identity Policy API [(#11356)](https://github.com/prowler-cloud/prowler/pull/11356)
 
@@ -22,7 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - ENS RD 311/2022 (AWS) compliance mapping: `vpc_different_regions` was uncorrectly mapped under the `mp.com.4` family (Network segregation). That check is now mapped to a new `op.cont.2.aws.vpc.1` requirement under the Continuity of Service control [(#11372)](https://github.com/prowler-cloud/prowler/pull/11372)
 - Compliance CSV row count now matches the UI per requirement by sourcing rows from the framework JSON's `requirement.Checks` instead of the stale `finding.compliance` snapshot [(#11370)](https://github.com/prowler-cloud/prowler/pull/11370)
 - OpenStack provider exception codes moved from the `10000-10999` range, shared with the AlibabaCloud provider, to the free `17000-17999` range to keep error codes unambiguous [(#11382)](https://github.com/prowler-cloud/prowler/pull/11382)
-- Azure provider now supports authentication against sovereign clouds (`AzureChinaCloud`, `AzureUSGovernment`) [(#10284)](https://github.com/prowler-cloud/prowler/pull/10284)
+- Azure provider authentication against sovereign clouds (`AzureChinaCloud`, `AzureUSGovernment`) [(#10284)](https://github.com/prowler-cloud/prowler/pull/10284)
 
 ---
 
