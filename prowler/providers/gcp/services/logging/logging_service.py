@@ -49,9 +49,7 @@ class Logging(GCPService):
 
         for org_id in org_ids:
             try:
-                request = self.client.sinks().list(
-                    parent=f"organizations/{org_id}"
-                )
+                request = self.client.sinks().list(parent=f"organizations/{org_id}")
                 while request is not None:
                     response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
