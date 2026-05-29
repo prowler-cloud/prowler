@@ -13,7 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - 8 Rules service checks for Google Workspace provider using the Cloud Identity Policy API [(#11379)](https://github.com/prowler-cloud/prowler/pull/11379)
 - 12 Security service checks for Google Workspace provider using the Cloud Identity Policy API [(#11356)](https://github.com/prowler-cloud/prowler/pull/11356)
 
-### Deprecated
+### ⚠️ Deprecated
 
 - `s3_bucket_default_encryption` check for AWS provider since SSE-S3 is automatically applied to all S3 buckets by AWS as of January 5, 2023 and can no longer be disabled [(#11230)](https://github.com/prowler-cloud/prowler/pull/11230)
 
