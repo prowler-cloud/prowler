@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_references_deleted_principals",
+  "CheckTitle": "Conditional Access policies must not reference deleted users, groups, or roles",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Conditional Access policies are reviewed to verify that none reference users, groups, or directory roles that no longer exist in the tenant. Deleted principals left in policy conditions can cause unexpected access grants or denials and make policies harder to audit.",
+  "Risk": "A Conditional Access policy that references a deleted user, group, or role may silently grant or block access in unintended ways. Stale references also obscure the effective scope of a policy, complicating audits and incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditions-users",
+    "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccesspolicy"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Open each policy that references users, groups, or roles.\n4. Under **Users**, review the **Include** and **Exclude** sections for any deleted users, groups, or directory roles.\n5. Remove or replace stale references.\n6. Save the policy.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review Conditional Access policies regularly to ensure they do not reference deleted users, groups, or directory roles. Remove or replace stale references to maintain correct access control behavior.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_references_deleted_principals"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_directory_sync_account_excluded"
+  ],
+  "Notes": "This check only inspects enabled and report-only policies. Disabled policies are skipped. The check compares referenced principal IDs against the current set of users, groups, and built-in directory roles in the tenant."
+}
