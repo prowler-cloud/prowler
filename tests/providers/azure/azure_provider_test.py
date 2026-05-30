@@ -730,6 +730,300 @@ class TestAzureProviderSetupIdentitySubscriptions:
         }
 
 
+class TestAzureProviderSovereignCloudSupport:
+    """Sovereign-cloud authentication coverage across AzureCloud,
+    AzureChinaCloud and AzureUSGovernment for every authentication code path
+    Prowler exposes. Pinned to issue #8425."""
+
+    REGION_CASES = [
+        (
+            "AzureCloud",
+            None,
+            "https://management.azure.com",
+            ["https://management.azure.com/.default"],
+            "https://graph.microsoft.com/.default",
+            "https://api.loganalytics.io",
+            "login.microsoftonline.com",
+        ),
+        (
+            "AzureChinaCloud",
+            "login.chinacloudapi.cn",
+            "https://management.chinacloudapi.cn",
+            ["https://management.chinacloudapi.cn/.default"],
+            "https://microsoftgraph.chinacloudapi.cn/.default",
+            "https://api.loganalytics.azure.cn",
+            "login.chinacloudapi.cn",
+        ),
+        (
+            "AzureUSGovernment",
+            "login.microsoftonline.us",
+            "https://management.usgovcloudapi.net",
+            ["https://management.usgovcloudapi.net/.default"],
+            "https://graph.microsoft.us/.default",
+            "https://api.loganalytics.us",
+            "login.microsoftonline.us",
+        ),
+    ]
+
+    @pytest.mark.parametrize(
+        "region,authority,base_url,credential_scopes,graph_scope,logs_endpoint,_login_endpoint",
+        REGION_CASES,
+    )
+    def test_setup_region_config_per_cloud(
+        self,
+        region,
+        authority,
+        base_url,
+        credential_scopes,
+        graph_scope,
+        logs_endpoint,
+        _login_endpoint,
+    ):
+        config = AzureProvider.setup_region_config(region)
+
+        # graph_host mirrors graph_scope without the `/.default` suffix; we
+        # derive it here to avoid threading a separate parameter through every
+        # parametrized test in this class.
+        expected_graph_host = graph_scope.removesuffix("/.default")
+        assert config == AzureRegionConfig(
+            name=region,
+            authority=authority,
+            base_url=base_url,
+            credential_scopes=credential_scopes,
+            graph_host=expected_graph_host,
+            graph_scope=graph_scope,
+            logs_endpoint=logs_endpoint,
+        )
+
+    @pytest.mark.parametrize(
+        "region,authority,_base_url,_credential_scopes,_graph_scope,_logs_endpoint,_login_endpoint",
+        REGION_CASES,
+    )
+    def test_setup_session_static_credentials_passes_authority(
+        self,
+        region,
+        authority,
+        _base_url,
+        _credential_scopes,
+        _graph_scope,
+        _logs_endpoint,
+        _login_endpoint,
+    ):
+        with patch(
+            "prowler.providers.azure.azure_provider.ClientSecretCredential"
+        ) as mock_client_secret_credential:
+            azure_credentials = {
+                "tenant_id": str(uuid4()),
+                "client_id": str(uuid4()),
+                "client_secret": "fake-secret-value",
+            }
+            region_config = AzureProvider.setup_region_config(region)
+
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                tenant_id=azure_credentials["tenant_id"],
+                azure_credentials=azure_credentials,
+                region_config=region_config,
+            )
+
+            mock_client_secret_credential.assert_called_once_with(
+                tenant_id=azure_credentials["tenant_id"],
+                client_id=azure_credentials["client_id"],
+                client_secret=azure_credentials["client_secret"],
+                authority=authority,
+            )
+
+    @pytest.mark.parametrize(
+        "region,authority,_base_url,_credential_scopes,_graph_scope,_logs_endpoint,_login_endpoint",
+        REGION_CASES,
+    )
+    def test_setup_session_browser_auth_passes_authority(
+        self,
+        region,
+        authority,
+        _base_url,
+        _credential_scopes,
+        _graph_scope,
+        _logs_endpoint,
+        _login_endpoint,
+    ):
+        with patch(
+            "prowler.providers.azure.azure_provider.InteractiveBrowserCredential"
+        ) as mock_interactive_browser_credential:
+            tenant_id = str(uuid4())
+            region_config = AzureProvider.setup_region_config(region)
+
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=True,
+                managed_identity_auth=False,
+                tenant_id=tenant_id,
+                azure_credentials=None,
+                region_config=region_config,
+            )
+
+            mock_interactive_browser_credential.assert_called_once_with(
+                tenant_id=tenant_id,
+                authority=authority,
+            )
+
+    @pytest.mark.parametrize(
+        "region,authority,_base_url,_credential_scopes,_graph_scope,_logs_endpoint,_login_endpoint",
+        REGION_CASES,
+    )
+    def test_setup_session_default_credential_passes_authority(
+        self,
+        region,
+        authority,
+        _base_url,
+        _credential_scopes,
+        _graph_scope,
+        _logs_endpoint,
+        _login_endpoint,
+    ):
+        with patch(
+            "prowler.providers.azure.azure_provider.DefaultAzureCredential"
+        ) as mock_default_credential:
+            region_config = AzureProvider.setup_region_config(region)
+
+            AzureProvider.setup_session(
+                az_cli_auth=True,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                tenant_id=None,
+                azure_credentials=None,
+                region_config=region_config,
+            )
+
+            _, called_kwargs = mock_default_credential.call_args
+            assert called_kwargs["authority"] == authority
+            assert called_kwargs["exclude_cli_credential"] is False
+            assert called_kwargs["exclude_environment_credential"] is True
+            assert called_kwargs["exclude_managed_identity_credential"] is True
+
+    @pytest.mark.parametrize(
+        "region,_authority,_base_url,_credential_scopes,graph_scope,_logs_endpoint,login_endpoint",
+        REGION_CASES,
+    )
+    def test_verify_client_uses_per_cloud_endpoints(
+        self,
+        region,
+        _authority,
+        _base_url,
+        _credential_scopes,
+        graph_scope,
+        _logs_endpoint,
+        login_endpoint,
+    ):
+        tenant_id = str(uuid4())
+        client_id = str(uuid4())
+        client_secret = "fake-secret"
+        region_config = AzureProvider.setup_region_config(region)
+
+        with patch("prowler.providers.azure.azure_provider.requests.post") as mock_post:
+            mock_post.return_value = MagicMock()
+            mock_post.return_value.json.return_value = {"access_token": "fake-token"}
+
+            AzureProvider.verify_client(
+                tenant_id, client_id, client_secret, region_config
+            )
+
+            mock_post.assert_called_once()
+            args, kwargs = mock_post.call_args
+            assert args[0] == (
+                f"https://{login_endpoint}/{tenant_id}/oauth2/v2.0/token"
+            )
+            assert kwargs["data"]["scope"] == graph_scope
+            assert kwargs["data"]["client_id"] == client_id
+            assert kwargs["data"]["client_secret"] == client_secret
+
+    @pytest.mark.parametrize(
+        "region,_authority,base_url,credential_scopes,_graph_scope,_logs_endpoint,_login_endpoint",
+        REGION_CASES,
+    )
+    def test_test_connection_passes_base_url_to_subscription_client(
+        self,
+        region,
+        _authority,
+        base_url,
+        credential_scopes,
+        _graph_scope,
+        _logs_endpoint,
+        _login_endpoint,
+    ):
+        subscription_client_instance = MagicMock()
+        subscription_client_instance.subscriptions = MagicMock()
+        subscription_client_instance.subscriptions.list = MagicMock(return_value=[])
+        subscription_client_class = MagicMock(return_value=subscription_client_instance)
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient",
+                subscription_client_class,
+            ),
+        ):
+            mock_setup_session.return_value = MagicMock()
+
+            AzureProvider.test_connection(
+                az_cli_auth=True,
+                region=region,
+                raise_on_exception=False,
+            )
+
+            subscription_client_class.assert_called_once()
+            _, kwargs = subscription_client_class.call_args
+            assert kwargs["base_url"] == base_url
+            assert kwargs["credential_scopes"] == credential_scopes
+
+    @pytest.mark.parametrize(
+        "region,_authority,base_url,credential_scopes,_graph_scope,_logs_endpoint,_login_endpoint",
+        REGION_CASES,
+    )
+    def test_get_locations_passes_base_url_to_subscription_client(
+        self,
+        region,
+        _authority,
+        base_url,
+        credential_scopes,
+        _graph_scope,
+        _logs_endpoint,
+        _login_endpoint,
+    ):
+        subscription_client_instance = MagicMock()
+        subscription_client_instance.subscriptions = MagicMock()
+        subscription_client_instance.subscriptions.list_locations = MagicMock(
+            return_value=[]
+        )
+        subscription_client_class = MagicMock(return_value=subscription_client_instance)
+
+        with (
+            patch.object(AzureProvider, "__init__", return_value=None),
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient",
+                subscription_client_class,
+            ),
+        ):
+            azure_provider = AzureProvider()
+            azure_provider._session = MagicMock()
+            azure_provider._region_config = AzureProvider.setup_region_config(region)
+            azure_provider._identity = AzureIdentityInfo(subscriptions={})
+
+            azure_provider.get_locations()
+
+            subscription_client_class.assert_called_once()
+            _, kwargs = subscription_client_class.call_args
+            assert kwargs["base_url"] == base_url
+            assert kwargs["credential_scopes"] == credential_scopes
+
+
 class TestAzureProviderSetupIdentityEventLoop:
     """Regression for the Celery worker scenario where
     asyncio.get_event_loop() raised "There is no current event loop in
