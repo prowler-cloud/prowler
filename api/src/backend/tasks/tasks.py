@@ -19,6 +19,7 @@ from tasks.jobs.backfill import (
     backfill_daily_severity_summaries,
     backfill_finding_group_summaries,
     backfill_provider_compliance_scores,
+    backfill_provider_str,
     backfill_resource_scan_summaries,
     aggregate_scan_category_summaries,
     aggregate_scan_resource_group_summaries,
@@ -720,6 +721,12 @@ def backfill_daily_severity_summaries_task(tenant_id: str, days: int = None):
 def backfill_finding_group_summaries_task(tenant_id: str, days: int = None):
     """Backfill FindingGroupDailySummary from historical scans. Use days param to limit scope."""
     return backfill_finding_group_summaries(tenant_id=tenant_id, days=days)
+
+
+@shared_task(name="backfill-provider-str", queue="backfill")
+def backfill_provider_str_task(tenant_id: str):
+    """Backfill the transitional provider_str shadow column for a tenant."""
+    return backfill_provider_str(tenant_id=tenant_id)
 
 
 @shared_task(name="scan-category-summaries", queue="overview")

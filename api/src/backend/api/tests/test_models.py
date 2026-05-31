@@ -543,3 +543,42 @@ class TestProviderShadowColumn:
         provider.save()
         provider.refresh_from_db()
         assert provider.provider_str == provider.provider
+
+    def test_backfill_populates_pre_trigger_rows(self, providers_fixture):
+        """Rows created before the sync trigger existed have a NULL shadow
+        column; the backfill copies `provider::text` into them in batches."""
+        from django.db import connection
+
+        from tasks.jobs.backfill import backfill_provider_str
+
+        tenant_id = str(providers_fixture[0].tenant_id)
+
+        # Simulate rows that predate the trigger: bypass triggers for the
+        # session, null the shadow column, then restore normal replication so
+        # subsequent writes resync as in production.
+        with connection.cursor() as cursor:
+            cursor.execute("SET session_replication_role = replica")
+            cursor.execute("UPDATE providers SET provider_str = NULL")
+            cursor.execute("SET session_replication_role = origin")
+
+        for provider in providers_fixture:
+            provider.refresh_from_db()
+            assert provider.provider_str is None
+
+        result = backfill_provider_str(tenant_id, batch_size=2)
+
+        assert result["updated"] == len(providers_fixture)
+        for provider in providers_fixture:
+            provider.refresh_from_db()
+            assert provider.provider_str == provider.provider
+
+    def test_backfill_is_idempotent(self, providers_fixture):
+        """Re-running the backfill touches no rows once the column is populated
+        (the trigger already keeps it in sync), so it is safe to retry."""
+        from tasks.jobs.backfill import backfill_provider_str
+
+        tenant_id = str(providers_fixture[0].tenant_id)
+
+        result = backfill_provider_str(tenant_id)
+
+        assert result["updated"] == 0

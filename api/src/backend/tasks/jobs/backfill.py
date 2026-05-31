@@ -40,6 +40,35 @@ from api.models import (
 logger = get_task_logger(__name__)
 
 
+def backfill_provider_str(tenant_id: str, batch_size: int = 1000):
+    """Populate the transitional `provider_str` shadow column for rows that
+    predate the sync trigger, copying `provider::text` in bounded batches.
+
+    Each batch runs in its own RLS transaction so the lock is held only for the
+    rows in that batch, keeping the operation safe on a large table. Idempotent:
+    only rows where `provider_str IS NULL` are touched, so an interrupted run
+    resumes cleanly and a completed column is a no-op on retry.
+    """
+    total_updated = 0
+    while True:
+        with rls_transaction(tenant_id) as cursor:
+            cursor.execute(
+                "UPDATE providers SET provider_str = provider::text "
+                "WHERE id IN ("
+                "    SELECT id FROM providers WHERE provider_str IS NULL LIMIT %s"
+                ")",
+                [batch_size],
+            )
+            updated = cursor.rowcount
+        total_updated += updated
+        if updated < batch_size:
+            break
+    logger.info(
+        "Backfilled provider_str for tenant %s: %d rows", tenant_id, total_updated
+    )
+    return {"tenant_id": tenant_id, "updated": total_updated}
+
+
 def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         if ResourceScanSummary.objects.filter(
