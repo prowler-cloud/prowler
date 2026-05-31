@@ -61,24 +61,24 @@ class ObjectStorageService:
                     object_lock_enabled = bucket_data.get("objectLockEnabled", False)
                 else:
                     continue
-
-                retention_days, retention_mode = self._get_default_retention(
-                    client, region, name
-                )
-
-                self.buckets.append(
-                    Bucket(
-                        name=name,
-                        region=region,
-                        project_id=self.project_id,
-                        object_lock_enabled=object_lock_enabled,
-                        retention_days=retention_days,
-                        retention_mode=retention_mode,
-                    )
-                )
             except Exception as e:
                 logger.error(f"Error processing bucket: {e}")
                 continue
+
+            retention_days, retention_mode = self._get_default_retention(
+                client, region, name
+            )
+
+            self.buckets.append(
+                Bucket(
+                    name=name,
+                    region=region,
+                    project_id=self.project_id,
+                    object_lock_enabled=object_lock_enabled,
+                    retention_days=retention_days,
+                    retention_mode=retention_mode,
+                )
+            )
 
         logger.info(f"Listed {len(buckets_list)} buckets in {region}")
 
