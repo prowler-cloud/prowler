@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.31.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Provider type is validated against the SDK's available providers instead of a static enum, so the API accepts any installed provider (built-in or external); `Provider.provider` is stored as `varchar` and the native PostgreSQL enum is removed [(#11399)](https://github.com/prowler-cloud/prowler/pull/11399)
+
+---
+
 ## [1.30.0] (Prowler v5.29.0)
 
 ### 🔄 Changed
