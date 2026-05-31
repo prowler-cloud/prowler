@@ -940,6 +940,12 @@ class ProviderIncludeSerializer(RLSSerializer):
 
 
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    # Declared explicitly so provider validation stays at the serializer layer:
+    # the model column is now a plain varchar with no choices, so without this
+    # an unknown provider would slip through to Provider.clean() instead of
+    # being rejected here with `invalid_choice`.
+    provider = ProviderEnumSerializerField()
+
     class Meta:
         model = Provider
         fields = [

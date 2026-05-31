@@ -40,7 +40,6 @@ from api.db_utils import (
     InvitationStateEnumField,
     MemberRoleEnumField,
     ProcessorTypeEnumField,
-    ProviderEnumField,
     ProviderSecretTypeEnumField,
     ScanTriggerEnumField,
     SeverityEnumField,
@@ -482,14 +481,10 @@ class Provider(RowLevelSecurityProtectedModel):
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     is_deleted = models.BooleanField(default=False)
-    provider = ProviderEnumField(
-        choices=ProviderChoices.choices, default=ProviderChoices.AWS
-    )
-    # Transitional shadow column for the zero-downtime migration of `provider`
-    # from a native PostgreSQL enum to varchar. Kept in sync with `provider` by
-    # a DB trigger; a later migration drops the enum column and renames this one
-    # to take its place.
-    provider_str = models.CharField(max_length=50, null=True, blank=True)
+    # Stored as a plain varchar: the SDK is the source of truth for which
+    # providers are valid, so the column accepts any provider name without a
+    # database-level enum to keep in sync.
+    provider = models.CharField(max_length=50, default=ProviderChoices.AWS)
     uid = models.CharField(
         "Unique identifier for the provider, set by the provider",
         max_length=250,
