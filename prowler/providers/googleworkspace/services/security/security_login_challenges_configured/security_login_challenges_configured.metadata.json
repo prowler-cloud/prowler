@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_login_challenges_configured",
+  "CheckTitle": "Login challenges are configured correctly",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level login challenges configuration has the **employee ID challenge disabled**. CIS 4.1.4.1 also requires Post-SSO verification to be enabled, but that setting is **not exposed by the Cloud Identity Policy API**. This check only covers the employee ID challenge portion of the control.",
+  "Risk": "When the employee ID login challenge is enabled without proper configuration, it may create a **false sense of security** or interfere with the login flow. The employee ID challenge is a supplementary verification method that should only be used when specifically required by the organization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/security/protect-google-workspace-accounts-with-security-challenges",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Login Challenges**\n3. Under **Login challenges**, uncheck **Use employee ID to keep my users more secure**\n4. Click **Save**\n5. Under **Post-SSO verification**, check **Logins using SSO are subject to additional verifications (if appropriate) and 2-Step Verification (if configured)** (this setting cannot be verified via the Policy API)\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable the **employee ID login challenge** and manually verify that **Post-SSO verification** is enabled in the Admin Console, as the Post-SSO setting is not exposed by the Policy API.",
+      "Url": "https://hub.prowler.com/check/security_login_challenges_configured"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_2sv_enforced"
+  ],
+  "Notes": "This check is partial — it only verifies the employee ID challenge setting. CIS 4.1.4.1 also requires Post-SSO verification to be enabled, which is not exposed by the Cloud Identity Policy API and must be verified manually."
+}

@@ -114,8 +114,8 @@ describe("ProviderTypeSelector", () => {
     render(<ProviderTypeSelector providers={providers} />);
 
     expect(multiSelectContentSpy).toHaveBeenCalledWith({
-      placeholder: "Search providers...",
-      emptyMessage: "No providers found.",
+      placeholder: "Search Provider Types...",
+      emptyMessage: "No Provider Types found.",
     });
     expect(screen.getByText("Amazon Web Services")).toBeInTheDocument();
   });
@@ -141,7 +141,7 @@ describe("ProviderTypeSelector", () => {
     render(<ProviderTypeSelector providers={providers} />);
 
     expect(
-      screen.getByRole("option", { name: /select all providers/i }),
+      screen.getByRole("option", { name: /select all Provider Types/i }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("All selected")).toBeInTheDocument();
   });

@@ -225,9 +225,9 @@ pnpm run test:e2e:ui
 
 ## QA CHECKLIST BEFORE COMMIT
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint:fix` passes
-- [ ] `npm run format:write` passes
+- [ ] `pnpm run typecheck` passes
+- [ ] `pnpm run lint:fix` passes
+- [ ] `pnpm run format:write` passes
 - [ ] Relevant E2E tests pass
 - [ ] All UI states handled (loading, error, empty)
 - [ ] No secrets in code (use `.env.local`)

@@ -37,7 +37,8 @@ export default function MainLayout({
       <main
         className={cn(
           "no-scrollbar relative z-10 mb-auto h-full flex-1 flex-col overflow-y-auto transition-[margin-left] duration-300 ease-in-out",
-          !settings.disabled && (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-72"),
+          !settings.disabled &&
+            (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-[248px]"),
         )}
       >
         {children}
