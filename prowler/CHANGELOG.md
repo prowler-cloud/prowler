@@ -9,11 +9,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `application` service for Okta provider with `application_admin_console_session_idle_timeout_15min`, `application_admin_console_mfa_required`, `application_admin_console_phishing_resistant_authentication`, `application_dashboard_mfa_required`, `application_dashboard_phishing_resistant_authentication`, and `application_authentication_policy_network_zone_enforced` checks [(#11358)](https://github.com/prowler-cloud/prowler/pull/11358)
 - AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
 - `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
+- Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 
 ### 🐞 Fixed
 
 - ENS RD 311/2022 (AWS) compliance mapping: `vpc_different_regions` was uncorrectly mapped under the `mp.com.4` family (Network segregation). That check is now mapped to a new `op.cont.2.aws.vpc.1` requirement under the Continuity of Service control [(#11372)](https://github.com/prowler-cloud/prowler/pull/11372)
 - Compliance CSV row count now matches the UI per requirement by sourcing rows from the framework JSON's `requirement.Checks` instead of the stale `finding.compliance` snapshot [(#11370)](https://github.com/prowler-cloud/prowler/pull/11370)
+- `load_and_validate_config_file` now unwraps namespaced config for every built-in and external provider, and no longer leaks the full file as the provider's config when the file is namespaced [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 
 ---
 
@@ -104,7 +106,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
 - Universal compliance with OCSF support [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 - ASD Essential Eight Maturity Model compliance framework for AWS (Maturity Level One, Nov 2023) [(#10808)](https://github.com/prowler-cloud/prowler/pull/10808)
@@ -182,10 +183,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `admincenter_groups_not_public_visibility` check for M365 provider evaluating Security and Distribution groups, now restricted to Microsoft 365 (Unified) groups per CIS M365 Foundations 1.2.1 [(#10899)](https://github.com/prowler-cloud/prowler/pull/10899)
 - Google Workspace check reports now store the actual domain or account resource subject instead of `provider.identity` [(#10901)](https://github.com/prowler-cloud/prowler/pull/10901)
 - `entra_users_mfa_capable` evaluating disabled guest accounts; CIS 5.2.3.4 only targets enabled member users [(#10785)](https://github.com/prowler-cloud/prowler/pull/10785)
-
-### 🐞 Fixed
-
-- `load_and_validate_config_file` now unwraps namespaced config for every built-in and external provider, and no longer leaks the full file as the provider's config when the file is namespaced [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 
 ---
 
