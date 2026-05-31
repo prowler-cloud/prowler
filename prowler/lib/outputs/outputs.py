@@ -24,6 +24,8 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
         details = finding.location
     elif finding.check_metadata.Provider == "nhn":
         details = finding.location
+    elif finding.check_metadata.Provider == "stackit":
+        details = finding.location
     elif finding.check_metadata.Provider == "llm":
         details = finding.check_metadata.CheckID
     elif finding.check_metadata.Provider == "iac":

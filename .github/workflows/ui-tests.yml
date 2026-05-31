@@ -16,7 +16,6 @@ concurrency:
 
 env:
   UI_WORKING_DIR: ./ui
-  NODE_VERSION: "24.13.0"
 
 permissions: {}
 
@@ -93,11 +92,11 @@ jobs:
             ui/vitest.config.ts
             ui/vitest.setup.ts
 
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
+      - name: Setup Node.js
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: 'ui/.nvmrc'
 
       - name: Setup pnpm
         if: steps.check-changes.outputs.any_changed == 'true'

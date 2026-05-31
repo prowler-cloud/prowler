@@ -402,6 +402,25 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif arguments.provider == "stackit":
+                    provider_class(
+                        project_id=arguments.stackit_project_id,
+                        service_account_key_path=getattr(
+                            arguments, "stackit_service_account_key_path", None
+                        ),
+                        service_account_key=getattr(
+                            arguments, "stackit_service_account_key", None
+                        ),
+                        regions=(
+                            set(arguments.stackit_region)
+                            if arguments.stackit_region
+                            else None
+                        ),
+                        scan_unused_services=arguments.scan_unused_services,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif arguments.provider == "github":
                     orgs = []
                     repos = []
@@ -549,8 +568,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-
-                elif "okta" in provider_class_name.lower():
+                elif arguments.provider == "okta":
                     provider_class(
                         okta_org_domain=getattr(arguments, "okta_org_domain", ""),
                         okta_client_id=getattr(arguments, "okta_client_id", ""),
@@ -563,7 +581,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "scaleway" in provider_class_name.lower():
+                elif arguments.provider == "scaleway":
                     # Credentials are read from the SCW_ACCESS_KEY /
                     # SCW_SECRET_KEY env vars by the provider itself; there
                     # are no credential CLI flags to avoid leaking secrets.

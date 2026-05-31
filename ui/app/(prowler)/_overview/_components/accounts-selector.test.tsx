@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { AccountsSelector } from "./accounts-selector";
 
 const multiSelectContentSpy = vi.fn();
+const multiSelectSpy = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -35,9 +37,25 @@ vi.mock("@/components/icons/providers-badge", () => ({
 }));
 
 vi.mock("@/components/shadcn/select/multiselect", () => ({
-  MultiSelect: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  MultiSelect: ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  }) => {
+    multiSelectSpy({ open });
+    return (
+      <div data-open={String(open)}>
+        <button type="button" onClick={() => onOpenChange?.(true)}>
+          Open selector
+        </button>
+        {children}
+      </div>
+    );
+  },
   MultiSelectTrigger: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -56,16 +74,26 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   },
   MultiSelectItem: ({
     children,
+    disabled,
     value,
     keywords,
+    onSelect,
   }: {
     children: React.ReactNode;
+    disabled?: boolean;
     value: string;
     keywords?: string[];
+    onSelect?: (value: string) => void;
   }) => (
-    <div data-value={value} data-keywords={keywords?.join("|")}>
+    <button
+      type="button"
+      data-value={value}
+      data-keywords={keywords?.join("|")}
+      data-disabled={disabled ? "true" : "false"}
+      onClick={() => onSelect?.(value)}
+    >
       {children}
-    </div>
+    </button>
   ),
 }));
 
@@ -114,8 +142,8 @@ describe("AccountsSelector", () => {
     render(<AccountsSelector providers={providers} />);
 
     expect(multiSelectContentSpy).toHaveBeenCalledWith({
-      placeholder: "Search accounts...",
-      emptyMessage: "No accounts found.",
+      placeholder: "Search Providers...",
+      emptyMessage: "No Providers found.",
     });
     expect(screen.getByText("Production AWS")).toBeInTheDocument();
   });
@@ -140,12 +168,56 @@ describe("AccountsSelector", () => {
     ).toHaveAttribute("data-keywords", expect.stringContaining("123456789012"));
   });
 
+  it("can use provider UID values for pages whose API filters by provider_uid__in", () => {
+    render(
+      <AccountsSelector providers={providers} filterKey="provider_uid__in" />,
+    );
+
+    expect(
+      screen.getByText("Production AWS").closest("[data-value]"),
+    ).toHaveAttribute("data-value", "123456789012");
+  });
+
   it("disables select all when every account is already shown", () => {
     render(<AccountsSelector providers={providers} />);
 
     expect(
-      screen.getByRole("option", { name: /select all accounts/i }),
+      screen.getByRole("option", { name: /select all Providers/i }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("All selected")).toBeInTheDocument();
+  });
+
+  it("marks configured account values as disabled", () => {
+    render(
+      <AccountsSelector
+        providers={providers}
+        disabledValues={["provider-1"]}
+      />,
+    );
+
+    expect(
+      screen.getByText("Production AWS").closest("[data-value]"),
+    ).toHaveAttribute("data-disabled", "true");
+    expect(screen.getByText("Disconnected")).toBeInTheDocument();
+  });
+
+  it("can close the dropdown after selecting a launch-scan provider", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <AccountsSelector
+        providers={providers}
+        closeOnSelect
+        onBatchChange={vi.fn()}
+        selectedValues={[]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /open selector/i }));
+    expect(multiSelectSpy).toHaveBeenLastCalledWith({ open: true });
+
+    await user.click(screen.getByRole("button", { name: /production aws/i }));
+
+    expect(multiSelectSpy).toHaveBeenLastCalledWith({ open: false });
   });
 });
