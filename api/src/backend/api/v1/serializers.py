@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+from pydantic import ValidationError as PydanticValidationError
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
@@ -1545,9 +1546,47 @@ class FindingMetadataSerializer(BaseSerializerV1):
 # Provider secrets
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
+    def _validate_external_provider_secret(provider_type: str, secret: dict):
+        """Validate a non-built-in provider's secret against the credential
+        schemas it declares through the SDK contract (one model per secret type;
+        the secret must match one).
+
+        Providers that declare no schema have their secret accepted as-is; the
+        credentials are then validated by the provider's ``test_connection``.
+        """
+        schemas = SDKProvider.get_class(provider_type).get_credentials_schema()
+        if not schemas:
+            return
+        collected_errors = []
+        for schema in schemas:
+            try:
+                schema.model_validate(secret)
+                return
+            except PydanticValidationError as error:
+                collected_errors.append(error)
+        raise serializers.ValidationError(
+            {
+                "secret": [
+                    f"{'/'.join(str(loc) for loc in item['loc']) or 'secret'}: "
+                    f"{item['msg']}"
+                    for error in collected_errors
+                    for item in error.errors()
+                ]
+            }
+        )
+
+    @staticmethod
     def validate_secret_based_on_provider(
         provider_type: str, secret_type: ProviderSecret.TypeChoices, secret: dict
     ):
+        # External providers validate against the schemas they declare via the
+        # SDK contract; built-in providers keep their explicit serializers below.
+        if not SDKProvider.is_builtin(provider_type):
+            BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                provider_type, secret
+            )
+            return
+
         if secret_type == ProviderSecret.TypeChoices.STATIC:
             if provider_type == Provider.ProviderChoices.AWS.value:
                 serializer = AwsProviderSecret(data=secret)

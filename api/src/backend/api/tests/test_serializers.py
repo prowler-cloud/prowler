@@ -1,8 +1,56 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
+from pydantic import BaseModel
 from rest_framework.exceptions import ValidationError
 
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
-from api.v1.serializers import ImageProviderSecret, ProviderEnumSerializerField
+from api.v1.serializers import (
+    BaseWriteProviderSecretSerializer,
+    ImageProviderSecret,
+    ProviderEnumSerializerField,
+)
+
+
+class TestExternalProviderSecretValidation:
+    """A non-built-in provider's secret is validated against the credential
+    schema it declares through the SDK contract, or accepted as-is when it
+    declares none (then validated by the provider's test_connection)."""
+
+    class _Credentials(BaseModel):
+        api_url: str
+        api_key: str
+
+    def test_secret_validated_against_declared_schema(self):
+        provider_class = MagicMock()
+        provider_class.get_credentials_schema.return_value = [self._Credentials]
+        with patch(
+            "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
+        ):
+            BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                "external-template", {"api_url": "u", "api_key": "k"}
+            )
+
+    def test_secret_rejected_when_schema_violated(self):
+        provider_class = MagicMock()
+        provider_class.get_credentials_schema.return_value = [self._Credentials]
+        with patch(
+            "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
+        ):
+            with pytest.raises(ValidationError):
+                BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                    "external-template", {"api_url": "u"}
+                )
+
+    def test_secret_accepted_when_no_schema_declared(self):
+        provider_class = MagicMock()
+        provider_class.get_credentials_schema.return_value = []
+        with patch(
+            "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
+        ):
+            BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                "external-template", {"anything": "goes"}
+            )
 
 
 class TestProviderEnumSerializerField:
