@@ -1,0 +1,39 @@
+{
+  "Provider": "stackit",
+  "CheckID": "objectstorage_bucket_retention_policy",
+  "CheckTitle": "ObjectStorage buckets should have a default retention policy configured",
+  "CheckType": [],
+  "ServiceName": "objectstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "storage",
+  "Description": "A default retention policy automatically applies a minimum retention period to every object uploaded to the bucket, preventing deletion or overwriting before the period expires. Without it, objects can be removed immediately after upload, undermining compliance and data durability requirements.",
+  "Risk": "Buckets without a default retention policy offer no automatic protection against premature deletion of objects. Compliance data, audit logs, and backups may be deleted before their required retention period elapses.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.stackit.cloud/products/storage/object-storage/",
+    "https://docs.stackit.cloud/products/storage/object-storage/how-tos/object-lock/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Use the STACKIT Object Storage API or Portal to set a default retention policy on the bucket. Choose COMPLIANCE mode for strict immutability or GOVERNANCE mode to allow privileged users to override the policy.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a default retention policy on every bucket that stores compliance-relevant or sensitive data. Choose COMPLIANCE mode for regulatory requirements and GOVERNANCE mode when administrative overrides are acceptable.",
+      "Url": "https://hub.prowler.com/check/objectstorage_bucket_retention_policy"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "objectstorage_bucket_object_lock_enabled"
+  ],
+  "Notes": "A default retention policy requires Object Lock to be enabled on the bucket. Buckets without Object Lock cannot have a retention policy."
+}

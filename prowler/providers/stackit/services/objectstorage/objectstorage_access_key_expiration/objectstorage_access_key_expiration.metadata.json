@@ -1,0 +1,37 @@
+{
+  "Provider": "stackit",
+  "CheckID": "objectstorage_access_key_expiration",
+  "CheckTitle": "ObjectStorage access keys should have an expiration date",
+  "CheckType": [],
+  "ServiceName": "objectstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Access keys without an expiration date remain valid indefinitely. Long-lived credentials increase the blast radius of a credential compromise because they cannot expire on their own. Setting an expiration date forces periodic rotation and limits the window of exposure if a key is leaked.",
+  "Risk": "Non-expiring access keys that are leaked, stolen, or forgotten remain usable indefinitely. An attacker who obtains a never-expiring key retains persistent access to the object storage resources until the key is manually revoked.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.stackit.cloud/products/storage/object-storage/",
+    "https://docs.stackit.cloud/products/storage/object-storage/how-tos/access-keys/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the STACKIT Portal navigate to Object Storage > Access Keys. 2. Delete the non-expiring access key. 3. Create a new access key with an expiration date appropriate for your rotation policy (e.g. 90 days). 4. Update all applications and services that use the old key with the new credentials.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create access keys with an explicit expiration date and establish a rotation process. Delete non-expiring keys and replace them with time-limited credentials. A rotation period of 90 days or less is recommended.",
+      "Url": "https://hub.prowler.com/check/objectstorage_access_key_expiration"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Access keys are scoped to credentials groups. This check evaluates all access keys across all credentials groups in the project."
+}

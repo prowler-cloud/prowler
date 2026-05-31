@@ -15,6 +15,7 @@ from colorama import Style
 # loader and surfacing as a misleading empty report.
 from stackit.core.configuration import Configuration
 from stackit.iaas import DefaultApi as IaasDefaultApi
+from stackit.objectstorage import DefaultApi as ObjectStorageDefaultApi
 from stackit.resourcemanager import DefaultApi as ResourceManagerDefaultApi
 
 from prowler.config.config import (
@@ -224,11 +225,17 @@ class StackitProvider(Provider):
             return json_regions.intersection(audited_regions)
         return json_regions
 
+    _SERVICE_API_CLASS = {
+        "iaas": IaasDefaultApi,
+        "objectstorage": ObjectStorageDefaultApi,
+    }
+
     def generate_regional_clients(self, service: str = "iaas") -> dict:
         """Generate regional API clients for the given service.
 
         Returns dict: {"eu01": DefaultApi_client, "eu02": DefaultApi_client}
         """
+        api_class = self._SERVICE_API_CLASS.get(service, IaasDefaultApi)
         regional_clients = {}
         service_regions = self.get_available_service_regions(
             service, self._audited_regions
@@ -240,7 +247,7 @@ class StackitProvider(Provider):
                     self._service_account_key_path,
                     self._service_account_key,
                 )
-                client = IaasDefaultApi(config)
+                client = api_class(config)
                 client.region = region  # Attach region attribute
                 regional_clients[region] = client
 

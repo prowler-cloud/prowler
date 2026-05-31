@@ -1,0 +1,37 @@
+{
+  "Provider": "stackit",
+  "CheckID": "objectstorage_bucket_object_lock_enabled",
+  "CheckTitle": "ObjectStorage buckets should have S3 Object Lock enabled",
+  "CheckType": [],
+  "ServiceName": "objectstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "storage",
+  "Description": "S3 Object Lock prevents objects from being deleted or overwritten for a fixed period or indefinitely. Enabling it protects against accidental deletion and ransomware by enforcing a write-once-read-many (WORM) model. Object Lock can only be enabled at bucket creation time.",
+  "Risk": "Without Object Lock, objects can be deleted or overwritten at any time, increasing the risk of data loss from accidental deletion, malicious actors, or ransomware. Backups and compliance data are particularly vulnerable.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.stackit.cloud/products/storage/object-storage/",
+    "https://docs.stackit.cloud/products/storage/object-storage/how-tos/object-lock/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Object Lock must be enabled at bucket creation time and cannot be enabled on an existing bucket. Create a new bucket with Object Lock enabled and migrate your data to it.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create buckets with S3 Object Lock enabled for workloads that require data immutability, compliance archiving, or ransomware protection. Object Lock cannot be retroactively enabled on existing buckets.",
+      "Url": "https://hub.prowler.com/check/objectstorage_bucket_object_lock_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Object Lock can only be activated at bucket creation. Buckets without Object Lock are not necessarily misconfigured — evaluate based on the sensitivity and compliance requirements of the stored data."
+}
