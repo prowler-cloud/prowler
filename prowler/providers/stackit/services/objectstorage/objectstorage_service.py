@@ -174,12 +174,9 @@ class AccessKey(BaseModel):
         """Return True if the key expires within the given number of days from now."""
         if not self.has_expiration():
             return False
-        try:
-            expires_str = self.expires.replace("Z", "+00:00")
-            dt = datetime.fromisoformat(expires_str)
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            delta = dt - datetime.now(tz=timezone.utc)
-            return delta.days <= days
-        except (ValueError, AttributeError):
-            return False
+        expires_str = self.expires.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(expires_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        delta = dt - datetime.now(tz=timezone.utc)
+        return delta.days <= days
