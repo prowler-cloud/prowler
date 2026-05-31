@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -17,30 +16,7 @@ from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
-
-if TYPE_CHECKING:
-    from prowler.providers.alibabacloud.alibabacloud_provider import (
-        AlibabacloudProvider,
-    )
-    from prowler.providers.aws.aws_provider import AwsProvider
-    from prowler.providers.azure.azure_provider import AzureProvider
-    from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
-    from prowler.providers.gcp.gcp_provider import GcpProvider
-    from prowler.providers.github.github_provider import GithubProvider
-    from prowler.providers.googleworkspace.googleworkspace_provider import (
-        GoogleworkspaceProvider,
-    )
-    from prowler.providers.iac.iac_provider import IacProvider
-    from prowler.providers.image.image_provider import ImageProvider
-    from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-    from prowler.providers.m365.m365_provider import M365Provider
-    from prowler.providers.mongodbatlas.mongodbatlas_provider import (
-        MongodbatlasProvider,
-    )
-    from prowler.providers.okta.okta_provider import OktaProvider
-    from prowler.providers.openstack.openstack_provider import OpenstackProvider
-    from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
-    from prowler.providers.vercel.vercel_provider import VercelProvider
+from prowler.providers.common.provider import Provider as SDKProvider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -79,117 +55,26 @@ def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
     return result
 
 
-def return_prowler_provider(
-    provider: Provider,
-) -> (
-    AlibabacloudProvider
-    | AwsProvider
-    | AzureProvider
-    | CloudflareProvider
-    | GcpProvider
-    | GithubProvider
-    | GoogleworkspaceProvider
-    | IacProvider
-    | ImageProvider
-    | KubernetesProvider
-    | M365Provider
-    | MongodbatlasProvider
-    | OktaProvider
-    | OpenstackProvider
-    | OraclecloudProvider
-    | VercelProvider
-):
-    """Return the Prowler provider class based on the given provider type.
+def return_prowler_provider(provider: Provider) -> type:
+    """Resolve the Prowler provider class for the given provider.
+
+    The class is resolved dynamically from the SDK, so any provider the SDK
+    discovers — built-in or external entry-point — works without a per-provider
+    branch in the API.
 
     Args:
-        provider (Provider): The provider object containing the provider type and associated secrets.
+        provider (Provider): The provider whose `provider` type to resolve.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | GoogleworkspaceProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: The corresponding provider class.
+        type: The Prowler provider class.
 
     Raises:
-        ValueError: If the provider type specified in `provider.provider` is not supported.
+        ValueError: If the provider type is not available in the SDK.
     """
-    match provider.provider:
-        case Provider.ProviderChoices.AWS.value:
-            from prowler.providers.aws.aws_provider import AwsProvider
-
-            prowler_provider = AwsProvider
-        case Provider.ProviderChoices.GCP.value:
-            from prowler.providers.gcp.gcp_provider import GcpProvider
-
-            prowler_provider = GcpProvider
-        case Provider.ProviderChoices.GOOGLEWORKSPACE.value:
-            from prowler.providers.googleworkspace.googleworkspace_provider import (
-                GoogleworkspaceProvider,
-            )
-
-            prowler_provider = GoogleworkspaceProvider
-        case Provider.ProviderChoices.AZURE.value:
-            from prowler.providers.azure.azure_provider import AzureProvider
-
-            prowler_provider = AzureProvider
-        case Provider.ProviderChoices.KUBERNETES.value:
-            from prowler.providers.kubernetes.kubernetes_provider import (
-                KubernetesProvider,
-            )
-
-            prowler_provider = KubernetesProvider
-        case Provider.ProviderChoices.M365.value:
-            from prowler.providers.m365.m365_provider import M365Provider
-
-            prowler_provider = M365Provider
-        case Provider.ProviderChoices.GITHUB.value:
-            from prowler.providers.github.github_provider import GithubProvider
-
-            prowler_provider = GithubProvider
-        case Provider.ProviderChoices.MONGODBATLAS.value:
-            from prowler.providers.mongodbatlas.mongodbatlas_provider import (
-                MongodbatlasProvider,
-            )
-
-            prowler_provider = MongodbatlasProvider
-        case Provider.ProviderChoices.IAC.value:
-            from prowler.providers.iac.iac_provider import IacProvider
-
-            prowler_provider = IacProvider
-        case Provider.ProviderChoices.ORACLECLOUD.value:
-            from prowler.providers.oraclecloud.oraclecloud_provider import (
-                OraclecloudProvider,
-            )
-
-            prowler_provider = OraclecloudProvider
-        case Provider.ProviderChoices.ALIBABACLOUD.value:
-            from prowler.providers.alibabacloud.alibabacloud_provider import (
-                AlibabacloudProvider,
-            )
-
-            prowler_provider = AlibabacloudProvider
-        case Provider.ProviderChoices.CLOUDFLARE.value:
-            from prowler.providers.cloudflare.cloudflare_provider import (
-                CloudflareProvider,
-            )
-
-            prowler_provider = CloudflareProvider
-        case Provider.ProviderChoices.OPENSTACK.value:
-            from prowler.providers.openstack.openstack_provider import OpenstackProvider
-
-            prowler_provider = OpenstackProvider
-        case Provider.ProviderChoices.IMAGE.value:
-            from prowler.providers.image.image_provider import ImageProvider
-
-            prowler_provider = ImageProvider
-        case Provider.ProviderChoices.VERCEL.value:
-            from prowler.providers.vercel.vercel_provider import VercelProvider
-
-            prowler_provider = VercelProvider
-        case Provider.ProviderChoices.OKTA.value:
-            from prowler.providers.okta.okta_provider import OktaProvider
-
-            prowler_provider = OktaProvider
-        case _:
-            raise ValueError(f"Provider type {provider.provider} not supported")
-    return prowler_provider
+    try:
+        return SDKProvider.get_class(provider.provider)
+    except ImportError as error:
+        raise ValueError(f"Provider type {provider.provider} not supported") from error
 
 
 def get_prowler_provider_kwargs(
@@ -288,24 +173,7 @@ def get_prowler_provider_kwargs(
 def initialize_prowler_provider(
     provider: Provider,
     mutelist_processor: Processor | None = None,
-) -> (
-    AlibabacloudProvider
-    | AwsProvider
-    | AzureProvider
-    | CloudflareProvider
-    | GcpProvider
-    | GithubProvider
-    | GoogleworkspaceProvider
-    | IacProvider
-    | ImageProvider
-    | KubernetesProvider
-    | M365Provider
-    | MongodbatlasProvider
-    | OktaProvider
-    | OpenstackProvider
-    | OraclecloudProvider
-    | VercelProvider
-):
+) -> SDKProvider:
     """Initialize a Prowler provider instance based on the given provider type.
 
     Args:
@@ -313,8 +181,8 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | GoogleworkspaceProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: An instance of the corresponding provider class
-            initialized with the provider's secrets.
+        SDKProvider: An instance of the corresponding provider class initialized
+            with the provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
     prowler_provider_kwargs = get_prowler_provider_kwargs(provider, mutelist_processor)
