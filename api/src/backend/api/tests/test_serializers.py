@@ -2,7 +2,27 @@ import pytest
 from rest_framework.exceptions import ValidationError
 
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
-from api.v1.serializers import ImageProviderSecret
+from api.v1.serializers import ImageProviderSecret, ProviderEnumSerializerField
+
+
+class TestProviderEnumSerializerField:
+    """The provider field accepts whatever the SDK exposes (built-in or
+    external) and rejects anything else with `invalid_choice`."""
+
+    def test_accepts_sdk_available_provider(self):
+        field = ProviderEnumSerializerField()
+        assert field.run_validation("aws") == "aws"
+
+    def test_accepts_external_provider_absent_from_static_enum(self):
+        field = ProviderEnumSerializerField()
+        # `llm` is exposed by the SDK but is not part of the legacy static enum.
+        assert field.run_validation("llm") == "llm"
+
+    def test_rejects_unknown_provider(self):
+        field = ProviderEnumSerializerField()
+        with pytest.raises(ValidationError) as exc:
+            field.run_validation("does-not-exist")
+        assert exc.value.detail[0].code == "invalid_choice"
 
 
 class TestS3ConfigSerializer:

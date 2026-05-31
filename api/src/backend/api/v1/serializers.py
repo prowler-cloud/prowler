@@ -73,6 +73,7 @@ from api.v1.serializer_utils.lighthouse import (
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
 from prowler.lib.mutelist.mutelist import Mutelist
+from prowler.providers.common.provider import Provider as SDKProvider
 
 # Base
 
@@ -854,7 +855,12 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
 # Providers
 class ProviderEnumSerializerField(serializers.ChoiceField):
     def __init__(self, **kwargs):
-        kwargs["choices"] = Provider.ProviderChoices.choices
+        # The SDK is the source of truth for which providers exist, so the
+        # accepted values track the installed providers (built-in or external)
+        # instead of a static enum.
+        kwargs["choices"] = [
+            (name, name) for name in SDKProvider.get_available_providers()
+        ]
         super().__init__(**kwargs)
 
 

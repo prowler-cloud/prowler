@@ -58,6 +58,7 @@ from api.rls import (
     Tenant,
 )
 from prowler.lib.check.models import Severity
+from prowler.providers.common.provider import Provider as SDKProvider
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -501,13 +502,24 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider not in SDKProvider.get_available_providers():
+            raise ModelValidationError(
+                detail=f"{self.provider} is not a supported provider.",
+                code="invalid",
+                pointer="/data/attributes/provider",
+            )
         if self.provider == self.ProviderChoices.OKTA and self.uid:
             # Mirror the SDK, which lowercases the org domain before connecting.
             # Without this the API would reject Acme.okta.com even though the
             # SDK would accept it, and stored uids could disagree with the
             # authenticated org domain.
             self.uid = self.uid.strip().lower()
-        getattr(self, f"validate_{self.provider}_uid")(self.uid)
+        # Providers the SDK exposes but the API has no specific uid rule for
+        # (e.g. external providers) fall back to the field-level min-length
+        # check only, instead of failing on a missing validator.
+        uid_validator = getattr(self, f"validate_{self.provider}_uid", None)
+        if uid_validator is not None:
+            uid_validator(self.uid)
 
     def save(self, *args, **kwargs):
         self.full_clean()

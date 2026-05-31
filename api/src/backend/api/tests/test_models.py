@@ -6,7 +6,9 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from api.db_router import MainRouter
+from api.exceptions import ModelValidationError
 from api.models import (
+    Provider,
     ProviderComplianceScore,
     Resource,
     ResourceTag,
@@ -525,3 +527,29 @@ class TestTenantComplianceSummaryModel:
 
         assert summary1.id != summary2.id
         assert summary1.requirements_passed != summary2.requirements_passed
+
+
+@pytest.mark.django_db
+class TestProviderDynamicValidation:
+    """Provider validity is driven by the SDK's available providers, not a
+    static enum. Providers the SDK exposes are accepted; for those without a
+    `validate_<provider>_uid` method only the uid min-length floor applies."""
+
+    def test_accepts_provider_without_uid_validator(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+        provider = Provider.objects.create(
+            tenant_id=tenant.id, provider="llm", uid="my-llm-account"
+        )
+        assert provider.provider == "llm"
+
+    def test_rejects_provider_not_available_in_sdk(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+        with pytest.raises(ModelValidationError):
+            Provider.objects.create(
+                tenant_id=tenant.id, provider="does-not-exist", uid="whatever"
+            )
+
+    def test_uid_floor_still_enforced_for_external_provider(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+        with pytest.raises(ValidationError):
+            Provider.objects.create(tenant_id=tenant.id, provider="llm", uid="ab")
