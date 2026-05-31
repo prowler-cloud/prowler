@@ -485,6 +485,11 @@ class Provider(RowLevelSecurityProtectedModel):
     provider = ProviderEnumField(
         choices=ProviderChoices.choices, default=ProviderChoices.AWS
     )
+    # Transitional shadow column for the zero-downtime migration of `provider`
+    # from a native PostgreSQL enum to varchar. Kept in sync with `provider` by
+    # a DB trigger; a later migration drops the enum column and renames this one
+    # to take its place.
+    provider_str = models.CharField(max_length=50, null=True, blank=True)
     uid = models.CharField(
         "Unique identifier for the provider, set by the provider",
         max_length=250,

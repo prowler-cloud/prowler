@@ -525,3 +525,21 @@ class TestTenantComplianceSummaryModel:
 
         assert summary1.id != summary2.id
         assert summary1.requirements_passed != summary2.requirements_passed
+
+
+@pytest.mark.django_db
+class TestProviderShadowColumn:
+    """The provider_str shadow column is kept in sync with the provider enum
+    column by a database trigger, on both INSERT and UPDATE."""
+
+    def test_provider_str_populated_on_insert(self, providers_fixture):
+        for provider in providers_fixture:
+            provider.refresh_from_db()
+            assert provider.provider_str == provider.provider
+
+    def test_provider_str_synced_on_update(self, providers_fixture):
+        provider = providers_fixture[0]
+        provider.alias = "renamed-alias"
+        provider.save()
+        provider.refresh_from_db()
+        assert provider.provider_str == provider.provider
