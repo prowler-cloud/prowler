@@ -89,6 +89,18 @@ def get_prowler_provider_kwargs(
     Returns:
         dict: The provider kwargs for the corresponding provider class.
     """
+    # External providers declare their own uid/secret -> kwargs mapping through
+    # the SDK contract; built-in providers keep the explicit mapping below.
+    if not SDKProvider.is_builtin(provider.provider):
+        mutelist_content = (
+            mutelist_processor.configuration.get("Mutelist", {})
+            if mutelist_processor
+            else None
+        )
+        return return_prowler_provider(provider).get_scan_arguments(
+            provider.uid, provider.secret.secret, mutelist_content
+        )
+
     prowler_provider_kwargs = provider.secret.secret
     if provider.provider == Provider.ProviderChoices.AZURE.value:
         prowler_provider_kwargs = {
@@ -204,6 +216,16 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         prowler_provider_kwargs = provider.secret.secret
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
+
+    # External providers declare their own connection kwargs through the SDK
+    # contract; built-in providers keep the explicit mapping below.
+    if not SDKProvider.is_builtin(provider.provider):
+        return prowler_provider.test_connection(
+            **prowler_provider.get_connection_arguments(
+                provider.uid, prowler_provider_kwargs
+            ),
+            raise_on_exception=False,
+        )
 
     # For IaC provider, construct the kwargs properly for test_connection
     if provider.provider == Provider.ProviderChoices.IAC.value:
