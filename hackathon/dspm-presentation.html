@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DSPM with Lighthouse AI · Prowler Hackathon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #08090d;
+        --bg-elevated: #0f1119;
+        --surface: #161a26;
+        --surface-2: #1c2030;
+        --border: #232838;
+        --border-strong: #313748;
+        --text: #f3f5fb;
+        --text-dim: #a3acbf;
+        --text-muted: #6b7488;
+        --accent: #2ee59b;
+        --accent-2: #62dff0;
+        --accent-soft: rgba(46, 229, 155, 0.12);
+        --gradient: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
+        --gradient-soft: linear-gradient(
+          96deg,
+          rgba(46, 229, 155, 0.15) 3.55%,
+          rgba(98, 223, 240, 0.15) 98.85%
+        );
+        --red: #ef4444;
+        --orange: #f59e0b;
+        --purple: #a855f7;
+        --slide-pad: clamp(2rem, 5vw, 5rem);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, sans-serif;
+        font-feature-settings: "ss01", "cv02", "cv11";
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      body {
+        position: relative;
+        background-image:
+          radial-gradient(
+            ellipse 60% 50% at 50% 0%,
+            rgba(46, 229, 155, 0.06),
+            transparent 70%
+          ),
+          radial-gradient(
+            ellipse 80% 40% at 50% 100%,
+            rgba(98, 223, 240, 0.04),
+            transparent 70%
+          );
+      }
+
+      .deck {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        padding: var(--slide-pad);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        opacity: 0;
+        transform: translateX(40px);
+        transition:
+          opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+        overflow-y: auto;
+      }
+
+      .slide.active {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+      }
+
+      .slide.prev {
+        transform: translateX(-40px);
+      }
+
+      .slide-inner {
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin-bottom: 2rem;
+      }
+      .eyebrow::before {
+        content: "";
+        width: 18px;
+        height: 1px;
+        background: var(--gradient);
+      }
+
+      h2.headline {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 600;
+        line-height: 1.06;
+        letter-spacing: -0.028em;
+        margin-bottom: 1rem;
+      }
+
+      .lede {
+        font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+        line-height: 1.55;
+        color: var(--text-dim);
+        max-width: 64ch;
+      }
+
+      .gradient-text {
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .serif {
+        font-family: "Instrument Serif", serif;
+        font-style: italic;
+        font-weight: 400;
+        letter-spacing: -0.01em;
+      }
+
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* progress + counter */
+      .progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 2px;
+        background: var(--gradient);
+        z-index: 100;
+        transition: width 0.4s ease-out;
+      }
+      .counter {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 2rem;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        z-index: 100;
+        letter-spacing: 0.04em;
+      }
+      .hint {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 2rem;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        z-index: 100;
+        letter-spacing: 0.04em;
+      }
+      .hint kbd {
+        display: inline-block;
+        padding: 1px 6px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        margin: 0 2px;
+      }
+
+      /* ====== slide 1: cover ====== */
+      .cover {
+        text-align: left;
+      }
+      .cover .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        font-size: 0.85rem;
+        color: var(--text-dim);
+        margin-bottom: 3.5rem;
+      }
+      .brand-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--gradient);
+        box-shadow: 0 0 24px rgba(46, 229, 155, 0.6);
+      }
+      .cover h1 {
+        font-size: clamp(3rem, 9vw, 7.5rem);
+        font-weight: 700;
+        line-height: 0.95;
+        letter-spacing: -0.045em;
+        margin-bottom: 2rem;
+      }
+      .cover .sub {
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+        color: var(--text-dim);
+        max-width: 50ch;
+        line-height: 1.45;
+      }
+      .cover .meta {
+        margin-top: 4rem;
+        display: flex;
+        gap: 3rem;
+        flex-wrap: wrap;
+      }
+      .cover .meta-block {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+      .cover .meta-label {
+        display: block;
+        font-size: 0.65rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 0.4rem;
+      }
+      .cover .meta-value {
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      /* ====== generic content blocks ====== */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2.5rem;
+        margin-top: 2.5rem;
+      }
+      @media (max-width: 900px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .bullet-list {
+        margin-top: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      .bullet {
+        display: flex;
+        gap: 0.85rem;
+        align-items: flex-start;
+        font-size: 1.02rem;
+        line-height: 1.5;
+        color: var(--text-dim);
+      }
+      .bullet::before {
+        content: "";
+        flex-shrink: 0;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-top: 0.55rem;
+        background: var(--gradient);
+      }
+      .bullet strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .col-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        color: var(--accent);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+      }
+      .col-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        line-height: 1.25;
+        margin-bottom: 0.5rem;
+      }
+
+      /* ====== terminal mockup ====== */
+      .terminal {
+        background: #0b0d14;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        box-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.04) inset,
+          0 40px 80px -20px rgba(0, 0, 0, 0.5);
+      }
+      .terminal-head {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.015);
+      }
+      .term-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: #3a3f50;
+      }
+      .terminal-title {
+        margin-left: 0.8rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        letter-spacing: 0.03em;
+      }
+      .terminal-body {
+        padding: 1.25rem 1.5rem;
+        color: #cdd3e1;
+      }
+      .term-cmd {
+        color: #6b7488;
+      }
+      .term-cmd::before {
+        content: "$ ";
+        color: var(--accent);
+      }
+      .term-ok {
+        color: var(--accent);
+      }
+      .term-warn {
+        color: var(--orange);
+      }
+      .term-crit {
+        color: var(--red);
+      }
+      .term-dim {
+        color: var(--text-muted);
+      }
+      .term-bold {
+        color: #fff;
+        font-weight: 500;
+      }
+
+      /* ====== flow diagram ====== */
+      .flow {
+        margin-top: 2.5rem;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.75rem;
+        align-items: stretch;
+      }
+      .flow-node {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem 1rem;
+        text-align: center;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        justify-content: center;
+        min-height: 130px;
+      }
+      .flow-node .flow-step {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.65rem;
+        color: var(--accent);
+        letter-spacing: 0.18em;
+      }
+      .flow-node .flow-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.25;
+      }
+      .flow-node .flow-desc {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+      }
+      .flow-node.highlight {
+        background: var(--surface-2);
+        border-color: var(--accent);
+        box-shadow:
+          0 0 0 1px var(--accent-soft),
+          0 20px 40px -20px rgba(46, 229, 155, 0.25);
+      }
+      .flow-arrow {
+        position: absolute;
+        right: -0.55rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--border-strong);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 1rem;
+        z-index: 1;
+      }
+      .flow-node:last-child .flow-arrow {
+        display: none;
+      }
+      @media (max-width: 1000px) {
+        .flow {
+          grid-template-columns: 1fr;
+        }
+        .flow-arrow {
+          right: 50%;
+          top: auto;
+          bottom: -0.7rem;
+          transform: translateX(50%) rotate(90deg);
+        }
+      }
+
+      /* ====== UI mockup ====== */
+      .ui-mock {
+        margin-top: 2rem;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        font-size: 0.85rem;
+      }
+      .ui-head {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .ui-head-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .sparkle {
+        width: 14px;
+        height: 14px;
+        background: var(--orange);
+        clip-path: polygon(
+          50% 0%,
+          61% 35%,
+          98% 35%,
+          68% 57%,
+          79% 91%,
+          50% 70%,
+          21% 91%,
+          32% 57%,
+          2% 35%,
+          39% 35%
+        );
+      }
+      .rescan-btn {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.85rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-dim);
+        font-family: inherit;
+      }
+      .ui-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      .ui-table th {
+        text-align: left;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.015);
+        border-bottom: 1px solid var(--border);
+      }
+      .ui-table td {
+        padding: 0.75rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.82rem;
+        color: var(--text-dim);
+      }
+      .ui-table tr:last-child td {
+        border-bottom: none;
+      }
+      .ui-table .ds {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--text);
+        font-size: 0.78rem;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 500;
+        border: 1px solid;
+      }
+      .pill-pii {
+        background: rgba(239, 68, 68, 0.1);
+        color: #fca5a5;
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+      .pill-fin {
+        background: rgba(245, 158, 11, 0.1);
+        color: #fcd34d;
+        border-color: rgba(245, 158, 11, 0.3);
+      }
+      .pill-health {
+        background: rgba(168, 85, 247, 0.1);
+        color: #d8b4fe;
+        border-color: rgba(168, 85, 247, 0.3);
+      }
+      .pill-public {
+        background: rgba(46, 229, 155, 0.1);
+        color: #6ee7b7;
+        border-color: rgba(46, 229, 155, 0.3);
+      }
+      .risk {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.78rem;
+      }
+      .risk-chip {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+      }
+      .risk-10 .risk-chip,
+      .risk-9 .risk-chip,
+      .risk-8 .risk-chip {
+        background: var(--red);
+      }
+      .risk-7 .risk-chip,
+      .risk-6 .risk-chip,
+      .risk-5 .risk-chip {
+        background: var(--orange);
+      }
+      .risk-1 .risk-chip {
+        background: var(--accent);
+      }
+
+      /* ====== badges row ====== */
+      .badges {
+        margin-top: 2rem;
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.8rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 0.78rem;
+        color: var(--text-dim);
+        font-family: "JetBrains Mono", monospace;
+      }
+      .badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      /* ====== final slide ====== */
+      .final {
+        text-align: center;
+        align-items: center;
+      }
+      .final .gradient-bar {
+        width: 80px;
+        height: 4px;
+        background: var(--gradient);
+        margin: 0 auto 2.5rem;
+        border-radius: 2px;
+      }
+      .final h2 {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+      }
+      .final p {
+        color: var(--text-dim);
+        max-width: 50ch;
+        margin: 0 auto;
+        font-size: 1.15rem;
+        line-height: 1.55;
+      }
+
+      /* ====== misc ====== */
+      .callout {
+        margin-top: 2rem;
+        padding: 1.25rem 1.5rem;
+        background: var(--gradient-soft);
+        border: 1px solid rgba(46, 229, 155, 0.2);
+        border-radius: 12px;
+        font-size: 1rem;
+        line-height: 1.55;
+        color: var(--text);
+      }
+      .callout strong {
+        color: #fff;
+      }
+
+      .hint.hide {
+        opacity: 0;
+        transition: opacity 1s;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="progress" id="progress"></div>
+    <div class="counter" id="counter">01 / 07</div>
+    <div class="hint" id="hint">
+      <kbd>←</kbd><kbd>→</kbd> navigate &nbsp;·&nbsp; <kbd>space</kbd> advance
+    </div>
+
+    <div class="deck" id="deck">
+      <!-- ============== SLIDE 1: COVER ============== -->
+      <section class="slide cover active">
+        <div class="slide-inner">
+          <div class="brand">
+            <span class="brand-dot"></span>
+            <span>Prowler · Off-site Hackathon · Team 3</span>
+          </div>
+          <h1>
+            DSPM <span class="serif">with</span>
+            <span class="gradient-text">Lighthouse&nbsp;AI</span>
+          </h1>
+          <p class="sub">
+            Automatic discovery and classification of sensitive data on
+            the infrastructure Prowler already audits.
+          </p>
+          <div class="meta">
+            <div class="meta-block">
+              <span class="meta-label">Time budget</span>
+              <span class="meta-value">60 minutes</span>
+            </div>
+            <div class="meta-block">
+              <span class="meta-label">Honesty</span>
+              <span class="meta-value">100% mocked, 0% cheating</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== SLIDE 2: THE HONEST SETUP ============== -->
+      <section class="slide">
+        <div class="slide-inner">
+          <div class="eyebrow">The setup</div>
+          <h2 class="headline">
+            Discover, sample, classify.<br />
+            <span class="serif" style="color: var(--text-dim)"
+              >In one hour. With a catch.</span
+            >
+          </h2>
+          <div class="grid-2">
+            <div>
+              <div class="col-label">The brief</div>
+              <p class="lede">
+                List S3, RDS and DynamoDB datastores. Sample 10 items
+                each. Send to Lighthouse AI. Get back type, confidence
+                and risk score.
+              </p>
+            </div>
+            <div>
+              <div class="col-label">The catch</div>
+              <p class="lede">
+                Reading S3 / RDS / DynamoDB needs a permission most
+                customers won't hand over. And one hour isn't enough to
+                touch real AWS anyway.
+              </p>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>DSPM has to be opt-in.</strong> That's the only
+            architectural decision we keep honest. The data is mocked;
+            the way we'd ship it isn't.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== SLIDE 3: REAL FLOW ============== -->
+      <section class="slide">
+        <div class="slide-inner">
+          <div class="eyebrow">How it would really ship</div>
+          <h2 class="headline">An extra task after the scan.</h2>
+          <p class="lede" style="margin-top: 0.5rem">
+            DSPM activates
+            <strong style="color: var(--text)">opt-in</strong> when the
+            customer grants extended read on a provider. The normal scan
+            is untouched.
+          </p>
+          <div class="flow">
+            <div class="flow-node">
+              <div class="flow-step">01</div>
+              <div class="flow-title">Provider creds</div>
+              <div class="flow-desc">+ S3/RDS/Dynamo read (opt-in)</div>
+              <div class="flow-arrow">→</div>
+            </div>
+            <div class="flow-node">
+              <div class="flow-step">02</div>
+              <div class="flow-title">Prowler scan</div>
+              <div class="flow-desc">The normal check scan</div>
+              <div class="flow-arrow">→</div>
+            </div>
+            <div class="flow-node highlight">
+              <div class="flow-step">03</div>
+              <div class="flow-title">DSPM task</div>
+              <div class="flow-desc">Discover + sample per datastore</div>
+              <div class="flow-arrow">→</div>
+            </div>
+            <div class="flow-node highlight">
+              <div class="flow-step">04</div>
+              <div class="flow-title">Lighthouse AI</div>
+              <div class="flow-desc">Classifies type, confidence, risk</div>
+              <div class="flow-arrow">→</div>
+            </div>
+            <div class="flow-node">
+              <div class="flow-step">05</div>
+              <div class="flow-title">Resource.dspm</div>
+              <div class="flow-desc">Persisted as JSONB, visible in UI</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== SLIDE 4: THE SCRIPT ============== -->
+      <section class="slide">
+        <div class="slide-inner">
+          <div class="eyebrow">Deliverable 01</div>
+          <h2 class="headline">
+            Same CLI as <span class="mono gradient-text">prowler</span>.
+          </h2>
+          <div class="terminal" style="margin-top: 2rem">
+            <div class="terminal-head">
+              <span class="term-dot"></span>
+              <span class="term-dot"></span>
+              <span class="term-dot"></span>
+              <span class="terminal-title">~/prowler · python scripts/dspm_scan.py</span>
+            </div>
+            <div class="terminal-body">
+<span class="term-cmd">python scripts/dspm_scan.py --provider aws --service s3,rds,dynamodb --verbose</span>
+
+<span class="term-bold">Prowler DSPM Scan</span> <span class="term-dim">v0.1.0 · powered by Lighthouse AI</span>
+
+<span class="term-ok">[+]</span> Discovering datastores in AWS account <span class="term-bold">123456789012</span>
+    <span class="term-ok">✓</span> S3: <span class="term-bold">3</span>  ·  RDS: <span class="term-bold">3</span>  ·  DynamoDB: <span class="term-bold">3</span>
+
+<span class="term-ok">[+]</span> Classifying samples with Lighthouse AI <span class="term-dim">. . .</span>
+    <span class="term-dim">[1/9]</span> s3://acme-customers-prod      <span class="term-crit">PII</span>         conf=0.96  risk=<span class="term-crit">10/10</span>
+    <span class="term-dim">[2/9]</span> s3://acme-payments-archive    <span class="term-warn">Financial</span>   conf=0.91  risk=<span class="term-warn">9/10</span>
+    <span class="term-dim">[3/9]</span> rds://patients-db-primary     <span class="term-warn">Health</span>      conf=0.89  risk=<span class="term-warn">8/10</span>
+    <span class="term-dim">[. . .]</span>
+
+<span class="term-ok">✓</span> Wrote <span class="term-bold">./dspm-output/dspm-catalog.json</span> + <span class="term-bold">dspm-report.html</span>
+<span class="term-dim">Summary: 3 PII · 2 Financial · 1 Health · 3 Public · top risk </span><span class="term-crit">10/10</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== SLIDE 5: THE UI ============== -->
+      <section class="slide">
+        <div class="slide-inner">
+          <div class="eyebrow">Deliverable 02</div>
+          <h2 class="headline">Where the customer already looks.</h2>
+          <p class="lede" style="margin-top: 0.5rem">
+            New action in each scan's row menu. Opens a Sheet with scan
+            progress, classified datastores, and one-click handoff to
+            Lighthouse.
+          </p>
+
+          <div class="ui-mock">
+            <div class="ui-head">
+              <div class="ui-head-title">
+                <span class="sparkle"></span>
+                DSPM Analysis
+                <span style="color: var(--text-muted); font-weight: 400">
+                  · powered by Lighthouse AI
+                </span>
+              </div>
+              <button class="rescan-btn">Re-scan</button>
+            </div>
+            <table class="ui-table">
+              <thead>
+                <tr>
+                  <th>Datastore</th>
+                  <th>Classification</th>
+                  <th>Confidence</th>
+                  <th>Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="ds">s3://acme-customers-prod</td>
+                  <td><span class="pill pill-pii">PII</span></td>
+                  <td>96%</td>
+                  <td class="risk risk-10">
+                    <span class="risk-chip"></span>10/10
+                  </td>
+                </tr>
+                <tr>
+                  <td class="ds">s3://acme-payments-archive</td>
+                  <td><span class="pill pill-fin">Financial</span></td>
+                  <td>91%</td>
+                  <td class="risk risk-9">
+                    <span class="risk-chip"></span>9/10
+                  </td>
+                </tr>
+                <tr>
+                  <td class="ds">rds://patients-db-primary</td>
+                  <td><span class="pill pill-health">Health</span></td>
+                  <td>89%</td>
+                  <td class="risk risk-8">
+                    <span class="risk-chip"></span>8/10
+                  </td>
+                </tr>
+                <tr>
+                  <td class="ds">s3://acme-marketing-assets</td>
+                  <td><span class="pill pill-public">Public</span></td>
+                  <td>99%</td>
+                  <td class="risk risk-1">
+                    <span class="risk-chip"></span>1/10
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== SLIDE 6: WHERE WE FIT ============== -->
+      <section class="slide">
+        <div class="slide-inner">
+          <div class="eyebrow">Where we fit</div>
+          <h2 class="headline">
+            What BigID and Sentra do.
+            <span class="serif" style="color: var(--text-dim)"
+              >What Prowler will do.</span
+            >
+          </h2>
+          <div class="grid-2">
+            <div>
+              <div class="col-label">BigID &middot; Sentra</div>
+              <p
+                class="lede"
+                style="font-size: 1rem; line-height: 1.6; margin-top: 0.5rem"
+              >
+                <strong style="color: var(--text)">BigID</strong> is an
+                enterprise data platform: ML-driven discovery and
+                classification across cloud and on-prem, continuous
+                access monitoring, automated remediation, and now AI SPM
+                for LLM pipelines.
+                <strong style="color: var(--text)">Sentra</strong> is the
+                cloud-native challenger: agentless scanning via cloud
+                APIs, 95%+ classification accuracy, 150+ built-in
+                labels (PII, PCI, PHI, secrets), full data-flow
+                tracking. Both excellent at the data layer. Neither sees
+                whether the bucket holding that data is publicly
+                accessible, unencrypted, or fronted by a permissive IAM
+                policy. That part lives in a different platform.
+                <span style="color: var(--text)">Usually Prowler.</span>
+              </p>
+            </div>
+            <div>
+              <div class="col-label">Prowler + Lighthouse</div>
+              <p
+                class="lede"
+                style="font-size: 1rem; line-height: 1.6; margin-top: 0.5rem"
+              >
+                When DSPM ships on Prowler, the customer enables it by
+                granting read access on the AWS provider they already
+                have. After the normal scan, a follow-up task discovers
+                S3 / RDS / DynamoDB resources, samples a handful of
+                objects per datastore, and asks Lighthouse to classify
+                type, confidence and risk. The classification lives next
+                to the infra finding, so one alert reads
+                <strong style="color: var(--text)"
+                  >"PII bucket, public ACL, unencrypted at rest"</strong
+                >. New classifiers are a prompt change. No new vendor,
+                no agents, no separate DSPM contract.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== SLIDE 7: FINAL ============== -->
+      <section class="slide final">
+        <div class="slide-inner">
+          <div class="gradient-bar"></div>
+          <h2>
+            What you see is a demo.<br />
+            <span class="gradient-text">What we're telling you isn't.</span>
+          </h2>
+          <p>
+            Prowler already audits. Lighthouse already reasons. An
+            opt-in flag, a follow-up task and one JSONField between them
+            and you have DSPM.
+          </p>
+          <div
+            style="
+              margin-top: 4rem;
+              display: flex;
+              gap: 2rem;
+              justify-content: center;
+              flex-wrap: wrap;
+            "
+          >
+            <span class="badge"
+              ><span class="badge-dot"></span>scripts/dspm_scan.py</span
+            >
+            <span class="badge"
+              ><span class="badge-dot"></span>ui/components/dspm/*</span
+            >
+            <span class="badge"
+              ><span class="badge-dot"></span>hackathon/DSPM_VS_BIGID.md</span
+            >
+          </div>
+          <p style="margin-top: 3rem; font-size: 0.85rem; color: var(--text-muted)">
+            Thanks.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const progress = document.getElementById("progress");
+      const counter = document.getElementById("counter");
+      const hint = document.getElementById("hint");
+      let current = 0;
+      let interacted = false;
+
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function render() {
+        slides.forEach((s, i) => {
+          s.classList.remove("active", "prev");
+          if (i === current) s.classList.add("active");
+          else if (i < current) s.classList.add("prev");
+        });
+        const pct = ((current + 1) / slides.length) * 100;
+        progress.style.width = pct + "%";
+        counter.textContent = `${pad(current + 1)} / ${pad(slides.length)}`;
+      }
+
+      function go(delta) {
+        const next = Math.min(
+          Math.max(current + delta, 0),
+          slides.length - 1,
+        );
+        if (next !== current) {
+          current = next;
+          render();
+        }
+        if (!interacted) {
+          hint.classList.add("hide");
+          interacted = true;
+        }
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (
+          ["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)
+        ) {
+          e.preventDefault();
+          go(1);
+        }
+        if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) {
+          e.preventDefault();
+          go(-1);
+        }
+        if (e.key === "Home") {
+          current = 0;
+          render();
+        }
+        if (e.key === "End") {
+          current = slides.length - 1;
+          render();
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (
+          e.target.tagName === "A" ||
+          e.target.tagName === "BUTTON" ||
+          e.target.closest("a") ||
+          e.target.closest("button")
+        )
+          return;
+        go(e.shiftKey ? -1 : 1);
+      });
+
+      let touchStartX = 0;
+      window.addEventListener(
+        "touchstart",
+        (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+        },
+        { passive: true },
+      );
+      window.addEventListener(
+        "touchend",
+        (e) => {
+          const dx = e.changedTouches[0].screenX - touchStartX;
+          if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+        },
+        { passive: true },
+      );
+
+      render();
+    </script>
+  </body>
+</html>

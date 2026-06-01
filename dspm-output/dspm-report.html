@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Prowler DSPM Catalog</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; margin: 0; background: #f6f7f9; color: #1f2329; }
+  header { background: linear-gradient(135deg, #0b2545 0%, #134074 100%); color: #fff; padding: 28px 40px; }
+  header h1 { margin: 0; font-size: 24px; letter-spacing: 0.3px; }
+  header p { margin: 6px 0 0; opacity: 0.85; font-size: 13px; }
+  main { padding: 24px 40px 60px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,0.08); border-radius: 6px; overflow: hidden; }
+  th, td { padding: 12px 14px; text-align: left; font-size: 13px; vertical-align: top; border-bottom: 1px solid #eceef2; }
+  th { background: #eef1f6; font-weight: 600; color: #2b3340; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  td.risk { color: #fff; font-weight: 700; text-align: center; width: 48px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #e6ecf5; color: #134074; font-weight: 600; font-size: 11px; }
+  footer { padding: 16px 40px; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; background: #fff; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Prowler DSPM Catalog</h1>
+  <p>Provider: aws &middot; Region: us-east-1 &middot; Services: s3, rds, dynamodb &middot; Datastores: 9</p>
+</header>
+<main>
+  <table>
+    <thead><tr>
+      <th>Datastore</th><th>Service</th><th>Classification</th><th>Confidence</th><th>Risk</th><th>Evidence</th><th>Recommendation</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class='mono'>s3://acme-customers-prod</td><td>s3</td><td><span class='pill'>PII</span></td><td>0.96</td><td class='risk' style='background:#d9342b'>10</td><td>Found SSN-format strings in 7/10 sampled objects; email + full name combinations in 9/10</td><td>Enable SSE-KMS encryption, attach restrictive bucket policy, enable Block Public Access</td></tr><tr><td class='mono'>s3://acme-payments-archive</td><td>s3</td><td><span class='pill'>Financial</span></td><td>0.91</td><td class='risk' style='background:#d9342b'>9</td><td>Detected credit card PANs (Luhn-valid) and IBAN strings in 8/10 sampled archives</td><td>Enable SSE-KMS, turn on versioning + Object Lock, restrict to PCI-scoped IAM roles</td></tr><tr><td class='mono'>rds://patients-db-primary</td><td>rds</td><td><span class='pill'>Health</span></td><td>0.89</td><td class='risk' style='background:#d9342b'>8</td><td>Rows contain ICD-10 codes, patient identifiers, and diagnosis free-text in 10/10 sampled rows</td><td>Disable public accessibility, place behind a private subnet, restrict to HIPAA-scoped roles</td></tr><tr><td class='mono'>dynamodb://billing-events</td><td>dynamodb</td><td><span class='pill'>Financial</span></td><td>0.88</td><td class='risk' style='background:#d9342b'>8</td><td>Items contain charge_amount, last4_cc, and merchant_id in 9/10 sampled items</td><td>Enable encryption at rest with customer-managed KMS, restrict global table replicas to PCI regions</td></tr><tr><td class='mono'>rds://payroll-prod</td><td>rds</td><td><span class='pill'>Financial</span></td><td>0.93</td><td class='risk' style='background:#e88a1a'>7</td><td>Columns include salary, tax_id, and bank_account in 10/10 sampled rows</td><td>Enable automated backups with 30-day retention, rotate KMS key, enforce least-privilege role</td></tr><tr><td class='mono'>dynamodb://user-sessions</td><td>dynamodb</td><td><span class='pill'>PII</span></td><td>0.84</td><td class='risk' style='background:#e88a1a'>7</td><td>Items contain user_email and session_token fields in 10/10 sampled items</td><td>Set TTL to 24h, enable PITR, rotate session signing key quarterly</td></tr><tr><td class='mono'>rds://analytics-warehouse</td><td>rds</td><td><span class='pill'>Unknown</span></td><td>0.42</td><td class='risk' style='background:#e0c020'>3</td><td>Sampled rows contain aggregate counts and anonymized identifiers; insufficient signal for confident classification</td><td>Re-run with expanded sample size; verify anonymization invariants documented</td></tr><tr><td class='mono'>s3://acme-marketing-assets</td><td>s3</td><td><span class='pill'>Public</span></td><td>0.99</td><td class='risk' style='background:#2e9d4a'>1</td><td>All 10 samples are PNG/JPG marketing collateral with no detected sensitive content</td><td>No action required; current public-read ACL is intentional</td></tr><tr><td class='mono'>dynamodb://feature-flags</td><td>dynamodb</td><td><span class='pill'>Public</span></td><td>0.97</td><td class='risk' style='background:#2e9d4a'>1</td><td>Items contain feature names and boolean flags only; no sensitive content detected</td><td>No action required</td></tr>
+    </tbody>
+  </table>
+</main>
+<footer>Generated by Prowler DSPM &middot; classification powered by Lighthouse AI &middot; 2026-05-28T18:11:56+00:00</footer>
+</body>
+</html>

@@ -1,0 +1,114 @@
+{
+  "metadata": {
+    "generated_at": "2026-05-28T18:11:56+00:00",
+    "provider": "aws",
+    "region": "us-east-1",
+    "services": [
+      "s3",
+      "rds",
+      "dynamodb"
+    ],
+    "tool": "Prowler DSPM Scan v0.1.0"
+  },
+  "datastores": [
+    {
+      "datastore_id": "s3://acme-customers-prod",
+      "service": "s3",
+      "classification": "PII",
+      "confidence": 0.96,
+      "risk_score": 10,
+      "evidence": "Found SSN-format strings in 7/10 sampled objects; email + full name combinations in 9/10",
+      "recommendation": "Enable SSE-KMS encryption, attach restrictive bucket policy, enable Block Public Access",
+      "encrypted": false,
+      "public": true
+    },
+    {
+      "datastore_id": "s3://acme-payments-archive",
+      "service": "s3",
+      "classification": "Financial",
+      "confidence": 0.91,
+      "risk_score": 9,
+      "evidence": "Detected credit card PANs (Luhn-valid) and IBAN strings in 8/10 sampled archives",
+      "recommendation": "Enable SSE-KMS, turn on versioning + Object Lock, restrict to PCI-scoped IAM roles",
+      "encrypted": false,
+      "public": false
+    },
+    {
+      "datastore_id": "rds://patients-db-primary",
+      "service": "rds",
+      "classification": "Health",
+      "confidence": 0.89,
+      "risk_score": 8,
+      "evidence": "Rows contain ICD-10 codes, patient identifiers, and diagnosis free-text in 10/10 sampled rows",
+      "recommendation": "Disable public accessibility, place behind a private subnet, restrict to HIPAA-scoped roles",
+      "encrypted": true,
+      "public": true
+    },
+    {
+      "datastore_id": "dynamodb://billing-events",
+      "service": "dynamodb",
+      "classification": "Financial",
+      "confidence": 0.88,
+      "risk_score": 8,
+      "evidence": "Items contain charge_amount, last4_cc, and merchant_id in 9/10 sampled items",
+      "recommendation": "Enable encryption at rest with customer-managed KMS, restrict global table replicas to PCI regions",
+      "encrypted": false,
+      "public": false
+    },
+    {
+      "datastore_id": "rds://payroll-prod",
+      "service": "rds",
+      "classification": "Financial",
+      "confidence": 0.93,
+      "risk_score": 7,
+      "evidence": "Columns include salary, tax_id, and bank_account in 10/10 sampled rows",
+      "recommendation": "Enable automated backups with 30-day retention, rotate KMS key, enforce least-privilege role",
+      "encrypted": true,
+      "public": false
+    },
+    {
+      "datastore_id": "dynamodb://user-sessions",
+      "service": "dynamodb",
+      "classification": "PII",
+      "confidence": 0.84,
+      "risk_score": 7,
+      "evidence": "Items contain user_email and session_token fields in 10/10 sampled items",
+      "recommendation": "Set TTL to 24h, enable PITR, rotate session signing key quarterly",
+      "encrypted": true,
+      "public": false
+    },
+    {
+      "datastore_id": "rds://analytics-warehouse",
+      "service": "rds",
+      "classification": "Unknown",
+      "confidence": 0.42,
+      "risk_score": 3,
+      "evidence": "Sampled rows contain aggregate counts and anonymized identifiers; insufficient signal for confident classification",
+      "recommendation": "Re-run with expanded sample size; verify anonymization invariants documented",
+      "encrypted": true,
+      "public": false
+    },
+    {
+      "datastore_id": "s3://acme-marketing-assets",
+      "service": "s3",
+      "classification": "Public",
+      "confidence": 0.99,
+      "risk_score": 1,
+      "evidence": "All 10 samples are PNG/JPG marketing collateral with no detected sensitive content",
+      "recommendation": "No action required; current public-read ACL is intentional",
+      "encrypted": true,
+      "public": true
+    },
+    {
+      "datastore_id": "dynamodb://feature-flags",
+      "service": "dynamodb",
+      "classification": "Public",
+      "confidence": 0.97,
+      "risk_score": 1,
+      "evidence": "Items contain feature names and boolean flags only; no sensitive content detected",
+      "recommendation": "No action required",
+      "encrypted": true,
+      "public": false
+    }
+  ]
+}

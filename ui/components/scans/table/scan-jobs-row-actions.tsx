@@ -5,6 +5,7 @@ import {
   Eye,
   Pencil,
   ShieldCheck,
+  Sparkles,
   TriangleAlert,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,6 +13,7 @@ import { useState } from "react";
 
 import { getTask } from "@/actions/task";
 import { getScanErrorDetails } from "@/actions/task/task.adapter";
+import { DspmSheet } from "@/components/dspm/dspm-sheet";
 import { EditAliasModal } from "@/components/scans/edit-alias-modal";
 import {
   ScanErrorDetailsModal,
@@ -35,6 +37,7 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+  const [dspmOpen, setDspmOpen] = useState(false);
   const [errorState, setErrorState] = useState<ScanErrorDetailsState>({
     kind: "idle",
   });
@@ -132,8 +135,15 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
           label="Edit"
           onSelect={() => setEditOpen(true)}
         />
+        <ActionDropdownItem
+          icon={<Sparkles />}
+          label="DSPM analysis with Lighthouse AI"
+          onSelect={() => setDspmOpen(true)}
+        />
         {/* TODO: Restore Cancel Scan once the backend exposes a public scan cancellation endpoint. */}
       </ActionDropdown>
+
+      <DspmSheet open={dspmOpen} onOpenChange={setDspmOpen} />
 
       <EditAliasModal
         open={editOpen}
