@@ -663,22 +663,25 @@ class TestProviderInitialization:
 
     @patch("prowler.providers.common.provider.logger")
     @patch("prowler.providers.common.provider.load_and_validate_config_file")
-    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
     @patch("prowler.providers.common.provider.import_module")
     @patch("prowler.providers.common.provider.Provider.is_builtin")
     def test_init_global_provider_warns_when_plugin_shadowed_by_builtin(
-        self, mock_is_builtin, mock_import, mock_load_ep, mock_config, mock_logger
+        self, mock_is_builtin, mock_import, mock_entry_points, mock_config, mock_logger
     ):
         """Regression guard: when a plug-in registers a provider name that
         collides with a built-in, the BUILT-IN wins and a warning is emitted
-        naming the shadowed plug-in. Matches the precedence enforced by
-        `_resolve_check_module` and `CheckMetadata.get_bulk` for checks. See
-        PR #10700 review (HugoPBrito).
+        naming the shadowed plug-in. Shadow detection matches by entry-point
+        name only — the plug-in is never `ep.load()`-ed just to warn, so its
+        module code cannot run during a built-in run. See PR #10700 review
+        (HugoPBrito, Alan-TheGentleman).
         """
         # Simulate a built-in `aws` that exists, AND a plug-in registered
         # under the same `aws` name via entry points.
         mock_is_builtin.return_value = True
-        mock_load_ep.return_value = FakeExternalProvider  # plug-in shadow
+        shadow_ep = MagicMock()
+        shadow_ep.name = "aws"  # plug-in shadowing the built-in name
+        mock_entry_points.return_value = [shadow_ep]
         mock_import.return_value = MagicMock(
             AwsProvider=MagicMock(side_effect=lambda **_kw: None)
         )
@@ -723,6 +726,8 @@ class TestProviderInitialization:
         ]
         assert warning_msgs, "expected a warning about the shadowed plug-in 'aws'"
         assert "IGNORED" in warning_msgs[0]
+        # Shadow detected by name only — plug-in code never executed to warn
+        shadow_ep.load.assert_not_called()
 
 
 # ===========================================================================
@@ -1353,6 +1358,63 @@ class TestCompliance:
             bulk = Compliance.get_bulk("fakeexternal")
 
             assert "dup_framework" in bulk
+
+    @pytest.mark.parametrize(
+        "provider, framework_segments",
+        [
+            # `cloud` is a substring of THREE built-in modules at once.
+            ("cloud", ["alibabacloud", "cloudflare", "oraclecloud"]),
+            ("git", ["github"]),
+            ("work", ["googleworkspace"]),
+            ("open", ["openstack"]),
+        ],
+    )
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_compliance_get_bulk_matches_provider_segment_exactly(
+        self, mock_list_modules, mock_ep, provider, framework_segments
+    ):
+        """Regression: a provider whose name is a substring of one or more
+        framework modules must NOT load them. The old `provider in name`
+        check captured overlapping built-ins (e.g. `cloud` matched
+        alibabacloud, cloudflare and oraclecloud). See PR #10700 review
+        (Alan-TheGentleman).
+        """
+        import json
+        import os
+        import tempfile
+
+        from prowler.lib.check.compliance_models import Compliance
+
+        mock_ep.return_value = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # The substring path the old code would have read from.
+            os.mkdir(os.path.join(tmpdir, provider))
+            json_data = {
+                "Framework": "Custom",
+                "Name": f"Should not load for '{provider}'",
+                "Version": "1.0",
+                "Provider": provider,
+                "Description": "Test",
+                "Requirements": [],
+            }
+            with open(os.path.join(tmpdir, provider, "wrong.json"), "w") as f:
+                json.dump(json_data, f)
+
+            modules = []
+            for segment in framework_segments:
+                module = MagicMock()
+                module.name = f"prowler.compliance.{segment}"
+                module.module_finder.path = tmpdir
+                modules.append(module)
+            mock_list_modules.return_value = modules
+
+            bulk = Compliance.get_bulk(provider)
+
+            # Exact-segment match: the provider is not any of these modules.
+            assert "wrong" not in bulk
+            assert bulk == {}
 
 
 # ===========================================================================
@@ -2104,11 +2166,11 @@ class TestGetClass:
     # -----------------------------------------------------------------------
 
     @patch("prowler.providers.common.provider.load_and_validate_config_file")
-    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
     @patch("prowler.providers.common.provider.import_module")
     @patch("prowler.providers.common.provider.Provider.is_builtin")
     def test_init_global_provider_emits_collision_warning_for_builtin_ep_shadow(
-        self, mock_is_builtin, mock_import, mock_load_ep, mock_config, caplog
+        self, mock_is_builtin, mock_import, mock_entry_points, mock_config, caplog
     ):
         """init_global_provider (not get_class) emits the collision warning
         when a built-in provider has a same-named entry-point plug-in registered.
@@ -2117,13 +2179,16 @@ class TestGetClass:
         the warning responsibility moved OUT of get_class and INTO
         init_global_provider, so users still see the message on CLI invocation
         but prowler --help and API calls (which never hit init_global_provider)
-        do not spuriously emit it.
+        do not spuriously emit it. The shadow is detected by entry-point name
+        only — the plug-in is never loaded to warn.
         """
         import logging
         import types
 
         mock_is_builtin.return_value = True
-        mock_load_ep.return_value = FakeExternalProvider  # plug-in shadow
+        shadow_ep = MagicMock()
+        shadow_ep.name = "aws"  # plug-in shadowing the built-in name
+        mock_entry_points.return_value = [shadow_ep]
 
         fake_module = types.ModuleType("fake_builtin_module")
         fake_module.AwsProvider = MagicMock(side_effect=lambda **_kw: None)
@@ -2169,3 +2234,5 @@ class TestGetClass:
             "init_global_provider must emit the collision warning when a "
             "same-named EP plug-in exists for a built-in provider"
         )
+        # Shadow detected by name only — the plug-in is never loaded to warn.
+        shadow_ep.load.assert_not_called()

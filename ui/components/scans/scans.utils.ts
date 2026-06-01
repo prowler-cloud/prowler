@@ -77,8 +77,14 @@ function isSearchParamValue(value: unknown): value is string | string[] {
 export function getScanJobsUserFilters(
   searchParams: SearchParamsProps,
 ): Record<string, string | string[]> {
+  const tab = getScanJobsTab(searchParams.tab);
+
   return Object.entries(searchParams).reduce<Record<string, string | string[]>>(
     (filters, [key, value]) => {
+      if (tab === SCAN_JOBS_TAB.SCHEDULED && key === "filter[trigger]") {
+        return filters;
+      }
+
       if (
         key.startsWith("filter[") &&
         !isScanStateFilterKey(key) &&

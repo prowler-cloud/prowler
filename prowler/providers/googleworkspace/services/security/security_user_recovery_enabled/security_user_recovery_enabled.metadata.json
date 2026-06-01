@@ -14,7 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://knowledge.workspace.google.com/admin/users/set-up-password-recovery-for-users",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

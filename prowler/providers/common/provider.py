@@ -289,9 +289,11 @@ class Provider(ABC):
             # plug-in is ignored.  This lives here (not in get_class) so
             # that `prowler --help` and API callers that resolve a class
             # without initialising a global provider do not see spurious
-            # warnings.
-            if Provider.is_builtin(arguments.provider) and (
-                Provider._load_ep_provider(arguments.provider) is not None
+            # warnings. Match by name only — never ep.load() a shadowing
+            # plug-in, or its module code would run during a built-in run.
+            if Provider.is_builtin(arguments.provider) and any(
+                ep.name == arguments.provider
+                for ep in importlib.metadata.entry_points(group="prowler.providers")
             ):
                 logger.warning(
                     f"Plug-in provider '{arguments.provider}' registered "
