@@ -13,9 +13,8 @@
   "Risk": "Overly permissive external sharing of secondary calendars exposes **project-specific or team-specific event details** to users outside the organization. Because secondary calendars often hold more targeted activities (e.g., product launches, internal reviews), unrestricted external sharing increases the risk of **information disclosure** and **competitive intelligence leakage**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/60765",
     "https://knowledge.workspace.google.com/admin/calendar/set-google-calendar-sharing-options",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

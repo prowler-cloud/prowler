@@ -13,8 +13,8 @@
   "Risk": "Without external sharing warnings, users may unintentionally share **sensitive documents** with external recipients who are not entitled to the data. This is a common vector for inadvertent leakage of intellectual property, personally identifiable information, and confidential business data through routine Drive sharing.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/60781",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/manage-external-sharing-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

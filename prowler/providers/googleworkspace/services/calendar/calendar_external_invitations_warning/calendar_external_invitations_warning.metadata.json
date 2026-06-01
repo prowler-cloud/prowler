@@ -13,9 +13,8 @@
   "Risk": "Without external invitation warnings, users may unintentionally include **external guests** in internal meetings, exposing **confidential meeting details**, agendas, and internal attendee lists to unauthorized parties. This is a common vector for inadvertent data leakage through everyday calendar actions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/6329284",
-    "https://knowledge.workspace.google.com/admin/calendar/set-google-calendar-sharing-options",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/calendar/allow-external-invitations-in-google-calendar-events",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

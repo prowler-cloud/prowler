@@ -1,5 +1,4 @@
 from datetime import date, datetime, timedelta, timezone
-from functools import lru_cache
 
 from dateutil.parser import parse
 from django.conf import settings
@@ -67,19 +66,8 @@ from api.uuid_utils import (
     uuid7_range,
     uuid7_start,
 )
+from api.provider_types import get_provider_type_choices
 from api.v1.serializers import TaskBase
-from prowler.providers.common.provider import Provider as SDKProvider
-
-
-@lru_cache(maxsize=1)
-def get_provider_type_choices():
-    """Provider-type filter choices driven by the SDK's available providers
-    instead of a static enum, so filtering covers external providers too.
-
-    Cached because the installed providers are fixed for the process lifetime
-    and provider-type filters live on hot list endpoints.
-    """
-    return [(name, name) for name in SDKProvider.get_available_providers()]
 
 
 class CustomDjangoFilterBackend(DjangoFilterBackend):

@@ -13,8 +13,8 @@
   "Risk": "Without protection against inbound domain spoofing, users may receive **emails that appear to come from their own organization** but are sent by external attackers. This enables **internal impersonation**, **phishing**, and **business email compromise** attacks that exploit trust in internal communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9157861",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/advanced-phishing-and-malware-protection",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
