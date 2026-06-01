@@ -3,6 +3,7 @@ from collections.abc import Iterable, Mapping
 from api.models import Provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
+from prowler.providers.common.provider import Provider as SDKProvider
 
 AVAILABLE_COMPLIANCE_FRAMEWORKS = {}
 
@@ -12,7 +13,7 @@ class LazyComplianceTemplate(Mapping):
 
     def __init__(self, provider_types: Iterable[str] | None = None) -> None:
         if provider_types is None:
-            provider_types = Provider.ProviderChoices.values
+            provider_types = SDKProvider.get_available_providers()
         self._provider_types = tuple(provider_types)
         self._provider_types_set = set(self._provider_types)
         self._cache: dict[str, dict] = {}
@@ -53,7 +54,7 @@ class LazyChecksMapping(Mapping):
 
     def __init__(self, provider_types: Iterable[str] | None = None) -> None:
         if provider_types is None:
-            provider_types = Provider.ProviderChoices.values
+            provider_types = SDKProvider.get_available_providers()
         self._provider_types = tuple(provider_types)
         self._provider_types_set = set(self._provider_types)
         self._cache: dict[str, dict] = {}
@@ -201,7 +202,7 @@ def load_prowler_checks(
     """
     checks = {}
     if provider_types is None:
-        provider_types = Provider.ProviderChoices.values
+        provider_types = SDKProvider.get_available_providers()
     for provider_type in provider_types:
         checks[provider_type] = {
             check_id: set() for check_id in get_prowler_provider_checks(provider_type)
@@ -280,7 +281,7 @@ def generate_compliance_overview_template(
     """
     template = {}
     if provider_types is None:
-        provider_types = Provider.ProviderChoices.values
+        provider_types = SDKProvider.get_available_providers()
     for provider_type in provider_types:
         provider_compliance = template.setdefault(provider_type, {})
         compliance_data_dict = prowler_compliance.get(provider_type, {})

@@ -324,6 +324,7 @@ from prowler.providers.aws.exceptions.exceptions import (
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
 )
+from prowler.providers.common.provider import Provider as SDKProvider
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -4993,7 +4994,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
         # If we couldn't determine from database, try each provider type
         if not provider_type:
-            for pt in Provider.ProviderChoices.values:
+            for pt in SDKProvider.get_available_providers():
                 if compliance_id in get_compliance_frameworks(pt):
                     provider_type = pt
                     break
@@ -5333,7 +5334,7 @@ class OverviewViewSet(BaseRLSViewSet):
         """Extract and validate provider filters from query params."""
         params = self.request.query_params
         filters = {}
-        valid_provider_types = {c[0] for c in Provider.ProviderChoices.choices}
+        valid_provider_types = set(SDKProvider.get_available_providers())
 
         provider_id = params.get("filter[provider_id]")
         if provider_id:
