@@ -1355,6 +1355,63 @@ class TestCompliance:
 
             assert "dup_framework" in bulk
 
+    @pytest.mark.parametrize(
+        "provider, framework_segments",
+        [
+            # `cloud` is a substring of THREE built-in modules at once.
+            ("cloud", ["alibabacloud", "cloudflare", "oraclecloud"]),
+            ("git", ["github"]),
+            ("work", ["googleworkspace"]),
+            ("open", ["openstack"]),
+        ],
+    )
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_compliance_get_bulk_matches_provider_segment_exactly(
+        self, mock_list_modules, mock_ep, provider, framework_segments
+    ):
+        """Regression: a provider whose name is a substring of one or more
+        framework modules must NOT load them. The old `provider in name`
+        check captured overlapping built-ins (e.g. `cloud` matched
+        alibabacloud, cloudflare and oraclecloud). See PR #10700 review
+        (Alan-TheGentleman).
+        """
+        import json
+        import os
+        import tempfile
+
+        from prowler.lib.check.compliance_models import Compliance
+
+        mock_ep.return_value = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # The substring path the old code would have read from.
+            os.mkdir(os.path.join(tmpdir, provider))
+            json_data = {
+                "Framework": "Custom",
+                "Name": f"Should not load for '{provider}'",
+                "Version": "1.0",
+                "Provider": provider,
+                "Description": "Test",
+                "Requirements": [],
+            }
+            with open(os.path.join(tmpdir, provider, "wrong.json"), "w") as f:
+                json.dump(json_data, f)
+
+            modules = []
+            for segment in framework_segments:
+                module = MagicMock()
+                module.name = f"prowler.compliance.{segment}"
+                module.module_finder.path = tmpdir
+                modules.append(module)
+            mock_list_modules.return_value = modules
+
+            bulk = Compliance.get_bulk(provider)
+
+            # Exact-segment match: the provider is not any of these modules.
+            assert "wrong" not in bulk
+            assert bulk == {}
+
 
 # ===========================================================================
 # 7. Parser
