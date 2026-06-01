@@ -81,6 +81,17 @@ const makeCompletedScan = (): ScanProps => ({
   },
 });
 
+const makeScheduledScan = (): ScanProps => ({
+  ...makeCompletedScan(),
+  attributes: {
+    ...makeCompletedScan().attributes,
+    trigger: "scheduled",
+    state: "scheduled",
+    scheduled_at: "2026-01-01T10:00:00Z",
+    next_scan_at: "2026-01-02T10:00:00Z",
+  },
+});
+
 const renderCell = (
   columnId: string,
   scan: ScanProps,
@@ -136,6 +147,7 @@ describe("getScanJobsColumns", () => {
     expect(getColumnIds(SCAN_JOBS_TAB.SCHEDULED)).toEqual([
       "account",
       "scanInfo",
+      "scanSchedule",
       "actions",
     ]);
   });
@@ -167,5 +179,13 @@ describe("getScanJobsColumns", () => {
 
     expect(screen.getByText("Type")).toBeInTheDocument();
     expect(screen.queryByText("Schedule")).not.toBeInTheDocument();
+  });
+
+  it("keeps the scheduled column without repeating the scheduled label in each row", () => {
+    renderHeader(SCAN_JOBS_TAB.SCHEDULED, "scanSchedule");
+    renderCell("scanSchedule", makeScheduledScan(), SCAN_JOBS_TAB.SCHEDULED);
+
+    expect(screen.getByText("Schedule")).toBeInTheDocument();
+    expect(screen.queryByText("Scheduled")).not.toBeInTheDocument();
   });
 });
