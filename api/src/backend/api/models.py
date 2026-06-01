@@ -666,6 +666,9 @@ class Scan(RowLevelSecurityProtectedModel):
     state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
     unique_resource_count = models.IntegerField(default=0)
     progress = models.IntegerField(default=0)
+    # Incremented by the scan-specific orphan-recovery path each time this scan is
+    # re-pointed to a fresh task; for observability (the retry cap is a Valkey counter).
+    recovery_count = models.IntegerField(default=0)
     scanner_args = models.JSONField(default=dict)
     duration = models.IntegerField(null=True, blank=True)
     scheduled_at = models.DateTimeField(null=True, blank=True)
