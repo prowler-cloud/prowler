@@ -1640,14 +1640,72 @@ class TestJiraIntegration:
     @patch("tasks.jobs.integrations.Finding")
     @patch("tasks.jobs.integrations.Integration")
     @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    @patch("tasks.jobs.integrations.JiraIssueDispatch")
+    def test_send_findings_to_jira_skips_already_dispatched(
+        self,
+        mock_jira_dispatch,
+        mock_initialize_integration,
+        mock_integration_model,
+        mock_finding_model,
+        mock_rls_transaction,
+    ):
+        """A re-run skips findings already ticketed (no duplicate Jira issues)."""
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock()
+        mock_integration_model.objects.get.return_value = MagicMock()
+        # finding-1 was already dispatched in a prior run; finding-2 is new.
+        mock_jira_dispatch.objects.filter.return_value.values_list.return_value = [
+            "finding-1"
+        ]
+
+        mock_jira_integration = MagicMock()
+        mock_jira_integration.send_finding.return_value = True
+        mock_initialize_integration.return_value = mock_jira_integration
+
+        finding2 = MagicMock()
+        finding2.id = "finding-2"
+        finding2.check_id = "check_002"
+        finding2.severity = "low"
+        finding2.status = "FAIL"
+        finding2.status_extended = ""
+        finding2.compliance = {}
+        finding2.resources.exists.return_value = False
+        finding2.resources.first.return_value = None
+        finding2.scan.provider.provider = "aws"
+        finding2.check_metadata = {
+            "checktitle": "C2",
+            "risk": "",
+            "remediation": {"recommendation": {}, "code": {}},
+        }
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding2
+
+        result = send_findings_to_jira(
+            "tenant-123", "integration-456", "PROJ", "Task", ["finding-1", "finding-2"]
+        )
+
+        # finding-1 skipped (already sent); only finding-2 sent -> no duplicate.
+        assert result == {"created_count": 1, "failed_count": 0, "skipped_count": 1}
+        mock_jira_integration.send_finding.assert_called_once()
+        assert (
+            mock_jira_integration.send_finding.call_args.kwargs["check_id"]
+            == "check_002"
+        )
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Finding")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    @patch("tasks.jobs.integrations.JiraIssueDispatch")
     def test_send_findings_to_jira_success(
         self,
+        mock_jira_dispatch,
         mock_initialize_integration,
         mock_integration_model,
         mock_finding_model,
         mock_rls_transaction,
     ):
         """Test successful sending of findings to Jira using send_finding method"""
+        mock_jira_dispatch.objects.filter.return_value.values_list.return_value = []
         tenant_id = "tenant-123"
         integration_id = "integration-456"
         project_key = "PROJ"
@@ -1739,7 +1797,7 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"created_count": 2, "failed_count": 0}
+        assert result == {"created_count": 2, "failed_count": 0, "skipped_count": 0}
 
         # Verify Jira integration was initialized
         mock_initialize_integration.assert_called_once_with(integration)
@@ -1771,8 +1829,10 @@ class TestJiraIntegration:
     @patch("tasks.jobs.integrations.Integration")
     @patch("tasks.jobs.integrations.initialize_prowler_integration")
     @patch("tasks.jobs.integrations.logger")
+    @patch("tasks.jobs.integrations.JiraIssueDispatch")
     def test_send_findings_to_jira_partial_failure(
         self,
+        mock_jira_dispatch,
         mock_logger,
         mock_initialize_integration,
         mock_integration_model,
@@ -1780,6 +1840,7 @@ class TestJiraIntegration:
         mock_rls_transaction,
     ):
         """Test partial failure when sending findings to Jira"""
+        mock_jira_dispatch.objects.filter.return_value.values_list.return_value = []
         tenant_id = "tenant-123"
         integration_id = "integration-456"
         project_key = "PROJ"
@@ -1833,7 +1894,7 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"created_count": 2, "failed_count": 1}
+        assert result == {"created_count": 2, "failed_count": 1, "skipped_count": 0}
 
         # Verify error was logged for the failed finding
         mock_logger.error.assert_called_with("Failed to send finding finding-2 to Jira")
@@ -1842,14 +1903,17 @@ class TestJiraIntegration:
     @patch("tasks.jobs.integrations.Finding")
     @patch("tasks.jobs.integrations.Integration")
     @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    @patch("tasks.jobs.integrations.JiraIssueDispatch")
     def test_send_findings_to_jira_no_resources(
         self,
+        mock_jira_dispatch,
         mock_initialize_integration,
         mock_integration_model,
         mock_finding_model,
         mock_rls_transaction,
     ):
         """Test sending findings to Jira when finding has no resources"""
+        mock_jira_dispatch.objects.filter.return_value.values_list.return_value = []
         tenant_id = "tenant-123"
         integration_id = "integration-456"
         project_key = "PROJ"
@@ -1907,7 +1971,7 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"created_count": 1, "failed_count": 0}
+        assert result == {"created_count": 1, "failed_count": 0, "skipped_count": 0}
 
         # Verify send_finding was called with empty resource fields
         call_kwargs = mock_jira_integration.send_finding.call_args.kwargs
@@ -1920,14 +1984,17 @@ class TestJiraIntegration:
     @patch("tasks.jobs.integrations.Finding")
     @patch("tasks.jobs.integrations.Integration")
     @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    @patch("tasks.jobs.integrations.JiraIssueDispatch")
     def test_send_findings_to_jira_with_empty_check_metadata(
         self,
+        mock_jira_dispatch,
         mock_initialize_integration,
         mock_integration_model,
         mock_finding_model,
         mock_rls_transaction,
     ):
         """Test sending findings to Jira when check_metadata is empty or missing fields"""
+        mock_jira_dispatch.objects.filter.return_value.values_list.return_value = []
         tenant_id = "tenant-123"
         integration_id = "integration-456"
         project_key = "PROJ"
@@ -1970,7 +2037,7 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"created_count": 1, "failed_count": 0}
+        assert result == {"created_count": 1, "failed_count": 0, "skipped_count": 0}
 
         # Verify send_finding was called with default/empty values
         call_kwargs = mock_jira_integration.send_finding.call_args.kwargs

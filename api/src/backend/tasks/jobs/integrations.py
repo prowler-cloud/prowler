@@ -9,7 +9,7 @@ from tasks.utils import batched
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
-from api.models import Finding, Integration, Provider
+from api.models import Finding, Integration, JiraIssueDispatch, Provider
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
@@ -482,9 +482,21 @@ def send_findings_to_jira(
     with rls_transaction(tenant_id):
         integration = Integration.objects.get(id=integration_id)
         jira_integration = initialize_prowler_integration(integration)
+        # Idempotency: findings already ticketed for this integration must not be
+        # sent again on a re-run (e.g. orphan recovery), to avoid duplicate issues
+        already_sent = {
+            str(fid)
+            for fid in JiraIssueDispatch.objects.filter(
+                integration_id=integration_id, finding_id__in=finding_ids
+            ).values_list("finding_id", flat=True)
+        }
 
     num_tickets_created = 0
+    skipped_count = 0
     for finding_id in finding_ids:
+        if str(finding_id) in already_sent:
+            skipped_count += 1
+            continue
         with rls_transaction(tenant_id):
             finding_instance = (
                 Finding.all_objects.select_related("scan__provider")
@@ -537,11 +549,18 @@ def send_findings_to_jira(
                 issue_type=issue_type,
             )
             if result:
+                # Record the dispatch so a re-run skips this finding (no duplicate issue).
+                JiraIssueDispatch.objects.get_or_create(
+                    tenant_id=tenant_id,
+                    integration_id=integration_id,
+                    finding_id=finding_id,
+                )
                 num_tickets_created += 1
             else:
                 logger.error(f"Failed to send finding {finding_id} to Jira")
 
     return {
         "created_count": num_tickets_created,
-        "failed_count": len(finding_ids) - num_tickets_created,
+        "failed_count": len(finding_ids) - num_tickets_created - skipped_count,
+        "skipped_count": skipped_count,
     }
