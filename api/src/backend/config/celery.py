@@ -26,6 +26,58 @@ celery_app.conf.result_backend_transport_options = {
 }
 celery_app.conf.visibility_timeout = BROKER_VISIBILITY_TIMEOUT
 
+# Durable delivery: keep the message until the task finishes, so a worker killed
+# mid-task (deploy/OOM/eviction) does not silently drop it. Reserve one task at a
+# time so a crash exposes at most one extra reserved message.
+celery_app.conf.task_acks_late = True
+celery_app.conf.task_reject_on_worker_lost = True
+celery_app.conf.worker_prefetch_multiplier = env.int(
+    "DJANGO_CELERY_WORKER_PREFETCH_MULTIPLIER", default=1
+)
+# On SIGTERM, give the worker time to finish or re-queue in-flight tasks before
+# it is forcefully killed (Celery 5.5+ soft shutdown).
+celery_app.conf.worker_soft_shutdown_timeout = env.int(
+    "DJANGO_CELERY_WORKER_SOFT_SHUTDOWN_TIMEOUT", default=60
+)
+# Bound execution so a blocked task cannot pin a worker forever. Connection
+# checks get a tight limit; scans and provider/tenant deletions can legitimately
+# run for more than a day on large tenants, so they get a much higher cap;
+# everything else a generous default.
+_TASK_HARD_LIMIT = env.int("DJANGO_CELERY_TASK_TIME_LIMIT", default=6 * 60 * 60)
+_TASK_SOFT_LIMIT = env.int(
+    "DJANGO_CELERY_TASK_SOFT_TIME_LIMIT", default=_TASK_HARD_LIMIT - 600
+)
+_LONG_TASK_HARD_LIMIT = env.int(
+    "DJANGO_CELERY_LONG_TASK_TIME_LIMIT", default=48 * 60 * 60
+)
+_LONG_TASK_SOFT_LIMIT = env.int(
+    "DJANGO_CELERY_LONG_TASK_SOFT_TIME_LIMIT", default=_LONG_TASK_HARD_LIMIT - 600
+)
+celery_app.conf.task_annotations = {
+    "*": {"soft_time_limit": _TASK_SOFT_LIMIT, "time_limit": _TASK_HARD_LIMIT},
+    **{
+        name: {"soft_time_limit": 60, "time_limit": 120}
+        for name in (
+            "provider-connection-check",
+            "integration-connection-check",
+            "lighthouse-connection-check",
+            "lighthouse-provider-connection-check",
+        )
+    },
+    **{
+        name: {
+            "soft_time_limit": _LONG_TASK_SOFT_LIMIT,
+            "time_limit": _LONG_TASK_HARD_LIMIT,
+        }
+        for name in (
+            "scan-perform",
+            "scan-perform-scheduled",
+            "provider-deletion",
+            "tenant-deletion",
+        )
+    },
+}
+
 celery_app.autodiscover_tasks(["api"])
 
 
