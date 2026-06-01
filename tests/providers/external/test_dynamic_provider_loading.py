@@ -659,22 +659,25 @@ class TestProviderInitialization:
 
     @patch("prowler.providers.common.provider.logger")
     @patch("prowler.providers.common.provider.load_and_validate_config_file")
-    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
     @patch("prowler.providers.common.provider.import_module")
     @patch("prowler.providers.common.provider.Provider.is_builtin")
     def test_init_global_provider_warns_when_plugin_shadowed_by_builtin(
-        self, mock_is_builtin, mock_import, mock_load_ep, mock_config, mock_logger
+        self, mock_is_builtin, mock_import, mock_entry_points, mock_config, mock_logger
     ):
         """Regression guard: when a plug-in registers a provider name that
         collides with a built-in, the BUILT-IN wins and a warning is emitted
-        naming the shadowed plug-in. Matches the precedence enforced by
-        `_resolve_check_module` and `CheckMetadata.get_bulk` for checks. See
-        PR #10700 review (HugoPBrito).
+        naming the shadowed plug-in. Shadow detection matches by entry-point
+        name only — the plug-in is never `ep.load()`-ed just to warn, so its
+        module code cannot run during a built-in run. See PR #10700 review
+        (HugoPBrito, Alan-TheGentleman).
         """
         # Simulate a built-in `aws` that exists, AND a plug-in registered
         # under the same `aws` name via entry points.
         mock_is_builtin.return_value = True
-        mock_load_ep.return_value = FakeExternalProvider  # plug-in shadow
+        shadow_ep = MagicMock()
+        shadow_ep.name = "aws"  # plug-in shadowing the built-in name
+        mock_entry_points.return_value = [shadow_ep]
         mock_import.return_value = MagicMock(
             AwsProvider=MagicMock(side_effect=lambda **_kw: None)
         )
@@ -719,6 +722,8 @@ class TestProviderInitialization:
         ]
         assert warning_msgs, "expected a warning about the shadowed plug-in 'aws'"
         assert "IGNORED" in warning_msgs[0]
+        # Shadow detected by name only — plug-in code never executed to warn
+        shadow_ep.load.assert_not_called()
 
 
 # ===========================================================================

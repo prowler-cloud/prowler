@@ -275,7 +275,11 @@ class Provider(ABC):
                 # tool prefers fail-loud predictability over silent
                 # overrides. Surface the override so the user knows their
                 # plug-in is being ignored and can rename it.
-                if Provider._load_ep_provider(arguments.provider) is not None:
+                # Match by name only — never ep.load() a shadowing plug-in.
+                if any(
+                    ep.name == arguments.provider
+                    for ep in importlib.metadata.entry_points(group="prowler.providers")
+                ):
                     logger.warning(
                         f"Plug-in provider '{arguments.provider}' registered "
                         f"via entry points is being IGNORED — a built-in with "
