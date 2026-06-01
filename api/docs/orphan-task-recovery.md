@@ -3,8 +3,8 @@
 When a worker is terminated mid-task (a deploy, an OOM kill, a node eviction), the
 task it was running can be left non-terminal forever: the `Scan` stays `EXECUTING`,
 the `TaskResult` stays `STARTED`, and nothing re-runs it. This page describes the
-mechanisms that detect and recover those orphans so users never see a stuck scan
-and pending-task alerts do not fire.
+mechanisms that detect and recover allowlisted idempotent orphans so users never
+see a stuck scan and pending-task alerts do not fire.
 
 ## How recovery works
 
@@ -17,15 +17,21 @@ and pending-task alerts do not fire.
 
 2. **Periodic watchdog.** A Beat task, `reconcile-orphan-tasks`, runs every couple of
    minutes (a `django_celery_beat` periodic task created by migration). For each
-   non-terminal `Scan` (state `EXECUTING`) it pings the worker recorded on the
-   task's `TaskResult`:
+   in-flight task result with an allowlisted idempotent task name, it pings the
+   worker recorded on the task's `TaskResult`:
    - worker responds -> the task is still running, leave it alone;
    - worker is gone (and the scan started before a short grace window) -> it is a
      real orphan: the stale task is revoked and marked terminal (clearing the
      pending/started alert), and the scan is re-enqueued from scratch.
 
-   The re-run is safe because scan persistence is idempotent: a re-execution clears
-   the scan's prior findings and compliance rows before re-writing them.
+   The re-run is safe because only tasks with proven idempotency are allowlisted.
+   Scan persistence, for example, clears the scan's prior findings and materialized
+   summary/compliance rows before re-writing them. Jira sends are allowlisted too:
+   each finding is reserved in a dispatch table before the external call, so a re-run
+   skips already-ticketed findings (the worst case is one finding missed if a worker
+   is hard-killed mid-send, never a duplicate issue). Other external side effects stay
+   terminal: the S3 upload rebuilds from worker-local files that do not survive a
+   crash, and report/Security Hub recovery is out of scope.
 
 3. **Recovery cap.** Each automatic re-enqueue increments `Scan.recovery_count`.
    After `--max-attempts` recoveries (default 3) the scan is marked `FAILED` instead

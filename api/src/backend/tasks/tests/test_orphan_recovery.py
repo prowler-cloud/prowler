@@ -98,6 +98,74 @@ class TestReconcileTaskResults:
         assert call["kwargs"] == {"tenant_id": str(tenant.id)}
         assert call["task_id"] != tr.task_id  # fresh task id
 
+    def test_external_integration_task_is_not_reenqueued_by_default(
+        self, tenants_fixture
+    ):
+        """External side-effect tasks without proven idempotency stay terminal.
+
+        integration-s3 rebuilds its upload from worker-local files that do not
+        survive the crash, so re-enqueuing it would upload nothing.
+        """
+        tr = _orphan_result(
+            name="integration-s3",
+            kwargs={
+                "tenant_id": str(tenants_fixture[0].id),
+                "provider_id": str(uuid4()),
+                "output_directory": "/tmp/gone",
+            },
+            worker="dead@gone",
+            created_minutes_ago=60,
+        )
+        p_alive, p_revoke, p_app, mock_task = self._patches(alive=False)
+        with (
+            p_alive,
+            p_revoke,
+            p_app,
+            patch("tasks.jobs.orphan_recovery._recovery_attempt_count", return_value=1),
+        ):
+            result = _reconcile_task_results(
+                grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
+            )
+
+        assert tr.task_id in result["failed"]
+        mock_task.apply_async.assert_not_called()
+
+    def test_jira_integration_task_is_reenqueued(self, tenants_fixture):
+        """integration-jira is re-enqueued: its JiraIssueDispatch reservation makes a
+        re-run skip already-ticketed findings, so recovery cannot duplicate issues."""
+        tenant = tenants_fixture[0]
+        kwargs = {
+            "tenant_id": str(tenant.id),
+            "integration_id": str(uuid4()),
+            "project_key": "PROWLER",
+            "issue_type": "Task",
+            "finding_ids": [str(uuid4()), str(uuid4())],
+        }
+        tr = _orphan_result(
+            name="integration-jira",
+            kwargs=kwargs,
+            worker="dead@gone",
+            created_minutes_ago=60,
+        )
+        p_alive, p_revoke, p_app, mock_task = self._patches(alive=False)
+        with (
+            p_alive,
+            p_revoke,
+            p_app,
+            patch("tasks.jobs.orphan_recovery._recovery_attempt_count", return_value=1),
+        ):
+            result = _reconcile_task_results(
+                grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
+            )
+
+        assert tr.task_id in result["recovered"]
+        tr.refresh_from_db()
+        assert tr.status == states.REVOKED  # stale result cleared (no pending alert)
+        mock_task.apply_async.assert_called_once()
+        call = mock_task.apply_async.call_args.kwargs
+        assert call["kwargs"] == kwargs
+        assert call["task_id"] != tr.task_id  # fresh task id
+
     def test_skips_live_worker(self, tenants_fixture):
         tr = _orphan_result(
             name="tenant-deletion",
@@ -132,7 +200,7 @@ class TestReconcileTaskResults:
         mock_task.apply_async.assert_not_called()
 
     def test_denylisted_task_failed_not_reenqueued(self, tenants_fixture):
-        """A denylisted (non-idempotent) task is failed, never blind re-run."""
+        """A non-allowlisted task is failed, never blind re-run."""
         tr = _orphan_result(
             name="some-non-idempotent-task",
             kwargs={"tenant_id": str(tenants_fixture[0].id)},
@@ -145,10 +213,6 @@ class TestReconcileTaskResults:
             p_revoke,
             p_app,
             patch("tasks.jobs.orphan_recovery._recovery_attempt_count", return_value=1),
-            patch(
-                "tasks.jobs.orphan_recovery.NON_REENQUEUEABLE",
-                {"some-non-idempotent-task"},
-            ),
         ):
             result = _reconcile_task_results(
                 grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
@@ -266,8 +330,9 @@ class TestScanRecovery:
         )
 
         with patch("tasks.tasks.perform_scan_task") as mock_scan_task:
-            _reenqueue_scan(str(uuid4()), scan)
+            recovered = _reenqueue_scan(str(uuid4()), scan)
 
+        assert recovered is False
         mock_scan_task.apply_async.assert_not_called()
         scan.refresh_from_db()
         assert scan.recovery_count == 0
@@ -300,5 +365,8 @@ class TestOrphanRecoveryHelpers:
     def test_recovery_attempt_count_increments(self):
         # Unique signature so the Valkey counter starts fresh for this test.
         kwargs_repr = repr({"probe": str(uuid4())})
-        assert _recovery_attempt_count("probe-task", kwargs_repr, 6) == 1
-        assert _recovery_attempt_count("probe-task", kwargs_repr, 6) == 2
+        redis_client = MagicMock()
+        redis_client.incr.side_effect = [1, 2]
+        with patch("redis.from_url", return_value=redis_client):
+            assert _recovery_attempt_count("probe-task", kwargs_repr, 6) == 1
+            assert _recovery_attempt_count("probe-task", kwargs_repr, 6) == 2

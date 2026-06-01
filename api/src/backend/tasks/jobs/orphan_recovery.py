@@ -8,11 +8,11 @@ from a still-running task by pinging the worker recorded on its `TaskResult`:
 - worker is gone   -> real orphan: mark the stale result terminal (so pending/started
   alerts clear), then re-enqueue the task from its stored name + kwargs.
 
-This works for EVERY task (scans, deletions, integrations, reports, ...), not just
-scans, because `result_extended=True` persists `task_name`/`task_kwargs`/`worker` on
-the `TaskResult` as soon as the task starts. A small recovery cap stops a task that
-repeatedly kills its worker from looping forever. Tasks that are not yet safe to
-re-run blindly are listed in `NON_REENQUEUEABLE` and are failed instead.
+This recovers only allowlisted tasks with local, proven idempotency. Celery's
+`result_extended=True` gives us the stored `task_name`/`task_kwargs`/`worker` once
+the task starts, but external side-effect tasks are failed instead of blindly
+re-run. A small recovery cap stops a task that repeatedly kills its worker from
+looping forever.
 
 This is the shared engine behind both the periodic Beat watchdog and the
 `reconcile_orphan_tasks` management command.
@@ -37,15 +37,30 @@ ORPHAN_RECOVERY_LOCK_KEY = 0x70726F77  # "prow"
 # Non-terminal states that mean "a worker had this and may have died with it".
 IN_FLIGHT_STATES = (states.STARTED, states.RECEIVED)
 
-# Tasks that must NOT be re-enqueued blindly because they are not idempotent.
-# These are failed (and surfaced) instead of re-run. Empty: every task is now
-# idempotent (integration-jira gained a dedup guard in tasks/jobs/integrations.py).
-NON_REENQUEUEABLE: set[str] = set()
-
 # Scan tasks are recovered by re-running scan-perform on the EXISTING scan row,
 # not by re-enqueuing the original task: re-enqueuing scan-perform-scheduled would
 # hit its "a scan is already executing" guard and no-op, leaving the scan stuck.
 _SCAN_TASKS = ("scan-perform", "scan-perform-scheduled")
+
+# Tasks with proven idempotency are auto re-enqueued. Scans/summaries clear and
+# rewrite their own rows. integration-jira is safe too: each finding is reserved in
+# JiraIssueDispatch before the external call, so a re-run skips already-ticketed
+# findings (worst case one finding missed on a mid-send crash, never a duplicate).
+# Other external side effects stay terminal: integration-s3 rebuilds its upload from
+# worker-local files that do not survive a crash, and report/Security Hub recovery is
+# out of scope.
+REENQUEUEABLE_TASKS = {
+    *_SCAN_TASKS,
+    "provider-deletion",
+    "tenant-deletion",
+    "scan-summary",
+    "scan-compliance-overviews",
+    "scan-provider-compliance-scores",
+    "scan-daily-severity",
+    "scan-finding-group-summaries",
+    "scan-reset-ephemeral-resources",
+    "integration-jira",
+}
 
 # Tasks excluded from generic recovery: attack-paths scans are handled by their own
 # stale-cleanup (which also drops the temp Neo4j db), and the maintenance tasks must
@@ -250,10 +265,10 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
     task_result.save(update_fields=["status", "date_done"])
 
     attempt = _recovery_attempt_count(name, kwargs_repr, window_hours)
-    if name in NON_REENQUEUEABLE or attempt > max_attempts:
+    if name not in REENQUEUEABLE_TASKS or attempt > max_attempts:
         reason = (
-            f"{name} is not safe to auto re-run"
-            if name in NON_REENQUEUEABLE
+            f"{name} is not allowlisted for auto recovery"
+            if name not in REENQUEUEABLE_TASKS
             else f"recovery cap reached ({attempt}/{max_attempts})"
         )
         _fail_domain_row(task_result.task_id, name, now)
@@ -269,7 +284,8 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
     if name in _SCAN_TASKS:
         scan = _scan_for_task(task_result.task_id)
         if scan is not None:
-            _reenqueue_scan(task_result.task_id, scan)
+            if not _reenqueue_scan(task_result.task_id, scan):
+                return "failed"
             logger.info(
                 "Re-enqueued orphaned scan %s (was task %s)",
                 scan.id,
@@ -317,7 +333,7 @@ def _scan_for_task(task_id: str):
     return Scan.all_objects.using(MainRouter.admin_db).filter(task_id=task_id).first()
 
 
-def _reenqueue_scan(old_task_id: str, scan) -> None:
+def _reenqueue_scan(old_task_id: str, scan) -> bool:
     """Re-run an orphaned scan via scan-perform on the existing row.
 
     Pre-provisions the new task linkage (TaskResult + api.Task) and relinks the
@@ -335,16 +351,14 @@ def _reenqueue_scan(old_task_id: str, scan) -> None:
     tenant_id = str(scan.tenant_id)
     new_task_id = str(uuid4())
     with rls_transaction(tenant_id):
-        relinked = Scan.all_objects.filter(id=scan.id, task_id=old_task_id).update(
-            task_id=new_task_id, recovery_count=(scan.recovery_count or 0) + 1
-        )
-        if not relinked:
+        locked_scan = Scan.all_objects.select_for_update().filter(id=scan.id).first()
+        if locked_scan is None or str(locked_scan.task_id) != old_task_id:
             logger.info(
                 "Scan %s no longer points at task %s; skipping recovery re-enqueue",
                 scan.id,
                 old_task_id,
             )
-            return
+            return False
         task_result_new, _ = TaskResult.objects.get_or_create(
             task_id=new_task_id,
             defaults={"status": states.PENDING, "task_name": "scan-perform"},
@@ -354,6 +368,9 @@ def _reenqueue_scan(old_task_id: str, scan) -> None:
             tenant_id=tenant_id,
             defaults={"task_runner_task": task_result_new},
         )
+        locked_scan.task_id = new_task_id
+        locked_scan.recovery_count = (locked_scan.recovery_count or 0) + 1
+        locked_scan.save(update_fields=["task_id", "recovery_count", "updated_at"])
 
     perform_scan_task.apply_async(
         kwargs={
@@ -363,6 +380,7 @@ def _reenqueue_scan(old_task_id: str, scan) -> None:
         },
         task_id=new_task_id,
     )
+    return True
 
 
 def _fail_domain_row(old_task_id: str, name: str, now: datetime) -> None:

@@ -32,12 +32,15 @@ from tasks.utils import CustomEncoder
 from api.db_router import MainRouter
 from api.exceptions import ProviderConnectionError
 from api.models import (
+    AttackSurfaceOverview,
     Finding,
     MuteRule,
     Provider,
     Resource,
     ResourceScanSummary,
     Scan,
+    ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
@@ -260,6 +263,53 @@ class TestPerformScan:
             scan_id = str(scan.id)
             provider_id = str(provider.id)
 
+            stale_resource = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=provider,
+                uid="stale_resource_uid",
+                name="stale",
+                region="stale-region",
+                service="stale-service",
+                type="stale-type",
+            )
+            ResourceScanSummary.objects.create(
+                tenant_id=tenant.id,
+                scan_id=scan.id,
+                resource_id=stale_resource.id,
+                service="stale-service",
+                region="stale-region",
+                resource_type="stale-type",
+            )
+            ScanCategorySummary.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                category="stale-category",
+                severity=Severity.medium,
+                total_findings=1,
+            )
+            ScanGroupSummary.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                resource_group="stale-group",
+                severity=Severity.medium,
+                total_findings=1,
+            )
+            ScanSummary.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                check_id="stale_check",
+                service="stale-service",
+                severity=Severity.medium,
+                region="stale-region",
+                total=1,
+            )
+            AttackSurfaceOverview.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                attack_surface_type=AttackSurfaceOverview.AttackSurfaceTypeChoices.SECRETS,
+                total_findings=1,
+            )
+
             finding = MagicMock()
             finding.uid = "dup_probe_finding"
             finding.status = StatusChoices.PASS
@@ -295,8 +345,17 @@ class TestPerformScan:
         # Neither findings nor resources are duplicated by the re-run: findings are
         # scope-deleted before re-insert; resources are upserted by (tenant, provider, uid).
         assert Finding.objects.filter(scan=scan).count() == 1
-        assert Resource.objects.filter(provider=provider).count() == 1
+        assert Resource.objects.filter(provider=provider).count() == 2
         assert ResourceScanSummary.objects.filter(scan_id=scan.id).count() == 1
+        assert not ResourceScanSummary.objects.filter(
+            scan_id=scan.id, resource_id=stale_resource.id
+        ).exists()
+        assert not ScanCategorySummary.objects.filter(scan=scan).exists()
+        assert not ScanGroupSummary.objects.filter(scan=scan).exists()
+        assert not ScanSummary.objects.filter(
+            scan=scan, check_id="stale_check"
+        ).exists()
+        assert not AttackSurfaceOverview.objects.filter(scan=scan).exists()
 
     @patch("tasks.jobs.scan.ProwlerScan")
     @patch(

@@ -5,8 +5,8 @@ from tasks.jobs.orphan_recovery import reconcile_orphans
 
 class Command(BaseCommand):
     help = (
-        "Recover orphaned Celery tasks: re-enqueue work whose worker is gone and "
-        "mark stale task results terminal. Single-flight via a Postgres advisory lock."
+        "Recover orphaned allowlisted Celery tasks whose worker is gone and mark "
+        "other stale task results terminal. Single-flight via a Postgres advisory lock."
     )
 
     def add_arguments(self, parser):
