@@ -539,12 +539,12 @@ class TestLoadFindingsForChecks:
                 total_counts_out=totals,
             )
 
-        assert (
-            len(result[check_id]) == 5
-        ), f"cap=5 should yield exactly 5 loaded findings, got {len(result[check_id])}"
-        assert (
-            totals[check_id] == 12
-        ), f"total_counts_out should report the pre-cap total (12), got {totals[check_id]}"
+        assert len(result[check_id]) == 5, (
+            f"cap=5 should yield exactly 5 loaded findings, got {len(result[check_id])}"
+        )
+        assert totals[check_id] == 12, (
+            f"total_counts_out should report the pre-cap total (12), got {totals[check_id]}"
+        )
 
     def test_only_failed_findings_pushes_down_to_sql(
         self, tenants_fixture, scans_fixture
@@ -616,13 +616,13 @@ class TestLoadFindingsForChecks:
         loaded = result[check_id]
         assert len(loaded) == 3, f"expected 3 FAIL findings, got {len(loaded)}"
         statuses = {getattr(f, "status", None) for f in loaded}
-        assert statuses == {
-            StatusChoices.FAIL
-        }, f"expected all loaded findings to be FAIL; got statuses {statuses}"
+        assert statuses == {StatusChoices.FAIL}, (
+            f"expected all loaded findings to be FAIL; got statuses {statuses}"
+        )
         # total_counts must reflect the FAIL-only total, not the global total.
-        assert (
-            totals[check_id] == 3
-        ), f"total_counts should be FAIL-only (3), got {totals[check_id]}"
+        assert totals[check_id] == 3, (
+            f"total_counts should be FAIL-only (3), got {totals[check_id]}"
+        )
 
     def test_max_findings_per_check_disabled(self, tenants_fixture, scans_fixture):
         """``MAX_FINDINGS_PER_CHECK=0`` disables the cap; load all rows."""
@@ -1259,12 +1259,12 @@ class TestGenerateComplianceReportsOptimized:
 
         # ``tsc_only`` was exclusive to ThreatScore → evicted before ENS ran.
         # ``shared`` is still pending for ENS → must remain.
-        assert (
-            "tsc_only" not in observed_state["cache_keys_when_ens_runs"]
-        ), "tsc_only should have been evicted before ENS ran"
-        assert (
-            "shared" in observed_state["cache_keys_when_ens_runs"]
-        ), "shared must remain in cache because ENS still needs it"
+        assert "tsc_only" not in observed_state["cache_keys_when_ens_runs"], (
+            "tsc_only should have been evicted before ENS ran"
+        )
+        assert "shared" in observed_state["cache_keys_when_ens_runs"], (
+            "shared must remain in cache because ENS still needs it"
+        )
 
     @patch("tasks.jobs.report.initialize_prowler_provider")
     @patch("tasks.jobs.report.rmtree")
@@ -1301,8 +1301,15 @@ class TestGenerateComplianceReportsOptimized:
         """
         mock_scan_summary_filter.return_value.exists.return_value = True
         mock_provider_get.return_value = Mock(uid="provider-uid", provider="aws")
-        # CIS variant discovery needs at least one cis_* key.
-        mock_get_bulk.return_value = {"cis_6.0_aws": Mock()}
+        # All five report frameworks exist for AWS; report availability is now
+        # derived from the framework map (CIS variant discovery needs a cis_* key).
+        mock_get_bulk.return_value = {
+            "prowler_threatscore_aws": Mock(),
+            "ens_rd2022_aws": Mock(),
+            "nis2_aws": Mock(),
+            "csa_ccm_4.0_aws": Mock(),
+            "cis_6.0_aws": Mock(),
+        }
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = "/tmp/tenant/scan/x/prowler-out"
         mock_upload_to_s3.return_value = "s3://bucket/tenant/scan/x/report.pdf"
@@ -1365,7 +1372,9 @@ class TestGenerateComplianceReportsOptimized:
         """Cleanup must run when all generated (supported) reports are uploaded."""
         mock_scan_summary_filter.return_value.exists.return_value = True
         mock_provider_get.return_value = Mock(uid="provider-uid", provider="m365")
-        mock_get_bulk.return_value = {}
+        # Real ``Compliance.get_bulk("m365")`` exposes the ThreatScore framework
+        # but not ENS/NIS2/CSA; report availability is derived from this map.
+        mock_get_bulk.return_value = {"prowler_threatscore_m365": Mock()}
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = (
             "/tmp/tenant/scan/threatscore/prowler-output-provider-20240101000000"
@@ -1416,7 +1425,9 @@ class TestGenerateComplianceReportsOptimized:
         """Cleanup must not run when a generated report upload fails."""
         mock_scan_summary_filter.return_value.exists.return_value = True
         mock_provider_get.return_value = Mock(uid="provider-uid", provider="m365")
-        mock_get_bulk.return_value = {}
+        # Real ``Compliance.get_bulk("m365")`` exposes the ThreatScore framework
+        # but not ENS/NIS2/CSA; report availability is derived from this map.
+        mock_get_bulk.return_value = {"prowler_threatscore_m365": Mock()}
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = (
             "/tmp/tenant/scan/threatscore/prowler-output-provider-20240101000000"
@@ -1439,6 +1450,111 @@ class TestGenerateComplianceReportsOptimized:
         mock_generate_output_dir.assert_called_once()
         mock_threatscore.assert_called_once()
         mock_rmtree.assert_not_called()
+
+    @patch("tasks.jobs.report.generate_csa_report")
+    @patch("tasks.jobs.report.generate_nis2_report")
+    @patch("tasks.jobs.report.generate_ens_report")
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    @patch("tasks.jobs.report.Provider.objects.get")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    def test_external_provider_without_frameworks_disables_all_reports(
+        self,
+        mock_scan_summary_filter,
+        mock_provider_get,
+        mock_get_bulk,
+        mock_aggregate_stats,
+        mock_threatscore,
+        mock_ens,
+        mock_nis2,
+        mock_csa,
+    ):
+        """An externally-registered provider with no compliance frameworks gets
+        every report disabled (empty output set) without a code change."""
+        mock_scan_summary_filter.return_value.exists.return_value = True
+        mock_provider_get.return_value = Mock(uid="acme-001", provider="local-template")
+        mock_get_bulk.return_value = {}
+        mock_aggregate_stats.return_value = {}
+
+        result = generate_compliance_reports(
+            tenant_id=str(uuid.uuid4()),
+            scan_id=str(uuid.uuid4()),
+            provider_id=str(uuid.uuid4()),
+            generate_threatscore=True,
+            generate_ens=True,
+            generate_nis2=True,
+            generate_csa=True,
+            generate_cis=False,
+        )
+
+        assert result["threatscore"]["upload"] is False
+        assert result["ens"]["upload"] is False
+        assert result["nis2"]["upload"] is False
+        assert result["csa"]["upload"] is False
+        mock_threatscore.assert_not_called()
+        mock_ens.assert_not_called()
+        mock_nis2.assert_not_called()
+        mock_csa.assert_not_called()
+
+    @patch("tasks.jobs.report.initialize_prowler_provider")
+    @patch("tasks.jobs.report.rmtree")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_csa_report")
+    @patch("tasks.jobs.report.generate_nis2_report")
+    @patch("tasks.jobs.report.generate_ens_report")
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    @patch("tasks.jobs.report.Provider.objects.get")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    def test_external_provider_with_threatscore_framework_enables_it(
+        self,
+        mock_scan_summary_filter,
+        mock_provider_get,
+        mock_get_bulk,
+        mock_aggregate_stats,
+        mock_generate_output_dir,
+        mock_threatscore,
+        mock_ens,
+        mock_nis2,
+        mock_csa,
+        mock_upload_to_s3,
+        mock_rmtree,
+        mock_init_provider,
+    ):
+        """An externally-registered provider that ships its own ThreatScore
+        framework gets the ThreatScore report generated with no API code change
+        — exactly what the old hard-coded provider whitelist silently blocked.
+        Frameworks it does not ship (ENS/NIS2/CSA) stay disabled."""
+        mock_scan_summary_filter.return_value.exists.return_value = True
+        mock_provider_get.return_value = Mock(uid="acme-001", provider="local-template")
+        mock_get_bulk.return_value = {"prowler_threatscore_local-template": Mock()}
+        mock_aggregate_stats.return_value = {}
+        mock_generate_output_dir.return_value = "/tmp/tenant/scan/threatscore/out"
+        mock_upload_to_s3.return_value = "s3://bucket/report.pdf"
+        mock_init_provider.return_value = Mock(name="prowler_provider")
+
+        result = generate_compliance_reports(
+            tenant_id=str(uuid.uuid4()),
+            scan_id=str(uuid.uuid4()),
+            provider_id=str(uuid.uuid4()),
+            generate_threatscore=True,
+            generate_ens=True,
+            generate_nis2=True,
+            generate_csa=True,
+            generate_cis=False,
+        )
+
+        # The provider ships the ThreatScore framework -> report generated.
+        mock_threatscore.assert_called_once()
+        assert result["threatscore"]["upload"] is True
+        # It does not ship the others -> they stay disabled.
+        mock_ens.assert_not_called()
+        mock_nis2.assert_not_called()
+        mock_csa.assert_not_called()
+        assert result["ens"]["upload"] is False
 
 
 @pytest.mark.django_db
