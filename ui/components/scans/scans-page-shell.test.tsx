@@ -332,4 +332,22 @@ describe("ScansPageShell", () => {
     expect(calledUrl).toContain("tab=active");
     expect(calledUrl).not.toContain("filter%5Bstate__in%5D");
   });
+
+  it("clears type filter when switching to scheduled scans", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=completed&filter%5Btrigger%5D=manual";
+    const user = userEvent.setup();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /scheduled/i }));
+
+    const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
+    expect(calledUrl).toContain("tab=scheduled");
+    expect(calledUrl).not.toContain("filter%5Btrigger%5D");
+  });
 });
