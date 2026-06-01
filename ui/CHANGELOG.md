@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.29.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Scans tabs and provider launch flow now work as expected [(#11407)](https://github.com/prowler-cloud/prowler/pull/11407)
+
+---
+
 ## [1.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added
