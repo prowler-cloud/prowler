@@ -52,6 +52,21 @@ class TestExternalProviderSecretValidation:
                 "external-template", {"anything": "goes"}
             )
 
+    @pytest.mark.parametrize("bad_secret", [["a", "b"], "a-string", None, 42])
+    def test_secret_rejected_when_not_a_json_object(self, bad_secret):
+        """Even with no declared schema, a non-object secret must be rejected so
+        a list/string/null cannot be persisted and blow up later at
+        ``{**secret}``. See PR #11402 review (Alan-TheGentleman)."""
+        provider_class = MagicMock()
+        provider_class.get_credentials_schema.return_value = []
+        with patch(
+            "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
+        ):
+            with pytest.raises(ValidationError):
+                BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                    "external-template", bad_secret
+                )
+
 
 class TestProviderEnumSerializerField:
     """The provider field accepts whatever the SDK exposes (built-in or

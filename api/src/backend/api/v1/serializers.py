@@ -1552,6 +1552,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
         Providers that declare no schema have their secret accepted as-is; the
         credentials are then validated by the provider's ``test_connection``.
         """
+        if not isinstance(secret, dict):
+            raise serializers.ValidationError({"secret": ["Must be a JSON object."]})
         schemas = SDKProvider.get_class(provider_type).get_credentials_schema()
         if not schemas:
             return
