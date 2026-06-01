@@ -13,6 +13,7 @@ and `prowler.providers.common.provider` without forming an import cycle.
 import importlib.metadata
 
 from prowler.lib.check.external_tool_providers import EXTERNAL_TOOL_PROVIDERS
+from prowler.providers.common.builtin import is_builtin_provider
 
 # Module-level cache for entry-point classes consulted by this helper.
 # Independent of `Provider._ep_providers` to keep this module leaf — the cost
@@ -53,5 +54,9 @@ def is_tool_wrapper_provider(provider: str) -> bool:
     """
     if provider in EXTERNAL_TOOL_PROVIDERS:
         return True
+    # Built-in wins: short-circuit before ep.load() so a same-name plug-in
+    # cannot flip a built-in onto the tool-wrapper path or run its code.
+    if is_builtin_provider(provider):
+        return False
     cls = _load_ep_class(provider)
     return bool(cls and getattr(cls, "is_external_tool_provider", False))
