@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
-import type { ScanJobsTab } from "@/types";
+import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import {
@@ -40,6 +40,7 @@ export function ScansFilterBar({
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const triggerFilterOptions = getScanTriggerFilterOptions(isCloudEnvironment);
   const statusFilterOptions = getScanStatusFilterOptions(activeTab);
+  const showScheduleTypeFilter = activeTab !== SCAN_JOBS_TAB.SCHEDULED;
 
   return (
     <>
@@ -52,18 +53,20 @@ export function ScansFilterBar({
         accountSelectorClassName={filterItemClass}
       />
 
-      <Select value={scheduleType} onValueChange={onScheduleTypeChange}>
-        <SelectTrigger aria-label="All Types" className={filterItemClass}>
-          <SelectValue placeholder="All Types" />
-        </SelectTrigger>
-        <SelectContent>
-          {triggerFilterOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {showScheduleTypeFilter && (
+        <Select value={scheduleType} onValueChange={onScheduleTypeChange}>
+          <SelectTrigger aria-label="All Types" className={filterItemClass}>
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            {triggerFilterOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       {showStatusFilter && (
         <Select value={scanStatus} onValueChange={onScanStatusChange}>
