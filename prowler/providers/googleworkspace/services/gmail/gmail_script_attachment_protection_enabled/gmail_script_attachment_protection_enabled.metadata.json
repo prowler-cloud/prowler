@@ -13,8 +13,8 @@
   "Risk": "Without protection against script-bearing attachments from untrusted senders, users may receive **files containing malicious scripts** that can execute harmful code when opened. Attackers commonly use script attachments to deliver **malware, backdoors, or credential stealers**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7676854",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/set-up-rules-to-detect-harmful-attachments",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
