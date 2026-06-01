@@ -13,8 +13,8 @@
   "Risk": "Unrestricted external spaces allow users to add **anyone from any domain** to persistent group conversations. This increases the risk of **confidential information exposure** in shared spaces and enables **unauthorized external access** to ongoing organizational discussions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9540647",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/chat/set-up-chat-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
