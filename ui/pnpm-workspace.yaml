@@ -87,3 +87,6 @@ trustPolicyExclude:
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true
+minimumReleaseAgeExclude:
+  # Renovate security update: @vitest/browser@4.1.6
+  - "@vitest/browser@4.1.6"

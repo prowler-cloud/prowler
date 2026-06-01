@@ -133,7 +133,7 @@
     "@typescript-eslint/eslint-plugin": "8.53.0",
     "@typescript-eslint/parser": "8.53.0",
     "@vitejs/plugin-react": "5.1.2",
-    "@vitest/browser": "4.0.18",
+    "@vitest/browser": "4.1.6",
     "@vitest/browser-playwright": "4.0.18",
     "@vitest/coverage-v8": "4.0.18",
     "babel-plugin-react-compiler": "1.0.0",
