@@ -72,6 +72,7 @@ from api.v1.serializer_utils.lighthouse import (
     OpenAICredentialsSerializer,
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
+from api.provider_types import get_provider_type_choices
 from api.v1.serializer_utils.providers import ProviderSecretField
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.providers.common.provider import Provider as SDKProvider
@@ -856,12 +857,9 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
 # Providers
 class ProviderEnumSerializerField(serializers.ChoiceField):
     def __init__(self, **kwargs):
-        # The SDK is the source of truth for which providers exist, so the
-        # accepted values track the installed providers (built-in or external)
-        # instead of a static enum.
-        kwargs["choices"] = [
-            (name, name) for name in SDKProvider.get_available_providers()
-        ]
+        # Accepted values track the SDK's installed providers (built-in or
+        # external), shared with the filters via one cached source.
+        kwargs["choices"] = get_provider_type_choices()
         super().__init__(**kwargs)
 
 
@@ -1546,34 +1544,45 @@ class FindingMetadataSerializer(BaseSerializerV1):
 # Provider secrets
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
-    def _validate_external_provider_secret(provider_type: str, secret: dict):
-        """Validate a non-built-in provider's secret against the credential
-        schemas it declares through the SDK contract (one model per secret type;
-        the secret must match one).
+    def _validate_external_provider_secret(
+        provider_type: str, secret_type: str, secret: dict
+    ):
+        """Validate a non-built-in provider's secret against the schema it
+        declares for the given secret type through the SDK contract.
 
-        Providers that declare no schema have their secret accepted as-is; the
-        credentials are then validated by the provider's ``test_connection``.
+        The provider maps each secret type to one model, so the chosen
+        secret_type stays bound to the shape it claims. Providers that declare
+        no schema have their secret accepted as an object and validated by the
+        provider's ``test_connection``.
         """
+        if not isinstance(secret, dict):
+            raise serializers.ValidationError({"secret": ["Must be a JSON object."]})
         schemas = SDKProvider.get_class(provider_type).get_credentials_schema()
         if not schemas:
             return
-        collected_errors = []
-        for schema in schemas:
-            try:
-                schema.model_validate(secret)
-                return
-            except PydanticValidationError as error:
-                collected_errors.append(error)
-        raise serializers.ValidationError(
-            {
-                "secret": [
-                    f"{'/'.join(str(loc) for loc in item['loc']) or 'secret'}: "
-                    f"{item['msg']}"
-                    for error in collected_errors
-                    for item in error.errors()
-                ]
-            }
-        )
+        schema = schemas.get(secret_type)
+        if schema is None:
+            raise serializers.ValidationError(
+                {
+                    "secret_type": [
+                        f"'{secret_type}' is not supported by provider "
+                        f"'{provider_type}'. Supported types: "
+                        f"{', '.join(sorted(schemas))}."
+                    ]
+                }
+            )
+        try:
+            schema.model_validate(secret)
+        except PydanticValidationError as error:
+            raise serializers.ValidationError(
+                {
+                    "secret": [
+                        f"{'/'.join(str(loc) for loc in item['loc']) or 'secret'}: "
+                        f"{item['msg']}"
+                        for item in error.errors()
+                    ]
+                }
+            )
 
     @staticmethod
     def validate_secret_based_on_provider(
@@ -1583,7 +1592,7 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
         # SDK contract; built-in providers keep their explicit serializers below.
         if not SDKProvider.is_builtin(provider_type):
             BaseWriteProviderSecretSerializer._validate_external_provider_secret(
-                provider_type, secret
+                provider_type, secret_type, secret
             )
             return
 

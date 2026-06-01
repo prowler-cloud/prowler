@@ -2,20 +2,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    """Contract step of the zero-downtime migration of Provider.provider from a
-    native PostgreSQL enum to varchar.
+    """Contract step: promote `provider_str` into `provider`.
 
-    The shadow column added in 0094 has been kept in sync by the trigger and
-    backfilled in 0095, so it now holds the value for every row. This migration
-    promotes it into place: drop the trigger and the enum column, rename the
-    shadow column to `provider`, and drop the orphaned enum type. The column
-    name is preserved throughout, and varchar accepts the same string values
-    the enum held, so app instances running the previous release keep working
-    against the swapped column.
-
-    The drop/rename runs in this migration's transaction so `provider` never
-    disappears for readers. The partial unique index is dropped here and
-    rebuilt concurrently in the next migration to avoid a long write lock.
+    Drops the trigger and enum column, renames the shadow column, sets it NOT
+    NULL, and drops the enum type. The unique index is dropped and recreated in
+    the same transaction, so there is no window for duplicate active providers;
+    recreated non-concurrently since the table is small, with a short
+    lock_timeout so the migration fails fast instead of queueing behind a
+    long-running transaction.
     """
 
     dependencies = [
@@ -38,6 +32,7 @@ class Migration(migrations.Migration):
             database_operations=[
                 migrations.RunSQL(
                     sql=(
+                        "SET LOCAL lock_timeout = '10s';\n"
                         "DROP TRIGGER IF EXISTS providers_sync_provider_str ON providers;\n"
                         "DROP FUNCTION IF EXISTS sync_provider_str();\n"
                         "DROP INDEX IF EXISTS unique_provider_uids;\n"
@@ -45,7 +40,9 @@ class Migration(migrations.Migration):
                         "ALTER TABLE providers RENAME COLUMN provider_str TO provider;\n"
                         "ALTER TABLE providers ALTER COLUMN provider SET DEFAULT 'aws';\n"
                         "ALTER TABLE providers ALTER COLUMN provider SET NOT NULL;\n"
-                        "DROP TYPE provider;"
+                        "DROP TYPE provider;\n"
+                        "CREATE UNIQUE INDEX unique_provider_uids ON providers "
+                        "(tenant_id, provider, uid) WHERE NOT is_deleted;"
                     ),
                     reverse_sql=migrations.RunSQL.noop,
                 ),

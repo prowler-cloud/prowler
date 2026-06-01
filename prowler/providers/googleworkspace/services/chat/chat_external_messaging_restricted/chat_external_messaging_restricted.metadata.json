@@ -13,8 +13,8 @@
   "Risk": "Unrestricted external messaging allows users to communicate freely with **any external party**, increasing the risk of **data exfiltration** through conversation content and **social engineering attacks** from untrusted domains targeting internal users.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9540647",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/chat/set-up-chat-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

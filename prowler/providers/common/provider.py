@@ -244,22 +244,21 @@ class Provider(ABC):
         return {**secret}
 
     @classmethod
-    def get_credentials_schema(cls) -> list:
-        """Return the credential schemas this provider accepts — one pydantic
-        model per secret type.
+    def get_credentials_schema(cls) -> dict:
+        """Return the provider's credential schemas keyed by secret type.
 
-        Each model documents, in a single declaration the API can consume for
-        both validation and OpenAPI generation:
-          * the secret type itself, via the model docstring (schema description);
-          * each field, via ``Field(description=...)``;
-          * whether each field is required (no default) or optional
-            (``Optional[...] = None`` / ``Field(default=...)``).
+        Maps each secret type the provider accepts (``"static"``, ``"role"`` or
+        ``"service_account"``) to the pydantic model that validates a secret of
+        that type. The provider declares which type each schema belongs to, so
+        the API validates a secret against the model for the secret type it is
+        created with and the chosen type stays bound to the shape it claims.
 
-        The API validates a stored secret against these models (it must match
-        one). An empty list means no schema is declared: the credentials are
-        accepted as-is and validated by :meth:`test_connection`.
+        Each model documents each field via ``Field(description=...)`` and
+        whether it is required (no default) or optional. An empty dict means no
+        schema is declared: the secret is accepted as an object and validated by
+        :meth:`test_connection`.
         """
-        return []
+        return {}
 
     def display_compliance_table(
         self,
@@ -339,9 +338,11 @@ class Provider(ABC):
             # plug-in is ignored.  This lives here (not in get_class) so
             # that `prowler --help` and API callers that resolve a class
             # without initialising a global provider do not see spurious
-            # warnings.
-            if Provider.is_builtin(arguments.provider) and (
-                Provider._load_ep_provider(arguments.provider) is not None
+            # warnings. Match by name only — never ep.load() a shadowing
+            # plug-in, or its module code would run during a built-in run.
+            if Provider.is_builtin(arguments.provider) and any(
+                ep.name == arguments.provider
+                for ep in importlib.metadata.entry_points(group="prowler.providers")
             ):
                 logger.warning(
                     f"Plug-in provider '{arguments.provider}' registered "
@@ -349,13 +350,6 @@ class Provider(ABC):
                     f"the same name exists. To use your plug-in, register "
                     f"it under a different name."
                 )
-
-            # Kept for downstream forks that may extend the dispatch below
-            # with their own custom built-in branches and reference this name.
-            # The upstream chain dispatches by `arguments.provider` directly.
-            provider_class_name = (  # noqa: F841
-                f"{arguments.provider.capitalize()}Provider"
-            )
 
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
@@ -737,9 +731,10 @@ class Provider(ABC):
     def get_class(provider: str) -> type:
         """Resolve the provider class for a name (built-in or entry-point).
 
-        Side-effect-free: no ``sys.exit``, no global state. Collision warnings
-        are emitted by ``init_global_provider``, not here. The caller handles
-        errors (CLI exits; the API can return HTTP 400).
+        Does not call ``sys.exit`` and does not initialize the global
+        provider (it may populate the ``_ep_providers`` memoization cache).
+        Collision warnings are emitted by ``init_global_provider``, not here.
+        The caller handles errors (CLI exits; the API can return HTTP 400).
 
         Args:
             provider: Provider name, e.g. ``"aws"`` or an external plug-in.
