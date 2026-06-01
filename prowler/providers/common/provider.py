@@ -302,13 +302,6 @@ class Provider(ABC):
                     f"it under a different name."
                 )
 
-            # Kept for downstream forks that may extend the dispatch below
-            # with their own custom built-in branches and reference this name.
-            # The upstream chain dispatches by `arguments.provider` directly.
-            provider_class_name = (
-                f"{arguments.provider.capitalize()}Provider"  # noqa: F841
-            )
-
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
             )
@@ -689,9 +682,10 @@ class Provider(ABC):
     def get_class(provider: str) -> type:
         """Resolve the provider class for a name (built-in or entry-point).
 
-        Side-effect-free: no ``sys.exit``, no global state. Collision warnings
-        are emitted by ``init_global_provider``, not here. The caller handles
-        errors (CLI exits; the API can return HTTP 400).
+        Does not call ``sys.exit`` and does not initialize the global
+        provider (it may populate the ``_ep_providers`` memoization cache).
+        Collision warnings are emitted by ``init_global_provider``, not here.
+        The caller handles errors (CLI exits; the API can return HTTP 400).
 
         Args:
             provider: Provider name, e.g. ``"aws"`` or an external plug-in.

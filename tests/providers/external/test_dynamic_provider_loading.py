@@ -2031,12 +2031,11 @@ class TestGetClass:
         mock_is_builtin.return_value = False
         mock_ep.return_value = []
 
-        with pytest.raises((ImportError, Exception)) as exc_info:
-            Provider.get_class("totally_unknown_xyz_provider")
-
-        # Must NOT be a SystemExit — that belongs in init_global_provider's
+        # Assert ImportError specifically to enforce the public API contract
+        # (not a broad Exception). SystemExit belongs in init_global_provider's
         # wrapper, not in the pure resolver.
-        assert not isinstance(exc_info.value, SystemExit)
+        with pytest.raises(ImportError):
+            Provider.get_class("totally_unknown_xyz_provider")
 
     # -----------------------------------------------------------------------
     # T4: get_class is PURE for built-ins — no collision warning, no EP call
