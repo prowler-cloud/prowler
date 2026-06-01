@@ -438,7 +438,9 @@ class Compliance(BaseModel):
             # Built-in compliance from prowler/compliance/{provider}/
             available_compliance_framework_modules = list_compliance_modules()
             for compliance_framework in available_compliance_framework_modules:
-                if provider in compliance_framework.name:
+                # Match the provider segment exactly, not as a substring, so
+                # e.g. `cloud` does not capture `cloudflare`.
+                if compliance_framework.name.split(".")[-1] == provider:
                     compliance_specification_dir_path = (
                         f"{compliance_framework.module_finder.path}/{provider}"
                     )

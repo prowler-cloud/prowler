@@ -13,8 +13,8 @@
   "Risk": "When external Google Groups access is enabled, users can access and participate in groups created **outside the organization**, potentially exposing them to **phishing, social engineering, or data leakage** through unmanaged external group communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/181865",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/users/advanced/turn-on-or-off-additional-google-services",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

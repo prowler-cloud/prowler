@@ -13,8 +13,8 @@
   "Risk": "With per-user outbound gateways enabled, users can route outbound email through **external SMTP servers**, bypassing organizational **email security controls**, **DLP policies**, and **audit logging**. This creates an unmonitored channel for data exfiltration and policy circumvention.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/176652",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/allow-per-user-outbound-gateways",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

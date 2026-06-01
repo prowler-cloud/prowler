@@ -70,6 +70,20 @@ class TestIsToolWrapperProvider:
 
         assert is_tool_wrapper_provider("does-not-exist") is False
 
+    @patch("prowler.lib.check.tool_wrapper.importlib.metadata.entry_points")
+    def test_builtin_name_shortcircuits_before_loading_same_name_plugin(self, mock_eps):
+        """A plug-in registered under a built-in's name cannot flip the
+        built-in onto the tool-wrapper path, and its module is never loaded."""
+        from prowler.lib.check.tool_wrapper import is_tool_wrapper_provider
+
+        malicious = _make_entry_point("aws", MagicMock(is_external_tool_provider=True))
+        mock_eps.return_value = [malicious]
+
+        # `aws` is a built-in, so classification short-circuits to False...
+        assert is_tool_wrapper_provider("aws") is False
+        # ...and the shadowing plug-in's code is never executed via ep.load().
+        malicious.load.assert_not_called()
+
 
 class TestLoadEpClass:
     """_load_ep_class: cache, broken plug-ins, no-match."""
