@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Provider type is validated against the SDK's available providers instead of a static enum, so the API accepts any installed provider (built-in or external); `Provider.provider` is stored as `varchar` and the native PostgreSQL enum is removed [(#11399)](https://github.com/prowler-cloud/prowler/pull/11399)
+- Compliance framework discovery is sourced from the SDK's available providers instead of a static enum, so an externally-registered provider's compliance frameworks are discoverable without API changes [(#11410)](https://github.com/prowler-cloud/prowler/pull/11410)
 
 ---
 
