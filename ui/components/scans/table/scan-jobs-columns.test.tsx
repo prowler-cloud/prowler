@@ -136,8 +136,6 @@ describe("getScanJobsColumns", () => {
     expect(getColumnIds(SCAN_JOBS_TAB.SCHEDULED)).toEqual([
       "account",
       "scanInfo",
-      "scanSchedule",
-      "nextScan",
       "actions",
     ]);
   });
@@ -162,5 +160,12 @@ describe("getScanJobsColumns", () => {
     renderCell("duration", makeCompletedScan());
 
     expect(screen.getByText("1 min 13 sec")).toBeInTheDocument();
+  });
+
+  it("labels the completed scan schedule column as Type", () => {
+    renderHeader(SCAN_JOBS_TAB.COMPLETED, "scanSchedule");
+
+    expect(screen.getByText("Type")).toBeInTheDocument();
+    expect(screen.queryByText("Schedule")).not.toBeInTheDocument();
   });
 });
