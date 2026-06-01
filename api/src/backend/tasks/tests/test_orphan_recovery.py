@@ -12,6 +12,7 @@ from tasks.jobs.orphan_recovery import (
     _decode_celery_field,
     _reconcile_task_results,
     _recovery_attempt_count,
+    _reenqueue_scan,
     advisory_lock,
     is_worker_alive,
 )
@@ -49,6 +50,10 @@ class TestDecodeCeleryField:
     def test_empty_returns_default(self):
         assert _decode_celery_field(None, {}) == {}
         assert _decode_celery_field("", []) == []
+
+    def test_unparseable_raises(self):
+        with pytest.raises(ValueError):
+            _decode_celery_field("<<not a literal>>", {})
 
 
 @pytest.mark.django_db
@@ -238,6 +243,34 @@ class TestScanRecovery:
         assert mock_scan_task.apply_async.call_args.kwargs["kwargs"]["scan_id"] == str(
             scan.id
         )
+
+    def test_reenqueue_skips_when_scan_already_repointed(
+        self, tenants_fixture, providers_fixture
+    ):
+        # The scan already points at a newer task, so a stale orphan must not relink
+        # it or launch a second concurrent run against the same scan row.
+        tenant, provider = tenants_fixture[0], providers_fixture[0]
+        newer_id = str(uuid4())
+        tr = TaskResult.objects.create(
+            task_id=newer_id, status=states.STARTED, task_name="scan-perform"
+        )
+        APITask.objects.create(id=newer_id, tenant_id=tenant.id, task_runner_task=tr)
+        scan = Scan.objects.create(
+            name="scan-orphan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.EXECUTING,
+            tenant_id=tenant.id,
+            task_id=newer_id,
+            recovery_count=0,
+        )
+
+        with patch("tasks.tasks.perform_scan_task") as mock_scan_task:
+            _reenqueue_scan(str(uuid4()), scan)
+
+        mock_scan_task.apply_async.assert_not_called()
+        scan.refresh_from_db()
+        assert scan.recovery_count == 0
 
 
 @pytest.mark.django_db

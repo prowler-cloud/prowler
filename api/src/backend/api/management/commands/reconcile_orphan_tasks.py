@@ -14,13 +14,13 @@ class Command(BaseCommand):
             "--grace-minutes",
             type=int,
             default=2,
-            help="Skip scans started within this window (worker may still register).",
+            help="Skip tasks started within this window (worker may still register).",
         )
         parser.add_argument(
             "--max-attempts",
             type=int,
             default=3,
-            help="Mark a scan FAILED after this many recovery re-enqueues.",
+            help="Give up re-running a task after this many recovery attempts (scans are marked FAILED).",
         )
         parser.add_argument(
             "--dry-run",

@@ -109,7 +109,10 @@ def revoke_task(task_result, terminate: bool = True) -> None:
 def _decode_celery_field(value, default):
     """Decode django-celery-results' stored task_args/task_kwargs to a Python object.
 
-    The backend stores them as a (sometimes double-encoded) repr/JSON string.
+    The backend stores them as a (sometimes double-encoded) repr/JSON string. An
+    empty or missing field returns ``default``; a non-empty value that cannot be
+    decoded raises ``ValueError`` so the caller can avoid re-enqueuing a task with
+    the wrong arguments.
     """
     obj = value
     for _ in range(2):  # values can be double-encoded (a string holding a repr)
@@ -126,7 +129,7 @@ def _decode_celery_field(value, default):
             except (ValueError, SyntaxError, TypeError):
                 continue
         if parsed is None:
-            return default
+            raise ValueError(f"undecodable celery field: {text[:120]!r}")
         obj = parsed
     return default if obj is None else obj
 
@@ -283,8 +286,17 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
         )
         return "failed"
 
-    args = _decode_celery_field(args_repr, [])
-    kwargs = _decode_celery_field(kwargs_repr, {})
+    try:
+        args = _decode_celery_field(args_repr, [])
+        kwargs = _decode_celery_field(kwargs_repr, {})
+    except ValueError:
+        logger.error(
+            "Orphan %s (%s): could not decode stored args/kwargs, not re-enqueuing",
+            task_result.task_id,
+            name,
+        )
+        _fail_domain_row(task_result.task_id, name, now)
+        return "failed"
     new_task_id = str(uuid4())
     task_obj.apply_async(
         args=list(args) if isinstance(args, (list, tuple)) else [],
@@ -323,6 +335,16 @@ def _reenqueue_scan(old_task_id: str, scan) -> None:
     tenant_id = str(scan.tenant_id)
     new_task_id = str(uuid4())
     with rls_transaction(tenant_id):
+        relinked = Scan.all_objects.filter(id=scan.id, task_id=old_task_id).update(
+            task_id=new_task_id, recovery_count=(scan.recovery_count or 0) + 1
+        )
+        if not relinked:
+            logger.info(
+                "Scan %s no longer points at task %s; skipping recovery re-enqueue",
+                scan.id,
+                old_task_id,
+            )
+            return
         task_result_new, _ = TaskResult.objects.get_or_create(
             task_id=new_task_id,
             defaults={"status": states.PENDING, "task_name": "scan-perform"},
@@ -331,9 +353,6 @@ def _reenqueue_scan(old_task_id: str, scan) -> None:
             id=new_task_id,
             tenant_id=tenant_id,
             defaults={"task_runner_task": task_result_new},
-        )
-        Scan.all_objects.filter(id=scan.id, task_id=old_task_id).update(
-            task_id=new_task_id, recovery_count=(scan.recovery_count or 0) + 1
         )
 
     perform_scan_task.apply_async(
