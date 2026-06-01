@@ -40,12 +40,6 @@ To install Prowler as a Python package, use `Python >= 3.10, <= 3.12`. Prowler i
     pip install prowler
     prowler -v
     ```
-
-    To upgrade Prowler to the latest version:
-
-    ``` bash
-    pip install --upgrade prowler
-    ```
   </Tab>
   <Tab title="Docker">
     _Requirements_:
@@ -169,6 +163,68 @@ To install Prowler as a Python package, use `Python >= 3.10, <= 3.12`. Prowler i
     ```
   </Tab>
 </Tabs>
+
+## Updating Prowler CLI
+
+Upgrade Prowler CLI to the latest release using the same method chosen for installation:
+
+<Tabs>
+  <Tab title="pipx">
+    ```bash
+    pipx upgrade prowler
+    prowler -v
+    ```
+  </Tab>
+  <Tab title="pip">
+    ```bash
+    pip install --upgrade prowler
+    prowler -v
+    ```
+  </Tab>
+  <Tab title="Docker">
+    Pull the desired image tag to fetch the latest version:
+
+    ```bash
+    docker pull toniblyx/prowler:latest
+    ```
+
+    <Note>
+      Replace `latest` with a specific release tag (for example, `stable` or `<x.y.z>`) to pin a version. Refer to the [Container Versions](#container-versions) section for the full list of available tags.
+    </Note>
+  </Tab>
+  <Tab title="GitHub">
+    Pull the latest changes and sync the environment:
+
+    ```bash
+    cd prowler
+    git pull
+    uv sync
+    uv run python prowler-cli.py -v
+    ```
+
+    <Note>
+      To upgrade to a specific release, check out the corresponding tag before syncing: `git checkout <x.y.z>`.
+    </Note>
+  </Tab>
+  <Tab title="Brew">
+    ```bash
+    brew upgrade prowler
+    prowler -v
+    ```
+  </Tab>
+  <Tab title="CloudShell">
+    Both AWS CloudShell and Azure CloudShell install Prowler with `pipx`, so the upgrade command is the same:
+
+    ```bash
+    pipx upgrade prowler
+    prowler -v
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  To install a specific version instead of the latest release, pin it explicitly. For example, with `pipx`: `pipx install prowler==<x.y.z>`, or with `pip`: `pip install prowler==<x.y.z>`. The available releases are listed in the [Releases GitHub section](https://github.com/prowler-cloud/prowler/releases).
+</Note>
 
 ## Container Versions
 
