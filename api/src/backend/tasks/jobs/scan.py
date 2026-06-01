@@ -476,9 +476,13 @@ def _create_compliance_summaries(
             )
         )
 
-    # Bulk insert summaries
-    if summary_objects:
-        with rls_transaction(tenant_id):
+    # Idempotent re-run: clear this scan's prior summaries before re-inserting, so
+    # a recovered scan's summary always reflects its own (re-derived) requirement
+    # rows rather than keeping a stale row (bulk_create ignore_conflicts alone would
+    # keep the old one).
+    with rls_transaction(tenant_id):
+        ComplianceOverviewSummary.objects.filter(scan_id=scan_id).delete()
+        if summary_objects:
             ComplianceOverviewSummary.objects.bulk_create(
                 summary_objects, batch_size=500, ignore_conflicts=True
             )
@@ -1019,6 +1023,9 @@ def perform_prowler_scan(
     with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
         scan_instance = Scan.objects.get(pk=scan_id)
+        # Idempotent re-run: findings have no unique key, so clear this scan's
+        # findings before re-inserting (mappings cascade). No-op on first run.
+        Finding.all_objects.filter(scan_id=scan_id).delete()
         scan_instance.state = StateChoices.EXECUTING
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save(update_fields=["state", "started_at", "updated_at"])
@@ -1650,6 +1657,10 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             requirement_statuses[key]["fail_count"] += 1
                         elif requirement_status == "PASS":
                             requirement_statuses[key]["pass_count"] += 1
+
+            # Idempotent re-run: COPY can't ON CONFLICT, so clear this scan's rows first.
+            with rls_transaction(tenant_id):
+                ComplianceRequirementOverview.objects.filter(scan_id=scan_id).delete()
 
             # Bulk create requirement records using PostgreSQL COPY
             _persist_compliance_requirement_rows(tenant_id, compliance_requirement_rows)
