@@ -48,6 +48,18 @@ const getScanScheduleColumn = (title: string): ColumnDef<ScanProps> => ({
   cell: ({ row }) => <ScheduleCell scan={row.original} />,
 });
 
+const scheduledScanScheduleColumn: ColumnDef<ScanProps> = {
+  id: "scanSchedule",
+  accessorFn: (row) => row.attributes.scheduled_at,
+  header: ({ column }) => (
+    <DataTableColumnHeader column={column} title="Schedule" />
+  ),
+  cell: ({ row }) => (
+    <DateWithTime dateTime={row.original.attributes.scheduled_at} showTime />
+  ),
+  enableSorting: false,
+};
+
 const resourcesColumn: ColumnDef<ScanProps> = {
   id: "resources",
   header: ({ column }) => (
@@ -139,6 +151,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
 const scheduledColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanInfoColumn,
+  scheduledScanScheduleColumn,
   /*
    * TODO: Restore this column when the API exposes the last completed scan date for this schedule.
    * {
