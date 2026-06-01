@@ -13,43 +13,59 @@ from api.v1.serializers import (
 
 
 class TestExternalProviderSecretValidation:
-    """A non-built-in provider's secret is validated against the credential
-    schema it declares through the SDK contract, or accepted as-is when it
-    declares none (then validated by the provider's test_connection)."""
+    """A non-built-in provider's secret is validated against the schema it
+    declares for the chosen secret type through the SDK contract, or accepted as
+    an object when it declares none (then validated by test_connection)."""
 
-    class _Credentials(BaseModel):
+    class _StaticCredentials(BaseModel):
         api_url: str
         api_key: str
 
-    def test_secret_validated_against_declared_schema(self):
+    class _RoleCredentials(BaseModel):
+        role_arn: str
+
+    def _patch(self, schemas):
         provider_class = MagicMock()
-        provider_class.get_credentials_schema.return_value = [self._Credentials]
-        with patch(
+        provider_class.get_credentials_schema.return_value = schemas
+        return patch(
             "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
-        ):
+        )
+
+    def test_secret_validated_against_its_type_schema(self):
+        with self._patch({"static": self._StaticCredentials}):
             BaseWriteProviderSecretSerializer._validate_external_provider_secret(
-                "external-template", {"api_url": "u", "api_key": "k"}
+                "external-template", "static", {"api_url": "u", "api_key": "k"}
             )
 
     def test_secret_rejected_when_schema_violated(self):
-        provider_class = MagicMock()
-        provider_class.get_credentials_schema.return_value = [self._Credentials]
-        with patch(
-            "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
-        ):
+        with self._patch({"static": self._StaticCredentials}):
             with pytest.raises(ValidationError):
                 BaseWriteProviderSecretSerializer._validate_external_provider_secret(
-                    "external-template", {"api_url": "u"}
+                    "external-template", "static", {"api_url": "u"}
+                )
+
+    def test_secret_must_match_its_type_not_another(self):
+        """A secret is validated against the schema for its declared secret_type,
+        not "any declared schema": a role-shaped secret under secret_type=static
+        is rejected. See PR #11402 review (josema-xyz / Alan-TheGentleman)."""
+        schemas = {"static": self._StaticCredentials, "role": self._RoleCredentials}
+        with self._patch(schemas):
+            with pytest.raises(ValidationError):
+                BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                    "external-template", "static", {"role_arn": "arn:aws:iam::x"}
+                )
+
+    def test_rejects_secret_type_not_declared_by_provider(self):
+        with self._patch({"static": self._StaticCredentials}):
+            with pytest.raises(ValidationError):
+                BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                    "external-template", "role", {"role_arn": "arn"}
                 )
 
     def test_secret_accepted_when_no_schema_declared(self):
-        provider_class = MagicMock()
-        provider_class.get_credentials_schema.return_value = []
-        with patch(
-            "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
-        ):
+        with self._patch({}):
             BaseWriteProviderSecretSerializer._validate_external_provider_secret(
-                "external-template", {"anything": "goes"}
+                "external-template", "static", {"anything": "goes"}
             )
 
     @pytest.mark.parametrize("bad_secret", [["a", "b"], "a-string", None, 42])
@@ -57,14 +73,10 @@ class TestExternalProviderSecretValidation:
         """Even with no declared schema, a non-object secret must be rejected so
         a list/string/null cannot be persisted and blow up later at
         ``{**secret}``. See PR #11402 review (Alan-TheGentleman)."""
-        provider_class = MagicMock()
-        provider_class.get_credentials_schema.return_value = []
-        with patch(
-            "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
-        ):
+        with self._patch({}):
             with pytest.raises(ValidationError):
                 BaseWriteProviderSecretSerializer._validate_external_provider_secret(
-                    "external-template", bad_secret
+                    "external-template", "static", bad_secret
                 )
 
 

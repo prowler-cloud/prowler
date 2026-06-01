@@ -244,22 +244,21 @@ class Provider(ABC):
         return {**secret}
 
     @classmethod
-    def get_credentials_schema(cls) -> list:
-        """Return the credential schemas this provider accepts — one pydantic
-        model per secret type.
+    def get_credentials_schema(cls) -> dict:
+        """Return the provider's credential schemas keyed by secret type.
 
-        Each model documents, in a single declaration the API can consume for
-        both validation and OpenAPI generation:
-          * the secret type itself, via the model docstring (schema description);
-          * each field, via ``Field(description=...)``;
-          * whether each field is required (no default) or optional
-            (``Optional[...] = None`` / ``Field(default=...)``).
+        Maps each secret type the provider accepts (``"static"``, ``"role"`` or
+        ``"service_account"``) to the pydantic model that validates a secret of
+        that type. The provider declares which type each schema belongs to, so
+        the API validates a secret against the model for the secret type it is
+        created with and the chosen type stays bound to the shape it claims.
 
-        The API validates a stored secret against these models (it must match
-        one). An empty list means no schema is declared: the credentials are
-        accepted as-is and validated by :meth:`test_connection`.
+        Each model documents each field via ``Field(description=...)`` and
+        whether it is required (no default) or optional. An empty dict means no
+        schema is declared: the secret is accepted as an object and validated by
+        :meth:`test_connection`.
         """
-        return []
+        return {}
 
     def display_compliance_table(
         self,
