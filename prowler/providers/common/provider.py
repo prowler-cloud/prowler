@@ -321,9 +321,11 @@ class Provider(ABC):
             # plug-in is ignored.  This lives here (not in get_class) so
             # that `prowler --help` and API callers that resolve a class
             # without initialising a global provider do not see spurious
-            # warnings.
-            if Provider.is_builtin(arguments.provider) and (
-                Provider._load_ep_provider(arguments.provider) is not None
+            # warnings. Match by name only — never ep.load() a shadowing
+            # plug-in, or its module code would run during a built-in run.
+            if Provider.is_builtin(arguments.provider) and any(
+                ep.name == arguments.provider
+                for ep in importlib.metadata.entry_points(group="prowler.providers")
             ):
                 logger.warning(
                     f"Plug-in provider '{arguments.provider}' registered "
@@ -331,13 +333,6 @@ class Provider(ABC):
                     f"the same name exists. To use your plug-in, register "
                     f"it under a different name."
                 )
-
-            # Kept for downstream forks that may extend the dispatch below
-            # with their own custom built-in branches and reference this name.
-            # The upstream chain dispatches by `arguments.provider` directly.
-            provider_class_name = (  # noqa: F841
-                f"{arguments.provider.capitalize()}Provider"
-            )
 
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
@@ -719,9 +714,10 @@ class Provider(ABC):
     def get_class(provider: str) -> type:
         """Resolve the provider class for a name (built-in or entry-point).
 
-        Side-effect-free: no ``sys.exit``, no global state. Collision warnings
-        are emitted by ``init_global_provider``, not here. The caller handles
-        errors (CLI exits; the API can return HTTP 400).
+        Does not call ``sys.exit`` and does not initialize the global
+        provider (it may populate the ``_ep_providers`` memoization cache).
+        Collision warnings are emitted by ``init_global_provider``, not here.
+        The caller handles errors (CLI exits; the API can return HTTP 400).
 
         Args:
             provider: Provider name, e.g. ``"aws"`` or an external plug-in.
