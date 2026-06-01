@@ -17,7 +17,7 @@ export default function MainLayout({
     <div className="relative flex h-dvh items-center justify-center overflow-hidden">
       {/* Top-left gradient halo */}
       <div
-        className="pointer-events-none fixed top-0 left-0 z-0 size-[600px] opacity-20 blur-3xl"
+        className="pointer-events-none fixed top-0 left-0 z-0 h-[120%] w-[160%] opacity-[7%] blur-3xl"
         style={{
           background: "linear-gradient(90deg, #31E59F 0%, #60E0EC 100%)",
           transform: "translate(-50%, -50%)",
@@ -26,7 +26,7 @@ export default function MainLayout({
 
       {/* Bottom-right gradient halo */}
       <div
-        className="pointer-events-none fixed right-0 bottom-0 z-0 size-[600px] opacity-20 blur-3xl"
+        className="pointer-events-none fixed right-0 bottom-0 z-0 h-[50%] w-[50%] opacity-[7%] blur-3xl"
         style={{
           background: "linear-gradient(90deg, #31E59F 0%, #60E0EC 100%)",
           transform: "translate(50%, 50%)",

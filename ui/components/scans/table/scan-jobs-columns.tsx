@@ -39,13 +39,25 @@ const scanInfoColumn: ColumnDef<ScanProps> = {
   cell: ({ row }) => <ScanInfoCell scan={row.original} />,
 };
 
-const scanScheduleColumn: ColumnDef<ScanProps> = {
+const getScanScheduleColumn = (title: string): ColumnDef<ScanProps> => ({
   id: "scanSchedule",
   accessorFn: (row) => row.attributes.trigger,
   header: ({ column }) => (
-    <DataTableColumnHeader column={column} title="Schedule" param="trigger" />
+    <DataTableColumnHeader column={column} title={title} param="trigger" />
   ),
   cell: ({ row }) => <ScheduleCell scan={row.original} />,
+});
+
+const scheduledScanScheduleColumn: ColumnDef<ScanProps> = {
+  id: "scanSchedule",
+  accessorFn: (row) => row.attributes.scheduled_at,
+  header: ({ column }) => (
+    <DataTableColumnHeader column={column} title="Schedule" />
+  ),
+  cell: ({ row }) => (
+    <DateWithTime dateTime={row.original.attributes.scheduled_at} showTime />
+  ),
+  enableSorting: false,
 };
 
 const resourcesColumn: ColumnDef<ScanProps> = {
@@ -86,7 +98,7 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
     cell: ({ row }) => <ProgressCell scan={row.original} />,
     enableSorting: false,
   },
-  scanScheduleColumn,
+  getScanScheduleColumn("Schedule"),
   {
     id: "launched",
     header: ({ column }) => (
@@ -118,7 +130,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
     cell: ({ row }) => <StatusBadge status={row.original.attributes.state} />,
     enableSorting: false,
   },
-  scanScheduleColumn,
+  getScanScheduleColumn("Type"),
   {
     id: "scanDate",
     accessorFn: (row) => row.attributes.completed_at,
@@ -139,7 +151,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
 const scheduledColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanInfoColumn,
-  scanScheduleColumn,
+  scheduledScanScheduleColumn,
   /*
    * TODO: Restore this column when the API exposes the last completed scan date for this schedule.
    * {
@@ -153,20 +165,6 @@ const scheduledColumns = (): ColumnDef<ScanProps>[] => [
    *   enableSorting: false,
    * },
    */
-  {
-    id: "nextScan",
-    accessorFn: (row) => row.attributes.next_scan_at,
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Next Run"
-        param="next_scan_at"
-      />
-    ),
-    cell: ({ row }) => (
-      <DateWithTime dateTime={row.original.attributes.next_scan_at} />
-    ),
-  },
   actionsColumn,
 ];
 

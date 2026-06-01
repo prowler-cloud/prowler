@@ -13,8 +13,8 @@
   "Risk": "Unrestricted internal file sharing in Chat allows files with **sensitive information** to be distributed freely without passing through approved channels. This undermines **data governance** and **audit trail** requirements, making it harder to track data movement within the organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9540647",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/chat/set-up-chat-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
