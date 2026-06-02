@@ -36,6 +36,7 @@ class MongodbatlasProvider(Provider):
     """
 
     _type: str = "mongodbatlas"
+    sdk_only: bool = False
     _session: MongoDBAtlasSession
     _identity: MongoDBAtlasIdentityInfo
     _audit_config: dict

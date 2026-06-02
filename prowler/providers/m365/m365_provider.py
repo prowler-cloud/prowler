@@ -99,6 +99,7 @@ class M365Provider(Provider):
     """
 
     _type: str = "m365"
+    sdk_only: bool = False
     _session: DefaultAzureCredential  # Must be used besides being named for Azure
     _identity: M365IdentityInfo
     _audit_config: dict

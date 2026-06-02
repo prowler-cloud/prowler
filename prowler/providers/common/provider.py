@@ -142,6 +142,10 @@ class Provider(ABC):
 
     _cli_help_text: str = ""
 
+    # CLI/SDK-only provider, hidden from the app (API/UI). Defaults True; a
+    # provider opts into the app with ``sdk_only = False``. See get_app_providers().
+    sdk_only: bool = True
+
     @classmethod
     def from_cli_args(cls, arguments: Namespace, fixer_config: dict) -> "Provider":
         """Instantiate the provider from CLI arguments and return the instance.
@@ -626,6 +630,28 @@ class Provider(ABC):
         for ep in importlib.metadata.entry_points(group="prowler.providers"):
             providers.add(ep.name)
         return sorted(providers)
+
+    @staticmethod
+    def get_app_providers() -> list[str]:
+        """Return the providers the app (API/UI) may expose: those with
+        ``sdk_only = False``.
+
+        Counterpart of :meth:`get_available_providers`, which lists every
+        provider for the CLI. A provider whose class cannot be imported is
+        treated as ``sdk_only`` (excluded) so a broken plug-in never leaks in.
+        """
+        app_providers = []
+        for name in Provider.get_available_providers():
+            try:
+                provider_class = Provider.get_class(name)
+            except Exception as error:
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                continue
+            if not getattr(provider_class, "sdk_only", True):
+                app_providers.append(name)
+        return app_providers
 
     @staticmethod
     def is_tool_wrapper_provider(provider: str) -> bool:
