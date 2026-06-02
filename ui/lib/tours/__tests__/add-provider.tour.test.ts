@@ -5,9 +5,11 @@ import {
   type AddProviderTourTarget,
 } from "../add-provider.tour";
 
-// The set of anchored step targets the tour is allowed to reference. Only these
-// two carry a `data-tour-id` in the UI source; the welcome step has no target.
-const ALLOWED_TARGETS = ["trigger", "provider-type"] as const;
+// The set of anchored step targets the tour is allowed to reference. Only
+// `trigger` carries a `data-tour-id` in the UI source; the welcome step has no
+// target. The tour ends at the Add Provider button and never anchors inside the
+// wizard, so it cannot overlay the Radix dialog and close it mid-flow.
+const ALLOWED_TARGETS = ["trigger"] as const;
 
 const definedTargets = (): AddProviderTourTarget[] =>
   addProviderTour.steps
@@ -26,13 +28,22 @@ describe("addProviderTour shape", () => {
     expect(addProviderTour.version).toBeGreaterThan(0);
   });
 
-  it("includes a trigger step and a provider-type step", () => {
+  it("includes a trigger step as the only anchored step", () => {
     // Given - the anchored step targets present in the tour
     const targets = definedTargets();
 
-    // Then - both anchored stages exist
+    // Then - the trigger anchor exists and is the single anchored stage
     expect(targets).toContain("trigger");
-    expect(targets).toContain("provider-type");
+    expect(targets).toHaveLength(1);
+  });
+
+  it("never anchors inside the provider wizard (no provider-type step)", () => {
+    // Given - the anchored step targets present in the tour
+    const targets = definedTargets();
+
+    // Then - the wizard-internal anchor is gone so the driver overlay never
+    // sits on top of the Radix dialog and closes it mid-flow.
+    expect(targets).not.toContain("provider-type");
   });
 
   it("never targets an element outside the allowed anchor set", () => {

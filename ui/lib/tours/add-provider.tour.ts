@@ -2,19 +2,21 @@ import {
   defineTour,
   TOUR_STEP_ALIGNMENTS,
   TOUR_STEP_SIDES,
-  type TourStepHandlers,
 } from "./tour-types";
 
-// The literal targets this tour anchors. `defineTour<...>` preserves the union
-// so `useDriverTour` can validate `stepHandlers` keys and `waitForStep`
-// arguments against exactly these two values.
-export type AddProviderTourTarget = "trigger" | "provider-type";
+// The literal target this tour anchors. `defineTour<...>` preserves the union
+// so `useDriverTour` can validate `waitForStep` arguments against exactly this
+// value. The tour deliberately stops at the Add Provider button: it must NOT
+// anchor inside the provider wizard, because driver.js renders a full-screen
+// overlay that the wizard's Radix `Dialog` treats as a click-outside and would
+// close the wizard mid-flow.
+export type AddProviderTourTarget = "trigger";
 
 export const addProviderTour = defineTour<AddProviderTourTarget>({
   id: "add-provider",
   version: 1,
   // Scopes the `tour:check` / `prowler-tour` drift check to the providers tree
-  // where the `trigger` and `provider-type` anchors live.
+  // where the `trigger` anchor lives.
   coversFiles: ["ui/components/providers/**"],
   steps: [
     {
@@ -24,40 +26,15 @@ export const addProviderTour = defineTour<AddProviderTourTarget>({
         "Prowler scans the cloud accounts you connect. Let's walk through adding your first provider so scans have something to assess.",
     },
     {
+      // Final step — highlights the Add Provider button and hands control back
+      // to the user. Clicking the button opens the wizard on its own surface;
+      // the tour does not follow the user into the dialog.
       target: "trigger",
       side: TOUR_STEP_SIDES.BOTTOM,
       align: TOUR_STEP_ALIGNMENTS.START,
-      title: "Open the Add Provider wizard",
+      title: "Connect your first provider",
       description:
-        "Click Add Provider to launch the setup wizard. We'll point out the first thing to choose.",
-    },
-    {
-      target: "provider-type",
-      side: TOUR_STEP_SIDES.RIGHT,
-      align: TOUR_STEP_ALIGNMENTS.START,
-      title: "Pick a provider type",
-      description:
-        "Choose the cloud you want to connect (AWS, Azure, GCP, and more). From here the wizard guides you through the rest — go at your own pace.",
+        "Click Add Provider to open the setup wizard — it will guide you through the rest.",
     },
   ],
 });
-
-// Step handlers are intentionally NOT part of the `TourDefinition` (which is the
-// CI-scanned, serializable shape). They are passed to `useDriverTour` at
-// consumption time. The factory takes the imperative wizard-open callback the
-// providers page owns (finalized in Slice C) so the tour file stays free of
-// page-level plumbing. The `trigger` step opens the wizard, then waits for the
-// `provider-type` anchor to mount before advancing; `provider-type` is the last
-// anchored step and releases control back to the user on completion.
-export function createAddProviderTourStepHandlers(openWizard: () => void): {
-  [K in AddProviderTourTarget]?: TourStepHandlers<AddProviderTourTarget>;
-} {
-  return {
-    trigger: {
-      onNext: async ({ waitForStep }) => {
-        openWizard();
-        await waitForStep("provider-type");
-      },
-    },
-  };
-}

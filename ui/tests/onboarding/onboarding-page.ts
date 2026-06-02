@@ -34,9 +34,9 @@ export class OnboardingPage extends BasePage {
   readonly checkpointContinueButton: Locator;
   readonly checkpointFinishButton: Locator;
 
-  // Tour anchors mounted on the providers surface.
+  // Tour anchor mounted on the providers surface. The add-provider tour ends at
+  // the Add Provider button and never anchors inside the wizard.
   readonly addProviderTriggerAnchor: Locator;
-  readonly providerTypeAnchor: Locator;
 
   // Per-route anchors for the sequence flows (Slices 4-7). Each value is
   // `<tour-id>-<step.target>`, matching the `data-tour-id` produced by adaptStep.
@@ -80,9 +80,6 @@ export class OnboardingPage extends BasePage {
 
     this.addProviderTriggerAnchor = page.locator(
       '[data-tour-id="add-provider-trigger"]',
-    );
-    this.providerTypeAnchor = page.locator(
-      '[data-tour-id="add-provider-provider-type"]',
     );
 
     this.viewFirstScanLaunchAnchor = page.locator(
@@ -213,7 +210,6 @@ export class OnboardingPage extends BasePage {
 
   async verifyAnchorsPresent(): Promise<void> {
     await expect(this.addProviderTriggerAnchor).toBeVisible();
-    await expect(this.providerTypeAnchor).toBeVisible();
   }
 
   // Each sequence route exposes its first anchor; the spec asserts that one to
