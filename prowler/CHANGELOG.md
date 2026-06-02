@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.29.1] (Prowler v5.29.1)
+
+### 🐞 Fixed
+
+- OCSF output writer now re-raises I/O errors (e.g. `ENOSPC`) instead of logging them per finding and leaving a truncated file [(#11421)](https://github.com/prowler-cloud/prowler/pull/11421)
+
+---
+
 ## [5.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added

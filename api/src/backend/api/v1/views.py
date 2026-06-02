@@ -2059,12 +2059,17 @@ class ScanViewSet(BaseRLSViewSet):
         if scan_instance.state == StateChoices.EXECUTING and scan_instance.task:
             task = scan_instance.task
         else:
-            try:
-                task = Task.objects.get(
+            # A scan can have several `scan-report` tasks (e.g. re-runs); take the
+            # most recent one. `.first()` also avoids `MultipleObjectsReturned`.
+            task = (
+                Task.objects.filter(
                     task_runner_task__task_name="scan-report",
                     task_runner_task__task_kwargs__contains=str(scan_instance.id),
                 )
-            except Task.DoesNotExist:
+                .order_by("-inserted_at")
+                .first()
+            )
+            if task is None:
                 return None
 
         self.response_serializer_class = TaskSerializer
@@ -2139,27 +2144,32 @@ class ScanViewSet(BaseRLSViewSet):
                         status=status.HTTP_502_BAD_GATEWAY,
                     )
                 contents = resp.get("Contents", [])
-                keys = []
+                matches = []
                 for obj in contents:
                     key = obj["Key"]
                     key_basename = os.path.basename(key)
                     if any(ch in suffix for ch in ("*", "?", "[")):
                         if fnmatch.fnmatch(key_basename, suffix):
-                            keys.append(key)
+                            matches.append(obj)
                     elif key_basename == suffix:
-                        keys.append(key)
+                        matches.append(obj)
                     elif key.endswith(suffix):
                         # Backward compatibility if suffix already includes directories
-                        keys.append(key)
-                if not keys:
+                        matches.append(obj)
+                if not matches:
                     return Response(
                         {
                             "detail": f"No compliance file found for name '{os.path.splitext(suffix)[0]}'."
                         },
                         status=status.HTTP_404_NOT_FOUND,
                     )
-                # path_pattern here is prefix, but in compliance we build correct suffix check before
-                key = keys[0]
+                # Return the most recently modified match (latest report) when
+                # several files share the prefix/suffix. `list_objects_v2` always
+                # returns `LastModified`; the fallback keeps ordering deterministic
+                # if it is ever absent.
+                key = max(matches, key=lambda o: (o.get("LastModified", ""), o["Key"]))[
+                    "Key"
+                ]
             else:
                 # path_pattern is exact key; HEAD before presigning to preserve the 404 contract.
                 key = path_pattern
@@ -2209,7 +2219,9 @@ class ScanViewSet(BaseRLSViewSet):
                     },
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            filepath = files[0]
+            # Return the most recently modified match (latest report) when the
+            # pattern resolves to several files.
+            filepath = max(files, key=os.path.getmtime)
             with open(filepath, "rb") as f:
                 content = f.read()
             filename = os.path.basename(filepath)
