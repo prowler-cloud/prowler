@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
+import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
@@ -176,6 +177,12 @@ export function useProviderWizardController({
   const isOrgDirectEntry = Boolean(orgInitialData);
 
   const handleClose = () => {
+    // Capture whether a provider was created in this session BEFORE the reset
+    // clears `providerId`. The connect step calls `setProvider` once the
+    // provider record is created server-side, so a non-null id means the wizard
+    // closed having connected a provider.
+    const connectedProviderId = useProviderWizardStore.getState().providerId;
+
     resetProviderWizard();
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
@@ -185,6 +192,15 @@ export function useProviderWizardController({
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
+
+    // Explicitly request the onboarding checkpoint on wizard close. The store
+    // gates it on `armed` (set only when the user started onboarding) and the
+    // handled marker, so an established user adding another provider never sees
+    // the dialog.
+    useOnboardingCheckpointStore.getState().requestOpenOnWizardClose({
+      providerConnected: connectedProviderId !== null,
+    });
+
     router.refresh();
   };
 

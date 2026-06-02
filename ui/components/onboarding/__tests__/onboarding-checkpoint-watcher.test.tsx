@@ -8,12 +8,13 @@ import { OnboardingCheckpointWatcher } from "../onboarding-checkpoint-watcher";
 
 const pushMock = vi.fn();
 const startSequenceMock = vi.fn();
+const closeMock = vi.fn();
 
 const CHECKPOINT_MARKER = "prowler.onboarding.checkpoint";
 
-// Drives the provider-wizard open signal the watcher subscribes to. Tests set
-// this before render/rerender to simulate the wizard being open or closed.
-let wizardOpenState = false;
+// Drives the store `open` flag the watcher subscribes to. Tests set this before
+// render to simulate the checkpoint being requested open/closed.
+let checkpointOpenState = false;
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
@@ -25,18 +26,24 @@ vi.mock("@/store/onboarding-sequence", () => ({
   },
 }));
 
-vi.mock("@/store/provider-wizard/store", () => ({
-  // The watcher reads the open flag via a selector hook. Return the current
-  // module-level state so a rerender after toggling reflects the new value.
-  useProviderWizardStore: (selector: (state: { isOpen: boolean }) => unknown) =>
-    selector({ isOpen: wizardOpenState }),
+vi.mock("@/store/onboarding-checkpoint", () => ({
+  CHECKPOINT_MARKER: "prowler.onboarding.checkpoint",
+  // The watcher reads `open` via a selector hook and calls `close` on resolve.
+  useOnboardingCheckpointStore: Object.assign(
+    (selector: (state: { open: boolean }) => unknown) =>
+      selector({ open: checkpointOpenState }),
+    {
+      getState: () => ({ close: closeMock }),
+    },
+  ),
 }));
 
 describe("OnboardingCheckpointWatcher", () => {
   beforeEach(() => {
     pushMock.mockClear();
     startSequenceMock.mockClear();
-    wizardOpenState = false;
+    closeMock.mockClear();
+    checkpointOpenState = false;
     window.localStorage.clear();
   });
 
@@ -44,103 +51,24 @@ describe("OnboardingCheckpointWatcher", () => {
     vi.restoreAllMocks();
   });
 
-  describe("firing rules", () => {
-    it("opens the dialog on a concrete false -> true flip", async () => {
-      // Given - the watcher first observes a no-provider state from the prop
-      const { rerender } = render(
-        <OnboardingCheckpointWatcher hasProviders={false} />,
-      );
-      expect(
-        screen.queryByText("Provider connected — keep exploring?"),
-      ).not.toBeInTheDocument();
+  describe("rendering", () => {
+    it("renders the dialog when the store open flag is true", () => {
+      // Given/When - the store requested the checkpoint open
+      checkpointOpenState = true;
+      render(<OnboardingCheckpointWatcher />);
 
-      // When - the layout re-computes hasProviders to true after first connect
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
-
-      // Then - the checkpoint dialog appears
+      // Then - the dialog is shown
       expect(
-        await screen.findByText("Provider connected — keep exploring?"),
+        screen.getByText("Provider connected — keep exploring?"),
       ).toBeInTheDocument();
     });
 
-    it("does NOT fire while the provider wizard is open, then fires once when it closes", async () => {
-      // Given - the wizard is open (the user is mid Add-Provider flow)
-      wizardOpenState = true;
-      const { rerender } = render(
-        <OnboardingCheckpointWatcher hasProviders={false} />,
-      );
+    it("does not render the dialog when the store open flag is false", () => {
+      // Given/When - the store has not requested the checkpoint
+      checkpointOpenState = false;
+      render(<OnboardingCheckpointWatcher />);
 
-      // When - the provider record is created on the wizard's first step, so
-      // hasProviders flips true WHILE the wizard is still open
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
-
-      // Then - the checkpoint must stay closed (it would otherwise close the
-      // wizard mid-flow)
-      expect(
-        screen.queryByText("Provider connected — keep exploring?"),
-      ).not.toBeInTheDocument();
-
-      // When - the wizard closes
-      wizardOpenState = false;
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
-
-      // Then - the deferred checkpoint fires exactly once
-      expect(
-        await screen.findByText("Provider connected — keep exploring?"),
-      ).toBeInTheDocument();
-    });
-
-    it("does not fire when hasProviders is true from the first render", () => {
-      // Given/When - a user who already has providers: the layout passes
-      // `true` from the FIRST render (prev=undefined, next=true). This is the
-      // regression guard for the store-hydration false-fire bug.
-      render(<OnboardingCheckpointWatcher hasProviders={true} />);
-
-      // Then - the checkpoint must NOT fire on the initial read
-      expect(
-        screen.queryByText("Provider connected — keep exploring?"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("does not fire on a true -> true steady state", () => {
-      // Given - the user already had providers on the first observed render
-      const { rerender } = render(
-        <OnboardingCheckpointWatcher hasProviders={true} />,
-      );
-
-      // When - providers stay present across a re-render
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
-
-      // Then - no checkpoint (no false -> true flip)
-      expect(
-        screen.queryByText("Provider connected — keep exploring?"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("does not fire when hasProviders is undefined (failed/ambiguous fetch)", () => {
-      // Given/When - the layout could not determine provider state
-      const { rerender } = render(
-        <OnboardingCheckpointWatcher hasProviders={undefined} />,
-      );
-      rerender(<OnboardingCheckpointWatcher hasProviders={undefined} />);
-
-      // Then - an unknown provider signal stays inert
-      expect(
-        screen.queryByText("Provider connected — keep exploring?"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("does not fire when the checkpoint was already handled", () => {
-      // Given - the marker is already set from a previous session
-      window.localStorage.setItem(CHECKPOINT_MARKER, "true");
-      const { rerender } = render(
-        <OnboardingCheckpointWatcher hasProviders={false} />,
-      );
-
-      // When - a false -> true flip happens
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
-
-      // Then - the marker suppresses the dialog
+      // Then - nothing is shown
       expect(
         screen.queryByText("Provider connected — keep exploring?"),
       ).not.toBeInTheDocument();
@@ -148,13 +76,11 @@ describe("OnboardingCheckpointWatcher", () => {
   });
 
   describe("when the user continues the tour", () => {
-    it("marks handled, starts the sequence at the next flow, and navigates", async () => {
-      // Given - the dialog is open after a first-connect flip
+    it("marks handled, starts the sequence at the next flow, navigates, and closes the store", async () => {
+      // Given - the dialog is open
       const user = userEvent.setup();
-      const { rerender } = render(
-        <OnboardingCheckpointWatcher hasProviders={false} />,
-      );
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
+      checkpointOpenState = true;
+      render(<OnboardingCheckpointWatcher />);
       await screen.findByText("Provider connected — keep exploring?");
 
       // When - the user continues
@@ -163,75 +89,37 @@ describe("OnboardingCheckpointWatcher", () => {
       );
 
       // Then - the marker is set, the sequence starts at the flow AFTER
-      // add-provider, and the watcher navigates to that flow's route.
+      // add-provider, the watcher navigates, and it closes the store.
       const nextFlow = getFlowById("view-first-scan");
       expect(window.localStorage.getItem(CHECKPOINT_MARKER)).not.toBeNull();
+      expect(closeMock).toHaveBeenCalledTimes(1);
       if (nextFlow) {
         expect(startSequenceMock).toHaveBeenCalledWith(nextFlow.id);
         expect(pushMock).toHaveBeenCalledWith(nextFlow.route);
       } else {
-        // Registry still add-provider-only (Slices 4-6 not landed): guard
-        // gracefully — no crash, no sequence start, no navigation.
+        // Registry still add-provider-only: guard gracefully.
         expect(startSequenceMock).not.toHaveBeenCalled();
         expect(pushMock).not.toHaveBeenCalled();
       }
-
-      // And - the dialog closes either way.
-      await waitFor(() =>
-        expect(
-          screen.queryByText("Provider connected — keep exploring?"),
-        ).not.toBeInTheDocument(),
-      );
     });
   });
 
   describe("when the user finishes here", () => {
-    it("marks handled and does not start a sequence or navigate", async () => {
-      // Given - the dialog is open after a first-connect flip
+    it("marks handled, starts no sequence, does not navigate, and closes the store", async () => {
+      // Given - the dialog is open
       const user = userEvent.setup();
-      const { rerender } = render(
-        <OnboardingCheckpointWatcher hasProviders={false} />,
-      );
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
+      checkpointOpenState = true;
+      render(<OnboardingCheckpointWatcher />);
       await screen.findByText("Provider connected — keep exploring?");
 
       // When - the user finishes here
       await user.click(screen.getByRole("button", { name: /finish here/i }));
 
-      // Then - the marker is set, no sequence starts, no navigation happens
+      // Then - the marker is set, no sequence starts, no navigation, store closed
       expect(window.localStorage.getItem(CHECKPOINT_MARKER)).not.toBeNull();
       expect(startSequenceMock).not.toHaveBeenCalled();
       expect(pushMock).not.toHaveBeenCalled();
-      await waitFor(() =>
-        expect(
-          screen.queryByText("Provider connected — keep exploring?"),
-        ).not.toBeInTheDocument(),
-      );
-    });
-
-    it("stays handled so the dialog never re-appears on a later flip", async () => {
-      // Given - the user finished once, setting the marker
-      const user = userEvent.setup();
-      const { rerender } = render(
-        <OnboardingCheckpointWatcher hasProviders={false} />,
-      );
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
-      await screen.findByText("Provider connected — keep exploring?");
-      await user.click(screen.getByRole("button", { name: /finish here/i }));
-      await waitFor(() =>
-        expect(
-          screen.queryByText("Provider connected — keep exploring?"),
-        ).not.toBeInTheDocument(),
-      );
-
-      // When - a fresh false -> true flip occurs later
-      rerender(<OnboardingCheckpointWatcher hasProviders={false} />);
-      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
-
-      // Then - the marker keeps the dialog suppressed
-      expect(
-        screen.queryByText("Provider connected — keep exploring?"),
-      ).not.toBeInTheDocument();
+      await waitFor(() => expect(closeMock).toHaveBeenCalledTimes(1));
     });
   });
 });

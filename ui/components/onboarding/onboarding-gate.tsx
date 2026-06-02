@@ -10,6 +10,7 @@ import {
 } from "@/lib/onboarding";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 import { TOUR_COMPLETION_STATES } from "@/lib/tours/tour-types";
+import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 
 import { OnboardingWelcomeModal } from "./onboarding-welcome-modal";
 
@@ -59,6 +60,11 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
   if (!activeFlow) return null;
 
   const handleAccept = () => {
+    // Arm the post-connect checkpoint: only a user who explicitly started
+    // onboarding here may later see the "keep exploring?" dialog. Skipping the
+    // modal must never arm it, so this lives in accept only.
+    useOnboardingCheckpointStore.getState().arm();
+
     // Hand off via the URL; the providers page's trigger starts the tour. No
     // record is written here — completion is persisted only when the tour
     // finishes or is skipped.

@@ -14,7 +14,6 @@ import type {
 } from "@/components/providers/wizard/types";
 import { getFlowById } from "@/lib/onboarding";
 import { createAddProviderTourStepHandlers } from "@/lib/tours/add-provider.tour";
-import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
 
@@ -45,29 +44,20 @@ export function ProvidersAccountsView({
     OrgWizardInitialData | undefined
   >(undefined);
 
-  // Mirrors the wizard open state into the shared store so the layout-level
-  // onboarding checkpoint watcher can defer its dialog while the wizard is open.
-  const setWizardOpenSignal = useProviderWizardStore(
-    (state) => state.setIsOpen,
-  );
-
   const openProviderWizard = (initialData?: ProviderWizardInitialData) => {
     setOrgWizardInitialData(undefined);
     setProviderWizardInitialData(initialData);
     setIsProviderWizardOpen(true);
-    setWizardOpenSignal(true);
   };
 
   const openOrganizationWizard = (initialData: OrgWizardInitialData) => {
     setProviderWizardInitialData(undefined);
     setOrgWizardInitialData(initialData);
     setIsProviderWizardOpen(true);
-    setWizardOpenSignal(true);
   };
 
   const handleWizardOpenChange = (open: boolean) => {
     setIsProviderWizardOpen(open);
-    setWizardOpenSignal(open);
 
     if (!open) {
       setProviderWizardInitialData(undefined);

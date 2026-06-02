@@ -76,12 +76,14 @@ export default async function RootLayout({
               fail open on an unknown provider signal. */}
           <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
           <OnboardingGate hasProviders={hasProviders} />
-          {/* Layout-level watcher: driven by the SAME server `hasProviders`
-              tri-state as the gate (not the UI store), so an existing user who
-              already has providers never sees a spurious checkpoint from store
-              hydration. Fires once on a genuine `false -> true` provider flip.
-              One mount point so it survives the post-connect navigation. */}
-          <OnboardingCheckpointWatcher hasProviders={hasProviders} />
+          {/* Layout-level watcher: subscribes to the onboarding-checkpoint
+              store `open` flag. The flag is armed by the gate's "Get started"
+              accept and raised explicitly when the provider wizard closes
+              having connected a provider, so the checkpoint fires once after
+              the wizard closes — never mid-wizard, and never for an established
+              user who simply adds another provider. One mount point so it
+              survives the post-connect navigation. */}
+          <OnboardingCheckpointWatcher />
           <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>

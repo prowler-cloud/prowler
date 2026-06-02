@@ -8,9 +8,16 @@ import { buildStorageKey } from "@/lib/tours/store/local-storage-adapter";
 import { OnboardingGate } from "../onboarding-gate";
 
 const pushMock = vi.fn();
+const armMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, replace: vi.fn() }),
+}));
+
+vi.mock("@/store/onboarding-checkpoint", () => ({
+  useOnboardingCheckpointStore: {
+    getState: () => ({ arm: armMock }),
+  },
 }));
 
 const addProviderStorageKey = buildStorageKey({
@@ -22,6 +29,7 @@ describe("OnboardingGate", () => {
   beforeEach(() => {
     window.localStorage.clear();
     pushMock.mockClear();
+    armMock.mockClear();
   });
 
   afterEach(() => {
@@ -153,6 +161,21 @@ describe("OnboardingGate", () => {
       );
       expect(window.localStorage.getItem(addProviderStorageKey)).toBeNull();
     });
+
+    it("arms the onboarding checkpoint", async () => {
+      // Given - the modal is shown for a zero-provider user
+      const user = userEvent.setup();
+      render(<OnboardingGate hasProviders={false} />);
+      const getStarted = await screen.findByRole("button", {
+        name: /get started/i,
+      });
+
+      // When - the user accepts
+      await user.click(getStarted);
+
+      // Then - the checkpoint is armed so it can fire after the wizard closes
+      expect(armMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("when the user dismisses the Welcome modal", () => {
@@ -176,6 +199,21 @@ describe("OnboardingGate", () => {
       const raw = window.localStorage.getItem(addProviderStorageKey);
       expect(raw).not.toBeNull();
       expect(JSON.parse(raw as string).state).toBe("dismissed");
+    });
+
+    it("does NOT arm the onboarding checkpoint", async () => {
+      // Given - the modal is shown for a zero-provider user
+      const user = userEvent.setup();
+      render(<OnboardingGate hasProviders={false} />);
+      const skip = await screen.findByRole("button", {
+        name: /skip for now/i,
+      });
+
+      // When - the user skips
+      await user.click(skip);
+
+      // Then - skipping must never arm the checkpoint (the user opted out)
+      expect(armMock).not.toHaveBeenCalled();
     });
   });
 });
