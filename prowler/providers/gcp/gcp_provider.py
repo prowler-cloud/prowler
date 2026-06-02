@@ -59,6 +59,7 @@ class GcpProvider(Provider):
     """
 
     _type: str = "gcp"
+    sdk_only: bool = False
     _session: Credentials
     _project_ids: list
     _excluded_project_ids: list

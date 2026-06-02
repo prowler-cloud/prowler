@@ -46,6 +46,7 @@ class CloudflareProvider(Provider):
     """Cloudflare provider."""
 
     _type: str = "cloudflare"
+    sdk_only: bool = False
     _session: CloudflareSession
     _identity: CloudflareIdentityInfo
     _audit_config: dict

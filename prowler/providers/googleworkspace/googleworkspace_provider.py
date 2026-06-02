@@ -54,6 +54,7 @@ class GoogleworkspaceProvider(Provider):
     """
 
     _type: str = "googleworkspace"
+    sdk_only: bool = False
     _session: GoogleWorkspaceSession
     _identity: GoogleWorkspaceIdentityInfo
     _domain_resource: GoogleWorkspaceResource
