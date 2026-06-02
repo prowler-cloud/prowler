@@ -3761,6 +3761,16 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             return queryset
         return super().filter_queryset(queryset)
 
+    def _optimize_tags_loading(self, queryset):
+        """Prefetch resource tags to avoid N+1 queries when serializing findings"""
+        return queryset.prefetch_related(
+            Prefetch(
+                "resources__tags",
+                queryset=ResourceTag.objects.filter(tenant_id=self.request.tenant_id),
+                to_attr="prefetched_tags",
+            )
+        )
+
     def list(self, request, *args, **kwargs):
         filtered_queryset = self.filter_queryset(self.get_queryset())
         return self.paginate_by_pk(

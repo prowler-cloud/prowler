@@ -24,9 +24,11 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
+from django.db import connection
 from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
@@ -64,6 +66,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceTag,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -7052,6 +7055,80 @@ class TestFindingViewSet:
         assert (
             response.json()["data"][0]["attributes"]["status"]
             == findings_fixture[0].status
+        )
+
+    def test_findings_list_resource_tags_no_n_plus_one(
+        self, authenticated_client, findings_fixture
+    ):
+        """Listing findings must load every resource's tags in a constant
+        number of queries, no matter how many findings/resources are returned.
+
+        This guards ``FindingViewSet._optimize_tags_loading`` against
+        regressions that would reintroduce one extra query per resource (the
+        N+1 the prefetch was added to remove).
+        """
+        scan = findings_fixture[0].scan
+        tenant_id = findings_fixture[0].tenant_id
+        provider = scan.provider
+
+        def _create_finding_with_tagged_resource(index):
+            resource = Resource.objects.create(
+                tenant_id=tenant_id,
+                provider=provider,
+                uid=f"arn:aws:ec2:us-east-1:123456789012:instance/n-plus-one-{index}",
+                name=f"N+1 Instance {index}",
+                region="us-east-1",
+                service="ec2",
+                type="prowler-test",
+            )
+            resource.upsert_or_delete_tags(
+                [
+                    ResourceTag.objects.create(
+                        tenant_id=tenant_id,
+                        key=f"key-{index}",
+                        value=f"value-{index}",
+                    )
+                ]
+            )
+            finding = Finding.objects.create(
+                tenant_id=tenant_id,
+                uid=f"n_plus_one_finding_{index}",
+                scan=scan,
+                status=Status.FAIL,
+                status_extended="n+1 status",
+                impact=Severity.medium,
+                severity=Severity.medium,
+                check_id="test_check_id",
+                check_metadata={"CheckId": "test_check_id", "servicename": "ec2"},
+                first_seen_at="2024-01-02T00:00:00Z",
+            )
+            finding.add_resources([resource])
+            return finding
+
+        params = {"filter[inserted_at]": TODAY, "include": "resources"}
+
+        # Baseline: the two findings provided by the fixture.
+        with CaptureQueriesContext(connection) as baseline:
+            response = authenticated_client.get(reverse("finding-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+
+        # Add more findings, each with its own resource carrying tags.
+        extra_findings = 5
+        for index in range(extra_findings):
+            _create_finding_with_tagged_resource(index)
+
+        with CaptureQueriesContext(connection) as scaled:
+            response = authenticated_client.get(reverse("finding-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(findings_fixture) + extra_findings
+
+        # The query count must not grow with the number of findings/resources.
+        assert len(scaled.captured_queries) == len(baseline.captured_queries), (
+            "Resource tags are not being prefetched: "
+            f"{len(baseline.captured_queries)} queries for {len(findings_fixture)} "
+            f"findings vs {len(scaled.captured_queries)} for "
+            f"{len(findings_fixture) + extra_findings}. Likely an N+1 regression "
+            "in FindingViewSet._optimize_tags_loading."
         )
 
     @pytest.mark.parametrize(
