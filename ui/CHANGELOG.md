@@ -4,9 +4,17 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.29.1] (Prowler UNRELEASED)
 
+### 🔄 Changed
+
+- Account and provider-type selector triggers now show the provider icon, with a non-deduped icon stack and `+N` overflow for multiple selections [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
 ### 🐞 Fixed
 
 - Add Provider modal now closes without reloading the providers page [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
+### 🔐 Security
+
+- Vitest toolchain upgraded `4.0.18` → `4.1.8` to clear two critical `pnpm audit` advisories [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
 
 ---
 

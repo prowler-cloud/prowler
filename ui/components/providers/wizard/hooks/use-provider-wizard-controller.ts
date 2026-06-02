@@ -50,8 +50,9 @@ interface UseProviderWizardControllerProps {
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
   orgInitialData?: OrgWizardInitialData;
-  // When false, the caller owns the post-close data refresh (e.g. to wrap it in
-  // a transition). Defaults to true so standalone callers keep refreshing.
+  // When false, the caller skips the post-close router.refresh() and relies on
+  // the provider-creation actions' revalidatePath("/providers") to refresh the
+  // data. Defaults to true so standalone callers keep refreshing.
   refreshOnClose?: boolean;
 }
 
