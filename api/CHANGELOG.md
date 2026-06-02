@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.31.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `GET /api/v1/findings` N+1 query loading `resources__tags` when listing findings [(#11420)](https://github.com/prowler-cloud/prowler/pull/11420)
+
+---
+
 ## [1.30.0] (Prowler v5.29.0)
 
 ### 🔄 Changed
