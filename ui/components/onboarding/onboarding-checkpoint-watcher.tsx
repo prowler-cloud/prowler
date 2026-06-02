@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { getOrderedFlows } from "@/lib/onboarding";
 import { useOnboardingSequenceStore } from "@/store/onboarding-sequence";
+import { useProviderWizardStore } from "@/store/provider-wizard/store";
 
-import { shouldFireCheckpoint } from "./checkpoint.logic";
+import { isCheckpointArmed, shouldFireCheckpoint } from "./checkpoint.logic";
 import { OnboardingCheckpointDialog } from "./onboarding-checkpoint-dialog";
 
 // localStorage flag set once the user has either continued or finished the
@@ -54,6 +55,14 @@ interface OnboardingCheckpointWatcherProps {
 // a concrete `false -> true` flip that has not been handled. A user who already
 // has providers receives `true` from the FIRST render (prev=undefined), which
 // never fires; only a genuine first-connect transition during the session does.
+//
+// The provider wizard creates the provider record on its FIRST step, so the
+// flip can land WHILE the wizard is still open. Opening the checkpoint then
+// would close the wizard mid-flow (two Radix dialogs). To avoid that, the
+// watcher LATCHES "armed" the moment a genuine flip is seen, but DEFERS opening
+// the dialog until the wizard is closed. It re-evaluates whenever either the
+// provider signal or the wizard-open signal changes.
+//
 // Renders the dialog only; all decision logic runs in a client effect so the
 // server renders nothing and there is no hydration mismatch.
 export function OnboardingCheckpointWatcher({
@@ -64,26 +73,48 @@ export function OnboardingCheckpointWatcher({
   // The previous observed `hasProviders`. `undefined` means "first read, no
   // transition seen yet" — that case must NOT fire the checkpoint.
   const previous = useRef<boolean | undefined>(undefined);
+  // Latches once a genuine first-connect flip is observed, so the checkpoint
+  // can still fire after the wizard closes even though the flip already passed.
+  const armed = useRef(false);
   const [open, setOpen] = useState(false);
+
+  const wizardOpen = useProviderWizardStore((state) => state.isOpen);
 
   useEffect(() => {
     // An unknown provider signal (failed/ambiguous fetch) must stay inert and
     // must not disturb the tracked previous value, so a later concrete read can
-    // still compare against the last known boolean.
-    if (hasProviders === undefined) return;
+    // still compare against the last known boolean. The wizard-open change can
+    // also retrigger this effect with `hasProviders` unchanged.
+    if (hasProviders !== undefined) {
+      const was = previous.current;
+      previous.current = hasProviders;
+      if (
+        isCheckpointArmed({
+          prev: was,
+          next: hasProviders,
+          handled: isCheckpointHandled(),
+        })
+      ) {
+        armed.current = true;
+      }
+    }
 
-    const was = previous.current;
-    previous.current = hasProviders;
     if (
+      armed.current &&
       shouldFireCheckpoint({
-        prev: was,
-        next: hasProviders,
+        // The flip was already captured into `armed`; re-assert the same
+        // arming truth via prev=false/next=true so the pure rule stays the
+        // single source of the firing decision.
+        prev: false,
+        next: true,
         handled: isCheckpointHandled(),
+        wizardOpen,
       })
     ) {
+      armed.current = false;
       setOpen(true);
     }
-  }, [hasProviders]);
+  }, [hasProviders, wizardOpen]);
 
   const handleContinue = () => {
     // Mark handled first so a re-render mid-navigation never re-opens it.

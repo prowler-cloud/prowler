@@ -11,6 +11,10 @@ const startSequenceMock = vi.fn();
 
 const CHECKPOINT_MARKER = "prowler.onboarding.checkpoint";
 
+// Drives the provider-wizard open signal the watcher subscribes to. Tests set
+// this before render/rerender to simulate the wizard being open or closed.
+let wizardOpenState = false;
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
 }));
@@ -21,10 +25,18 @@ vi.mock("@/store/onboarding-sequence", () => ({
   },
 }));
 
+vi.mock("@/store/provider-wizard/store", () => ({
+  // The watcher reads the open flag via a selector hook. Return the current
+  // module-level state so a rerender after toggling reflects the new value.
+  useProviderWizardStore: (selector: (state: { isOpen: boolean }) => unknown) =>
+    selector({ isOpen: wizardOpenState }),
+}));
+
 describe("OnboardingCheckpointWatcher", () => {
   beforeEach(() => {
     pushMock.mockClear();
     startSequenceMock.mockClear();
+    wizardOpenState = false;
     window.localStorage.clear();
   });
 
@@ -46,6 +58,33 @@ describe("OnboardingCheckpointWatcher", () => {
       rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
 
       // Then - the checkpoint dialog appears
+      expect(
+        await screen.findByText("Provider connected — keep exploring?"),
+      ).toBeInTheDocument();
+    });
+
+    it("does NOT fire while the provider wizard is open, then fires once when it closes", async () => {
+      // Given - the wizard is open (the user is mid Add-Provider flow)
+      wizardOpenState = true;
+      const { rerender } = render(
+        <OnboardingCheckpointWatcher hasProviders={false} />,
+      );
+
+      // When - the provider record is created on the wizard's first step, so
+      // hasProviders flips true WHILE the wizard is still open
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
+
+      // Then - the checkpoint must stay closed (it would otherwise close the
+      // wizard mid-flow)
+      expect(
+        screen.queryByText("Provider connected — keep exploring?"),
+      ).not.toBeInTheDocument();
+
+      // When - the wizard closes
+      wizardOpenState = false;
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
+
+      // Then - the deferred checkpoint fires exactly once
       expect(
         await screen.findByText("Provider connected — keep exploring?"),
       ).toBeInTheDocument();
