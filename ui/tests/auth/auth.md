@@ -21,7 +21,7 @@
 - Application is running.
 - No active session (cookies cleared).
 
-### Flow Steps:
+### Flow Steps
 
 1. Clear all cookies.
 2. Navigate to /sign-in.
@@ -29,7 +29,7 @@
 4. Navigate to /sign-up.
 5. Verify page loads.
 
-### Expected Result:
+### Expected Result
 
 - Public routes are accessible without authentication.
 
@@ -50,7 +50,7 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Log in with valid credentials.
 2. Navigate to a protected route.
@@ -58,7 +58,7 @@
 4. Navigate to another protected route.
 5. Verify redirect to sign-in.
 
-### Expected Result:
+### Expected Result
 
 - Invalid session results in redirect to sign-in.
 
@@ -79,13 +79,13 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to /sign-in with error=RefreshAccessTokenError query parameter.
 2. Check for toast notification.
 3. Verify form elements are still visible.
 
-### Expected Result:
+### Expected Result
 
 - Toast shows "Session Expired" message with "Please sign in again".
 - Sign-in form is displayed and functional.
@@ -107,13 +107,13 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to /sign-in with error=MissingRefreshToken query parameter.
 2. Check for toast notification.
 3. Verify email input is visible.
 
-### Expected Result:
+### Expected Result
 
 - Toast shows "Session Error" message.
 - Sign-in form is displayed.
@@ -135,12 +135,12 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to /sign-in with error=UnknownError query parameter.
 2. Check for toast notification.
 
-### Expected Result:
+### Expected Result
 
 - Toast shows "Authentication Error" message with "Please sign in again".
 
@@ -162,7 +162,7 @@
 - Application is running.
 - Valid test user credentials.
 
-### Flow Steps:
+### Flow Steps
 
 1. Log in with valid credentials.
 2. Navigate to a protected route (/scans).
@@ -171,7 +171,7 @@
 5. Navigate to another protected route (/providers) using fresh navigation.
 6. Verify redirect to sign-in includes callbackUrl parameter.
 
-### Expected Result:
+### Expected Result
 
 - URL contains callbackUrl=/providers parameter.
 - User can sign in and be redirected back to the original destination.
@@ -194,7 +194,7 @@
 - Application is running.
 - Valid test user credentials.
 
-### Flow Steps:
+### Flow Steps
 
 1. Log in with valid credentials.
 2. Verify home page is loaded.
@@ -202,7 +202,7 @@
 4. Reload the page.
 5. Verify session is still valid with same user data.
 
-### Expected Result:
+### Expected Result
 
 - Session persists after reload.
 - User email, userId, and tenantId remain the same.
@@ -225,14 +225,14 @@
 - Application is running.
 - Valid test user credentials.
 
-### Flow Steps:
+### Flow Steps
 
 1. Log in with valid credentials.
 2. Capture initial session with permissions.
 3. Reload the page.
 4. Verify permissions match initial session.
 
-### Expected Result:
+### Expected Result
 
 - User permissions are identical before and after refresh.
 - User profile data (email, name, companyName) is preserved.
@@ -255,14 +255,14 @@
 - Application is running.
 - Valid test user credentials.
 
-### Flow Steps:
+### Flow Steps
 
 1. Log in with valid credentials.
 2. Verify session is valid.
 3. Clear all cookies.
 4. Check session status.
 
-### Expected Result:
+### Expected Result
 
 - Session returns null after cookies are cleared.
 - User is effectively logged out.

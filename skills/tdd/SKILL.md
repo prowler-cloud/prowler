@@ -20,7 +20,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
 
 ## TDD Cycle (MANDATORY)
 
-```
+```text
 +-----------------------------------------+
 |  RED -> GREEN -> REFACTOR               |
 |     ^                        |          |
@@ -28,7 +28,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
 +-----------------------------------------+
 ```
 
-**The question is NOT "should I write tests?" but "what tests do I need?"**
+The question is NOT "should I write tests?" but "what tests do I need?"
 
 ---
 
@@ -94,7 +94,7 @@ uv run pytest api/src/backend/api/tests/test_models.py -v
 
 ### Decision Tree (All Stacks)
 
-```
+```text
 +------------------------------------------+
 |     Does test file exist for this code?  |
 +----------+-----------------------+-------+
@@ -122,7 +122,7 @@ uv run pytest api/src/backend/api/tests/test_models.py -v
 
 ### For NEW Functionality
 
-**UI (Vitest)**
+#### UI (Vitest)
 
 ```typescript
 describe("PriceCalculator", () => {
@@ -139,7 +139,7 @@ describe("PriceCalculator", () => {
 });
 ```
 
-**SDK (pytest)**
+#### SDK (pytest)
 
 ```python
 class Test_ec2_ami_public:
@@ -159,7 +159,7 @@ class Test_ec2_ami_public:
             assert len(result) == 0
 ```
 
-**API (pytest-django)**
+#### API (pytest-django)
 
 ```python
 @pytest.mark.django_db
@@ -192,18 +192,18 @@ Write a test that **reproduces the bug** first:
 
 **API:** `assert response.status_code == 403  # Currently returns 200`
 
-**Run -> Should FAIL (reproducing the bug)**
+Run -> Should FAIL (reproducing the bug).
 
 ### For REFACTORING
 
 Capture ALL current behavior BEFORE refactoring:
 
-```
+```text
 # Any stack: run ALL existing tests, they should PASS
 # This is your safety net - if any fail after refactoring, you broke something
 ```
 
-**Run -> All should PASS (baseline)**
+Run -> All should PASS (baseline).
 
 ---
 
@@ -288,13 +288,13 @@ Tests GREEN -> Improve code quality WITHOUT changing behavior.
 - Add types/validation
 - Reduce duplication
 
-**Run tests after EACH change -> Must stay GREEN**
+Run tests after EACH change -> Must stay GREEN.
 
 ---
 
 ## Quick Reference
 
-```
+```text
 +------------------------------------------------+
 |                 TDD WORKFLOW                    |
 +------------------------------------------------+
@@ -320,7 +320,7 @@ Tests GREEN -> Improve code quality WITHOUT changing behavior.
 
 ## Anti-Patterns (NEVER DO)
 
-```
+```python
 # ANY language:
 
 # 1. Code first, tests after

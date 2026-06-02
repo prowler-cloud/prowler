@@ -158,6 +158,7 @@ from prowler.providers.okta.models import OktaOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
 from prowler.providers.scaleway.models import ScalewayOutputOptions
+from prowler.providers.stackit.models import StackITOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
 
 
@@ -414,6 +415,10 @@ def prowler():
         output_options = LLMOutputOptions(args, bulk_checks_metadata)
     elif provider == "oraclecloud":
         output_options = OCIOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "stackit":
+        output_options = StackITOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "alibabacloud":

@@ -15,8 +15,10 @@ from tasks.jobs.lighthouse_providers import (
 from tasks.tasks import (
     DJANGO_TMP_OUTPUT_DIRECTORY,
     STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    ScanReportRLSTask,
     _cleanup_orphan_scheduled_scans,
     _perform_scan_complete_tasks,
+    _scan_tmp_output_directory,
     check_integrations_task,
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
@@ -769,6 +771,38 @@ class TestGenerateOutputs:
                 enabled=True,
             )
             mock_s3_task.assert_called_once()
+
+
+class TestScanReportRLSTaskOnFailure:
+    def test_on_failure_removes_scan_tmp_directory(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_called_once_with(
+            _scan_tmp_output_directory("t-1", "s-1"), ignore_errors=True
+        )
+
+    def test_on_failure_skips_when_missing_kwargs(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_not_called()
 
 
 class TestScanCompleteTasks:
@@ -2672,3 +2706,36 @@ class TestReaggregateAllFindingGroupSummaries:
         assert result == {"scans_reaggregated": 0}
         mock_group.assert_not_called()
         mock_chain.assert_not_called()
+
+
+class TestTaskTimeLimits:
+    """The per-task limits in task_annotations must actually take effect.
+
+    Celery applies a "*" annotation after the per-task one, so a "*" entry would
+    silently overwrite every specific limit and cap long scans at the default. The
+    default is set as the global limit instead, and these per-task limits must win.
+    """
+
+    def test_long_running_tasks_exceed_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "scan-perform",
+            "scan-perform-scheduled",
+            "provider-deletion",
+            "tenant-deletion",
+        ):
+            assert celery_app.tasks[name].time_limit > default
+
+    def test_connection_checks_stay_below_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "provider-connection-check",
+            "integration-connection-check",
+            "lighthouse-connection-check",
+            "lighthouse-provider-connection-check",
+        ):
+            assert celery_app.tasks[name].time_limit < default

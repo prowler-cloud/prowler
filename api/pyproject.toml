@@ -68,7 +68,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.29.0"
+version = "1.31.0"
 
 [tool.uv]
 # Transitive pins matching master to avoid silent drift; bump deliberately.

@@ -1,0 +1,10 @@
+{
+  "extends": "markdownlint/style/prettier",
+  "first-line-h1": false,
+  "no-duplicate-heading": {
+    "siblings_only": true
+  },
+  "no-inline-html": false,
+  "line-length": false,
+  "no-bare-urls": false
+}

@@ -18,7 +18,7 @@ Source: [`prowler-cloud/prowler`](https://github.com/prowler-cloud/prowler) · M
 | `provider` | yes | — | Cloud provider to scan (`aws`, `azure`, `gcp`, `github`, `kubernetes`, `iac`, `cloudflare`, etc.) |
 | `image-tag` | no | `stable` | Docker image tag — `stable` (latest release), `latest` (master, not stable), or `<x.y.z>` (pinned). See [available tags](https://hub.docker.com/r/prowlercloud/prowler/tags). |
 | `output-formats` | no | `json-ocsf` | Output format(s) for scan results. Space-separated (e.g. `sarif json-ocsf`) |
-| `push-to-cloud` | no | `false` | Push findings to [Prowler Cloud](/user-guide/tutorials/prowler-app-import-findings). When `true`, `PROWLER_CLOUD_API_KEY` is auto-forwarded |
+| `push-to-cloud` | no | `false` | Push findings to [Prowler Cloud](/user-guide/tutorials/prowler-import-findings). When `true`, `PROWLER_CLOUD_API_KEY` is auto-forwarded |
 | `flags` | no | `""` | Additional CLI flags (e.g. `--severity critical high`). Values with spaces can be quoted: `--resource-tag 'Environment=My Server'` |
 | `extra-env` | no | `""` | Space-, newline-, or comma-separated list of env var **names** to forward to the container (see [Authentication](#authentication)) |
 | `upload-sarif` | no | `false` | Upload SARIF results to GitHub Code Scanning |
@@ -43,7 +43,7 @@ Source: [`prowler-cloud/prowler`](https://github.com/prowler-cloud/prowler) · M
 
 ### Push findings to Prowler Cloud
 
-Send scan results directly to [Prowler Cloud](/user-guide/tutorials/prowler-app-import-findings) for centralized visibility, compliance tracking, and team collaboration.
+Send scan results directly to [Prowler Cloud](/user-guide/tutorials/prowler-import-findings) for centralized visibility, compliance tracking, and team collaboration.
 
 ```yaml
 - uses: prowler-cloud/prowler@5.25

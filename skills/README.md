@@ -36,7 +36,7 @@ After running setup, restart your AI coding assistant to load the skills.
 
 Skills are automatically discovered by the AI agent. To manually load a skill during a session:
 
-```
+```text
 Read skills/{skill-name}/SKILL.md
 ```
 
@@ -90,7 +90,7 @@ Patterns tailored for Prowler development:
 
 ## Directory Structure
 
-```
+```text
 skills/
 ├── {skill-name}/
 │   ├── SKILL.md              # Required - main instrunsction and metadata
@@ -118,7 +118,7 @@ This reads `metadata.scope` and `metadata.auto_invoke` from each `SKILL.md` and 
 
 Use the `skill-creator` skill for guidance:
 
-```
+```text
 Read skills/skill-creator/SKILL.md
 ```
 

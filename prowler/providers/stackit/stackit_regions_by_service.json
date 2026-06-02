@@ -1,0 +1,10 @@
+{
+  "services": {
+    "iaas": {
+      "regions": [
+        "eu01",
+        "eu02"
+      ]
+    }
+  }
+}

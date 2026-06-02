@@ -34,6 +34,7 @@ class TestComputeService:
             assert len(compute_client.compute_projects) == 1
             assert compute_client.compute_projects[0].id == GCP_PROJECT_ID
             assert compute_client.compute_projects[0].enable_oslogin
+            assert compute_client.compute_projects[0].enable_oslogin_2fa
 
             assert len(compute_client.instances) == 2
             assert compute_client.instances[0].name == "instance1"
