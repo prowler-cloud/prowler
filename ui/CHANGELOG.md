@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - In-product tour for the Attack Paths workflow [(#11383)](https://github.com/prowler-cloud/prowler/pull/11383)
 - Extensible onboarding system with a guided add-provider tour: a mandatory Welcome modal for zero-provider users and a "Product tour" restart entry in the avatar menu [(#11400)](https://github.com/prowler-cloud/prowler/pull/11400)
+- Guided onboarding sequence after the first provider connects: a checkpoint dialog chains three new tours (`view-first-scan`, `explore-findings`, `view-compliance`) plus the existing Attack Paths tour, advancing on completion and stopping when any tour is closed; the avatar "Product tour" menu now lists every flow for single-flow replay [(#11500)](https://github.com/prowler-cloud/prowler/pull/11500)
 
 ---
 
