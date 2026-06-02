@@ -41,8 +41,10 @@ celery_app.conf.worker_soft_shutdown_timeout = env.int(
 )
 # Bound execution so a blocked task cannot pin a worker forever. Connection
 # checks get a tight limit; scans and provider/tenant deletions can legitimately
-# run for more than a day on large tenants, so they get a much higher cap;
-# everything else a generous default.
+# run for more than a day on large tenants, so they get a much higher cap.
+# The default for every other task is set as the global limit, not as a "*"
+# annotation: Celery applies the "*" entry AFTER the per-task one, so a "*" in
+# task_annotations would silently overwrite every specific limit defined below.
 _TASK_HARD_LIMIT = env.int("DJANGO_CELERY_TASK_TIME_LIMIT", default=6 * 60 * 60)
 _TASK_SOFT_LIMIT = env.int(
     "DJANGO_CELERY_TASK_SOFT_TIME_LIMIT", default=_TASK_HARD_LIMIT - 600
@@ -53,8 +55,9 @@ _LONG_TASK_HARD_LIMIT = env.int(
 _LONG_TASK_SOFT_LIMIT = env.int(
     "DJANGO_CELERY_LONG_TASK_SOFT_TIME_LIMIT", default=_LONG_TASK_HARD_LIMIT - 600
 )
+celery_app.conf.task_time_limit = _TASK_HARD_LIMIT
+celery_app.conf.task_soft_time_limit = _TASK_SOFT_LIMIT
 celery_app.conf.task_annotations = {
-    "*": {"soft_time_limit": _TASK_SOFT_LIMIT, "time_limit": _TASK_HARD_LIMIT},
     **{
         name: {"soft_time_limit": 60, "time_limit": 120}
         for name in (

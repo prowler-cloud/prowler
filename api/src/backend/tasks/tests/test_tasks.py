@@ -1434,9 +1434,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert (
-                "asff" not in created_writers
-            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "asff" not in created_writers, (
+                "ASFF writer should NOT be created for non-AWS providers"
+            )
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 
@@ -2672,3 +2672,36 @@ class TestReaggregateAllFindingGroupSummaries:
         assert result == {"scans_reaggregated": 0}
         mock_group.assert_not_called()
         mock_chain.assert_not_called()
+
+
+class TestTaskTimeLimits:
+    """The per-task limits in task_annotations must actually take effect.
+
+    Celery applies a "*" annotation after the per-task one, so a "*" entry would
+    silently overwrite every specific limit and cap long scans at the default. The
+    default is set as the global limit instead, and these per-task limits must win.
+    """
+
+    def test_long_running_tasks_exceed_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "scan-perform",
+            "scan-perform-scheduled",
+            "provider-deletion",
+            "tenant-deletion",
+        ):
+            assert celery_app.tasks[name].time_limit > default
+
+    def test_connection_checks_stay_below_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "provider-connection-check",
+            "integration-connection-check",
+            "lighthouse-connection-check",
+            "lighthouse-provider-connection-check",
+        ):
+            assert celery_app.tasks[name].time_limit < default
