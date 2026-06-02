@@ -13,6 +13,7 @@ import type {
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
 import { getFlowById } from "@/lib/onboarding";
+import { createAddProviderTourStepHandlers } from "@/lib/tours/add-provider.tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
 
@@ -67,12 +68,16 @@ export function ProvidersAccountsView({
   return (
     <>
       {/* Renders null; reads the sequence slice + ?onboarding param and force-
-          starts the add-provider tour. The tour ends at the Add Provider
-          button (no step handlers, no wizard-open from the tour), so the driver
-          overlay never sits on top of the wizard's Radix dialog. Suspense
-          satisfies the App Router requirement around `useSearchParams`. */}
+          starts the add-provider tour, wiring the tour's wizard-open step to
+          this view's imperative open. Suspense satisfies the App Router
+          requirement around `useSearchParams`. */}
       <Suspense fallback={null}>
-        <OnboardingTrigger flow={addProviderFlow} />
+        <OnboardingTrigger
+          flow={addProviderFlow}
+          stepHandlers={createAddProviderTourStepHandlers(() =>
+            openProviderWizard(),
+          )}
+        />
       </Suspense>
       <div className="flex flex-col gap-6">
         <ProvidersFilters

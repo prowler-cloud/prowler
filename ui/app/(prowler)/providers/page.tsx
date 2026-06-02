@@ -22,9 +22,17 @@ export default async function Providers({
   const activeTab = getProviderTab(resolvedSearchParams.tab);
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
-  // Exclude `tab` from the Suspense key so switching tabs doesn't re-suspend
-  const { tab: _, ...paramsWithoutTab } = resolvedSearchParams || {};
-  const searchParamsKey = JSON.stringify(paramsWithoutTab);
+  // Exclude `tab` and `onboarding` from the Suspense key. `tab` switching must
+  // not re-suspend; `onboarding` is an ephemeral param the tour strips via
+  // history.replaceState, and a later revalidatePath("/providers") would
+  // otherwise change the key, remount ProvidersAccountsView, and reset the
+  // wizard's open state mid-flow during onboarding.
+  const {
+    tab: _tab,
+    onboarding: _onboarding,
+    ...stableParams
+  } = resolvedSearchParams || {};
+  const searchParamsKey = JSON.stringify(stableParams);
 
   return (
     <ContentLayout title="Providers" icon="lucide:cloud-cog">
