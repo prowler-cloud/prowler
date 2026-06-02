@@ -22,7 +22,10 @@ describe("OnboardingCheckpointDialog", () => {
 
       // Then - the user sees the prompt and both actions
       expect(
-        screen.getByText("Provider connected — keep exploring?"),
+        screen.getByText("Provider added — keep exploring?"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Your first provider is added\./),
       ).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /continue the tour/i }),
@@ -111,7 +114,7 @@ describe("OnboardingCheckpointDialog", () => {
 
       // Then - the prompt is not in the document
       expect(
-        screen.queryByText("Provider connected — keep exploring?"),
+        screen.queryByText("Provider added — keep exploring?"),
       ).not.toBeInTheDocument();
     });
   });

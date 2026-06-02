@@ -19,7 +19,7 @@ interface OnboardingCheckpointDialogProps {
   onFinish: () => void;
 }
 
-// Presentational checkpoint shown after the first provider connects. It owns no
+// Presentational checkpoint shown after the first provider is added. It owns no
 // navigation, persistence, or sequence state: the watcher decides what to do on
 // each choice so this component stays a pure render of the prompt.
 export function OnboardingCheckpointDialog({
@@ -38,9 +38,9 @@ export function OnboardingCheckpointDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Provider connected — keep exploring?</DialogTitle>
+          <DialogTitle>Provider added — keep exploring?</DialogTitle>
           <DialogDescription>
-            Your first provider is connected. Want a quick guided tour of scans,
+            Your first provider is added. Want a quick guided tour of scans,
             findings, compliance, and attack paths? You can stop anytime.
           </DialogDescription>
         </DialogHeader>

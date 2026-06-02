@@ -68,7 +68,7 @@ export class OnboardingPage extends BasePage {
 
     this.checkpointDialog = page.getByRole("dialog").filter({
       has: page.getByRole("heading", {
-        name: /Provider connected — keep exploring\?/i,
+        name: /Provider added — keep exploring\?/i,
       }),
     });
     this.checkpointContinueButton = page.getByRole("button", {

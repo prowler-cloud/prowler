@@ -54,7 +54,13 @@ export function OnboardingSequenceBanner() {
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <p className="text-text-neutral-primary text-sm font-medium">
+          {/* Polite live region so screen readers announce step transitions
+              when the banner's step-progress text updates on advance. */}
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-text-neutral-primary text-sm font-medium"
+          >
             Step {index + 1} of {total}: {flow.title}
           </p>
           {flow.dataRequirementHint ? (

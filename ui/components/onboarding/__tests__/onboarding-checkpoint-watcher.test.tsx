@@ -59,7 +59,7 @@ describe("OnboardingCheckpointWatcher", () => {
 
       // Then - the dialog is shown
       expect(
-        screen.getByText("Provider connected — keep exploring?"),
+        screen.getByText("Provider added — keep exploring?"),
       ).toBeInTheDocument();
     });
 
@@ -70,7 +70,7 @@ describe("OnboardingCheckpointWatcher", () => {
 
       // Then - nothing is shown
       expect(
-        screen.queryByText("Provider connected — keep exploring?"),
+        screen.queryByText("Provider added — keep exploring?"),
       ).not.toBeInTheDocument();
     });
   });
@@ -81,7 +81,7 @@ describe("OnboardingCheckpointWatcher", () => {
       const user = userEvent.setup();
       checkpointOpenState = true;
       render(<OnboardingCheckpointWatcher />);
-      await screen.findByText("Provider connected — keep exploring?");
+      await screen.findByText("Provider added — keep exploring?");
 
       // When - the user continues
       await user.click(
@@ -110,7 +110,7 @@ describe("OnboardingCheckpointWatcher", () => {
       const user = userEvent.setup();
       checkpointOpenState = true;
       render(<OnboardingCheckpointWatcher />);
-      await screen.findByText("Provider connected — keep exploring?");
+      await screen.findByText("Provider added — keep exploring?");
 
       // When - the user finishes here
       await user.click(screen.getByRole("button", { name: /finish here/i }));

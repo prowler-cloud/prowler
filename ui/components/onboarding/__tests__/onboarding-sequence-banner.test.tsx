@@ -73,6 +73,21 @@ describe("OnboardingSequenceBanner", () => {
     expect(screen.getByText(`Step 2 of 5: ${flow.title}`)).toBeInTheDocument();
   });
 
+  it("announces step progress to screen readers via a polite live region", () => {
+    // Given - the sequence points at an active flow
+    setSlice({ active: true, currentFlowId: "view-first-scan" });
+    const flow = getFlowById("view-first-scan")!;
+
+    // When
+    render(<OnboardingSequenceBanner />);
+
+    // Then - the step-progress text is a polite live region so screen readers
+    // announce step transitions when the banner text updates.
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent(`Step 2 of 5: ${flow.title}`);
+    expect(status).toHaveAttribute("aria-live", "polite");
+  });
+
   it("shows the data requirement hint when the current flow has one", () => {
     // Given - explore-findings carries the scan-data hint
     setSlice({ active: true, currentFlowId: "explore-findings" });
