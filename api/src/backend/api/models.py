@@ -51,6 +51,7 @@ from api.db_utils import (
     one_week_from_now,
 )
 from api.exceptions import ModelValidationError
+from api.provider_types import get_app_provider_types
 from api.rls import (
     BaseSecurityConstraint,
     RowLevelSecurityConstraint,
@@ -58,7 +59,6 @@ from api.rls import (
     Tenant,
 )
 from prowler.lib.check.models import Severity
-from prowler.providers.common.provider import Provider as SDKProvider
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -502,7 +502,7 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
-        if self.provider not in SDKProvider.get_available_providers():
+        if self.provider not in get_app_provider_types():
             raise ModelValidationError(
                 detail=f"{self.provider} is not a supported provider.",
                 code="invalid",

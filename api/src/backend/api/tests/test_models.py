@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 import pytest
 from allauth.socialaccount.models import SocialApp
@@ -531,16 +532,18 @@ class TestTenantComplianceSummaryModel:
 
 @pytest.mark.django_db
 class TestProviderDynamicValidation:
-    """Provider validity is driven by the SDK's available providers, not a
-    static enum. Providers the SDK exposes are accepted; for those without a
-    `validate_<provider>_uid` method only the uid min-length floor applies."""
+    """Provider validity is driven by the SDK's app-facing providers
+    (``sdk_only = False``). sdk_only and unknown providers are rejected; an
+    app provider without a ``validate_<provider>_uid`` method only hits the
+    uid min-length floor."""
 
-    def test_accepts_provider_without_uid_validator(self, tenants_fixture):
+    def test_rejects_sdk_only_builtin(self, tenants_fixture):
+        # `llm` is a built-in but sdk_only, so the API must not accept it.
         tenant = tenants_fixture[0]
-        provider = Provider.objects.create(
-            tenant_id=tenant.id, provider="llm", uid="my-llm-account"
-        )
-        assert provider.provider == "llm"
+        with pytest.raises(ModelValidationError):
+            Provider.objects.create(
+                tenant_id=tenant.id, provider="llm", uid="my-llm-account"
+            )
 
     def test_rejects_provider_not_available_in_sdk(self, tenants_fixture):
         tenant = tenants_fixture[0]
@@ -549,7 +552,17 @@ class TestProviderDynamicValidation:
                 tenant_id=tenant.id, provider="does-not-exist", uid="whatever"
             )
 
-    def test_uid_floor_still_enforced_for_external_provider(self, tenants_fixture):
+    @patch("api.models.get_app_provider_types", return_value=("customext",))
+    def test_accepts_app_provider_without_uid_validator(self, _mock, tenants_fixture):
+        # An external provider that opts into the app and has no uid validator.
+        tenant = tenants_fixture[0]
+        provider = Provider.objects.create(
+            tenant_id=tenant.id, provider="customext", uid="my-account"
+        )
+        assert provider.provider == "customext"
+
+    @patch("api.models.get_app_provider_types", return_value=("customext",))
+    def test_uid_floor_still_enforced_for_app_provider(self, _mock, tenants_fixture):
         tenant = tenants_fixture[0]
         with pytest.raises(ValidationError):
-            Provider.objects.create(tenant_id=tenant.id, provider="llm", uid="ab")
+            Provider.objects.create(tenant_id=tenant.id, provider="customext", uid="ab")
