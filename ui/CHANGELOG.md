@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.30.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- ESLint: typed flat config with `typescript-eslint` (type-aware via `projectService`) and `eslint-plugin-import-x`, replacing `eslint-plugin-prettier`, `eslint-plugin-simple-import-sort`, and `eslint-plugin-unused-imports` [(#11352)](https://github.com/prowler-cloud/prowler/pull/11352)
+
+---
+
 ## [1.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added
@@ -11,7 +19,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Dark mode: pure-black canvas, pure-white primary text, and brighter border / input tokens for clearer separation between cards, tables, and inputs [(#11073)](https://github.com/prowler-cloud/prowler/pull/11073)
-- ESLint: typed flat config with `typescript-eslint` (type-aware via `projectService`) and `eslint-plugin-import-x`, replacing `eslint-plugin-prettier`, `eslint-plugin-simple-import-sort`, and `eslint-plugin-unused-imports` [(#11352)](https://github.com/prowler-cloud/prowler/pull/11352)
 - CI workflows (`ui-tests.yml`, `ui-e2e-tests-v2.yml`) now read the Node version from `ui/.nvmrc` and the pnpm version from `package.json#packageManager` instead of hardcoded values [(#11225)](https://github.com/prowler-cloud/prowler/pull/11225)
 
 ### 🐞 Fixed
