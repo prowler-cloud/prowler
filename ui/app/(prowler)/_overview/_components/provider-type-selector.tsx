@@ -105,7 +105,9 @@ export const ProviderTypeSelector = ({
       const providerType = selectedTypes[0] as ProviderType;
       return (
         <span className="flex min-w-0 items-center gap-2">
-          <ProviderTypeIcon type={providerType} />
+          <span aria-hidden="true">
+            <ProviderTypeIcon type={providerType} />
+          </span>
           <span className="truncate">
             {PROVIDER_TYPE_DATA[providerType].label}
           </span>

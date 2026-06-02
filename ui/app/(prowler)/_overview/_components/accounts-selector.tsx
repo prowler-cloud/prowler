@@ -127,7 +127,11 @@ export function AccountsSelector({
       const name = p ? p.attributes.alias || p.attributes.uid : selectedIds[0];
       return (
         <span className="flex min-w-0 items-center gap-2">
-          {p && <ProviderTypeIcon type={p.attributes.provider} />}
+          {p && (
+            <span aria-hidden="true">
+              <ProviderTypeIcon type={p.attributes.provider} />
+            </span>
+          )}
           <span className="truncate">{name}</span>
         </span>
       );
