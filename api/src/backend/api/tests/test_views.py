@@ -3857,6 +3857,7 @@ class TestScanViewSet:
         scan.save()
 
         task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
             task_name="scan-report",
             task_kwargs={"scan_id": str(scan.id)},
         )
@@ -4389,6 +4390,7 @@ class TestScanViewSet:
         scan.save()
 
         task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
             task_name="scan-report",
             task_kwargs={"scan_id": str(scan.id)},
         )
@@ -4416,6 +4418,7 @@ class TestScanViewSet:
         scan.save()
 
         task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
             task_name="scan-report",
             task_kwargs={"scan_id": str(scan.id)},
         )
@@ -4449,6 +4452,7 @@ class TestScanViewSet:
         old_task = Task.objects.create(
             tenant_id=scan.tenant_id,
             task_runner_task=TaskResult.objects.create(
+                task_id=str(uuid4()),
                 task_name="scan-report",
                 task_kwargs={"scan_id": str(scan.id)},
             ),
@@ -4456,6 +4460,7 @@ class TestScanViewSet:
         new_task = Task.objects.create(
             tenant_id=scan.tenant_id,
             task_runner_task=TaskResult.objects.create(
+                task_id=str(uuid4()),
                 task_name="scan-report",
                 task_kwargs={"scan_id": str(scan.id)},
             ),
