@@ -2059,12 +2059,17 @@ class ScanViewSet(BaseRLSViewSet):
         if scan_instance.state == StateChoices.EXECUTING and scan_instance.task:
             task = scan_instance.task
         else:
-            try:
-                task = Task.objects.get(
+            # A scan can have several `scan-report` tasks (e.g. re-runs); take the
+            # most recent one. `.first()` also avoids `MultipleObjectsReturned`.
+            task = (
+                Task.objects.filter(
                     task_runner_task__task_name="scan-report",
                     task_runner_task__task_kwargs__contains=str(scan_instance.id),
                 )
-            except Task.DoesNotExist:
+                .order_by("-inserted_at")
+                .first()
+            )
+            if task is None:
                 return None
 
         self.response_serializer_class = TaskSerializer
