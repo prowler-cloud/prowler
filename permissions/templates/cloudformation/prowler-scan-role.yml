@@ -129,6 +129,7 @@ Resources:
                   - "lightsail:GetRelationalDatabases"
                   - "macie2:GetMacieSession"
                   - "macie2:GetAutomatedDiscoveryConfiguration"
+                  - "rolesanywhere:ListTrustAnchors"
                   - "s3:GetAccountPublicAccessBlock"
                   - "shield:DescribeProtection"
                   - "shield:GetSubscriptionState"
