@@ -12,6 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown/dropdown";
 import {
@@ -37,14 +40,14 @@ export const UserNav = () => {
         .join("")
     : name.charAt(0);
 
-  // Derive the restart destination from the registry so adding or reordering
-  // flows never requires editing this component. The trigger mounted on the
-  // target route consumes the `?onboarding=<id>` param and force-starts the tour.
-  const firstFlow = getOrderedFlows()[0];
+  // Derive the replay list entirely from the registry so adding or reordering
+  // flows never requires editing this component. Selecting an entry hands off
+  // to the target route's OnboardingTrigger via the `?onboarding=<id>` param,
+  // which force-starts that single flow only — no guided sequence is started.
+  const flows = getOrderedFlows();
 
-  const startProductTour = () => {
-    if (!firstFlow) return;
-    router.push(`${firstFlow.route}?onboarding=${firstFlow.id}`);
+  const replayFlow = (route: string, id: string) => {
+    router.push(`${route}?onboarding=${id}`);
   };
 
   return (
@@ -73,15 +76,23 @@ export const UserNav = () => {
             Account Settings
           </CustomLink>
         </DropdownMenuItem>
-        {firstFlow && (
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onSelect={startProductTour}
-          >
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="cursor-pointer">
             <Compass />
             Product tour
-          </DropdownMenuItem>
-        )}
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {flows.map((flow) => (
+              <DropdownMenuItem
+                key={flow.id}
+                className="cursor-pointer"
+                onSelect={() => replayFlow(flow.route, flow.id)}
+              >
+                {flow.title}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
