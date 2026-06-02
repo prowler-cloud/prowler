@@ -50,6 +50,9 @@ interface UseProviderWizardControllerProps {
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
   orgInitialData?: OrgWizardInitialData;
+  // When false, the caller owns the post-close data refresh (e.g. to wrap it in
+  // a transition). Defaults to true so standalone callers keep refreshing.
+  refreshOnClose?: boolean;
 }
 
 export function useProviderWizardController({
@@ -57,6 +60,7 @@ export function useProviderWizardController({
   onOpenChange,
   initialData,
   orgInitialData,
+  refreshOnClose = true,
 }: UseProviderWizardControllerProps) {
   const router = useRouter();
   const initialProviderId = initialData?.providerId ?? null;
@@ -185,7 +189,9 @@ export function useProviderWizardController({
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
-    router.refresh();
+    if (refreshOnClose) {
+      router.refresh();
+    }
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {

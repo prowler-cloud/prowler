@@ -1,11 +1,34 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
 
+const { refreshMock, searchParamsValue } = vi.hoisted(() => ({
+  refreshMock: vi.fn(),
+  searchParamsValue: { current: "" },
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/providers",
+  useRouter: () => ({
+    refresh: refreshMock,
+  }),
+  useSearchParams: () => new URLSearchParams(searchParamsValue.current),
+}));
+
+vi.mock("@/components/providers/table", () => ({
+  SkeletonTableProviders: () => <div data-testid="providers-skeleton" />,
+}));
+
 vi.mock("@/components/providers/add-provider-button", () => ({
-  AddProviderButton: () => <button type="button">Add provider</button>,
+  AddProviderButton: ({ onOpenWizard }: { onOpenWizard: () => void }) => (
+    <button type="button" onClick={onOpenWizard}>
+      Add Provider
+    </button>
+  ),
 }));
 
 vi.mock("@/components/providers/muted-findings-config-button", () => ({
@@ -15,7 +38,12 @@ vi.mock("@/components/providers/muted-findings-config-button", () => ({
 }));
 
 vi.mock("@/components/providers/providers-filters", () => ({
-  ProvidersFilters: () => <div data-testid="providers-filters">Filters</div>,
+  ProvidersFilters: ({ actions }: { actions: ReactNode }) => (
+    <div data-testid="providers-filters">
+      Filters
+      {actions}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/providers/providers-accounts-table", () => ({
@@ -23,7 +51,21 @@ vi.mock("@/components/providers/providers-accounts-table", () => ({
 }));
 
 vi.mock("@/components/providers/wizard", () => ({
-  ProviderWizardModal: () => <div data-testid="provider-wizard-modal" />,
+  ProviderWizardModal: ({
+    open,
+    onOpenChange,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <div role="dialog">
+        Provider wizard
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
 }));
 
 import { ProvidersAccountsView } from "./providers-accounts-view";
@@ -36,8 +78,55 @@ const metadata: MetaDataProps = {
   version: "latest",
 };
 
+const disconnectedProviders: ProviderProps[] = [
+  {
+    id: "provider-1",
+    type: "providers",
+    attributes: {
+      provider: "aws",
+      uid: "123456789012",
+      alias: "Production",
+      status: "completed",
+      resources: 0,
+      connection: {
+        connected: false,
+        last_checked_at: "2026-04-13T00:00:00Z",
+      },
+      scanner_args: {
+        only_logs: false,
+        excluded_checks: [],
+        aws_retries_max_attempts: 3,
+      },
+      inserted_at: "2026-04-13T00:00:00Z",
+      updated_at: "2026-04-13T00:00:00Z",
+      created_by: {
+        object: "user",
+        id: "user-1",
+      },
+    },
+    relationships: {
+      secret: {
+        data: null,
+      },
+      provider_groups: {
+        meta: {
+          count: 0,
+        },
+        data: [],
+      },
+    },
+  },
+];
+
 describe("ProvidersAccountsView", () => {
-  it("keeps the same vertical spacing between filters and table as other views", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    searchParamsValue.current = "";
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("shows a full page empty state without filters or table when there are no providers", () => {
+    // Given/When
     render(
       <ProvidersAccountsView
         isCloud={false}
@@ -48,11 +137,162 @@ describe("ProvidersAccountsView", () => {
       />,
     );
 
+    // Then
+    expect(screen.getByText("No Providers Configured")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: /no providers configured/i }),
+    ).toHaveClass("min-h-[calc(100dvh-28rem)]");
+    expect(screen.queryByTestId("providers-filters")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("providers-table")).not.toBeInTheDocument();
+  });
+
+  it("opens the provider wizard from the no providers CTA", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open add provider modal/i }),
+    );
+
+    // Then
+    expect(screen.getByRole("dialog")).toHaveTextContent("Provider wizard");
+  });
+
+  it("opens the provider wizard from the URL without immediately clearing the one-shot intent", () => {
+    // Given
+    searchParamsValue.current = "tab=connected&addProvider=true";
+    window.history.replaceState(
+      {},
+      "",
+      "/providers?tab=connected&addProvider=true",
+    );
+    // Spy only after the URL setup so we measure what the component does on mount.
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // Then
+    expect(screen.getByRole("dialog")).toHaveTextContent("Provider wizard");
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+  });
+
+  it("clears the one-shot intent when the URL-opened provider wizard closes", async () => {
+    // Given
+    searchParamsValue.current = "tab=connected&addProvider=true";
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    // URL is cleaned via the History API (no Next navigation / RSC refetch).
+    expect(replaceStateSpy).toHaveBeenCalledWith(
+      null,
+      "",
+      "/providers?tab=connected",
+    );
+  });
+
+  it("does not touch the URL when a manually opened wizard closes", async () => {
+    // Given: no addProvider param in the URL, wizard opened via the CTA.
+    searchParamsValue.current = "";
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When: open the wizard from the empty-state CTA, then close it.
+    await user.click(
+      screen.getByRole("button", { name: /open add provider modal/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then: the guard skips the cleanup since there was no param to remove.
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+  });
+
+  it("keeps filters and table visible when providers are disconnected", () => {
+    // Given/When
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+
+    // Then
     expect(screen.getByTestId("providers-filters").parentElement).toHaveClass(
       "flex",
       "flex-col",
       "gap-6",
     );
     expect(screen.getByTestId("providers-table")).toBeInTheDocument();
+    expect(
+      screen.queryByText("No Providers Configured"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the provider wizard from the normal Add Provider button", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /add provider/i }));
+
+    // Then
+    expect(screen.getByRole("dialog")).toHaveTextContent("Provider wizard");
   });
 });
