@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.29.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Add Provider modal now closes without reloading the providers page [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
+---
+
 ## [1.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added
