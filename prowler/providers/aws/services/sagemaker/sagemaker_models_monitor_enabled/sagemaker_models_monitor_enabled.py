@@ -9,14 +9,14 @@ class sagemaker_models_monitor_enabled(Check):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=monitoring_schedule
             )
-            if monitoring_schedule.schedule_status == "NOT_AVAILABLE":
+            if monitoring_schedule.is_scheduled:
+                report.status = "PASS"
+                report.status_extended = f"SageMaker monitoring schedule {monitoring_schedule.name} is enabled in region {monitoring_schedule.region}."
+            elif not monitoring_schedule.has_schedules:
                 report.status = "FAIL"
                 report.status_extended = f"No SageMaker monitoring schedules found in region {monitoring_schedule.region}."
-            elif monitoring_schedule.schedule_status == "Scheduled":
-                report.status = "PASS"
-                report.status_extended = f"SageMaker monitoring schedule {monitoring_schedule.name} is enabled."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"SageMaker monitoring schedule {monitoring_schedule.name} is not active ({monitoring_schedule.schedule_status})."
+                report.status_extended = f"No active SageMaker monitoring schedule in region {monitoring_schedule.region}; existing schedules are not in Scheduled status."
             findings.append(report)
         return findings
