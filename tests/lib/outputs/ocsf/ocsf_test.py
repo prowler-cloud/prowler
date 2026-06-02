@@ -2,8 +2,10 @@ import json
 from datetime import datetime, timezone
 from io import StringIO
 from typing import Optional
+from unittest.mock import MagicMock
 from uuid import UUID
 
+import pytest
 import requests
 from freezegun import freeze_time
 from mock import patch
@@ -299,6 +301,36 @@ class TestOCSF:
 
     def test_batch_write_data_to_file_without_findings(self):
         assert not OCSF([])._file_descriptor
+
+    def test_batch_write_data_to_file_propagates_oserror(self):
+        """An I/O error (e.g. ENOSPC) while writing a finding must propagate
+        instead of being swallowed, so the caller can fail fast."""
+        findings = [
+            generate_finding_output(
+                status="FAIL",
+                severity="low",
+                muted=False,
+                region=AWS_REGION_EU_WEST_1,
+                timestamp=datetime.now(),
+                resource_details="resource_details",
+                resource_name="resource_name",
+                resource_uid="resource-id",
+                status_extended="status extended",
+            )
+        ]
+
+        output = OCSF(findings)
+        mock_file = MagicMock()
+        mock_file.closed = False
+        # Non-zero so the "[" prelude is skipped and the failure happens on the
+        # per-finding write, the exact path that hit ENOSPC in production.
+        mock_file.tell.return_value = 1
+        mock_file.write.side_effect = OSError(28, "No space left on device")
+        output._file_descriptor = mock_file
+
+        with pytest.raises(OSError) as excinfo:
+            output.batch_write_data_to_file()
+        assert excinfo.value.errno == 28
 
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(
