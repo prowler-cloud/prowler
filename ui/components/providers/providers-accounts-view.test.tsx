@@ -6,8 +6,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
 
-const { refreshMock, searchParamsValue } = vi.hoisted(() => ({
+const { refreshMock, replaceMock, searchParamsValue } = vi.hoisted(() => ({
   refreshMock: vi.fn(),
+  replaceMock: vi.fn(),
   searchParamsValue: { current: "" },
 }));
 
@@ -15,6 +16,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/providers",
   useRouter: () => ({
     refresh: refreshMock,
+    replace: replaceMock,
   }),
   useSearchParams: () => new URLSearchParams(searchParamsValue.current),
 }));
@@ -195,7 +197,7 @@ describe("ProvidersAccountsView", () => {
     expect(replaceStateSpy).not.toHaveBeenCalled();
   });
 
-  it("clears the one-shot intent when the URL-opened provider wizard closes", async () => {
+  it("cleans the one-shot intent from the URL without refetching when the URL-opened wizard closes", async () => {
     // Given
     searchParamsValue.current = "tab=connected&addProvider=true";
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
@@ -216,15 +218,20 @@ describe("ProvidersAccountsView", () => {
 
     // Then
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    // URL is cleaned via the History API (no Next navigation / RSC refetch).
+    // The URL is cleaned via the History API (no RSC refetch). We must NOT
+    // refresh/replace here: re-running the /providers Server Component on close
+    // read as a full page reload. The provider-creation actions already
+    // revalidatePath("/providers"), so the table is fresh behind the modal.
     expect(replaceStateSpy).toHaveBeenCalledWith(
       null,
       "",
       "/providers?tab=connected",
     );
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
-  it("does not touch the URL when a manually opened wizard closes", async () => {
+  it("does not touch the URL or refetch when a manually opened wizard closes", async () => {
     // Given: no addProvider param in the URL, wizard opened via the CTA.
     searchParamsValue.current = "";
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
@@ -246,9 +253,12 @@ describe("ProvidersAccountsView", () => {
     );
     await user.click(screen.getByRole("button", { name: /close/i }));
 
-    // Then: the guard skips the cleanup since there was no param to remove.
+    // Then: nothing to clean and no refresh — the creation actions own the
+    // data refresh via revalidatePath.
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(replaceStateSpy).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
   it("keeps filters and table visible when providers are disconnected", () => {
