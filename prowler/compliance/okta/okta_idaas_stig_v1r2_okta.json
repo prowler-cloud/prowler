@@ -1,0 +1,602 @@
+{
+  "Framework": "Okta-IDaaS-STIG",
+  "Name": "DISA Okta Identity as a Service (IDaaS) STIG V1R2",
+  "Version": "1R2",
+  "Provider": "Okta",
+  "Description": "Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS), Version 1 Release 2 (Benchmark Date: 05 Jan 2026).",
+  "Requirements": [
+    {
+      "Id": "OKTA-APP-000020",
+      "Name": "Okta must log out a session after a 15-minute period of inactivity.",
+      "Description": "A session timeout lock is a temporary action taken when a user stops work and moves away from the immediate physical vicinity of the information system but does not log out because of the temporary nature of the absence. Rather than relying on the user to manually lock their application session prior to vacating the vicinity, applications must be able to identify when a user's application session has idled and take action to initiate the session lock. The session lock is implemented at the point where session activity can be determined and/or controlled. This is typically at the operating system level and results in a system lock. However, it may be at the application level where the application interface window is secured instead. Satisfies: SRG-APP-000003, SRG-APP-000190",
+      "Checks": [
+        "signon_global_session_idle_timeout_15min"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273186r1098825_rule",
+          "StigID": "OKTA-APP-000020",
+          "CCI": [
+            "CCI-000057",
+            "CCI-001133"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Global Session Policy. 2. In the Default Policy, verify a rule is configured at Priority 1 that is not named \"Default Rule\". 3. Click the edit icon next to the Priority 1 rule. 4. Verify the \"Maximum Okta global session idle time\" is set to 15 minutes. If \"Maximum Okta global session idle time\" is not set to 15 minutes, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Global Session Policy. 2. Select the Default Policy. 3. In the Rules table, make these updates: - Click \"Add rule\". - Set \"Maximum Okta global session idle time\" to 15 minutes."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000025",
+      "Name": "The Okta Admin Console must log out a session after a 15-minute period of inactivity.",
+      "Description": "A session timeout lock is a temporary action taken when a user stops work and moves away from the immediate physical vicinity of the information system but does not log out because of the temporary nature of the absence. Rather than relying on the user to manually lock their application session prior to vacating the vicinity, applications must be able to identify when a user's application session has idled and take action to initiate the session lock. The session lock is implemented at the point where session activity can be determined and/or controlled. This is typically at the operating system level and results in a system lock. However, it may be at the application level where the application interface window is secured instead.",
+      "Checks": [
+        "application_admin_console_session_idle_timeout_15min"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273187r1098828_rule",
+          "StigID": "OKTA-APP-000025",
+          "CCI": [
+            "CCI-000057"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Applications >> Applications >> Okta Admin Console. 2. In the Sign On tab, under \"Okta Admin Console session\", verify the \"Maximum app session idle time\" is set to 15 minutes. If the \"Maximum app session idle time\" is not set to 15 minutes, this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Applications >> Applications >> Okta Admin Console. 2. In the Sign On tab, under \"Okta Admin Console session\", set the \"Maximum app session idle time\" to 15 minutes."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000090",
+      "Name": "Okta must automatically disable accounts after a 35-day period of account inactivity.",
+      "Description": "Attackers that are able to exploit an inactive account can potentially obtain and maintain undetected access to an application. Owners of inactive accounts will not notice if unauthorized access to their user account has been obtained. Applications must track periods of user inactivity and disable accounts after 35 days of inactivity. Such a process greatly reduces the risk that accounts will be hijacked, leading to a data compromise. To address access requirements, many application developers choose to integrate their applications with enterprise-level authentication/access mechanisms that meet or exceed access control policy requirements. Such integration allows the application developer to off-load those access control functions and focus on core application features and functionality. This policy does not apply to emergency accounts or infrequently used accounts. Infrequently used accounts are local login administrator accounts used by system administrators when network or normal login/access is not available. Emergency accounts are administrator accounts created in response to crisis situations. Satisfies: SRG-APP-000025, SRG-APP-000163, SRG-APP-000700",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273188r1098831_rule",
+          "StigID": "OKTA-APP-000090",
+          "CCI": [
+            "CCI-000017",
+            "CCI-000795",
+            "CCI-003627"
+          ],
+          "CheckText": "If Okta Services rely on external directory services for user sourcing, this is not applicable, and the connected directory services must perform this function. Go to Workflows >> Automations and verify that an Automation has been created to disable accounts after 35 days of inactivity. If the Okta configuration does not automatically disable accounts after a 35-day period of account inactivity, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Workflow >> Automations and select \"Add Automation\". 2. Create a name for the Automation (e.g., \"User Inactivity\"). 3. Click \"Add Condition\" and select \"User Inactivity in Okta\". 4. In the duration field, enter 35 days and click \"Save\". 5 Click the edit button next to \"Select Schedule\". 6. Configure the \"Schedule\" field for \"Run Daily\" and set the \"Time\" field to an organizationally defined time to run this automation. Click \"Save\". 7. Click the edit button next to \"Select group membership\". 8. In the \"Applies to\" field, select the group \"Everyone\" by typing it into the field. Click \"Save\". 9. Click \"Add Action\" and select \"Change User lifecycle state in Okta\". 10. In the \"Change user state to\" field, select \"Suspended\" and click \"Save\". 11. Click the \"Inactive\" button near the top of the section screen and select \"Activate\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000170",
+      "Name": "Okta must enforce the limit of three consecutive invalid login attempts by a user during a 15-minute time period.",
+      "Description": "By limiting the number of failed login attempts, the risk of unauthorized system access via user password guessing, otherwise known as brute forcing, is reduced. Limits are imposed by locking the account. Satisfies: SRG-APP-000065, SRG-APP-000345",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273189r1098834_rule",
+          "StigID": "OKTA-APP-000170",
+          "CCI": [
+            "CCI-000044",
+            "CCI-002238"
+          ],
+          "CheckText": "If Okta Services rely on external directory services for user sourcing, this check is not applicable, and the connected directory services must perform this function. From the Admin Console: 1. Go to Security >> Authenticators. 2. Click the \"Actions\" button next to \"Password\" and select \"Edit\". 3. For each Password Policy, verify the \"Lock Out\" section has the following values: - \"Lock out after 3 unsuccessful attempts\" is checked. - The value is set to \"3\". If Okta Services are not configured to automatically lock user accounts after three consecutive invalid login attempts, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Authenticators. 2. Click the \"Actions\" button next to \"Password\" and select \"Edit\". 3. For each Password Policy, ensure the \"Lock Out\" section has the following values: - \"Lock out after 3 unsuccessful attempts\" is checked. - The value is set to \"3\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000180",
+      "Name": "The Okta Dashboard application must be configured to allow authentication only via non-phishable authenticators.",
+      "Description": "Requiring the use of non-phishable authenticators protects against brute force/password dictionary attacks. This provides a better level of security while removing the need to lock out accounts after three attempts in 15 minutes.",
+      "Checks": [
+        "application_dashboard_phishing_resistant_authentication"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273190r1099763_rule",
+          "StigID": "OKTA-APP-000180",
+          "CCI": [
+            "CCI-000044"
+          ],
+          "CheckText": "From the Admin Console: 1. Go to Security >> Authentication Policies. 2. Click the \"Okta Dashboard\" policy. 3. Click the \"Actions\" button next to the top rule and select \"Edit\". 4. In the \"Possession factor constraints are\" section, verify the \"Phishing resistant\" box is checked. This will ensure that only phishing-resistant factors are used to access the Okta Dashboard. If in the \"Possession factor constraints are\" section the \"Phishing resistant\" box is not checked, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Authentication Policies. 2. Click the \"Okta Dashboard\" policy. 3. Click the \"Actions\" button next to the top rule and select \"Edit\". 4. In the \"Possession factor constraints are\" section, ensure the \"Phishing resistant\" box is checked."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000190",
+      "Name": "The Okta Admin Console application must be configured to allow authentication only via non-phishable authenticators.",
+      "Description": "Requiring the use of non-phishable authenticators protects against brute force/password dictionary attacks. This provides a better level of security while removing the need to lock out accounts after three attempts in 15 minutes.",
+      "Checks": [
+        "application_admin_console_phishing_resistant_authentication"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273191r1099764_rule",
+          "StigID": "OKTA-APP-000190",
+          "CCI": [
+            "CCI-000044"
+          ],
+          "CheckText": "From the Admin Console: 1. Go to Security >> Authentication Policies. 2. Click the \"Okta Admin Console\" policy. 3. Click the \"Actions\" button next to the top rule and select \"Edit\". 4. In the \"Possession factor constraints are\" section, verify the \"Phishing resistant\" box is checked. This will ensure that only phishing-resistant factors are used to access the Okta Dashboard. If in the \"Possession factor constraints are\" section the \"Phishing resistant\" box is not checked, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Authentication Policies. 2. Click the \"Okta Admin Console\" policy. 3. Click the \"Actions\" button next to the top rule and select \"Edit\". 4. In the \"Possession factor constraints are\" section, ensure the \"Phishing resistant\" box is checked."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000200",
+      "Name": "Okta must display the Standard Mandatory DOD Notice and Consent Banner before granting access to the application.",
+      "Description": "Display of the DOD-approved use notification before granting access to the application ensures that privacy and security notification verbiage used is consistent with applicable federal laws, Executive Orders, directives, policies, regulations, standards, and guidance. System use notifications are required only for access via login interfaces with human users and are not required when such human interfaces do not exist. The banner must be formatted in accordance with DTM-08-060. Use the following verbiage for applications that can accommodate banners of 1300 characters: \"You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only. By using this IS (which includes any device attached to this IS), you consent to the following conditions: -The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations. -At any time, the USG may inspect and seize data stored on this IS. -Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG-authorized purpose. -This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy. -Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details.\" Use the following verbiage for operating systems that have severe limitations on the number of characters that can be displayed in the banner: \"I've read & consent to terms in IS user agreem't.\" Satisfies: SRG-APP-000068, SRG-APP-000069, SRG-APP-000070",
+      "Checks": [
+        "signon_dod_warning_banner_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273192r1098843_rule",
+          "StigID": "OKTA-APP-000200",
+          "CCI": [
+            "CCI-000048",
+            "CCI-000050",
+            "CCI-001384",
+            "CCI-001385",
+            "CCI-001386",
+            "CCI-001387",
+            "CCI-001388"
+          ],
+          "CheckText": "Attempt to log in to the Okta tenant and verify the DOD-approved warning banner is in place. If the required warning banner is not present and complete, this is a finding.",
+          "FixText": "Follow the supplemental instructions in the \"Okta DOD Warning Banner Configuration Guide\" provided with this STIG package."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000560",
+      "Name": "The Okta Admin Console application must be configured to use multifactor authentication.",
+      "Description": "Without the use of multifactor authentication, the ease of access to privileged functions is greatly increased. Multifactor authentication requires using two or more factors to achieve authentication. Factors include: (i) something a user knows (e.g., password/PIN); (ii) something a user has (e.g., cryptographic identification device, token); or (iii) something a user is (e.g., biometric). A privileged account is defined as an information system account with authorizations of a privileged user. Network access is defined as access to an information system by a user (or a process acting on behalf of a user) communicating through a network (e.g., local area network, wide area network, or the internet). Satisfies: SRG-APP-000149, SRG-APP-000154",
+      "Checks": [
+        "application_admin_console_mfa_required"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT I (High)",
+          "Severity": "high",
+          "RuleID": "SV-273193r1098846_rule",
+          "StigID": "OKTA-APP-000560",
+          "CCI": [
+            "CCI-000765",
+            "CCI-004046"
+          ],
+          "CheckText": "From the Admin Console: 1. Go to Security >> Authentication Policies. 2. Click the \"Okta Admin Console\" policy. 3. Click the \"Actions\" button next to the top rule and select \"Edit\". 4. In the \"User must authenticate with\" field, verify that either \"Password/IdP + Another factor\" or \"Any 2 factor types\" is selected. If either of these settings is incorrect, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Authentication Policies. 2. Click the \"Okta Admin Console\" policy. 3. Click the \"Actions\" button next to the top rule and select \"Edit\". 4. In the \"User must authenticate with\" field, select either \"Password/IdP + Another factor\" or \"Any 2 factor types\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000570",
+      "Name": "The Okta Dashboard application must be configured to use multifactor authentication.",
+      "Description": "To ensure accountability and prevent unauthenticated access, nonprivileged users must use multifactor authentication to prevent potential misuse and compromise of the system. Multifactor authentication uses two or more factors to achieve authentication. Factors include: (i) Something you know (e.g., password/PIN); (ii) Something you have (e.g., cryptographic identification device, token); or (iii) Something you are (e.g., biometric). A nonprivileged account is any information system account with authorizations of a nonprivileged user. Network access is any access to an application by a user (or process acting on behalf of a user) where the access is obtained through a network connection. Applications integrating with the DOD Active Directory and using the DOD CAC are examples of compliant multifactor authentication solutions. Satisfies: SRG-APP-000150, SRG-APP-000155",
+      "Checks": [
+        "application_dashboard_mfa_required"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT I (High)",
+          "Severity": "high",
+          "RuleID": "SV-273194r1098849_rule",
+          "StigID": "OKTA-APP-000570",
+          "CCI": [
+            "CCI-000766",
+            "CCI-004046"
+          ],
+          "CheckText": "From the Admin Console: 1. Go to Security >> Authentication Policies. 2. Click the \"Okta Dashboard\" policy. 3. Click the \"Actions\" button next to the top rule and select \"Edit\". 4. In the \"User must authenticate with\" field, verify that either \"Password/IdP + Another factor\" or \"Any 2 factor types\" is selected. If either of these settings is incorrect, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Authentication Policies. 2. Click the \"Okta Dashboard\" policy. 3. Click the \"Actions\" button next to the top rule and select \"Edit\". 4. In the \"User must authenticate with\" field, select either \"Password/IdP + Another factor\" or \"Any 2 factor types\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000650",
+      "Name": "Okta must enforce a minimum 15-character password length.",
+      "Description": "Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password length is one factor of several that helps to determine strength and how long it takes to crack a password. The shorter the password, the lower the number of possible combinations that need to be tested before the password is compromised. Use of more characters in a password helps to exponentially increase the time and/or resources required to compromise the password.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273195r1098852_rule",
+          "StigID": "OKTA-APP-000650",
+          "CCI": [
+            "CCI-004066"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy, verify the \"Minimum Length\" field is set to at least \"15\" characters. If any policy is not set to at least \"15\", this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy: - Click \"Edit\". - Set the \"Minimum Length\" field to at least \"15\" characters."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000670",
+      "Name": "Okta must enforce password complexity by requiring that at least one uppercase character be used.",
+      "Description": "Use of a complex password helps to increase the time and resources required to compromise the password. Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password complexity is one factor of several that determine how long it takes to crack a password. The more complex the password is, the greater the number of possible combinations that need to be tested before the password is compromised.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273196r1098855_rule",
+          "StigID": "OKTA-APP-000670",
+          "CCI": [
+            "CCI-004066"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy, verify \"Upper case letter\" is checked. For each policy, if \"Upper case letter\" is not checked, this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy: - Click \"Edit\". - Set \"Upper case letter\" to checked."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000680",
+      "Name": "Okta must enforce password complexity by requiring that at least one lowercase character be used.",
+      "Description": "Use of a complex password helps to increase the time and resources required to compromise the password. Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password complexity is one factor of several that determine how long it takes to crack a password. The more complex the password, the greater the number of possible combinations that need to be tested before the password is compromised.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273197r1098858_rule",
+          "StigID": "OKTA-APP-000680",
+          "CCI": [
+            "CCI-004066"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy, verify \"Lower case letter\" is checked. For each policy, if \"Lower case letter\" is not checked, this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy: - Click \"Edit\". - Set \"Lower case letter\" to checked."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000690",
+      "Name": "Okta must enforce password complexity by requiring that at least one numeric character be used.",
+      "Description": "Use of a complex password helps to increase the time and resources required to compromise the password. Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password complexity is one factor of several that determine how long it takes to crack a password. The more complex the password, the greater the number of possible combinations that need to be tested before the password is compromised.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273198r1098861_rule",
+          "StigID": "OKTA-APP-000690",
+          "CCI": [
+            "CCI-004066"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy, verify \"Number (0-9)\" is checked. For each policy, if \"Number (0-9)\" is not checked, this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy: - Click \"Edit\". - Set \"Number (0-9)\" to checked."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000700",
+      "Name": "Okta must enforce password complexity by requiring that at least one special character be used.",
+      "Description": "Use of a complex password helps to increase the time and resources required to compromise the password. Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password complexity is one factor in determining how long it takes to crack a password. The more complex the password, the greater the number of possible combinations that need to be tested before the password is compromised. Special characters are not alphanumeric. Examples include: ~ ! @ # $ % ^ *.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273199r1098864_rule",
+          "StigID": "OKTA-APP-000700",
+          "CCI": [
+            "CCI-004066"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy, verify \"Symbol (e.g., !@#$%^&*)\" is checked. For each policy, if \"Symbol (e.g., !@#$%^&*)\" is not checked, this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy: - Click \"Edit\". - Set \"Symbol (e.g., !@#$%^&*)\" to checked."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000740",
+      "Name": "Okta must enforce 24 hours/one day as the minimum password lifetime.",
+      "Description": "Enforcing a minimum password lifetime helps prevent repeated password changes to defeat the password reuse or history enforcement requirement. Restricting this setting limits the user's ability to change their password. Passwords must be changed at specific policy-based intervals; however, if the application allows the user to immediately and continually change their password, it could be changed repeatedly in a short period of time to defeat the organization's policy regarding password reuse. Satisfies: SRG-APP-000173, SRG-APP-000870",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273200r1098867_rule",
+          "StigID": "OKTA-APP-000740",
+          "CCI": [
+            "CCI-004066"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy, verify \"Minimum password age is XX hours\" is set to at least \"24\". For each policy, if \"Minimum password age is XX hours\" is not set to at least \"24\", this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy: - Click \"Edit\". - Set \"Minimum password age is XX hours\" to at least \"24\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-000745",
+      "Name": "Okta must enforce a 60-day maximum password lifetime restriction.",
+      "Description": "Any password, no matter how complex, can eventually be cracked. Therefore, passwords must be changed at specific intervals. One method of minimizing this risk is to use complex passwords and periodically change them. If the application does not limit the lifetime of passwords and force users to change their passwords, there is the risk that the system and/or application passwords could be compromised. This requirement does not include emergency administration accounts, which are meant for access to the application in case of failure. These accounts are not required to have maximum password lifetime restrictions.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273201r1098870_rule",
+          "StigID": "OKTA-APP-000745",
+          "CCI": [
+            "CCI-004066"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy, verify \"Password expires after XX days\" is set to \"60\". For each policy, if \"Password expires after XX days\" is not set to \"60\", this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy: - Click \"Edit\". - Set \"Password expires after XX days\" to \"60\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-001430",
+      "Name": "Okta must off-load audit records onto a central log server.",
+      "Description": "Information stored in one location is vulnerable to accidental or incidental deletion or alteration. Off-loading is a common process in information systems with limited audit storage capacity. Satisfies: SRG-APP-000358, SRG-APP-000080, SRG-APP-000125",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT I (High)",
+          "Severity": "high",
+          "RuleID": "SV-273202r1099766_rule",
+          "StigID": "OKTA-APP-001430",
+          "CCI": [
+            "CCI-001851",
+            "CCI-000166",
+            "CCI-001348"
+          ],
+          "CheckText": "From the Admin Console: 1. Go to Reports >> Log Streaming. 2. Verify that a Log Stream connection is configured and active. Alternately, interview the information system security manager (ISSM) and verify that an external Security Information and Event Management (SIEM) system is pulling Okta logs via an Application Programming Interface (API). If either of these is not configured, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Reports >> Log Streaming. 2. Select either \"AWS EventBridge\" or \"Splunk Cloud\" and click \"Next\". 3. Complete the necessary fields and click \"Save\". If Log Streaming is not an option because the SIEM required is not an option, customers can use the Okta Log API to export system logs in real time."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-001665",
+      "Name": "Okta must be configured to limit the global session lifetime to 18 hours.",
+      "Description": "Without reauthentication, users may access resources or perform tasks for which they do not have authorization. When applications provide the capability to change security roles or escalate the functional capability of the application, it is critical the user reauthenticate. In addition to the reauthentication requirements associated with session locks, organizations may require reauthentication of individuals and/or devices in other situations, including (but not limited to) the following circumstances. (i) When authenticators change; (ii) When roles change; (iii) When security categories of information systems change; (iv) When the execution of privileged functions occurs; (v) After a fixed period of time; or (vi) Periodically. Within the DOD, the minimum circumstances requiring reauthentication are privilege escalation and role changes.",
+      "Checks": [
+        "signon_global_session_lifetime_18h"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273203r1099958_rule",
+          "StigID": "OKTA-APP-001665",
+          "CCI": [
+            "CCI-002038"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Global Session Policy. 2. In the Default Policy, verify a rule is configured at Priority 1 that is not named \"Default Rule\". 3. Click the \"Edit\" icon next to the Priority 1 rule. 4. Verify \"Maximum Okta global session lifetime\" is set to 18 hours. If the above is not set, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Global Session Policy. 2. Select the Default Policy. 3. In the Rules table, make these updates: - Click \"Add rule\". - Set \"Maximum Okta global session lifetime\" to 18 hours."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-001670",
+      "Name": "Okta must be configured to accept Personal Identity Verification (PIV) credentials.",
+      "Description": "The use of PIV credentials facilitates standardization and reduces the risk of unauthorized access. DOD has mandated the use of the common access card (CAC) to support identity management and personal authentication for systems covered under HSPD 12, as well as a primary component of layered protection for national security systems. Satisfies: SRG-APP-000391, SRG-APP-000402, SRG-APP-000403",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273204r1098879_rule",
+          "StigID": "OKTA-APP-001670",
+          "CCI": [
+            "CCI-001953",
+            "CCI-002009",
+            "CCI-002010"
+          ],
+          "CheckText": "From the Admin Console: 1. Go to Security >> Authenticators. 2. Verify that \"Smart Card Authenticator\" is listed and has \"Status\" listed as \"Active\". If \"Smart Card Authenticator\" is not listed or is not listed as \"Active\", this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Authenticators. 2. In the \"Setup\" tab, click \"Add authenticator\". 3. Select the configured Smart Card Identity Provider and finish configuration."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-001700",
+      "Name": "The Okta Verify application must be configured to connect only to FIPS-compliant devices.",
+      "Description": "Without device-to-device authentication, communications with malicious devices may be established. Bidirectional authentication provides stronger safeguards to validate the identity of other devices for connections that are of greater risk. Currently, DOD requires the use of AES for bidirectional authentication because it is the only FIPS-validated AES cipher block algorithm. For distributed architectures (e.g., service-oriented architectures), the decisions regarding the validation of authentication claims may be made by services separate from the services acting on those decisions. In such situations, it is necessary to provide authentication decisions (as opposed to the actual authenticators) to the services that need to act on those decisions. A local connection is any connection with a device communicating without the use of a network. A network connection is any connection with a device that communicates through a network (e.g., local area or wide area network; the internet). A remote connection is any connection with a device communicating through an external network (e.g., the internet). Because of the challenges of applying this requirement on a large scale, organizations are encouraged to apply the requirement only to those limited number (and type) of devices that truly need to support this capability.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273205r1098882_rule",
+          "StigID": "OKTA-APP-001700",
+          "CCI": [
+            "CCI-001967"
+          ],
+          "CheckText": "From the Admin Console: 1. Go to Security >> Authenticators. 2. From the \"Setup\" tab, select \"Edit Okta Verify\". 3. Review the \"FIPS Compliance\" field. If FIPS-compliant authentication is not enabled, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Authenticators. 2. From the \"Setup\" tab, select \"Edit Okta Verify\". 3. In the \"FIPS Compliance\" field, choose whether users enrolling in Okta Verify can use FIPS-compliant devices only or any device. 4. Click \"Save\" after making any changes."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-001710",
+      "Name": "Okta must be configured to disable persistent global session cookies.",
+      "Description": "If cached authentication information is out of date, the validity of the authentication information may be questionable. Satisfies: SRG-APP-000400, SRG-APP-000157",
+      "Checks": [
+        "signon_global_session_cookies_not_persistent"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273206r1098885_rule",
+          "StigID": "OKTA-APP-001710",
+          "CCI": [
+            "CCI-002007",
+            "CCI-001942"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Global Session Policy. 2. In the Default Policy, verify a rule is configured at Priority 1 that is not named \"Default Rule\". 3. Click the \"Edit\" icon next to the Priority 1 rule. 4. Verify \"Okta global session cookies persist across browser sessions\" is set to \"Disabled\". If the above it not set, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Global Session Policy. 2. Select the Default Policy. 3. In the \"Rules\" table, make these updates: - Click \"Add rule\". - Set \"Okta global session cookies persist across browser sessions\" to Disable."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-001920",
+      "Name": "Okta must be configured to use only DOD-approved certificate authorities.",
+      "Description": "Untrusted Certificate Authorities (CA) can issue certificates, but they may be issued by organizations or individuals that seek to compromise DOD systems or by organizations with insufficient security controls. If the CA used for verifying the certificate is not DOD approved, trust of this CA has not been established. The DOD will accept only PKI certificates obtained from a DOD-approved internal or external CA. Reliance on CAs for the establishment of secure sessions includes, for example, the use of Transport Layer Security (TLS) certificates. This requirement focuses on communications protection for the application session rather than for the network packet. This requirement applies to applications that use communications sessions. This includes, but is not limited to, web-based applications and Service-Oriented Architectures (SOA). Satisfies: SRG-APP-000427, SRG-APP-000910",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273207r1098888_rule",
+          "StigID": "OKTA-APP-001920",
+          "CCI": [
+            "CCI-002470",
+            "CCI-004909"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Identity Providers (IdPs). 2. Review the list of IdPs with \"Type\" as \"Smart Card\". If the IdP is not listed as \"Active\", this is a finding. 3. Select Actions >> Configure. 4. Under \"Certificate chain\", verify the certificate is from a DOD-approved CA. If the certificate is not from a DOD-approved CA, this is a finding.",
+          "FixText": "From the Admin Console: 1. Go to Security >> Identity Providers. 2. Click \"Add identity provider.\" 3. Click \"Smart Card IdP\". Click \"Next\". 4. Enter the name of the identity provider. 5. Build a certificate chain: - Click \"Browse\" to open a file explorer. Select the certificate file to add and click \"Open\". - To add another certificate, click \"Add Another\" and repeat step 1. - Click \"Build certificate chain\". On success, the chain and its certificates are shown. If the build failed, correct any issues and try again. - Click \"Reset certificate chain\" if replacing the current chain with a new one. 6. In \"IdP username\", select the \"idpuser.subjectAltNameUpn\" attribute. This is the attribute that stores the Electronic Data Interchange Personnel Identifier (EDIPI) on the CAC. 7. In the \"Match Against\" field, select the Okta Profile Attribute in which the EDIPI is to be stored."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-002980",
+      "Name": "Okta must validate passwords against a list of commonly used, expected, or compromised passwords.",
+      "Description": "Password-based authentication applies to passwords regardless of whether they are used in single-factor or multifactor authentication. Long passwords or passphrases are preferable over shorter passwords. Enforced composition rules provide marginal security benefits while decreasing usability. However, organizations may choose to establish certain rules for password generation (e.g., minimum character length for long passwords) under certain circumstances and can enforce this requirement in IA-5(1)(h). Account recovery can occur, for example, in situations when a password is forgotten. Cryptographically protected passwords include salted one-way cryptographic hashes of passwords. The list of commonly used, compromised, or expected passwords includes passwords obtained from previous breach corpuses, dictionary words, and repetitive or sequential characters. The list includes context-specific words, such as the name of the service, username, and derivatives thereof.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273208r1099769_rule",
+          "StigID": "OKTA-APP-002980",
+          "CCI": [
+            "CCI-004058"
+          ],
+          "CheckText": "From the Admin Console: 1. Navigate to Security >> Authenticators. 2. Click the \"Actions\" button next to the Password authenticator and select \"Edit\". 3. Under the \"Password Settings\" section, verify the \"Common Password Check\" box is checked. If \"Common Password Check\" is not selected, this is a finding.",
+          "FixText": "From the Admin Console: 1. Navigate to Security >> Authenticators. 2. Click the \"Actions\" button next to the Password authenticator and select \"Edit\". 3. Under the \"Password Settings\" section, check the \"Common Password Check\" box."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-003010",
+      "Name": "Okta must prohibit password reuse for a minimum of five generations.",
+      "Description": "Password-based authentication applies to passwords regardless of whether they are used in single-factor or multifactor authentication. Long passwords or passphrases are preferable over shorter passwords. Enforced composition rules provide marginal security benefits while decreasing usability. However, organizations may choose to establish certain rules for password generation (e.g., minimum character length for long passwords) under certain circumstances and can enforce this requirement in IA-5(1)(h). Account recovery can occur, for example, in situations when a password is forgotten. Cryptographically protected passwords include salted one-way cryptographic hashes of passwords. The list of commonly used, compromised, or expected passwords includes passwords obtained from previous breach corpuses, dictionary words, and repetitive or sequential characters. The list includes context-specific words, such as the name of the service, username, and derivatives thereof.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-273209r1098894_rule",
+          "StigID": "OKTA-APP-003010",
+          "CCI": [
+            "CCI-004061"
+          ],
+          "CheckText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password row\" and select \"Edit\". 3. For each listed policy, verify \"Enforce password history for last XX passwords\" is set to \"5\". If any policy is not set to at least \"5\", this is a finding.",
+          "FixText": "From the Admin Console: 1. Select Security >> Authenticators. 2. Click the \"Actions\" button next to the \"Password\" row and select \"Edit\". 3. For each listed policy: - Click \"Edit\". - Set \"Enforce password history for last XX passwords\" to \"5\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-003240",
+      "Name": "Okta API tokens must be configured with Network Zones to restrict authorization from known networks.",
+      "Description": "An access token is a piece of data that represents the authorization granted to a user or NPE to access specific systems or information resources. Access tokens enable controlled access to services and resources. Properly managing the lifecycle of access tokens, including their issuance, validation, and revocation, is crucial to maintaining confidentiality of data and systems. Restricting token validity to a specific audience, e.g., an application or security domain, and restricting token validity lifetimes are important practices. Access tokens are revoked or invalidated if they are compromised, lost, or are no longer needed to mitigate the risks associated with stolen or misused tokens. API tokens have the potential to be replicated or stolen (just like a password). Because of this, it is important to only allow API tokens to authenticate from known IP ranges as this limits an adversary's ability to use a token to gain access.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-279689r1155066_rule",
+          "StigID": "OKTA-APP-003240",
+          "CCI": [
+            "CCI-005165",
+            "CCI-000366"
+          ],
+          "CheckText": "From the Admin Console: 1. Select the \"Security\" menu, and then click the \"API\" item. 2. Click the \"Tokens\" tab. 3. For each token listed, click the token name link. 4. In the \"Security\" section, verify the \"Token can be used from\" setting is mapped to a known network zone for the application calling the API. If a network zone for each API access token is not defined, this is a finding.",
+          "FixText": "From the Admin Console: 1. Select the \"Security\" menu, and then click the \"API\" item. 2. Click the \"Tokens\" tab. 3. For each token listed, click the token name link. 4. In the \"Security\" section, click \"Edit\". 5. Set the \"Token can be used from\" setting to the known network zone for the application calling the API. 6. Click \"Save\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-003241",
+      "Name": "Okta API tokens must be created under new dedicated user accounts.",
+      "Description": "An access token is a piece of data that represents the authorization granted to a user or NPE to access specific systems or information resources. Access tokens enable controlled access to services and resources. Properly managing the lifecycle of access tokens, including their issuance, validation, and revocation, is crucial to maintaining confidentiality of data and systems. Restricting token validity to a specific audience, e.g., an application or security domain, and restricting token validity lifetimes are important practices. Access tokens are revoked or invalidated if they are compromised, lost, or are no longer needed to mitigate the risks associated with stolen or misused tokens. When API tokens are created, they inherit the permissions of the user that created them. Therefore, API tokens should only be created from dedicated accounts and permissions must be constrained to least privilege for that dedicated user account and token. No API tokens should be created using a Super Admin account.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-279690r1155069_rule",
+          "StigID": "OKTA-APP-003241",
+          "CCI": [
+            "CCI-005165",
+            "CCI-000366"
+          ],
+          "CheckText": "From the Admin Console: 1. Select the \"Security\" menu, and then click the \"API\" item. 2. Click the \"Tokens\" tab. 3. For each token listed, verify that the Role listed is not \"Super Admin\", and that the account has been specifically created for that token. 4. Click the account name to be token to the user profile for that user. 5. Verify the user only has an administrator role (standard or customer) applied that is correctly scoped as required and documented in the Okta Access Control policy. If the token is using a Super Administrator account, or one that is not properly scoped per the Access Control policy, this is a finding. Note: If a Super Admin token is required for system operation, then this permanent finding.",
+          "FixText": "From the Admin Console: 1. Select the \"Security\" menu, and then click the \"API\" item. 2. Click the \"Tokens\" tab. 3. For each token listed that has \"Super Admin\" or an improperly scoped Admin account, delete the token and create a new one with the appropriately scoped permissions. 4. Verify the application performing the API calls with the new token has been updated."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-003242",
+      "Name": "The Okta Global Session policy must be configured to allow or deny IP based access in accordance with the Access Control policy for Okta.",
+      "Description": "To mitigate the risk of unauthorized access to sensitive information by entities that have been issued certificates by DOD-approved PKIs, all DOD systems (e.g., networks, web servers, and web portals) must be properly configured to incorporate access control methods that do not rely solely on the possession of a certificate for access. Successful authentication must not automatically give an entity access to an asset or security boundary. Authorization procedures and controls must be implemented to ensure each authenticated entity also has a validated and current authorization. Authorization is the process of determining whether an entity, once authenticated, is permitted to access a specific asset. Information systems use access control policies and enforcement mechanisms to implement this requirement. Access Control policies include identity-based policies, role-based policies, and attribute-based policies. Access enforcement mechanisms include access control lists, access control matrices, and cryptography. These policies and mechanisms must be employed by the application to control access between users (or processes acting on behalf of users) and objects (e.g., devices, files, records, processes, programs, and domains) in the information system. The Okta Global Session Policy is applied at the organization level and before any application-specific authentication policies are processed. The Okta authorization package should contain an access control policy that defines IP ranges from which to either allow or deny access. This list (either as an explicit allow or explicit deny) can be implemented in the Global Session Policy.",
+      "Checks": [
+        "signon_global_session_policy_network_zone_enforced"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-279691r1155072_rule",
+          "StigID": "OKTA-APP-003242",
+          "CCI": [
+            "CCI-000213"
+          ],
+          "CheckText": "From the Admin Console: 1. Select the \"Security\" menu, and then click the \"Global Session Policy\" item. 2. In the \"Policy Settings\" section, verify the \"IF User's IP is\" setting is correctly set to either allow or deny based on the organization defined policy. If the Okta Global Session Policy is not configured to restrict access to specific IP ranges, this is a finding.",
+          "FixText": "From the Admin Console: 1. Select the \"Security\" menu, and then click the \"Global Session Policy\" item. 2. In the Policy Settings section, configure the \"IF User's IP is\" setting to correctly set the appropriate network to either allow or deny based on the Access Control Policy."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-003243",
+      "Name": "Okta must be configured with Network Zones defined to block anonymized proxies according to organizationally defined policy.",
+      "Description": "A mechanism to detect and prevent unauthorized communication flow must be configured or provided as part of the system design. If information flow is not enforced based on approved authorizations, the system may become compromised. Information flow control regulates where information is allowed to travel within a system and between interconnected systems. The flow of all application information must be monitored and controlled so it does not introduce any unacceptable risk to the systems or data. Application-specific examples of enforcement occurs in systems that employ rule sets or establish configuration settings that restrict information system services, or provide a message filtering capability based on message content (e.g., implementing key word searches or using document characteristics). Applications providing information flow control must be able to enforce approved authorizations for controlling the flow of information between interconnected systems in accordance with applicable policy. Working with the organizational CSSP, the ISSM should obtain a list of known anonymizer proxies that exist on the commercial internet. If this is not available from the CSSP, then the Okta-provided \"Enhanced dynamic zone blocklist\" should be activated.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-279692r1155075_rule",
+          "StigID": "OKTA-APP-003243",
+          "CCI": [
+            "CCI-001414"
+          ],
+          "CheckText": "From the Admin Console: 1. Select the \"Security\" menu, and then click the \"Networks' item. 2. If the CSSP has provided a list of anonymizers to block, verify the \"IP Block list\" is configured with them. a. Click the pencil icon next to IP Block list. b. Verify the \"Gateway IPs\" section contains all of the IP ranges in the provided list. 3. If the CSSP is not able to provide a list, then implement the Okta managed list. a. Verify the \"Enhanced dynamic zone blocklist\" is set to \"Active\". If Network Zones are not configured to block anonymous proxies, this is a finding.",
+          "FixText": "From the Admin Console: 1. Select the \"Security\" menu, and then click the \"Networks\" item. 2. If the CSSP has provided a list of anonymizers to block, add the IP ranges to the \"IP Block list\". a. Click the pencil icon next to IP Block list. b. Add the IP ranges to the \"Gateway IPs\" section and click \"Save\". 3. If the CSSP is not able to provide a list, then implement the Okta managed list. a. Set the \"Enhanced dynamic zone blocklist\" to \"Active\"."
+        }
+      ]
+    },
+    {
+      "Id": "OKTA-APP-003244",
+      "Name": "For each application integrated with Okta, network zones must be defined in its authentication policy.",
+      "Description": "A mechanism to detect and prevent unauthorized communication flow must be configured or provided as part of the system design. If information flow is not enforced based on approved authorizations, the system may become compromised. Information flow control regulates where information is allowed to travel within a system and between interconnected systems. The flow of all application information must be monitored and controlled so it does not introduce any unacceptable risk to the systems or data. Application-specific examples of enforcement occurs in systems that employ rule sets or establish configuration settings that restrict information system services, or provide a message filtering capability based on message content (e.g., implementing key word searches or using document characteristics). Applications providing information flow control must be able to enforce approved authorizations for controlling the flow of information between interconnected systems in accordance with applicable policy. Each application in Okta should have a well defined access control policy that takes into account the end user network. This should be documented in the Access Control policy for each application. As an example, access to an application may be restricted to a specific location by policy. In this case, a network defining that specific location should be created.",
+      "Checks": [
+        "application_authentication_policy_network_zone_enforced"
+      ],
+      "Attributes": [
+        {
+          "Section": "CAT II (Medium)",
+          "Severity": "medium",
+          "RuleID": "SV-279693r1155078_rule",
+          "StigID": "OKTA-APP-003244",
+          "CCI": [
+            "CCI-001414"
+          ],
+          "CheckText": "For each application integrated into Okta: 1. From the Admin console, open the \"Security\" menu, and then select \"Networks\". 2. Verify the list of networks includes all necessary allow or block lists. If any application is not configured with network zones, this is a finding.",
+          "FixText": "For each application, starting at the admin console: 1. Open the \"Applications\" group from the Menu, and then click the \"Applications\" menu item. 2. Click the application name. 3. Click the \"Sign On\" tab. 4. Scroll to the \"User Authentication\" section, and then click \"Edit\". 5. Select the appropriate Authentication policy from the pull down, and then click \"Save\". 6. Click \"View Policy Details\". 7. For each nondefault rule: a. Select \"Edit\" from the Actions menu. b. In the \"IF\" section, verify the \"User is\" setting has the appropriate allow or deny range has been selected based on the Access Control policy for the application. c. Scroll down to the bottom and click \"Save\". 8. For the Catch-All rule: a. Select \"Edit\" from the Actions menu. b. Scroll down to the \"Then\" section. c. For the \"Access is\" setting, select \"Denied\", and then click \"Save\"."
+        }
+      ]
+    }
+  ]
+}

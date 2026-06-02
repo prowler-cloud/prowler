@@ -327,6 +327,16 @@ export interface ASDEssentialEightRequirement extends Requirement {
   references: ASDEssentialEightAttributesMetadata["References"];
 }
 
+export interface OktaIDaaSStigAttributesMetadata {
+  Section: string;
+  Severity: string;
+  RuleID: string;
+  StigID: string;
+  CCI?: string[];
+  CheckText?: string;
+  FixText?: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -349,6 +359,7 @@ export interface AttributesItemData {
         | CCCAttributesMetadata[]
         | CSAAttributesMetadata[]
         | ASDEssentialEightAttributesMetadata[]
+        | OktaIDaaSStigAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure

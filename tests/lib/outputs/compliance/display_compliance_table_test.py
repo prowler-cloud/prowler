@@ -120,6 +120,15 @@ class TestDispatchStartswith:
 
     @pytest.mark.parametrize(
         "framework_name",
+        ["okta_idaas_stig_v1r2_okta"],
+    )
+    @patch(f"{MODULE}.get_okta_idaas_stig_table")
+    def test_okta_idaas_stig_dispatch(self, mock_fn, framework_name):
+        display_compliance_table(compliance_framework=framework_name, **_COMMON)
+        mock_fn.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "framework_name",
         [
             "soc2_aws",
             "hipaa_aws",

@@ -282,6 +282,26 @@ class CSA_CCM_Requirement_Attribute(BaseModel):
     ScopeApplicability: list[dict]
 
 
+class STIG_Requirement_Attribute_Severity(str, Enum):
+    """DISA STIG Requirement Attribute Severity (maps to CAT I/II/III)"""
+
+    high = "high"
+    medium = "medium"
+    low = "low"
+
+
+class STIG_Requirement_Attribute(BaseModel):
+    """DISA STIG Requirement Attribute"""
+
+    Section: str
+    Severity: STIG_Requirement_Attribute_Severity
+    RuleID: str
+    StigID: str
+    CCI: Optional[list[str]] = None
+    CheckText: Optional[str] = None
+    FixText: Optional[str] = None
+
+
 # Base Compliance Model
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
@@ -302,6 +322,7 @@ class Compliance_Requirement(BaseModel):
             CCC_Requirement_Attribute,
             C5Germany_Requirement_Attribute,
             CSA_CCM_Requirement_Attribute,
+            STIG_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]

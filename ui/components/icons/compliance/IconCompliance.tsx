@@ -17,6 +17,7 @@ import KISALogo from "./kisa.svg";
 import MITRELogo from "./mitre-attack.svg";
 import NIS2Logo from "./nis2.svg";
 import NISTLogo from "./nist.svg";
+import OktaLogo from "./okta.svg";
 import PCILogo from "./pci-dss.svg";
 import PROWLERTHREATLogo from "./prowlerThreat.svg";
 import RBILogo from "./rbi.svg";
@@ -68,6 +69,7 @@ const COMPLIANCE_LOGOS = [
   ["ccc", CCCLogo],
   ["csa", CSALogo],
   ["secnumcloud", ANSSILogo],
+  ["okta", OktaLogo],
   ["aws", AWSLogo],
 ] as const;
 

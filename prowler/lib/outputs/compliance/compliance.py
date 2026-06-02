@@ -19,6 +19,9 @@ from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp import get_kisa_ismsp_
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
 )
+from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig import (
+    get_okta_idaas_stig_table,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore import (
     get_prowler_threatscore_table,
 )
@@ -235,6 +238,15 @@ def display_compliance_table(
             )
         elif "asd_essential_eight" in compliance_framework:
             get_asd_essential_eight_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
+        elif compliance_framework.startswith("okta_idaas_stig"):
+            get_okta_idaas_stig_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,
