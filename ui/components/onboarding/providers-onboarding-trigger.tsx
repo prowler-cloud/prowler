@@ -74,21 +74,26 @@ interface OnboardingTourRunnerProps {
 }
 
 function OnboardingTourRunner({ flow, openWizard }: OnboardingTourRunnerProps) {
-  const hasStartedRef = useRef(false);
-
   const { start } = useDriverTour(flow.tour, {
     autoOpen: false,
     stepHandlers: createAddProviderTourStepHandlers(openWizard),
   });
 
+  // Force-start once per mount. This bypasses the `hasCompleted` short-circuit
+  // so re-trigger works even with an existing completion record.
+  //
+  // The empty dependency array is intentional (NOT `[start]`): `start` gets a
+  // new identity every render and always reads the latest `driverRef.current`,
+  // so a single call on mount is correct. A `hasStartedRef` guard must NOT be
+  // used here: under React StrictMode (dev) the effect runs setup → cleanup →
+  // setup; the first setup starts the tour, the cleanup destroys it, and a ref
+  // guard would then skip the re-start on the second setup, leaving no visible
+  // tour. Mounting a fresh runner per re-trigger (via the parent `key`) already
+  // guarantees one start per intentional trigger.
   useEffect(() => {
-    // Force-start once: bypasses the `hasCompleted` short-circuit so the
-    // re-trigger works even with an existing completion record.
-    if (hasStartedRef.current) return;
-    hasStartedRef.current = true;
-
     start();
-  }, [start]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return null;
 }
