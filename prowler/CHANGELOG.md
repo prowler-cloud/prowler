@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.30.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
+
+---
+
 ## [5.29.1] (Prowler v5.29.1)
 
 ### 🐞 Fixed
