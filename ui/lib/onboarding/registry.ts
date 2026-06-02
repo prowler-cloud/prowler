@@ -1,12 +1,26 @@
+import { addProviderTour } from "@/lib/tours/add-provider.tour";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 import type { TourCompletionStore } from "@/lib/tours/store/tour-completion-store";
 
 import type { OnboardingContext, OnboardingFlow } from "./onboarding-types";
 
-// Single source of truth for onboarding flows. Starts empty in Slice A; the
-// `add-provider` entry is appended in Slice B. Adding a flow is one entry here
-// plus its `*.tour.ts` file — no gate, modal, or nav edits required.
-export const onboardingFlows: readonly OnboardingFlow[] = [];
+// Single source of truth for onboarding flows. Adding a flow is one entry here
+// plus its `*.tour.ts` file — no gate, modal, or nav edits required. `order`
+// is an explicit integer (gaps allowed) so reordering is a data edit.
+export const onboardingFlows: readonly OnboardingFlow[] = [
+  {
+    id: "add-provider",
+    order: 1,
+    title: "Add your first provider",
+    description:
+      "Connect a cloud account so Prowler has something to scan and assess.",
+    route: "/providers",
+    tour: addProviderTour,
+    // Server-derived authority: a user who already has providers is never
+    // gated into this flow, even with no local completion record.
+    isComplete: (ctx) => ctx.hasProviders,
+  },
+];
 
 // Returns flows sorted ascending by `order`. The sort is stable: entries that
 // share an `order` value keep their original relative position. The `flows`

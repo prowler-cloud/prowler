@@ -347,11 +347,13 @@ export const ConnectAccountForm = ({
       >
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
-          <RadioGroupProvider
-            control={form.control}
-            isInvalid={!!form.formState.errors.providerType}
-            errorMessage={form.formState.errors.providerType?.message}
-          />
+          <div data-tour-id="add-provider-provider-type">
+            <RadioGroupProvider
+              control={form.control}
+              isInvalid={!!form.formState.errors.providerType}
+              errorMessage={form.formState.errors.providerType?.message}
+            />
+          </div>
         )}
         {/* Step 2: AWS method selector (only for AWS, before choosing method) */}
         {prevStep === 2 && providerType === "aws" && awsMethod === null && (
