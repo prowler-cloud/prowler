@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.30.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- DISA Okta IDaaS STIG V1R2 compliance framework for the Okta provider, with a dedicated CSV output formatter and terminal summary table [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+
+---
+
 ## [5.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added

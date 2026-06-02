@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.31.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- DISA Okta IDaaS STIG V1R2 compliance framework export support for the Okta provider [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+
+---
+
 ## [1.30.0] (Prowler v5.29.0)
 
 ### 🔄 Changed
