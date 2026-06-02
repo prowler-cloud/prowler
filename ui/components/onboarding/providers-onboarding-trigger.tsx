@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { getFlowById, type OnboardingFlow } from "@/lib/onboarding";
 import { createAddProviderTourStepHandlers } from "@/lib/tours/add-provider.tour";
@@ -15,6 +15,13 @@ interface ProvidersOnboardingTriggerProps {
 
 const ONBOARDING_PARAM = "onboarding";
 
+// A single, latched trigger request. `key` lets us mount a FRESH runner per
+// re-trigger so the tour can be restarted repeatedly.
+interface OnboardingRequest {
+  flow: OnboardingFlow;
+  key: number;
+}
+
 // Reads `?onboarding=<flowId>` and, when it matches a known flow, force-starts
 // that flow's tour over the real page surface, then strips the param so a
 // refresh does not re-trigger. Renders nothing.
@@ -24,14 +31,41 @@ export function ProvidersOnboardingTrigger({
   const searchParams = useSearchParams();
   // `useSearchParams` can return null outside a router/Suspense context.
   const flowId = searchParams?.get(ONBOARDING_PARAM) ?? null;
-  const flow = flowId ? getFlowById(flowId) : undefined;
 
-  if (!flow) return null;
+  // The flow is LATCHED into state rather than derived from the live params on
+  // every render. Once latched, stripping the param does NOT unmount the
+  // runner — which previously destroyed the just-started tour.
+  const [request, setRequest] = useState<OnboardingRequest | null>(null);
+  const keyRef = useRef(0);
 
-  // Delegated to an inner component so the `useDriverTour` hook is always
-  // called unconditionally for the resolved flow (Rules of Hooks): this whole
-  // tree only mounts when a valid flow is present.
-  return <OnboardingTourRunner flow={flow} openWizard={openWizard} />;
+  useEffect(() => {
+    if (!flowId) return;
+    const flow = getFlowById(flowId);
+    if (!flow) return;
+
+    keyRef.current += 1;
+    setRequest({ flow, key: keyRef.current });
+
+    // Strip the param via history so a hard reload does not re-launch the tour.
+    // We use `window.history.replaceState` instead of `router.replace` so that
+    // clearing the param does NOT re-trigger `useSearchParams` reactivity or a
+    // server route round-trip. The latched runner therefore stays mounted.
+    window.history.replaceState(null, "", window.location.pathname);
+  }, [flowId]);
+
+  if (!request) return null;
+
+  // Keyed so each re-trigger mounts a FRESH runner (fresh `hasStartedRef`),
+  // preserving "restart works repeatedly". The runner calls `useDriverTour`
+  // unconditionally, so Rules of Hooks hold even though this parent can return
+  // null above.
+  return (
+    <OnboardingTourRunner
+      key={request.key}
+      flow={request.flow}
+      openWizard={openWizard}
+    />
+  );
 }
 
 interface OnboardingTourRunnerProps {
@@ -40,8 +74,6 @@ interface OnboardingTourRunnerProps {
 }
 
 function OnboardingTourRunner({ flow, openWizard }: OnboardingTourRunnerProps) {
-  const router = useRouter();
-  const pathname = usePathname();
   const hasStartedRef = useRef(false);
 
   const { start } = useDriverTour(flow.tour, {
@@ -56,9 +88,7 @@ function OnboardingTourRunner({ flow, openWizard }: OnboardingTourRunnerProps) {
     hasStartedRef.current = true;
 
     start();
-    // Strip the param so a hard reload does not re-launch the tour.
-    router.replace(pathname);
-  }, [start, router, pathname]);
+  }, [start]);
 
   return null;
 }
