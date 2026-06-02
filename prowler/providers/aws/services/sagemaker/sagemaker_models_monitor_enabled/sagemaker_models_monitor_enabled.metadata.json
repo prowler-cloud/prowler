@@ -13,11 +13,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "**SageMaker Models Monitor** detects data drift, model quality issues, and bias drift in production.",
-  "Risk": "Without active monitoring, model degradation goes undetected and downstream decisions (fraud, access, pricing) silently degrade.",
+  "Risk": "Without an **active monitoring schedule**, data drift, model quality issues, and bias drift go undetected, so **model quality degrades silently** while downstream decisions such as fraud detection, access control, and pricing keep relying on a degrading model.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html",
-    "https://github.com/aws-samples/sample-aiml-security-assessment"
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor-scheduling.html"
   ],
   "Remediation": {
     "Code": {
@@ -27,7 +27,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that model monitoring is active and you have at least one monitor scheduled to check.",
+      "Text": "Enable **Amazon SageMaker Model Monitor** and keep at least one **monitoring schedule** in the `Scheduled` state so data quality, model quality, and bias drift are continuously evaluated against a baseline.",
       "Url": "https://hub.prowler.com/check/sagemaker_models_monitor_enabled"
     }
   },
