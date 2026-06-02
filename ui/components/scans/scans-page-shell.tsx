@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, Suspense, useState } from "react";
 
+import { OnboardingTrigger } from "@/components/onboarding";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import {
   Button,
@@ -11,6 +12,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
+import { getFlowById } from "@/lib/onboarding";
 import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
@@ -18,6 +20,10 @@ import {
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
+
+// Resolved once: the registry is static, so the flow this route owns never
+// changes at runtime.
+const viewFirstScanFlow = getFlowById("view-first-scan")!;
 
 import { CliImportBanner } from "./cli-import-banner";
 import { LaunchScanModal } from "./launch-scan-modal";
@@ -80,6 +86,12 @@ export function ScansPageShell({
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {/* Renders null; reads the sequence slice + ?onboarding param and force-
+          starts the view-first-scan tour. Suspense satisfies the App Router
+          requirement around `useSearchParams`. */}
+      <Suspense fallback={null}>
+        <OnboardingTrigger flow={viewFirstScanFlow} />
+      </Suspense>
       <div
         role="group"
         aria-label="Scan filters and actions"
@@ -101,6 +113,7 @@ export function ScansPageShell({
           onClick={() => handleLaunchOpenChange(true)}
           disabled={launchDisabled}
           className="w-full md:w-auto"
+          data-tour-id="view-first-scan-launch"
         >
           Launch Scan
         </Button>
@@ -118,7 +131,10 @@ export function ScansPageShell({
           aria-label="Scan tabs"
           className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
-          <TabsList className="overflow-x-auto">
+          <TabsList
+            className="overflow-x-auto"
+            data-tour-id="view-first-scan-tabs"
+          >
             {Object.values(SCAN_JOBS_TAB).map((tab) => (
               <TabsTrigger key={tab} value={tab}>
                 {getTabLabel(tab as ScanJobsTab)}

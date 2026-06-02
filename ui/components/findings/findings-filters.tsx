@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
@@ -14,11 +14,13 @@ import {
   FilterSummaryStrip,
 } from "@/components/filters/filter-summary-strip";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { OnboardingTrigger } from "@/components/onboarding";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
+import { getFlowById } from "@/lib/onboarding";
 import { FilterType, ScanEntity } from "@/types";
 import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
@@ -27,6 +29,10 @@ import {
   buildFindingsFilterChips,
   getFindingsFilterDisplayValue,
 } from "./findings-filters.utils";
+
+// Resolved once: the registry is static, so the flow this route owns never
+// changes at runtime.
+const exploreFindingsFlow = getFlowById("explore-findings")!;
 
 interface FindingsFiltersProps {
   /** Provider data for provider/account filter controls. */
@@ -333,19 +339,27 @@ export const FindingsFilters = (props: FindingsFiltersProps) => {
   });
 
   return (
-    <FindingsFilterBatchControls
-      {...props}
-      appliedFilters={appliedFilters}
-      pendingFilters={pendingFilters}
-      changedFilters={changedFilters}
-      setPending={setPending}
-      applyAll={applyAll}
-      discardAll={discardAll}
-      clearAndApply={clearAndApply}
-      removeAppliedAndApply={removeAppliedAndApply}
-      hasChanges={hasChanges}
-      changeCount={changeCount}
-      getFilterValue={getFilterValue}
-    />
+    <div data-tour-id="explore-findings-filters">
+      {/* Renders null; reads the sequence slice + ?onboarding param and force-
+          starts the explore-findings tour. Suspense satisfies the App Router
+          requirement around `useSearchParams`. */}
+      <Suspense fallback={null}>
+        <OnboardingTrigger flow={exploreFindingsFlow} />
+      </Suspense>
+      <FindingsFilterBatchControls
+        {...props}
+        appliedFilters={appliedFilters}
+        pendingFilters={pendingFilters}
+        changedFilters={changedFilters}
+        setPending={setPending}
+        applyAll={applyAll}
+        discardAll={discardAll}
+        clearAndApply={clearAndApply}
+        removeAppliedAndApply={removeAppliedAndApply}
+        hasChanges={hasChanges}
+        changeCount={changeCount}
+        getFilterValue={getFilterValue}
+      />
+    </div>
   );
 };

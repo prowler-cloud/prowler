@@ -110,6 +110,52 @@ describe("onboardingFlows (production registry)", () => {
     expect(addProvider?.isComplete?.({ hasProviders: true })).toBe(true);
     expect(addProvider?.isComplete?.({ hasProviders: false })).toBe(false);
   });
+
+  it("registers the view-first-scan flow at order 2 on the scans route", () => {
+    // Given / When - the sequence flow added in Slice 4
+    const flow = getFlowById("view-first-scan", onboardingFlows);
+
+    // Then - declared contract: order, route, and a matching tour id
+    expect(flow).toBeDefined();
+    expect(flow?.order).toBe(2);
+    expect(flow?.route).toBe("/scans");
+    expect(flow?.tour.id).toBe("view-first-scan");
+  });
+
+  it("registers the explore-findings flow at order 3 on the findings route", () => {
+    // Given / When - the sequence flow added in Slice 5
+    const flow = getFlowById("explore-findings", onboardingFlows);
+
+    // Then - declared contract: order, route, and a matching tour id
+    expect(flow).toBeDefined();
+    expect(flow?.order).toBe(3);
+    expect(flow?.route).toBe("/findings");
+    expect(flow?.tour.id).toBe("explore-findings");
+  });
+
+  it("registers the view-compliance flow at order 4 on the compliance route", () => {
+    // Given / When - the sequence flow added in Slice 6
+    const flow = getFlowById("view-compliance", onboardingFlows);
+
+    // Then - declared contract: order, route, and a matching tour id
+    expect(flow).toBeDefined();
+    expect(flow?.order).toBe(4);
+    expect(flow?.route).toBe("/compliance");
+    expect(flow?.tour.id).toBe("view-compliance");
+  });
+
+  it("orders the four sequence flows 1..4 by registry order", () => {
+    // Given / When - the production registry after Slices 4-6 registration
+    const ordered = getOrderedFlows(onboardingFlows);
+
+    // Then - the guided sequence advances in declared order
+    expect(ordered.map((flow) => flow.id)).toEqual([
+      "add-provider",
+      "view-first-scan",
+      "explore-findings",
+      "view-compliance",
+    ]);
+  });
 });
 
 describe("public api barrel", () => {

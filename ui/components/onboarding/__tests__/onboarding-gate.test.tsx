@@ -78,6 +78,34 @@ describe("OnboardingGate", () => {
     });
   });
 
+  describe("when the gate flow is dismissed but later sequence flows are incomplete", () => {
+    it("does not show the Welcome modal for a later flow", async () => {
+      // Given - the gate flow (add-provider) is dismissed; the additional
+      // sequence flows (view-first-scan, explore-findings, view-compliance)
+      // have no record. The mandatory gate must ONLY ever force add-provider —
+      // the later flows are reached via the checkpoint/sequence, never the
+      // gate. So a dismissed add-provider record keeps the gate silent.
+      window.localStorage.setItem(
+        addProviderStorageKey,
+        JSON.stringify({
+          tourId: addProviderTour.id,
+          version: addProviderTour.version,
+          state: "dismissed",
+          completedAt: new Date().toISOString(),
+        }),
+      );
+
+      render(<OnboardingGate hasProviders={false} />);
+
+      // Then - the gate never surfaces a later flow's modal
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("button", { name: /get started/i }),
+        ).not.toBeInTheDocument();
+      });
+    });
+  });
+
   describe("when hasProviders is undefined (fail-open)", () => {
     it("does not show the Welcome modal", async () => {
       // Given - an ambiguous provider signal (transient / errored). The prop is

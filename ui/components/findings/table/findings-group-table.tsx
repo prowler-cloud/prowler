@@ -201,29 +201,32 @@ export function FindingsGroupTable({
         resolveMuteIds,
       }}
     >
-      <DataTable
-        columns={columns}
-        data={safeData}
-        metadata={metadata}
-        enableRowSelection
-        rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
-        getRowCanSelect={getRowCanSelect}
-        showSearch
-        searchPlaceholder={
-          expandedCheckId ? "Search resources..." : "Search by name"
-        }
-        controlledSearch={expandedCheckId ? resourceSearchInput : undefined}
-        onSearchChange={expandedCheckId ? setResourceSearchInput : undefined}
-        onSearchCommit={expandedCheckId ? setResourceSearch : undefined}
-        searchBadge={
-          expandedGroup
-            ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }
-            : undefined
-        }
-        toolbarRightContent={<CustomCheckboxMutedFindings />}
-        renderAfterRow={renderAfterRow}
-      />
+      {/* Anchor for the explore-findings onboarding tour `table` step. */}
+      <div data-tour-id="explore-findings-table">
+        <DataTable
+          columns={columns}
+          data={safeData}
+          metadata={metadata}
+          enableRowSelection
+          rowSelection={rowSelection}
+          onRowSelectionChange={setRowSelection}
+          getRowCanSelect={getRowCanSelect}
+          showSearch
+          searchPlaceholder={
+            expandedCheckId ? "Search resources..." : "Search by name"
+          }
+          controlledSearch={expandedCheckId ? resourceSearchInput : undefined}
+          onSearchChange={expandedCheckId ? setResourceSearchInput : undefined}
+          onSearchCommit={expandedCheckId ? setResourceSearch : undefined}
+          searchBadge={
+            expandedGroup
+              ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }
+              : undefined
+          }
+          toolbarRightContent={<CustomCheckboxMutedFindings />}
+          renderAfterRow={renderAfterRow}
+        />
+      </div>
 
       {(selectedCheckIds.length > 0 || hasResourceSelection) && (
         <FloatingMuteButton
