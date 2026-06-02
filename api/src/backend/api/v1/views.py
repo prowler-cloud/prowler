@@ -3754,9 +3754,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         return queryset.prefetch_related(
             Prefetch(
                 "resources__tags",
-                queryset=ResourceTag.objects.filter(
-                    tenant_id=self.request.tenant_id
-                ).select_related(),
+                queryset=ResourceTag.objects.filter(tenant_id=self.request.tenant_id),
                 to_attr="prefetched_tags",
             )
         )

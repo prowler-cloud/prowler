@@ -24,9 +24,11 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
+from django.db import connection
 from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
@@ -64,6 +66,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceTag,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -1469,9 +1472,9 @@ class TestProviderViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -5573,13 +5576,13 @@ class TestAttackPathsScanViewSet:
                     content_type=API_JSON_CONTENT_TYPE,
                 )
                 if i < 10:
-                    assert (
-                        response.status_code == status.HTTP_200_OK
-                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    assert response.status_code == status.HTTP_200_OK, (
+                        f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    )
                 else:
-                    assert (
-                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-                    ), f"Request {i + 1} should be throttled"
+                    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS, (
+                        f"Request {i + 1} should be throttled"
+                    )
 
     # -- Timeout simulation -------------------------------------------------------
 
@@ -5782,9 +5785,9 @@ class TestResourceViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -6333,9 +6336,9 @@ class TestResourceViewSet:
             (e for e in errors if e["source"]["parameter"] == expected_invalid_param),
             None,
         )
-        assert (
-            error is not None
-        ), f"Expected error for parameter '{expected_invalid_param}'"
+        assert error is not None, (
+            f"Expected error for parameter '{expected_invalid_param}'"
+        )
         assert error["code"] == "invalid"
         assert error["status"] == "400"  # Must be string per JSON:API spec
         assert expected_invalid_param in error["detail"]
@@ -6867,16 +6870,16 @@ class TestResourceViewSet:
         # Test with completely malformed token
         client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for malformed token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for malformed token but got {response.status_code}"
+        )
 
         # Test with empty bearer token
         client.credentials(HTTP_AUTHORIZATION="Bearer ")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for empty bearer token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for empty bearer token but got {response.status_code}"
+        )
 
 
 @pytest.mark.django_db
@@ -6916,6 +6919,80 @@ class TestFindingViewSet:
             == findings_fixture[0].status
         )
 
+    def test_findings_list_resource_tags_no_n_plus_one(
+        self, authenticated_client, findings_fixture
+    ):
+        """Listing findings must load every resource's tags in a constant
+        number of queries, no matter how many findings/resources are returned.
+
+        This guards ``FindingViewSet._optimize_tags_loading`` against
+        regressions that would reintroduce one extra query per resource (the
+        N+1 the prefetch was added to remove).
+        """
+        scan = findings_fixture[0].scan
+        tenant_id = findings_fixture[0].tenant_id
+        provider = scan.provider
+
+        def _create_finding_with_tagged_resource(index):
+            resource = Resource.objects.create(
+                tenant_id=tenant_id,
+                provider=provider,
+                uid=f"arn:aws:ec2:us-east-1:123456789012:instance/n-plus-one-{index}",
+                name=f"N+1 Instance {index}",
+                region="us-east-1",
+                service="ec2",
+                type="prowler-test",
+            )
+            resource.upsert_or_delete_tags(
+                [
+                    ResourceTag.objects.create(
+                        tenant_id=tenant_id,
+                        key=f"key-{index}",
+                        value=f"value-{index}",
+                    )
+                ]
+            )
+            finding = Finding.objects.create(
+                tenant_id=tenant_id,
+                uid=f"n_plus_one_finding_{index}",
+                scan=scan,
+                status=Status.FAIL,
+                status_extended="n+1 status",
+                impact=Severity.medium,
+                severity=Severity.medium,
+                check_id="test_check_id",
+                check_metadata={"CheckId": "test_check_id", "servicename": "ec2"},
+                first_seen_at="2024-01-02T00:00:00Z",
+            )
+            finding.add_resources([resource])
+            return finding
+
+        params = {"filter[inserted_at]": TODAY, "include": "resources"}
+
+        # Baseline: the two findings provided by the fixture.
+        with CaptureQueriesContext(connection) as baseline:
+            response = authenticated_client.get(reverse("finding-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+
+        # Add more findings, each with its own resource carrying tags.
+        extra_findings = 5
+        for index in range(extra_findings):
+            _create_finding_with_tagged_resource(index)
+
+        with CaptureQueriesContext(connection) as scaled:
+            response = authenticated_client.get(reverse("finding-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(findings_fixture) + extra_findings
+
+        # The query count must not grow with the number of findings/resources.
+        assert len(scaled.captured_queries) == len(baseline.captured_queries), (
+            "Resource tags are not being prefetched: "
+            f"{len(baseline.captured_queries)} queries for {len(findings_fixture)} "
+            f"findings vs {len(scaled.captured_queries)} for "
+            f"{len(findings_fixture) + extra_findings}. Likely an N+1 regression "
+            "in FindingViewSet._optimize_tags_loading."
+        )
+
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
@@ -6937,9 +7014,9 @@ class TestFindingViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -7504,9 +7581,9 @@ class TestJWTFields:
             reverse("token-obtain"), data, format="json"
         )
 
-        assert (
-            response.status_code == status.HTTP_200_OK
-        ), f"Unexpected status code: {response.status_code}"
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Unexpected status code: {response.status_code}"
+        )
 
         access_token = response.data["attributes"]["access"]
         payload = jwt.decode(access_token, options={"verify_signature": False})
@@ -7520,23 +7597,23 @@ class TestJWTFields:
         # Verify expected fields
         for field in expected_fields:
             assert field in payload, f"The field '{field}' is not in the JWT"
-            assert (
-                payload[field] == expected_fields[field]
-            ), f"The value of '{field}' does not match"
+            assert payload[field] == expected_fields[field], (
+                f"The value of '{field}' does not match"
+            )
 
         # Verify time fields are integers
         for time_field in ["exp", "iat", "nbf"]:
             assert time_field in payload, f"The field '{time_field}' is not in the JWT"
-            assert isinstance(
-                payload[time_field], int
-            ), f"The field '{time_field}' is not an integer"
+            assert isinstance(payload[time_field], int), (
+                f"The field '{time_field}' is not an integer"
+            )
 
         # Verify identification fields are non-empty strings
         for id_field in ["jti", "sub", "tenant_id"]:
             assert id_field in payload, f"The field '{id_field}' is not in the JWT"
-            assert (
-                isinstance(payload[id_field], str) and payload[id_field]
-            ), f"The field '{id_field}' is not a valid string"
+            assert isinstance(payload[id_field], str) and payload[id_field], (
+                f"The field '{id_field}' is not a valid string"
+            )
 
 
 @pytest.mark.django_db
@@ -11477,9 +11554,9 @@ class TestIntegrationViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
@@ -12916,9 +12993,9 @@ class TestLighthouseConfigViewSet:
         )
         # Check that API key is masked with asterisks only
         masked_api_key = data["attributes"]["api_key"]
-        assert all(
-            c == "*" for c in masked_api_key
-        ), "API key should contain only asterisks"
+        assert all(c == "*" for c in masked_api_key), (
+            "API key should contain only asterisks"
+        )
 
     @pytest.mark.parametrize(
         "field_name, invalid_value",
@@ -16669,9 +16746,9 @@ class TestFindingGroupViewSet:
         assert len(data) == 2
         for item in data:
             resource = item["attributes"]["resource"]
-            assert (
-                resource["resource_group"] == "storage"
-            ), "resource_group must be 'storage'"
+            assert resource["resource_group"] == "storage", (
+                "resource_group must be 'storage'"
+            )
 
     def test_resources_name_icontains(
         self, authenticated_client, finding_groups_fixture
@@ -16985,12 +17062,12 @@ class TestFindingGroupViewSet:
         assert response_p1.status_code == status.HTTP_200_OK
         p1_check_ids = {item["id"] for item in response_p1.json()["data"]}
         # Provider1 has scan1 with 4 checks
-        assert (
-            len(p1_check_ids) == 4
-        ), f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
-        assert (
-            "cloudtrail_enabled" not in p1_check_ids
-        ), "cloudtrail_enabled should NOT be in provider1"
+        assert len(p1_check_ids) == 4, (
+            f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
+        )
+        assert "cloudtrail_enabled" not in p1_check_ids, (
+            "cloudtrail_enabled should NOT be in provider1"
+        )
 
         # Get finding groups for provider2 only
         response_p2 = authenticated_client.get(
@@ -17000,12 +17077,12 @@ class TestFindingGroupViewSet:
         assert response_p2.status_code == status.HTTP_200_OK
         p2_check_ids = {item["id"] for item in response_p2.json()["data"]}
         # Provider2 has scan2 with 1 check
-        assert (
-            len(p2_check_ids) == 1
-        ), f"Provider2 should have 1 check, got {len(p2_check_ids)}"
-        assert (
-            "cloudtrail_enabled" in p2_check_ids
-        ), "cloudtrail_enabled should be in provider2"
+        assert len(p2_check_ids) == 1, (
+            f"Provider2 should have 1 check, got {len(p2_check_ids)}"
+        )
+        assert "cloudtrail_enabled" in p2_check_ids, (
+            "cloudtrail_enabled should be in provider2"
+        )
 
     # Test provider_type filter actually filters data
     def test_finding_groups_provider_type_filter_actually_filters(
@@ -17028,9 +17105,9 @@ class TestFindingGroupViewSet:
             {"filter[inserted_at]": TODAY, "filter[provider_type]": "gcp"},
         )
         assert response_gcp.status_code == status.HTTP_200_OK
-        assert (
-            len(response_gcp.json()["data"]) == 0
-        ), "GCP filter should return 0 results"
+        assert len(response_gcp.json()["data"]) == 0, (
+            "GCP filter should return 0 results"
+        )
 
     def test_finding_groups_pagination(
         self, authenticated_client, finding_groups_fixture
