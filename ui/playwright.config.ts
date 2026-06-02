@@ -138,6 +138,12 @@ export default defineConfig({
       testMatch: "invitations.spec.ts",
       dependencies: ["admin.auth.setup"],
     },
+    // This project runs the onboarding test suite
+    {
+      name: "onboarding",
+      testMatch: "onboarding.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
   ],
 
   webServer: {
