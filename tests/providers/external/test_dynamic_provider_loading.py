@@ -1248,7 +1248,7 @@ class TestCompliance:
 
         dirs = _get_ep_compliance_dirs()
 
-        assert dirs["fakeexternal"] == "/path/to/compliance"
+        assert dirs["fakeexternal"] == ["/path/to/compliance"]
 
     @patch("prowler.config.config.importlib.metadata.entry_points")
     def test_get_ep_compliance_dirs_file_fallback(self, mock_ep):
@@ -1264,7 +1264,7 @@ class TestCompliance:
 
         dirs = _get_ep_compliance_dirs()
 
-        assert dirs["ext"] == "/path/to/compliance"
+        assert dirs["ext"] == ["/path/to/compliance"]
 
     @patch("prowler.config.config.importlib.metadata.entry_points")
     def test_get_ep_compliance_dirs_handles_load_exception(self, mock_ep):
@@ -1294,7 +1294,7 @@ class TestCompliance:
             with open(json_path, "w") as f:
                 json.dump({"Framework": "Custom", "Provider": "ext"}, f)
 
-            mock_dirs.return_value = {"ext": tmpdir}
+            mock_dirs.return_value = {"ext": [tmpdir]}
 
             frameworks = get_available_compliance_frameworks("ext")
 
