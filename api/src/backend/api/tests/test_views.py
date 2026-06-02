@@ -4189,6 +4189,88 @@ class TestScanViewSet:
         assert resp.status_code == status.HTTP_302_FOUND
         assert resp["Location"] == presigned_url
 
+    def test_compliance_s3_returns_latest_match(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """When several files match, the most recently modified one is served."""
+        scan = scans_fixture[0]
+        bucket = "bucket"
+        scan.output_location = f"s3://{bucket}/path/scan.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+        )
+
+        old_key = "path/compliance/prowler-output-aws-20240101000000_cis_1.4_aws.csv"
+        latest_key = "path/compliance/prowler-output-aws-20240202000000_cis_1.4_aws.csv"
+
+        class FakeS3Client:
+            def list_objects_v2(self, Bucket, Prefix):
+                return {
+                    "Contents": [
+                        {
+                            "Key": old_key,
+                            "LastModified": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                        },
+                        {
+                            "Key": latest_key,
+                            "LastModified": datetime(2024, 2, 2, tzinfo=timezone.utc),
+                        },
+                    ]
+                }
+
+            def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
+                assert Params["Key"] == latest_key
+                return "https://test-bucket.s3.amazonaws.com/latest"
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
+
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_302_FOUND
+        assert resp["Location"].endswith("/latest")
+
+    def test_compliance_local_returns_latest_match(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """The local branch serves the most recently modified matching file."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            comp_dir = Path(tmp) / "reports" / "compliance"
+            comp_dir.mkdir(parents=True, exist_ok=True)
+
+            old_file = comp_dir / "prowler-output-aws-20240101000000_cis_1.4_aws.csv"
+            old_file.write_bytes(b"old")
+            latest_file = comp_dir / "prowler-output-aws-20240202000000_cis_1.4_aws.csv"
+            latest_file.write_bytes(b"latest")
+            # Make `latest_file` newer regardless of creation order.
+            os.utime(old_file, (1_700_000_000, 1_700_000_000))
+            os.utime(latest_file, (1_700_000_100, 1_700_000_100))
+
+            scan.output_location = str(Path(tmp) / "reports" / "scan.zip")
+            scan.save()
+
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: [str(old_file), str(latest_file)],
+            )
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.content == b"latest"
+            assert resp["Content-Disposition"].endswith(
+                f'filename="{latest_file.name}"'
+            )
+
     def test_compliance_s3_not_found(
         self, authenticated_client, scans_fixture, monkeypatch
     ):
