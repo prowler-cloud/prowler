@@ -1,13 +1,11 @@
 "use client";
 
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { type ComponentType, lazy, Suspense } from "react";
 
 import {
   Badge,
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
@@ -140,12 +138,22 @@ interface ProviderTypeIconProps {
   size?: number;
 }
 
-/** Renders a single provider-type badge with a sized placeholder fallback. */
+/**
+ * Renders a single provider-type badge with a sized placeholder fallback.
+ *
+ * Falls back to the placeholder for provider types missing from
+ * `PROVIDER_TYPE_DATA` (e.g. a brand-new provider the API knows but this UI
+ * build does not). The `type` is statically typed as `ProviderType`, so this
+ * only guards the runtime case — see #9991, which fixed the same crash class.
+ */
 export const ProviderTypeIcon = ({
   type,
   size = 18,
 }: ProviderTypeIconProps) => {
-  const Icon = PROVIDER_TYPE_DATA[type].icon;
+  const data = PROVIDER_TYPE_DATA[type];
+  if (!data) return <IconPlaceholder width={size} height={size} />;
+
+  const Icon = data.icon;
   return (
     <Suspense fallback={<IconPlaceholder width={size} height={size} />}>
       <Icon width={size} height={size} />
@@ -168,7 +176,13 @@ interface ProviderTypeIconStackProps {
   className?: string;
 }
 
-/** Icon wrapped in a portalled tooltip so it isn't clipped by the trigger. */
+/**
+ * Icon with a hover tooltip. `TooltipContent` (shadcn) already renders inside a
+ * Radix portal, so the tooltip is not clipped by the selector trigger and we do
+ * not need to portal it ourselves. `delayDuration` is set on the tooltip itself
+ * because shadcn's `Tooltip` wraps each instance in its own `TooltipProvider`
+ * (delay 0), which would otherwise override an ancestor provider's delay.
+ */
 const IconWithTooltip = ({
   item,
   size,
@@ -185,11 +199,9 @@ const IconWithTooltip = ({
   if (!item.tooltip) return icon;
 
   return (
-    <Tooltip>
+    <Tooltip delayDuration={150}>
       <TooltipTrigger asChild>{icon}</TooltipTrigger>
-      <TooltipPrimitive.Portal>
-        <TooltipContent side="top">{item.tooltip}</TooltipContent>
-      </TooltipPrimitive.Portal>
+      <TooltipContent side="top">{item.tooltip}</TooltipContent>
     </Tooltip>
   );
 };
@@ -213,33 +225,26 @@ export const ProviderTypeIconStack = ({
     .join(", ");
 
   return (
-    <TooltipProvider delayDuration={150}>
-      <span className={cn("flex shrink-0 items-center gap-1", className)}>
-        <span className="flex items-center gap-1">
-          {visible.map((item) => (
-            <IconWithTooltip key={item.key} item={item} size={size} />
-          ))}
-        </span>
-        {overflow.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                variant="tag"
-                className="px-1.5 py-0.5 text-xs font-medium"
-              >
-                +{overflow.length}
-              </Badge>
-            </TooltipTrigger>
-            {overflowLabel && (
-              <TooltipPrimitive.Portal>
-                <TooltipContent side="top" className="max-w-xs">
-                  {overflowLabel}
-                </TooltipContent>
-              </TooltipPrimitive.Portal>
-            )}
-          </Tooltip>
-        )}
+    <span className={cn("flex shrink-0 items-center gap-1", className)}>
+      <span className="flex items-center gap-1">
+        {visible.map((item) => (
+          <IconWithTooltip key={item.key} item={item} size={size} />
+        ))}
       </span>
-    </TooltipProvider>
+      {overflow.length > 0 && (
+        <Tooltip delayDuration={150}>
+          <TooltipTrigger asChild>
+            <Badge variant="tag" className="px-1.5 py-0.5 text-xs font-medium">
+              +{overflow.length}
+            </Badge>
+          </TooltipTrigger>
+          {overflowLabel && (
+            <TooltipContent side="top" className="max-w-xs">
+              {overflowLabel}
+            </TooltipContent>
+          )}
+        </Tooltip>
+      )}
+    </span>
   );
 };

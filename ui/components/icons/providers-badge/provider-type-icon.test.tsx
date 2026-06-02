@@ -1,7 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import type { ProviderType } from "@/types/providers";
+
 import { ProviderTypeIcon, ProviderTypeIconStack } from "./provider-type-icon";
+
+// A provider type the API may return but this UI build does not know about.
+const UNKNOWN_TYPE = "future-provider" as unknown as ProviderType;
 
 // Render the lazy provider badges as plain text so we can assert on them.
 vi.mock("@/components/icons/providers-badge", () => ({
@@ -35,13 +40,6 @@ vi.mock("@/components/shadcn", () => ({
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <span data-testid="tooltip">{children}</span>
   ),
-  TooltipProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-}));
-
-vi.mock("@radix-ui/react-tooltip", () => ({
-  Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 describe("ProviderTypeIcon", () => {
@@ -49,6 +47,19 @@ describe("ProviderTypeIcon", () => {
     render(<ProviderTypeIcon type="aws" />);
 
     expect(await screen.findByText("AWS")).toBeInTheDocument();
+  });
+
+  it("renders a sized placeholder instead of crashing for an unknown type", () => {
+    // Regression guard for #9991: an unknown provider type must not throw.
+    const { container } = render(
+      <ProviderTypeIcon type={UNKNOWN_TYPE} size={24} />,
+    );
+
+    expect(screen.queryByText("AWS")).not.toBeInTheDocument();
+    expect(container.querySelector("div")).toHaveStyle({
+      width: "24px",
+      height: "24px",
+    });
   });
 });
 
@@ -97,5 +108,19 @@ describe("ProviderTypeIconStack", () => {
     // First icon is shown; items sliced beyond `max` never reach the DOM.
     expect(await screen.findByText("AWS")).toBeInTheDocument();
     expect(screen.queryByText("Okta")).not.toBeInTheDocument();
+  });
+
+  it("renders known icons and skips unknown types without crashing", async () => {
+    // Regression guard for #9991: an unknown type in the stack must not throw.
+    render(
+      <ProviderTypeIconStack
+        items={[
+          { key: "a", type: "aws", tooltip: "111" },
+          { key: "b", type: UNKNOWN_TYPE, tooltip: "222" },
+        ]}
+      />,
+    );
+
+    expect(await screen.findByText("AWS")).toBeInTheDocument();
   });
 });
