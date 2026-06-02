@@ -9,19 +9,10 @@ import { OnboardingCheckpointWatcher } from "../onboarding-checkpoint-watcher";
 const pushMock = vi.fn();
 const startSequenceMock = vi.fn();
 
-// The current `hasProviders` value the mocked UI-store selector returns. Tests
-// mutate this then re-render to drive a `false -> true` flip.
-let hasProvidersValue = false;
-
 const CHECKPOINT_MARKER = "prowler.onboarding.checkpoint";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
-}));
-
-vi.mock("@/store/ui/store", () => ({
-  useUIStore: (selector: (state: { hasProviders: boolean }) => unknown) =>
-    selector({ hasProviders: hasProvidersValue }),
 }));
 
 vi.mock("@/store/onboarding-sequence", () => ({
@@ -34,7 +25,6 @@ describe("OnboardingCheckpointWatcher", () => {
   beforeEach(() => {
     pushMock.mockClear();
     startSequenceMock.mockClear();
-    hasProvidersValue = false;
     window.localStorage.clear();
   });
 
@@ -44,16 +34,16 @@ describe("OnboardingCheckpointWatcher", () => {
 
   describe("firing rules", () => {
     it("opens the dialog on a concrete false -> true flip", async () => {
-      // Given - the watcher first observes a no-provider state
-      hasProvidersValue = false;
-      const { rerender } = render(<OnboardingCheckpointWatcher />);
+      // Given - the watcher first observes a no-provider state from the prop
+      const { rerender } = render(
+        <OnboardingCheckpointWatcher hasProviders={false} />,
+      );
       expect(
         screen.queryByText("Provider connected — keep exploring?"),
       ).not.toBeInTheDocument();
 
-      // When - the post-connect re-fetch flips hasProviders to true
-      hasProvidersValue = true;
-      rerender(<OnboardingCheckpointWatcher />);
+      // When - the layout re-computes hasProviders to true after first connect
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
 
       // Then - the checkpoint dialog appears
       expect(
@@ -61,13 +51,26 @@ describe("OnboardingCheckpointWatcher", () => {
       ).toBeInTheDocument();
     });
 
+    it("does not fire when hasProviders is true from the first render", () => {
+      // Given/When - a user who already has providers: the layout passes
+      // `true` from the FIRST render (prev=undefined, next=true). This is the
+      // regression guard for the store-hydration false-fire bug.
+      render(<OnboardingCheckpointWatcher hasProviders={true} />);
+
+      // Then - the checkpoint must NOT fire on the initial read
+      expect(
+        screen.queryByText("Provider connected — keep exploring?"),
+      ).not.toBeInTheDocument();
+    });
+
     it("does not fire on a true -> true steady state", () => {
       // Given - the user already had providers on the first observed render
-      hasProvidersValue = true;
-      const { rerender } = render(<OnboardingCheckpointWatcher />);
+      const { rerender } = render(
+        <OnboardingCheckpointWatcher hasProviders={true} />,
+      );
 
-      // When - providers stay present
-      rerender(<OnboardingCheckpointWatcher />);
+      // When - providers stay present across a re-render
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
 
       // Then - no checkpoint (no false -> true flip)
       expect(
@@ -75,13 +78,14 @@ describe("OnboardingCheckpointWatcher", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("does not fire on the undefined -> true initial read", () => {
-      // Given/When - the very first observed value is already true (no prior
-      // false was seen, so prev is undefined, not false)
-      hasProvidersValue = true;
-      render(<OnboardingCheckpointWatcher />);
+    it("does not fire when hasProviders is undefined (failed/ambiguous fetch)", () => {
+      // Given/When - the layout could not determine provider state
+      const { rerender } = render(
+        <OnboardingCheckpointWatcher hasProviders={undefined} />,
+      );
+      rerender(<OnboardingCheckpointWatcher hasProviders={undefined} />);
 
-      // Then - the checkpoint must NOT fire on the initial read
+      // Then - an unknown provider signal stays inert
       expect(
         screen.queryByText("Provider connected — keep exploring?"),
       ).not.toBeInTheDocument();
@@ -90,12 +94,12 @@ describe("OnboardingCheckpointWatcher", () => {
     it("does not fire when the checkpoint was already handled", () => {
       // Given - the marker is already set from a previous session
       window.localStorage.setItem(CHECKPOINT_MARKER, "true");
-      hasProvidersValue = false;
-      const { rerender } = render(<OnboardingCheckpointWatcher />);
+      const { rerender } = render(
+        <OnboardingCheckpointWatcher hasProviders={false} />,
+      );
 
       // When - a false -> true flip happens
-      hasProvidersValue = true;
-      rerender(<OnboardingCheckpointWatcher />);
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
 
       // Then - the marker suppresses the dialog
       expect(
@@ -108,10 +112,10 @@ describe("OnboardingCheckpointWatcher", () => {
     it("marks handled, starts the sequence at the next flow, and navigates", async () => {
       // Given - the dialog is open after a first-connect flip
       const user = userEvent.setup();
-      hasProvidersValue = false;
-      const { rerender } = render(<OnboardingCheckpointWatcher />);
-      hasProvidersValue = true;
-      rerender(<OnboardingCheckpointWatcher />);
+      const { rerender } = render(
+        <OnboardingCheckpointWatcher hasProviders={false} />,
+      );
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
       await screen.findByText("Provider connected — keep exploring?");
 
       // When - the user continues
@@ -146,10 +150,10 @@ describe("OnboardingCheckpointWatcher", () => {
     it("marks handled and does not start a sequence or navigate", async () => {
       // Given - the dialog is open after a first-connect flip
       const user = userEvent.setup();
-      hasProvidersValue = false;
-      const { rerender } = render(<OnboardingCheckpointWatcher />);
-      hasProvidersValue = true;
-      rerender(<OnboardingCheckpointWatcher />);
+      const { rerender } = render(
+        <OnboardingCheckpointWatcher hasProviders={false} />,
+      );
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
       await screen.findByText("Provider connected — keep exploring?");
 
       // When - the user finishes here
@@ -169,10 +173,10 @@ describe("OnboardingCheckpointWatcher", () => {
     it("stays handled so the dialog never re-appears on a later flip", async () => {
       // Given - the user finished once, setting the marker
       const user = userEvent.setup();
-      hasProvidersValue = false;
-      const { rerender } = render(<OnboardingCheckpointWatcher />);
-      hasProvidersValue = true;
-      rerender(<OnboardingCheckpointWatcher />);
+      const { rerender } = render(
+        <OnboardingCheckpointWatcher hasProviders={false} />,
+      );
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
       await screen.findByText("Provider connected — keep exploring?");
       await user.click(screen.getByRole("button", { name: /finish here/i }));
       await waitFor(() =>
@@ -182,10 +186,8 @@ describe("OnboardingCheckpointWatcher", () => {
       );
 
       // When - a fresh false -> true flip occurs later
-      hasProvidersValue = false;
-      rerender(<OnboardingCheckpointWatcher />);
-      hasProvidersValue = true;
-      rerender(<OnboardingCheckpointWatcher />);
+      rerender(<OnboardingCheckpointWatcher hasProviders={false} />);
+      rerender(<OnboardingCheckpointWatcher hasProviders={true} />);
 
       // Then - the marker keeps the dialog suppressed
       expect(

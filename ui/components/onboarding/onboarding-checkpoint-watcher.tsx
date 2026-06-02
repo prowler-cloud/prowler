@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { getOrderedFlows } from "@/lib/onboarding";
 import { useOnboardingSequenceStore } from "@/store/onboarding-sequence";
-import { useUIStore } from "@/store/ui/store";
 
 import { shouldFireCheckpoint } from "./checkpoint.logic";
 import { OnboardingCheckpointDialog } from "./onboarding-checkpoint-dialog";
@@ -39,15 +38,28 @@ function markCheckpointHandled(): void {
   }
 }
 
-// Layout-level watcher (sibling to OnboardingGate). It observes `hasProviders`
-// from the UI store — which `StoreInitializer` re-syncs on every layout render,
-// including the post-connect re-fetch — and opens the checkpoint dialog exactly
-// once on a concrete `false -> true` flip that has not been handled. Renders the
-// dialog only; all decision logic runs in a client effect so the server renders
-// nothing and there is no hydration mismatch.
-export function OnboardingCheckpointWatcher() {
+interface OnboardingCheckpointWatcherProps {
+  // Tri-state, driven by the SERVER provider fetch the layout already computes
+  // (the same value passed to `OnboardingGate`): `true`/`false` from a
+  // successful fetch, `undefined` when provider state is unknown (failed/
+  // ambiguous fetch). Driving from this prop — not the UI store — avoids the
+  // store-hydration false-fire: the store defaults to `false` and
+  // `StoreInitializer` hydrates it to the real value on mount, so a user who
+  // already has providers would otherwise see a spurious `false -> true` flip.
+  hasProviders?: boolean;
+}
+
+// Layout-level watcher (sibling to OnboardingGate). It observes the server
+// `hasProviders` signal via prop and opens the checkpoint dialog exactly once on
+// a concrete `false -> true` flip that has not been handled. A user who already
+// has providers receives `true` from the FIRST render (prev=undefined), which
+// never fires; only a genuine first-connect transition during the session does.
+// Renders the dialog only; all decision logic runs in a client effect so the
+// server renders nothing and there is no hydration mismatch.
+export function OnboardingCheckpointWatcher({
+  hasProviders,
+}: OnboardingCheckpointWatcherProps) {
   const router = useRouter();
-  const hasProviders = useUIStore((state) => state.hasProviders);
 
   // The previous observed `hasProviders`. `undefined` means "first read, no
   // transition seen yet" — that case must NOT fire the checkpoint.
@@ -55,6 +67,11 @@ export function OnboardingCheckpointWatcher() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    // An unknown provider signal (failed/ambiguous fetch) must stay inert and
+    // must not disturb the tracked previous value, so a later concrete read can
+    // still compare against the last known boolean.
+    if (hasProviders === undefined) return;
+
     const was = previous.current;
     previous.current = hasProviders;
     if (
