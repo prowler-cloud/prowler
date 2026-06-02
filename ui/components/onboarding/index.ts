@@ -3,3 +3,4 @@
 
 export { OnboardingGate } from "./onboarding-gate";
 export { OnboardingWelcomeModal } from "./onboarding-welcome-modal";
+export { ProvidersOnboardingTrigger } from "./providers-onboarding-trigger";

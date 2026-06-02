@@ -5,6 +5,7 @@ import { Metadata, Viewport } from "next";
 import { ReactNode } from "react";
 
 import { getProviders } from "@/actions/providers";
+import { OnboardingGate } from "@/components/onboarding";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
 import { Toaster } from "@/components/ui/toast";
@@ -57,6 +58,7 @@ export default async function RootLayout({
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <NavigationProgress />
           <StoreInitializer values={{ hasProviders }} />
+          <OnboardingGate hasProviders={hasProviders} />
           <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>

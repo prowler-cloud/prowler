@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
+import { ProvidersOnboardingTrigger } from "@/components/onboarding";
 import { AddProviderButton } from "@/components/providers/add-provider-button";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import { ProvidersAccountsTable } from "@/components/providers/providers-accounts-table";
@@ -60,6 +61,12 @@ export function ProvidersAccountsView({
 
   return (
     <>
+      {/* Renders null; reads ?onboarding and force-starts the tour, wiring the
+          tour's wizard-open step to this view's imperative open. Suspense
+          satisfies the App Router requirement around `useSearchParams`. */}
+      <Suspense fallback={null}>
+        <ProvidersOnboardingTrigger openWizard={() => openProviderWizard()} />
+      </Suspense>
       <div className="flex flex-col gap-6">
         <ProvidersFilters
           filters={filters}
