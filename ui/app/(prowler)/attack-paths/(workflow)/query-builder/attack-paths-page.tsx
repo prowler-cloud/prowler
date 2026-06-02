@@ -15,6 +15,7 @@ import {
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { FindingDetailDrawer } from "@/components/findings/table";
+import { mapCloseToSequenceAction } from "@/components/onboarding/onboarding-trigger.logic";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
 import {
@@ -35,6 +36,7 @@ import { useToast } from "@/components/ui";
 import { attackPathsTour } from "@/lib/tours/attack-paths.tour";
 import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import { useDriverTour } from "@/lib/tours/use-driver-tour";
+import { useOnboardingSequenceStore } from "@/store/onboarding-sequence";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -96,8 +98,32 @@ export default function AttackPathsPage() {
     enabled: !scansLoading && hasNoScans,
   });
 
+  // Follow-up (out of MVP scope): replaying attack-paths via
+  // `/attack-paths?onboarding=attack-paths` when a completion record ALREADY
+  // exists will not force the tour open — the page's normal auto-open only
+  // fires when no record is stored. Re-opening on an existing record would mean
+  // reading the `onboarding` param here and calling the tour result's `start()`.
+  // The avatar replay list still navigates here; the no-record case is covered.
+
   useDriverTour(attackPathsTour, {
     enabled: !scansLoading && hasReadyScan,
+    // Single-fire integration (Decision 4): the PAGE owns the only driver for
+    // attackPathsTour. When the guided sequence is on this flow, report the
+    // tour's outcome to the slice so completion advances (and, since
+    // attack-paths is the LAST ordered flow, advance() clears the slice) while
+    // any user-close stops it. Read live slice state at close time so the guard
+    // reflects the moment the tour ended, not the render that wired the option.
+    // Guarded by `active && currentFlowId === "attack-paths"`: a standalone
+    // visit (sequence inactive) leaves this inert, preserving today's behavior.
+    onClosed: (state) => {
+      const { active, currentFlowId } = useOnboardingSequenceStore.getState();
+      if (!active || currentFlowId !== "attack-paths") return;
+      if (mapCloseToSequenceAction(state) === "advance") {
+        useOnboardingSequenceStore.getState().advance();
+      } else {
+        useOnboardingSequenceStore.getState().stop();
+      }
+    },
     stepHandlers: {
       "scan-list": {
         onNext: async ({ waitForStep }) => {
