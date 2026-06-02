@@ -46,6 +46,7 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
+from tasks.jobs.orphan_recovery import reconcile_orphans
 from tasks.jobs.report import (
     STALE_TMP_OUTPUT_MAX_AGE_HOURS,
     _cleanup_stale_tmp_output_directories,
@@ -462,13 +463,42 @@ def cleanup_stale_attack_paths_scans_task():
     return cleanup_stale_attack_paths_scans()
 
 
+@shared_task(name="reconcile-orphan-tasks", queue="celery")
+def reconcile_orphan_tasks_task():
+    """Periodic watchdog: recover tasks whose worker is gone (deploys, crashes)."""
+    return reconcile_orphans()
+
+
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
 def delete_tenant_task(tenant_id: str):
     return delete_tenant(pk=tenant_id)
 
 
+def _scan_tmp_output_directory(tenant_id: str, scan_id: str) -> Path:
+    """Root tmp output directory for a scan ({tmp}/{tenant_id}/{scan_id})."""
+    return Path(DJANGO_TMP_OUTPUT_DIRECTORY) / str(tenant_id) / str(scan_id)
+
+
+class ScanReportRLSTask(RLSTask):
+    """
+    RLS task that removes the scan's tmp output directory when the task fails.
+
+    Covers failures both inside and outside the task body (e.g. ENOSPC mid-write,
+    or setup errors) so partial artifacts do not accumulate on the worker disk.
+    """
+
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):  # noqa: ARG002
+        del args  # Required by Celery's Task.on_failure signature; not used.
+        tenant_id = kwargs.get("tenant_id")
+        scan_id = kwargs.get("scan_id")
+
+        if tenant_id and scan_id:
+            logger.error(f"Scan report task {task_id} failed: {exc}")
+            rmtree(_scan_tmp_output_directory(tenant_id, scan_id), ignore_errors=True)
+
+
 @shared_task(
-    base=RLSTask,
+    base=ScanReportRLSTask,
     name="scan-report",
     queue="scan-reports",
 )
@@ -518,6 +548,9 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
+    # Removed on success here and on failure by ScanReportRLSTask.on_failure,
+    # so partial artifacts do not accumulate and fill the disk (ENOSPC).
+    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
 
     def get_writer(writer_map, name, factory, is_last):
         """
@@ -666,7 +699,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         # TODO: We need to create a new periodic task to delete the output files
         # This task shouldn't be responsible for deleting the output files
         try:
-            rmtree(Path(compressed).parent, ignore_errors=True)
+            rmtree(scan_tmp_dir, ignore_errors=True)
         except Exception as e:
             logger.error(f"Error deleting output files: {e}")
         final_location, did_upload = upload_uri, True

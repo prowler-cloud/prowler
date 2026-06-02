@@ -7,6 +7,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - DISA Okta IDaaS STIG V1R2 compliance framework for the Okta provider, with a dedicated CSV output formatter and terminal summary table [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+- `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
+
+---
+
+## [5.29.1] (Prowler v5.29.1)
+
+### 🐞 Fixed
+
+- OCSF output writer now re-raises I/O errors (e.g. `ENOSPC`) instead of logging them per finding and leaving a truncated file [(#11421)](https://github.com/prowler-cloud/prowler/pull/11421)
 
 ---
 
