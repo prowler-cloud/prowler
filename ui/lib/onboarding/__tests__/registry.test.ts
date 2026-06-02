@@ -168,6 +168,30 @@ describe("onboardingFlows (production registry)", () => {
     }
   });
 
+  it("sets a data requirement hint on the scan-dependent flows only", () => {
+    // Given / When - the flows whose pages render nothing without scan data
+    const scanDependent = [
+      "explore-findings",
+      "view-compliance",
+      "attack-paths",
+    ];
+    const standalone = ["add-provider", "view-first-scan"];
+    const expectedHint =
+      "This step needs a completed scan to show data. Launch a scan first, or continue anyway.";
+
+    // Then - the three data-dependent steps carry the hint verbatim
+    for (const id of scanDependent) {
+      const flow = getFlowById(id, onboardingFlows);
+      expect(flow?.dataRequirementHint).toBe(expectedHint);
+    }
+
+    // And - the self-contained steps carry no hint
+    for (const id of standalone) {
+      const flow = getFlowById(id, onboardingFlows);
+      expect(flow?.dataRequirementHint).toBeUndefined();
+    }
+  });
+
   it("orders the five sequence flows 1..5 by registry order", () => {
     // Given / When - the production registry after Slices 4-7 registration
     const ordered = getOrderedFlows(onboardingFlows);

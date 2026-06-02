@@ -8,6 +8,12 @@ import { viewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 
 import type { OnboardingContext, OnboardingFlow } from "./onboarding-types";
 
+// Shared hint for steps whose pages render nothing until a scan has completed.
+// Surfaced in the sequence banner so the user can launch a scan first or move
+// on at their own pace.
+const SCAN_DATA_HINT =
+  "This step needs a completed scan to show data. Launch a scan first, or continue anyway.";
+
 // Single source of truth for onboarding flows. Adding a flow is one entry here
 // plus its `*.tour.ts` file — no gate, modal, or nav edits required. `order`
 // is an explicit integer (gaps allowed) so reordering is a data edit.
@@ -40,6 +46,7 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     description: "See what Prowler detected and how to fix it.",
     route: "/findings",
     tour: exploreFindingsTour,
+    dataRequirementHint: SCAN_DATA_HINT,
   },
   {
     id: "view-compliance",
@@ -48,6 +55,7 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     description: "Map your findings to frameworks like CIS.",
     route: "/compliance",
     tour: viewComplianceTour,
+    dataRequirementHint: SCAN_DATA_HINT,
   },
   {
     id: "attack-paths",
@@ -56,6 +64,7 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     description: "See how a compromise could spread across your cloud.",
     route: "/attack-paths",
     tour: attackPathsTour,
+    dataRequirementHint: SCAN_DATA_HINT,
     // The attack-paths PAGE already drives this tour (its own auto-open +
     // rich stepHandlers). The shared OnboardingTrigger must NOT mount a second
     // runner; the page reports completion to the sequence slice instead.

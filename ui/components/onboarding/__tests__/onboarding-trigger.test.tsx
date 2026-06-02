@@ -156,9 +156,8 @@ describe("OnboardingTrigger", () => {
   });
 
   describe("when a sequence tour completes", () => {
-    it("advances the sequence and navigates to the next flow route", async () => {
-      // Given - the sequence is on add-provider; the next ordered flow exists
-      const nextFlow = getFlowById("view-first-scan");
+    it("leaves the sequence slice untouched (the banner owns advance now)", async () => {
+      // Given - the sequence is on add-provider
       setSlice({
         active: true,
         currentFlowId: "add-provider",
@@ -170,20 +169,17 @@ describe("OnboardingTrigger", () => {
       await waitFor(() => expect(capturedOnClosed).toBeDefined());
       capturedOnClosed?.("completed");
 
-      // Then - it advances the slice and pushes to the next flow's route. When
-      // there is no next flow yet (registry not extended), it advances without
-      // navigating.
-      expect(advanceMock).toHaveBeenCalledTimes(1);
-      if (nextFlow) {
-        expect(pushMock).toHaveBeenCalledWith(nextFlow.route);
-      } else {
-        expect(pushMock).not.toHaveBeenCalled();
-      }
+      // Then - closing the tour no longer auto-advances or navigates. The
+      // persistent banner is the only advance/exit control: the user stays on
+      // the page until they explicitly click Continue.
+      expect(advanceMock).not.toHaveBeenCalled();
+      expect(stopMock).not.toHaveBeenCalled();
+      expect(pushMock).not.toHaveBeenCalled();
     });
   });
 
   describe("when a sequence tour is dismissed", () => {
-    it("stops the sequence and does not navigate", async () => {
+    it("leaves the sequence slice untouched (no auto-stop on close)", async () => {
       // Given - the sequence is on add-provider
       setSlice({
         active: true,
@@ -196,8 +192,8 @@ describe("OnboardingTrigger", () => {
       await waitFor(() => expect(capturedOnClosed).toBeDefined());
       capturedOnClosed?.("skipped");
 
-      // Then - it ends the sequence and never navigates or advances
-      expect(stopMock).toHaveBeenCalledTimes(1);
+      // Then - closing leaves the sequence active; only the banner Exit ends it
+      expect(stopMock).not.toHaveBeenCalled();
       expect(advanceMock).not.toHaveBeenCalled();
       expect(pushMock).not.toHaveBeenCalled();
     });
