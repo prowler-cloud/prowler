@@ -18,6 +18,20 @@ Re-evaluate when a non-disputed advisory or upstream fix lands.
 """
 
 [[IgnoredVulns]]
+id = "GHSA-897w-fcg9-f6xj"
+ignoreUntil = 2026-09-01T00:00:00Z
+reason = """
+Temporary suppression for api/uv.lock only. The SDK (root pyproject.toml) is
+already bumped to dulwich==1.2.6, which fixes this advisory (patched in 1.2.5).
+api/uv.lock resolves dulwich transitively through `prowler @ git+...@master`,
+which still pins dulwich==0.23.0 at the locked commit, so api cannot upgrade
+until the SDK fix lands on master and api/uv.lock is regenerated against the
+new commit. The advisory is also Windows-only (arbitrary file write via
+NTFS-hostile tree entries); the API runs in Linux containers. Remove this entry
+once api/uv.lock is refreshed and no longer resolves dulwich 0.23.0.
+"""
+
+[[IgnoredVulns]]
 id = "PYSEC-2026-89"
 ignoreUntil = 2026-08-20T00:00:00Z
 reason = """

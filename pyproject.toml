@@ -73,7 +73,7 @@ dependencies = [
   "dash-bootstrap-components==2.0.3",
   "defusedxml==0.7.1",
   "detect-secrets==1.5.0",
-  "dulwich==0.23.0",
+  "dulwich==1.2.6",
   "google-api-python-client==2.163.0",
   "google-auth-httplib2==0.2.0",
   "jsonschema==4.23.0",
