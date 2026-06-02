@@ -16,6 +16,32 @@ const { scansFilterBarSpy } = vi.hoisted(() => ({
   scansFilterBarSpy: vi.fn(),
 }));
 
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
+  };
+})();
+
+Object.defineProperty(window, "localStorage", {
+  value: localStorageMock,
+  writable: true,
+});
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/scans",
   useRouter: () => ({
@@ -120,6 +146,7 @@ describe("ScansPageShell", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+    localStorageMock.clear();
     searchParamsValue.current = "";
     useScansStore.getState().closeLaunchScanModal();
   });
@@ -189,6 +216,36 @@ describe("ScansPageShell", () => {
     );
 
     expect(screen.getByRole("combobox", { name: /all types/i })).toBeVisible();
+  });
+
+  it("shows the CLI import banner in Cloud", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /import findings from prowler cli/i,
+    );
+    expect(screen.getByRole("link", { name: /learn more/i })).toHaveAttribute(
+      "href",
+      "https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings",
+    );
+  });
+
+  it("hides the CLI import banner outside Cloud", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("keeps launch scan with filters and mutelist with tabs", () => {
@@ -331,5 +388,23 @@ describe("ScansPageShell", () => {
     const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
     expect(calledUrl).toContain("tab=active");
     expect(calledUrl).not.toContain("filter%5Bstate__in%5D");
+  });
+
+  it("clears type filter when switching to scheduled scans", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "tab=completed&filter%5Btrigger%5D=manual";
+    const user = userEvent.setup();
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /scheduled/i }));
+
+    const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
+    expect(calledUrl).toContain("tab=scheduled");
+    expect(calledUrl).not.toContain("filter%5Btrigger%5D");
   });
 });

@@ -20,6 +20,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.30.1] (Prowler v5.29.1)
+
+### 🐞 Fixed
+
+- Clean up the scan tmp output directory when `scan-report` fails so partial files do not accumulate and fill the worker disk (`No space left on device`) [(#11421)](https://github.com/prowler-cloud/prowler/pull/11421)
+
+---
+
 ## [1.30.0] (Prowler v5.29.0)
 
 ### 🔄 Changed

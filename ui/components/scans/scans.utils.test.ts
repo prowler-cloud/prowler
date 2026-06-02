@@ -94,6 +94,18 @@ describe("scans.utils", () => {
     });
   });
 
+  it("excludes trigger filters from scheduled scans", () => {
+    expect(
+      getScanJobsUserFilters({
+        tab: "scheduled",
+        "filter[trigger]": "manual",
+        "filter[provider_uid]": "123456789012",
+      }),
+    ).toEqual({
+      "filter[provider_uid]": "123456789012",
+    });
+  });
+
   it("formats scan labels and durations for table display", () => {
     expect(getScanAlias(makeScan(""))).toBe("-");
     expect(getScanAlias(makeScan("Daily scheduled scan", "scheduled"))).toBe(
