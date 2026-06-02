@@ -46,6 +46,7 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
+from tasks.jobs.orphan_recovery import reconcile_orphans
 from tasks.jobs.report import (
     STALE_TMP_OUTPUT_MAX_AGE_HOURS,
     _cleanup_stale_tmp_output_directories,
@@ -460,6 +461,12 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
 @shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
 def cleanup_stale_attack_paths_scans_task():
     return cleanup_stale_attack_paths_scans()
+
+
+@shared_task(name="reconcile-orphan-tasks", queue="celery")
+def reconcile_orphan_tasks_task():
+    """Periodic watchdog: recover tasks whose worker is gone (deploys, crashes)."""
+    return reconcile_orphans()
 
 
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))

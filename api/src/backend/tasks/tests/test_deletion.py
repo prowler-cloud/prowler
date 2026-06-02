@@ -1,11 +1,12 @@
 from unittest.mock import call, patch
+from uuid import uuid4
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from tasks.jobs.deletion import delete_provider, delete_tenant
 
 from api.attack_paths import database as graph_database
-from api.models import Provider, Tenant, TenantComplianceSummary
+from api.models import JiraIssueDispatch, Provider, Tenant, TenantComplianceSummary
 
 
 @pytest.mark.django_db
@@ -33,6 +34,43 @@ class TestDeleteProvider:
                 "tenant-db",
                 str(instance.id),
             )
+
+    def test_delete_provider_removes_jira_dispatches(
+        self,
+        providers_fixture,
+        findings_fixture,
+        integrations_fixture,
+    ):
+        """Deleting a provider removes JiraIssueDispatch rows for its findings only."""
+        instance = providers_fixture[0]
+        tenant_id = str(instance.tenant_id)
+        finding = findings_fixture[0]
+        integration = integrations_fixture[0]
+
+        # Dispatch for one of the provider's findings: must be removed with it.
+        JiraIssueDispatch.objects.create(
+            tenant_id=tenant_id,
+            integration=integration,
+            finding_id=finding.id,
+        )
+        # Dispatch for an unrelated finding: must survive the provider deletion.
+        unrelated = JiraIssueDispatch.objects.create(
+            tenant_id=tenant_id,
+            integration=integration,
+            finding_id=uuid4(),
+        )
+
+        with (
+            patch(
+                "tasks.jobs.deletion.graph_database.get_database_name",
+                return_value="tenant-db",
+            ),
+            patch("tasks.jobs.deletion.graph_database.drop_subgraph"),
+        ):
+            delete_provider(tenant_id, instance.id)
+
+        assert not JiraIssueDispatch.objects.filter(finding_id=finding.id).exists()
+        assert JiraIssueDispatch.objects.filter(pk=unrelated.pk).exists()
 
     def test_delete_provider_does_not_exist(self, tenants_fixture):
         with (
