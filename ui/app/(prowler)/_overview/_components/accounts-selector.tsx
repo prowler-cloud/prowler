@@ -1,26 +1,12 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 
 import {
-  AlibabaCloudProviderBadge,
-  AWSProviderBadge,
-  AzureProviderBadge,
-  CloudflareProviderBadge,
-  GCPProviderBadge,
-  GitHubProviderBadge,
-  GoogleWorkspaceProviderBadge,
-  IacProviderBadge,
-  ImageProviderBadge,
-  KS8ProviderBadge,
-  M365ProviderBadge,
-  MongoDBAtlasProviderBadge,
-  OktaProviderBadge,
-  OpenStackProviderBadge,
-  OracleCloudProviderBadge,
-  VercelProviderBadge,
-} from "@/components/icons/providers-badge";
+  ProviderTypeIcon,
+  ProviderTypeIconStack,
+} from "@/components/icons/providers-badge/provider-type-icon";
 import { Badge } from "@/components/shadcn";
 import {
   MultiSelect,
@@ -44,25 +30,6 @@ const ACCOUNT_SELECTOR_FILTER = {
 
 type AccountSelectorFilter =
   (typeof ACCOUNT_SELECTOR_FILTER)[keyof typeof ACCOUNT_SELECTOR_FILTER];
-
-const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
-  aws: <AWSProviderBadge width={18} height={18} />,
-  azure: <AzureProviderBadge width={18} height={18} />,
-  gcp: <GCPProviderBadge width={18} height={18} />,
-  kubernetes: <KS8ProviderBadge width={18} height={18} />,
-  m365: <M365ProviderBadge width={18} height={18} />,
-  github: <GitHubProviderBadge width={18} height={18} />,
-  googleworkspace: <GoogleWorkspaceProviderBadge width={18} height={18} />,
-  iac: <IacProviderBadge width={18} height={18} />,
-  image: <ImageProviderBadge width={18} height={18} />,
-  oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
-  mongodbatlas: <MongoDBAtlasProviderBadge width={18} height={18} />,
-  alibabacloud: <AlibabaCloudProviderBadge width={18} height={18} />,
-  cloudflare: <CloudflareProviderBadge width={18} height={18} />,
-  openstack: <OpenStackProviderBadge width={18} height={18} />,
-  vercel: <VercelProviderBadge width={18} height={18} />,
-  okta: <OktaProviderBadge width={18} height={18} />,
-};
 
 /** Common props shared by both batch and instant modes. */
 interface AccountsSelectorBaseProps {
@@ -158,10 +125,32 @@ export function AccountsSelector({
     if (selectedIds.length === 1) {
       const p = providers.find((pr) => getProviderValue(pr) === selectedIds[0]);
       const name = p ? p.attributes.alias || p.attributes.uid : selectedIds[0];
-      return <span className="truncate">{name}</span>;
+      return (
+        <span className="flex min-w-0 items-center gap-2">
+          {p && <ProviderTypeIcon type={p.attributes.provider} />}
+          <span className="truncate">{name}</span>
+        </span>
+      );
     }
+    // One icon per selected account (no dedupe): two accounts of the same
+    // provider show two icons, disambiguated by the UID tooltip on hover.
+    const items = selectedIds
+      .map((selectedId) =>
+        providers.find((pr) => getProviderValue(pr) === selectedId),
+      )
+      .filter((p): p is ProviderProps => Boolean(p))
+      .map((p) => ({
+        key: p.id,
+        type: p.attributes.provider as ProviderType,
+        tooltip: p.attributes.uid,
+      }));
     return (
-      <span className="truncate">{selectedIds.length} Providers selected</span>
+      <span className="flex min-w-0 items-center gap-2">
+        <ProviderTypeIconStack items={items} />
+        <span className="truncate">
+          {selectedIds.length} Providers selected
+        </span>
+      </span>
     );
   };
 
@@ -208,7 +197,6 @@ export function AccountsSelector({
                 const isDisabled = disabledValuesSet.has(value);
                 const displayName = p.attributes.alias || p.attributes.uid;
                 const providerType = p.attributes.provider as ProviderType;
-                const icon = PROVIDER_ICON[providerType];
                 const searchKeywords = [
                   displayName,
                   p.attributes.alias,
@@ -228,7 +216,9 @@ export function AccountsSelector({
                       if (closeOnSelect) setSelectorOpen(false);
                     }}
                   >
-                    <span aria-hidden="true">{icon}</span>
+                    <span aria-hidden="true">
+                      <ProviderTypeIcon type={providerType} />
+                    </span>
                     <span className="flex min-w-0 flex-1 items-center gap-2">
                       <span className="truncate">{displayName}</span>
                       {isDisabled && <Badge variant="tag">Disconnected</Badge>}

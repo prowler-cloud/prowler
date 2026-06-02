@@ -1,8 +1,12 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { type ComponentType, lazy, Suspense } from "react";
 
+import {
+  PROVIDER_TYPE_DATA,
+  ProviderTypeIcon,
+  ProviderTypeIconStack,
+} from "@/components/icons/providers-badge/provider-type-icon";
 import {
   MultiSelect,
   MultiSelectContent,
@@ -13,163 +17,6 @@ import {
 } from "@/components/shadcn/select/multiselect";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { type ProviderProps, ProviderType } from "@/types/providers";
-
-const AWSProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.AWSProviderBadge,
-  })),
-);
-const AzureProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.AzureProviderBadge,
-  })),
-);
-const GCPProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.GCPProviderBadge,
-  })),
-);
-const KS8ProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.KS8ProviderBadge,
-  })),
-);
-const M365ProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.M365ProviderBadge,
-  })),
-);
-const GitHubProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.GitHubProviderBadge,
-  })),
-);
-const IacProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.IacProviderBadge,
-  })),
-);
-const ImageProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.ImageProviderBadge,
-  })),
-);
-const OracleCloudProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.OracleCloudProviderBadge,
-  })),
-);
-const MongoDBAtlasProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.MongoDBAtlasProviderBadge,
-  })),
-);
-const AlibabaCloudProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.AlibabaCloudProviderBadge,
-  })),
-);
-const CloudflareProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.CloudflareProviderBadge,
-  })),
-);
-const OpenStackProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.OpenStackProviderBadge,
-  })),
-);
-const GoogleWorkspaceProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.GoogleWorkspaceProviderBadge,
-  })),
-);
-const VercelProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.VercelProviderBadge,
-  })),
-);
-const OktaProviderBadge = lazy(() =>
-  import("@/components/icons/providers-badge").then((m) => ({
-    default: m.OktaProviderBadge,
-  })),
-);
-
-type IconProps = { width: number; height: number };
-
-const IconPlaceholder = ({ width, height }: IconProps) => (
-  <div style={{ width, height }} />
-);
-
-const PROVIDER_DATA: Record<
-  ProviderType,
-  { label: string; icon: ComponentType<IconProps> }
-> = {
-  aws: {
-    label: "Amazon Web Services",
-    icon: AWSProviderBadge,
-  },
-  azure: {
-    label: "Microsoft Azure",
-    icon: AzureProviderBadge,
-  },
-  gcp: {
-    label: "Google Cloud Platform",
-    icon: GCPProviderBadge,
-  },
-  kubernetes: {
-    label: "Kubernetes",
-    icon: KS8ProviderBadge,
-  },
-  m365: {
-    label: "Microsoft 365",
-    icon: M365ProviderBadge,
-  },
-  github: {
-    label: "GitHub",
-    icon: GitHubProviderBadge,
-  },
-  googleworkspace: {
-    label: "Google Workspace",
-    icon: GoogleWorkspaceProviderBadge,
-  },
-  iac: {
-    label: "Infrastructure as Code",
-    icon: IacProviderBadge,
-  },
-  image: {
-    label: "Container Registry",
-    icon: ImageProviderBadge,
-  },
-  oraclecloud: {
-    label: "Oracle Cloud Infrastructure",
-    icon: OracleCloudProviderBadge,
-  },
-  mongodbatlas: {
-    label: "MongoDB Atlas",
-    icon: MongoDBAtlasProviderBadge,
-  },
-  alibabacloud: {
-    label: "Alibaba Cloud",
-    icon: AlibabaCloudProviderBadge,
-  },
-  cloudflare: {
-    label: "Cloudflare",
-    icon: CloudflareProviderBadge,
-  },
-  openstack: {
-    label: "OpenStack",
-    icon: OpenStackProviderBadge,
-  },
-  vercel: {
-    label: "Vercel",
-    icon: VercelProviderBadge,
-  },
-  okta: {
-    label: "Okta",
-    icon: OktaProviderBadge,
-  },
-};
 
 /** Common props shared by both batch and instant modes. */
 interface ProviderTypeSelectorBaseProps {
@@ -247,19 +94,10 @@ export const ProviderTypeSelector = ({
         .map((p) => p.attributes.provider),
     ),
   )
-    .filter((type): type is ProviderType => type in PROVIDER_DATA)
+    .filter((type): type is ProviderType => type in PROVIDER_TYPE_DATA)
     .sort((a, b) =>
-      PROVIDER_DATA[a].label.localeCompare(PROVIDER_DATA[b].label),
+      PROVIDER_TYPE_DATA[a].label.localeCompare(PROVIDER_TYPE_DATA[b].label),
     );
-
-  const renderIcon = (providerType: ProviderType) => {
-    const IconComponent = PROVIDER_DATA[providerType].icon;
-    return (
-      <Suspense fallback={<IconPlaceholder width={24} height={24} />}>
-        <IconComponent width={24} height={24} />
-      </Suspense>
-    );
-  };
 
   const selectedLabel = () => {
     if (selectedTypes.length === 0) return null;
@@ -267,14 +105,25 @@ export const ProviderTypeSelector = ({
       const providerType = selectedTypes[0] as ProviderType;
       return (
         <span className="flex min-w-0 items-center gap-2">
-          {renderIcon(providerType)}
-          <span className="truncate">{PROVIDER_DATA[providerType].label}</span>
+          <ProviderTypeIcon type={providerType} />
+          <span className="truncate">
+            {PROVIDER_TYPE_DATA[providerType].label}
+          </span>
         </span>
       );
     }
     return (
-      <span className="min-w-0 truncate">
-        {selectedTypes.length} Provider Types selected
+      <span className="flex min-w-0 items-center gap-2">
+        <ProviderTypeIconStack
+          items={(selectedTypes as ProviderType[]).map((type) => ({
+            key: type,
+            type,
+            tooltip: PROVIDER_TYPE_DATA[type].label,
+          }))}
+        />
+        <span className="min-w-0 truncate">
+          {selectedTypes.length} Provider Types selected
+        </span>
       </span>
     );
   };
@@ -329,12 +178,17 @@ export const ProviderTypeSelector = ({
                 <MultiSelectItem
                   key={providerType}
                   value={providerType}
-                  badgeLabel={PROVIDER_DATA[providerType].label}
-                  keywords={[providerType, PROVIDER_DATA[providerType].label]}
-                  aria-label={`${PROVIDER_DATA[providerType].label} Provider Type`}
+                  badgeLabel={PROVIDER_TYPE_DATA[providerType].label}
+                  keywords={[
+                    providerType,
+                    PROVIDER_TYPE_DATA[providerType].label,
+                  ]}
+                  aria-label={`${PROVIDER_TYPE_DATA[providerType].label} Provider Type`}
                 >
-                  <span aria-hidden="true">{renderIcon(providerType)}</span>
-                  <span>{PROVIDER_DATA[providerType].label}</span>
+                  <span aria-hidden="true">
+                    <ProviderTypeIcon type={providerType} size={24} />
+                  </span>
+                  <span>{PROVIDER_TYPE_DATA[providerType].label}</span>
                 </MultiSelectItem>
               ))}
             </>
