@@ -43,7 +43,18 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   const providersData = await getProviders({ page: 1, pageSize: 1 });
-  const hasProviders = !!(providersData?.data && providersData.data.length > 0);
+  // Tri-state on purpose: a SUCCESSFUL fetch carries `data` (an array, possibly
+  // empty); a FAILED/ambiguous fetch yields `undefined` (network error) or an
+  // error envelope without `data`. Collapsing the failure to `false` would
+  // force the mandatory onboarding gate onto an existing user during an API
+  // outage, so we keep `undefined` distinct and let the gate fail open.
+  //   - success with providers -> true
+  //   - success, zero providers -> false
+  //   - failed/ambiguous fetch  -> undefined
+  const hasProviders =
+    providersData?.data === undefined
+      ? undefined
+      : providersData.data.length > 0;
 
   return (
     <html suppressHydrationWarning lang="en">
@@ -57,7 +68,10 @@ export default async function RootLayout({
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <NavigationProgress />
-          <StoreInitializer values={{ hasProviders }} />
+          {/* Store keeps a plain boolean: existing sidebar/empty-state
+              behavior is unchanged. Only the gate gets the tri-state so it can
+              fail open on an unknown provider signal. */}
+          <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
           <OnboardingGate hasProviders={hasProviders} />
           <MainLayout>{children}</MainLayout>
           <Toaster />

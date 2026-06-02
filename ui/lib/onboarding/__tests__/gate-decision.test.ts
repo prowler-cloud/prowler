@@ -76,10 +76,11 @@ describe("shouldStartOnboarding", () => {
   });
 
   it("fails open when hasProviders is undefined", () => {
-    // Given - ambiguous provider signal (undefined)
+    // Given - ambiguous provider signal (undefined), passed type-cleanly
+    // because the input type accepts `boolean | undefined`
     // When - strict === false check rejects non-false values
     const result = shouldStartOnboarding({
-      hasProviders: undefined as unknown as boolean,
+      hasProviders: undefined,
       completionRecord: null,
     });
 

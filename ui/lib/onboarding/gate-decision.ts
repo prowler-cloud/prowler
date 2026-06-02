@@ -1,7 +1,10 @@
 import type { TourCompletionRecord } from "@/lib/tours/tour-types";
 
 export interface GateDecisionInput {
-  hasProviders: boolean;
+  // Accepts `undefined` so callers can forward an ambiguous/failed provider
+  // signal without casting. The strict `=== false` check below fails open on
+  // anything that is not provably `false`.
+  hasProviders: boolean | undefined;
   completionRecord: TourCompletionRecord | null;
 }
 
