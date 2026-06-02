@@ -474,6 +474,7 @@ class EndpointConfig(BaseModel):
     production_variants: list[ProductionVariant] = []
     tags: Optional[list] = []
 
+
 class ModelRegistry(BaseModel):
     """Represents the SageMaker Model Registry state for a specific region."""
 
@@ -482,6 +483,7 @@ class ModelRegistry(BaseModel):
     region: str
     has_groups: bool = False
     has_approved_packages: bool = False
+
 
 class MonitoringSchedule(BaseModel):
     name: str
