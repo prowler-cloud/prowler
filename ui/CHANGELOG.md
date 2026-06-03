@@ -25,6 +25,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [1.28.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Users page now shows the "Delete User" action only on the current user's row, matching the backend rule that a user can only delete their own account [(#11447)](https://github.com/prowler-cloud/prowler/pull/11447)
+
+---
+
 ## [1.28.1] (Prowler v5.28.1)
 
 ### 🐞 Fixed
