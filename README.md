@@ -153,11 +153,23 @@ Prowler App offers flexible installation methods tailored to various environment
 
 #### Commands
 
+_macOS/Linux:_
+
 ``` console
 VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
 # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
+docker compose up -d
+```
+
+_Windows PowerShell:_
+
+``` powershell
+$VERSION = (Invoke-RestMethod -Uri "https://api.github.com/repos/prowler-cloud/prowler/releases/latest").tag_name
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/docker-compose.yml" -OutFile "docker-compose.yml"
+# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/.env" -OutFile ".env"
 docker compose up -d
 ```
 

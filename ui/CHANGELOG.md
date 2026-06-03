@@ -6,9 +6,27 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
+- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 - In-product tour for the Attack Paths workflow [(#11383)](https://github.com/prowler-cloud/prowler/pull/11383)
 - Extensible onboarding system with a guided add-provider tour: a mandatory Welcome modal for zero-provider users and a "Product tour" restart entry in the avatar menu [(#11430)](https://github.com/prowler-cloud/prowler/pull/11430)
 - Guided onboarding sequence after the first provider is added: a checkpoint dialog starts a sequence across three new tours (`view-first-scan`, `explore-findings`, `view-compliance`) plus the existing Attack Paths tour, driven by a persistent banner to advance manually (Continue/Exit) with per-step data hints; closing a step's tour leaves the sequence active. The avatar "Product tour" menu now lists every flow for single-flow replay [(#11430)](https://github.com/prowler-cloud/prowler/pull/11430)
+
+---
+
+## [1.29.2] (Prowler v5.29.2)
+
+### 🔄 Changed
+
+- Account and provider-type selector triggers now show the provider icon, with a non-deduped icon stack [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
+### 🐞 Fixed
+
+- Add Provider modal now closes without reloading the providers page [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+- Users page now shows the "Delete User" action only on the current user's row, matching the backend rule that a user can only delete their own account [(#11447)](https://github.com/prowler-cloud/prowler/pull/11447)
+
+### 🔐 Security
+
+- Vitest toolchain upgraded `4.0.18` → `4.1.8` to clear two critical `pnpm audit` advisories [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
 
 ---
 
