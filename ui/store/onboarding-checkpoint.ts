@@ -22,7 +22,6 @@ interface OnboardingCheckpointState {
   // this is what keeps an established user (who later adds another provider)
   // from ever seeing the dialog.
   armed: boolean;
-  // Whether the checkpoint dialog should be shown.
   open: boolean;
 
   // Mark the checkpoint as armed. Called by the gate's "Get started" accept.

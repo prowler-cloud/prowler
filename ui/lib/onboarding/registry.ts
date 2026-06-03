@@ -65,16 +65,14 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     route: "/attack-paths",
     tour: attackPathsTour,
     dataRequirementHint: SCAN_DATA_HINT,
-    // The attack-paths PAGE already drives this tour (its own auto-open +
-    // rich stepHandlers). The shared OnboardingTrigger must NOT mount a second
-    // runner; the page reports completion to the sequence slice instead.
+    // The attack-paths PAGE already drives this tour, so the shared
+    // OnboardingTrigger must NOT mount a second runner.
     ownsAutoOpen: true,
   },
 ];
 
-// Returns flows sorted ascending by `order`. The sort is stable: entries that
-// share an `order` value keep their original relative position. The `flows`
-// argument defaults to the production registry; tests inject fixtures.
+// Stable sort by `order`: entries sharing an `order` keep their original
+// relative position. `flows` defaults to the production registry; tests inject.
 export function getOrderedFlows(
   flows: readonly OnboardingFlow[] = onboardingFlows,
 ): OnboardingFlow[] {
@@ -84,7 +82,6 @@ export function getOrderedFlows(
     .map(({ flow }) => flow);
 }
 
-// Resolves a flow by its stable `id`, or `undefined` when none matches.
 export function getFlowById(
   id: string,
   flows: readonly OnboardingFlow[] = onboardingFlows,
@@ -103,10 +100,9 @@ function isFlowComplete(
   return store.get(flow.tour) !== null;
 }
 
-// Returns the first flow (by `order`) that is NOT complete, or `undefined`
-// when every flow is complete. The store is injected with a production default
-// (`localStorageAdapter`) so the function stays pure and unit-testable: tests
-// pass an in-memory store instead of mocking localStorage.
+// First incomplete flow by `order`, or `undefined` when all are complete. The
+// store is injected (default `localStorageAdapter`) so the function stays pure
+// and unit-testable without mocking localStorage.
 export function getFirstIncompleteFlow(
   ctx: OnboardingContext,
   store: TourCompletionStore = localStorageAdapter,

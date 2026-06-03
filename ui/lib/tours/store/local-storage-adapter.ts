@@ -8,8 +8,6 @@ const STORAGE_KEY = "prowler.tours";
 
 type ToursObject = Record<string, TourCompletionRecord>;
 
-// Field key for a tour within the single tours object. Composition stays here so
-// callers never hand-build keys.
 export function buildStorageKey({ id, version }: TourId): string {
   return `${id}.v${version}`;
 }

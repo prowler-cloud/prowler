@@ -21,9 +21,7 @@ interface OnboardingTriggerProps<TTarget extends string = string> {
   // The flow THIS route owns. The trigger force-starts it when the sequence
   // names it OR the `?onboarding=<id>` replay param matches.
   flow: OnboardingFlow;
-  // Flow-specific step handlers (e.g. add-provider needs openWizard). Optional.
   stepHandlers?: { [K in TTarget]?: TourStepHandlers<TTarget> };
-  // Per-flow driver config (e.g. shallow tours pass nothing). Optional.
   configOverrides?: Partial<Config>;
 }
 
@@ -124,8 +122,7 @@ function OnboardingTourRunner<TTarget extends string>({
     stepHandlers,
     configOverrides,
     onClosed: () => {
-      // No-op: neither replay nor sequence mutates the slice on tour close. The
-      // banner is the single advance/exit control while a sequence is active.
+      // Intentionally inert: the banner is the single advance/exit control.
     },
   });
 

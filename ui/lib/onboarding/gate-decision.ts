@@ -8,12 +8,9 @@ export interface GateDecisionInput {
   completionRecord: TourCompletionRecord | null;
 }
 
-// Pure decision for the mandatory new-user gate. Returns `true` only when the
-// user provably has no providers AND no prior tour record exists in this
-// browser. The strict `=== false` check fails open: any ambiguous provider
-// signal (`undefined`, `null`, error state) is treated as "do not force".
-// The explicit null/undefined check covers both an absent record and an
-// unexpected `undefined` passed from a defensive caller.
+// Mandatory new-user gate. The strict `=== false` check fails open: any
+// ambiguous provider signal (`undefined`, `null`, error state) is treated as
+// "do not force".
 export function shouldStartOnboarding({
   hasProviders,
   completionRecord,

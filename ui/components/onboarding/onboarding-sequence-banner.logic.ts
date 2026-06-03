@@ -6,9 +6,7 @@ import { getOrderedFlows, type OnboardingFlow } from "@/lib/onboarding";
 export interface SequenceProgress {
   // 0-based index of the current flow within the ordered registry.
   index: number;
-  // Total number of ordered flows in the sequence.
   total: number;
-  // The flow the sequence currently points at.
   flow: OnboardingFlow;
   // The next ordered flow, or null when the current flow is the last step.
   nextFlow: OnboardingFlow | null;

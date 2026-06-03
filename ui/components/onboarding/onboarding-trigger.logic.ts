@@ -7,7 +7,6 @@ import type { OnboardingSequenceMode } from "@/store/onboarding-sequence";
 export interface TriggerRequestInput {
   // The `?onboarding=<id>` query param value, or null when absent.
   param: string | null;
-  // Whether the sequence slice is currently active.
   sliceActive: boolean;
   // The flow id the active sequence points at, or null.
   currentFlowId: string | null;
