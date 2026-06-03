@@ -380,6 +380,12 @@ aws:
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
 
+  # AWS Post-Quantum TLS Configuration
+  # aws.cloudfront_distributions_pqc_tls_enabled
+  # Allowed CloudFront MinimumProtocolVersion values that enable post-quantum hybrid key exchange
+  cloudfront_pqc_min_protocol_versions:
+    - "TLSv1.3_2025"
+
   # AWS Elasticache Configuration
   # aws.elasticache_redis_cluster_backup_enabled
   # Minimum number of days that a Redis cluster must have backups retention period

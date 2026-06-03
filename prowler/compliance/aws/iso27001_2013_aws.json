@@ -35,7 +35,8 @@
       ],
       "Checks": [
         "elb_insecure_ssl_ciphers",
-        "elbv2_insecure_ssl_ciphers"
+        "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled"
       ]
     },
     {

@@ -64,6 +64,7 @@ def example_distribution_config(ref):
         "ViewerCertificate": {
             "SSLSupportMethod": "static-ip",
             "Certificate": "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012",
+            "MinimumProtocolVersion": "TLSv1.3_2025",
         },
         "Comment": "an optional comment that's not actually optional",
         "Enabled": False,
@@ -234,6 +235,7 @@ class Test_CloudFront_Service:
         ]
         SSL_SUPPORT_METHOD = SSLSupportMethod.sni_only
         CERTIFICATE = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+        MINIMUM_PROTOCOL_VERSION = "TLSv1.3_2025"
 
         cloudfront = mock.MagicMock
         cloudfront.distributions = {
@@ -249,6 +251,7 @@ class Test_CloudFront_Service:
                 tags=TAGS,
                 ssl_support_method=SSL_SUPPORT_METHOD,
                 certificate=CERTIFICATE,
+                minimum_protocol_version=MINIMUM_PROTOCOL_VERSION,
             )
         }
 
@@ -288,6 +291,10 @@ class Test_CloudFront_Service:
             == DEFAULT_CACHE_CONFIG.field_level_encryption_id
         )
         assert cloudfront.distributions[DISTRIBUTION_ID].tags == TAGS
+        assert (
+            cloudfront.distributions[DISTRIBUTION_ID].minimum_protocol_version
+            == MINIMUM_PROTOCOL_VERSION
+        )
 
     def test_get_log_delivery_sources_with_active_delivery(self):
         from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
