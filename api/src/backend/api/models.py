@@ -666,6 +666,9 @@ class Scan(RowLevelSecurityProtectedModel):
     state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
     unique_resource_count = models.IntegerField(default=0)
     progress = models.IntegerField(default=0)
+    # Incremented by the scan-specific orphan-recovery path each time this scan is
+    # re-pointed to a fresh task; for observability (the retry cap is a Valkey counter).
+    recovery_count = models.IntegerField(default=0)
     scanner_args = models.JSONField(default=dict)
     duration = models.IntegerField(null=True, blank=True)
     scheduled_at = models.DateTimeField(null=True, blank=True)
@@ -1989,6 +1992,35 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
             models.UniqueConstraint(
                 fields=["integration_id", "provider_id"],
                 name="unique_integration_provider_rel",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+
+class JiraIssueDispatch(RowLevelSecurityProtectedModel):
+    """Tracks findings already sent to a Jira integration.
+
+    Lets the Jira task be re-run safely (e.g. by orphan recovery): findings with
+    an existing dispatch row are skipped, so no duplicate issues are created.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    integration = models.ForeignKey(
+        Integration, on_delete=models.CASCADE, related_name="jira_dispatches"
+    )
+    finding_id = models.UUIDField()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "jira_issue_dispatches"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant_id", "integration_id", "finding_id"],
+                name="unique_jira_issue_dispatch",
             ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
