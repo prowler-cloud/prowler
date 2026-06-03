@@ -9,7 +9,7 @@ from tasks.utils import batched
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
-from api.models import Finding, Integration, Provider
+from api.models import Finding, Integration, JiraIssueDispatch, Provider
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
@@ -482,66 +482,115 @@ def send_findings_to_jira(
     with rls_transaction(tenant_id):
         integration = Integration.objects.get(id=integration_id)
         jira_integration = initialize_prowler_integration(integration)
+        # Idempotency: findings already ticketed for this integration must not be
+        # sent again on a re-run (e.g. orphan recovery), to avoid duplicate issues
+        already_sent = {
+            str(fid)
+            for fid in JiraIssueDispatch.objects.filter(
+                integration_id=integration_id, finding_id__in=finding_ids
+            ).values_list("finding_id", flat=True)
+        }
 
     num_tickets_created = 0
+    skipped_count = 0
     for finding_id in finding_ids:
+        if str(finding_id) in already_sent:
+            skipped_count += 1
+            continue
+
+        # Reserve the finding BEFORE the external call. The unique constraint on
+        # (tenant, integration, finding) makes the dispatch row the single source of
+        # truth, so a concurrent run or a retry that raced past the bulk pre-check
+        # cannot create a duplicate issue: created=False means another run already
+        # claimed it. The reservation is released below if the send does not succeed.
         with rls_transaction(tenant_id):
-            finding_instance = (
-                Finding.all_objects.select_related("scan__provider")
-                .prefetch_related("resources")
-                .get(id=finding_id)
+            _, created = JiraIssueDispatch.objects.get_or_create(
+                tenant_id=tenant_id,
+                integration_id=integration_id,
+                finding_id=finding_id,
             )
+        if not created:
+            skipped_count += 1
+            continue
 
-            # Extract resource information
-            resource = (
-                finding_instance.resources.first()
-                if finding_instance.resources.exists()
-                else None
-            )
-            resource_uid = resource.uid if resource else ""
-            resource_name = resource.name if resource else ""
-            resource_tags = {}
-            if resource and hasattr(resource, "tags"):
-                resource_tags = resource.get_tags(tenant_id)
+        sent = False
+        try:
+            with rls_transaction(tenant_id):
+                finding_instance = (
+                    Finding.all_objects.select_related("scan__provider")
+                    .prefetch_related("resources")
+                    .get(id=finding_id)
+                )
 
-            # Get region
-            region = resource.region if resource and resource.region else ""
+                # Extract resource information
+                resource = (
+                    finding_instance.resources.first()
+                    if finding_instance.resources.exists()
+                    else None
+                )
+                resource_uid = resource.uid if resource else ""
+                resource_name = resource.name if resource else ""
+                resource_tags = {}
+                if resource and hasattr(resource, "tags"):
+                    resource_tags = resource.get_tags(tenant_id)
 
-            # Extract remediation information from check_metadata
-            check_metadata = finding_instance.check_metadata
-            remediation = check_metadata.get("remediation", {})
-            recommendation = remediation.get("recommendation", {})
-            remediation_code = remediation.get("code", {})
+                # Get region
+                region = resource.region if resource and resource.region else ""
 
-            # Send the individual finding to Jira
-            result = jira_integration.send_finding(
-                check_id=finding_instance.check_id,
-                check_title=check_metadata.get("checktitle", ""),
-                severity=finding_instance.severity,
-                status=finding_instance.status,
-                status_extended=finding_instance.status_extended or "",
-                provider=finding_instance.scan.provider.provider,
-                region=region,
-                resource_uid=resource_uid,
-                resource_name=resource_name,
-                risk=check_metadata.get("risk", ""),
-                recommendation_text=recommendation.get("text", ""),
-                recommendation_url=recommendation.get("url", ""),
-                remediation_code_native_iac=remediation_code.get("nativeiac", ""),
-                remediation_code_terraform=remediation_code.get("terraform", ""),
-                remediation_code_cli=remediation_code.get("cli", ""),
-                remediation_code_other=remediation_code.get("other", ""),
-                resource_tags=resource_tags,
-                compliance=finding_instance.compliance or {},
-                project_key=project_key,
-                issue_type=issue_type,
-            )
-            if result:
-                num_tickets_created += 1
-            else:
-                logger.error(f"Failed to send finding {finding_id} to Jira")
+                # Extract remediation information from check_metadata
+                check_metadata = finding_instance.check_metadata
+                remediation = check_metadata.get("remediation", {})
+                recommendation = remediation.get("recommendation", {})
+                remediation_code = remediation.get("code", {})
+
+                # Send the individual finding to Jira
+                sent = bool(
+                    jira_integration.send_finding(
+                        check_id=finding_instance.check_id,
+                        check_title=check_metadata.get("checktitle", ""),
+                        severity=finding_instance.severity,
+                        status=finding_instance.status,
+                        status_extended=finding_instance.status_extended or "",
+                        provider=finding_instance.scan.provider.provider,
+                        region=region,
+                        resource_uid=resource_uid,
+                        resource_name=resource_name,
+                        risk=check_metadata.get("risk", ""),
+                        recommendation_text=recommendation.get("text", ""),
+                        recommendation_url=recommendation.get("url", ""),
+                        remediation_code_native_iac=remediation_code.get(
+                            "nativeiac", ""
+                        ),
+                        remediation_code_terraform=remediation_code.get(
+                            "terraform", ""
+                        ),
+                        remediation_code_cli=remediation_code.get("cli", ""),
+                        remediation_code_other=remediation_code.get("other", ""),
+                        resource_tags=resource_tags,
+                        compliance=finding_instance.compliance or {},
+                        project_key=project_key,
+                        issue_type=issue_type,
+                    )
+                )
+        finally:
+            if not sent:
+                # Release the reservation so a later run can retry this finding: it
+                # was not ticketed (send failed or raised), so the row must not block
+                # a future legitimate send.
+                with rls_transaction(tenant_id):
+                    JiraIssueDispatch.objects.filter(
+                        tenant_id=tenant_id,
+                        integration_id=integration_id,
+                        finding_id=finding_id,
+                    ).delete()
+
+        if sent:
+            num_tickets_created += 1
+        else:
+            logger.error(f"Failed to send finding {finding_id} to Jira")
 
     return {
         "created_count": num_tickets_created,
-        "failed_count": len(finding_ids) - num_tickets_created,
+        "failed_count": len(finding_ids) - num_tickets_created - skipped_count,
+        "skipped_count": skipped_count,
     }
