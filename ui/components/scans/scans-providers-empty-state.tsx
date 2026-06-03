@@ -34,6 +34,10 @@ export function ScansProvidersEmptyState({
     setIsProviderWizardOpen(true);
   };
 
+  const handleWizardOpenChange = (open: boolean) => {
+    setIsProviderWizardOpen(open);
+  };
+
   return (
     <>
       {thereIsNoProviders ? (
@@ -43,7 +47,7 @@ export function ScansProvidersEmptyState({
       )}
       <ProviderWizardModal
         open={isProviderWizardOpen}
-        onOpenChange={setIsProviderWizardOpen}
+        onOpenChange={handleWizardOpenChange}
       />
     </>
   );

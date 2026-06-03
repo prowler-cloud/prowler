@@ -54,6 +54,10 @@
   --bg-neutral-primary: #fdfdfd;
   --bg-neutral-secondary: var(--color-white);
   --bg-neutral-tertiary: #fbfdfd;
+
+  /* Popover / Floating Surfaces (shadcn) */
+  --popover: var(--bg-neutral-secondary);
+  --popover-foreground: var(--text-neutral-primary);
   --bg-tag-primary: var(--color-slate-50);
   --bg-pass-primary: var(--color-emerald-400);
   --bg-pass-secondary: var(--color-emerald-50);
@@ -136,6 +140,10 @@
   --bg-neutral-primary: #000000;
   --bg-neutral-secondary: var(--color-stone-950);
   --bg-neutral-tertiary: #121110;
+
+  /* Popover / Floating Surfaces (shadcn) */
+  --popover: var(--bg-neutral-secondary);
+  --popover-foreground: var(--text-neutral-primary);
   --bg-tag-primary: var(--color-slate-950);
   --bg-pass-primary: var(--color-green-400);
   --bg-pass-secondary: var(--color-emerald-900);
@@ -235,6 +243,10 @@
   --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
+
+  /* Popover / Floating Surfaces (shadcn) */
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);

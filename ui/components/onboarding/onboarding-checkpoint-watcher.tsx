@@ -1,34 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 
 import { getOrderedFlows } from "@/lib/onboarding";
+import {
+  CHECKPOINT_MARKER,
+  useOnboardingCheckpointStore,
+} from "@/store/onboarding-checkpoint";
 import { useOnboardingSequenceStore } from "@/store/onboarding-sequence";
-import { useUIStore } from "@/store/ui/store";
 
-import { shouldFireCheckpoint } from "./checkpoint.logic";
 import { OnboardingCheckpointDialog } from "./onboarding-checkpoint-dialog";
-
-// localStorage flag set once the user has either continued or finished the
-// checkpoint. It keeps the dialog from re-appearing on any later provider flip
-// in this browser. Distinct from per-tour `prowler.tour.*` completion records.
-const CHECKPOINT_MARKER = "prowler.onboarding.checkpoint";
 
 // The first ordered flow is `add-provider` (the gate). The checkpoint begins
 // the sequence at the flow AFTER it, so any flow id but `add-provider` qualifies
 // as the next one to start.
 const FIRST_FLOW_ID = "add-provider";
-
-function isCheckpointHandled(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.localStorage.getItem(CHECKPOINT_MARKER) !== null;
-  } catch {
-    // Fail open: an unreadable storage should not block the checkpoint.
-    return false;
-  }
-}
 
 function markCheckpointHandled(): void {
   if (typeof window === "undefined") return;
@@ -39,43 +25,22 @@ function markCheckpointHandled(): void {
   }
 }
 
-// Layout-level watcher (sibling to OnboardingGate). It observes `hasProviders`
-// from the UI store — which `StoreInitializer` re-syncs on every layout render,
-// including the post-connect re-fetch — and opens the checkpoint dialog exactly
-// once on a concrete `false -> true` flip that has not been handled. Renders the
-// dialog only; all decision logic runs in a client effect so the server renders
-// nothing and there is no hydration mismatch.
+// Layout-level watcher (sibling to OnboardingGate). It subscribes to the
+// onboarding-checkpoint store `open` flag and renders the checkpoint dialog when
+// the flag is set. The flag is raised explicitly by the provider wizard on
+// close (gated on `armed` + the handled marker), so this component owns no
+// transition/flip detection — only the resolve actions (continue/finish).
 export function OnboardingCheckpointWatcher() {
   const router = useRouter();
-  const hasProviders = useUIStore((state) => state.hasProviders);
-
-  // The previous observed `hasProviders`. `undefined` means "first read, no
-  // transition seen yet" — that case must NOT fire the checkpoint.
-  const previous = useRef<boolean | undefined>(undefined);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const was = previous.current;
-    previous.current = hasProviders;
-    if (
-      shouldFireCheckpoint({
-        prev: was,
-        next: hasProviders,
-        handled: isCheckpointHandled(),
-      })
-    ) {
-      setOpen(true);
-    }
-  }, [hasProviders]);
+  const open = useOnboardingCheckpointStore((state) => state.open);
 
   const handleContinue = () => {
     // Mark handled first so a re-render mid-navigation never re-opens it.
     markCheckpointHandled();
-    setOpen(false);
+    useOnboardingCheckpointStore.getState().close();
 
     // Start at the first ordered flow that is NOT add-provider (i.e. the next
-    // flow). Guard gracefully when none exists yet (registry may still be
-    // add-provider-only until later slices add flows): close without crashing.
+    // flow). Guard gracefully when none exists yet: close without crashing.
     const nextFlow = getOrderedFlows().find(
       (flow) => flow.id !== FIRST_FLOW_ID,
     );
@@ -89,7 +54,7 @@ export function OnboardingCheckpointWatcher() {
     // Onboarding ends here: mark handled, start no sequence. Remaining flows
     // stay reachable via the avatar replay list.
     markCheckpointHandled();
-    setOpen(false);
+    useOnboardingCheckpointStore.getState().close();
   };
 
   return (

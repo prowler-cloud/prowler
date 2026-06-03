@@ -12,14 +12,23 @@ import {
 import type { ProviderWizardInitialData } from "../types";
 import { useProviderWizardController } from "./use-provider-wizard-controller";
 
-const { refreshMock } = vi.hoisted(() => ({
+const { refreshMock, requestOpenOnWizardCloseMock } = vi.hoisted(() => ({
   refreshMock: vi.fn(),
+  requestOpenOnWizardCloseMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: refreshMock,
   }),
+}));
+
+vi.mock("@/store/onboarding-checkpoint", () => ({
+  useOnboardingCheckpointStore: {
+    getState: () => ({
+      requestOpenOnWizardClose: requestOpenOnWizardCloseMock,
+    }),
+  },
 }));
 
 vi.mock("next-auth/react", () => ({
@@ -33,6 +42,7 @@ describe("useProviderWizardController", () => {
   beforeEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    requestOpenOnWizardCloseMock.mockClear();
     sessionStorage.clear();
     localStorage.clear();
     useProviderWizardStore.getState().reset();
@@ -57,6 +67,58 @@ describe("useProviderWizardController", () => {
     // Then
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("requests the onboarding checkpoint with providerConnected:true when a provider was created", () => {
+    // Given - the connect step created a provider record (setProvider sets the
+    // store providerId before the wizard closes)
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+    act(() => {
+      useProviderWizardStore.getState().setProvider({
+        id: "provider-1",
+        type: "aws",
+        uid: "111111111111",
+        alias: "production",
+      });
+    });
+
+    // When - the wizard closes
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Then - the checkpoint is asked to open, reading the providerId BEFORE the
+    // reset cleared it
+    expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
+      providerConnected: true,
+    });
+  });
+
+  it("requests the onboarding checkpoint with providerConnected:false when no provider was created", () => {
+    // Given - the user opened the wizard but closed it without connecting
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+
+    // When - the wizard closes with no provider in the store
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Then - the checkpoint is told no provider connected
+    expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
+      providerConnected: false,
+    });
   });
 
   it("hydrates update mode when initial data is provided", async () => {
