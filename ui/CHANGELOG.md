@@ -19,6 +19,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Add Provider modal now closes without reloading the providers page [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+- Users page now shows the "Delete User" action only on the current user's row, matching the backend rule that a user can only delete their own account [(#11447)](https://github.com/prowler-cloud/prowler/pull/11447)
 
 ### 🔐 Security
 
