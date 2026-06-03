@@ -18,6 +18,7 @@ class SageMaker(AWSService):
         self.sagemaker_domains = []
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
+        self.sagemaker_monitoring_schedules = []
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -26,6 +27,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_endpoint_configs)
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
+        self.__threading_call__(self._list_monitoring_schedules)
 
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
@@ -377,6 +379,46 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_monitoring_schedules(self, regional_client):
+        logger.info("SageMaker - listing monitoring schedules...")
+        name = "SageMaker Monitoring Schedules"
+        arn = self.get_unknown_arn(
+            region=regional_client.region,
+            resource_type="monitoring-schedule",
+        )
+        has_schedules = False
+        is_scheduled = False
+        try:
+            paginator = regional_client.get_paginator("list_monitoring_schedules")
+            for page in paginator.paginate():
+                for schedule in page["MonitoringScheduleSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            schedule["MonitoringScheduleArn"], self.audit_resources
+                        )
+                    ):
+                        has_schedules = True
+                        if schedule["MonitoringScheduleStatus"] == "Scheduled":
+                            is_scheduled = True
+                            name = schedule["MonitoringScheduleName"]
+                            arn = schedule["MonitoringScheduleArn"]
+                            break
+                if is_scheduled:
+                    break
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        self.sagemaker_monitoring_schedules.append(
+            MonitoringSchedule(
+                name=name,
+                region=regional_client.region,
+                arn=arn,
+                has_schedules=has_schedules,
+                is_scheduled=is_scheduled,
+            )
+        )
+
 
 class NotebookInstance(BaseModel):
     name: str
@@ -441,3 +483,11 @@ class ModelRegistry(BaseModel):
     region: str
     has_groups: bool = False
     has_approved_packages: bool = False
+
+
+class MonitoringSchedule(BaseModel):
+    name: str
+    region: str
+    arn: str
+    has_schedules: bool = False
+    is_scheduled: bool = False

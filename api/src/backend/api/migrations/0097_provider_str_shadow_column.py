@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ("api", "0093_okta_provider"),
+        ("api", "0096_jiraissuedispatch"),
     ]
 
     operations = [

@@ -32,12 +32,15 @@ from tasks.utils import CustomEncoder
 from api.db_router import MainRouter
 from api.exceptions import ProviderConnectionError
 from api.models import (
+    AttackSurfaceOverview,
     Finding,
     MuteRule,
     Provider,
     Resource,
     ResourceScanSummary,
     Scan,
+    ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
@@ -228,6 +231,131 @@ class TestPerformScan:
 
         # Assert that failed_findings_count is 0 (finding is PASS and muted)
         assert scan_resource.failed_findings_count == 0
+
+    def test_perform_prowler_scan_idempotent_on_rerun(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Re-running a scan for the same scan_id must not duplicate findings."""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict) as mock_checks,
+        ):
+            mock_checks["aws"] = {"check1": {"compliance1"}}
+
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            stale_resource = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=provider,
+                uid="stale_resource_uid",
+                name="stale",
+                region="stale-region",
+                service="stale-service",
+                type="stale-type",
+            )
+            ResourceScanSummary.objects.create(
+                tenant_id=tenant.id,
+                scan_id=scan.id,
+                resource_id=stale_resource.id,
+                service="stale-service",
+                region="stale-region",
+                resource_type="stale-type",
+            )
+            ScanCategorySummary.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                category="stale-category",
+                severity=Severity.medium,
+                total_findings=1,
+            )
+            ScanGroupSummary.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                resource_group="stale-group",
+                severity=Severity.medium,
+                total_findings=1,
+            )
+            ScanSummary.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                check_id="stale_check",
+                service="stale-service",
+                severity=Severity.medium,
+                region="stale-region",
+                total=1,
+            )
+            AttackSurfaceOverview.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                attack_surface_type=AttackSurfaceOverview.AttackSurfaceTypeChoices.SECRETS,
+                total_findings=1,
+            )
+
+            finding = MagicMock()
+            finding.uid = "dup_probe_finding"
+            finding.status = StatusChoices.PASS
+            finding.status_extended = "x"
+            finding.severity = Severity.medium
+            finding.check_id = "check1"
+            finding.get_metadata.return_value = {"key": "value"}
+            finding.resource_uid = "resource_uid"
+            finding.resource_name = "resource_name"
+            finding.region = "region"
+            finding.service_name = "service_name"
+            finding.resource_type = "resource_type"
+            finding.resource_tags = {}
+            finding.muted = False
+            finding.raw = {}
+            finding.resource_metadata = {}
+            finding.resource_details = {}
+            finding.partition = "partition"
+            finding.compliance = {}
+
+            mock_scan_instance = MagicMock()
+            mock_scan_instance.scan.return_value = [(100, [finding])]
+            mock_prowler_scan_class.return_value = mock_scan_instance
+
+            mock_provider_instance = MagicMock()
+            mock_provider_instance.get_regions.return_value = ["region"]
+            mock_initialize_prowler_provider.return_value = mock_provider_instance
+
+            # Run the same scan twice (simulating an orphan-recovery re-run).
+            perform_prowler_scan(tenant_id, scan_id, provider_id, ["check1"])
+            perform_prowler_scan(tenant_id, scan_id, provider_id, ["check1"])
+
+        # Neither findings nor resources are duplicated by the re-run: findings are
+        # scope-deleted before re-insert; resources are upserted by (tenant, provider, uid).
+        assert Finding.objects.filter(scan=scan).count() == 1
+        assert Resource.objects.filter(provider=provider).count() == 2
+        assert ResourceScanSummary.objects.filter(scan_id=scan.id).count() == 1
+        assert not ResourceScanSummary.objects.filter(
+            scan_id=scan.id, resource_id=stale_resource.id
+        ).exists()
+        assert not ScanCategorySummary.objects.filter(scan=scan).exists()
+        assert not ScanGroupSummary.objects.filter(scan=scan).exists()
+        assert not ScanSummary.objects.filter(
+            scan=scan, check_id="stale_check"
+        ).exists()
+        assert not AttackSurfaceOverview.objects.filter(scan=scan).exists()
 
     @patch("tasks.jobs.scan.ProwlerScan")
     @patch(
@@ -1879,6 +2007,62 @@ class TestCreateComplianceRequirements:
             result = create_compliance_requirements(tenant_id, scan_id)
 
             assert "requirements_created" in result
+
+    @pytest.mark.django_db(transaction=True)
+    def test_create_compliance_requirements_idempotent_on_rerun(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+        findings_fixture,
+    ):
+        """Re-running compliance materialization must not raise nor duplicate rows.
+
+        Uses transaction=True because the COPY path commits on its own connection,
+        so the test must use real commits (mirroring production) rather than the
+        default rollback wrapper.
+        """
+        from api.models import ComplianceRequirementOverview
+
+        with patch(
+            "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
+        ) as mock_compliance_template:
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
+
+            mock_compliance_template.__getitem__.return_value = {
+                "test_compliance": {
+                    "framework": "Test Framework",
+                    "version": "1.0",
+                    "requirements": {
+                        "req_1": {
+                            "description": "Test Requirement 1",
+                            "checks": {"test_check_id": None},
+                            "checks_status": {
+                                "pass": 2,
+                                "fail": 1,
+                                "manual": 0,
+                                "total": 3,
+                            },
+                            "status": "FAIL",
+                        },
+                    },
+                }
+            }
+
+            create_compliance_requirements(tenant_id, scan_id)
+            count_after_first = ComplianceRequirementOverview.objects.filter(
+                scan_id=scan_id
+            ).count()
+
+            # Second run must not raise and must not duplicate rows.
+            create_compliance_requirements(tenant_id, scan_id)
+            count_after_second = ComplianceRequirementOverview.objects.filter(
+                scan_id=scan_id
+            ).count()
+
+        assert count_after_first > 0
+        assert count_after_second == count_after_first
 
     def test_create_compliance_requirements_kubernetes_provider(
         self,
