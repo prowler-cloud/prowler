@@ -5,7 +5,10 @@ import { Metadata, Viewport } from "next";
 import { ReactNode } from "react";
 
 import { getProviders } from "@/actions/providers";
-import { OnboardingGate } from "@/components/onboarding";
+import {
+  OnboardingCheckpointWatcher,
+  OnboardingGate,
+} from "@/components/onboarding";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
 import { Toaster } from "@/components/ui/toast";
@@ -73,6 +76,11 @@ export default async function RootLayout({
               fail open on an unknown provider signal. */}
           <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
           <OnboardingGate hasProviders={hasProviders} />
+          {/* Layout-level watcher: reads `hasProviders` from the UI store
+              (synced by StoreInitializer) and fires the checkpoint dialog once
+              on the first `false -> true` provider flip. One mount point so it
+              survives the post-connect navigation. */}
+          <OnboardingCheckpointWatcher />
           <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>
