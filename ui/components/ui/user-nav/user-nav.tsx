@@ -1,24 +1,30 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { Compass, LogOut, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { logOut } from "@/actions/auth";
 import { Button } from "@/components/shadcn/button/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/shadcn/dropdown/dropdown";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar/avatar";
 import { CustomLink } from "@/components/ui/custom/custom-link";
+import { getOrderedFlows } from "@/lib/onboarding";
 
 export const UserNav = () => {
   const { data: session } = useSession();
+  const router = useRouter();
 
   if (!session?.user) return null;
 
@@ -31,43 +37,61 @@ export const UserNav = () => {
         .join("")
     : name.charAt(0);
 
-  return (
-    <div className="flex items-center gap-2">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon-sm"
-            className="border-border-input-primary-fill rounded-full"
-            asChild
-          >
-            <CustomLink href="/profile" target="_self" aria-label="Account">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="#" alt="Avatar" />
-                <AvatarFallback className="bg-transparent text-xs font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </CustomLink>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Account Settings</TooltipContent>
-      </Tooltip>
+  // Derive the restart destination from the registry so adding or reordering
+  // flows never requires editing this component. The trigger mounted on the
+  // target route consumes the `?onboarding=<id>` param and force-starts the tour.
+  const firstFlow = getOrderedFlows()[0];
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="border-border-input-primary-fill rounded-full"
-            onClick={() => logOut()}
-            aria-label="Sign out"
+  const startProductTour = () => {
+    if (!firstFlow) return;
+    router.push(`${firstFlow.route}?onboarding=${firstFlow.id}`);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          className="border-border-input-primary-fill rounded-full"
+          aria-label="Account menu"
+        >
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="#" alt="Avatar" />
+            <AvatarFallback className="bg-transparent text-xs font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>{name}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <CustomLink href="/profile" target="_self">
+            <Settings />
+            Account Settings
+          </CustomLink>
+        </DropdownMenuItem>
+        {firstFlow && (
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onSelect={startProductTour}
           >
-            <LogOut />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Sign Out</TooltipContent>
-      </Tooltip>
-    </div>
+            <Compass />
+            Product tour
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          className="cursor-pointer"
+          onSelect={() => logOut()}
+        >
+          <LogOut />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
