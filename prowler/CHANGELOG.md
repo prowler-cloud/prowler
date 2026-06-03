@@ -6,6 +6,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 - Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 - Public `Provider.get_class()` method that resolves a provider class by name for both built-in and external (entry-point) providers [(#11398)](https://github.com/prowler-cloud/prowler/pull/11398)
 - `sdk_only` provider property (default `true`) and `Provider.get_app_providers()`, so a provider (built-in or external) stays CLI/SDK-only and hidden from the app unless it declares `sdk_only = False` [(#11427)](https://github.com/prowler-cloud/prowler/pull/11427)
@@ -13,6 +15,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - `load_and_validate_config_file` now unwraps namespaced config for every built-in and external provider, and no longer leaks the full file as the provider's config when the file is namespaced [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
+
+---
+
+## [5.29.1] (Prowler v5.29.1)
+
+### 🐞 Fixed
+
+- OCSF output writer now re-raises I/O errors (e.g. `ENOSPC`) instead of logging them per finding and leaving a truncated file [(#11421)](https://github.com/prowler-cloud/prowler/pull/11421)
 
 ---
 

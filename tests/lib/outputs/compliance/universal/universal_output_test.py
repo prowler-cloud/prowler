@@ -122,6 +122,43 @@ class TestManualRequirements:
         assert manual_rows[0].dict()["Requirements_Id"] == "manual-1"
         assert manual_rows[0].dict()["ResourceId"] == "manual_check"
 
+    def test_include_manual_false_skips_manual_rows(self, tmp_path):
+        """``_transform(..., include_manual=False)`` emits finding rows but
+        NOT manual requirements. The streaming caller passes ``False`` for
+        batches 2..N so manual rows are not duplicated across batches."""
+        reqs = [
+            UniversalComplianceRequirement(
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"]},
+            ),
+            UniversalComplianceRequirement(
+                id="manual-1",
+                description="manual check",
+                attributes={"Section": "Governance"},
+                checks={},
+            ),
+        ]
+        metadata = [AttributeMetadata(key="Section", type="str")]
+        fw = _make_framework(reqs, metadata, TableConfig(group_by="Section"))
+        findings = [_make_finding("check_a", "PASS", {"TestFW-1.0": ["1.1"]})]
+
+        output = UniversalComplianceOutput(
+            findings=findings,
+            framework=fw,
+            file_path=str(tmp_path / "t.csv"),
+        )
+        # __init__ transforms with include_manual=True (default) → manual present
+        assert any(r.dict()["Status"] == "MANUAL" for r in output.data)
+
+        # A subsequent batch re-transforms with include_manual=False
+        output._data.clear()
+        output._transform(findings, fw, "TestFW-1.0", include_manual=False)
+
+        assert len(output.data) == 1  # only the finding row, no manual
+        assert all(r.dict()["Status"] != "MANUAL" for r in output.data)
+
 
 class TestMITREExtraColumns:
     def test_mitre_columns_present(self, tmp_path):
