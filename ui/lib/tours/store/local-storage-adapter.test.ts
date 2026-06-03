@@ -4,7 +4,8 @@ import { TOUR_COMPLETION_STATES } from "../tour-types";
 import { buildStorageKey, localStorageAdapter } from "./local-storage-adapter";
 
 const TOUR_ID = { id: "attack-paths", version: 1 };
-const STORAGE_KEY = "prowler.tour.attack-paths.v1";
+// All records live under this single key as one object.
+const STORAGE_KEY = "prowler.tours";
 
 const sampleRecord = {
   tourId: "attack-paths",
@@ -14,15 +15,15 @@ const sampleRecord = {
 } as const;
 
 describe("buildStorageKey", () => {
-  it("composes the documented key format", () => {
+  it("composes the field key for the tours object", () => {
     expect(buildStorageKey({ id: "attack-paths", version: 1 })).toBe(
-      "prowler.tour.attack-paths.v1",
+      "attack-paths.v1",
     );
   });
 
   it("renders multi-digit versions verbatim", () => {
     expect(buildStorageKey({ id: "lighthouse", version: 42 })).toBe(
-      "prowler.tour.lighthouse.v42",
+      "lighthouse.v42",
     );
   });
 });
@@ -36,15 +37,26 @@ describe("localStorageAdapter", () => {
     window.localStorage.clear();
   });
 
-  it("set/get round-trips a record under the documented key", () => {
+  it("set/get round-trips a record inside the single tours object", () => {
     localStorageAdapter.set(TOUR_ID, sampleRecord);
 
     const raw = window.localStorage.getItem(STORAGE_KEY);
     expect(raw).not.toBeNull();
-    expect(JSON.parse(raw as string)).toEqual(sampleRecord);
+    expect(JSON.parse(raw as string)).toEqual({
+      "attack-paths.v1": sampleRecord,
+    });
 
     const fetched = localStorageAdapter.get(TOUR_ID);
     expect(fetched).toEqual(sampleRecord);
+  });
+
+  it("stores every tour under one localStorage key", () => {
+    localStorageAdapter.set(TOUR_ID, sampleRecord);
+    localStorageAdapter.set({ id: "add-provider", version: 1 }, sampleRecord);
+
+    // A single key holds both records — no per-tour key proliferation.
+    expect(window.localStorage.length).toBe(1);
+    expect(window.localStorage.key(0)).toBe(STORAGE_KEY);
   });
 
   it("returns null when no record exists for that (id, version)", () => {
@@ -75,16 +87,16 @@ describe("localStorageAdapter", () => {
     );
   });
 
-  it("returns null when stored JSON is malformed", () => {
+  it("returns null when the stored object is malformed JSON", () => {
     window.localStorage.setItem(STORAGE_KEY, "{not json");
 
     expect(localStorageAdapter.get(TOUR_ID)).toBeNull();
   });
 
-  it("returns null when stored JSON is missing required fields", () => {
+  it("returns null when the stored record is missing required fields", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ tourId: "attack-paths" }),
+      JSON.stringify({ "attack-paths.v1": { tourId: "attack-paths" } }),
     );
 
     expect(localStorageAdapter.get(TOUR_ID)).toBeNull();

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { addProviderTour } from "@/lib/tours/add-provider.tour";
-import { buildStorageKey } from "@/lib/tours/store/local-storage-adapter";
+import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 
 import { OnboardingGate } from "../onboarding-gate";
 
@@ -20,10 +20,10 @@ vi.mock("@/store/onboarding-checkpoint", () => ({
   },
 }));
 
-const addProviderStorageKey = buildStorageKey({
+const addProviderTourId = {
   id: addProviderTour.id,
   version: addProviderTour.version,
-});
+};
 
 describe("OnboardingGate", () => {
   beforeEach(() => {
@@ -65,15 +65,12 @@ describe("OnboardingGate", () => {
   describe("when a completion record already exists in this browser", () => {
     it("does not show the Welcome modal", async () => {
       // Given - a prior dismissal record for the first flow
-      window.localStorage.setItem(
-        addProviderStorageKey,
-        JSON.stringify({
-          tourId: addProviderTour.id,
-          version: addProviderTour.version,
-          state: "dismissed",
-          completedAt: new Date().toISOString(),
-        }),
-      );
+      localStorageAdapter.set(addProviderTourId, {
+        tourId: addProviderTour.id,
+        version: addProviderTour.version,
+        state: "dismissed",
+        completedAt: new Date().toISOString(),
+      });
 
       render(<OnboardingGate hasProviders={false} />);
 
@@ -93,15 +90,12 @@ describe("OnboardingGate", () => {
       // have no record. The mandatory gate must ONLY ever force add-provider —
       // the later flows are reached via the checkpoint/sequence, never the
       // gate. So a dismissed add-provider record keeps the gate silent.
-      window.localStorage.setItem(
-        addProviderStorageKey,
-        JSON.stringify({
-          tourId: addProviderTour.id,
-          version: addProviderTour.version,
-          state: "dismissed",
-          completedAt: new Date().toISOString(),
-        }),
-      );
+      localStorageAdapter.set(addProviderTourId, {
+        tourId: addProviderTour.id,
+        version: addProviderTour.version,
+        state: "dismissed",
+        completedAt: new Date().toISOString(),
+      });
 
       render(<OnboardingGate hasProviders={false} />);
 
@@ -159,7 +153,7 @@ describe("OnboardingGate", () => {
       expect(pushMock).toHaveBeenCalledWith(
         "/providers?onboarding=add-provider",
       );
-      expect(window.localStorage.getItem(addProviderStorageKey)).toBeNull();
+      expect(localStorageAdapter.get(addProviderTourId)).toBeNull();
     });
 
     it("arms the onboarding checkpoint", async () => {
@@ -196,9 +190,9 @@ describe("OnboardingGate", () => {
           screen.queryByRole("button", { name: /skip for now/i }),
         ).not.toBeInTheDocument();
       });
-      const raw = window.localStorage.getItem(addProviderStorageKey);
-      expect(raw).not.toBeNull();
-      expect(JSON.parse(raw as string).state).toBe("dismissed");
+      const record = localStorageAdapter.get(addProviderTourId);
+      expect(record).not.toBeNull();
+      expect(record?.state).toBe("dismissed");
     });
 
     it("does NOT arm the onboarding checkpoint", async () => {

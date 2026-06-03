@@ -1,70 +1,74 @@
 import type { TourCompletionRecord, TourId } from "../tour-types";
 import type { TourCompletionStore } from "./tour-completion-store";
 
-const KEY_PREFIX = "prowler.tour";
+// All tour completion records live under ONE localStorage key, as a single
+// object keyed by `<id>.v<version>`, instead of one key per tour. This keeps the
+// browser storage namespace tidy and lets callers never hand-build keys.
+const STORAGE_KEY = "prowler.tours";
 
-// Key composition stays in the adapter so callers never hand-build storage keys.
+type ToursObject = Record<string, TourCompletionRecord>;
+
+// Field key for a tour within the single tours object. Composition stays here so
+// callers never hand-build keys.
 export function buildStorageKey({ id, version }: TourId): string {
-  return `${KEY_PREFIX}.${id}.v${version}`;
+  return `${id}.v${version}`;
 }
 
-function readSafely(key: string): TourCompletionRecord | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
+function isValidRecord(value: unknown): value is TourCompletionRecord {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Partial<TourCompletionRecord>;
+  return (
+    typeof record.tourId === "string" &&
+    typeof record.version === "number" &&
+    typeof record.state === "string" &&
+    typeof record.completedAt === "string"
+  );
+}
+
+function readAll(): ToursObject {
+  if (typeof window === "undefined") return {};
 
   let raw: string | null;
   try {
-    raw = window.localStorage.getItem(key);
+    raw = window.localStorage.getItem(STORAGE_KEY);
   } catch {
-    return null;
+    return {};
   }
-  if (raw === null) return null;
+  if (raw === null) return {};
 
   try {
-    const parsed = JSON.parse(raw) as TourCompletionRecord;
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      typeof parsed.tourId === "string" &&
-      typeof parsed.version === "number" &&
-      typeof parsed.state === "string" &&
-      typeof parsed.completedAt === "string"
-    ) {
-      return parsed;
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed === "object" && parsed !== null) {
+      return parsed as ToursObject;
     }
-    return null;
+    return {};
   } catch {
-    return null;
+    return {};
   }
 }
 
-function writeSafely(key: string, record: TourCompletionRecord): void {
+function writeAll(tours: ToursObject): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(key, JSON.stringify(record));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tours));
   } catch {
     // Non-fatal: a re-shown tour beats a thrown render.
   }
 }
 
-function clearSafely(key: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    // Non-fatal: see writeSafely.
-  }
-}
-
 export const localStorageAdapter: TourCompletionStore = {
   get(id) {
-    return readSafely(buildStorageKey(id));
+    const record = readAll()[buildStorageKey(id)];
+    return isValidRecord(record) ? record : null;
   },
   set(id, record) {
-    writeSafely(buildStorageKey(id), record);
+    const tours = readAll();
+    tours[buildStorageKey(id)] = record;
+    writeAll(tours);
   },
   clear(id) {
-    clearSafely(buildStorageKey(id));
+    const tours = readAll();
+    delete tours[buildStorageKey(id)];
+    writeAll(tours);
   },
 };
