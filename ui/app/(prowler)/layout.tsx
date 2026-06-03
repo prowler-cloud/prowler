@@ -8,6 +8,7 @@ import { getProviders } from "@/actions/providers";
 import {
   OnboardingCheckpointWatcher,
   OnboardingGate,
+  OnboardingSequenceBanner,
 } from "@/components/onboarding";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
@@ -84,6 +85,11 @@ export default async function RootLayout({
               user who simply adds another provider. One mount point so it
               survives the post-connect navigation. */}
           <OnboardingCheckpointWatcher />
+          {/* Persistent, non-blocking bottom banner shown only while a guided
+              sequence is active. It self-hides otherwise and owns the manual
+              Continue (advance + navigate) and Exit (stop) controls, replacing
+              the old auto-advance that jumped to empty pages before a scan. */}
+          <OnboardingSequenceBanner />
           <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>

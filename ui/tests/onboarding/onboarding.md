@@ -133,7 +133,7 @@ findings, compliance, and attack paths, advancing only on tour completion.
 
 1. Start zero-provider; assert the Welcome modal is visible
 2. Connect a provider (real flip via `addAWSProvider`)
-3. Assert the checkpoint dialog "Provider connected — keep exploring?" is visible
+3. Assert the checkpoint dialog "Provider added — keep exploring?" is visible
 4. Click "Continue the tour"
 5. Assert `/scans` with `data-tour-id="view-first-scan-launch"` present
 6. Complete the scans tour; assert `/findings` with `explore-findings-filters`

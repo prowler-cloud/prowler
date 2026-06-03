@@ -1,10 +1,10 @@
 "use client";
 
 import type { Config } from "driver.js";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { getOrderedFlows, type OnboardingFlow } from "@/lib/onboarding";
+import { type OnboardingFlow } from "@/lib/onboarding";
 import type { TourStepHandlers } from "@/lib/tours/tour-types";
 import { useDriverTour } from "@/lib/tours/use-driver-tour";
 import {
@@ -12,10 +12,7 @@ import {
   useOnboardingSequenceStore,
 } from "@/store/onboarding-sequence";
 
-import {
-  mapCloseToSequenceAction,
-  resolveTriggerRequest,
-} from "./onboarding-trigger.logic";
+import { resolveTriggerRequest } from "./onboarding-trigger.logic";
 
 const ONBOARDING_PARAM = "onboarding";
 
@@ -94,7 +91,6 @@ export function OnboardingTrigger<TTarget extends string = string>({
     <OnboardingTourRunner<TTarget>
       key={request.key}
       flow={request.flow}
-      mode={request.mode}
       stepHandlers={stepHandlers}
       configOverrides={configOverrides}
     />
@@ -103,44 +99,30 @@ export function OnboardingTrigger<TTarget extends string = string>({
 
 interface OnboardingTourRunnerProps<TTarget extends string> {
   flow: OnboardingFlow;
-  mode: OnboardingSequenceMode;
   stepHandlers?: { [K in TTarget]?: TourStepHandlers<TTarget> };
   configOverrides?: Partial<Config>;
 }
 
 function OnboardingTourRunner<TTarget extends string>({
   flow,
-  mode,
   stepHandlers,
   configOverrides,
 }: OnboardingTourRunnerProps<TTarget>) {
-  const router = useRouter();
-
+  // The trigger only STARTS the current flow's tour on arrival. It no longer
+  // owns sequence advance/exit: closing a tour in sequence mode leaves the
+  // slice untouched, and the persistent OnboardingSequenceBanner is the single
+  // control for Continue (advance + navigate) and Exit (stop). This prevents
+  // the old auto-advance that jumped to empty pages before a scan completed.
+  // The `onClosed` handler is intentionally inert for BOTH replay and sequence
+  // modes: the tour just shows on arrival, and the banner owns what happens
+  // next.
   const { start } = useDriverTour(flow.tour, {
     autoOpen: false,
     stepHandlers,
     configOverrides,
-    onClosed: (state) => {
-      // Replay is single-flow: never touch the sequence slice.
-      if (mode === "replay") return;
-
-      const action = mapCloseToSequenceAction(state);
-      const sequence = useOnboardingSequenceStore.getState();
-      if (action === "stop") {
-        sequence.stop();
-        return;
-      }
-
-      // Advance, then own the cross-route navigation (the slice stays
-      // framework-agnostic). Resolve the next flow from the registry using the
-      // pre-advance currentFlowId so navigation is deterministic.
-      const ordered = getOrderedFlows();
-      const currentIdx = ordered.findIndex((f) => f.id === flow.id);
-      const nextFlow = currentIdx >= 0 ? ordered[currentIdx + 1] : undefined;
-      sequence.advance();
-      if (nextFlow) {
-        router.push(nextFlow.route);
-      }
+    onClosed: () => {
+      // No-op: neither replay nor sequence mutates the slice on tour close. The
+      // banner is the single advance/exit control while a sequence is active.
     },
   });
 

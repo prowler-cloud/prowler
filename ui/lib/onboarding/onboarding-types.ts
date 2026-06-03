@@ -24,4 +24,9 @@ export interface OnboardingFlow {
   // the page owns auto-open and reports completion to the sequence slice.
   // Additive, optional, defaults to undefined/false.
   ownsAutoOpen?: boolean;
+  // Optional hint shown in the sequence banner when this step needs scan data
+  // to display anything meaningful (e.g. findings, compliance, attack-paths).
+  // The banner surfaces it as a muted/warning note so the user knows they can
+  // launch a scan first or continue anyway. Additive, optional.
+  dataRequirementHint?: string;
 }
