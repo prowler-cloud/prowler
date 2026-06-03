@@ -6,13 +6,22 @@ class monitor_diagnostic_setting_with_appropriate_categories(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        for (
-            subscription_id,
-            diagnostic_settings,
-        ) in monitor_client.diagnostics_settings.items():
-            subscription_name = monitor_client.subscriptions.get(
-                subscription_id, subscription_id
+        for subscription_id in monitor_client.subscriptions:
+            subscription_name = monitor_client.subscriptions[subscription_id]
+            if monitor_client.resource_groups:
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
+                report.subscription = subscription_id
+                report.resource_name = subscription_id
+                report.resource_id = f"/subscriptions/{subscription_id}"
+                report.status = "MANUAL"
+                report.status_extended = f"Subscription '{subscription_name}' ({subscription_id}): diagnostic-setting checks are subscription-scoped and cannot be accurately evaluated with resource group filtering enabled. Re-run without --azure-resource-group to get accurate results."
+                findings.append(report)
+                continue
+
+            diagnostic_settings = monitor_client.diagnostics_settings.get(
+                subscription_id, []
             )
+
             compliant_setting = None
 
             for diagnostic_setting in diagnostic_settings:

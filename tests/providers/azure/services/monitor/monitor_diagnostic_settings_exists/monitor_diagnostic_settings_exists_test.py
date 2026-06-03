@@ -15,6 +15,7 @@ class Test_monitor_diagnostic_settings_exists:
         monitor_client = mock.MagicMock()
         monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.diagnostics_settings = {}
+        monitor_client.resource_groups = []
 
         with (
             mock.patch(
@@ -32,12 +33,21 @@ class Test_monitor_diagnostic_settings_exists:
 
             check = monitor_diagnostic_settings_exists()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
+            assert (
+                result[0].status_extended
+                == f"No diagnostic settings found in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
+            )
 
     def test_no_diagnostic_settings(self):
         monitor_client = mock.MagicMock()
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
         monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        monitor_client.resource_groups = []
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -69,6 +79,7 @@ class Test_monitor_diagnostic_settings_exists:
         storage_client = mock.MagicMock()
         monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        monitor_client.resource_groups = []
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -202,3 +213,31 @@ class Test_monitor_diagnostic_settings_exists:
                     result[0].status_extended
                     == f"Diagnostic setting name found in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
                 )
+
+    def test_monitor_diagnostic_settings_exists_resource_groups_returns_manual(self):
+        monitor_client = mock.MagicMock()
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        monitor_client.diagnostics_settings = {}
+        monitor_client.resource_groups = {AZURE_SUBSCRIPTION_ID: ["rg-production"]}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.monitor.monitor_diagnostic_settings_exists.monitor_diagnostic_settings_exists.monitor_client",
+                new=monitor_client,
+            ),
+        ):
+            from prowler.providers.azure.services.monitor.monitor_diagnostic_settings_exists.monitor_diagnostic_settings_exists import (
+                monitor_diagnostic_settings_exists,
+            )
+
+            check = monitor_diagnostic_settings_exists()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
+            assert "--azure-resource-group" in result[0].status_extended

@@ -5,7 +5,8 @@ from prowler.providers.azure.services.network.network_client import network_clie
 class network_watcher_enabled(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
-        for subscription, network_watchers in network_client.network_watchers.items():
+        for subscription in network_client.subscriptions:
+            network_watchers = network_client.network_watchers.get(subscription, [])
             subscription_name = network_client.subscriptions.get(
                 subscription, subscription
             )
