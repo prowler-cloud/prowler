@@ -13,6 +13,10 @@ const NO_PROVIDERS_ADDED_ACTION = {
 
 interface NoProvidersAddedBaseProps {
   containerClassName?: string;
+  // Tour anchor for the CTA button. The add-provider onboarding tour runs in the
+  // zero-provider state, where this empty state replaces the table's
+  // AddProviderButton, so the anchor must ride along here too.
+  ctaTourId?: string;
 }
 
 interface NoProvidersAddedButtonProps extends NoProvidersAddedBaseProps {
@@ -49,6 +53,7 @@ const renderCta = (props: NoProvidersAddedProps) => {
     <Button
       aria-label="Open Add Provider modal"
       className="w-full max-w-xs justify-center"
+      data-tour-id={props.ctaTourId}
       size="lg"
       onClick={props.onOpenWizard}
     >

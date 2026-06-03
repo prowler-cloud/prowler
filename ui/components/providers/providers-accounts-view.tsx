@@ -114,6 +114,7 @@ export function ProvidersAccountsView({
           action="button"
           containerClassName="min-h-[calc(100dvh-28rem)]"
           onOpenWizard={() => openProviderWizard()}
+          ctaTourId="add-provider-trigger"
         />
       ) : (
         <div className="flex flex-col gap-6">
