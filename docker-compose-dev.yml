@@ -139,6 +139,8 @@ services:
 
   worker-dev:
     image: prowler-api-dev
+    # Give Celery soft shutdown time to drain/re-queue in-flight tasks on stop.
+    stop_grace_period: 120s
     build:
       context: ./api
       dockerfile: Dockerfile
