@@ -24,9 +24,11 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
+from django.db import connection
 from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
@@ -64,6 +66,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceTag,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -3856,16 +3859,20 @@ class TestScanViewSet:
         scan.output_location = "dummy"
         scan.save()
 
-        dummy_task = Task.objects.create(tenant_id=scan.tenant_id)
-        dummy_task.id = "dummy-task-id"
-        dummy_task_data = {"id": dummy_task.id, "state": StateChoices.EXECUTING}
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
+            task_name="scan-report",
+            task_kwargs={"scan_id": str(scan.id)},
+        )
+        task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=task_result,
+        )
+        dummy_task_data = {"id": str(task.id), "state": StateChoices.EXECUTING}
 
-        with (
-            patch("api.v1.views.Task.objects.get", return_value=dummy_task),
-            patch(
-                "api.v1.views.TaskSerializer",
-                return_value=type("DummySerializer", (), {"data": dummy_task_data}),
-            ),
+        with patch(
+            "api.v1.views.TaskSerializer",
+            return_value=type("DummySerializer", (), {"data": dummy_task_data}),
         ):
             url = reverse("scan-report", kwargs={"pk": scan.id})
             response = authenticated_client.get(url)
@@ -4186,6 +4193,88 @@ class TestScanViewSet:
         assert resp.status_code == status.HTTP_302_FOUND
         assert resp["Location"] == presigned_url
 
+    def test_compliance_s3_returns_latest_match(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """When several files match, the most recently modified one is served."""
+        scan = scans_fixture[0]
+        bucket = "bucket"
+        scan.output_location = f"s3://{bucket}/path/scan.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+        )
+
+        old_key = "path/compliance/prowler-output-aws-20240101000000_cis_1.4_aws.csv"
+        latest_key = "path/compliance/prowler-output-aws-20240202000000_cis_1.4_aws.csv"
+
+        class FakeS3Client:
+            def list_objects_v2(self, Bucket, Prefix):
+                return {
+                    "Contents": [
+                        {
+                            "Key": old_key,
+                            "LastModified": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                        },
+                        {
+                            "Key": latest_key,
+                            "LastModified": datetime(2024, 2, 2, tzinfo=timezone.utc),
+                        },
+                    ]
+                }
+
+            def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
+                assert Params["Key"] == latest_key
+                return "https://test-bucket.s3.amazonaws.com/latest"
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
+
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_302_FOUND
+        assert resp["Location"].endswith("/latest")
+
+    def test_compliance_local_returns_latest_match(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """The local branch serves the most recently modified matching file."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            comp_dir = Path(tmp) / "reports" / "compliance"
+            comp_dir.mkdir(parents=True, exist_ok=True)
+
+            old_file = comp_dir / "prowler-output-aws-20240101000000_cis_1.4_aws.csv"
+            old_file.write_bytes(b"old")
+            latest_file = comp_dir / "prowler-output-aws-20240202000000_cis_1.4_aws.csv"
+            latest_file.write_bytes(b"latest")
+            # Make `latest_file` newer regardless of creation order.
+            os.utime(old_file, (1_700_000_000, 1_700_000_000))
+            os.utime(latest_file, (1_700_000_100, 1_700_000_100))
+
+            scan.output_location = str(Path(tmp) / "reports" / "scan.zip")
+            scan.save()
+
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: [str(old_file), str(latest_file)],
+            )
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.content == b"latest"
+            assert resp["Content-Disposition"].endswith(
+                f'filename="{latest_file.name}"'
+            )
+
     def test_compliance_s3_not_found(
         self, authenticated_client, scans_fixture, monkeypatch
     ):
@@ -4294,18 +4383,24 @@ class TestScanViewSet:
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
 
-    @patch("api.v1.views.Task.objects.get")
     @patch("api.v1.views.TaskSerializer")
     def test__get_task_status_returns_none_if_task_not_executing(
-        self, mock_task_serializer, mock_task_get, authenticated_client, scans_fixture
+        self, mock_task_serializer, authenticated_client, scans_fixture
     ):
         scan = scans_fixture[0]
         scan.state = StateChoices.COMPLETED
         scan.output_location = "dummy"
         scan.save()
 
-        task = Task.objects.create(tenant_id=scan.tenant_id)
-        mock_task_get.return_value = task
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
+            task_name="scan-report",
+            task_kwargs={"scan_id": str(scan.id)},
+        )
+        task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=task_result,
+        )
         mock_task_serializer.return_value.data = {
             "id": str(task.id),
             "state": StateChoices.COMPLETED,
@@ -4326,6 +4421,7 @@ class TestScanViewSet:
         scan.save()
 
         task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
             task_name="scan-report",
             task_kwargs={"scan_id": str(scan.id)},
         )
@@ -4345,6 +4441,51 @@ class TestScanViewSet:
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.data["id"] == str(task.id)
+
+    @patch("api.v1.views.TaskSerializer")
+    def test__get_task_status_returns_latest_task(
+        self, mock_task_serializer, authenticated_client, scans_fixture
+    ):
+        """With several scan-report tasks for the scan, the most recent is used."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        old_task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=TaskResult.objects.create(
+                task_id=str(uuid4()),
+                task_name="scan-report",
+                task_kwargs={"scan_id": str(scan.id)},
+            ),
+        )
+        new_task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=TaskResult.objects.create(
+                task_id=str(uuid4()),
+                task_name="scan-report",
+                task_kwargs={"scan_id": str(scan.id)},
+            ),
+        )
+        # `inserted_at` is `auto_now_add`, and within the test transaction the DB
+        # `now()` is constant, so force distinct timestamps to make order_by stable.
+        base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        Task.objects.filter(pk=old_task.pk).update(inserted_at=base)
+        Task.objects.filter(pk=new_task.pk).update(
+            inserted_at=base + timedelta(hours=1)
+        )
+
+        mock_task_serializer.side_effect = lambda instance, *a, **k: SimpleNamespace(
+            data={"id": str(instance.id), "state": StateChoices.EXECUTING}
+        )
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert str(new_task.id) in response["Content-Location"]
+        assert str(old_task.id) not in response["Content-Location"]
 
     @patch("api.v1.views.get_s3_client")
     @patch("api.v1.views.sentry_sdk.capture_exception")
@@ -6914,6 +7055,80 @@ class TestFindingViewSet:
         assert (
             response.json()["data"][0]["attributes"]["status"]
             == findings_fixture[0].status
+        )
+
+    def test_findings_list_resource_tags_no_n_plus_one(
+        self, authenticated_client, findings_fixture
+    ):
+        """Listing findings must load every resource's tags in a constant
+        number of queries, no matter how many findings/resources are returned.
+
+        This guards ``FindingViewSet._optimize_tags_loading`` against
+        regressions that would reintroduce one extra query per resource (the
+        N+1 the prefetch was added to remove).
+        """
+        scan = findings_fixture[0].scan
+        tenant_id = findings_fixture[0].tenant_id
+        provider = scan.provider
+
+        def _create_finding_with_tagged_resource(index):
+            resource = Resource.objects.create(
+                tenant_id=tenant_id,
+                provider=provider,
+                uid=f"arn:aws:ec2:us-east-1:123456789012:instance/n-plus-one-{index}",
+                name=f"N+1 Instance {index}",
+                region="us-east-1",
+                service="ec2",
+                type="prowler-test",
+            )
+            resource.upsert_or_delete_tags(
+                [
+                    ResourceTag.objects.create(
+                        tenant_id=tenant_id,
+                        key=f"key-{index}",
+                        value=f"value-{index}",
+                    )
+                ]
+            )
+            finding = Finding.objects.create(
+                tenant_id=tenant_id,
+                uid=f"n_plus_one_finding_{index}",
+                scan=scan,
+                status=Status.FAIL,
+                status_extended="n+1 status",
+                impact=Severity.medium,
+                severity=Severity.medium,
+                check_id="test_check_id",
+                check_metadata={"CheckId": "test_check_id", "servicename": "ec2"},
+                first_seen_at="2024-01-02T00:00:00Z",
+            )
+            finding.add_resources([resource])
+            return finding
+
+        params = {"filter[inserted_at]": TODAY, "include": "resources"}
+
+        # Baseline: the two findings provided by the fixture.
+        with CaptureQueriesContext(connection) as baseline:
+            response = authenticated_client.get(reverse("finding-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+
+        # Add more findings, each with its own resource carrying tags.
+        extra_findings = 5
+        for index in range(extra_findings):
+            _create_finding_with_tagged_resource(index)
+
+        with CaptureQueriesContext(connection) as scaled:
+            response = authenticated_client.get(reverse("finding-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(findings_fixture) + extra_findings
+
+        # The query count must not grow with the number of findings/resources.
+        assert len(scaled.captured_queries) == len(baseline.captured_queries), (
+            "Resource tags are not being prefetched: "
+            f"{len(baseline.captured_queries)} queries for {len(findings_fixture)} "
+            f"findings vs {len(scaled.captured_queries)} for "
+            f"{len(findings_fixture) + extra_findings}. Likely an N+1 regression "
+            "in FindingViewSet._optimize_tags_loading."
         )
 
     @pytest.mark.parametrize(

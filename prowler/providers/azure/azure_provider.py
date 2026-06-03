@@ -241,7 +241,10 @@ class AzureProvider(Provider):
         azure_credentials = None
         if tenant_id and client_id and client_secret:
             azure_credentials = self.validate_static_credentials(
-                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
+                tenant_id=tenant_id,
+                client_id=client_id,
+                client_secret=client_secret,
+                region_config=self._region_config,
             )
 
         # Set up the Azure session
@@ -410,6 +413,9 @@ class AzureProvider(Provider):
                 authority=config["authority"],
                 base_url=config["base_url"],
                 credential_scopes=config["credential_scopes"],
+                graph_host=config["graph_host"],
+                graph_scope=config["graph_scope"],
+                logs_endpoint=config["logs_endpoint"],
             )
         except ArgumentTypeError as validation_error:
             logger.error(
@@ -507,6 +513,7 @@ class AzureProvider(Provider):
                             tenant_id=azure_credentials["tenant_id"],
                             client_id=azure_credentials["client_id"],
                             client_secret=azure_credentials["client_secret"],
+                            authority=region_config.authority,
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -579,7 +586,10 @@ class AzureProvider(Provider):
                 )
         else:
             try:
-                credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
+                credentials = InteractiveBrowserCredential(
+                    tenant_id=tenant_id,
+                    authority=region_config.authority,
+                )
             except Exception as error:
                 logger.critical(
                     "Failed to retrieve azure credentials using browser authentication"
@@ -662,6 +672,7 @@ class AzureProvider(Provider):
                     tenant_id=tenant_id,
                     client_id=client_id,
                     client_secret=client_secret,
+                    region_config=region_config,
                 )
 
             # Set up the Azure session
@@ -675,7 +686,11 @@ class AzureProvider(Provider):
                 region_config,
             )
             # Create a SubscriptionClient
-            subscription_client = SubscriptionClient(credentials)
+            subscription_client = SubscriptionClient(
+                credentials,
+                base_url=region_config.base_url,
+                credential_scopes=region_config.credential_scopes,
+            )
 
             # Get info from the subscriptions
             available_subscriptions = []
@@ -1039,7 +1054,11 @@ class AzureProvider(Provider):
             }
         """
         credentials = self.session
-        subscription_client = SubscriptionClient(credentials)
+        subscription_client = SubscriptionClient(
+            credentials,
+            base_url=self.region_config.base_url,
+            credential_scopes=self.region_config.credential_scopes,
+        )
         locations = {}
 
         for subscription_id, display_name in self._identity.subscriptions.items():
@@ -1084,7 +1103,10 @@ class AzureProvider(Provider):
 
     @staticmethod
     def validate_static_credentials(
-        tenant_id: str = None, client_id: str = None, client_secret: str = None
+        tenant_id: str = None,
+        client_id: str = None,
+        client_secret: str = None,
+        region_config: AzureRegionConfig = None,
     ) -> dict:
         """
         Validates the static credentials for the Azure provider.
@@ -1093,6 +1115,9 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            region_config (AzureRegionConfig): The region configuration used to
+                build the per-cloud login endpoint and Graph scope. Defaults to
+                the public-cloud configuration when not provided.
 
         Raises:
             AzureNotValidTenantIdError: If the provided Azure Tenant ID is not valid.
@@ -1129,8 +1154,13 @@ class AzureProvider(Provider):
                 message="The provided Azure Client Secret is not valid.",
             )
 
+        if region_config is None:
+            region_config = AzureProvider.setup_region_config("AzureCloud")
+
         try:
-            AzureProvider.verify_client(tenant_id, client_id, client_secret)
+            AzureProvider.verify_client(
+                tenant_id, client_id, client_secret, region_config
+            )
             return {
                 "tenant_id": tenant_id,
                 "client_id": client_id,
@@ -1162,7 +1192,9 @@ class AzureProvider(Provider):
             )
 
     @staticmethod
-    def verify_client(tenant_id, client_id, client_secret) -> None:
+    def verify_client(
+        tenant_id, client_id, client_secret, region_config: AzureRegionConfig = None
+    ) -> None:
         """
         Verifies the Azure client credentials using the specified tenant ID, client ID, and client secret.
 
@@ -1170,6 +1202,9 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            region_config (AzureRegionConfig): The region configuration used to
+                build the per-cloud login endpoint and Graph scope. Defaults to
+                the public-cloud configuration when not provided.
 
         Raises:
             AzureNotValidTenantIdError: If the provided Azure Tenant ID is not valid.
@@ -1179,7 +1214,13 @@ class AzureProvider(Provider):
         Returns:
             None
         """
-        url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+        if region_config is None:
+            region_config = AzureProvider.setup_region_config("AzureCloud")
+        # `authority` is None for the public cloud and a bare host (e.g.
+        # `login.chinacloudapi.cn`) for sovereign clouds, mirroring the
+        # `AzureAuthorityHosts` constants used by azure-identity.
+        login_endpoint = region_config.authority or "login.microsoftonline.com"
+        url = f"https://{login_endpoint}/{tenant_id}/oauth2/v2.0/token"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "application/json",
@@ -1188,7 +1229,7 @@ class AzureProvider(Provider):
             "grant_type": "client_credentials",
             "client_id": client_id,
             "client_secret": client_secret,
-            "scope": "https://graph.microsoft.com/.default",
+            "scope": region_config.graph_scope,
         }
         response = requests.post(url, headers=headers, data=data).json()
         if "access_token" not in response.keys() and "error_codes" in response.keys():

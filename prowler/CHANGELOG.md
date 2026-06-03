@@ -2,21 +2,48 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.29.0] (Prowler UNRELEASED)
+## [5.30.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
+
+---
+
+## [5.29.1] (Prowler v5.29.1)
+
+### 🐞 Fixed
+
+- OCSF output writer now re-raises I/O errors (e.g. `ENOSPC`) instead of logging them per finding and leaving a truncated file [(#11421)](https://github.com/prowler-cloud/prowler/pull/11421)
+
+---
+
+## [5.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added
 
 - `application` service for Okta provider with `application_admin_console_session_idle_timeout_15min`, `application_admin_console_mfa_required`, `application_admin_console_phishing_resistant_authentication`, `application_dashboard_mfa_required`, `application_dashboard_phishing_resistant_authentication`, and `application_authentication_policy_network_zone_enforced` checks [(#11358)](https://github.com/prowler-cloud/prowler/pull/11358)
 - AWS AI Security Framework compliance for AWS provider [(#11353)](https://github.com/prowler-cloud/prowler/pull/11353)
 - `storage_account_public_network_access_disabled` check for Azure provider and remapped the Azure CIS "Public Network Access is Disabled" requirements to it [(#11334)](https://github.com/prowler-cloud/prowler/pull/11334)
+- StackIT provider with service account key authentication [(#9237)](https://github.com/prowler-cloud/prowler/pull/9237)
+- 8 Rules service checks for Google Workspace provider using the Cloud Identity Policy API [(#11379)](https://github.com/prowler-cloud/prowler/pull/11379)
+- 12 Security service checks for Google Workspace provider using the Cloud Identity Policy API [(#11356)](https://github.com/prowler-cloud/prowler/pull/11356)
+
+### ⚠️ Deprecated
+
+- `s3_bucket_default_encryption` check for AWS provider since SSE-S3 is automatically applied to all S3 buckets by AWS as of January 5, 2023 and can no longer be disabled [(#11230)](https://github.com/prowler-cloud/prowler/pull/11230)
 
 ### 🐞 Fixed
 
+- Broken documentation URLs in Google Workspace check metadata [(#11405)](https://github.com/prowler-cloud/prowler/pull/11405)
+- ENS RD 311/2022 (AWS) compliance mapping: `vpc_different_regions` was uncorrectly mapped under the `mp.com.4` family (Network segregation). That check is now mapped to a new `op.cont.2.aws.vpc.1` requirement under the Continuity of Service control [(#11372)](https://github.com/prowler-cloud/prowler/pull/11372)
 - Compliance CSV row count now matches the UI per requirement by sourcing rows from the framework JSON's `requirement.Checks` instead of the stale `finding.compliance` snapshot [(#11370)](https://github.com/prowler-cloud/prowler/pull/11370)
+- OpenStack provider exception codes moved from the `10000-10999` range, shared with the AlibabaCloud provider, to the free `17000-17999` range to keep error codes unambiguous [(#11382)](https://github.com/prowler-cloud/prowler/pull/11382)
+- Azure provider authentication against sovereign clouds (`AzureChinaCloud`, `AzureUSGovernment`) [(#10284)](https://github.com/prowler-cloud/prowler/pull/10284)
 
 ---
 
-## [5.28.1] (Prowler 5.28.1)
+## [5.28.1] (Prowler v5.28.1)
 
 ### 🐞 Fixed
 

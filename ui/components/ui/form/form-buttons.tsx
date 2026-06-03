@@ -56,7 +56,13 @@ const FormCancelButton = ({
   };
 
   return (
-    <Button type="button" variant="ghost" size="lg" onClick={handleCancel}>
+    <Button
+      type="button"
+      variant="outline"
+      size="lg"
+      onClick={handleCancel}
+      className="w-40"
+    >
       {leftIcon}
       {children}
     </Button>
@@ -79,6 +85,7 @@ const FormSubmitButton = ({
       variant={submitVariant}
       size="lg"
       disabled={isDisabled || pending}
+      className="w-40"
     >
       {pending ? <Loader2 className="animate-spin" /> : rightIcon}
       {pending ? loadingText : children}
@@ -98,7 +105,7 @@ export const FormButtons = ({
   leftIcon,
 }: FormButtonsProps) => {
   return (
-    <div className="flex w-full justify-end gap-4">
+    <div className="flex w-full justify-between gap-4">
       <FormCancelButton
         setIsOpen={setIsOpen}
         onCancel={onCancel}

@@ -27,7 +27,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## Tech Stack (Versions)
 
-```
+```text
 Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8
 NextAuth 5.0.0-beta.30 | Recharts 2.15.4
@@ -43,7 +43,7 @@ HeroUI 2.8.4 (LEGACY - do not add new components)
 
 ### Component Placement
 
-```
+```text
 New feature UI? → shadcn/ui + Tailwind
 Existing HeroUI feature? → Keep HeroUI (don't mix)
 Used 1 feature? → features/{feature}/components/
@@ -54,7 +54,7 @@ Server component? → No directive needed
 
 ### Code Location
 
-```
+```text
 Server action      → actions/{feature}/{feature}.ts
 Data transform     → actions/{feature}/{feature}.adapter.ts
 Types (shared 2+)  → types/{domain}.ts
@@ -69,7 +69,7 @@ HeroUI components  → components/ui/ (LEGACY)
 
 ### Styling Decision
 
-```
+```text
 Tailwind class exists? → className
 Dynamic value?         → style prop
 Conditional styles?    → cn()
@@ -85,7 +85,7 @@ Recharts/library?      → CHART_COLORS constant + var()
 
 ## Project Structure
 
-```
+```text
 ui/
 ├── app/
 │   ├── (auth)/              # Auth pages (login, signup)

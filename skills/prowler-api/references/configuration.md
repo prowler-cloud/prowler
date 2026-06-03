@@ -2,7 +2,7 @@
 
 ## Settings File Structure
 
-```
+```text
 api/src/backend/config/
 ├── django/
 │   ├── base.py               # Base settings (all environments)
