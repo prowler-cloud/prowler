@@ -4,10 +4,16 @@ import {
   TOUR_STEP_SIDES,
 } from "./tour-types";
 
-// The literal targets this tour anchors. `defineTour<...>` preserves the union
-// so `useDriverTour` can validate `stepHandlers` keys and `waitForStep`
-// arguments against exactly these two values.
-export type ViewComplianceTourTarget = "frameworks" | "search";
+// The literal targets this tour anchors, as a const map. `defineTour<...>`
+// preserves the union so `useDriverTour` can validate `stepHandlers` keys and
+// `waitForStep` arguments against exactly these values.
+export const VIEW_COMPLIANCE_TOUR_TARGETS = {
+  FRAMEWORKS: "frameworks",
+  SEARCH: "search",
+} as const;
+
+export type ViewComplianceTourTarget =
+  (typeof VIEW_COMPLIANCE_TOUR_TARGETS)[keyof typeof VIEW_COMPLIANCE_TOUR_TARGETS];
 
 export const viewComplianceTour = defineTour<ViewComplianceTourTarget>({
   id: "view-compliance",

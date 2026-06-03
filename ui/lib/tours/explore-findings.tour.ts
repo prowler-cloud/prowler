@@ -4,10 +4,16 @@ import {
   TOUR_STEP_SIDES,
 } from "./tour-types";
 
-// The literal targets this tour anchors. `defineTour<...>` preserves the union
-// so `useDriverTour` can validate `stepHandlers` keys and `waitForStep`
-// arguments against exactly these two values.
-export type ExploreFindingsTourTarget = "filters" | "table";
+// The literal targets this tour anchors, as a const map. `defineTour<...>`
+// preserves the union so `useDriverTour` can validate `stepHandlers` keys and
+// `waitForStep` arguments against exactly these values.
+export const EXPLORE_FINDINGS_TOUR_TARGETS = {
+  FILTERS: "filters",
+  TABLE: "table",
+} as const;
+
+export type ExploreFindingsTourTarget =
+  (typeof EXPLORE_FINDINGS_TOUR_TARGETS)[keyof typeof EXPLORE_FINDINGS_TOUR_TARGETS];
 
 export const exploreFindingsTour = defineTour<ExploreFindingsTourTarget>({
   id: "explore-findings",

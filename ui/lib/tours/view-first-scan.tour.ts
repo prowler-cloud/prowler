@@ -4,10 +4,16 @@ import {
   TOUR_STEP_SIDES,
 } from "./tour-types";
 
-// The literal targets this tour anchors. `defineTour<...>` preserves the union
-// so `useDriverTour` can validate `stepHandlers` keys and `waitForStep`
-// arguments against exactly these two values.
-export type ViewFirstScanTourTarget = "launch" | "tabs";
+// The literal targets this tour anchors, as a const map. `defineTour<...>`
+// preserves the union so `useDriverTour` can validate `stepHandlers` keys and
+// `waitForStep` arguments against exactly these values.
+export const VIEW_FIRST_SCAN_TOUR_TARGETS = {
+  LAUNCH: "launch",
+  TABS: "tabs",
+} as const;
+
+export type ViewFirstScanTourTarget =
+  (typeof VIEW_FIRST_SCAN_TOUR_TARGETS)[keyof typeof VIEW_FIRST_SCAN_TOUR_TARGETS];
 
 export const viewFirstScanTour = defineTour<ViewFirstScanTourTarget>({
   id: "view-first-scan",

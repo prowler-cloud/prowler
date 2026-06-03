@@ -5,10 +5,16 @@ import {
   type TourStepHandlers,
 } from "./tour-types";
 
-// The literal targets this tour anchors. `defineTour<...>` preserves the union
-// so `useDriverTour` can validate `stepHandlers` keys and `waitForStep`
-// arguments against exactly these two values.
-export type AddProviderTourTarget = "trigger" | "provider-type";
+// The literal targets this tour anchors, as a const map. `defineTour<...>`
+// preserves the union so `useDriverTour` can validate `stepHandlers` keys and
+// `waitForStep` arguments against exactly these values.
+export const ADD_PROVIDER_TOUR_TARGETS = {
+  TRIGGER: "trigger",
+  PROVIDER_TYPE: "provider-type",
+} as const;
+
+export type AddProviderTourTarget =
+  (typeof ADD_PROVIDER_TOUR_TARGETS)[keyof typeof ADD_PROVIDER_TOUR_TARGETS];
 
 export const addProviderTour = defineTour<AddProviderTourTarget>({
   id: "add-provider",
@@ -53,10 +59,10 @@ export function createAddProviderTourStepHandlers(openWizard: () => void): {
   [K in AddProviderTourTarget]?: TourStepHandlers<AddProviderTourTarget>;
 } {
   return {
-    trigger: {
+    [ADD_PROVIDER_TOUR_TARGETS.TRIGGER]: {
       onNext: async ({ waitForStep }) => {
         openWizard();
-        await waitForStep("provider-type");
+        await waitForStep(ADD_PROVIDER_TOUR_TARGETS.PROVIDER_TYPE);
       },
     },
   };
