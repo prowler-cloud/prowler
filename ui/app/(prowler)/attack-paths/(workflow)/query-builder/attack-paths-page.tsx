@@ -32,7 +32,12 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { useToast } from "@/components/ui";
-import { attackPathsTour } from "@/lib/tours/attack-paths.tour";
+import {
+  attackPathsTour,
+  type AttackPathsTourTarget,
+  pickDemoQuery,
+  pickDemoScan,
+} from "@/lib/tours/attack-paths.tour";
 import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import { useDriverTour } from "@/lib/tours/use-driver-tour";
 import type {
@@ -103,7 +108,7 @@ export default function AttackPathsPage() {
   // reading the `onboarding` param here and calling the tour result's `start()`.
   // The avatar replay list still navigates here; the no-record case is covered.
 
-  useDriverTour(attackPathsTour, {
+  useDriverTour<AttackPathsTourTarget>(attackPathsTour, {
     enabled: !scansLoading && hasReadyScan,
     // Single-fire integration (Decision 4): the PAGE owns the only driver for
     // attackPathsTour, including its standalone auto-open. The guided sequence
@@ -111,17 +116,14 @@ export default function AttackPathsPage() {
     // OnboardingSequenceBanner is the single Continue/Exit control. So this page
     // just RUNS its tour on arrival and never mutates the sequence slice; the
     // user advances or exits via the banner at their own pace.
+    //
+    // The handlers below are thin wiring only: the "which scan/query does the
+    // demo pick" policy lives in attack-paths.tour.ts (pickDemoScan/pickDemoQuery)
+    // so it can evolve without touching the page.
     stepHandlers: {
       "scan-list": {
         onNext: async ({ waitForStep }) => {
-          const isReady = (scan: AttackPathScan) =>
-            scan.attributes.graph_data_ready;
-          // Predefined queries are AWS-only; fall back to any ready scan.
-          const preferred = scans.find(
-            (scan) => isReady(scan) && scan.attributes.provider_type === "aws",
-          );
-          const fallback = scans.find(isReady);
-          const selected = preferred ?? fallback;
+          const selected = pickDemoScan(scans);
           if (!selected) return;
           const params = new URLSearchParams(searchParams.toString());
           params.set("scanId", selected.id);
@@ -131,19 +133,7 @@ export default function AttackPathsPage() {
       },
       "query-selector": {
         onNext: async ({ waitForStep }) => {
-          // Demo query must run with no further input: skip Custom (needs
-          // Cypher) and any query with required parameters. Prefer the IAM
-          // wildcard — well-known and usually returns findings.
-          const isRunnable = (query: AttackPathQuery) =>
-            query.id !== ATTACK_PATH_QUERY_IDS.CUSTOM &&
-            query.attributes.parameters.length === 0;
-          const preferred = queries.find(
-            (query) =>
-              query.id === "aws-iam-statements-allow-all-actions" &&
-              isRunnable(query),
-          );
-          const fallback = queries.find(isRunnable);
-          const selected = preferred ?? fallback;
+          const selected = pickDemoQuery(queries);
           if (!selected) return;
           queryBuilder.handleQueryChange(selected.id);
           await waitForStep("execute-button");
