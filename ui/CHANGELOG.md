@@ -2,6 +2,33 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [1.30.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+
+---
+
+## [1.29.2] (Prowler v5.29.2)
+
+### 🔄 Changed
+
+- Account and provider-type selector triggers now show the provider icon, with a non-deduped icon stack [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
+### 🐞 Fixed
+
+- Add Provider modal now closes without reloading the providers page [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
+### 🔐 Security
+
+- Vitest toolchain upgraded `4.0.18` → `4.1.8` to clear two critical `pnpm audit` advisories [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
+---
+
+>>>>>>> e60a4462e (fix(ui): refine add-provider wizard flow between scans and providers (#11424))
 ## [1.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added
