@@ -80,10 +80,25 @@ describe("OnboardingGate", () => {
 
   describe("when hasProviders is undefined (fail-open)", () => {
     it("does not show the Welcome modal", async () => {
-      // Given - an ambiguous provider signal (transient / errored)
-      render(<OnboardingGate hasProviders={undefined as unknown as boolean} />);
+      // Given - an ambiguous provider signal (transient / errored). The prop is
+      // optional (`boolean | undefined`) so `undefined` is passed type-cleanly,
+      // mirroring the tri-state the layout forwards on a failed provider fetch.
+      render(<OnboardingGate hasProviders={undefined} />);
 
       // Then - the gate fails open and does not force onboarding
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("button", { name: /get started/i }),
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("can be mounted with the prop omitted entirely (fail-open)", async () => {
+      // Given - the layout forwards `undefined` (omitted) when the provider
+      // fetch failed; the gate must still fail open rather than force the modal.
+      render(<OnboardingGate />);
+
+      // Then - no modal
       await waitFor(() => {
         expect(
           screen.queryByRole("button", { name: /get started/i }),

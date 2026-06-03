@@ -14,7 +14,11 @@ import { TOUR_COMPLETION_STATES } from "@/lib/tours/tour-types";
 import { OnboardingWelcomeModal } from "./onboarding-welcome-modal";
 
 interface OnboardingGateProps {
-  hasProviders: boolean;
+  // Tri-state: `true`/`false` from a successful provider fetch, `undefined`
+  // when the layout could not determine provider state (failed/ambiguous
+  // fetch). `undefined` must fail open — never force the modal on an unknown
+  // state.
+  hasProviders?: boolean;
 }
 
 // Mandatory new-user gate. Mounted once in the (prowler) layout. Reads the
@@ -28,11 +32,16 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
 
   useEffect(() => {
     // Select the first flow that is incomplete by account state and has no
-    // browser record. `getFirstIncompleteFlow` uses `isComplete(ctx)` which
-    // false-positives when `hasProviders` is undefined, so it is NOT the final
-    // authority — `shouldStartOnboarding` below applies the strict `=== false`
-    // fail-open guard.
-    const flow = getFirstIncompleteFlow({ hasProviders }, localStorageAdapter);
+    // browser record. `OnboardingContext.hasProviders` is a strict boolean, so
+    // an unknown signal collapses to `false` here (`?? false`) for SELECTION
+    // ONLY — a flow is still picked. `getFirstIncompleteFlow` is NOT the final
+    // authority: `shouldStartOnboarding` below receives the RAW (possibly
+    // `undefined`) value and applies the strict `=== false` fail-open guard, so
+    // an ambiguous provider state never forces the modal.
+    const flow = getFirstIncompleteFlow(
+      { hasProviders: hasProviders ?? false },
+      localStorageAdapter,
+    );
     if (!flow) {
       setActiveFlow(null);
       return;
