@@ -1,4 +1,5 @@
 import { addProviderTour } from "@/lib/tours/add-provider.tour";
+import { attackPathsTour } from "@/lib/tours/attack-paths.tour";
 import { exploreFindingsTour } from "@/lib/tours/explore-findings.tour";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 import type { TourCompletionStore } from "@/lib/tours/store/tour-completion-store";
@@ -47,6 +48,18 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     description: "Map your findings to frameworks like CIS.",
     route: "/compliance",
     tour: viewComplianceTour,
+  },
+  {
+    id: "attack-paths",
+    order: 5,
+    title: "Visualize attack paths",
+    description: "See how a compromise could spread across your cloud.",
+    route: "/attack-paths",
+    tour: attackPathsTour,
+    // The attack-paths PAGE already drives this tour (its own auto-open +
+    // rich stepHandlers). The shared OnboardingTrigger must NOT mount a second
+    // runner; the page reports completion to the sequence slice instead.
+    ownsAutoOpen: true,
   },
 ];
 

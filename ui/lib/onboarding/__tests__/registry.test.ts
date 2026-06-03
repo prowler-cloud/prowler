@@ -37,6 +37,7 @@ const buildFlow = (
   route: overrides.route ?? "/route",
   tour: overrides.tour ?? buildTour(overrides.id ?? "flow"),
   isComplete: overrides.isComplete,
+  ownsAutoOpen: overrides.ownsAutoOpen,
 });
 
 const completedRecord = (
@@ -144,8 +145,31 @@ describe("onboardingFlows (production registry)", () => {
     expect(flow?.tour.id).toBe("view-compliance");
   });
 
-  it("orders the four sequence flows 1..4 by registry order", () => {
-    // Given / When - the production registry after Slices 4-6 registration
+  it("registers the attack-paths flow at order 5 on the attack-paths route", () => {
+    // Given / When - the integration flow added in Slice 7
+    const flow = getFlowById("attack-paths", onboardingFlows);
+
+    // Then - declared contract: order, route, and a matching tour id
+    expect(flow).toBeDefined();
+    expect(flow?.order).toBe(5);
+    expect(flow?.route).toBe("/attack-paths");
+    expect(flow?.tour.id).toBe("attack-paths");
+  });
+
+  it("flags attack-paths with ownsAutoOpen so the shared trigger never drives it", () => {
+    // Given / When - the attack-paths page owns its own driver (Decision 4)
+    const attackPaths = getFlowById("attack-paths", onboardingFlows);
+
+    // Then - only attack-paths carries the flag; every other flow is falsy
+    expect(attackPaths?.ownsAutoOpen).toBe(true);
+    for (const flow of onboardingFlows) {
+      if (flow.id === "attack-paths") continue;
+      expect(flow.ownsAutoOpen).toBeFalsy();
+    }
+  });
+
+  it("orders the five sequence flows 1..5 by registry order", () => {
+    // Given / When - the production registry after Slices 4-7 registration
     const ordered = getOrderedFlows(onboardingFlows);
 
     // Then - the guided sequence advances in declared order
@@ -154,6 +178,7 @@ describe("onboardingFlows (production registry)", () => {
       "view-first-scan",
       "explore-findings",
       "view-compliance",
+      "attack-paths",
     ]);
   });
 });
