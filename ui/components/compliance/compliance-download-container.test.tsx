@@ -6,15 +6,19 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { downloadComplianceCsvMock, downloadCompliancePdfMock } = vi.hoisted(
-  () => ({
-    downloadComplianceCsvMock: vi.fn(),
-    downloadCompliancePdfMock: vi.fn(),
-  }),
-);
+const {
+  downloadComplianceCsvMock,
+  downloadComplianceOcsfMock,
+  downloadCompliancePdfMock,
+} = vi.hoisted(() => ({
+  downloadComplianceCsvMock: vi.fn(),
+  downloadComplianceOcsfMock: vi.fn(),
+  downloadCompliancePdfMock: vi.fn(),
+}));
 
 vi.mock("@/lib/helper", () => ({
   downloadComplianceCsv: downloadComplianceCsvMock,
+  downloadComplianceOcsf: downloadComplianceOcsfMock,
   downloadCompliancePdf: downloadCompliancePdfMock,
 }));
 
@@ -128,6 +132,53 @@ describe("ComplianceDownloadContainer", () => {
     expect(downloadCompliancePdfMock).toHaveBeenCalledWith(
       "scan-1",
       "threatscore",
+      {},
+    );
+  });
+
+  it("should hide the OCSF action for frameworks without OCSF support", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ComplianceDownloadContainer
+        compact
+        presentation="dropdown"
+        scanId="scan-1"
+        complianceId="compliance-1"
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Open compliance export actions" }),
+    );
+
+    expect(screen.queryByText("Download OCSF report")).not.toBeInTheDocument();
+  });
+
+  it("should surface and trigger the OCSF download for universal frameworks", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ComplianceDownloadContainer
+        compact
+        presentation="dropdown"
+        scanId="scan-1"
+        complianceId="dora"
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Open compliance export actions" }),
+    );
+    expect(screen.getByText("Download OCSF report")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("menuitem", { name: /Download OCSF report/i }),
+    );
+
+    expect(downloadComplianceOcsfMock).toHaveBeenCalledWith(
+      "scan-1",
+      "dora",
       {},
     );
   });
