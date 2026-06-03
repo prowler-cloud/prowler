@@ -40,6 +40,7 @@
         "ec2_instance_public_ip",
         "efs_encryption_at_rest_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "apigateway_domain_name_pqc_tls_enabled",
         "elb_ssl_listeners",
         "ec2_ebs_default_encryption",
         "emr_cluster_master_nodes_no_public_ip",
