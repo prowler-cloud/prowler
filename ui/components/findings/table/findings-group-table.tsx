@@ -2,12 +2,14 @@
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
+import { OnboardingTrigger } from "@/components/onboarding";
 import { DataTable } from "@/components/ui/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
+import { getFlowById } from "@/lib/onboarding";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
@@ -18,6 +20,8 @@ import {
   InlineResourceContainer,
   InlineResourceContainerHandle,
 } from "./inline-resource-container";
+
+const exploreFindingsFlow = getFlowById("explore-findings")!;
 
 function buildMuteLabel(groupCount: number, resourceCount: number): string {
   const parts: string[] = [];
@@ -201,8 +205,13 @@ export function FindingsGroupTable({
         resolveMuteIds,
       }}
     >
-      {/* Anchor for the explore-findings onboarding tour `table` step. */}
+      {/* Anchor for the explore-findings onboarding tour `table` step. The
+          trigger lives here (not in the filters) so the tour force-starts only
+          once the table has rendered with data — never against the skeleton. */}
       <div data-tour-id="explore-findings-table">
+        <Suspense fallback={null}>
+          <OnboardingTrigger flow={exploreFindingsFlow} />
+        </Suspense>
         <DataTable
           columns={columns}
           data={safeData}
