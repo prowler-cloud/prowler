@@ -54,9 +54,10 @@ export const UserNav = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon-sm"
-          className="border-border-input-primary-fill rounded-full"
+          // Avatar is round; ghost icon button + rounded-full instead of an ad-hoc bordered variant
+          className="rounded-full"
           aria-label="Account menu"
         >
           <Avatar className="h-8 w-8">
