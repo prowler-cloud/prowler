@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 
-import { ProvidersOnboardingTrigger } from "@/components/onboarding";
+import { OnboardingTrigger } from "@/components/onboarding";
 import { AddProviderButton } from "@/components/providers/add-provider-button";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import { ProvidersAccountsTable } from "@/components/providers/providers-accounts-table";
@@ -12,8 +12,14 @@ import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
+import { getFlowById } from "@/lib/onboarding";
+import { createAddProviderTourStepHandlers } from "@/lib/tours/add-provider.tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
+
+// Resolved once: the registry is static, so the add-provider flow that this
+// route owns never changes at runtime.
+const addProviderFlow = getFlowById("add-provider")!;
 
 interface ProvidersAccountsViewProps {
   isCloud: boolean;
@@ -61,11 +67,17 @@ export function ProvidersAccountsView({
 
   return (
     <>
-      {/* Renders null; reads ?onboarding and force-starts the tour, wiring the
-          tour's wizard-open step to this view's imperative open. Suspense
-          satisfies the App Router requirement around `useSearchParams`. */}
+      {/* Renders null; reads the sequence slice + ?onboarding param and force-
+          starts the add-provider tour, wiring the tour's wizard-open step to
+          this view's imperative open. Suspense satisfies the App Router
+          requirement around `useSearchParams`. */}
       <Suspense fallback={null}>
-        <ProvidersOnboardingTrigger openWizard={() => openProviderWizard()} />
+        <OnboardingTrigger
+          flow={addProviderFlow}
+          stepHandlers={createAddProviderTourStepHandlers(() =>
+            openProviderWizard(),
+          )}
+        />
       </Suspense>
       <div className="flex flex-col gap-6">
         <ProvidersFilters
