@@ -19,4 +19,9 @@ export interface OnboardingFlow {
   route: string;
   tour: TourDefinition;
   isComplete?: (ctx: OnboardingContext) => boolean;
+  // When true, the route's PAGE already drives this flow's tour (e.g.
+  // attack-paths). The shared OnboardingTrigger must NOT mount a runner for it;
+  // the page owns auto-open and reports completion to the sequence slice.
+  // Additive, optional, defaults to undefined/false.
+  ownsAutoOpen?: boolean;
 }

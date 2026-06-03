@@ -32,6 +32,13 @@ export interface UseDriverTourOptions<TTarget extends string = string> {
   configOverrides?: Partial<Config>;
   /** Indexed by step `target`; overrides driver.js's default Next/Back for that step. */
   stepHandlers?: { [K in TTarget]?: TourStepHandlers<TTarget> };
+  /**
+   * Fired once when the tour is destroyed (completed OR user-dismissed), with
+   * the final persisted state. Additive: existing callers omit it and keep the
+   * current behavior. Invoked from inside `onDestroyed`, AFTER persist, via a
+   * ref so a changing callback identity never recreates the driver.
+   */
+  onClosed?: (state: TourCompletionRecord["state"]) => void;
 }
 
 export interface UseDriverTourResult {
@@ -147,6 +154,7 @@ export function useDriverTour<TTarget extends string>(
     store = localStorageAdapter,
     configOverrides,
     stepHandlers,
+    onClosed,
   } = options;
 
   const { resolvedTheme } = useTheme();
@@ -166,6 +174,13 @@ export function useDriverTour<TTarget extends string>(
   stepHandlersRef.current = stepHandlers as
     | Record<string, TourStepHandlers<TTarget> | undefined>
     | undefined;
+
+  // Ref so a changing `onClosed` identity never recreates the driver (mirrors
+  // `stepHandlersRef`). NOT added to the effect dependency array.
+  const onClosedRef = useRef<
+    ((state: TourCompletionRecord["state"]) => void) | undefined
+  >(onClosed);
+  onClosedRef.current = onClosed;
 
   const tourId = tour.id;
   const tourVersion = tour.version;
@@ -255,6 +270,7 @@ export function useDriverTour<TTarget extends string>(
       },
       onDestroyed: () => {
         persist(finalStateRef.current);
+        onClosedRef.current?.(finalStateRef.current);
       },
     });
 
