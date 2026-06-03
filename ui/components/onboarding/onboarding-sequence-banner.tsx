@@ -3,17 +3,30 @@
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/shadcn";
+import { getFlowById } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { useOnboardingSequenceStore } from "@/store/onboarding-sequence";
 
 import { getSequenceProgress } from "./onboarding-sequence-banner.logic";
+
+// Flow the "Run a scan" shortcut jumps to. The scans page's OnboardingTrigger
+// re-runs that tour on arrival, re-guiding the user through launching a scan.
+const SCAN_FLOW_ID = "view-first-scan";
+
+interface OnboardingSequenceBannerProps {
+  // Server-derived signal (SSR). When the scan state is unknown we pass `true`
+  // (fail-open) so the shortcut never nags a user whose scans we can't read.
+  hasCompletedScan?: boolean;
+}
 
 // Persistent, NON-blocking bottom banner shown while a guided sequence is
 // active. Unlike a Dialog it never traps focus or covers the page, so the user
 // can perform the step's real action (e.g. launch a scan) at their own pace and
 // then click Continue. The banner owns sequence advance/exit; the per-route
 // tour only shows on arrival and no longer auto-advances on close.
-export function OnboardingSequenceBanner() {
+export function OnboardingSequenceBanner({
+  hasCompletedScan = true,
+}: OnboardingSequenceBannerProps = {}) {
   const router = useRouter();
   const active = useOnboardingSequenceStore((state) => state.active);
   const currentFlowId = useOnboardingSequenceStore(
@@ -26,6 +39,21 @@ export function OnboardingSequenceBanner() {
   if (!active || !progress) return null;
 
   const { index, total, flow, nextFlow } = progress;
+
+  // Offer the shortcut only on a data-gated step that still lacks scan data,
+  // and never on the scan step itself (it would point back to the same place).
+  const scanFlow = getFlowById(SCAN_FLOW_ID);
+  const showScanShortcut =
+    Boolean(flow.dataRequirementHint) &&
+    hasCompletedScan === false &&
+    flow.id !== SCAN_FLOW_ID &&
+    scanFlow !== undefined;
+
+  const handleRunScan = () => {
+    if (!scanFlow) return;
+    useOnboardingSequenceStore.getState().goToFlow(scanFlow.id);
+    router.push(scanFlow.route);
+  };
 
   const handleContinue = () => {
     const sequence = useOnboardingSequenceStore.getState();
@@ -70,6 +98,11 @@ export function OnboardingSequenceBanner() {
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {showScanShortcut ? (
+            <Button variant="outline" size="sm" onClick={handleRunScan}>
+              Run a scan
+            </Button>
+          ) : null}
           <Button variant="ghost" size="sm" onClick={handleExit}>
             Exit
           </Button>

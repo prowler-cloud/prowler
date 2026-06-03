@@ -9,15 +9,17 @@ import { OnboardingSequenceBanner } from "../onboarding-sequence-banner";
 const pushMock = vi.fn();
 const advanceMock = vi.fn();
 const stopMock = vi.fn();
+const goToFlowMock = vi.fn();
 
 // Mutable sequence-slice snapshot the mocked store hook returns. The banner
-// reads `active` + `currentFlowId` reactively and calls advance/stop via
-// getState(), mirroring the trigger's store usage.
+// reads `active` + `currentFlowId` reactively and calls advance/stop/goToFlow
+// via getState(), mirroring the trigger's store usage.
 let sliceState = {
   active: false,
   currentFlowId: null as string | null,
   advance: advanceMock,
   stop: stopMock,
+  goToFlow: goToFlowMock,
 };
 
 vi.mock("next/navigation", () => ({
@@ -40,11 +42,13 @@ describe("OnboardingSequenceBanner", () => {
     pushMock.mockClear();
     advanceMock.mockClear();
     stopMock.mockClear();
+    goToFlowMock.mockClear();
     sliceState = {
       active: false,
       currentFlowId: null,
       advance: advanceMock,
       stop: stopMock,
+      goToFlow: goToFlowMock,
     };
   });
 
@@ -142,6 +146,91 @@ describe("OnboardingSequenceBanner", () => {
     // Then - the sequence ends and no navigation occurs
     expect(stopMock).toHaveBeenCalledTimes(1);
     expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("offers a Run a scan shortcut when the flow needs scan data and none is completed", () => {
+    // Given - explore-findings needs scan data and no scan has completed yet
+    setSlice({ active: true, currentFlowId: "explore-findings" });
+
+    // When
+    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+
+    // Then - the shortcut button is offered
+    expect(
+      screen.getByRole("button", { name: /run a scan/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the Run a scan shortcut once a scan has completed", () => {
+    // Given - the same data-gated flow but a scan is already completed
+    setSlice({ active: true, currentFlowId: "explore-findings" });
+
+    // When
+    render(<OnboardingSequenceBanner hasCompletedScan={true} />);
+
+    // Then - no shortcut is offered (nothing to nag about)
+    expect(
+      screen.queryByRole("button", { name: /run a scan/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not offer the Run a scan shortcut for a flow without a data hint", () => {
+    // Given - add-provider has no data requirement hint
+    setSlice({ active: true, currentFlowId: "add-provider" });
+
+    // When
+    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+
+    // Then - the shortcut is not rendered
+    expect(
+      screen.queryByRole("button", { name: /run a scan/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not offer the Run a scan shortcut on the scan flow itself", () => {
+    // Given - the current flow IS view-first-scan (already where the shortcut leads)
+    setSlice({ active: true, currentFlowId: "view-first-scan" });
+
+    // When
+    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+
+    // Then - no shortcut points back to the same step
+    expect(
+      screen.queryByRole("button", { name: /run a scan/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("jumps the banner to the scan step and navigates when Run a scan is clicked", async () => {
+    // Given - a data-gated flow with the shortcut offered
+    setSlice({ active: true, currentFlowId: "explore-findings" });
+    const scanFlow = getFlowById("view-first-scan")!;
+    const user = userEvent.setup();
+
+    // When
+    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+    await user.click(screen.getByRole("button", { name: /run a scan/i }));
+
+    // Then - it re-points the sequence to the scan step and routes there
+    expect(goToFlowMock).toHaveBeenCalledWith(scanFlow.id);
+    expect(pushMock).toHaveBeenCalledWith(scanFlow.route);
+    expect(advanceMock).not.toHaveBeenCalled();
+    expect(stopMock).not.toHaveBeenCalled();
+  });
+
+  it("still advances on Continue regardless of completed-scan state", async () => {
+    // Given - a data-gated flow with no completed scan (shortcut visible)
+    setSlice({ active: true, currentFlowId: "explore-findings" });
+    const nextFlow = getFlowById("view-compliance")!;
+    const user = userEvent.setup();
+
+    // When - the user clicks Continue instead of the shortcut
+    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+    await user.click(screen.getByRole("button", { name: /^continue$/i }));
+
+    // Then - Continue stays non-blocking: it advances and navigates as usual
+    expect(advanceMock).toHaveBeenCalledTimes(1);
+    expect(pushMock).toHaveBeenCalledWith(nextFlow.route);
+    expect(goToFlowMock).not.toHaveBeenCalled();
   });
 
   it("stops the sequence when Exit is clicked", async () => {

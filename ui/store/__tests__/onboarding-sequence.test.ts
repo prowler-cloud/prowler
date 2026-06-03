@@ -94,6 +94,47 @@ describe("useOnboardingSequenceStore", () => {
     });
   });
 
+  describe("goToFlow", () => {
+    it("re-points currentFlowId to a known flow while staying active in sequence mode", () => {
+      // Given - an active sequence on a later flow
+      const ordered = getOrderedFlows();
+      const target = ordered[1];
+      useOnboardingSequenceStore.setState({
+        active: true,
+        currentFlowId: ordered[2].id,
+        mode: "sequence",
+      });
+
+      // When - jumping back to a known flow
+      useOnboardingSequenceStore.getState().goToFlow(target.id);
+
+      // Then - it points at the target flow and keeps the sequence active
+      const state = useOnboardingSequenceStore.getState();
+      expect(state.active).toBe(true);
+      expect(state.currentFlowId).toBe(target.id);
+      expect(state.mode).toBe("sequence");
+    });
+
+    it("is a no-op for an unknown flow id", () => {
+      // Given - an active sequence on a known flow
+      const ordered = getOrderedFlows();
+      useOnboardingSequenceStore.setState({
+        active: true,
+        currentFlowId: ordered[0].id,
+        mode: "sequence",
+      });
+
+      // When - jumping to a flow id that does not exist
+      useOnboardingSequenceStore.getState().goToFlow("does-not-exist");
+
+      // Then - state is unchanged
+      const state = useOnboardingSequenceStore.getState();
+      expect(state.active).toBe(true);
+      expect(state.currentFlowId).toBe(ordered[0].id);
+      expect(state.mode).toBe("sequence");
+    });
+  });
+
   describe("stop", () => {
     it("resets every field to its inactive value", () => {
       // Given - an active sequence in progress

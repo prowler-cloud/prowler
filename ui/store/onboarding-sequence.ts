@@ -18,6 +18,10 @@ interface OnboardingSequenceState {
   // Move to the next ordered flow after the current one. Clears state when the
   // current flow is the last (sequence finished).
   advance: () => void;
+  // Jump the active sequence to a specific known flow (e.g. the banner's
+  // "Run a scan" shortcut re-pointing back to the scan step). No-op when the id
+  // is not in the registry, so callers never need to guard.
+  goToFlow: (flowId: string) => void;
   // End the sequence immediately (user closed a tour, or finished). Resets all.
   stop: () => void;
 }
@@ -52,6 +56,11 @@ export const useOnboardingSequenceStore = create<OnboardingSequenceState>(
         return;
       }
       set({ currentFlowId: next.id });
+    },
+
+    goToFlow: (flowId) => {
+      if (!getFlowById(flowId)) return;
+      set({ active: true, currentFlowId: flowId, mode: "sequence" });
     },
 
     stop: () => set({ active: false, currentFlowId: null, mode: null }),

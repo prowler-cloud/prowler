@@ -5,6 +5,7 @@ import { Metadata, Viewport } from "next";
 import { ReactNode } from "react";
 
 import { getProviders } from "@/actions/providers";
+import { getScansByState } from "@/actions/scans/scans";
 import {
   OnboardingCheckpointWatcher,
   OnboardingGate,
@@ -17,6 +18,7 @@ import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { StoreInitializer } from "@/store/ui/store-initializer";
+import { SCAN_STATES } from "@/types/attack-paths";
 
 import { Providers } from "../providers";
 
@@ -46,7 +48,19 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  const providersData = await getProviders({ page: 1, pageSize: 1 });
+  const [providersData, scansByState] = await Promise.all([
+    getProviders({ page: 1, pageSize: 1 }),
+    getScansByState(),
+  ]);
+  // Fail-open: if the scan fetch fails or returns no parseable data we treat
+  // the user as already having scan data, so the banner's "Run a scan"
+  // shortcut never nags someone whose scan state we can't determine.
+  const hasCompletedScan = Array.isArray(scansByState?.data)
+    ? scansByState.data.some(
+        (scan: { attributes?: { state?: string } }) =>
+          scan.attributes?.state === SCAN_STATES.COMPLETED,
+      )
+    : true;
   // Tri-state on purpose: a SUCCESSFUL fetch carries `data` (an array, possibly
   // empty); a FAILED/ambiguous fetch yields `undefined` (network error) or an
   // error envelope without `data`. Collapsing the failure to `false` would
@@ -89,7 +103,7 @@ export default async function RootLayout({
               sequence is active. It self-hides otherwise and owns the manual
               Continue (advance + navigate) and Exit (stop) controls, replacing
               the old auto-advance that jumped to empty pages before a scan. */}
-          <OnboardingSequenceBanner />
+          <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
           <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>
