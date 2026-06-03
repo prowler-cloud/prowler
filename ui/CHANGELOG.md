@@ -2,19 +2,19 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.29.2] (Prowler v5.29.2)
-
-### 🐞 Fixed
-
-- Users page now shows the "Delete User" action only on the current user's row, matching the backend rule that a user can only delete their own account [(#11447)](https://github.com/prowler-cloud/prowler/pull/11447)
-
----
-
 ## [1.30.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+
+---
+
+## [1.29.2] (Prowler v5.29.2)
+
+### 🐞 Fixed
+
+- Users page now shows the "Delete User" action only on the current user's row, matching the backend rule that a user can only delete their own account [(#11447)](https://github.com/prowler-cloud/prowler/pull/11447)
 
 ---
 
