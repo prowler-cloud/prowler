@@ -2,8 +2,9 @@
 
 import type { Config } from "driver.js";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { type OnboardingFlow } from "@/lib/onboarding";
 import type { TourStepHandlers } from "@/lib/tours/tour-types";
 import { useDriverTour } from "@/lib/tours/use-driver-tour";
@@ -28,8 +29,8 @@ interface OnboardingTriggerProps<TTarget extends string = string> {
 
 // A single latched trigger request. `key` lets us mount a FRESH runner per
 // re-trigger so the tour can be restarted repeatedly; `mode` records whether
-// the start came from the sequence or a replay param so the close handler knows
-// whether to advance/stop the sequence or leave it untouched.
+// the start came from the sequence or a replay param so the runner knows
+// whether to strip the param.
 interface OnboardingRequest {
   flow: OnboardingFlow;
   key: number;
@@ -37,9 +38,9 @@ interface OnboardingRequest {
 }
 
 // Generalized per-route onboarding trigger. Reads the `?onboarding=<id>` replay
-// param AND the sequence slice, decides via `resolveTriggerRequest` whether this
+// param AND the sequence slice, DERIVES via `resolveTriggerRequest` whether this
 // route's flow should force-start, then mounts a keyed runner over the real page
-// surface. Renders nothing. Replaces the single-flow ProvidersOnboardingTrigger.
+// surface. Renders nothing.
 export function OnboardingTrigger<TTarget extends string = string>({
   flow,
   stepHandlers,
@@ -54,33 +55,35 @@ export function OnboardingTrigger<TTarget extends string = string>({
     (state) => state.currentFlowId,
   );
 
-  // The request is LATCHED into state rather than derived from live params on
-  // every render. Once latched, stripping the replay param does NOT unmount the
-  // runner — which previously destroyed the just-started tour.
+  // DERIVED during render: does this route's flow want to start, and how?
+  const resolved = resolveTriggerRequest({
+    param,
+    sliceActive,
+    currentFlowId,
+    flowId: flow.id,
+  });
+  // Collapse the resolving inputs to a single signal; `null` means "no start".
+  const signal = resolved ? `${flow.id}:${resolved.mode}` : null;
+
+  // The request is LATCHED so that stripping the replay param afterwards does
+  // NOT unmount the runner (which previously destroyed the just-started tour).
+  // We latch with React's "adjust state while rendering when an input changes"
+  // pattern — the no-`useEffect` alternative — minting a fresh runner key only
+  // on the transition INTO a new truthy signal. When the signal later drops to
+  // `null` (param stripped) we only advance the tracker, leaving the runner up.
   const [request, setRequest] = useState<OnboardingRequest | null>(null);
-  const keyRef = useRef(0);
+  const [lastSignal, setLastSignal] = useState<string | null>(null);
 
-  useEffect(() => {
-    const resolved = resolveTriggerRequest({
-      param,
-      sliceActive,
-      currentFlowId,
-      flowId: flow.id,
-    });
-    if (!resolved) return;
-
-    keyRef.current += 1;
-    setRequest({ flow, key: keyRef.current, mode: resolved.mode });
-
-    // For replay, strip the param via history so a hard reload does not
-    // re-launch the tour. We use `window.history.replaceState` instead of
-    // `router.replace` so clearing the param does NOT re-trigger
-    // `useSearchParams` reactivity or a server route round-trip — the latched
-    // runner therefore stays mounted. For sequence starts there is no param.
-    if (resolved.mode === "replay") {
-      window.history.replaceState(null, "", window.location.pathname);
+  if (signal !== lastSignal) {
+    setLastSignal(signal);
+    if (resolved) {
+      setRequest((prev) => ({
+        flow,
+        key: (prev?.key ?? 0) + 1,
+        mode: resolved.mode,
+      }));
     }
-  }, [param, sliceActive, currentFlowId, flow]);
+  }
 
   if (!request) return null;
 
@@ -91,6 +94,7 @@ export function OnboardingTrigger<TTarget extends string = string>({
     <OnboardingTourRunner<TTarget>
       key={request.key}
       flow={request.flow}
+      mode={request.mode}
       stepHandlers={stepHandlers}
       configOverrides={configOverrides}
     />
@@ -99,23 +103,22 @@ export function OnboardingTrigger<TTarget extends string = string>({
 
 interface OnboardingTourRunnerProps<TTarget extends string> {
   flow: OnboardingFlow;
+  mode: OnboardingSequenceMode;
   stepHandlers?: { [K in TTarget]?: TourStepHandlers<TTarget> };
   configOverrides?: Partial<Config>;
 }
 
 function OnboardingTourRunner<TTarget extends string>({
   flow,
+  mode,
   stepHandlers,
   configOverrides,
 }: OnboardingTourRunnerProps<TTarget>) {
   // The trigger only STARTS the current flow's tour on arrival. It no longer
   // owns sequence advance/exit: closing a tour in sequence mode leaves the
   // slice untouched, and the persistent OnboardingSequenceBanner is the single
-  // control for Continue (advance + navigate) and Exit (stop). This prevents
-  // the old auto-advance that jumped to empty pages before a scan completed.
-  // The `onClosed` handler is intentionally inert for BOTH replay and sequence
-  // modes: the tour just shows on arrival, and the banner owns what happens
-  // next.
+  // control for Continue (advance + navigate) and Exit (stop). The `onClosed`
+  // handler is intentionally inert for BOTH replay and sequence modes.
   const { start } = useDriverTour(flow.tour, {
     autoOpen: false,
     stepHandlers,
@@ -126,21 +129,19 @@ function OnboardingTourRunner<TTarget extends string>({
     },
   });
 
-  // Force-start once per mount. This bypasses the `hasCompleted` short-circuit
-  // so re-trigger works even with an existing completion record.
-  //
-  // The empty dependency array is intentional (NOT `[start]`): `start` gets a
-  // new identity every render and always reads the latest `driverRef.current`,
-  // so a single call on mount is correct. A `hasStartedRef` guard must NOT be
-  // used here: under React StrictMode (dev) the effect runs setup → cleanup →
-  // setup; the first setup starts the tour, the cleanup destroys it, and a ref
-  // guard would then skip the re-start on the second setup, leaving no visible
-  // tour. Mounting a fresh runner per re-trigger (via the parent `key`) already
-  // guarantees one start per intentional trigger.
-  useEffect(() => {
+  // Mount-time side effects via the project-approved named wrapper (NOT a raw
+  // `useEffect([])`): force-start the tour once, and for a replay strip the
+  // `?onboarding` param via the History API so a hard reload does not re-launch
+  // it. `replaceState` (not router.replace) avoids a `useSearchParams`
+  // re-trigger / server round-trip, so the latched runner stays mounted.
+  // Mounting a fresh runner per re-trigger (parent `key`) already guarantees
+  // exactly one start per intentional trigger, including under React StrictMode.
+  useMountEffect(() => {
     start();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (mode === "replay") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
 
   return null;
 }

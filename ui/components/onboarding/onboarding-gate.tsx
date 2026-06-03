@@ -1,15 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import {
-  getOrderedFlows,
-  type OnboardingFlow,
-  shouldStartOnboarding,
-} from "@/lib/onboarding";
+import { getOrderedFlows, shouldStartOnboarding } from "@/lib/onboarding";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 import { TOUR_COMPLETION_STATES } from "@/lib/tours/tour-types";
+import { useTourCompletion } from "@/lib/tours/use-tour-completion";
 import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 
 import { OnboardingWelcomeModal } from "./onboarding-welcome-modal";
@@ -22,40 +19,37 @@ interface OnboardingGateProps {
   hasProviders?: boolean;
 }
 
-// Mandatory new-user gate. Mounted once in the (prowler) layout. Reads the
-// already-hydrated `hasProviders` signal plus the per-tour localStorage record
-// to decide whether to force a new user into the Welcome modal. All decision
-// logic runs inside `useEffect` (client-only) so the server renders nothing and
-// there is no hydration mismatch.
+// Mandatory new-user gate. Mounted once in the (prowler) layout. The decision is
+// DERIVED during render from the `hasProviders` signal plus the gate flow's
+// completion record (read SSR-safely via `useTourCompletion`/useSyncExternalStore,
+// so the server renders nothing and there is no hydration mismatch — no effect).
 export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
   const router = useRouter();
-  const [activeFlow, setActiveFlow] = useState<OnboardingFlow | null>(null);
 
-  useEffect(() => {
-    // The mandatory gate ONLY ever forces the FIRST ordered flow (the new-user
-    // entry point, `add-provider`). The remaining sequence flows
-    // (view-first-scan, explore-findings, view-compliance, ...) are reached via
-    // the post-connect checkpoint and the avatar replay list — never the gate.
-    // Walking to the "first INCOMPLETE flow" would wrongly surface a later
-    // flow's modal once add-provider is dismissed but its successors have no
-    // record yet, so the gate is scoped to the first ordered flow alone.
-    const flow = getOrderedFlows()[0];
-    if (!flow) {
-      setActiveFlow(null);
-      return;
-    }
+  // The mandatory gate ONLY ever forces the FIRST ordered flow (the new-user
+  // entry point, `add-provider`). The remaining sequence flows are reached via
+  // the post-connect checkpoint and the avatar replay list — never the gate.
+  const flow = getOrderedFlows()[0] ?? null;
 
-    // `shouldStartOnboarding` receives the RAW (possibly `undefined`)
-    // `hasProviders` and applies the strict `=== false` fail-open guard, so an
-    // ambiguous provider state never forces the modal. A completion/dismissal
-    // record for the gate flow also keeps the gate silent.
-    const completionRecord = localStorageAdapter.get(flow.tour);
-    if (shouldStartOnboarding({ hasProviders, completionRecord })) {
-      setActiveFlow(flow);
-    } else {
-      setActiveFlow(null);
-    }
-  }, [hasProviders]);
+  // `useTourCompletion` returns `null` on the server and first client render, so
+  // the gate stays closed until the record resolves client-side without an
+  // effect or a hydration mismatch.
+  const completionRecord = useTourCompletion(flow?.tour ?? null);
+
+  // Session-local resolution: once the user accepts or dismisses, the gate
+  // closes for this mount via the handler below — no effect re-deriving state.
+  const [resolvedThisSession, setResolvedThisSession] = useState(false);
+
+  // `shouldStartOnboarding` receives the RAW (possibly `undefined`)
+  // `hasProviders` and applies the strict `=== false` fail-open guard, so an
+  // ambiguous provider state never forces the modal. A completion/dismissal
+  // record keeps the gate silent.
+  const activeFlow =
+    flow &&
+    !resolvedThisSession &&
+    shouldStartOnboarding({ hasProviders, completionRecord })
+      ? flow
+      : null;
 
   if (!activeFlow) return null;
 
@@ -68,12 +62,13 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
     // Hand off via the URL; the providers page's trigger starts the tour. No
     // record is written here — completion is persisted only when the tour
     // finishes or is skipped.
-    setActiveFlow(null);
+    setResolvedThisSession(true);
     router.push(`${activeFlow.route}?onboarding=${activeFlow.id}`);
   };
 
   const handleDismiss = () => {
-    // Persist a dismissal so the gate stops re-prompting in this browser.
+    // Persist a dismissal so the gate stops re-prompting in this browser, and
+    // resolve the session so the modal closes immediately.
     localStorageAdapter.set(
       { id: activeFlow.tour.id, version: activeFlow.tour.version },
       {
@@ -83,7 +78,7 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
         completedAt: new Date().toISOString(),
       },
     );
-    setActiveFlow(null);
+    setResolvedThisSession(true);
   };
 
   return (
