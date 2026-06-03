@@ -18,6 +18,7 @@ import {
 import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
+
 import { ComplianceDownloadContainer } from "./compliance-download-container";
 
 interface ComplianceCardProps {

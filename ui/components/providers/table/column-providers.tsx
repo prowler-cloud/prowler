@@ -27,6 +27,7 @@ import {
 } from "@/types/providers-table";
 
 import { LinkToScans } from "../link-to-scans";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 interface GroupNameChipsProps {

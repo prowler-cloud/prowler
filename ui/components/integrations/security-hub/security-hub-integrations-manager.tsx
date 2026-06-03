@@ -15,7 +15,13 @@ import {
   IntegrationCardHeader,
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
-import { Badge, Button } from "@/components/shadcn";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
@@ -24,7 +30,6 @@ import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
-import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SecurityHubIntegrationForm } from "./security-hub-integration-form";
 
 interface SecurityHubIntegrationsManagerProps {

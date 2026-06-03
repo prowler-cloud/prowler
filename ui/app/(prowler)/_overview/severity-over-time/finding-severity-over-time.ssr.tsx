@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
+
 import { FindingSeverityOverTime } from "./_components/finding-severity-over-time";
 import { FindingSeverityOverTimeSkeleton } from "./_components/finding-severity-over-time.skeleton";
 import { DEFAULT_TIME_RANGE } from "./_constants/time-range.constants";

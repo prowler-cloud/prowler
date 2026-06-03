@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.30.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- ESLint: typed flat config with `typescript-eslint` (type-aware via `projectService`) and `eslint-plugin-import-x`, replacing `eslint-plugin-prettier`, `eslint-plugin-simple-import-sort`, and `eslint-plugin-unused-imports` [(#11352)](https://github.com/prowler-cloud/prowler/pull/11352)
+
+---
+
 ## [1.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added

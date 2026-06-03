@@ -1,22 +1,15 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import tsPlugin from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
-import prettierPlugin from "eslint-plugin-prettier";
-import simpleImportSort from "eslint-plugin-simple-import-sort";
-import jsxA11y from "eslint-plugin-jsx-a11y";
-import security from "eslint-plugin-security";
-import unusedImports from "eslint-plugin-unused-imports";
 import nextPlugin from "@next/eslint-plugin-next";
+import prettierConfig from "eslint-config-prettier/flat";
+import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
+import importX, { createNodeResolver } from "eslint-plugin-import-x";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
+import security from "eslint-plugin-security";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-export default [
-  // Global ignores (replaces .eslintignore)
+export default tseslint.config(
   {
     ignores: [
       ".now/**",
@@ -29,6 +22,7 @@ export default [
       "scripts/**",
       "*.config.js",
       "*.config.mjs",
+      "*.config.ts",
       ".DS_Store",
       "node_modules/**",
       "coverage/**",
@@ -37,27 +31,33 @@ export default [
       "next-env.d.ts",
     ],
   },
-
-  // TypeScript and React files configuration
+  importX.flatConfigs.recommended,
+  importX.flatConfigs.typescript,
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
     linterOptions: {
       reportUnusedDisableDirectives: "error",
     },
     plugins: {
-      "@typescript-eslint": tsPlugin,
+      "@typescript-eslint": tseslint.plugin,
       "@next/next": nextPlugin,
       react: reactPlugin,
       "react-hooks": reactHooksPlugin,
-      prettier: prettierPlugin,
-      "simple-import-sort": simpleImportSort,
       "jsx-a11y": jsxA11y,
-      security: security,
-      "unused-imports": unusedImports,
+      security,
     },
     languageOptions: {
-      parser: tsParser,
+      parser: tseslint.parser,
       parserOptions: {
+        projectService: {
+          allowDefaultProject: [
+            // Duplicate of events-timeline.test.ts in the same folder;
+            // TypeScript only picks the .ts sibling, so this .tsx file is
+            // outside the project graph. Tracked for follow-up cleanup.
+            "components/shared/events-timeline/events-timeline.test.tsx",
+          ],
+        },
+        tsconfigRootDir: import.meta.dirname,
         ecmaVersion: "latest",
         sourceType: "module",
         ecmaFeatures: {
@@ -75,14 +75,19 @@ export default [
       react: {
         version: "detect",
       },
+      "import-x/resolver-next": [
+        createTypeScriptImportResolver({
+          alwaysTryTypes: true,
+          project: "./tsconfig.json",
+        }),
+        createNodeResolver(),
+      ],
     },
     rules: {
-      // Console rules - allow console.error but no console.log
       "no-console": ["error", { allow: ["error"] }],
-      eqeqeq: 2,
-      quotes: ["error", "double", "avoid-escape"],
+      eqeqeq: "error",
+      quotes: ["error", "double", { avoidEscape: true }],
 
-      // TypeScript rules
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -93,28 +98,30 @@ export default [
         },
       ],
 
-      // Security
       "security/detect-object-injection": "off",
 
-      // Prettier integration
-      "prettier/prettier": [
-        "error",
-        {
-          endOfLine: "auto",
-          tabWidth: 2,
-          useTabs: false,
-        },
-      ],
       "eol-last": ["error", "always"],
 
-      // Import sorting
-      "simple-import-sort/imports": "error",
-      "simple-import-sort/exports": "error",
+      "import-x/order": [
+        "error",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+          ],
+          "newlines-between": "always",
+          alphabetize: { order: "asc", caseInsensitive: true },
+        },
+      ],
+      // Pre-existing duplicate exports and re-export shape mismatches are
+      // tracked separately; the migration keeps behavior parity with the
+      // legacy config until the rule is enforced in the canonical Base layer.
+      "import-x/export": "off",
 
-      // Unused imports
-      "unused-imports/no-unused-imports": "error",
-
-      // Accessibility
       "jsx-a11y/anchor-is-valid": [
         "error",
         {
@@ -125,14 +132,13 @@ export default [
       ],
       "jsx-a11y/alt-text": "error",
 
-      // React Hooks
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
 
-      // Next.js specific rules
       "@next/next/no-html-link-for-pages": "error",
       "@next/next/no-img-element": "warn",
       "@next/next/no-sync-scripts": "error",
     },
   },
-];
+  prettierConfig,
+);

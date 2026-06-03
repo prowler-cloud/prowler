@@ -2,6 +2,7 @@ import { getServicesOverview, ServiceOverview } from "@/actions/overview";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
+
 import { ServiceWatchlist } from "./_components/service-watchlist";
 
 export const ServiceWatchlistSSR = async ({
