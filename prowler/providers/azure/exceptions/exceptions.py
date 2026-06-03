@@ -102,6 +102,11 @@ class AzureBaseException(ProwlerException):
             "message": "The provided provider_id does not match with the available subscriptions",
             "remediation": "Check the provider_id and ensure it is a valid subscription for the given credentials.",
         },
+        (2024, "AzureOIDCTokenMissingError"): {
+            "message": "Azure OIDC token missing",
+            "remediation": "Set the AZURE_FEDERATED_TOKEN or AZURE_OIDC_TOKEN environment variable with a valid OIDC JWT token. "
+            "Also ensure AZURE_CLIENT_ID and AZURE_TENANT_ID are set.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -290,4 +295,11 @@ class AzureInvalidProviderIdError(AzureBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             2023, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureOIDCTokenMissingError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            2024, file=file, original_exception=original_exception, message=message
         )

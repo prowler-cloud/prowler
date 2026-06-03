@@ -19,6 +19,7 @@ from prowler.providers.azure.exceptions.exceptions import (
     AzureHTTPResponseError,
     AzureInvalidProviderIdError,
     AzureNoAuthenticationMethodError,
+    AzureOIDCTokenMissingError,
     AzureTenantIDNoBrowserAuthError,
 )
 from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
@@ -158,7 +159,7 @@ class TestAzureProvider:
                 )
             assert exception.type == AzureNoAuthenticationMethodError
             assert (
-                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth | --oidc-auth]"
                 in exception.value.args[0]
             )
 
@@ -475,7 +476,7 @@ class TestAzureProvider:
 
         assert exception.type == AzureNoAuthenticationMethodError
         assert (
-            "[2003] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            "[2003] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth | --oidc-auth]"
             in exception.value.args[0]
         )
 
@@ -624,6 +625,7 @@ class TestAzureProviderSetupIdentitySubscriptions:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                oidc_auth=False,
                 subscription_ids=[],
                 client_id=None,
             )
@@ -656,6 +658,7 @@ class TestAzureProviderSetupIdentitySubscriptions:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                oidc_auth=False,
                 subscription_ids=[],
                 client_id=None,
             )
@@ -685,6 +688,7 @@ class TestAzureProviderSetupIdentitySubscriptions:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                oidc_auth=False,
                 subscription_ids=[first_id, second_id],
                 client_id=None,
             )
@@ -715,6 +719,7 @@ class TestAzureProviderSetupIdentitySubscriptions:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                oidc_auth=False,
                 subscription_ids=[first_id, second_id],
                 client_id=None,
             )
@@ -1092,6 +1097,7 @@ class TestAzureProviderSetupIdentityEventLoop:
                     sp_env_auth=True,
                     browser_auth=False,
                     managed_identity_auth=False,
+                    oidc_auth=False,
                     subscription_ids=[],
                     client_id="00000000-0000-0000-0000-000000000000",
                 )
@@ -1102,3 +1108,178 @@ class TestAzureProviderSetupIdentityEventLoop:
         assert isinstance(identity, AzureIdentityInfo)
         assert identity.subscriptions == {sub_id: "Sub"}
         graph_client.domains.get.assert_awaited_once()
+
+
+class TestAzureProviderOIDCAuth:
+    """Tests for OIDC/Workload Identity Federation authentication (Issue #11386)."""
+
+    def test_check_oidc_creds_env_vars_missing_client_id(self):
+        """check_oidc_creds_env_vars raises AzureOIDCTokenMissingError when AZURE_CLIENT_ID is missing."""
+        with patch.dict(
+            "os.environ",
+            {
+                "AZURE_TENANT_ID": "test-tenant-id",
+                "AZURE_FEDERATED_TOKEN": "test-token",
+            },
+            clear=True,
+        ):
+            with pytest.raises(AzureOIDCTokenMissingError) as exc_info:
+                AzureProvider.check_oidc_creds_env_vars()
+            assert "AZURE_CLIENT_ID" in exc_info.value.args[0]
+
+    def test_check_oidc_creds_env_vars_missing_tenant_id(self):
+        """check_oidc_creds_env_vars raises AzureOIDCTokenMissingError when AZURE_TENANT_ID is missing."""
+        with patch.dict(
+            "os.environ",
+            {
+                "AZURE_CLIENT_ID": "test-client-id",
+                "AZURE_FEDERATED_TOKEN": "test-token",
+            },
+            clear=True,
+        ):
+            with pytest.raises(AzureOIDCTokenMissingError) as exc_info:
+                AzureProvider.check_oidc_creds_env_vars()
+            assert "AZURE_TENANT_ID" in exc_info.value.args[0]
+
+    def test_check_oidc_creds_env_vars_missing_token(self):
+        """check_oidc_creds_env_vars raises AzureOIDCTokenMissingError when both token env vars are missing."""
+        with patch.dict(
+            "os.environ",
+            {
+                "AZURE_CLIENT_ID": "test-client-id",
+                "AZURE_TENANT_ID": "test-tenant-id",
+            },
+            clear=True,
+        ):
+            with pytest.raises(AzureOIDCTokenMissingError) as exc_info:
+                AzureProvider.check_oidc_creds_env_vars()
+            assert "AZURE_FEDERATED_TOKEN" in exc_info.value.args[0]
+
+    def test_check_oidc_creds_env_vars_with_oidc_token_fallback(self):
+        """check_oidc_creds_env_vars passes when AZURE_OIDC_TOKEN is set (fallback)."""
+        with patch.dict(
+            "os.environ",
+            {
+                "AZURE_CLIENT_ID": "test-client-id",
+                "AZURE_TENANT_ID": "test-tenant-id",
+                "AZURE_OIDC_TOKEN": "test-oidc-token",
+            },
+            clear=True,
+        ):
+            # Should not raise
+            AzureProvider.check_oidc_creds_env_vars()
+
+    def test_check_oidc_creds_env_vars_success(self):
+        """check_oidc_creds_env_vars passes when all required env vars are present."""
+        with patch.dict(
+            "os.environ",
+            {
+                "AZURE_CLIENT_ID": "test-client-id",
+                "AZURE_TENANT_ID": "test-tenant-id",
+                "AZURE_FEDERATED_TOKEN": "eyJhbGciOiJSUzI1NiJ9.test.token",
+            },
+            clear=True,
+        ):
+            # Should not raise
+            AzureProvider.check_oidc_creds_env_vars()
+
+    def test_setup_session_oidc_auth_success(self):
+        """setup_session with oidc_auth=True returns a ClientAssertionCredential."""
+        from azure.identity import ClientAssertionCredential
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.check_oidc_creds_env_vars"
+            ),
+            patch.dict(
+                "os.environ",
+                {
+                    "AZURE_CLIENT_ID": "test-client-id",
+                    "AZURE_TENANT_ID": "test-tenant-id",
+                    "AZURE_FEDERATED_TOKEN": "eyJhbGciOiJSUzI1NiJ9.test.token",
+                },
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.ClientAssertionCredential"
+            ) as mock_client_assertion,
+        ):
+            mock_credential = MagicMock(spec=ClientAssertionCredential)
+            mock_client_assertion.return_value = mock_credential
+
+            region_config = AzureRegionConfig(
+                name="AzureCloud",
+                authority=None,
+                base_url="https://management.azure.com",
+                credential_scopes=["https://management.azure.com/.default"],
+            )
+
+            credentials = AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                oidc_auth=True,
+                tenant_id=None,
+                azure_credentials=None,
+                region_config=region_config,
+            )
+
+            mock_client_assertion.assert_called_once_with(
+                tenant_id="test-tenant-id",
+                client_id="test-client-id",
+                func=mock_client_assertion.call_args.kwargs["func"],
+            )
+            assert credentials is mock_credential
+
+    def test_setup_session_oidc_auth_missing_token_raises(self):
+        """setup_session with oidc_auth=True raises AzureOIDCTokenMissingError when token is missing."""
+        region_config = AzureRegionConfig(
+            name="AzureCloud",
+            authority=None,
+            base_url="https://management.azure.com",
+            credential_scopes=["https://management.azure.com/.default"],
+        )
+        with patch.dict(
+            "os.environ",
+            {
+                "AZURE_CLIENT_ID": "test-client-id",
+                "AZURE_TENANT_ID": "test-tenant-id",
+            },
+            clear=True,
+        ):
+            with pytest.raises(AzureOIDCTokenMissingError):
+                AzureProvider.setup_session(
+                    az_cli_auth=False,
+                    sp_env_auth=False,
+                    browser_auth=False,
+                    managed_identity_auth=False,
+                    oidc_auth=True,
+                    tenant_id=None,
+                    azure_credentials=None,
+                    region_config=region_config,
+                )
+
+    def test_test_connection_oidc_auth_success(self):
+        """test_connection with oidc_auth=True returns a successful Connection."""
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient"
+            ) as mock_resource_client,
+        ):
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            mock_client = MagicMock()
+            mock_resource_client.return_value = mock_client
+
+            test_connection = AzureProvider.test_connection(
+                oidc_auth=True,
+                raise_on_exception=False,
+            )
+
+            assert isinstance(test_connection, Connection)
+            assert test_connection.is_connected
+            assert test_connection.error is None

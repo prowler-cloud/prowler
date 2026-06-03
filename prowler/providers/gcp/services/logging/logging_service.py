@@ -12,6 +12,7 @@ class Logging(GCPService):
         self.sinks = []
         self.metrics = []
         self._get_sinks()
+        self._get_org_sinks()
         self._get_metrics()
 
     def _get_sinks(self):
@@ -28,6 +29,38 @@ class Logging(GCPService):
                                 destination=sink["destination"],
                                 filter=sink.get("filter", "all"),
                                 project_id=project_id,
+                            )
+                        )
+
+                    request = self.client.sinks().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_org_sinks(self):
+        """Fetch org-level sinks with includeChildren so child projects are not falsely failed."""
+        org_ids = set()
+        for project in self.projects.values():
+            if project.organization:
+                org_ids.add(project.organization.id)
+
+        for org_id in org_ids:
+            try:
+                request = self.client.sinks().list(parent=f"organizations/{org_id}")
+                while request is not None:
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+
+                    for sink in response.get("sinks", []):
+                        self.sinks.append(
+                            Sink(
+                                name=sink["name"],
+                                destination=sink["destination"],
+                                filter=sink.get("filter", "all"),
+                                project_id=f"organizations/{org_id}",
+                                include_children=sink.get("includeChildren", False),
                             )
                         )
 
@@ -76,6 +109,7 @@ class Sink(BaseModel):
     destination: str
     filter: str
     project_id: str
+    include_children: bool = False
 
 
 class Metric(BaseModel):
