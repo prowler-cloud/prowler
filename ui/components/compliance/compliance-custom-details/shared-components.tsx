@@ -47,10 +47,31 @@ type BadgeColor =
   | "red" // Risk/Level/Severity
   | "blue" // Assessment/Method
   | "orange" // Type/Category
+  | "yellow" // Severity (medium)
   | "green" // Weight/Score (positive)
   | "purple" // Profile
   | "indigo" // IDs/References
   | "gray"; // Additional Info/Neutral
+
+// Maps a severity level to a distinct badge color so each severity is visually
+// differentiated instead of all rendering as red.
+export const getSeverityBadgeColor = (severity: string): BadgeColor => {
+  switch (severity?.toLowerCase()) {
+    case "critical":
+      return "red";
+    case "high":
+      return "orange";
+    case "medium":
+      return "yellow";
+    case "low":
+      return "green";
+    case "informational":
+    case "info":
+      return "blue";
+    default:
+      return "gray";
+  }
+};
 
 export const ComplianceBadge = ({
   label,
@@ -70,6 +91,8 @@ export const ComplianceBadge = ({
     blue: "bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20",
     orange:
       "bg-orange-50 text-orange-700 ring-orange-600/10 dark:bg-orange-400/10 dark:text-orange-400 dark:ring-orange-400/20",
+    yellow:
+      "bg-yellow-50 text-yellow-700 ring-yellow-600/10 dark:bg-yellow-400/10 dark:text-yellow-400 dark:ring-yellow-400/20",
     green:
       "bg-green-50 text-green-700 ring-green-600/10 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/20",
     purple:

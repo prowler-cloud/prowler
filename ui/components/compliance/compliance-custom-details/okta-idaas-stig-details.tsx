@@ -7,6 +7,7 @@ import {
   ComplianceDetailContainer,
   ComplianceDetailSection,
   ComplianceDetailText,
+  getSeverityBadgeColor,
 } from "./shared-components";
 
 export const OktaIDaaSStigCustomDetails = ({
@@ -25,7 +26,11 @@ export const OktaIDaaSStigCustomDetails = ({
     <ComplianceDetailContainer>
       <ComplianceBadgeContainer>
         {severity && (
-          <ComplianceBadge label="Severity" value={severity} color="red" />
+          <ComplianceBadge
+            label="Severity"
+            value={severity}
+            color={getSeverityBadgeColor(severity)}
+          />
         )}
         {stigId && (
           <ComplianceBadge label="STIG ID" value={stigId} color="indigo" />
