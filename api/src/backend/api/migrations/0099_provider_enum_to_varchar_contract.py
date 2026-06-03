@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ("api", "0095_backfill_provider_str"),
+        ("api", "0098_backfill_provider_str"),
     ]
 
     operations = [
