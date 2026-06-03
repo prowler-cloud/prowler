@@ -90,10 +90,25 @@ describe("OnboardingFlow / OnboardingContext types", () => {
   });
 });
 
-describe("onboardingFlows", () => {
-  it("starts empty (the add-provider entry is registered in Slice B)", () => {
-    // Given / When / Then - the production registry ships empty in Slice A
-    expect(onboardingFlows).toEqual([]);
+describe("onboardingFlows (production registry)", () => {
+  it("registers the add-provider flow as the first onboarding flow", () => {
+    // Given / When - the production registry after Slice B registration
+    const addProvider = getFlowById("add-provider", onboardingFlows);
+
+    // Then - the entry exists with its declared contract
+    expect(addProvider).toBeDefined();
+    expect(addProvider?.order).toBe(1);
+    expect(addProvider?.route).toBe("/providers");
+    expect(addProvider?.tour.id).toBe("add-provider");
+  });
+
+  it("treats add-provider as complete when the context reports providers", () => {
+    // Given - the production add-provider flow's completion predicate
+    const addProvider = getFlowById("add-provider", onboardingFlows);
+
+    // Then - isComplete delegates to the server-derived hasProviders signal
+    expect(addProvider?.isComplete?.({ hasProviders: true })).toBe(true);
+    expect(addProvider?.isComplete?.({ hasProviders: false })).toBe(false);
   });
 });
 
