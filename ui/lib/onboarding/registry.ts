@@ -1,6 +1,9 @@
 import { addProviderTour } from "@/lib/tours/add-provider.tour";
+import { exploreFindingsTour } from "@/lib/tours/explore-findings.tour";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 import type { TourCompletionStore } from "@/lib/tours/store/tour-completion-store";
+import { viewComplianceTour } from "@/lib/tours/view-compliance.tour";
+import { viewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 
 import type { OnboardingContext, OnboardingFlow } from "./onboarding-types";
 
@@ -19,6 +22,31 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     // Server-derived authority: a user who already has providers is never
     // gated into this flow, even with no local completion record.
     isComplete: (ctx) => ctx.hasProviders,
+  },
+  {
+    id: "view-first-scan",
+    order: 2,
+    title: "Run your first scan",
+    description:
+      "Launch a scan and watch Prowler assess your connected provider.",
+    route: "/scans",
+    tour: viewFirstScanTour,
+  },
+  {
+    id: "explore-findings",
+    order: 3,
+    title: "Explore your findings",
+    description: "See what Prowler detected and how to fix it.",
+    route: "/findings",
+    tour: exploreFindingsTour,
+  },
+  {
+    id: "view-compliance",
+    order: 4,
+    title: "Check compliance",
+    description: "Map your findings to frameworks like CIS.",
+    route: "/compliance",
+    tour: viewComplianceTour,
   },
 ];
 

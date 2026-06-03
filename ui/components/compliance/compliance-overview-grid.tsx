@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
+import { OnboardingTrigger } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/ui/table/data-table-search";
+import { getFlowById } from "@/lib/onboarding";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { ScanEntity } from "@/types/scans";
+
+// Resolved once: the registry is static, so the flow this route owns never
+// changes at runtime.
+const viewComplianceFlow = getFlowById("view-compliance")!;
 
 interface ComplianceOverviewGridProps {
   frameworks: ComplianceOverviewData[];
@@ -35,17 +41,28 @@ export const ComplianceOverviewGrid = ({
 
   return (
     <>
+      {/* Renders null; reads the sequence slice + ?onboarding param and force-
+          starts the view-compliance tour. Suspense satisfies the App Router
+          requirement around `useSearchParams`. */}
+      <Suspense fallback={null}>
+        <OnboardingTrigger flow={viewComplianceFlow} />
+      </Suspense>
       <div className="flex items-center justify-between gap-4">
-        <DataTableSearch
-          controlledValue={searchTerm}
-          onSearchChange={setSearchTerm}
-          placeholder="Search frameworks..."
-        />
+        <div data-tour-id="view-compliance-search">
+          <DataTableSearch
+            controlledValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            placeholder="Search frameworks..."
+          />
+        </div>
         <span className="text-text-neutral-secondary shrink-0 text-sm">
           {filteredFrameworks.length.toLocaleString()} Total Entries
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      <div
+        data-tour-id="view-compliance-frameworks"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
+      >
         {filteredFrameworks.map((compliance) => {
           const { attributes, id } = compliance;
           const {

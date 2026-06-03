@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import {
-  getFirstIncompleteFlow,
+  getOrderedFlows,
   type OnboardingFlow,
   shouldStartOnboarding,
 } from "@/lib/onboarding";
@@ -31,22 +31,23 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
   const [activeFlow, setActiveFlow] = useState<OnboardingFlow | null>(null);
 
   useEffect(() => {
-    // Select the first flow that is incomplete by account state and has no
-    // browser record. `OnboardingContext.hasProviders` is a strict boolean, so
-    // an unknown signal collapses to `false` here (`?? false`) for SELECTION
-    // ONLY — a flow is still picked. `getFirstIncompleteFlow` is NOT the final
-    // authority: `shouldStartOnboarding` below receives the RAW (possibly
-    // `undefined`) value and applies the strict `=== false` fail-open guard, so
-    // an ambiguous provider state never forces the modal.
-    const flow = getFirstIncompleteFlow(
-      { hasProviders: hasProviders ?? false },
-      localStorageAdapter,
-    );
+    // The mandatory gate ONLY ever forces the FIRST ordered flow (the new-user
+    // entry point, `add-provider`). The remaining sequence flows
+    // (view-first-scan, explore-findings, view-compliance, ...) are reached via
+    // the post-connect checkpoint and the avatar replay list — never the gate.
+    // Walking to the "first INCOMPLETE flow" would wrongly surface a later
+    // flow's modal once add-provider is dismissed but its successors have no
+    // record yet, so the gate is scoped to the first ordered flow alone.
+    const flow = getOrderedFlows()[0];
     if (!flow) {
       setActiveFlow(null);
       return;
     }
 
+    // `shouldStartOnboarding` receives the RAW (possibly `undefined`)
+    // `hasProviders` and applies the strict `=== false` fail-open guard, so an
+    // ambiguous provider state never forces the modal. A completion/dismissal
+    // record for the gate flow also keeps the gate silent.
     const completionRecord = localStorageAdapter.get(flow.tour);
     if (shouldStartOnboarding({ hasProviders, completionRecord })) {
       setActiveFlow(flow);
