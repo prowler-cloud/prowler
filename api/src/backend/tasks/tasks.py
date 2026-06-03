@@ -68,7 +68,10 @@ from tasks.utils import (
     get_next_execution_datetime,
 )
 
-from api.compliance import get_compliance_frameworks
+from api.compliance import (
+    get_compliance_frameworks,
+    get_prowler_provider_compliance,
+)
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import delete_related_daily_task, rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
@@ -76,6 +79,9 @@ from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateC
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.compliance import (
+    process_universal_compliance_frameworks,
+)
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
@@ -543,7 +549,16 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     provider_uid = provider_obj.uid
     provider_type = provider_obj.provider
 
+    # Per-framework exporters in `COMPLIANCE_CLASS_MAP` consume the legacy bulk.
     frameworks_bulk = Compliance.get_bulk(provider_type)
+    # Universal-only frameworks (top-level JSONs like `dora.json`) are emitted
+    # via `process_universal_compliance_frameworks` below.
+    universal_bulk = get_prowler_provider_compliance(provider_type)
+    universal_only_names = {
+        name
+        for name in universal_bulk
+        if name not in frameworks_bulk and universal_bulk[name].outputs
+    }
     frameworks_avail = get_compliance_frameworks(provider_type)
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
@@ -568,6 +583,10 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     output_writers = {}
     compliance_writers = {}
+    # Shared across batches so universal writers are created once and reused.
+    universal_compliance_state: dict[str, list] = {"compliance": []}
+    universal_base_dir = os.path.dirname(out_dir)
+    universal_output_filename = os.path.basename(out_dir)
 
     scan_summary = FindingOutput._transform_findings_stats(
         ScanSummary.objects.filter(scan_id=scan_id)
@@ -622,8 +641,30 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 writer.batch_write_data_to_file(**extra)
                 writer._data.clear()
 
-            # Compliance CSVs
+            # Universal-only frameworks (e.g. `dora.json`).
+            if universal_only_names:
+                process_universal_compliance_frameworks(
+                    input_compliance_frameworks=universal_only_names,
+                    universal_frameworks=universal_bulk,
+                    finding_outputs=fos,
+                    output_directory=universal_base_dir,
+                    output_filename=universal_output_filename,
+                    provider=provider_type,
+                    generated_outputs=universal_compliance_state,
+                    from_cli=False,
+                    is_last=is_last,
+                )
+
+            # Compliance CSVs (per-framework exporters).
             for name in frameworks_avail:
+                if name in universal_only_names:
+                    continue
+                if name not in frameworks_bulk:
+                    logger.warning(
+                        "Compliance framework '%s' missing from bulk; skipping CSV export",
+                        name,
+                    )
+                    continue
                 compliance_obj = frameworks_bulk[name]
 
                 klass = GenericCompliance
