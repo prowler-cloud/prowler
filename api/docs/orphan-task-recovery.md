@@ -26,12 +26,10 @@ see a stuck scan and pending-task alerts do not fire.
 
    The re-run is safe because only tasks with proven idempotency are allowlisted.
    Scan persistence, for example, clears the scan's prior findings and materialized
-   summary/compliance rows before re-writing them. Jira sends are allowlisted too:
-   each finding is reserved in a dispatch table before the external call, so a re-run
-   skips already-ticketed findings (the worst case is one finding missed if a worker
-   is hard-killed mid-send, never a duplicate issue). Other external side effects stay
-   terminal: the S3 upload rebuilds from worker-local files that do not survive a
-   crash, and report/Security Hub recovery is out of scope.
+   summary/compliance rows before re-writing them. External side effects stay
+   terminal: Jira sends would create duplicate issues, the S3 upload rebuilds from
+   worker-local files that do not survive a crash, and report/Security Hub recovery is
+   out of scope.
 
 3. **Recovery cap.** Each automatic re-enqueue increments `Scan.recovery_count`.
    After `--max-attempts` recoveries (default 3) the scan is marked `FAILED` instead

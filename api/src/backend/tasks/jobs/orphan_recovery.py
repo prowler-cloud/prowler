@@ -43,12 +43,10 @@ IN_FLIGHT_STATES = (states.STARTED, states.RECEIVED)
 _SCAN_TASKS = ("scan-perform", "scan-perform-scheduled")
 
 # Tasks with proven idempotency are auto re-enqueued. Scans/summaries clear and
-# rewrite their own rows. integration-jira is safe too: each finding is reserved in
-# JiraIssueDispatch before the external call, so a re-run skips already-ticketed
-# findings (worst case one finding missed on a mid-send crash, never a duplicate).
-# Other external side effects stay terminal: integration-s3 rebuilds its upload from
-# worker-local files that do not survive a crash, and report/Security Hub recovery is
-# out of scope.
+# rewrite their own rows. Tasks with external side effects stay terminal instead of
+# being re-run: integration-jira would create duplicate issues, integration-s3
+# rebuilds its upload from worker-local files that do not survive a crash, and
+# report/Security Hub recovery is out of scope.
 REENQUEUEABLE_TASKS = {
     *_SCAN_TASKS,
     "provider-deletion",
@@ -59,7 +57,6 @@ REENQUEUEABLE_TASKS = {
     "scan-daily-severity",
     "scan-finding-group-summaries",
     "scan-reset-ephemeral-resources",
-    "integration-jira",
 }
 
 # Tasks excluded from generic recovery: attack-paths scans are handled by their own

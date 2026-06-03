@@ -130,9 +130,9 @@ class TestReconcileTaskResults:
         assert tr.task_id in result["failed"]
         mock_task.apply_async.assert_not_called()
 
-    def test_jira_integration_task_is_reenqueued(self, tenants_fixture):
-        """integration-jira is re-enqueued: its JiraIssueDispatch reservation makes a
-        re-run skip already-ticketed findings, so recovery cannot duplicate issues."""
+    def test_jira_integration_task_is_not_reenqueued(self, tenants_fixture):
+        """integration-jira stays terminal: re-running it would create duplicate Jira
+        issues, so an orphaned send is failed instead of re-enqueued."""
         tenant = tenants_fixture[0]
         kwargs = {
             "tenant_id": str(tenant.id),
@@ -158,13 +158,10 @@ class TestReconcileTaskResults:
                 grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
             )
 
-        assert tr.task_id in result["recovered"]
+        assert tr.task_id in result["failed"]
         tr.refresh_from_db()
         assert tr.status == states.REVOKED  # stale result cleared (no pending alert)
-        mock_task.apply_async.assert_called_once()
-        call = mock_task.apply_async.call_args.kwargs
-        assert call["kwargs"] == kwargs
-        assert call["task_id"] != tr.task_id  # fresh task id
+        mock_task.apply_async.assert_not_called()
 
     def test_skips_live_worker(self, tenants_fixture):
         tr = _orphan_result(
