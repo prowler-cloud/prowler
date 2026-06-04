@@ -1,0 +1,36 @@
+{
+  "Provider": "okta",
+  "CheckID": "authenticator_smart_card_active",
+  "CheckTitle": "Okta Smart Card authenticator is active",
+  "CheckType": [],
+  "ServiceName": "authenticator",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Prowler evaluates whether the Smart Card IdP authenticator is configured and active for certificate-based authentication scenarios required by policy.",
+  "Risk": "When Smart Card authentication is unavailable, users may be unable to satisfy certificate-based authentication requirements where they are mandated.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/authenticator"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Security > Authenticators: add or activate the Smart Card IdP authenticator.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review Okta Authenticators and configure or activate the Smart Card IdP authenticator where certificate-based authentication is required.",
+      "Url": "https://hub.prowler.com/check/authenticator_smart_card_active"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "apitoken_restricted_to_network_zone",
+  "CheckTitle": "Okta API tokens are restricted to known Network Zones",
+  "CheckType": [],
+  "ServiceName": "apitoken",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Prowler evaluates whether visible Okta API tokens are constrained to known Network Zones rather than being usable from Any IP.",
+  "Risk": "When an API token can be used from Any IP or references unknown Network Zones, an exposed token may be replayed from attacker-controlled infrastructure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developer.okta.com/docs/reference/api/api-tokens/",
+    "https://help.okta.com/oie/en-us/content/topics/security/api.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Security > API > Tokens: edit each token Security section and select specific Network Zones instead of Any IP.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review each Okta API token and restrict it to one or more known IP-based Network Zones instead of Any IP.",
+      "Url": "https://hub.prowler.com/check/apitoken_restricted_to_network_zone"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

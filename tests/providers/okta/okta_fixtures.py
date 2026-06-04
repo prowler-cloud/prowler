@@ -11,12 +11,24 @@ def set_mocked_okta_provider(
     session: OktaSession = None,
     identity: OktaIdentityInfo = None,
     audit_config: dict = None,
+    scopes: list[str] = None,
 ):
     if session is None:
         session = OktaSession(
             org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
-            scopes=["okta.policies.read", "okta.brands.read"],
+            scopes=(
+                scopes
+                if scopes is not None
+                else [
+                    "okta.policies.read",
+                    "okta.brands.read",
+                    "okta.networkZones.read",
+                    "okta.apiTokens.read",
+                    "okta.roles.read",
+                    "okta.authenticators.read",
+                ]
+            ),
             private_key=OKTA_PRIVATE_KEY,
         )
     if identity is None:

@@ -32,3 +32,8 @@ class OktaService:
     def _run(coro):
         """Run an okta-sdk-python coroutine from synchronous code."""
         return asyncio.run(coro)
+
+    def _missing_scopes(self, required_scopes: list[str]) -> list[str]:
+        """Return required OAuth scopes not granted to the Okta service app."""
+        granted_scopes = set(getattr(self.provider.session, "scopes", []) or [])
+        return [scope for scope in required_scopes if scope not in granted_scopes]
