@@ -2,17 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [5.30.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
-- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
-
----
-
 ## [5.29.3] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
@@ -21,7 +10,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> bcd282d3d (fix(gcp): honour org-level aggregated sinks in logging_sink_created check (#11355))
 ## [5.29.1] (Prowler v5.29.1)
 
 ### 🐞 Fixed
