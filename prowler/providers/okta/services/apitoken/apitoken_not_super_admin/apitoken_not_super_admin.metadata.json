@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckType": [],
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developer.okta.com/docs/guides/api-security/",
+    "https://developer.okta.com/docs/reference/api/roles/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Create a dedicated service account, assign only required admin roles, rotate the API token, and revoke Super Admin-owned tokens.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create API tokens with dedicated service accounts assigned least-privilege admin roles instead of Super Admin.",
+      "Url": "https://hub.prowler.com/check/apitoken_not_super_admin"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "CheckID": "apitoken_not_super_admin",
+  "CheckTitle": "Okta API tokens are not owned by Super Admin users",
+  "ServiceName": "apitoken",
+  "Description": "Okta API tokens inherit the admin permissions of the user that created them, so token owners should not hold the Super Admin role.",
+  "Risk": "A compromised API token owned by a Super Admin grants broad organization administration capability."
+}
