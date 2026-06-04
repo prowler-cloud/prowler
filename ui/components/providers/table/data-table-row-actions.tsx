@@ -1,16 +1,23 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { KeyRound, Pencil, Rocket, Trash2 } from "lucide-react";
+import { CalendarClock, KeyRound, Pencil, Rocket, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
+import { getSchedule } from "@/actions/schedules";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
+import {
+  EDIT_SCAN_SCHEDULE_STATE,
+  EditScanScheduleModal,
+  type EditScanScheduleState,
+  type ScanScheduleProvider,
+} from "@/components/scans/schedule/edit-scan-schedule-modal";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
@@ -29,6 +36,7 @@ import {
   ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import type { ScheduleApiResponse } from "@/types/schedules";
 
 import { DeleteForm } from "../forms/delete-form";
 import { DeleteOrganizationForm } from "../forms/delete-organization-form";
@@ -202,6 +210,10 @@ export function DataTableRowActions({
   onOpenOrganizationWizard,
 }: DataTableRowActionsProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [scheduleState, setScheduleState] = useState<EditScanScheduleState>({
+    kind: EDIT_SCAN_SCHEDULE_STATE.LOADING,
+  });
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -215,6 +227,14 @@ export function DataTableRowActions({
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
+  const scheduleProvider: ScanScheduleProvider | undefined = provider
+    ? {
+        providerId,
+        providerType,
+        providerUid,
+        providerAlias,
+      }
+    : undefined;
 
   const orgGroupKind = isOrganizationRow ? rowData.groupKind : null;
   const childTestableIds = isOrganizationRow
@@ -281,6 +301,40 @@ export function DataTableRowActions({
 
   const handleTestChildConnections = async () => {
     await handleBulkTest(childTestableIds);
+  };
+
+  const openScheduleEditor = async () => {
+    if (!providerId) {
+      setScheduleState({
+        kind: EDIT_SCAN_SCHEDULE_STATE.ERROR,
+        message: "Provider ID is not available.",
+      });
+      setIsScheduleOpen(true);
+      return;
+    }
+
+    setScheduleState({ kind: EDIT_SCAN_SCHEDULE_STATE.LOADING });
+    setIsScheduleOpen(true);
+
+    const response = (await getSchedule(providerId)) as
+      | ScheduleApiResponse
+      | { error?: string };
+
+    if (!response || ("error" in response && response.error)) {
+      setScheduleState({
+        kind: EDIT_SCAN_SCHEDULE_STATE.ERROR,
+        message:
+          response && "error" in response && response.error
+            ? response.error
+            : "Failed to load scan schedule.",
+      });
+      return;
+    }
+
+    setScheduleState({
+      kind: EDIT_SCAN_SCHEDULE_STATE.LOADED,
+      schedule: "data" in response ? response.data : null,
+    });
   };
 
   // When this row is part of the selection, only show "Test Connection"
@@ -364,12 +418,23 @@ export function DataTableRowActions({
           <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
         )}
       </Modal>
+      <EditScanScheduleModal
+        open={isScheduleOpen}
+        onOpenChange={setIsScheduleOpen}
+        provider={scheduleProvider}
+        state={scheduleState}
+      />
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit Provider Alias"
             onSelect={() => setIsEditOpen(true)}
+          />
+          <ActionDropdownItem
+            icon={<CalendarClock />}
+            label="Edit Scan Schedule"
+            onSelect={() => void openScheduleEditor()}
           />
           <ActionDropdownItem
             icon={<KeyRound />}

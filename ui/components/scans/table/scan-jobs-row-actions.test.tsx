@@ -1,19 +1,24 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ScanProps } from "@/types";
 
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
-const { downloadScanZipMock, getTaskMock, pushMock, toastMock } = vi.hoisted(
-  () => ({
-    downloadScanZipMock: vi.fn(),
-    getTaskMock: vi.fn(),
-    pushMock: vi.fn(),
-    toastMock: vi.fn(),
-  }),
-);
+const {
+  downloadScanZipMock,
+  getScheduleMock,
+  getTaskMock,
+  pushMock,
+  toastMock,
+} = vi.hoisted(() => ({
+  downloadScanZipMock: vi.fn(),
+  getScheduleMock: vi.fn(),
+  getTaskMock: vi.fn(),
+  pushMock: vi.fn(),
+  toastMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -27,6 +32,10 @@ vi.mock("@/components/ui", () => ({
 
 vi.mock("@/actions/task", () => ({
   getTask: getTaskMock,
+}));
+
+vi.mock("@/actions/schedules", () => ({
+  getSchedule: getScheduleMock,
 }));
 
 vi.mock("@/lib/helper", () => ({
@@ -49,6 +58,26 @@ vi.mock("@/components/scans/edit-alias-modal", () => ({
     open ? (
       <div role="dialog" aria-label="Edit Alias">
         Editing {currentAlias}
+      </div>
+    ) : null,
+}));
+
+vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
+  EDIT_SCAN_SCHEDULE_STATE: {
+    LOADING: "loading",
+    LOADED: "loaded",
+    ERROR: "error",
+  },
+  EditScanScheduleModal: ({
+    open,
+    provider,
+  }: {
+    open: boolean;
+    provider?: { providerId: string };
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Edit Scan Schedule">
+        Editing schedule for {provider?.providerId}
       </div>
     ) : null,
 }));
@@ -80,6 +109,19 @@ const makeScan = (
 });
 
 describe("ScanJobsRowActions", () => {
+  beforeEach(() => {
+    getScheduleMock.mockResolvedValue({
+      data: {
+        type: "schedules",
+        id: "provider-1",
+        attributes: { scan_hour: null },
+        relationships: {
+          provider: { data: { type: "providers", id: "provider-1" } },
+        },
+      },
+    });
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
@@ -103,7 +145,7 @@ describe("ScanJobsRowActions", () => {
     ).toHaveTextContent("Editing Production scan");
   });
 
-  it("does not render the legacy Edit Scan Schedule option", async () => {
+  it("opens Edit Scan Schedule for scan rows", async () => {
     // Given
     const user = userEvent.setup();
 
@@ -114,10 +156,14 @@ describe("ScanJobsRowActions", () => {
       screen.getByRole("button", { name: /open actions menu/i }),
     );
 
+    await user.click(
+      screen.getByRole("menuitem", { name: /edit scan schedule/i }),
+    );
+
     // Then
     expect(
-      screen.queryByRole("menuitem", { name: /edit scan schedule/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("dialog", { name: /edit scan schedule/i }),
+    ).toHaveTextContent("Editing schedule for provider-1");
   });
 
   it("does not render cancel scan while the scan cancellation API is missing", async () => {

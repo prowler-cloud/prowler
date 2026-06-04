@@ -1,7 +1,7 @@
 import { Row } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
@@ -10,7 +10,10 @@ import {
   ProvidersTableRow,
 } from "@/types/providers-table";
 
-const checkConnectionProviderMock = vi.hoisted(() => vi.fn());
+const { checkConnectionProviderMock, getScheduleMock } = vi.hoisted(() => ({
+  checkConnectionProviderMock: vi.fn(),
+  getScheduleMock: vi.fn(),
+}));
 
 vi.mock("@/actions/organizations/organizations", () => ({
   updateOrganizationName: vi.fn(),
@@ -18,6 +21,10 @@ vi.mock("@/actions/organizations/organizations", () => ({
 
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
+}));
+
+vi.mock("@/actions/schedules", () => ({
+  getSchedule: getScheduleMock,
 }));
 
 vi.mock("../forms/delete-form", () => ({
@@ -30,6 +37,26 @@ vi.mock("../forms/delete-organization-form", () => ({
 
 vi.mock("../forms/edit-name-form", () => ({
   EditNameForm: () => null,
+}));
+
+vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
+  EDIT_SCAN_SCHEDULE_STATE: {
+    LOADING: "loading",
+    LOADED: "loaded",
+    ERROR: "error",
+  },
+  EditScanScheduleModal: ({
+    open,
+    provider,
+  }: {
+    open: boolean;
+    provider?: { providerId: string };
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Edit Scan Schedule">
+        Editing schedule for {provider?.providerId}
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -143,6 +170,19 @@ const createOuRow = () =>
   }) as unknown as Row<ProvidersTableRow>;
 
 describe("DataTableRowActions", () => {
+  beforeEach(() => {
+    getScheduleMock.mockResolvedValue({
+      data: {
+        type: "schedules",
+        id: "provider-1",
+        attributes: { scan_hour: null },
+        relationships: {
+          provider: { data: { type: "providers", id: "provider-1" } },
+        },
+      },
+    });
+  });
+
   it("renders Add Credentials for provider rows without credentials", async () => {
     // Given
     const user = userEvent.setup();
@@ -163,10 +203,37 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(screen.getByText("Edit Provider Alias")).toBeInTheDocument();
+    expect(screen.getByText("Edit Scan Schedule")).toBeInTheDocument();
     expect(screen.getByText("Add Credentials")).toBeInTheDocument();
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("Delete Provider")).toBeInTheDocument();
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+  });
+
+  it("opens Edit Scan Schedule for provider rows", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Edit Scan Schedule"));
+
+    // Then
+    expect(
+      screen.getByRole("dialog", { name: /edit scan schedule/i }),
+    ).toHaveTextContent("Editing schedule for provider-1");
   });
 
   it("renders Update Credentials for provider rows with credentials", async () => {

@@ -1,34 +1,30 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { scanOnDemand, scheduleDaily } from "@/actions/scans";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn/select/select";
+import { scanOnDemand } from "@/actions/scans";
+import { updateSchedule } from "@/actions/schedules";
+import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { ToastAction, useToast } from "@/components/ui";
+import {
+  buildScheduleUpdatePayload,
+  getScheduleFormDefaults,
+  scheduleFormSchema,
+} from "@/lib/schedules";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { SCAN_JOBS_TAB } from "@/types";
+import type { ScheduleFormValues } from "@/types/schedules";
 import { TREE_ITEM_STATUS } from "@/types/tree";
 
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "./footer-controls";
-
-const SCAN_SCHEDULE = {
-  DAILY: "daily",
-  SINGLE: "single",
-} as const;
-
-type ScanScheduleOption = (typeof SCAN_SCHEDULE)[keyof typeof SCAN_SCHEDULE];
 
 interface LaunchStepProps {
   onBack: () => void;
@@ -44,49 +40,65 @@ export function LaunchStep({
   const { toast } = useToast();
   const { providerId } = useProviderWizardStore();
   const [isLaunching, setIsLaunching] = useState(false);
-  const [scheduleOption, setScheduleOption] = useState<ScanScheduleOption>(
-    SCAN_SCHEDULE.DAILY,
-  );
+  const form = useForm<ScheduleFormValues>({
+    resolver: zodResolver(scheduleFormSchema),
+    defaultValues: getScheduleFormDefaults(),
+  });
   const launchActionRef = useRef<() => void>(() => {});
 
-  const handleLaunchScan = async () => {
+  const handleLaunchScan = form.handleSubmit(async (values) => {
     if (!providerId) {
       return;
     }
 
     setIsLaunching(true);
-    const formData = new FormData();
-    formData.set("providerId", providerId);
-    const result =
-      scheduleOption === SCAN_SCHEDULE.DAILY
-        ? await scheduleDaily(formData)
-        : await scanOnDemand(formData);
+    const scheduleResult = await updateSchedule(
+      providerId,
+      buildScheduleUpdatePayload(values),
+    );
 
-    if (result?.error) {
+    if (scheduleResult?.error) {
       setIsLaunching(false);
       toast({
         variant: "destructive",
-        title: "Unable to launch scan",
-        description: String(result.error),
+        title: "Unable to save scan schedule",
+        description: String(scheduleResult.error),
       });
       return;
+    }
+
+    if (values.launchInitialScan) {
+      const formData = new FormData();
+      formData.set("providerId", providerId);
+      const scanResult = await scanOnDemand(formData);
+
+      if (scanResult?.error) {
+        setIsLaunching(false);
+        toast({
+          variant: "destructive",
+          title: "Scan schedule saved",
+          description: `Initial scan failed: ${String(scanResult.error)}`,
+        });
+        return;
+      }
     }
 
     setIsLaunching(false);
     onClose();
     toast({
-      title: "Scan Launched",
-      description:
-        scheduleOption === SCAN_SCHEDULE.DAILY
-          ? "Daily scan scheduled successfully."
-          : "Single scan launched successfully.",
+      title: values.launchInitialScan
+        ? "Scan schedule saved and initial scan launched"
+        : "Scan schedule saved",
+      description: values.launchInitialScan
+        ? "The schedule was saved and the initial scan was launched."
+        : "The scan schedule was saved successfully.",
       action: (
         <ToastAction altText="Go to scans" asChild>
           <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>Go to scans</Link>
         </ToastAction>
       ),
     });
-  };
+  });
 
   launchActionRef.current = () => {
     void handleLaunchScan();
@@ -127,7 +139,7 @@ export function LaunchStep({
       </div>
 
       <p className="text-text-neutral-secondary text-sm">
-        Choose how you want to launch scans for this provider.
+        Choose when Prowler should scan this provider.
       </p>
 
       {!providerId && (
@@ -136,28 +148,11 @@ export function LaunchStep({
         </p>
       )}
 
-      <div className="flex flex-col gap-4">
-        <p className="text-text-neutral-secondary text-sm">Scan schedule</p>
-        <Select
-          value={scheduleOption}
-          onValueChange={(value) =>
-            setScheduleOption(value as ScanScheduleOption)
-          }
-          disabled={isLaunching || !providerId}
-        >
-          <SelectTrigger className="w-full max-w-[376px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={SCAN_SCHEDULE.DAILY}>
-              Scan Daily (every 24 hours)
-            </SelectItem>
-            <SelectItem value={SCAN_SCHEDULE.SINGLE}>
-              Run a single scan (no recurring schedule)
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <ScanScheduleFields
+        form={form}
+        disabled={isLaunching || !providerId}
+        showLaunchInitialScan
+      />
     </div>
   );
 }
