@@ -32,6 +32,30 @@ class Test_apitoken_not_super_admin:
         findings = _run_check(build_api_token_client({}))
         assert findings == []
 
+    def test_missing_api_token_scope_is_manual(self):
+        findings = _run_check(
+            build_api_token_client(
+                {},
+                missing_scope={"api_tokens": "okta.apiTokens.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "okta.apiTokens.read" in findings[0].status_extended
+
+    def test_missing_user_roles_scope_is_manual(self):
+        token = api_token(owner_roles=[])
+        findings = _run_check(
+            build_api_token_client(
+                {token.id: token},
+                missing_scope={"user_roles": "okta.roles.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert findings[0].resource_id == token.id
+        assert "okta.roles.read" in findings[0].status_extended
+
     def test_token_owner_without_super_admin_passes(self):
         token = api_token(owner_roles=["READ_ONLY_ADMIN"])
         findings = _run_check(build_api_token_client({token.id: token}))

@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest import mock
 
+from prowler.providers.okta.models import OktaIdentityInfo
 from prowler.providers.okta.services.apitoken.api_token_service import ApiToken
 from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
 
@@ -151,3 +152,94 @@ class Test_ApiToken_service:
             service = ApiToken(provider)
 
         assert service.api_tokens == {}
+
+    def test_missing_api_token_scope_skips_dependent_api_calls(self):
+        provider = set_mocked_okta_provider(
+            identity=OktaIdentityInfo(
+                org_domain="acme.okta.com",
+                client_id="0oa1234567890abcdef",
+                granted_scopes=["okta.networkZones.read", "okta.roles.read"],
+            )
+        )
+
+        async def fail_if_called(*_a, **_k):
+            raise AssertionError("API calls should not run without apiTokens scope")
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_api_tokens = fail_if_called
+            mocked.list_network_zones = fail_if_called
+            mocked.list_assigned_roles_for_user = fail_if_called
+            mocked_client_cls.return_value = mocked
+            service = ApiToken(provider)
+
+        assert service.missing_scope["api_tokens"] == "okta.apiTokens.read"
+        assert service.api_tokens == {}
+        assert service.known_network_zone_ids == set()
+
+    def test_missing_network_zone_scope_skips_zone_api_call(self):
+        provider = set_mocked_okta_provider(
+            identity=OktaIdentityInfo(
+                org_domain="acme.okta.com",
+                client_id="0oa1234567890abcdef",
+                granted_scopes=["okta.apiTokens.read", "okta.roles.read"],
+            )
+        )
+        token = _sdk_token()
+
+        async def fake_list_api_tokens(*_a, **_k):
+            return ([token], _resp({}), None)
+
+        async def fake_list_assigned_roles_for_user(*_a, **_k):
+            return ([_sdk_role("READ_ONLY_ADMIN")], _resp({}), None)
+
+        async def fail_if_called(*_a, **_k):
+            raise AssertionError("list_network_zones should not be called")
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_api_tokens = fake_list_api_tokens
+            mocked.list_assigned_roles_for_user = fake_list_assigned_roles_for_user
+            mocked.list_network_zones = fail_if_called
+            mocked_client_cls.return_value = mocked
+            service = ApiToken(provider)
+
+        assert service.missing_scope["network_zones"] == "okta.networkZones.read"
+        assert service.known_network_zone_ids == set()
+        assert set(service.api_tokens.keys()) == {token.id}
+
+    def test_missing_role_scope_skips_role_api_call(self):
+        provider = set_mocked_okta_provider(
+            identity=OktaIdentityInfo(
+                org_domain="acme.okta.com",
+                client_id="0oa1234567890abcdef",
+                granted_scopes=["okta.apiTokens.read", "okta.networkZones.read"],
+            )
+        )
+        token = _sdk_token()
+
+        async def fake_list_api_tokens(*_a, **_k):
+            return ([token], _resp({}), None)
+
+        async def fail_if_called(*_a, **_k):
+            raise AssertionError("list_assigned_roles_for_user should not be called")
+
+        async def fake_list_network_zones(*_a, **_k):
+            return ([_sdk_zone("nzo-corp", "Corporate")], _resp({}), None)
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_api_tokens = fake_list_api_tokens
+            mocked.list_assigned_roles_for_user = fail_if_called
+            mocked.list_network_zones = fake_list_network_zones
+            mocked_client_cls.return_value = mocked
+            service = ApiToken(provider)
+
+        assert service.missing_scope["user_roles"] == "okta.roles.read"
+        assert service.api_tokens[token.id].owner_roles == []

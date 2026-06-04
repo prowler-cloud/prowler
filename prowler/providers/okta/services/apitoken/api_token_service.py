@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
@@ -5,6 +7,12 @@ from prowler.providers.okta.lib.service.service import OktaService
 from prowler.providers.okta.services.network.network_zone_service import (
     _next_after_cursor,
 )
+
+REQUIRED_SCOPES: dict[str, str] = {
+    "api_tokens": "okta.apiTokens.read",
+    "network_zones": "okta.networkZones.read",
+    "user_roles": "okta.roles.read",
+}
 
 
 def _normalise_sdk_result(result) -> tuple[list, object, object]:
@@ -32,8 +40,19 @@ class ApiToken(OktaService):
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.known_network_zone_ids: set[str] = self._list_known_network_zone_ids()
-        self.api_tokens: dict[str, OktaApiToken] = self._list_api_tokens()
+        granted = set(getattr(provider.identity, "granted_scopes", None) or [])
+        self.missing_scope: dict[str, Optional[str]] = {
+            resource: (scope if granted and scope not in granted else None)
+            for resource, scope in REQUIRED_SCOPES.items()
+        }
+        self.known_network_zone_ids: set[str] = (
+            set()
+            if self.missing_scope["api_tokens"] or self.missing_scope["network_zones"]
+            else self._list_known_network_zone_ids()
+        )
+        self.api_tokens: dict[str, OktaApiToken] = (
+            {} if self.missing_scope["api_tokens"] else self._list_api_tokens()
+        )
 
     def _list_api_tokens(self) -> dict[str, "OktaApiToken"]:
         """List active API token metadata and owner roles."""
@@ -73,6 +92,8 @@ class ApiToken(OktaService):
 
     async def _fetch_user_role_types(self, user_id: str) -> list[str]:
         """Return normalized admin role types assigned to the token owner."""
+        if self.missing_scope["user_roles"]:
+            return []
         items, _resp, err = _normalise_sdk_result(
             await self.client.list_assigned_roles_for_user(user_id)
         )
@@ -114,8 +135,15 @@ class ApiToken(OktaService):
 
     async def _fetch_all_network_zones(self) -> tuple[list, object]:
         """Drain all Network Zone pages for API token reference validation."""
+        return await self._paginate(
+            lambda after: self.client.list_network_zones(after=after, limit=200)
+        )
+
+    @staticmethod
+    async def _paginate(fetch) -> tuple[list, object]:
+        """Drain all pages of an SDK list call using Okta Link cursors."""
         all_items = []
-        result = await self.client.list_network_zones(after=None, limit=200)
+        result = await fetch(None)
         items, resp, err = _normalise_sdk_result(result)
         if err is not None:
             return [], err
@@ -124,7 +152,7 @@ class ApiToken(OktaService):
             cursor = _next_after_cursor(resp)
             if not cursor:
                 break
-            result = await self.client.list_network_zones(after=cursor, limit=200)
+            result = await fetch(cursor)
             items, resp, err = _normalise_sdk_result(result)
             if err is not None:
                 return all_items, err

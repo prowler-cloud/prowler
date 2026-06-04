@@ -32,6 +32,42 @@ class Test_apitoken_restricted_to_network_zone:
         findings = _run_check(build_api_token_client({}))
         assert findings == []
 
+    def test_missing_api_token_scope_is_manual(self):
+        findings = _run_check(
+            build_api_token_client(
+                {},
+                missing_scope={"api_tokens": "okta.apiTokens.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "okta.apiTokens.read" in findings[0].status_extended
+
+    def test_missing_network_zone_scope_is_manual(self):
+        token = api_token(network_connection="ZONE", network_includes=["nzo-corp"])
+        findings = _run_check(
+            build_api_token_client(
+                {token.id: token},
+                missing_scope={"network_zones": "okta.networkZones.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert findings[0].resource_id == token.id
+        assert "okta.networkZones.read" in findings[0].status_extended
+
+    def test_missing_network_zone_scope_still_fails_anywhere_token(self):
+        token = api_token(network_connection="ANYWHERE", network_includes=[])
+        findings = _run_check(
+            build_api_token_client(
+                {token.id: token},
+                missing_scope={"network_zones": "okta.networkZones.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "from any IP" in findings[0].status_extended
+
     def test_token_restricted_to_known_network_zone_passes(self):
         token = api_token(network_connection="ZONE", network_includes=["nzo-corp"])
         findings = _run_check(

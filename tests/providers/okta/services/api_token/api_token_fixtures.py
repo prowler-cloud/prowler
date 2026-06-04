@@ -5,11 +5,18 @@ from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
 
 
 def build_api_token_client(
-    tokens: dict = None, known_network_zone_ids: set[str] = None
+    tokens: dict = None,
+    known_network_zone_ids: set[str] = None,
+    missing_scope: dict = None,
 ):
     client = mock.MagicMock()
     client.api_tokens = tokens or {}
     client.known_network_zone_ids = known_network_zone_ids or {"nzo-corp"}
+    client.missing_scope = missing_scope or {
+        "api_tokens": None,
+        "network_zones": None,
+        "user_roles": None,
+    }
     client.provider = set_mocked_okta_provider()
     return client
 
