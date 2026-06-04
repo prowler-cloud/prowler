@@ -10,5 +10,6 @@ export * from "./providers";
 export * from "./providers-table";
 export * from "./resources";
 export * from "./scans";
+export * from "./schedules";
 export * from "./tasks";
 export * from "./tree";
