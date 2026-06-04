@@ -296,6 +296,7 @@ class Provider(RowLevelSecurityProtectedModel):
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
         VERCEL = "vercel", _("Vercel")
+        OKTA = "okta", _("Okta")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -351,6 +352,26 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
                 code="googleworkspace-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_okta_uid(value):
+        if not re.match(
+            r"^[a-z0-9][a-z0-9-]*\.("
+            r"okta\.com|oktapreview\.com|okta-emea\.com|"
+            r"okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com"
+            r")$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail=(
+                    "Okta provider ID must be a valid Okta-managed org domain "
+                    "(e.g., acme.okta.com, also .oktapreview.com / .okta-emea.com "
+                    "/ .okta-gov.com / .okta.mil / .okta-miltest.com / "
+                    ".trex-govcloud.com), without scheme or path."
+                ),
+                code="okta-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -480,6 +501,12 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider == self.ProviderChoices.OKTA and self.uid:
+            # Mirror the SDK, which lowercases the org domain before connecting.
+            # Without this the API would reject Acme.okta.com even though the
+            # SDK would accept it, and stored uids could disagree with the
+            # authenticated org domain.
+            self.uid = self.uid.strip().lower()
         getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):
@@ -639,6 +666,9 @@ class Scan(RowLevelSecurityProtectedModel):
     state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
     unique_resource_count = models.IntegerField(default=0)
     progress = models.IntegerField(default=0)
+    # Incremented by the scan-specific orphan-recovery path each time this scan is
+    # re-pointed to a fresh task; for observability (the retry cap is a Valkey counter).
+    recovery_count = models.IntegerField(default=0)
     scanner_args = models.JSONField(default=dict)
     duration = models.IntegerField(null=True, blank=True)
     scheduled_at = models.DateTimeField(null=True, blank=True)
@@ -1962,6 +1992,35 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
             models.UniqueConstraint(
                 fields=["integration_id", "provider_id"],
                 name="unique_integration_provider_rel",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+
+class JiraIssueDispatch(RowLevelSecurityProtectedModel):
+    """Tracks findings already sent to a Jira integration.
+
+    Lets the Jira task be re-run safely (e.g. by orphan recovery): findings with
+    an existing dispatch row are skipped, so no duplicate issues are created.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    integration = models.ForeignKey(
+        Integration, on_delete=models.CASCADE, related_name="jira_dispatches"
+    )
+    finding_id = models.UUIDField()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "jira_issue_dispatches"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant_id", "integration_id", "finding_id"],
+                name="unique_jira_issue_dispatch",
             ),
             RowLevelSecurityConstraint(
                 field="tenant_id",

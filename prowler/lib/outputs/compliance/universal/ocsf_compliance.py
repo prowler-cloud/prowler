@@ -79,30 +79,43 @@ def _to_snake_case(name: str) -> str:
     return s.lower()
 
 
-def _build_requirement_attrs(requirement, framework) -> dict:
-    """Build a dict with requirement attributes for the unmapped section.
+def _build_requirement_attrs(requirement, framework):
+    """Build the requirement attributes payload for the unmapped section.
 
-    Keys are normalized to snake_case for OCSF consistency.
-    Only includes attributes whose AttributeMetadata has output_formats.ocsf=True.
-    When no metadata is declared, all attributes are included.
+    Keys are snake_cased and filtered by ``AttributeMetadata.output_formats.ocsf``
+    when declared. MITRE-style attrs (``{"_raw_attributes": [...]}``) are
+    unwrapped into a list of per-entry dicts.
     """
-    attrs = requirement.attributes
-    if not attrs:
+    requirement_attributes = requirement.attributes
+    if not requirement_attributes:
         return {}
 
-    # Build set of keys allowed for OCSF output
     metadata = framework.attributes_metadata
-    if metadata:
-        ocsf_keys = {m.key for m in metadata if m.output_formats.ocsf}
-    else:
-        ocsf_keys = None  # No metadata → include all
+    allowed_keys = (
+        {entry.key for entry in metadata if entry.output_formats.ocsf}
+        if metadata
+        else None
+    )
 
-    result = {}
-    for key, value in attrs.items():
-        if ocsf_keys is not None and key not in ocsf_keys:
-            continue
-        result[_to_snake_case(key)] = value
-    return result
+    def _to_snake_case_dict(entry: dict) -> dict:
+        return {
+            _to_snake_case(key): value
+            for key, value in entry.items()
+            if allowed_keys is None or key in allowed_keys
+        }
+
+    if (
+        isinstance(requirement_attributes, dict)
+        and "_raw_attributes" in requirement_attributes
+    ):
+        raw_entries = requirement_attributes.get("_raw_attributes") or []
+        return [
+            _to_snake_case_dict(entry)
+            for entry in raw_entries
+            if isinstance(entry, dict)
+        ]
+
+    return _to_snake_case_dict(requirement_attributes)
 
 
 class OCSFComplianceOutput:
@@ -147,7 +160,14 @@ class OCSFComplianceOutput:
         findings: List["Finding"],
         framework: ComplianceFramework,
         compliance_name: str,
+        include_manual: bool = True,
     ) -> None:
+        """Transform findings into OCSF ComplianceFinding events.
+
+        Manual requirements are emitted only when ``include_manual=True``. The
+        caller must pass ``False`` for subsequent streaming batches so manual
+        events are not duplicated.
+        """
         # Build check -> requirements map
         check_req_map = {}
         for req in framework.requirements:
@@ -169,6 +189,9 @@ class OCSFComplianceOutput:
                     )
                     if cf:
                         self._data.append(cf)
+
+        if not include_manual:
+            return
 
         # Manual requirements (no checks or empty for current provider)
         for req in framework.requirements:

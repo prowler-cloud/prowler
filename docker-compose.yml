@@ -129,6 +129,8 @@ services:
 
   worker:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    # Give Celery soft shutdown time to drain/re-queue in-flight tasks on stop.
+    stop_grace_period: 120s
     env_file:
       - path: .env
         required: false
@@ -176,6 +178,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 60s
 
 volumes:
   output:

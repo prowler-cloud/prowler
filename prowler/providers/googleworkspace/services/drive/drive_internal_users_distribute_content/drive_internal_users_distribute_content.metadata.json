@@ -13,8 +13,8 @@
   "Risk": "If external users can move files from internal shared drives into shared drives owned by another organization, the organization **loses authoritative control** over its own data. This is a frequently overlooked path for unintentional or malicious data exfiltration through shared drive collaboration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/60781",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/manage-external-sharing-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

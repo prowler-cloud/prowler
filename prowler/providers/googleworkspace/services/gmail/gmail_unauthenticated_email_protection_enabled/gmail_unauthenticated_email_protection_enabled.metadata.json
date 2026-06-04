@@ -13,8 +13,8 @@
   "Risk": "Without protection against unauthenticated emails, users may receive **spoofed or forged messages** that fail SPF and DKIM checks but are still delivered normally. This enables **phishing**, **spam**, and **impersonation attacks** that exploit the lack of sender verification.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9157861",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/advanced-phishing-and-malware-protection",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

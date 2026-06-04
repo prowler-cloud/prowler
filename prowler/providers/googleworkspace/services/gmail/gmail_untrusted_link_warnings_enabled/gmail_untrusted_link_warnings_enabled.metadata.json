@@ -13,8 +13,8 @@
   "Risk": "Without untrusted link warnings, users may click on **phishing links** or links to **malware distribution sites** without any warning. This significantly increases the success rate of **social engineering attacks** targeting the organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7676854",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/advanced-phishing-and-malware-protection",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
