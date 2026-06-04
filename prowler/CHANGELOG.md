@@ -11,6 +11,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.29.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- GCP `logging_sink_created` now recognizes organization-level aggregated sinks with `includeChildren=True`, avoiding false failures for covered projects [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
+
+---
+
 ## [5.29.1] (Prowler v5.29.1)
 
 ### 🐞 Fixed
