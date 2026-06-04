@@ -1,4 +1,8 @@
-from prowler.providers.okta.services.network.network_zone_service import OktaNetworkZone
+from prowler.lib.check.models import CheckReportOkta
+from prowler.providers.okta.services.network.network_zone_service import (
+    NetworkZoneSummary,
+    OktaNetworkZone,
+)
 
 ANONYMIZER_CATEGORY_MARKERS = (
     "ANONYM",
@@ -51,3 +55,28 @@ def compliant_anonymized_proxy_blocklist(
         if is_enhanced_dynamic_anonymizer_blocklist(zone):
             return zone, "active Enhanced Dynamic Zone blocklist for anonymizers"
     return None, ""
+
+
+_SCOPE_ADVICE = (
+    "Grant it on the service app's Okta API Scopes tab in the Okta Admin "
+    "Console, then re-run the check."
+)
+
+
+def missing_network_zone_scope_finding(
+    metadata, org_domain: str, scope: str
+) -> CheckReportOkta:
+    """Build the MANUAL finding emitted when Network Zones cannot be listed."""
+    resource = NetworkZoneSummary(
+        id="network-zones-scope-missing",
+        name="(scope not granted)",
+    )
+    report = CheckReportOkta(
+        metadata=metadata, resource=resource, org_domain=org_domain
+    )
+    report.status = "MANUAL"
+    report.status_extended = (
+        f"Could not retrieve Okta Network Zones: the Okta service app "
+        f"is missing the required `{scope}` API scope. {_SCOPE_ADVICE}"
+    )
+    return report

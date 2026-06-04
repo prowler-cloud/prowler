@@ -35,6 +35,17 @@ class Test_network_zone_block_anonymized_proxies:
         assert findings[0].status == "FAIL"
         assert "No active Okta Network Zone blocklist" in findings[0].status_extended
 
+    def test_missing_network_zone_scope_is_manual(self):
+        findings = _run_check(
+            build_network_zone_client(
+                {},
+                missing_scope={"network_zones": "okta.networkZones.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "okta.networkZones.read" in findings[0].status_extended
+
     def test_pass_with_active_ip_blocklist_gateway(self):
         zone = network_zone(gateways=["198.51.100.10/32"])
         findings = _run_check(build_network_zone_client({zone.id: zone}))

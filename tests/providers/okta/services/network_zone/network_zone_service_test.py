@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest import mock
 
+from prowler.providers.okta.models import OktaIdentityInfo
 from prowler.providers.okta.services.network.network_zone_service import (
     NetworkZone,
     OktaNetworkZone,
@@ -124,4 +125,27 @@ class Test_NetworkZone_service:
             mocked_client_cls.return_value = mocked
             service = NetworkZone(provider)
 
+        assert service.network_zones == {}
+
+    def test_missing_network_zone_scope_skips_api_call(self):
+        provider = set_mocked_okta_provider(
+            identity=OktaIdentityInfo(
+                org_domain="acme.okta.com",
+                client_id="0oa1234567890abcdef",
+                granted_scopes=["okta.policies.read", "okta.brands.read"],
+            )
+        )
+
+        async def fail_if_called(*_a, **_k):
+            raise AssertionError("list_network_zones should not be called")
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_network_zones = fail_if_called
+            mocked_client_cls.return_value = mocked
+            service = NetworkZone(provider)
+
+        assert service.missing_scope["network_zones"] == "okta.networkZones.read"
         assert service.network_zones == {}

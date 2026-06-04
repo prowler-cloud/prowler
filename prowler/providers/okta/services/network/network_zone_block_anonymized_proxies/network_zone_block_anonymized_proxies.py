@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, CheckReportOkta
 from prowler.providers.okta.services.network.lib.network_zone_helpers import (
     compliant_anonymized_proxy_blocklist,
+    missing_network_zone_scope_finding,
 )
 from prowler.providers.okta.services.network.network_zone_client import (
     network_zone_client,
@@ -16,6 +17,14 @@ class network_zone_block_anonymized_proxies(Check):
     def execute(self) -> list[CheckReportOkta]:
         """Evaluate whether an active blocklist covers anonymized proxies."""
         org_domain = network_zone_client.provider.identity.org_domain
+        missing_scope = network_zone_client.missing_scope.get("network_zones")
+        if missing_scope:
+            return [
+                missing_network_zone_scope_finding(
+                    self.metadata(), org_domain, missing_scope
+                )
+            ]
+
         matching_zone, reason = compliant_anonymized_proxy_blocklist(
             network_zone_client.network_zones
         )

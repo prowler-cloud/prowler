@@ -6,6 +6,10 @@ from pydantic import BaseModel, Field
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.service import OktaService
 
+REQUIRED_SCOPES: dict[str, str] = {
+    "network_zones": "okta.networkZones.read",
+}
+
 
 def _next_after_cursor(resp) -> Optional[str]:
     """Extract the Okta pagination cursor from a Link header."""
@@ -50,7 +54,14 @@ class NetworkZone(OktaService):
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.network_zones: dict[str, OktaNetworkZone] = self._list_network_zones()
+        granted = set(getattr(provider.identity, "granted_scopes", None) or [])
+        self.missing_scope: dict[str, Optional[str]] = {
+            resource: (scope if granted and scope not in granted else None)
+            for resource, scope in REQUIRED_SCOPES.items()
+        }
+        self.network_zones: dict[str, OktaNetworkZone] = (
+            {} if self.missing_scope["network_zones"] else self._list_network_zones()
+        )
 
     def _list_network_zones(self) -> dict[str, "OktaNetworkZone"]:
         """List all Network Zones visible to the configured Okta service app."""
