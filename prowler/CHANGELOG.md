@@ -15,7 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- `logging_sink_created` GCP check no longer false-FAILs projects covered by an organisation-level aggregated sink with `includeChildren=True`; the service now also queries `organizations/{id}/sinks` and passes any project whose org has a matching aggregated sink [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
+- GCP `logging_sink_created` now recognizes organization-level aggregated sinks with `includeChildren=True`, avoiding false failures for covered projects [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
 
 ---
 

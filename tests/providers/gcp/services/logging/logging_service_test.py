@@ -80,9 +80,7 @@ class TestLoggingService:
                 name="test",
                 labels={},
                 lifecycle_state="ACTIVE",
-                organization=GCPOrganization(
-                    id=org_id, name=f"organizations/{org_id}"
-                ),
+                organization=GCPOrganization(id=org_id, name=f"organizations/{org_id}"),
             )
         }
 
@@ -133,13 +131,9 @@ class TestLoggingService:
                 new=mock_api_client,
             ),
         ):
-            logging_svc = Logging(
-                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
-            )
+            logging_svc = Logging(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
 
         org_sinks = [
-            s
-            for s in logging_svc.sinks
-            if s.project_id.startswith("organizations/")
+            s for s in logging_svc.sinks if s.project_id.startswith("organizations/")
         ]
         assert org_sinks == []
