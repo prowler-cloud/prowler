@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckType": [],
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/networkzone",
+    "https://help.okta.com/en-us/content/topics/security/network/about-enhanced-dynamic-zones.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Security > Networks: configure BlockedIpZone gateway/proxy IP entries or activate DefaultEnhancedDynamicZone / Enhanced Dynamic Zone blocklisting for anonymizers.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure an active IP Network Zone blocklist or activate an Enhanced Dynamic Zone blocklist that covers anonymizers.",
+      "Url": "https://hub.prowler.com/check/network_zone_block_anonymized_proxies"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "CheckID": "network_zone_block_anonymized_proxies",
+  "CheckTitle": "Okta blocks anonymized proxy access with active Network Zone blocklists",
+  "ServiceName": "network",
+  "Description": "Okta should use an active Network Zone blocklist, including gateway/proxy IP entries or an Enhanced Dynamic Zone anonymizer category, to block anonymized proxy access before authentication.",
+  "Risk": "If anonymized proxies are not blocked before authentication, attackers can hide source networks and attempt credential attacks or session establishment from untrusted infrastructure."
+}
