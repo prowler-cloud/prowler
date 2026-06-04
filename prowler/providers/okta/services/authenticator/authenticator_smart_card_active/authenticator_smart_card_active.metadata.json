@@ -1,0 +1,36 @@
+{
+  "Provider": "okta",
+  "CheckType": [],
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/authenticator"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Security > Authenticators: add or activate the Smart Card IdP authenticator.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure and activate the Smart Card IdP authenticator in Okta.",
+      "Url": "https://hub.prowler.com/check/authenticator_smart_card_active"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "CheckID": "authenticator_smart_card_active",
+  "CheckTitle": "Okta Smart Card authenticator is active",
+  "ServiceName": "authenticator",
+  "Description": "The Smart Card IdP authenticator should be configured and active for certificate-based authentication scenarios required by the STIG.",
+  "Risk": "If Smart Card authentication is unavailable, users cannot satisfy certificate-based authentication requirements where mandated."
+}

@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckType": [],
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/en-us/content/topics/mobile/ov-admin-config.htm",
+    "https://support.okta.com/help/s/article/How-to-Enable-FIPS-Encryption-on-Okta-Verify"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Security > Authenticators > Okta Verify: set FIPS Compliance to users enrolling in Okta Verify can use FIPS compliant devices only.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable FIPS compliance for Okta Verify and restrict enrollment to FIPS-compliant devices.",
+      "Url": "https://hub.prowler.com/check/authenticator_okta_verify_fips_compliant"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "CheckID": "authenticator_okta_verify_fips_compliant",
+  "CheckTitle": "Okta Verify requires FIPS-compliant devices",
+  "ServiceName": "authenticator",
+  "Description": "Okta Verify should require FIPS-compliant devices for enrollment when the organization must enforce FIPS-compliant authenticator usage.",
+  "Risk": "If Okta Verify enrollment allows non-FIPS devices, users can authenticate with devices that do not meet the required cryptographic assurance."
+}
