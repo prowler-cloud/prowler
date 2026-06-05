@@ -337,6 +337,31 @@ export interface OktaIDaaSStigAttributesMetadata {
   FixText?: string;
 }
 
+// DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554).
+// Universal framework — flat attributes dict with Pillar/Article/ArticleTitle.
+// `Pillar` is the canonical grouping key for tables and PDF; the enum mirrors
+// the five DORA pillars declared in `prowler/compliance/dora.json`.
+export const DORA_PILLAR = {
+  ICT_RISK_MANAGEMENT: "ICT Risk Management",
+  INCIDENT_REPORTING: "ICT-Related Incident Reporting",
+  RESILIENCE_TESTING: "Digital Operational Resilience Testing",
+  THIRD_PARTY_RISK: "ICT Third-Party Risk Management",
+  INFORMATION_SHARING: "Information Sharing",
+} as const;
+export type DORAPillar = (typeof DORA_PILLAR)[keyof typeof DORA_PILLAR];
+
+export interface DORAAttributesMetadata {
+  Pillar: DORAPillar;
+  Article: string;
+  ArticleTitle: string;
+}
+
+export interface DORARequirement extends Requirement {
+  pillar: DORAAttributesMetadata["Pillar"];
+  article: DORAAttributesMetadata["Article"];
+  article_title: DORAAttributesMetadata["ArticleTitle"];
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -360,6 +385,7 @@ export interface AttributesItemData {
         | CSAAttributesMetadata[]
         | ASDEssentialEightAttributesMetadata[]
         | OktaIDaaSStigAttributesMetadata[]
+        | DORAAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure

@@ -96,21 +96,6 @@ class TestDispatchStartswith:
 
     @pytest.mark.parametrize(
         "framework_name",
-        [
-            "csa_ccm_4.0_aws",
-            "csa_ccm_4.0_azure",
-            "csa_ccm_4.0_gcp",
-            "csa_ccm_4.0_oraclecloud",
-            "csa_ccm_4.0_alibabacloud",
-        ],
-    )
-    @patch(f"{MODULE}.get_csa_table")
-    def test_csa_dispatch(self, mock_fn, framework_name):
-        display_compliance_table(compliance_framework=framework_name, **_COMMON)
-        mock_fn.assert_called_once()
-
-    @pytest.mark.parametrize(
-        "framework_name",
         ["c5_aws", "c5_azure", "c5_gcp"],
     )
     @patch(f"{MODULE}.get_c5_table")

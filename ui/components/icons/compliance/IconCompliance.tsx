@@ -6,6 +6,7 @@ import CCCLogo from "./ccc.svg";
 import CISLogo from "./cis.svg";
 import CISALogo from "./cisa.svg";
 import CSALogo from "./csa.svg";
+import DORALogo from "./dora.svg";
 import ENSLogo from "./ens.png";
 import FedRAMPLogo from "./fedramp.svg";
 import FFIECLogo from "./ffiec.svg";
@@ -68,6 +69,9 @@ const COMPLIANCE_LOGOS = [
   ["c5", C5Logo],
   ["ccc", CCCLogo],
   ["csa", CSALogo],
+  // DORA — universal framework (`prowler/compliance/dora.json`). The
+  // compliance_id is just `dora`, no provider suffix.
+  ["dora", DORALogo],
   ["secnumcloud", ANSSILogo],
   ["okta", OktaLogo],
   ["aws", AWSLogo],

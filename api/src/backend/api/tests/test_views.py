@@ -9560,6 +9560,16 @@ class TestComplianceOverviewViewSet:
             assert "platforms" in attributes["attributes"]["technique_details"]
             assert "technique_url" in attributes["attributes"]["technique_details"]
 
+            # Guard against the `_raw_attributes` wrapper leaking through —
+            # the UI reads metadata[i].Category / .AWSService directly.
+            metadata = attributes["attributes"]["metadata"]
+            assert isinstance(metadata, list) and len(metadata) > 0
+            first_attr = metadata[0]
+            assert isinstance(first_attr, dict)
+            assert "_raw_attributes" not in first_attr
+            assert "Category" in first_attr
+            assert "AWSService" in first_attr
+
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client
     ):

@@ -39,11 +39,6 @@ from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
     GoogleWorkspaceCISASCuBA,
 )
-from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
-from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
-from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
-from prowler.lib.outputs.compliance.csa.csa_gcp import GCPCSA
-from prowler.lib.outputs.compliance.csa.csa_oraclecloud import OracleCloudCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -105,7 +100,6 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name == "prowler_threatscore_aws", ProwlerThreatScoreAWS),
         (lambda name: name.startswith("ccc_"), CCC_AWS),
         (lambda name: name.startswith("c5_"), AWSC5),
-        (lambda name: name.startswith("csa_"), AWSCSA),
         (lambda name: name == "asd_essential_eight_aws", ASDEssentialEightAWS),
     ],
     "azure": [
@@ -116,7 +110,6 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("ccc_"), CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
         (lambda name: name == "c5_azure", AzureC5),
-        (lambda name: name.startswith("csa_"), AzureCSA),
     ],
     "gcp": [
         (lambda name: name.startswith("cis_"), GCPCIS),
@@ -126,7 +119,6 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
         (lambda name: name.startswith("ccc_"), CCC_GCP),
         (lambda name: name == "c5_gcp", GCPC5),
-        (lambda name: name.startswith("csa_"), GCPCSA),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
@@ -155,11 +147,9 @@ COMPLIANCE_CLASS_MAP = {
     "image": [],
     "oraclecloud": [
         (lambda name: name.startswith("cis_"), OracleCloudCIS),
-        (lambda name: name.startswith("csa_"), OracleCloudCSA),
     ],
     "alibabacloud": [
         (lambda name: name.startswith("cis_"), AlibabaCloudCIS),
-        (lambda name: name.startswith("csa_"), AlibabaCloudCSA),
         (
             lambda name: name == "prowler_threatscore_alibabacloud",
             ProwlerThreatScoreAlibaba,
