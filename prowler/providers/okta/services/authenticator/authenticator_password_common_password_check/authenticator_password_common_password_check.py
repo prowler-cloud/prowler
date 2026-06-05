@@ -19,5 +19,6 @@ class authenticator_password_common_password_check(Check):
             field_name="common_password_check",
             requirement="common-password dictionary checks",
             compliant=lambda value: value is True,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="common password check enabled",
         )

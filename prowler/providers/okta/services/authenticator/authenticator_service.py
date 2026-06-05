@@ -1,9 +1,33 @@
 from typing import Optional
+from urllib.parse import parse_qs, urlparse
 
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.service import OktaService
+
+REQUIRED_SCOPES: dict[str, str] = {
+    "password_policies": "okta.policies.read",
+    "authenticators": "okta.authenticators.read",
+}
+
+
+def _next_after_cursor(resp) -> Optional[str]:
+    """Extract the Okta pagination cursor from a Link header."""
+    if resp is None:
+        return None
+    headers = getattr(resp, "headers", None) or {}
+    link = headers.get("link") or headers.get("Link") or ""
+    if not link:
+        return None
+    for part in link.split(","):
+        if 'rel="next"' not in part:
+            continue
+        url_segment = part.split(";", 1)[0].strip().lstrip("<").rstrip(">")
+        cursor = parse_qs(urlparse(url_segment).query).get("after", [None])[0]
+        if cursor:
+            return cursor
+    return None
 
 
 def _normalise_sdk_result(result) -> tuple[list, object, object]:
@@ -48,10 +72,19 @@ class Authenticator(OktaService):
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
+        granted = set(getattr(provider.identity, "granted_scopes", None) or [])
+        self.missing_scope: dict[str, Optional[str]] = {
+            resource: (scope if granted and scope not in granted else None)
+            for resource, scope in REQUIRED_SCOPES.items()
+        }
         self.password_policies: dict[str, PasswordPolicy] = (
-            self._list_password_policies()
+            {}
+            if self.missing_scope["password_policies"]
+            else self._list_password_policies()
         )
-        self.authenticators: dict[str, OktaAuthenticator] = self._list_authenticators()
+        self.authenticators: dict[str, OktaAuthenticator] = (
+            {} if self.missing_scope["authenticators"] else self._list_authenticators()
+        )
 
     def _list_password_policies(self) -> dict[str, "PasswordPolicy"]:
         """List PASSWORD policies with normalized password settings."""
@@ -66,8 +99,10 @@ class Authenticator(OktaService):
 
     async def _fetch_password_policies(self) -> dict[str, "PasswordPolicy"]:
         result: dict[str, PasswordPolicy] = {}
-        items, _resp, err = _normalise_sdk_result(
-            await self.client.list_policies(type="PASSWORD")
+        items, err = await self._paginate(
+            lambda after: self.client.list_policies(
+                type="PASSWORD", after=after, limit="200"
+            )
         )
         if err is not None:
             logger.error(f"Error listing PASSWORD policies: {err}")
@@ -104,6 +139,26 @@ class Authenticator(OktaService):
         return result
 
     @staticmethod
+    async def _paginate(fetch):
+        """Drain all pages of an SDK list call using Okta Link headers."""
+        all_items = []
+        result = await fetch(None)
+        items, resp, err = _normalise_sdk_result(result)
+        if err is not None:
+            return [], err
+        all_items.extend(items)
+        while True:
+            cursor = _next_after_cursor(resp)
+            if not cursor:
+                break
+            result = await fetch(cursor)
+            items, resp, err = _normalise_sdk_result(result)
+            if err is not None:
+                return all_items, err
+            all_items.extend(items)
+        return all_items, None
+
+    @staticmethod
     def _build_password_policy(policy) -> "PasswordPolicy":
         settings = getattr(policy, "settings", None)
         password_settings = getattr(settings, "password", None) if settings else None
@@ -116,6 +171,7 @@ class Authenticator(OktaService):
             else None
         )
         dictionary = getattr(complexity, "dictionary", None) if complexity else None
+        common = getattr(dictionary, "common", None) if dictionary else None
         age = getattr(password_settings, "age", None) if password_settings else None
         policy_id = _value(getattr(policy, "id", None))
         return PasswordPolicy(
@@ -133,7 +189,7 @@ class Authenticator(OktaService):
             min_age_minutes=_int_or_none(getattr(age, "min_age_minutes", None)),
             max_age_days=_int_or_none(getattr(age, "max_age_days", None)),
             history_count=_int_or_none(getattr(age, "history_count", None)),
-            common_password_check=_bool_or_none(getattr(dictionary, "common", None)),
+            common_password_check=_bool_or_none(getattr(common, "exclude", None)),
         )
 
     @staticmethod

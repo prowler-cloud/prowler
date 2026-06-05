@@ -48,6 +48,17 @@ class Test_authenticator_smart_card_active:
         assert findings[0].status == "FAIL"
         assert "not active" in findings[0].status_extended
 
+    def test_missing_authenticators_scope_is_manual(self):
+        findings = _run_check(
+            build_authenticator_client(
+                authenticators={},
+                missing_scope={"authenticators": "okta.authenticators.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "okta.authenticators.read" in findings[0].status_extended
+
     def test_inactive_smart_card_fails(self):
         smart_card = authenticator(
             auth_id="aut-smart-card",

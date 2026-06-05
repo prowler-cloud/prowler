@@ -19,5 +19,6 @@ class authenticator_password_complexity_symbol(Check):
             field_name="min_symbol",
             requirement="at least one symbol character",
             compliant=lambda value: value is not None and value >= 1,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="minimum symbol characters",
         )

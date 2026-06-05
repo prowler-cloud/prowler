@@ -19,5 +19,6 @@ class authenticator_password_minimum_age_24h(Check):
             field_name="min_age_minutes",
             requirement="minimum password age of at least 24 hours",
             compliant=lambda value: value is not None and value >= 1440,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="minimum age minutes",
         )

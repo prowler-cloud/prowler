@@ -34,6 +34,17 @@ class Test_authenticator_password_common_password_check:
         assert findings[0].status == "FAIL"
         assert "No active Okta Password Policies" in findings[0].status_extended
 
+    def test_missing_password_policies_scope_is_manual(self):
+        findings = _run_check(
+            build_authenticator_client(
+                {},
+                missing_scope={"password_policies": "okta.policies.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "okta.policies.read" in findings[0].status_extended
+
     def test_compliant_password_policy_passes(self):
         policy = password_policy(common_password_check=True)
         findings = _run_check(build_authenticator_client({policy.id: policy}))

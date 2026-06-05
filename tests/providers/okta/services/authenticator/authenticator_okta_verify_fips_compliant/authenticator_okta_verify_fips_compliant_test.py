@@ -52,3 +52,14 @@ class Test_authenticator_okta_verify_fips_compliant:
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
         assert "Okta Verify authenticator is not active" in findings[0].status_extended
+
+    def test_missing_authenticators_scope_is_manual(self):
+        findings = _run_check(
+            build_authenticator_client(
+                authenticators={},
+                missing_scope={"authenticators": "okta.authenticators.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "okta.authenticators.read" in findings[0].status_extended

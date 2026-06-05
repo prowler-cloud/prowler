@@ -19,5 +19,6 @@ class authenticator_password_maximum_age_60d(Check):
             field_name="max_age_days",
             requirement="maximum password age of 60 days or less",
             compliant=lambda value: value is not None and 0 < value <= 60,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="maximum age days",
         )

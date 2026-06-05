@@ -19,5 +19,6 @@ class authenticator_password_complexity_lowercase(Check):
             field_name="min_lower_case",
             requirement="at least one lowercase character",
             compliant=lambda value: value is not None and value >= 1,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="minimum lowercase characters",
         )

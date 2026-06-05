@@ -8,11 +8,17 @@ from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
 
 
 def build_authenticator_client(
-    password_policies: dict = None, authenticators: dict = None
+    password_policies: dict = None,
+    authenticators: dict = None,
+    missing_scope: dict = None,
 ):
     client = mock.MagicMock()
     client.password_policies = password_policies or {}
     client.authenticators = authenticators or {}
+    client.missing_scope = missing_scope or {
+        "password_policies": None,
+        "authenticators": None,
+    }
     client.provider = set_mocked_okta_provider()
     return client
 

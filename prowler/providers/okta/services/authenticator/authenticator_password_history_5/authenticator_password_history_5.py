@@ -19,5 +19,6 @@ class authenticator_password_history_5(Check):
             field_name="history_count",
             requirement="password history of at least 5 previous passwords",
             compliant=lambda value: value is not None and value >= 5,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="password history count",
         )

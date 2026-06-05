@@ -19,5 +19,6 @@ class authenticator_password_complexity_number(Check):
             field_name="min_number",
             requirement="at least one numeric character",
             compliant=lambda value: value is not None and value >= 1,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="minimum numeric characters",
         )

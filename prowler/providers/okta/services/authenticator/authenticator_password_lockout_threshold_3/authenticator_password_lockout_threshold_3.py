@@ -19,5 +19,6 @@ class authenticator_password_lockout_threshold_3(Check):
             field_name="max_attempts",
             requirement="password lockout after 3 or fewer failed attempts",
             compliant=lambda value: value is not None and value <= 3,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="maximum failed attempts",
         )

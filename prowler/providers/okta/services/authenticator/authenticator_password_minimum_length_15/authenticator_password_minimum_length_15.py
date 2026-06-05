@@ -19,5 +19,6 @@ class authenticator_password_minimum_length_15(Check):
             field_name="min_length",
             requirement="minimum password length of at least 15 characters",
             compliant=lambda value: value is not None and value >= 15,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="minimum length",
         )

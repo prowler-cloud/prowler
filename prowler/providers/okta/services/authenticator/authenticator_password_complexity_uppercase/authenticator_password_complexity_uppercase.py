@@ -19,5 +19,6 @@ class authenticator_password_complexity_uppercase(Check):
             field_name="min_upper_case",
             requirement="at least one uppercase character",
             compliant=lambda value: value is not None and value >= 1,
+            missing_scope=authenticator_client.missing_scope.get("password_policies"),
             actual_label="minimum uppercase characters",
         )
