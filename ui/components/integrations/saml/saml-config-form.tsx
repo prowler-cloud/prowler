@@ -18,7 +18,7 @@ import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomServerInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { FormButtons } from "@/components/ui/form";
-import { apiBaseUrl } from "@/lib";
+import { getRuntimeConfigClient } from "@/lib/get-runtime-config.client";
 
 const validateXMLContent = (
   xmlContent: string,
@@ -253,10 +253,12 @@ export const SamlConfigForm = ({
     reader.readAsText(file);
   };
 
+  const { apiBaseUrl } = getRuntimeConfigClient();
   const trimmedEmailDomain = emailDomain.trim();
-  const acsUrl = trimmedEmailDomain
-    ? `${apiBaseUrl}/accounts/saml/${trimmedEmailDomain}/acs/`
-    : "";
+  const acsUrl =
+    trimmedEmailDomain && apiBaseUrl
+      ? `${apiBaseUrl}/accounts/saml/${trimmedEmailDomain}/acs/`
+      : "";
 
   return (
     <form

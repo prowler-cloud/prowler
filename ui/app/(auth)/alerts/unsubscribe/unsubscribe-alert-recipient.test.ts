@@ -14,7 +14,7 @@ const lastFetchCall = (): { url: string; init: RequestInit } => {
 describe("unsubscribeAlertRecipient", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.com/api/v1");
+    vi.stubEnv("WEB_APP_API_BASE_URL", "https://api.example.com/api/v1");
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({

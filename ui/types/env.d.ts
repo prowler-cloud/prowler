@@ -5,14 +5,21 @@ declare global {
       NODE_ENV: "development" | "production" | "test";
       NEXT_RUNTIME?: "nodejs" | "edge";
 
-      // Public client config
-      NEXT_PUBLIC_API_BASE_URL: string;
-      NEXT_PUBLIC_API_DOCS_URL?: string;
+      // WEB_APP prefix
+      // Runtime public config read server-side per request,
+      WEB_APP_API_BASE_URL: string;
+      WEB_APP_API_DOCS_URL?: string;
+
+      // GTM
+      WEB_APP_GOOGLE_TAG_MANAGER_ID?: string;
+
+      // SENTRY
+      WEB_APP_SENTRY_DSN?: string;
+      WEB_APP_SENTRY_ENVIRONMENT?: string;
+
+      // Build-time public config
       NEXT_PUBLIC_IS_CLOUD_ENV?: "true" | "false";
       NEXT_PUBLIC_PROWLER_RELEASE_VERSION?: string;
-      NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID?: string;
-      NEXT_PUBLIC_SENTRY_DSN?: string;
-      NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
 
       // Auth (NextAuth)
       AUTH_URL: string;
@@ -21,12 +28,15 @@ declare global {
       NEXTAUTH_URL?: string;
 
       // Sentry (server / build)
-      SENTRY_DSN?: string;
-      SENTRY_ENVIRONMENT?: string;
       SENTRY_RELEASE?: string;
       SENTRY_ORG?: string;
       SENTRY_PROJECT?: string;
       SENTRY_AUTH_TOKEN?: string;
+
+      // TODO Reserved runtime public config (registered now; no UI consumer yet)
+      POSTHOG_KEY?: string;
+      POSTHOG_HOST?: string;
+      REO_DEV_CLIENT_ID?: string;
 
       // Social OAuth
       SOCIAL_GOOGLE_OAUTH_CLIENT_ID?: string;

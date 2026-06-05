@@ -26,6 +26,7 @@ import {
   LighthouseIcon,
   SupportIcon,
 } from "@/components/icons/Icons";
+import { getRuntimeConfigClient } from "@/lib/get-runtime-config.client";
 import { GroupProps } from "@/types";
 
 interface MenuListOptions {
@@ -34,6 +35,7 @@ interface MenuListOptions {
 
 export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const { apiDocsUrl } = getRuntimeConfigClient();
 
   return [
     {
@@ -164,10 +166,9 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: DocIcon,
             },
             {
-              href:
-                process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-                  ? "https://api.prowler.com/api/v1/docs"
-                  : `${process.env.NEXT_PUBLIC_API_DOCS_URL}`,
+              href: isCloudEnv
+                ? "https://api.prowler.com/api/v1/docs"
+                : (apiDocsUrl ?? ""),
               target: "_blank",
               label: "API reference",
               icon: APIdocIcon,

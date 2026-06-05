@@ -1,10 +1,10 @@
 import * as Sentry from "@sentry/nextjs";
 
-const SENTRY_DSN = process.env.SENTRY_DSN;
+const WEB_APP_SENTRY_DSN = process.env.WEB_APP_SENTRY_DSN;
 
 // Only initialize Sentry if DSN is configured
-if (SENTRY_DSN) {
-  const isProduction = process.env.SENTRY_ENVIRONMENT === "pro";
+if (WEB_APP_SENTRY_DSN) {
+  const isProduction = process.env.WEB_APP_SENTRY_ENVIRONMENT === "pro";
 
   /**
    * Server-side Sentry configuration
@@ -16,10 +16,10 @@ if (SENTRY_DSN) {
    */
   Sentry.init({
     // 📍 DSN - Data Source Name (identifies your Sentry project)
-    dsn: SENTRY_DSN,
+    dsn: WEB_APP_SENTRY_DSN,
 
     // 🌍 Environment configuration
-    environment: process.env.SENTRY_ENVIRONMENT || "local",
+    environment: process.env.WEB_APP_SENTRY_ENVIRONMENT || "local",
 
     // 📦 Release tracking
     release: process.env.SENTRY_RELEASE,

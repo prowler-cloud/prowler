@@ -14,7 +14,7 @@ const lastFetchCall = (): { url: string; init: RequestInit } => {
 describe("confirmAlertRecipient", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.com/api/v1");
+    vi.stubEnv("WEB_APP_API_BASE_URL", "https://api.example.com/api/v1");
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -105,7 +105,7 @@ describe("confirmAlertRecipient", () => {
 
   it("returns the fallback message when the API base URL is missing", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
+    vi.stubEnv("WEB_APP_API_BASE_URL", "");
 
     // When
     const result = await confirmAlertRecipient("token-1");

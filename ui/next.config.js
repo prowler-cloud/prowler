@@ -6,7 +6,15 @@ const { withSentryConfig } = require("@sentry/nextjs");
 /** @type {import('next').NextConfig} */
 
 // HTTP Security Headers
-// 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode
+// 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode.
+//
+// CSP is intentionally STATIC (decision D4): the runtime config island is
+// `type="application/json"` (inert, not governed by `script-src`), so it needs
+// no nonce. Constraint (R2): a runtime `WEB_APP_SENTRY_DSN`'s ingest host must fall
+// under the `connect-src` allowlist below — `https://*.sentry.io` /
+// `https://*.ingest.sentry.io` cover Sentry Cloud, but a self-hosted or
+// region-specific Sentry host would be blocked until per-request CSP via
+// middleware lands as a follow-up.
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://browser.sentry-cdn.com;
@@ -16,22 +24,7 @@ const cspHeader = `
   style-src 'self' 'unsafe-inline';
   frame-src 'self' https://js.stripe.com https://www.googletagmanager.com;
   frame-ancestors 'none';
-  report-to csp-endpoint;
 `;
-
-// Get Sentry CSP report endpoint if DSN is configured
-const getSentryReportEndpoint = () => {
-  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return null;
-  try {
-    const sentryKey =
-      process.env.NEXT_PUBLIC_SENTRY_DSN.split("@")[0]?.split("//")[1];
-    return sentryKey
-      ? `https://o0.ingest.sentry.io/api/0/security/?sentry_key=${sentryKey}`
-      : null;
-  } catch {
-    return null;
-  }
-};
 
 const nextConfig = {
   poweredByHeader: false,
@@ -47,7 +40,6 @@ const nextConfig = {
     root: __dirname,
   },
   async headers() {
-    const sentryEndpoint = getSentryReportEndpoint();
     const headers = [
       {
         key: "Content-Security-Policy",
@@ -62,14 +54,6 @@ const nextConfig = {
         value: "strict-origin-when-cross-origin",
       },
     ];
-
-    // Add Reporting-Endpoints header if Sentry is configured
-    if (sentryEndpoint) {
-      headers.push({
-        key: "Reporting-Endpoints",
-        value: `csp-endpoint="${sentryEndpoint}"`,
-      });
-    }
 
     return [
       {
@@ -92,6 +76,12 @@ const sentryWebpackPluginOptions = {
 };
 
 // Export with Sentry only if configuration is available
-module.exports = process.env.SENTRY_DSN
+const hasSentryBuildCredentials = Boolean(
+  process.env.SENTRY_AUTH_TOKEN &&
+    process.env.SENTRY_ORG &&
+    process.env.SENTRY_PROJECT,
+);
+
+module.exports = hasSentryBuildCredentials
   ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
   : nextConfig;

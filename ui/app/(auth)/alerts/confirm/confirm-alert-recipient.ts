@@ -41,7 +41,7 @@ const toState = (payload: unknown): string => {
 export const confirmAlertRecipient = async (
   token?: string,
 ): Promise<AlertConfirmResult> => {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const apiBaseUrl = process.env.WEB_APP_API_BASE_URL;
   if (!apiBaseUrl) {
     return {
       ok: false,

@@ -13,8 +13,9 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
-export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+export const baseUrl = process.env.AUTH_URL;
+export const apiBaseUrl =
+  process.env.WEB_APP_API_BASE_URL ?? "http://localhost:8080/api/v1";
 
 /**
  * Extracts a form value from a FormData object

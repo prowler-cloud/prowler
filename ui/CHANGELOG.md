@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 
+### 🔄 Changed
+
+- Public SaaS config (Sentry, Google Tag Manager, API base/docs URL) now resolves at container runtime instead of build time; self-hosted deployments must set the UI config through the new `WEB_APP_`-prefixed env vars (`WEB_APP_API_BASE_URL`, `WEB_APP_API_DOCS_URL`, `WEB_APP_GOOGLE_TAG_MANAGER_ID`, `WEB_APP_SENTRY_DSN`, `WEB_APP_SENTRY_ENVIRONMENT`) [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+
 ---
 
 ## [1.29.3] (Prowler UNRELEASED)
