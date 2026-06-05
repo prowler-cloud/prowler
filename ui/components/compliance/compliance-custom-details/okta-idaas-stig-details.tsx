@@ -1,3 +1,4 @@
+import { Severity, SeverityBadge } from "@/components/ui/table";
 import { Requirement } from "@/types/compliance";
 
 import {
@@ -7,7 +8,6 @@ import {
   ComplianceDetailContainer,
   ComplianceDetailSection,
   ComplianceDetailText,
-  getSeverityBadgeColor,
 } from "./shared-components";
 
 export const OktaIDaaSStigCustomDetails = ({
@@ -26,17 +26,18 @@ export const OktaIDaaSStigCustomDetails = ({
     <ComplianceDetailContainer>
       <ComplianceBadgeContainer>
         {severity && (
-          <ComplianceBadge
-            label="Severity"
-            value={severity}
-            color={getSeverityBadgeColor(severity)}
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground text-sm font-medium">
+              Severity:
+            </span>
+            <SeverityBadge severity={severity.toLowerCase() as Severity} />
+          </div>
         )}
         {stigId && (
-          <ComplianceBadge label="STIG ID" value={stigId} color="indigo" />
+          <ComplianceBadge label="STIG ID" value={stigId} variant="tag" />
         )}
         {ruleId && (
-          <ComplianceBadge label="Rule ID" value={ruleId} color="indigo" />
+          <ComplianceBadge label="Rule ID" value={ruleId} variant="tag" />
         )}
       </ComplianceBadgeContainer>
 
