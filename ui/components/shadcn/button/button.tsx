@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[8px] text-sm font-medium transition-all disabled:pointer-events-none disabled:bg-button-disabled disabled:text-text-neutral-tertiary outline-none focus-visible:ring-2 focus-visible:ring-offset-2 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[8px] text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform,scale] duration-150 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:bg-button-disabled disabled:text-text-neutral-tertiary motion-reduce:active:scale-100 motion-reduce:transform-none motion-reduce:transition-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -21,13 +21,13 @@ const buttonVariants = cva(
           "border border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary text-text-neutral-primary focus-visible:ring-border-neutral-tertiary/50",
         ghost:
           "border border-transparent text-text-neutral-primary hover:bg-bg-neutral-tertiary active:bg-border-neutral-secondary focus-visible:ring-border-neutral-secondary/50",
-        link: "text-button-tertiary underline-offset-4 hover:text-button-tertiary-hover disabled:bg-transparent",
+        link: "text-button-tertiary underline-offset-4 hover:text-button-tertiary-hover active:scale-100 disabled:bg-transparent",
         // Menu variant like secondary but more padding and the back is almost transparent
-        menu: "backdrop-blur-xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/10 text-text-neutral-primary dark:text-white shadow-lg hover:bg-white/70 dark:hover:bg-white/10 hover:border-white/90 dark:hover:border-white/30 active:bg-white/80 dark:active:bg-white/15 active:scale-[0.98] focus-visible:ring-button-primary/50 transition-all duration-200",
+        menu: "backdrop-blur-xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/10 text-text-neutral-primary dark:text-white shadow-lg hover:bg-white/70 dark:hover:bg-white/10 hover:border-white/90 dark:hover:border-white/30 active:bg-white/80 dark:active:bg-white/15 focus-visible:ring-button-primary/50 duration-200",
         "menu-active":
-          "backdrop-blur-xl bg-white/50 dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-text-neutral-primary dark:text-white shadow-sm hover:bg-white/60 dark:hover:bg-white/10 hover:border-black/[0.12] dark:hover:border-white/30 active:bg-white/70 dark:active:bg-white/15 active:scale-[0.98] focus-visible:ring-button-primary/50 transition-all duration-200",
+          "backdrop-blur-xl bg-white/50 dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-text-neutral-primary dark:text-white shadow-sm hover:bg-white/60 dark:hover:bg-white/10 hover:border-black/[0.12] dark:hover:border-white/30 active:bg-white/70 dark:active:bg-white/15 focus-visible:ring-button-primary/50 duration-200",
         "menu-inactive":
-          "text-text-neutral-primary border border-transparent hover:backdrop-blur-xl hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.08] dark:hover:border-white/10 hover:shadow-sm active:bg-white/50 dark:active:bg-white/15 active:scale-[0.98] focus-visible:ring-border-neutral-secondary/50 transition-all duration-200",
+          "text-text-neutral-primary border border-transparent hover:backdrop-blur-xl hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.08] dark:hover:border-white/10 hover:shadow-sm active:bg-white/50 dark:active:bg-white/15 focus-visible:ring-border-neutral-secondary/50 duration-200",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
