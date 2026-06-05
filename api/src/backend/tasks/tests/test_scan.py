@@ -443,6 +443,7 @@ class TestPerformScan:
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
+                "name": finding.resource_name,
                 "region": finding.region,
                 "service": finding.service_name,
                 "type": finding.resource_type,
@@ -476,6 +477,7 @@ class TestPerformScan:
 
         resource_instance = MagicMock()
         resource_instance.uid = finding.resource_uid
+        resource_instance.name = "old_name"
         resource_instance.region = "us-west-1"
         resource_instance.service = "old_service"
         resource_instance.type = "old_type"
@@ -494,6 +496,7 @@ class TestPerformScan:
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
+                "name": finding.resource_name,
                 "region": finding.region,
                 "service": finding.service_name,
                 "type": finding.resource_type,
@@ -501,6 +504,7 @@ class TestPerformScan:
         )
 
         # Check that resource fields were updated
+        assert resource_instance.name == finding.resource_name
         assert resource_instance.region == finding.region
         assert resource_instance.service == finding.service_name
         assert resource_instance.type == finding.resource_type
