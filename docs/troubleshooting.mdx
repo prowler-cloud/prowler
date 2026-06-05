@@ -201,35 +201,29 @@ When running Prowler behind a reverse proxy (nginx, Traefik, etc.) or load balan
 
 **Root Cause:**
 
-Next.js environment variables prefixed with `NEXT_PUBLIC_` are **bundled at build time**, not runtime. The pre-built Docker images from Docker Hub (`prowlercloud/prowler-ui:stable`) are built with default internal URLs. Simply setting `NEXT_PUBLIC_API_BASE_URL` in your `.env` file or environment variables and restarting the container will **NOT** work because these values are already compiled into the JavaScript bundle.
+The API base and docs URLs are resolved from the container environment **at runtime**. A single pre-built Docker image (`prowlercloud/prowler-ui:stable`) therefore serves any environment: point the URLs at your external domain and restart the container — no rebuild is required.
 
 **Solution:**
 
-You must **rebuild** the UI Docker image with your external URL:
-
-```bash
-# Clone the repository (if you haven't already)
-git clone https://github.com/prowler-cloud/prowler.git
-cd prowler/ui
-
-# Build with your external URL as a build argument
-docker build \
-  --build-arg NEXT_PUBLIC_API_BASE_URL=https://prowler.example.com/api/v1 \
-  --build-arg NEXT_PUBLIC_API_DOCS_URL=https://prowler.example.com/api/v1/docs \
-  -t prowler-ui-custom:latest \
-  --target prod \
-  .
-```
-
-Then update your `docker-compose.yml` to use your custom image instead of the pre-built one:
+Set the runtime environment variables to your external URL and restart the UI container:
 
 ```yaml
 services:
   ui:
-    image: prowler-ui-custom:latest  # Use your custom-built image
+    image: prowlercloud/prowler-ui:stable
+    environment:
+      WEB_APP_API_BASE_URL: https://prowler.example.com/api/v1
+      WEB_APP_API_DOCS_URL: https://prowler.example.com/api/v1/docs
     # ... rest of configuration
 ```
 
+The same values can be supplied through your `.env` file:
+
+```bash
+WEB_APP_API_BASE_URL=https://prowler.example.com/api/v1
+WEB_APP_API_DOCS_URL=https://prowler.example.com/api/v1/docs
+```
+
 <Note>
-The `NEXT_PUBLIC_` prefix is a Next.js convention that exposes environment variables to the browser. Since the browser bundle is compiled during `docker build`, these variables must be provided as build arguments, not runtime environment variables.
+Earlier releases inlined these values into the JavaScript bundle at build time (via the `NEXT_PUBLIC_` prefix) and required a rebuild with `--build-arg`. That is no longer necessary: `WEB_APP_API_BASE_URL` and `WEB_APP_API_DOCS_URL` are read at container start, so updating them and restarting is sufficient.
 </Note>

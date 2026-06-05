@@ -11,7 +11,11 @@ This folder contains all Sentry-related configuration and utilities for the Prow
 
 ## Client Configuration
 
-The client-side configuration is located in `app/instrumentation.client.ts` following Next.js conventions.
+The client-side configuration lives in the Next.js convention file
+`instrumentation-client.ts` (repo root). It runs before hydration and reads the
+DSN/environment from the runtime data island injected into `<head>` (see
+`lib/runtime-config.ts`), so the browser SDK is configured per deployment from
+the container environment rather than from build-time `NEXT_PUBLIC_*` vars.
 
 ## Usage
 
@@ -30,16 +34,21 @@ Sentry.captureException(error, {
 
 ## Environment Variables
 
-Required environment variables (add to `.env`):
+Runtime environment variables (supplied to the running container; a single
+`WEB_APP_SENTRY_DSN` / `WEB_APP_SENTRY_ENVIRONMENT` now serves both server and
+browser):
 
 ```env
-SENTRY_DSN=https://YOUR_KEY@o0.ingest.sentry.io/0
-NEXT_PUBLIC_SENTRY_DSN=https://YOUR_KEY@o0.ingest.sentry.io/0
+WEB_APP_SENTRY_DSN=https://YOUR_KEY@o0.ingest.sentry.io/0
+WEB_APP_SENTRY_ENVIRONMENT=production
+```
+
+Build-time only (for source-map upload via `withSentryConfig`):
+
+```env
 SENTRY_ORG=your-org-slug
 SENTRY_PROJECT=your-project-slug
 SENTRY_AUTH_TOKEN=sntrys_YOUR_AUTH_TOKEN
-SENTRY_ENVIRONMENT=development
-NEXT_PUBLIC_SENTRY_ENVIRONMENT=development
 ```
 
 ## Ignored Errors
