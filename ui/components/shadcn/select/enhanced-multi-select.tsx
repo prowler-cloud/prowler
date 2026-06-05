@@ -183,7 +183,7 @@ export function EnhancedMultiSelect({
           aria-controls={open ? listboxId : undefined}
           aria-label={ariaLabel}
           className={cn(
-            "border-border-input-primary bg-bg-input-primary text-text-neutral-primary data-[placeholder]:text-text-neutral-tertiary [&_svg:not([class*='text-'])]:text-text-neutral-tertiary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-input-primary active:bg-bg-input-primary focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex h-auto min-h-12 w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 [&_svg]:pointer-events-auto",
+            "group border-border-input-primary bg-bg-input-primary text-text-neutral-primary data-[placeholder]:text-text-neutral-tertiary [&_svg:not([class*='text-'])]:text-text-neutral-tertiary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-input-primary active:bg-bg-input-primary focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex h-auto min-h-12 w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm shadow-xs transition-[background-color,border-color,color,box-shadow] duration-150 ease-out outline-none focus-visible:ring-1 focus-visible:ring-offset-1 motion-reduce:transition-none [&_svg]:pointer-events-auto",
             disabled && "cursor-not-allowed opacity-50",
             className,
           )}
@@ -200,7 +200,8 @@ export function EnhancedMultiSelect({
                       <Badge
                         key={value}
                         variant="tag"
-                        className="m-1 cursor-default [&>svg]:pointer-events-auto"
+                        data-slot="enhanced-multiselect-pill"
+                        className="animate-in fade-in-0 zoom-in-95 m-1 cursor-default duration-150 ease-out motion-reduce:transform-none motion-reduce:animate-none motion-reduce:transition-none [&>svg]:pointer-events-auto"
                       >
                         <span className="cursor-default">{option.label}</span>
                         <span
@@ -224,7 +225,8 @@ export function EnhancedMultiSelect({
                 {selectedValues.length > maxCount && (
                   <Badge
                     variant="tag"
-                    className="m-1 cursor-default [&>svg]:pointer-events-auto"
+                    data-slot="enhanced-multiselect-pill"
+                    className="animate-in fade-in-0 zoom-in-95 m-1 cursor-default duration-150 ease-out motion-reduce:transform-none motion-reduce:animate-none motion-reduce:transition-none [&>svg]:pointer-events-auto"
                   >
                     {`+ ${selectedValues.length - maxCount} more`}
                     <span
@@ -271,7 +273,7 @@ export function EnhancedMultiSelect({
                   className="flex h-full min-h-6"
                 />
                 <ChevronDown
-                  className="text-text-neutral-tertiary mx-2 h-4 cursor-pointer"
+                  className="text-text-neutral-tertiary mx-2 h-4 cursor-pointer transition-transform duration-200 ease-out group-aria-expanded:rotate-180 motion-reduce:rotate-0 motion-reduce:transition-none"
                   aria-hidden="true"
                 />
               </div>
@@ -281,7 +283,7 @@ export function EnhancedMultiSelect({
               <span className="text-text-neutral-tertiary mx-3 text-sm">
                 {placeholder}
               </span>
-              <ChevronDown className="text-text-neutral-tertiary mx-2 h-4 cursor-pointer" />
+              <ChevronDown className="text-text-neutral-tertiary mx-2 h-4 cursor-pointer transition-transform duration-200 ease-out group-aria-expanded:rotate-180 motion-reduce:rotate-0 motion-reduce:transition-none" />
             </div>
           )}
         </Button>
@@ -339,7 +341,7 @@ export function EnhancedMultiSelect({
                     aria-selected={isSelected}
                     aria-disabled={option.disabled}
                     className={cn(
-                      "cursor-pointer",
+                      "cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none",
                       option.disabled && "cursor-not-allowed opacity-50",
                     )}
                     disabled={option.disabled}

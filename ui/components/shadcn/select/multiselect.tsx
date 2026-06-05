@@ -153,15 +153,14 @@ export function MultiSelectTrigger({
         data-slot="multiselect-trigger"
         data-size={size}
         className={cn(
-          "border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=multiselect-value]:line-clamp-1 *:data-[slot=multiselect-value]:flex *:data-[slot=multiselect-value]:items-center *:data-[slot=multiselect-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
+          "group border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[background-color,border-color,color,box-shadow] duration-150 ease-out outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=multiselect-value]:line-clamp-1 *:data-[slot=multiselect-value]:flex *:data-[slot=multiselect-value]:items-center *:data-[slot=multiselect-value]:gap-2 motion-reduce:transition-none dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
           className,
         )}
       >
         {children}
         <ChevronDown
           className={cn(
-            "text-bg-button-secondary size-6 shrink-0 opacity-70 transition-transform duration-200",
-            open && "rotate-180",
+            "text-bg-button-secondary size-6 shrink-0 opacity-70 transition-transform duration-200 ease-out group-aria-expanded:rotate-180 motion-reduce:rotate-0 motion-reduce:transition-none",
           )}
         />
       </Button>
@@ -267,7 +266,7 @@ export function MultiSelectValue({
           <Badge
             variant="tag"
             data-selected-item
-            className="group flex items-center gap-1.5 px-2 py-1 text-xs font-medium"
+            className="group animate-in fade-in-0 zoom-in-95 flex items-center gap-1.5 px-2 py-1 text-xs font-medium duration-150 ease-out motion-reduce:transform-none motion-reduce:animate-none motion-reduce:transition-none"
             key={value}
             onClick={
               clickToRemove
@@ -415,7 +414,7 @@ export function MultiSelectItem({
       keywords={keywords}
       data-slot="multiselect-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary my-1 flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none first:mt-0 last:mb-0 hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary my-1 flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden transition-colors duration-150 ease-out select-none first:mt-0 last:mb-0 hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 motion-reduce:transition-none dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         isSelected && "bg-slate-100 dark:bg-slate-800/50",
         disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
         className,
@@ -431,8 +430,8 @@ export function MultiSelectItem({
       </span>
       <CheckIcon
         className={cn(
-          "text-bg-button-secondary size-5 shrink-0",
-          isSelected ? "opacity-100" : "opacity-0",
+          "text-bg-button-secondary size-5 shrink-0 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
+          isSelected ? "scale-100 opacity-100" : "scale-95 opacity-0",
         )}
       />
     </CommandItem>

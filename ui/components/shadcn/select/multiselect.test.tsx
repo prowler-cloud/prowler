@@ -83,6 +83,138 @@ describe("MultiSelect", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("uses visible trigger and chevron open-state motion", () => {
+    render(
+      <MultiSelect values={[]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    const trigger = screen.getByRole("combobox");
+    const icon = trigger.querySelector("svg");
+
+    expect(trigger).toHaveClass(
+      "transition-[background-color,border-color,color,box-shadow]",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+    expect(icon).toHaveClass(
+      "transition-transform",
+      "duration-200",
+      "ease-out",
+      "group-aria-expanded:rotate-180",
+      "motion-reduce:rotate-0",
+      "motion-reduce:transition-none",
+    );
+  });
+
+  it("uses visible content open and close motion", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+
+    const content = document.querySelector("[data-slot='multiselect-content']");
+
+    expect(content).toHaveClass(
+      "duration-200",
+      "ease-out",
+      "data-[state=open]:animate-in",
+      "data-[state=open]:fade-in-0",
+      "data-[state=open]:zoom-in-95",
+      "data-[state=closed]:animate-out",
+      "data-[state=closed]:fade-out-0",
+      "data-[state=closed]:zoom-out-95",
+      "data-[state=closed]:duration-100",
+      "data-[state=closed]:ease-in",
+      "motion-reduce:animate-none",
+      "motion-reduce:transform-none",
+      "motion-reduce:transition-none",
+    );
+  });
+
+  it("animates item selection feedback and check visibility", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MultiSelect defaultValues={[]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+
+    const option = screen.getByRole("option", { name: /production aws/i });
+    const checkIcon = option.querySelector("svg");
+
+    expect(option).toHaveClass(
+      "transition-colors",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+    expect(checkIcon).toHaveClass(
+      "transition-[opacity,transform]",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+  });
+
+  it("animates selected pills when values are added to the trigger", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MultiSelect defaultValues={[]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+    await user.click(screen.getByRole("option", { name: /production aws/i }));
+
+    const pill = within(screen.getByRole("combobox"))
+      .getByText("Production AWS")
+      .closest("[data-selected-item]");
+
+    expect(pill).toHaveClass(
+      "animate-in",
+      "fade-in-0",
+      "zoom-in-95",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:animate-none",
+      "motion-reduce:transform-none",
+      "motion-reduce:transition-none",
+    );
+  });
+
   it("filters items without crashing when search is enabled", async () => {
     const user = userEvent.setup();
 
