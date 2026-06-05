@@ -1856,11 +1856,41 @@ class TestBaseContractDefaults:
         provider = FakeProviderNoHelpText()
         assert provider.get_finding_sort_key() is None
 
-    def test_get_summary_entity_raises_not_implemented(self):
-        """Base Provider.get_summary_entity raises NotImplementedError."""
+    def test_get_summary_entity_returns_type_and_account_default(self):
+        """Base Provider.get_summary_entity returns (type, account_id) so the
+        summary table is not silently dropped for providers that don't override
+        it."""
+        from types import SimpleNamespace
+        from unittest.mock import PropertyMock
+
         provider = FakeProviderNoHelpText()
-        with pytest.raises(NotImplementedError):
-            provider.get_summary_entity()
+        with patch.object(
+            type(provider),
+            "identity",
+            new_callable=PropertyMock,
+            return_value=SimpleNamespace(account_id="acc-123"),
+        ):
+            entity_type, audited_entities = provider.get_summary_entity()
+
+        assert entity_type == provider.type
+        assert audited_entities == "acc-123"
+
+    def test_get_summary_entity_defaults_account_to_empty_string(self):
+        """When the identity has no account_id, audited_entities falls back to ''."""
+        from types import SimpleNamespace
+        from unittest.mock import PropertyMock
+
+        provider = FakeProviderNoHelpText()
+        with patch.object(
+            type(provider),
+            "identity",
+            new_callable=PropertyMock,
+            return_value=SimpleNamespace(),
+        ):
+            entity_type, audited_entities = provider.get_summary_entity()
+
+        assert entity_type == provider.type
+        assert audited_entities == ""
 
     def test_get_finding_output_data_raises_not_implemented(self):
         """Base Provider.get_finding_output_data raises NotImplementedError."""
