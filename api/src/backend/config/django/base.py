@@ -312,7 +312,6 @@ ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
 # toggles default to enabled, so once the master is on every group recovers unless a
 # group is explicitly turned off.
 TASK_RECOVERY_ENABLED = env.bool("DJANGO_TASK_RECOVERY_ENABLED", False)
-TASK_RECOVERY_SCANS_ENABLED = env.bool("DJANGO_TASK_RECOVERY_SCANS_ENABLED", True)
 TASK_RECOVERY_SUMMARIES_ENABLED = env.bool(
     "DJANGO_TASK_RECOVERY_SUMMARIES_ENABLED", True
 )

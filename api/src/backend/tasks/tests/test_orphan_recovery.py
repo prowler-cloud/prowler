@@ -7,13 +7,10 @@ from celery import states
 from django.test import override_settings
 from django_celery_results.models import TaskResult
 
-from api.models import Scan, StateChoices
-from api.models import Task as APITask
 from tasks.jobs.orphan_recovery import (
     _decode_celery_field,
     _reconcile_task_results,
     _recovery_attempt_count,
-    _reenqueue_scan,
     advisory_lock,
     is_worker_alive,
     reconcile_orphans,
@@ -159,6 +156,28 @@ class TestReconcileTaskResults:
         assert tr.task_id in result["failed"]
         mock_task.apply_async.assert_not_called()
 
+    def test_scan_task_is_skipped_entirely(self, tenants_fixture):
+        """Scan tasks are excluded from recovery: the watchdog never touches them."""
+        tr = _orphan_result(
+            name="scan-perform",
+            kwargs={
+                "tenant_id": str(tenants_fixture[0].id),
+                "scan_id": str(uuid4()),
+            },
+            worker="dead@gone",
+            created_minutes_ago=60,
+        )
+        p_alive, p_revoke, p_app, mock_task = self._patches(alive=False)
+        with p_alive, p_revoke, p_app:
+            result = _reconcile_task_results(
+                grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
+            )
+
+        assert tr.task_id not in result["recovered"]
+        assert tr.task_id not in result["failed"]
+        assert tr.task_id not in result["skipped"]
+        mock_task.apply_async.assert_not_called()
+
     def test_jira_integration_task_is_not_reenqueued(self, tenants_fixture):
         """integration-jira stays terminal: re-running it would create duplicate Jira
         issues, so an orphaned send is failed instead of re-enqueued."""
@@ -273,98 +292,6 @@ class TestReconcileTaskResults:
 
 
 @pytest.mark.django_db
-class TestScanRecovery:
-    """Scans are recovered by re-running scan-perform on the EXISTING scan row,
-    so even a scheduled-scan orphan (whose own task would no-op on its guard) is
-    actually re-executed."""
-
-    def _scan_orphan(self, tenant, provider, name):
-        old_id = str(uuid4())
-        tr = TaskResult.objects.create(
-            task_id=old_id,
-            status=states.STARTED,
-            task_name=name,
-            worker="dead@gone",
-            task_kwargs=repr(
-                {"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
-            ),
-            task_args=repr([]),
-        )
-        TaskResult.objects.filter(pk=tr.pk).update(
-            date_created=datetime.now(tz=timezone.utc) - timedelta(minutes=60)
-        )
-        APITask.objects.create(id=old_id, tenant_id=tenant.id, task_runner_task=tr)
-        scan = Scan.objects.create(
-            name="scan-orphan",
-            provider=provider,
-            trigger=Scan.TriggerChoices.SCHEDULED,
-            state=StateChoices.EXECUTING,
-            tenant_id=tenant.id,
-            task_id=old_id,
-            recovery_count=0,
-        )
-        return old_id, scan
-
-    @pytest.mark.parametrize("name", ["scan-perform", "scan-perform-scheduled"])
-    def test_scan_recovered_via_scan_perform(
-        self, tenants_fixture, providers_fixture, name
-    ):
-        tenant, provider = tenants_fixture[0], providers_fixture[0]
-        old_id, scan = self._scan_orphan(tenant, provider, name)
-
-        with (
-            patch("tasks.jobs.orphan_recovery.is_worker_alive", return_value=False),
-            patch("tasks.jobs.orphan_recovery.revoke_task"),
-            patch("tasks.jobs.orphan_recovery._recovery_attempt_count", return_value=1),
-            patch("tasks.tasks.perform_scan_task") as mock_scan_task,
-        ):
-            result = _reconcile_task_results(
-                grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
-            )
-
-        assert old_id in result["recovered"]
-        scan.refresh_from_db()
-        assert str(scan.task_id) != old_id  # relinked to a fresh task
-        assert scan.recovery_count == 1
-        assert TaskResult.objects.get(task_id=old_id).status == states.REVOKED
-        # Recovered by re-running scan-perform on the existing scan row (so the
-        # scheduled guard cannot no-op it), regardless of the original task name.
-        mock_scan_task.apply_async.assert_called_once()
-        assert mock_scan_task.apply_async.call_args.kwargs["kwargs"]["scan_id"] == str(
-            scan.id
-        )
-
-    def test_reenqueue_skips_when_scan_already_repointed(
-        self, tenants_fixture, providers_fixture
-    ):
-        # The scan already points at a newer task, so a stale orphan must not relink
-        # it or launch a second concurrent run against the same scan row.
-        tenant, provider = tenants_fixture[0], providers_fixture[0]
-        newer_id = str(uuid4())
-        tr = TaskResult.objects.create(
-            task_id=newer_id, status=states.STARTED, task_name="scan-perform"
-        )
-        APITask.objects.create(id=newer_id, tenant_id=tenant.id, task_runner_task=tr)
-        scan = Scan.objects.create(
-            name="scan-orphan",
-            provider=provider,
-            trigger=Scan.TriggerChoices.SCHEDULED,
-            state=StateChoices.EXECUTING,
-            tenant_id=tenant.id,
-            task_id=newer_id,
-            recovery_count=0,
-        )
-
-        with patch("tasks.tasks.perform_scan_task") as mock_scan_task:
-            recovered = _reenqueue_scan(str(uuid4()), scan)
-
-        assert recovered is False
-        mock_scan_task.apply_async.assert_not_called()
-        scan.refresh_from_db()
-        assert scan.recovery_count == 0
-
-
-@pytest.mark.django_db
 class TestOrphanRecoveryHelpers:
     def test_advisory_lock_acquires_and_releases(self):
         with advisory_lock() as acquired:
@@ -401,30 +328,22 @@ class TestOrphanRecoveryHelpers:
 class TestRecoveryFeatureFlags:
     def test_all_groups_enabled_by_default(self):
         tasks = reenqueueable_tasks()
-        assert {"scan-perform", "scan-perform-scheduled"} <= tasks
         assert "scan-summary" in tasks
         assert {"provider-deletion", "tenant-deletion"} <= tasks
-
-    @override_settings(TASK_RECOVERY_SCANS_ENABLED=False)
-    def test_scans_group_flag_excludes_scan_tasks(self):
-        tasks = reenqueueable_tasks()
-        assert "scan-perform" not in tasks
-        assert "scan-perform-scheduled" not in tasks
-        assert "scan-summary" in tasks  # other groups unaffected
 
     @override_settings(TASK_RECOVERY_SUMMARIES_ENABLED=False)
     def test_summaries_group_flag_excludes_summary_tasks(self):
         tasks = reenqueueable_tasks()
         assert "scan-summary" not in tasks
         assert "scan-compliance-overviews" not in tasks
-        assert "scan-perform" in tasks
+        assert "provider-deletion" in tasks
 
     @override_settings(TASK_RECOVERY_DELETIONS_ENABLED=False)
     def test_deletions_group_flag_excludes_deletion_tasks(self):
         tasks = reenqueueable_tasks()
         assert "provider-deletion" not in tasks
         assert "tenant-deletion" not in tasks
-        assert "scan-perform" in tasks
+        assert "scan-summary" in tasks
 
 
 @pytest.mark.django_db

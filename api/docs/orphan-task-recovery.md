@@ -1,10 +1,11 @@
 # Orphan Celery task recovery
 
 When a worker is terminated mid-task (a deploy, an OOM kill, a node eviction), the
-task it was running can be left non-terminal forever: the `Scan` stays `EXECUTING`,
-the `TaskResult` stays `STARTED`, and nothing re-runs it. This page describes the
-mechanisms that detect and recover allowlisted idempotent orphans so users never
-see a stuck scan and pending-task alerts do not fire.
+task it was running can be left non-terminal forever: the `TaskResult` stays
+`STARTED` and nothing re-runs it. This page describes the mechanisms that detect and
+recover allowlisted idempotent orphans so pending-task alerts do not fire. Scan tasks
+are not auto-recovered (re-running a scan is not safe to do automatically); the
+watchdog covers the summary/aggregation and deletion tasks.
 
 ## How recovery works
 
@@ -20,20 +21,22 @@ see a stuck scan and pending-task alerts do not fire.
    in-flight task result with an allowlisted idempotent task name, it pings the
    worker recorded on the task's `TaskResult`:
    - worker responds -> the task is still running, leave it alone;
-   - worker is gone (and the scan started before a short grace window) -> it is a
+   - worker is gone (and the task started before a short grace window) -> it is a
      real orphan: the stale task is revoked and marked terminal (clearing the
-     pending/started alert), and the scan is re-enqueued from scratch.
+     pending/started alert), and the task is re-enqueued from its stored name and
+     kwargs.
 
-   The re-run is safe because only tasks with proven idempotency are allowlisted.
-   Scan persistence, for example, clears the scan's prior findings and materialized
-   summary/compliance rows before re-writing them. External side effects stay
-   terminal: Jira sends would create duplicate issues, the S3 upload rebuilds from
-   worker-local files that do not survive a crash, and report/Security Hub recovery is
-   out of scope.
+   The re-run is safe because only tasks with proven idempotency are allowlisted: the
+   summary/aggregation tasks clear and re-write their own rows, and deletions are
+   idempotent. Scan tasks and external side effects are excluded: re-running a scan is
+   not safe to do automatically, Jira sends would create duplicate issues, the S3
+   upload rebuilds from worker-local files that do not survive a crash, and
+   report/Security Hub recovery is out of scope.
 
-3. **Recovery cap.** Each automatic re-enqueue increments `Scan.recovery_count`.
-   After `--max-attempts` recoveries (default 3) the scan is marked `FAILED` instead
-   of re-enqueued, so a task that repeatedly kills its worker cannot loop forever.
+3. **Recovery cap.** A per-task Valkey counter limits how often the same task is
+   re-enqueued. After `--max-attempts` recoveries (default 3) the orphan is marked
+   terminal instead of re-enqueued, so a task that repeatedly kills its worker cannot
+   loop forever.
 
 A Postgres advisory lock ensures that, even with multiple API/worker replicas, only
 one reconciliation runs at a time; the others no-op.
@@ -62,7 +65,6 @@ All settings have safe defaults; override via environment variables.
 | `DJANGO_CELERY_LONG_TASK_TIME_LIMIT` | `172800` (48h) | Hard limit for scans and provider/tenant deletions, which can legitimately run for more than a day. |
 | `DJANGO_CELERY_LONG_TASK_SOFT_TIME_LIMIT` | long hard - 600 | Soft limit for the long-running tasks above. |
 | `DJANGO_TASK_RECOVERY_ENABLED` | `false` | Master switch for orphan-task recovery, disabled by default (opt-in); set to `true` to enable. When off, no orphan is detected, marked terminal, or re-enqueued (attack-paths stale cleanup still runs). |
-| `DJANGO_TASK_RECOVERY_SCANS_ENABLED` | `true` | Auto re-enqueue orphaned scan tasks (`scan-perform`, `scan-perform-scheduled`). |
 | `DJANGO_TASK_RECOVERY_SUMMARIES_ENABLED` | `true` | Auto re-enqueue orphaned scan summary/aggregation tasks. |
 | `DJANGO_TASK_RECOVERY_DELETIONS_ENABLED` | `true` | Auto re-enqueue orphaned provider/tenant deletion tasks. |
 
