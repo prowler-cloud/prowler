@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Okta should use an active Network Zone blocklist before authentication. Enhanced Dynamic Zone anonymizer categories provide direct anonymizer coverage; static IP blocklists provide evidence that gateway/proxy IP entries are blocked, but Prowler cannot verify full anonymizer-provider coverage from static entries alone.",
-  "Risk": "If anonymized proxy sources are not blocked before authentication, attackers can hide source networks and attempt credential attacks or session establishment from untrusted infrastructure.",
+  "Description": "**Okta Network Zone blocklists** should block anonymized proxy access before authentication. Enhanced Dynamic Zone anonymizer categories provide direct coverage; static IP blocklists show gateway/proxy blocking but cannot prove full anonymizer-provider coverage.",
+  "Risk": "**Anonymized proxy access** lets attackers hide source networks while attempting credential attacks, session establishment, or policy bypass from untrusted infrastructure.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/networkzone",
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Prefer an active Enhanced Dynamic Zone blocklist that covers anonymizers. If using a static IP Network Zone blocklist, keep gateway/proxy entries actively maintained because Prowler cannot verify full anonymizer-provider coverage from static entries alone.",
+      "Text": "**Prefer an active Enhanced Dynamic Zone blocklist** for anonymizers. If you use a static IP Network Zone blocklist, keep gateway/proxy entries actively maintained because Prowler cannot prove full anonymizer-provider coverage from static entries alone.",
       "Url": "https://hub.prowler.com/check/network_zone_block_anonymized_proxies"
     }
   },
