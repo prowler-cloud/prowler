@@ -6,7 +6,6 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import {
   Checkbox,
   Field,
-  FieldError,
   FieldLabel,
   Select,
   SelectContent,
@@ -14,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
-import { formatScheduleHour } from "@/lib/schedules";
+import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
+import { formatScheduleHour, getBrowserTimezone } from "@/lib/schedules";
 import { SCHEDULE_FREQUENCY, type ScheduleFormValues } from "@/types/schedules";
 
 const FREQUENCY_OPTIONS = [
@@ -22,16 +22,6 @@ const FREQUENCY_OPTIONS = [
   { value: SCHEDULE_FREQUENCY.INTERVAL, label: "Every 48 hours" },
   { value: SCHEDULE_FREQUENCY.WEEKLY, label: "Weekly" },
   { value: SCHEDULE_FREQUENCY.MONTHLY, label: "Monthly" },
-] as const;
-
-const TIMEZONE_OPTIONS = [
-  "UTC",
-  "Europe/Madrid",
-  "Europe/London",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
 ] as const;
 
 const WEEKDAY_OPTIONS = [
@@ -55,6 +45,14 @@ interface ScanScheduleFieldsProps {
   form: UseFormReturn<ScheduleFormValues>;
   disabled?: boolean;
   showLaunchInitialScan?: boolean;
+  showNextScheduledCopy?: boolean;
+  /**
+   * When false, the frequency is locked to `Daily` and the advanced cadences
+   * (interval/weekly/monthly) are disabled. Used for non-Cloud (OSS) accounts.
+   */
+  canUseAdvancedSchedule?: boolean;
+  /** Render the "Available in Prowler Cloud" upsell badge on locked controls. */
+  showCloudUpgradeBadge?: boolean;
 }
 
 function NumberSelect({
@@ -97,14 +95,14 @@ export function ScanScheduleFields({
   form,
   disabled = false,
   showLaunchInitialScan = false,
+  showNextScheduledCopy = false,
+  canUseAdvancedSchedule = true,
+  showCloudUpgradeBadge = false,
 }: ScanScheduleFieldsProps) {
   const frequency = form.watch("frequency");
-  const timezone = form.watch("timezone");
-  const timezoneOptions = TIMEZONE_OPTIONS.includes(
-    timezone as (typeof TIMEZONE_OPTIONS)[number],
-  )
-    ? TIMEZONE_OPTIONS
-    : ([timezone, ...TIMEZONE_OPTIONS] as const);
+  const hour = form.watch("hour");
+  const timezone = getBrowserTimezone();
+  const frequencyDisabled = disabled || !canUseAdvancedSchedule;
 
   return (
     <div className="flex flex-col gap-6">
@@ -115,7 +113,7 @@ export function ScanScheduleFields({
         </h3>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Controller
           control={form.control}
           name="hour"
@@ -132,45 +130,21 @@ export function ScanScheduleFields({
 
         <Controller
           control={form.control}
-          name="timezone"
-          render={({ field }) => (
-            <Field>
-              <FieldLabel>Timezone</FieldLabel>
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled={disabled}
-              >
-                <SelectTrigger aria-label="Timezone">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent width="wide">
-                  {timezoneOptions.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.timezone?.message && (
-                <FieldError>
-                  {form.formState.errors.timezone.message}
-                </FieldError>
-              )}
-            </Field>
-          )}
-        />
-
-        <Controller
-          control={form.control}
           name="frequency"
           render={({ field }) => (
             <Field>
-              <FieldLabel>Repeats</FieldLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel>Repeats</FieldLabel>
+                {showCloudUpgradeBadge && <CloudFeatureBadgeLink size="sm" />}
+              </div>
               <Select
-                value={field.value}
+                value={
+                  canUseAdvancedSchedule
+                    ? field.value
+                    : SCHEDULE_FREQUENCY.DAILY
+                }
                 onValueChange={field.onChange}
-                disabled={disabled}
+                disabled={frequencyDisabled}
               >
                 <SelectTrigger aria-label="Repeats">
                   <SelectValue />
@@ -223,9 +197,12 @@ export function ScanScheduleFields({
         />
       )}
 
-      <p className="text-text-neutral-secondary text-sm">
-        The next scheduled scan will start on the selected hour in {timezone}.
-      </p>
+      {showNextScheduledCopy && (
+        <p className="text-text-neutral-secondary text-sm">
+          The next scheduled scan will start on: MM/DD/YY @{" "}
+          {formatScheduleHour(hour)} {timezone}
+        </p>
+      )}
 
       {showLaunchInitialScan && (
         <Controller

@@ -27,6 +27,8 @@ import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { testProviderConnection } from "@/lib/provider-helpers";
+import { getScanScheduleCapability } from "@/lib/schedules";
+import { isCloud } from "@/lib/shared/env";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import {
@@ -36,7 +38,11 @@ import {
   ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
-import type { ScheduleApiResponse } from "@/types/schedules";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+  type ScheduleApiResponse,
+} from "@/types/schedules";
 
 import { DeleteForm } from "../forms/delete-form";
 import { DeleteOrganizationForm } from "../forms/delete-organization-form";
@@ -54,6 +60,13 @@ interface DataTableRowActionsProps {
   onClearSelection: () => void;
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
+  /**
+   * Schedule capability override. Absent in OSS (defaults to a Cloud-vs-non-Cloud
+   * decision). The prowler-cloud overlay injects a billing-aware capability so
+   * only subscribed Cloud accounts can open the advanced schedule editor (which
+   * talks to the new schedule API).
+   */
+  capability?: ScanScheduleCapability;
 }
 
 function collectTestableChildProviderIds(rows: ProvidersTableRow[]): string[] {
@@ -208,7 +221,11 @@ export function DataTableRowActions({
   onClearSelection,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
+  capability,
 }: DataTableRowActionsProps) {
+  const canEditSchedule =
+    (capability ?? getScanScheduleCapability(isCloud())) ===
+    SCAN_SCHEDULE_CAPABILITY.ADVANCED;
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [scheduleState, setScheduleState] = useState<EditScanScheduleState>({
@@ -431,11 +448,13 @@ export function DataTableRowActions({
             label="Edit Provider Alias"
             onSelect={() => setIsEditOpen(true)}
           />
-          <ActionDropdownItem
-            icon={<CalendarClock />}
-            label="Edit Scan Schedule"
-            onSelect={() => void openScheduleEditor()}
-          />
+          {canEditSchedule && (
+            <ActionDropdownItem
+              icon={<CalendarClock />}
+              label="Edit Scan Schedule"
+              onSelect={() => void openScheduleEditor()}
+            />
+          )}
           <ActionDropdownItem
             icon={<KeyRound />}
             label={hasSecret ? "Update Credentials" : "Add Credentials"}

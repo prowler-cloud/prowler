@@ -1,19 +1,27 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildScheduleUpdatePayload,
   getBrowserTimezone,
-  getScheduleFormDefaults,
+  getScanScheduleCapability,
 } from "@/lib/schedules";
-import { SCHEDULE_FREQUENCY } from "@/types/schedules";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  SCHEDULE_FREQUENCY,
+} from "@/types/schedules";
 
 describe("schedule payload mapping", () => {
+  beforeEach(() => {
+    vi.spyOn(Intl, "DateTimeFormat").mockReturnValue({
+      resolvedOptions: () => ({ timeZone: "Europe/Madrid" }),
+    } as Intl.DateTimeFormat);
+  });
+
   it("maps daily schedules and clears unused fields", () => {
     // Given
     const values = {
       frequency: SCHEDULE_FREQUENCY.DAILY,
       hour: 8,
-      timezone: "Europe/Madrid",
       dayOfWeek: 2,
       dayOfMonth: 12,
       launchInitialScan: false,
@@ -39,7 +47,6 @@ describe("schedule payload mapping", () => {
     const values = {
       frequency: SCHEDULE_FREQUENCY.INTERVAL,
       hour: 23,
-      timezone: "UTC",
       dayOfWeek: 0,
       dayOfMonth: 1,
       launchInitialScan: false,
@@ -53,6 +60,7 @@ describe("schedule payload mapping", () => {
       scan_enabled: true,
       scan_frequency: SCHEDULE_FREQUENCY.INTERVAL,
       scan_hour: 23,
+      scan_timezone: "Europe/Madrid",
       scan_interval_hours: 48,
       scan_day_of_week: null,
       scan_day_of_month: null,
@@ -64,7 +72,6 @@ describe("schedule payload mapping", () => {
     const values = {
       frequency: SCHEDULE_FREQUENCY.WEEKLY,
       hour: 6,
-      timezone: "America/New_York",
       dayOfWeek: 0,
       dayOfMonth: 28,
       launchInitialScan: false,
@@ -87,7 +94,6 @@ describe("schedule payload mapping", () => {
     const values = {
       frequency: SCHEDULE_FREQUENCY.MONTHLY,
       hour: 0,
-      timezone: "UTC",
       dayOfWeek: 5,
       dayOfMonth: 28,
       launchInitialScan: false,
@@ -106,20 +112,7 @@ describe("schedule payload mapping", () => {
   });
 });
 
-describe("schedule defaults", () => {
-  it("uses the browser timezone as the default timezone", () => {
-    // Given
-    vi.spyOn(Intl, "DateTimeFormat").mockReturnValue({
-      resolvedOptions: () => ({ timeZone: "Europe/Madrid" }),
-    } as Intl.DateTimeFormat);
-
-    // When
-    const defaults = getScheduleFormDefaults();
-
-    // Then
-    expect(defaults.timezone).toBe("Europe/Madrid");
-  });
-
+describe("browser timezone", () => {
   it("falls back to UTC when browser timezone is unavailable", () => {
     // Given
     vi.spyOn(Intl, "DateTimeFormat").mockReturnValue({
@@ -128,5 +121,19 @@ describe("schedule defaults", () => {
 
     // When / Then
     expect(getBrowserTimezone()).toBe("UTC");
+  });
+});
+
+describe("scan schedule capability", () => {
+  it("returns DAILY_LEGACY for non-Cloud (OSS)", () => {
+    expect(getScanScheduleCapability(false)).toBe(
+      SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY,
+    );
+  });
+
+  it("returns ADVANCED for Cloud", () => {
+    expect(getScanScheduleCapability(true)).toBe(
+      SCAN_SCHEDULE_CAPABILITY.ADVANCED,
+    );
   });
 });

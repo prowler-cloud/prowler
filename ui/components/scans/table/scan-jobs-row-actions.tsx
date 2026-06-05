@@ -32,14 +32,30 @@ import {
 import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
+import { getScanScheduleCapability } from "@/lib/schedules";
+import { isCloud } from "@/lib/shared/env";
 import type { ProviderType, ScanProps, ScheduleApiResponse } from "@/types";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+} from "@/types/schedules";
 
 interface ScanJobsRowActionsProps {
   scan: ScanProps;
+  /**
+   * Schedule capability override. Only for Prowler Cloud.
+   */
+  capability?: ScanScheduleCapability;
 }
 
-export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
+export function ScanJobsRowActions({
+  scan,
+  capability,
+}: ScanJobsRowActionsProps) {
   const router = useRouter();
+  const canEditSchedule =
+    (capability ?? getScanScheduleCapability(isCloud())) ===
+    SCAN_SCHEDULE_CAPABILITY.ADVANCED;
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -187,11 +203,13 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
           label="Edit"
           onSelect={() => setEditOpen(true)}
         />
-        <ActionDropdownItem
-          icon={<CalendarClock />}
-          label="Edit Scan Schedule"
-          onSelect={() => void openScheduleEditor()}
-        />
+        {canEditSchedule && (
+          <ActionDropdownItem
+            icon={<CalendarClock />}
+            label="Edit Scan Schedule"
+            onSelect={() => void openScheduleEditor()}
+          />
+        )}
         {/* TODO: Restore Cancel Scan once the backend exposes a public scan cancellation endpoint. */}
       </ActionDropdown>
 

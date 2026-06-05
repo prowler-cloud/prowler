@@ -1,7 +1,7 @@
 import { Row } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
@@ -170,6 +170,10 @@ const createOuRow = () =>
   }) as unknown as Row<ProvidersTableRow>;
 
 describe("DataTableRowActions", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     getScheduleMock.mockResolvedValue({
       data: {
@@ -203,15 +207,17 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(screen.getByText("Edit Provider Alias")).toBeInTheDocument();
-    expect(screen.getByText("Edit Scan Schedule")).toBeInTheDocument();
+    // Advanced schedule editing is gated to Prowler Cloud subscribed accounts.
+    expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
     expect(screen.getByText("Add Credentials")).toBeInTheDocument();
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("Delete Provider")).toBeInTheDocument();
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
   });
 
-  it("opens Edit Scan Schedule for provider rows", async () => {
+  it("opens Edit Scan Schedule for Prowler Cloud subscribed provider rows", async () => {
     // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
     const user = userEvent.setup();
 
     render(
