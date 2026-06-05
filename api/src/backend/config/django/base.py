@@ -306,3 +306,15 @@ SESSION_COOKIE_SECURE = True
 ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
 )  # 48h
+
+# Orphan task recovery feature flags. Master switch plus per-group toggles so a
+# group of tasks can be excluded from automatic re-enqueue without a code change.
+# All default to enabled to preserve the current recovery behavior.
+TASK_RECOVERY_ENABLED = env.bool("DJANGO_TASK_RECOVERY_ENABLED", True)
+TASK_RECOVERY_SCANS_ENABLED = env.bool("DJANGO_TASK_RECOVERY_SCANS_ENABLED", True)
+TASK_RECOVERY_SUMMARIES_ENABLED = env.bool(
+    "DJANGO_TASK_RECOVERY_SUMMARIES_ENABLED", True
+)
+TASK_RECOVERY_DELETIONS_ENABLED = env.bool(
+    "DJANGO_TASK_RECOVERY_DELETIONS_ENABLED", True
+)

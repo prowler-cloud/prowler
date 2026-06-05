@@ -42,22 +42,46 @@ IN_FLIGHT_STATES = (states.STARTED, states.RECEIVED)
 # hit its "a scan is already executing" guard and no-op, leaving the scan stuck.
 _SCAN_TASKS = ("scan-perform", "scan-perform-scheduled")
 
-# Tasks with proven idempotency are auto re-enqueued. Scans/summaries clear and
-# rewrite their own rows. Tasks with external side effects stay terminal instead of
-# being re-run: integration-jira would create duplicate issues, integration-s3
-# rebuilds its upload from worker-local files that do not survive a crash, and
-# report/Security Hub recovery is out of scope.
-REENQUEUEABLE_TASKS = {
-    *_SCAN_TASKS,
-    "provider-deletion",
-    "tenant-deletion",
-    "scan-summary",
-    "scan-compliance-overviews",
-    "scan-provider-compliance-scores",
-    "scan-daily-severity",
-    "scan-finding-group-summaries",
-    "scan-reset-ephemeral-resources",
+# Tasks with proven idempotency are eligible for auto re-enqueue, grouped so each
+# group can be toggled independently by a feature flag (see config.django.base).
+# Scans/summaries clear and rewrite their own rows and deletions are idempotent.
+# Tasks with external side effects are never eligible: integration-jira would create
+# duplicate issues, integration-s3 rebuilds its upload from worker-local files that
+# do not survive a crash, and report/Security Hub recovery is out of scope.
+RECOVERY_TASK_GROUPS = {
+    "scans": set(_SCAN_TASKS),
+    "summaries": {
+        "scan-summary",
+        "scan-compliance-overviews",
+        "scan-provider-compliance-scores",
+        "scan-daily-severity",
+        "scan-finding-group-summaries",
+        "scan-reset-ephemeral-resources",
+    },
+    "deletions": {"provider-deletion", "tenant-deletion"},
 }
+
+
+def reenqueueable_tasks() -> set[str]:
+    """Task names eligible for auto re-enqueue, honoring the per-group feature flags.
+
+    A group whose flag is disabled is dropped, so its orphaned tasks are marked
+    terminal instead of re-enqueued.
+    """
+    from django.conf import settings
+
+    group_enabled = {
+        "scans": settings.TASK_RECOVERY_SCANS_ENABLED,
+        "summaries": settings.TASK_RECOVERY_SUMMARIES_ENABLED,
+        "deletions": settings.TASK_RECOVERY_DELETIONS_ENABLED,
+    }
+    return {
+        task
+        for group, tasks in RECOVERY_TASK_GROUPS.items()
+        if group_enabled[group]
+        for task in tasks
+    }
+
 
 # Tasks excluded from generic recovery: attack-paths scans are handled by their own
 # stale-cleanup (which also drops the temp Neo4j db), and the maintenance tasks must
@@ -163,15 +187,21 @@ def reconcile_orphans(
             logger.info("Orphan reconcile skipped: another run holds the lock")
             return {"acquired": False}
 
-        # Populate the task registry so we can re-enqueue any task by name.
-        import tasks.tasks  # noqa: F401
+        from django.conf import settings
 
-        result = _reconcile_task_results(
-            grace_minutes=grace_minutes,
-            max_attempts=max_attempts,
-            window_hours=window_hours,
-            dry_run=dry_run,
-        )
+        if settings.TASK_RECOVERY_ENABLED:
+            # Populate the task registry so we can re-enqueue any task by name.
+            import tasks.tasks  # noqa: F401
+
+            result = _reconcile_task_results(
+                grace_minutes=grace_minutes,
+                max_attempts=max_attempts,
+                window_hours=window_hours,
+                dry_run=dry_run,
+            )
+        else:
+            logger.info("Orphan task recovery disabled by feature flag")
+            result = {"recovered": [], "failed": [], "skipped": [], "enabled": False}
 
         if not dry_run:
             from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
@@ -262,10 +292,11 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
     task_result.save(update_fields=["status", "date_done"])
 
     attempt = _recovery_attempt_count(name, kwargs_repr, window_hours)
-    if name not in REENQUEUEABLE_TASKS or attempt > max_attempts:
+    allowlisted = name in reenqueueable_tasks()
+    if not allowlisted or attempt > max_attempts:
         reason = (
             f"{name} is not allowlisted for auto recovery"
-            if name not in REENQUEUEABLE_TASKS
+            if not allowlisted
             else f"recovery cap reached ({attempt}/{max_attempts})"
         )
         _fail_domain_row(task_result.task_id, name, now)

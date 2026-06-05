@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 from celery import states
+from django.test import override_settings
 from django_celery_results.models import TaskResult
 
 from api.models import Scan, StateChoices
@@ -15,6 +16,8 @@ from tasks.jobs.orphan_recovery import (
     _reenqueue_scan,
     advisory_lock,
     is_worker_alive,
+    reconcile_orphans,
+    reenqueueable_tasks,
 )
 
 
@@ -112,6 +115,32 @@ class TestReconcileTaskResults:
                 "tenant_id": str(tenants_fixture[0].id),
                 "provider_id": str(uuid4()),
                 "output_directory": "/tmp/gone",
+            },
+            worker="dead@gone",
+            created_minutes_ago=60,
+        )
+        p_alive, p_revoke, p_app, mock_task = self._patches(alive=False)
+        with (
+            p_alive,
+            p_revoke,
+            p_app,
+            patch("tasks.jobs.orphan_recovery._recovery_attempt_count", return_value=1),
+        ):
+            result = _reconcile_task_results(
+                grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
+            )
+
+        assert tr.task_id in result["failed"]
+        mock_task.apply_async.assert_not_called()
+
+    @override_settings(TASK_RECOVERY_SUMMARIES_ENABLED=False)
+    def test_disabled_group_task_is_not_reenqueued(self, tenants_fixture):
+        """A task whose group feature flag is off stays terminal, not re-enqueued."""
+        tr = _orphan_result(
+            name="scan-summary",
+            kwargs={
+                "tenant_id": str(tenants_fixture[0].id),
+                "scan_id": str(uuid4()),
             },
             worker="dead@gone",
             created_minutes_ago=60,
@@ -367,3 +396,68 @@ class TestOrphanRecoveryHelpers:
         with patch("redis.from_url", return_value=redis_client):
             assert _recovery_attempt_count("probe-task", kwargs_repr, 6) == 1
             assert _recovery_attempt_count("probe-task", kwargs_repr, 6) == 2
+
+
+class TestRecoveryFeatureFlags:
+    def test_all_groups_enabled_by_default(self):
+        tasks = reenqueueable_tasks()
+        assert {"scan-perform", "scan-perform-scheduled"} <= tasks
+        assert "scan-summary" in tasks
+        assert {"provider-deletion", "tenant-deletion"} <= tasks
+
+    @override_settings(TASK_RECOVERY_SCANS_ENABLED=False)
+    def test_scans_group_flag_excludes_scan_tasks(self):
+        tasks = reenqueueable_tasks()
+        assert "scan-perform" not in tasks
+        assert "scan-perform-scheduled" not in tasks
+        assert "scan-summary" in tasks  # other groups unaffected
+
+    @override_settings(TASK_RECOVERY_SUMMARIES_ENABLED=False)
+    def test_summaries_group_flag_excludes_summary_tasks(self):
+        tasks = reenqueueable_tasks()
+        assert "scan-summary" not in tasks
+        assert "scan-compliance-overviews" not in tasks
+        assert "scan-perform" in tasks
+
+    @override_settings(TASK_RECOVERY_DELETIONS_ENABLED=False)
+    def test_deletions_group_flag_excludes_deletion_tasks(self):
+        tasks = reenqueueable_tasks()
+        assert "provider-deletion" not in tasks
+        assert "tenant-deletion" not in tasks
+        assert "scan-perform" in tasks
+
+
+@pytest.mark.django_db
+class TestRecoveryMasterFlag:
+    @override_settings(TASK_RECOVERY_ENABLED=False)
+    def test_master_flag_disables_task_recovery(self):
+        with (
+            patch(
+                "tasks.jobs.orphan_recovery._reconcile_task_results"
+            ) as mock_reconcile,
+            patch(
+                "tasks.jobs.attack_paths.cleanup.cleanup_stale_attack_paths_scans",
+                return_value={},
+            ),
+        ):
+            result = reconcile_orphans(grace_minutes=2, max_attempts=3, dry_run=False)
+
+        mock_reconcile.assert_not_called()
+        assert result["acquired"] is True
+        assert result["enabled"] is False
+
+    @override_settings(TASK_RECOVERY_ENABLED=True)
+    def test_master_flag_enabled_runs_task_recovery(self):
+        with (
+            patch(
+                "tasks.jobs.orphan_recovery._reconcile_task_results",
+                return_value={"recovered": [], "failed": [], "skipped": []},
+            ) as mock_reconcile,
+            patch(
+                "tasks.jobs.attack_paths.cleanup.cleanup_stale_attack_paths_scans",
+                return_value={},
+            ),
+        ):
+            reconcile_orphans(grace_minutes=2, max_attempts=3, dry_run=False)
+
+        mock_reconcile.assert_called_once()

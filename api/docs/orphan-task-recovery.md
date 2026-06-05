@@ -61,6 +61,14 @@ All settings have safe defaults; override via environment variables.
 | `DJANGO_CELERY_TASK_SOFT_TIME_LIMIT` | hard - 600 | Soft limit; raises `SoftTimeLimitExceeded` for cleanup. |
 | `DJANGO_CELERY_LONG_TASK_TIME_LIMIT` | `172800` (48h) | Hard limit for scans and provider/tenant deletions, which can legitimately run for more than a day. |
 | `DJANGO_CELERY_LONG_TASK_SOFT_TIME_LIMIT` | long hard - 600 | Soft limit for the long-running tasks above. |
+| `DJANGO_TASK_RECOVERY_ENABLED` | `true` | Master switch for orphan-task recovery; when `false` no orphan is detected, marked terminal, or re-enqueued (attack-paths stale cleanup still runs). |
+| `DJANGO_TASK_RECOVERY_SCANS_ENABLED` | `true` | Auto re-enqueue orphaned scan tasks (`scan-perform`, `scan-perform-scheduled`). |
+| `DJANGO_TASK_RECOVERY_SUMMARIES_ENABLED` | `true` | Auto re-enqueue orphaned scan summary/aggregation tasks. |
+| `DJANGO_TASK_RECOVERY_DELETIONS_ENABLED` | `true` | Auto re-enqueue orphaned provider/tenant deletion tasks. |
+
+The recovery flags disable a group of tasks together: a task whose group flag is off
+is marked terminal instead of re-enqueued, while the master flag turns the whole
+recovery sweep off.
 
 `task_acks_late` and `task_reject_on_worker_lost` are enabled in `config/celery.py`.
 
