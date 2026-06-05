@@ -329,7 +329,9 @@ export function DataTable<TData, TValue>({
                         </TableCell>
                       ))}
                     </TableRow>
-                    {renderAfterRow?.(row)}
+                    <AnimatePresence initial={false}>
+                      {renderAfterRow?.(row)}
+                    </AnimatePresence>
                   </Fragment>
                 ),
               )

@@ -5,7 +5,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
 import { useImperativeHandle, useRef } from "react";
 
@@ -213,109 +213,112 @@ export function InlineResourceContainer({
         onMuteComplete: handleMuteComplete,
       }}
     >
-      <tr>
+      <motion.tr
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
         <td colSpan={columnCount} className="p-0">
-          <AnimatePresence initial>
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="overflow-hidden"
-            >
-              <div className="relative">
-                <div
-                  ref={combinedScrollRef}
-                  className="max-h-[440px] overflow-y-auto pl-6"
-                >
-                  {/* Resource rows or skeleton placeholder */}
-                  <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
-                    <tbody>
-                      {isLoading && rows.length === 0 ? (
-                        Array.from({ length: skeletonRowCount }).map((_, i) => (
-                          <ResourceSkeletonRow
-                            key={i}
-                            isEmptyStateSized={filteredResourceCount === 0}
-                          />
-                        ))
-                      ) : rows.length > 0 ? (
-                        rows.map((row) => (
-                          <TableRow
-                            key={row.id}
-                            data-state={row.getIsSelected() && "selected"}
-                            className="cursor-pointer"
-                            onClick={(e) => {
-                              // Don't open drawer if clicking interactive elements
-                              // (links, buttons, checkboxes, dropdown items)
-                              const target = e.target as HTMLElement;
-                              if (
-                                target.closest(
-                                  "a, button, input, [role=menuitem]",
-                                )
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="relative">
+              <div
+                ref={combinedScrollRef}
+                className="max-h-[440px] overflow-y-auto pl-6"
+              >
+                {/* Resource rows or skeleton placeholder */}
+                <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
+                  <tbody>
+                    {isLoading && rows.length === 0 ? (
+                      Array.from({ length: skeletonRowCount }).map((_, i) => (
+                        <ResourceSkeletonRow
+                          key={i}
+                          isEmptyStateSized={filteredResourceCount === 0}
+                        />
+                      ))
+                    ) : rows.length > 0 ? (
+                      rows.map((row) => (
+                        <TableRow
+                          key={row.id}
+                          data-state={row.getIsSelected() && "selected"}
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            // Don't open drawer if clicking interactive elements
+                            // (links, buttons, checkboxes, dropdown items)
+                            const target = e.target as HTMLElement;
+                            if (
+                              target.closest(
+                                "a, button, input, [role=menuitem]",
                               )
-                                return;
-                              drawer.openDrawer(row.index);
-                            }}
-                          >
-                            {row.getVisibleCells().map((cell) => (
-                              <TableCell key={cell.id}>
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext(),
-                                )}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow className="hover:bg-transparent">
-                          <TableCell
-                            colSpan={columns.length}
-                            className="h-24 text-center"
-                          >
-                            {getFindingGroupEmptyStateMessage(group, filters)}
-                          </TableCell>
+                            )
+                              return;
+                            drawer.openDrawer(row.index);
+                          }}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </TableCell>
+                          ))}
                         </TableRow>
-                      )}
-                    </tbody>
-                  </table>
+                      ))
+                    ) : (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-24 text-center"
+                        >
+                          {getFindingGroupEmptyStateMessage(group, filters)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </tbody>
+                </table>
 
-                  {/* Loading state for infinite scroll (subsequent pages only) */}
-                  {isLoading && rows.length > 0 && (
-                    <LoadingState label="Loading resources..." />
-                  )}
+                {/* Loading state for infinite scroll (subsequent pages only) */}
+                {isLoading && rows.length > 0 && (
+                  <LoadingState label="Loading resources..." />
+                )}
 
-                  {/* Sentinel for scroll hint detection */}
-                  <div
-                    ref={scrollHintSentinelRef}
-                    aria-hidden
-                    className="h-px shrink-0"
-                  />
+                {/* Sentinel for scroll hint detection */}
+                <div
+                  ref={scrollHintSentinelRef}
+                  aria-hidden
+                  className="h-px shrink-0"
+                />
 
-                  {/* Sentinel for infinite scroll */}
-                  <div ref={sentinelRef} className="h-1" />
-                </div>
+                {/* Sentinel for infinite scroll */}
+                <div ref={sentinelRef} className="h-1" />
+              </div>
 
-                {/* Gradients rendered after scroll container so they paint on top */}
-                <div className="from-bg-neutral-secondary pointer-events-none absolute top-0 right-0 left-6 z-20 h-6 bg-gradient-to-b to-transparent" />
-                <div className="from-bg-neutral-secondary pointer-events-none absolute right-0 bottom-0 left-6 z-20 h-6 bg-gradient-to-t to-transparent" />
+              {/* Gradients rendered after scroll container so they paint on top */}
+              <div className="from-bg-neutral-secondary pointer-events-none absolute top-0 right-0 left-6 z-20 h-6 bg-gradient-to-b to-transparent" />
+              <div className="from-bg-neutral-secondary pointer-events-none absolute right-0 bottom-0 left-6 z-20 h-6 bg-gradient-to-t to-transparent" />
 
-                {/* Scroll hint */}
-                {showScrollHint && (
-                  <div className="pointer-events-none absolute right-0 bottom-0 left-6 z-30">
-                    <div className="absolute inset-x-0 bottom-2 flex justify-center">
-                      <div className="bg-bg-neutral-tertiary text-text-neutral-secondary animate-bounce rounded-full px-3 py-1 text-xs shadow-md">
-                        <ChevronsDown className="inline size-3.5" /> Scroll for
-                        more
-                      </div>
+              {/* Scroll hint */}
+              {showScrollHint && (
+                <div className="pointer-events-none absolute right-0 bottom-0 left-6 z-30">
+                  <div className="absolute inset-x-0 bottom-2 flex justify-center">
+                    <div className="bg-bg-neutral-tertiary text-text-neutral-secondary animate-bounce rounded-full px-3 py-1 text-xs shadow-md">
+                      <ChevronsDown className="inline size-3.5" /> Scroll for
+                      more
                     </div>
                   </div>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
+                </div>
+              )}
+            </div>
+          </motion.div>
         </td>
-      </tr>
+      </motion.tr>
 
       <ResourceDetailDrawer
         open={drawer.isOpen}
