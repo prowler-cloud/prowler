@@ -1798,11 +1798,52 @@ class TestBaseContractDefaults:
         with pytest.raises(NotImplementedError):
             FakeProviderNoHelpText.from_cli_args(MagicMock(), {})
 
-    def test_get_output_options_raises_not_implemented(self):
-        """Base Provider.get_output_options raises NotImplementedError."""
+    def test_get_output_options_returns_generic_default(self):
+        """Base Provider.get_output_options returns a generic ProviderOutputOptions
+        so an external provider that does not override it still produces output
+        instead of aborting the run with NotImplementedError."""
+        from prowler.config.config import output_file_timestamp
+        from prowler.providers.common.models import ProviderOutputOptions
+
         provider = FakeProviderNoHelpText()
-        with pytest.raises(NotImplementedError):
-            provider.get_output_options(MagicMock(), {})
+        arguments = Namespace(
+            status=None,
+            output_formats=None,
+            output_directory=None,
+            output_filename=None,
+            verbose=None,
+            only_logs=None,
+            unix_timestamp=None,
+            shodan=None,
+            fixer=None,
+        )
+
+        output_options = provider.get_output_options(arguments, {})
+
+        assert isinstance(output_options, ProviderOutputOptions)
+        assert (
+            output_options.output_filename
+            == f"prowler-output-{provider.type}-{output_file_timestamp}"
+        )
+
+    def test_get_output_options_honors_explicit_filename(self):
+        """A user-supplied output_filename is preserved by the default."""
+        provider = FakeProviderNoHelpText()
+        arguments = Namespace(
+            status=None,
+            output_formats=None,
+            output_directory=None,
+            output_filename="custom-name",
+            verbose=None,
+            only_logs=None,
+            unix_timestamp=None,
+            shodan=None,
+            fixer=None,
+        )
+
+        output_options = provider.get_output_options(arguments, {})
+
+        assert output_options.output_filename == "custom-name"
 
     def test_get_stdout_detail_raises_not_implemented(self):
         """Base Provider.get_stdout_detail raises NotImplementedError."""
