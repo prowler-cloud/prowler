@@ -14,10 +14,12 @@ watchdog covers the summary/aggregation and deletion tasks.
    (`worker_prefetch_multiplier = 1`), and an abruptly-lost worker re-queues its task
    (`task_reject_on_worker_lost`). On `SIGTERM` the worker is given a soft-shutdown
    window (`worker_soft_shutdown_timeout`) to finish or re-queue in-flight work
-   before it is force-killed. The tasks that are neither idempotent nor recovered opt
-   out with `acks_late=False` (`scan-perform`, `scan-perform-scheduled`,
-   `integration-jira`), so a crash drops them instead of redelivering and duplicating
-   findings or Jira issues.
+   before it is force-killed. `scan-perform`, `scan-perform-scheduled` and
+   `integration-jira` opt out of redelivery with `acks_late=False`, so a crash drops
+   them rather than re-running and duplicating findings or Jira issues. Other
+   non-recovered side-effect tasks keep `acks_late=True`; a redelivery there rebuilds
+   from worker-local state that did not survive the crash, so it no-ops instead of
+   duplicating.
 
 2. **Periodic watchdog.** A Beat task, `reconcile-orphan-tasks`, runs every couple of
    minutes (a `django_celery_beat` periodic task created by migration). For each

@@ -156,6 +156,32 @@ class TestReconcileTaskResults:
         assert tr.task_id in result["failed"]
         mock_task.apply_async.assert_not_called()
 
+    @override_settings(TASK_RECOVERY_SUMMARIES_ENABLED=False)
+    def test_disabled_group_task_does_not_consume_recovery_attempt(
+        self, tenants_fixture
+    ):
+        """A disabled-group task is failed without incrementing its Valkey attempt
+        counter, so re-enabling the group does not start it at the cap."""
+        tr = _orphan_result(
+            name="scan-summary",
+            kwargs={"tenant_id": str(tenants_fixture[0].id), "scan_id": str(uuid4())},
+            worker="dead@gone",
+            created_minutes_ago=60,
+        )
+        p_alive, p_revoke, p_app, mock_task = self._patches(alive=False)
+        with (
+            p_alive,
+            p_revoke,
+            p_app,
+            patch("tasks.jobs.orphan_recovery._recovery_attempt_count") as mock_count,
+        ):
+            result = _reconcile_task_results(
+                grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
+            )
+
+        assert tr.task_id in result["failed"]
+        mock_count.assert_not_called()
+
     def test_scan_task_is_skipped_entirely(self, tenants_fixture):
         """Scan tasks are excluded from recovery: the watchdog never touches them."""
         tr = _orphan_result(

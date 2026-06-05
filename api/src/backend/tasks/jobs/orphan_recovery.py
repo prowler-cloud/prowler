@@ -288,16 +288,25 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
     task_result.date_done = now
     task_result.save(update_fields=["status", "date_done"])
 
-    attempt = _recovery_attempt_count(name, kwargs_repr, window_hours)
-    allowlisted = name in reenqueueable_tasks()
-    if not allowlisted or attempt > max_attempts:
-        reason = (
-            f"{name} is not allowlisted for auto recovery"
-            if not allowlisted
-            else f"recovery cap reached ({attempt}/{max_attempts})"
-        )
+    if name not in reenqueueable_tasks():
         logger.warning(
-            "Orphan %s (%s) not re-enqueued: %s", task_result.task_id, name, reason
+            "Orphan %s (%s) not re-enqueued: not allowlisted for auto recovery",
+            task_result.task_id,
+            name,
+        )
+        return "failed"
+
+    # Count the attempt only once the task is allowlisted, so a task sitting in a
+    # disabled group does not burn its recovery budget while the flag is off (and is
+    # not already over the cap the moment the group is re-enabled).
+    attempt = _recovery_attempt_count(name, kwargs_repr, window_hours)
+    if attempt > max_attempts:
+        logger.warning(
+            "Orphan %s (%s) not re-enqueued: recovery cap reached (%d/%d)",
+            task_result.task_id,
+            name,
+            attempt,
+            max_attempts,
         )
         return "failed"
 
