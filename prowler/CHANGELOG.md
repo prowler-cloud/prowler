@@ -15,8 +15,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- Jira integration no longer fails with `400 INVALID_INPUT` when a finding has empty fields [(#11937)](https://github.com/prowler-cloud/prowler/pull/11937)
 - GCP `logging_sink_created` now recognizes organization-level aggregated sinks with `includeChildren=True`, avoiding false failures for covered projects [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
+- Jira integration no longer fails with `400 INVALID_INPUT` when a finding has empty fields [(#11474)](https://github.com/prowler-cloud/prowler/pull/11474)
 
 ---
 
