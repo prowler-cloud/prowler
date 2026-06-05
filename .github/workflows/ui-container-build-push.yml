@@ -32,9 +32,6 @@ env:
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-ui
 
-  # Build args
-  NEXT_PUBLIC_API_BASE_URL: http://prowler-api:8080/api/v1
-
 permissions: {}
 
 jobs:
@@ -146,7 +143,6 @@ jobs:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('v{0}', env.RELEASE_TAG) || needs.setup.outputs.short-sha }}
-            NEXT_PUBLIC_API_BASE_URL=${{ env.NEXT_PUBLIC_API_BASE_URL }}
           push: true
           platforms: ${{ matrix.platform }}
           tags: |
