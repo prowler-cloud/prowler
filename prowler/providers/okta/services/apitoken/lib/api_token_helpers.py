@@ -20,16 +20,16 @@ def network_zone_restriction_status(
             "Restrict the token to one or more known Okta Network Zones.",
         )
 
-    referenced_zones = token.network_includes + token.network_excludes
-    if not referenced_zones:
+    if not token.network_includes:
         return (
             "FAIL",
-            f"API token '{token.name}' is not open to Any IP, but it does not "
-            "reference a specific Okta Network Zone.",
+            f"API token '{token.name}' does not allowlist a specific Okta "
+            "Network Zone. Excluded zones do not restrict the token to trusted "
+            "source networks.",
         )
 
     unknown_zones = [
-        zone for zone in referenced_zones if zone not in known_network_zone_ids
+        zone for zone in token.network_includes if zone not in known_network_zone_ids
     ]
     if unknown_zones:
         return (
@@ -41,7 +41,7 @@ def network_zone_restriction_status(
     return (
         "PASS",
         f"API token '{token.name}' is restricted to known Okta Network Zone(s): "
-        f"{', '.join(referenced_zones)}.",
+        f"{', '.join(token.network_includes)}.",
     )
 
 
@@ -50,8 +50,7 @@ def definite_network_zone_restriction_failure(
 ) -> tuple[str, str] | None:
     """Return a definite network restriction failure that does not need zone lookup."""
     connection = token.network_connection.upper()
-    referenced_zones = token.network_includes + token.network_excludes
-    if connection in ANYWHERE_CONNECTIONS or not referenced_zones:
+    if connection in ANYWHERE_CONNECTIONS or not token.network_includes:
         return network_zone_restriction_status(token, set())
     return None
 

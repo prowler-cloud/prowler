@@ -79,6 +79,21 @@ class Test_apitoken_restricted_to_network_zone:
         assert findings[0].status == "PASS"
         assert findings[0].resource_id == token.id
 
+    def test_token_with_only_excluded_network_zone_fails(self):
+        token = api_token(
+            network_connection="ZONE",
+            network_includes=[],
+            network_excludes=["nzo-blocked"],
+        )
+        findings = _run_check(
+            build_api_token_client(
+                {token.id: token}, known_network_zone_ids={"nzo-blocked"}
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "does not allowlist" in findings[0].status_extended
+
     def test_token_open_to_anywhere_fails(self):
         token = api_token(network_connection="ANYWHERE", network_includes=[])
         findings = _run_check(build_api_token_client({token.id: token}))
