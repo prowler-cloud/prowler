@@ -9,7 +9,7 @@ from argparse import Namespace
 from importlib import import_module
 from typing import Any, Optional
 
-from prowler.config.config import load_and_validate_config_file
+from prowler.config.config import load_and_validate_config_file, output_file_timestamp
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -155,7 +155,6 @@ class Provider(ABC):
 
     def get_output_options(self, arguments, bulk_checks_metadata):
         """Return a generic OutputOptions default; override for provider-specific output."""
-        from prowler.config.config import output_file_timestamp
         from prowler.providers.common.models import ProviderOutputOptions
 
         output_options = ProviderOutputOptions(arguments, bulk_checks_metadata)

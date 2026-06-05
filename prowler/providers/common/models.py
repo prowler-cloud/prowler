@@ -4,8 +4,6 @@ from os.path import isdir
 
 from pydantic.v1 import BaseModel
 
-from prowler.providers.common.provider import Provider
-
 
 # TODO: include this for all the providers
 class Audit_Metadata(BaseModel):
@@ -41,6 +39,9 @@ class ProviderOutputOptions:
         # Shodan API Key
         if self.shodan_api_key:
             # TODO: revisit this logic
+            # Local import to avoid a module-level import cycle with provider.py
+            from prowler.providers.common.provider import Provider
+
             provider = Provider.get_global_provider()
             updated_audit_config = Provider.update_provider_config(
                 provider.audit_config, "shodan_api_key", self.shodan_api_key
