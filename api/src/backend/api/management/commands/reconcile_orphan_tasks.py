@@ -20,7 +20,7 @@ class Command(BaseCommand):
             "--max-attempts",
             type=int,
             default=3,
-            help="Give up re-running a task after this many recovery attempts (scans are marked FAILED).",
+            help="Give up re-running a task after this many recovery attempts; it is then left terminal instead of re-enqueued.",
         )
         parser.add_argument(
             "--dry-run",
@@ -37,6 +37,13 @@ class Command(BaseCommand):
 
         if not result.get("acquired"):
             self.stdout.write("Reconcile skipped: another run holds the lock.")
+            return
+
+        if result.get("enabled") is False:
+            self.stdout.write(
+                "Task recovery is disabled (DJANGO_TASK_RECOVERY_ENABLED is off); "
+                "no orphans were recovered."
+            )
             return
 
         self.stdout.write(

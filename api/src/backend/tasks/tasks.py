@@ -260,7 +260,9 @@ def delete_provider_task(provider_id: str, tenant_id: str):
     return delete_provider(tenant_id=tenant_id, pk=provider_id)
 
 
-@shared_task(base=RLSTask, name="scan-perform", queue="scans")
+# acks_late=False: a re-run would duplicate findings and the task is not auto-recovered,
+# so a crashed scan is dropped rather than redelivered by the broker (as before #11416).
+@shared_task(base=RLSTask, name="scan-perform", queue="scans", acks_late=False)
 @handle_provider_deletion
 def perform_scan_task(
     tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
@@ -304,7 +306,14 @@ def perform_scan_task(
     return result
 
 
-@shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
+# acks_late=False: like scan-perform; a dropped run is re-fired by Beat on the next tick.
+@shared_task(
+    base=RLSTask,
+    bind=True,
+    name="scan-perform-scheduled",
+    queue="scans",
+    acks_late=False,
+)
 @handle_provider_deletion
 def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
@@ -1151,10 +1160,13 @@ def security_hub_integration_task(
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
 
 
+# acks_late=False: Jira sends are not deduplicated and the task is not auto-recovered,
+# so a crashed send is dropped rather than redelivered (avoids duplicate Jira issues).
 @shared_task(
     base=RLSTask,
     name="integration-jira",
     queue="integrations",
+    acks_late=False,
 )
 def jira_integration_task(
     tenant_id: str,
