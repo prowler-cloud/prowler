@@ -3,6 +3,7 @@
 > **Skills Reference**: For detailed patterns, use these skills:
 >
 > - [`prowler-ui`](../skills/prowler-ui/SKILL.md) - Prowler-specific UI patterns
+> - [`prowler-ui-motion`](../skills/prowler-ui-motion/SKILL.md) - shadcn/Radix visible microinteraction conventions
 > - [`prowler-ui-skeletons`](../skills/prowler-ui-skeletons/SKILL.md) - shadcn skeleton loading and content reveal conventions
 > - [`prowler-test-ui`](../skills/prowler-test-ui/SKILL.md) - Playwright E2E testing (comprehensive)
 > - [`typescript`](../skills/typescript/SKILL.md) - Const types, flat interfaces
