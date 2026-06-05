@@ -96,7 +96,9 @@ export function TreeNode({
         className={cn(
           "flex items-center gap-2 rounded-md px-2 py-1.5",
           "hover:bg-prowler-white/5 cursor-pointer",
+          "transition-[background-color,box-shadow,color] duration-150 ease-out motion-reduce:transition-none",
           "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
+          isSelected && "bg-prowler-white/5",
           item.disabled && "cursor-not-allowed opacity-50",
           item.className,
         )}
@@ -110,7 +112,7 @@ export function TreeNode({
         onKeyDown={handleKeyDown}
       >
         <button
-          className="hover:bg-prowler-white/10 shrink-0 rounded p-0.5"
+          className="hover:bg-prowler-white/10 shrink-0 rounded p-0.5 transition-colors duration-150 ease-out motion-reduce:transition-none"
           aria-label={isExpanded ? "Collapse" : "Expand"}
           onClick={(e) => {
             e.stopPropagation();
@@ -123,7 +125,7 @@ export function TreeNode({
           ) : (
             <ChevronRightIcon
               className={cn(
-                "h-4 w-4 transition-transform duration-200",
+                "h-4 w-4 transition-transform duration-200 ease-out motion-reduce:transition-none",
                 isExpanded && "rotate-90",
               )}
             />
