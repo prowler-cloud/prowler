@@ -1,14 +1,19 @@
 {
   "Provider": "okta",
+  "CheckID": "apitoken_restricted_to_network_zone",
+  "CheckTitle": "Okta API tokens are restricted to known Network Zones",
   "CheckType": [],
+  "ServiceName": "apitoken",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
+  "Description": "Okta API tokens should not be usable from Any IP. Each token must have a network condition tied to known Okta Network Zones.",
+  "Risk": "An API token usable from any IP address can be replayed from attacker-controlled infrastructure if the secret is exposed.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developer.okta.com/docs/reference/api/api-tokens/",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/apitoken",
     "https://help.okta.com/oie/en-us/content/topics/security/api.htm"
   ],
   "Remediation": {
@@ -28,10 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "CheckID": "apitoken_restricted_to_network_zone",
-  "CheckTitle": "Okta API tokens are restricted to known Network Zones",
-  "ServiceName": "apitoken",
-  "Description": "Okta API tokens should not be usable from Any IP. Each token must have a network condition tied to known Okta Network Zones.",
-  "Risk": "An API token usable from any IP address can be replayed from attacker-controlled infrastructure if the secret is exposed."
+  "Notes": ""
 }

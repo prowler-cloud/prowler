@@ -1,15 +1,20 @@
 {
   "Provider": "okta",
+  "CheckID": "apitoken_not_super_admin",
+  "CheckTitle": "Okta API tokens are not owned by Super Admin users",
   "CheckType": [],
+  "ServiceName": "apitoken",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
+  "Description": "Okta API tokens inherit the admin permissions of the user that created them, so token owners should not hold the Super Admin role.",
+  "Risk": "A compromised API token owned by a Super Admin grants broad organization administration capability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developer.okta.com/docs/guides/api-security/",
-    "https://developer.okta.com/docs/reference/api/roles/"
+    "https://developer.okta.com/docs/api/openapi/okta-management/guides/roles",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/apitoken"
   ],
   "Remediation": {
     "Code": {
@@ -28,10 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "CheckID": "apitoken_not_super_admin",
-  "CheckTitle": "Okta API tokens are not owned by Super Admin users",
-  "ServiceName": "apitoken",
-  "Description": "Okta API tokens inherit the admin permissions of the user that created them, so token owners should not hold the Super Admin role.",
-  "Risk": "A compromised API token owned by a Super Admin grants broad organization administration capability."
+  "Notes": ""
 }
