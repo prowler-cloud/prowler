@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Okta API tokens should not be usable from Any IP. Each token must have a network condition tied to known Okta Network Zones.",
-  "Risk": "An API token usable from any IP address can be replayed from attacker-controlled infrastructure if the secret is exposed.",
+  "Description": "**Okta API token network restrictions** should prevent token use from Any IP by tying each token to known Okta Network Zones.",
+  "Risk": "**API tokens allowed from Any IP** can be replayed from attacker-controlled infrastructure if the secret is exposed, removing an important network boundary.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/apitoken",
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict each Okta API token to one or more known IP-based Network Zones.",
+      "Text": "**Restrict every Okta API token to trusted IP-based Network Zones** and review token network conditions whenever service locations change.",
       "Url": "https://hub.prowler.com/check/apitoken_restricted_to_network_zone"
     }
   },
