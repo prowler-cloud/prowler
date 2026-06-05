@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "elbv2_drop_invalid_header_fields_enabled",
+  "CheckID": "elbv2_alb_drop_invalid_header_fields_enabled",
   "CheckTitle": "Application Load Balancer should be configured to drop invalid HTTP header fields",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
@@ -30,7 +30,7 @@
     },
     "Recommendation": {
       "Text": "Enable 'drop invalid header fields' on Application Load Balancers so non-RFC-compliant HTTP headers are removed before requests reach backend targets, reducing exposure to HTTP desync and request smuggling. Apply defense in depth and validate requests at the application layer as well.",
-      "Url": "https://hub.prowler.com/check/elbv2_drop_invalid_header_fields_enabled"
+      "Url": "https://hub.prowler.com/check/elbv2_alb_drop_invalid_header_fields_enabled"
     }
   },
   "Categories": [],
