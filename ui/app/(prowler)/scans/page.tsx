@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
@@ -12,6 +10,7 @@ import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
+import { SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import {
   ProviderProps,
@@ -88,7 +87,7 @@ export default async function Scans({
           hasManageScansPermission={hasManageScansPermission}
           activeScanCount={activeScanCount}
         >
-          <Suspense
+          <SkeletonBoundary
             fallback={
               <SkeletonTableScans
                 tab={getScanJobsTab(resolvedSearchParams.tab)}
@@ -96,7 +95,7 @@ export default async function Scans({
             }
           >
             <SSRDataTableScans searchParams={resolvedSearchParams} />
-          </Suspense>
+          </SkeletonBoundary>
         </ScansPageShell>
       )}
     </ContentLayout>

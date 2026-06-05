@@ -1,7 +1,6 @@
-import { Suspense } from "react";
-
 import { getAllProviders } from "@/actions/providers";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
@@ -47,55 +46,64 @@ export default async function Home({
       </div>
 
       <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
-        <Suspense fallback={<ThreatScoreSkeleton />}>
+        <SkeletonBoundary
+          fallback={<ThreatScoreSkeleton />}
+          className="w-full lg:max-w-[312px]"
+        >
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
-        </Suspense>
+        </SkeletonBoundary>
 
-        <Suspense fallback={<StatusChartSkeleton />}>
+        <SkeletonBoundary
+          fallback={<StatusChartSkeleton />}
+          className="min-w-[312px] flex-1 md:min-w-[380px]"
+        >
           <CheckFindingsSSR searchParams={resolvedSearchParams} />
-        </Suspense>
+        </SkeletonBoundary>
 
-        <Suspense fallback={<RiskSeverityChartSkeleton />}>
+        <SkeletonBoundary
+          fallback={<RiskSeverityChartSkeleton />}
+          className="min-w-[312px] flex-1 md:min-w-[380px]"
+        >
           <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
-        </Suspense>
+        </SkeletonBoundary>
       </div>
 
       <div className="mt-6">
-        <Suspense fallback={<ResourcesInventorySkeleton />}>
+        <SkeletonBoundary fallback={<ResourcesInventorySkeleton />}>
           <ResourcesInventorySSR searchParams={resolvedSearchParams} />
-        </Suspense>
+        </SkeletonBoundary>
       </div>
 
       <div className="mt-6 flex flex-col gap-6 xl:flex-row">
         {/* Watchlists: stacked on mobile, row on tablet, stacked on desktop */}
         <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:flex-wrap sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
           <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
-            <Suspense fallback={<WatchlistCardSkeleton />}>
+            <SkeletonBoundary fallback={<WatchlistCardSkeleton />}>
               <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
-            </Suspense>
+            </SkeletonBoundary>
           </div>
           <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
-            <Suspense fallback={<WatchlistCardSkeleton />}>
+            <SkeletonBoundary fallback={<WatchlistCardSkeleton />}>
               <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
-            </Suspense>
+            </SkeletonBoundary>
           </div>
         </div>
 
         {/* Charts column: Attack Surface on top, Findings Over Time below */}
         <div className="flex flex-1 flex-col gap-6">
-          <Suspense fallback={<AttackSurfaceSkeleton />}>
+          <SkeletonBoundary fallback={<AttackSurfaceSkeleton />}>
             <AttackSurfaceSSR searchParams={resolvedSearchParams} />
-          </Suspense>
-          <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
+          </SkeletonBoundary>
+          <SkeletonBoundary fallback={<FindingSeverityOverTimeSkeleton />}>
             <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
-          </Suspense>
+          </SkeletonBoundary>
         </div>
       </div>
 
       <div className="mt-6">
-        <Suspense fallback={<RiskPipelineViewSkeleton />}>
+        <SkeletonBoundary fallback={<RiskPipelineViewSkeleton />}>
           <GraphsTabsWrapper searchParams={resolvedSearchParams} />
-        </Suspense>
+        </SkeletonBoundary>
       </div>
     </ContentLayout>
   );

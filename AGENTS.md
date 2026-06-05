@@ -35,6 +35,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler` | Project overview, component navigation | [SKILL.md](skills/prowler/SKILL.md) |
 | `prowler-api` | Django + RLS + JSON:API patterns | [SKILL.md](skills/prowler-api/SKILL.md) |
 | `prowler-ui` | Next.js + shadcn conventions | [SKILL.md](skills/prowler-ui/SKILL.md) |
+| `prowler-ui-skeletons` | shadcn skeleton loading and content reveal conventions | [SKILL.md](skills/prowler-ui-skeletons/SKILL.md) |
 | `prowler-sdk-check` | Create new security checks | [SKILL.md](skills/prowler-sdk-check/SKILL.md) |
 | `prowler-mcp` | MCP server tools and models | [SKILL.md](skills/prowler-mcp/SKILL.md) |
 | `prowler-test-sdk` | SDK testing (pytest + moto) | [SKILL.md](skills/prowler-test-sdk/SKILL.md) |
@@ -85,6 +86,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating new skills | `skill-creator` |
 | Creating or reviewing Django migrations | `django-migration-psql` |
 | Creating/modifying Prowler UI components | `prowler-ui` |
+| Creating/modifying skeletons, loading states, or Suspense fallbacks | `prowler-ui-skeletons` |
 | Creating/modifying models, views, serializers | `prowler-api` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Debug why a GitHub Actions job is failing | `prowler-ci` |

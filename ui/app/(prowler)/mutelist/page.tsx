@@ -1,5 +1,4 @@
-import { Suspense } from "react";
-
+import { SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types/components";
 
@@ -18,9 +17,12 @@ export default async function MutelistPage({
     <ContentLayout title="Mutelist" icon="lucide:volume-x">
       <MutelistTabs
         simpleContent={
-          <Suspense key={searchParamsKey} fallback={<MuteRulesTableSkeleton />}>
+          <SkeletonBoundary
+            key={searchParamsKey}
+            fallback={<MuteRulesTableSkeleton />}
+          >
             <MuteRulesTable searchParams={resolvedSearchParams} />
-          </Suspense>
+          </SkeletonBoundary>
         }
       />
     </ContentLayout>

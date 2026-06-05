@@ -1,5 +1,4 @@
 import { Info } from "lucide-react";
-import { Suspense } from "react";
 
 import {
   getComplianceOverviewMetadataInfo,
@@ -16,6 +15,7 @@ import { ComplianceFilters } from "@/components/compliance/compliance-header/com
 import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overview-grid";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
+import { SkeletonBoundary } from "@/components/shadcn/skeleton/skeleton-boundary";
 import { ContentLayout } from "@/components/ui";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import {
@@ -156,7 +156,7 @@ export default async function Compliance({
             )}
 
           {/* Row 3: Compliance grid with client-side search */}
-          <Suspense
+          <SkeletonBoundary
             key={searchParamsKey}
             fallback={
               <ComplianceOverviewPanel>
@@ -169,7 +169,7 @@ export default async function Compliance({
               scanId={selectedScanId}
               selectedScan={selectedScanData}
             />
-          </Suspense>
+          </SkeletonBoundary>
         </>
       ) : (
         <NoScansAvailable />

@@ -68,7 +68,10 @@ export const StatusBadge = ({
     >
       {status === "executing" ? (
         <span className="inline-flex items-center gap-1">
-          <SpinnerIcon size={12} className="animate-spin" />
+          <SpinnerIcon
+            size={12}
+            className="animate-spin motion-reduce:animate-none"
+          />
           {loadingProgress !== undefined && (
             <span className="text-[0.6rem]">{loadingProgress}%</span>
           )}

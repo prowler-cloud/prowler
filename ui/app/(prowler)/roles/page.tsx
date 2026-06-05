@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
 import { filterRoles } from "@/components/filters/data-filters";
 import { AddIcon } from "@/components/icons";
 import { ColumnsRoles, SkeletonTableRoles } from "@/components/roles/table";
-import { Button } from "@/components/shadcn";
+import { Button, SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";
@@ -34,9 +33,12 @@ export default async function Roles({
           </Button>
         </div>
 
-        <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
+        <SkeletonBoundary
+          key={searchParamsKey}
+          fallback={<SkeletonTableRoles />}
+        >
           <SSRDataTable searchParams={resolvedSearchParams} />
-        </Suspense>
+        </SkeletonBoundary>
       </div>
     </ContentLayout>
   );

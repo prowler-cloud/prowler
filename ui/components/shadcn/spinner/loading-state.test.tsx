@@ -33,4 +33,22 @@ describe("LoadingState", () => {
     const { container } = render(<LoadingState className="custom-wrapper" />);
     expect(container.firstChild).toHaveClass("custom-wrapper");
   });
+
+  it("animates the loading state entry and label color subtly", () => {
+    const { container } = render(<LoadingState label="Loading findings..." />);
+    expect(container.firstChild).toHaveClass(
+      "animate-in",
+      "fade-in-0",
+      "duration-200",
+      "ease-out",
+      "motion-reduce:animate-none",
+      "motion-reduce:transition-none",
+    );
+    expect(screen.getByText("Loading findings...")).toHaveClass(
+      "transition-colors",
+      "duration-200",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+  });
 });

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { getInvitations } from "@/actions/invitations/invitation";
 import { getRoles } from "@/actions/roles";
@@ -10,7 +9,7 @@ import {
   ColumnsInvitation,
   SkeletonTableInvitation,
 } from "@/components/invitations/table";
-import { Button } from "@/components/shadcn";
+import { Button, SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { InvitationProps, Role, SearchParamsProps } from "@/types";
@@ -39,9 +38,12 @@ export default async function Invitations({
           </Button>
         </div>
 
-        <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
+        <SkeletonBoundary
+          key={searchParamsKey}
+          fallback={<SkeletonTableInvitation />}
+        >
           <SSRDataTable searchParams={resolvedSearchParams} />
-        </Suspense>
+        </SkeletonBoundary>
       </div>
     </ContentLayout>
   );

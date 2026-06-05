@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-
 import {
   adaptFindingGroupsResponse,
   getFindingGroups,
@@ -14,6 +12,7 @@ import {
   FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
+import { SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
@@ -111,12 +110,12 @@ export default async function Findings({
             }
           />
         </div>
-        <Suspense fallback={<SkeletonTableFindings />}>
+        <SkeletonBoundary fallback={<SkeletonTableFindings />}>
           <SSRDataTable
             searchParams={resolvedSearchParams}
             filters={resolvedFilters}
           />
-        </Suspense>
+        </SkeletonBoundary>
       </FilterTransitionWrapper>
     </ContentLayout>
   );

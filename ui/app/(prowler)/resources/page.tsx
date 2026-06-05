@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-
 import { getAllProviders } from "@/actions/providers";
 import {
   getLatestMetadataInfo,
@@ -11,6 +9,7 @@ import {
 import { ResourcesFilters } from "@/components/resources/resources-filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
 import { ResourcesTableWithSelection } from "@/components/resources/table";
+import { SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
@@ -86,12 +85,12 @@ export default async function Resources({
             uniqueGroups={uniqueGroups}
           />
         </div>
-        <Suspense fallback={<SkeletonTableResources />}>
+        <SkeletonBoundary fallback={<SkeletonTableResources />}>
           <SSRDataTable
             searchParams={resolvedSearchParams}
             initialResource={processedResource}
           />
-        </Suspense>
+        </SkeletonBoundary>
       </FilterTransitionWrapper>
     </ContentLayout>
   );

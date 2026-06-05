@@ -22,9 +22,26 @@ describe("StatusBadge", () => {
   );
 
   it("renders the executing state with spinner and progress percentage", () => {
-    render(<StatusBadge status="executing" loadingProgress={42} />);
+    const { container } = render(
+      <StatusBadge status="executing" loadingProgress={42} />,
+    );
     expect(screen.getByText("executing")).toBeInTheDocument();
     expect(screen.getByText("42%")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toHaveClass(
+      "animate-spin",
+      "motion-reduce:animate-none",
+    );
+  });
+
+  it("animates status color changes without layout motion", () => {
+    const { container } = render(<StatusBadge status="completed" />);
+    const badge = container.querySelector("[data-slot='badge']");
+    expect(badge).toHaveClass(
+      "transition-[background-color,border-color,color,box-shadow]",
+      "duration-200",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
   });
 
   it("omits progress when loadingProgress is not provided", () => {

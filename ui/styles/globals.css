@@ -409,6 +409,21 @@
     transform-box: fill-box;
     transform-origin: center;
   }
+
+  @keyframes skeletonScan {
+    0% {
+      transform: translateX(0);
+    }
+
+    55%,
+    100% {
+      transform: translateX(300%);
+    }
+  }
+
+  .animate-skeleton-scan {
+    animation: skeletonScan 2.6s ease-in-out infinite;
+  }
 }
 
 /* ===== BASE LAYER ===== */
