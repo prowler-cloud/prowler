@@ -4,6 +4,9 @@ from os.path import isdir
 
 from pydantic.v1 import BaseModel
 
+from prowler.config.config import output_file_timestamp
+from prowler.providers.common.provider import Provider
+
 
 # TODO: include this for all the providers
 class Audit_Metadata(BaseModel):
@@ -39,9 +42,6 @@ class ProviderOutputOptions:
         # Shodan API Key
         if self.shodan_api_key:
             # TODO: revisit this logic
-            # Local import to avoid a module-level import cycle with provider.py
-            from prowler.providers.common.provider import Provider
-
             provider = Provider.get_global_provider()
             updated_audit_config = Provider.update_provider_config(
                 provider.audit_config, "shodan_api_key", self.shodan_api_key
@@ -70,3 +70,15 @@ class Connection:
 
     is_connected: bool = False
     error: Exception = None
+
+
+def default_output_options(provider, arguments, bulk_checks_metadata):
+    """Generic OutputOptions fallback for external providers that do not
+    implement get_output_options, so the run still produces output instead of
+    aborting. Honors arguments.output_filename and otherwise derives a name
+    from the provider type."""
+    output_options = ProviderOutputOptions(arguments, bulk_checks_metadata)
+    output_options.output_filename = getattr(arguments, "output_filename", None) or (
+        f"prowler-output-{provider.type}-{output_file_timestamp}"
+    )
+    return output_options

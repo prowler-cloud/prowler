@@ -9,7 +9,7 @@ from argparse import Namespace
 from importlib import import_module
 from typing import Any, Optional
 
-from prowler.config.config import load_and_validate_config_file, output_file_timestamp
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -153,15 +153,11 @@ class Provider(ABC):
         """
         raise NotImplementedError(f"{cls.__name__} has not implemented from_cli_args()")
 
-    def get_output_options(self, arguments, bulk_checks_metadata):
-        """Return a generic OutputOptions default; override for provider-specific output."""
-        from prowler.providers.common.models import ProviderOutputOptions
-
-        output_options = ProviderOutputOptions(arguments, bulk_checks_metadata)
-        output_options.output_filename = getattr(
-            arguments, "output_filename", None
-        ) or (f"prowler-output-{self.type}-{output_file_timestamp}")
-        return output_options
+    def get_output_options(self, arguments, _bulk_checks_metadata):
+        """Create the provider-specific OutputOptions."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} has not implemented get_output_options()"
+        )
 
     def get_stdout_detail(self, _finding) -> str:
         """Return the detail string for stdout reporting (region, location, etc.)."""
