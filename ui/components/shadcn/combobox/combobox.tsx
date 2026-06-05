@@ -113,8 +113,10 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={selectedOption ? selectedOption.label : placeholder}
           disabled={disabled}
           className={cn(
+            "group transition-[background-color,border-color,color,box-shadow]",
             comboboxTriggerVariants({ variant }),
             triggerClassName,
             className,
@@ -123,7 +125,7 @@ export function Combobox({
           <span className="truncate">
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform duration-200 ease-out group-aria-expanded:rotate-180 motion-reduce:rotate-0 motion-reduce:transition-none" />
         </Button>
       </PopoverTrigger>
       <PopoverContent

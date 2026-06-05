@@ -41,7 +41,7 @@ function Checkbox({
       checked={indeterminate ? "indeterminate" : checked}
       className={cn(
         // Base styles
-        "peer shrink-0 rounded-sm border transition-all outline-none",
+        "peer shrink-0 rounded-sm border transition-colors duration-200 ease-out outline-none motion-reduce:transition-none",
         sizeStyles.root,
         // Default state
         "bg-bg-input-primary border-border-input-primary shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]",
@@ -58,8 +58,9 @@ function Checkbox({
       {...props}
     >
       <CheckboxPrimitive.Indicator
+        forceMount
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none"
+        className="grid place-content-center text-current transition-[opacity,transform] duration-200 ease-out data-[state=checked]:scale-100 data-[state=checked]:opacity-100 data-[state=indeterminate]:scale-100 data-[state=indeterminate]:opacity-100 data-[state=unchecked]:scale-75 data-[state=unchecked]:opacity-0 motion-reduce:scale-100 motion-reduce:transition-none"
       >
         {indeterminate || checked === "indeterminate" ? (
           <MinusIcon className={sizeStyles.icon} />

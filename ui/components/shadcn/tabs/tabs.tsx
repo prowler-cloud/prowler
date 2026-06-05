@@ -1,6 +1,7 @@
 "use client";
 
 import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { motion, useReducedMotion } from "framer-motion";
 import type { ComponentProps, ReactNode } from "react";
 
 import {
@@ -30,7 +31,7 @@ const TRIGGER_STYLES = {
  * Content component styles
  */
 const CONTENT_STYLES =
-  "mt-2 focus-visible:rounded-md focus-visible:outline-1 focus-visible:ring-[3px] focus-visible:border-ring focus-visible:outline-ring focus-visible:ring-ring/50" as const;
+  "mt-2 will-change-transform motion-reduce:transform-none focus-visible:rounded-md focus-visible:outline-1 focus-visible:ring-[3px] focus-visible:border-ring focus-visible:outline-ring focus-visible:ring-ring/50" as const;
 
 /**
  * Build trigger className by combining style parts
@@ -122,14 +123,27 @@ function TabsTrigger({
 
 function TabsContent({
   className,
+  children,
   ...props
 }: ComponentProps<typeof TabsPrimitive.Content>) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <TabsPrimitive.Content
-      data-slot="tabs-content"
-      className={cn(CONTENT_STYLES, className)}
-      {...props}
-    />
+    <TabsPrimitive.Content asChild {...props}>
+      <motion.div
+        data-slot="tabs-content"
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={
+          shouldReduceMotion
+            ? { duration: 0 }
+            : { duration: 0.2, ease: "easeOut" }
+        }
+        className={cn(CONTENT_STYLES, className)}
+      >
+        {children}
+      </motion.div>
+    </TabsPrimitive.Content>
   );
 }
 
