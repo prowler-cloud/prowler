@@ -12,6 +12,7 @@ import {
 } from "@/actions/processors";
 import { Button, Card, Skeleton } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import { SkeletonContentReveal } from "@/components/shadcn/skeleton/skeleton-content-reveal";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { fontMono } from "@/config/fonts";
@@ -187,111 +188,114 @@ export function AdvancedMutelistForm() {
         </div>
       </Modal>
 
-      <Card variant="base" className="p-6">
-        <form action={formAction} className="flex flex-col gap-4">
-          {config && <input type="hidden" name="id" value={config.id} />}
+      <SkeletonContentReveal>
+        <Card variant="base" className="p-6">
+          <form action={formAction} className="flex flex-col gap-4">
+            {config && <input type="hidden" name="id" value={config.id} />}
 
-          <div className="flex flex-col gap-4">
-            <div>
-              <h3 className="text-default-700 mb-2 text-lg font-semibold">
-                Advanced Mutelist Configuration
-              </h3>
-              <ul className="text-default-600 mb-4 list-disc pl-5 text-sm">
-                <li>
-                  <strong>
-                    This Mutelist configuration will take effect on the next
-                    scan.
-                  </strong>
-                </li>
-                <li>
-                  Use this for pattern-based muting with wildcards, regions, and
-                  tags.
-                </li>
-                <li>
-                  Learn more about configuring the Mutelist{" "}
-                  <CustomLink
-                    size="sm"
-                    href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-mute-findings"
-                  >
-                    here
-                  </CustomLink>
-                  .
-                </li>
-                <li>
-                  A default Mutelist is used to exclude certain predefined
-                  resources if no Mutelist is provided.
-                </li>
-              </ul>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="configuration"
-                className="text-default-700 text-sm font-medium"
-              >
-                Mutelist Configuration (YAML)
-              </label>
+            <div className="flex flex-col gap-4">
               <div>
-                <Textarea
-                  id="configuration"
-                  name="configuration"
-                  placeholder={defaultMutedFindingsConfig}
-                  variant="bordered"
-                  value={configText}
-                  onChange={(e) => handleConfigChange(e.target.value)}
-                  minRows={20}
-                  maxRows={20}
-                  isInvalid={
-                    (!hasUserStartedTyping && !!state?.errors?.configuration) ||
-                    !yamlValidation.isValid
-                  }
-                  errorMessage={
-                    (!hasUserStartedTyping && state?.errors?.configuration) ||
-                    (!yamlValidation.isValid ? yamlValidation.error : "")
-                  }
-                  classNames={{
-                    input: fontMono.className + " text-sm",
-                    base: "min-h-[400px]",
-                    errorMessage: "whitespace-pre-wrap",
-                  }}
-                />
-                {yamlValidation.isValid &&
-                  configText &&
-                  hasUserStartedTyping && (
-                    <div className="text-tiny text-success my-1 flex items-center px-1">
-                      <span>Valid YAML format</span>
-                    </div>
-                  )}
+                <h3 className="text-default-700 mb-2 text-lg font-semibold">
+                  Advanced Mutelist Configuration
+                </h3>
+                <ul className="text-default-600 mb-4 list-disc pl-5 text-sm">
+                  <li>
+                    <strong>
+                      This Mutelist configuration will take effect on the next
+                      scan.
+                    </strong>
+                  </li>
+                  <li>
+                    Use this for pattern-based muting with wildcards, regions,
+                    and tags.
+                  </li>
+                  <li>
+                    Learn more about configuring the Mutelist{" "}
+                    <CustomLink
+                      size="sm"
+                      href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-mute-findings"
+                    >
+                      here
+                    </CustomLink>
+                    .
+                  </li>
+                  <li>
+                    A default Mutelist is used to exclude certain predefined
+                    resources if no Mutelist is provided.
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="configuration"
+                  className="text-default-700 text-sm font-medium"
+                >
+                  Mutelist Configuration (YAML)
+                </label>
+                <div>
+                  <Textarea
+                    id="configuration"
+                    name="configuration"
+                    placeholder={defaultMutedFindingsConfig}
+                    variant="bordered"
+                    value={configText}
+                    onChange={(e) => handleConfigChange(e.target.value)}
+                    minRows={20}
+                    maxRows={20}
+                    isInvalid={
+                      (!hasUserStartedTyping &&
+                        !!state?.errors?.configuration) ||
+                      !yamlValidation.isValid
+                    }
+                    errorMessage={
+                      (!hasUserStartedTyping && state?.errors?.configuration) ||
+                      (!yamlValidation.isValid ? yamlValidation.error : "")
+                    }
+                    classNames={{
+                      input: fontMono.className + " text-sm",
+                      base: "min-h-[400px]",
+                      errorMessage: "whitespace-pre-wrap",
+                    }}
+                  />
+                  {yamlValidation.isValid &&
+                    configText &&
+                    hasUserStartedTyping && (
+                      <div className="text-tiny text-success my-1 flex items-center px-1">
+                        <span>Valid YAML format</span>
+                      </div>
+                    )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex w-full justify-end gap-4">
-            {config && (
+            <div className="flex w-full justify-end gap-4">
+              {config && (
+                <Button
+                  type="button"
+                  aria-label="Delete Configuration"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setShowDeleteConfirmation(true)}
+                  disabled={isPending || isDeleting}
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </Button>
+              )}
               <Button
-                type="button"
-                aria-label="Delete Configuration"
-                variant="outline"
+                type="submit"
                 size="lg"
-                onClick={() => setShowDeleteConfirmation(true)}
-                disabled={isPending || isDeleting}
+                disabled={
+                  isPending || !yamlValidation.isValid || !configText.trim()
+                }
               >
-                <Trash2 className="size-4" />
-                Delete
+                {isPending ? "Saving..." : config ? "Update" : "Save"}
               </Button>
-            )}
-            <Button
-              type="submit"
-              size="lg"
-              disabled={
-                isPending || !yamlValidation.isValid || !configText.trim()
-              }
-            >
-              {isPending ? "Saving..." : config ? "Update" : "Save"}
-            </Button>
-          </div>
-        </form>
-      </Card>
+            </div>
+          </form>
+        </Card>
+      </SkeletonContentReveal>
     </>
   );
 }

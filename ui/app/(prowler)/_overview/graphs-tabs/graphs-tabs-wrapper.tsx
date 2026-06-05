@@ -2,6 +2,7 @@ import { Skeleton } from "@heroui/skeleton";
 import { Suspense } from "react";
 
 import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table";
+import { SkeletonBoundary } from "@/components/shadcn";
 import { SearchParamsProps } from "@/types";
 
 import { GraphsTabsClient } from "./_components/graphs-tabs-client";
@@ -44,10 +45,21 @@ export const GraphsTabsWrapper = async ({
     GRAPH_TABS.map((tab) => {
       const Component = GRAPH_COMPONENTS[tab.id];
       const fallback = TAB_FALLBACKS[tab.id] ?? <LoadingFallback />;
+      const content = <Component searchParams={searchParams} />;
+
+      if (tab.id === "findings") {
+        return [
+          tab.id,
+          <SkeletonBoundary key={tab.id} fallback={fallback}>
+            {content}
+          </SkeletonBoundary>,
+        ];
+      }
+
       return [
         tab.id,
         <Suspense key={tab.id} fallback={fallback}>
-          <Component searchParams={searchParams} />
+          {content}
         </Suspense>,
       ];
     }),

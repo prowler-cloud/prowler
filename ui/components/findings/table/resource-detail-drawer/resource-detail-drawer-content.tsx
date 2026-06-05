@@ -37,6 +37,7 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { SkeletonContentReveal } from "@/components/shadcn/skeleton/skeleton-content-reveal";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Tooltip,
@@ -494,7 +495,7 @@ export function ResourceDetailDrawerContent({
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
+    <SkeletonContentReveal className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
       {/* Mute modal — rendered outside drawer content to avoid overlay conflicts */}
       {f && !f.isMuted && (
         <MuteFindingsModal
@@ -1339,7 +1340,7 @@ export function ResourceDetailDrawerContent({
           Analyze This Finding With Lighthouse AI
         </a>
       )}
-    </div>
+    </SkeletonContentReveal>
   );
 }
 
