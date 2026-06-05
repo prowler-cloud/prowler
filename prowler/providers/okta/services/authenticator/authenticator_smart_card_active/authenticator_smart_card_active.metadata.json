@@ -1,11 +1,16 @@
 {
   "Provider": "okta",
+  "CheckID": "authenticator_smart_card_active",
+  "CheckTitle": "Okta Smart Card authenticator is active",
   "CheckType": [],
+  "ServiceName": "authenticator",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
+  "Description": "The Smart Card IdP authenticator should be configured and active for certificate-based authentication scenarios required by the STIG.",
+  "Risk": "If Smart Card authentication is unavailable, users cannot satisfy certificate-based authentication requirements where mandated.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/authenticator"
@@ -27,10 +32,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "CheckID": "authenticator_smart_card_active",
-  "CheckTitle": "Okta Smart Card authenticator is active",
-  "ServiceName": "authenticator",
-  "Description": "The Smart Card IdP authenticator should be configured and active for certificate-based authentication scenarios required by the STIG.",
-  "Risk": "If Smart Card authentication is unavailable, users cannot satisfy certificate-based authentication requirements where mandated."
+  "Notes": ""
 }
