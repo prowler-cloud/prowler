@@ -1,6 +1,7 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
+import { AnimatePresence, motion } from "framer-motion";
 import { SearchIcon, XCircle } from "lucide-react";
 import { ComponentProps, forwardRef } from "react";
 
@@ -20,7 +21,7 @@ const searchInputWrapperVariants = cva("relative flex items-center w-full", {
 });
 
 const searchInputVariants = cva(
-  "flex w-full rounded-lg border text-sm transition-all outline-none placeholder:text-text-neutral-tertiary disabled:cursor-not-allowed disabled:opacity-50",
+  "flex w-full rounded-lg border text-sm transition-[background-color,border-color,box-shadow,color] duration-250 ease-out outline-none motion-reduce:transition-none placeholder:text-text-neutral-tertiary disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -89,7 +90,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         <SearchIcon
           size={iconSize}
           className={cn(
-            "text-text-neutral-tertiary pointer-events-none absolute",
+            "text-text-neutral-tertiary pointer-events-none absolute transition-colors duration-250 ease-out motion-reduce:transition-none",
             iconPosition,
           )}
         />
@@ -102,19 +103,27 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           className={cn(searchInputVariants({ variant, size, className }))}
           {...props}
         />
-        {hasValue && onClear && (
-          <button
-            type="button"
-            aria-label="Clear search"
-            onClick={onClear}
-            className={cn(
-              "text-text-neutral-tertiary hover:text-text-neutral-primary absolute transition-colors focus:outline-none",
-              clearButtonPosition,
-            )}
-          >
-            <XCircle size={iconSize} />
-          </button>
-        )}
+        <AnimatePresence initial={false}>
+          {hasValue && onClear && (
+            <motion.button
+              key="clear-search"
+              type="button"
+              data-slot="search-input-clear"
+              aria-label="Clear search"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              onClick={onClear}
+              className={cn(
+                "text-text-neutral-tertiary hover:text-text-neutral-primary absolute transition-colors duration-250 ease-out focus:outline-none motion-reduce:transition-none",
+                clearButtonPosition,
+              )}
+            >
+              <XCircle size={iconSize} />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     );
   },
