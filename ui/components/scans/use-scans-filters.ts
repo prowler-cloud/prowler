@@ -46,13 +46,19 @@ export function useScansFilters(): UseScansFiltersReturn {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const setTab = (tab: string) =>
-    updateParams({
+  const setTab = (tab: string) => {
+    const isScheduledTab = tab === SCAN_JOBS_TAB.SCHEDULED;
+    const updates: Record<string, string | null> = {
       tab,
       sort: null,
       "filter[state]": null,
       "filter[state__in]": null,
-    });
+    };
+
+    if (isScheduledTab) updates["filter[trigger]"] = null;
+
+    updateParams(updates);
+  };
 
   const setScheduleType = (value: string) =>
     updateParams({ "filter[trigger]": value });

@@ -1,10 +1,6 @@
-"use client";
+import { NoProvidersAdded } from "@/components/providers/no-providers-added";
+import { ADD_PROVIDER_HREF } from "@/lib/providers-navigation";
 
-import { useState } from "react";
-
-import { ProviderWizardModal } from "@/components/providers/wizard";
-
-import { NoProvidersAdded } from "./no-providers-added";
 import { NoProvidersConnected } from "./no-providers-connected";
 
 interface ScansProvidersEmptyStateProps {
@@ -14,19 +10,13 @@ interface ScansProvidersEmptyStateProps {
 export function ScansProvidersEmptyState({
   thereIsNoProviders,
 }: ScansProvidersEmptyStateProps) {
-  const [isProviderWizardOpen, setIsProviderWizardOpen] = useState(false);
-
   return (
     <>
       {thereIsNoProviders ? (
-        <NoProvidersAdded onOpenWizard={() => setIsProviderWizardOpen(true)} />
+        <NoProvidersAdded action="link" href={ADD_PROVIDER_HREF} />
       ) : (
         <NoProvidersConnected />
       )}
-      <ProviderWizardModal
-        open={isProviderWizardOpen}
-        onOpenChange={setIsProviderWizardOpen}
-      />
     </>
   );
 }

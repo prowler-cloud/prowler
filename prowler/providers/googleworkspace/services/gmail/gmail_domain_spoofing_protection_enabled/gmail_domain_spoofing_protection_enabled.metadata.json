@@ -13,8 +13,8 @@
   "Risk": "Without protection against domain spoofing based on similar domain names, users may receive **phishing emails from lookalike domains** (e.g., examp1e.com instead of example.com) that appear legitimate. This enables **credential theft, malware delivery, and business email compromise** attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9157861",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/advanced-phishing-and-malware-protection",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

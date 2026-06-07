@@ -202,6 +202,26 @@ class TestOCSFComplianceOutput:
         assert cf.status_code == "MANUAL"
         assert cf.finding_info.uid == "manual-MANUAL-1"
 
+    def test_include_manual_false_skips_manual(self):
+        """``_transform(..., include_manual=False)`` emits check events but
+        NOT manual requirement events. The streaming caller passes ``False``
+        for batches 2..N so manual events are not duplicated."""
+        covered = _simple_requirement("REQ-1", ["check_a"])
+        manual = _simple_requirement("MANUAL-1", checks=[])
+        fw = _make_framework([covered, manual])
+        findings = [_make_finding("check_a")]
+
+        output = OCSFComplianceOutput(findings=findings, framework=fw, provider="aws")
+        # __init__ transforms with include_manual=True (default) → manual present
+        assert any(cf.status_code == "MANUAL" for cf in output.data)
+
+        # A subsequent batch re-transforms with include_manual=False
+        output._data.clear()
+        output._transform(findings, fw, "TestFW-1.0", include_manual=False)
+
+        assert len(output.data) == 1  # only the check event, no manual
+        assert all(cf.status_code != "MANUAL" for cf in output.data)
+
     def test_multi_provider_checks_dict(self):
         req = UniversalComplianceRequirement(
             id="REQ-1",
@@ -631,3 +651,103 @@ class TestNoTopLevelOCSFImport:
         import prowler.lib.outputs.compliance.universal.ocsf_compliance as mod
 
         assert "OCSF" not in dir(mod)
+
+
+def _mitre_requirement(req_id="T1078", entries=None):
+    """Build a MITRE-style requirement with `_raw_attributes` wrapping."""
+    return UniversalComplianceRequirement(
+        id=req_id,
+        description="Valid Accounts",
+        attributes={
+            "_raw_attributes": entries
+            or [{"AWSService": "IAM", "Category": "Initial Access"}]
+        },
+        checks={"aws": ["check_a"]},
+    )
+
+
+class TestMitreRawAttributes:
+    """MITRE attrs wrapped as `{"_raw_attributes": [...]}` must not leak
+    the marker key into the OCSF payload."""
+
+    def test_raw_attributes_key_not_in_unmapped(self):
+        framework = _make_framework([_mitre_requirement()])
+        findings = [_make_finding("check_a", "PASS")]
+
+        output = OCSFComplianceOutput(
+            findings=findings, framework=framework, provider="aws"
+        )
+
+        requirement_attrs = (output.data[0].unmapped or {}).get(
+            "requirement_attributes", {}
+        )
+        assert "_raw_attributes" not in requirement_attrs
+        assert "raw_attributes" not in requirement_attrs
+
+    def test_finding_serializes_with_raw_attributes(self):
+        framework = _make_framework(
+            [
+                _mitre_requirement(
+                    entries=[
+                        {"AWSService": "IAM", "Category": "Initial Access"},
+                        {"AWSService": "STS", "Category": "Privilege Escalation"},
+                    ]
+                )
+            ]
+        )
+        findings = [_make_finding("check_a", "PASS")]
+
+        output = OCSFComplianceOutput(
+            findings=findings, framework=framework, provider="aws"
+        )
+        compliance_finding = output.data[0]
+        if hasattr(compliance_finding, "model_dump_json"):
+            payload = json.loads(compliance_finding.model_dump_json(exclude_none=True))
+        else:
+            payload = json.loads(compliance_finding.json(exclude_none=True))
+        assert payload["compliance"]["requirements"] == ["T1078"]
+
+
+class TestProviderFiltering:
+    """OCSF writer scopes findings against `requirement.checks[provider]`."""
+
+    def test_check_for_other_provider_not_emitted(self):
+        azure_only_requirement = UniversalComplianceRequirement(
+            id="REQ-1",
+            description="Azure-only requirement",
+            attributes={},
+            checks={"azure": ["check_a"]},
+        )
+        framework = _make_framework([azure_only_requirement])
+        findings = [_make_finding("check_a", "PASS", provider="aws")]
+
+        output = OCSFComplianceOutput(
+            findings=findings, framework=framework, provider="aws"
+        )
+
+        assert all(
+            compliance_finding.status_code == "MANUAL"
+            for compliance_finding in output.data
+        )
+
+    def test_no_provider_aggregates_all_checks(self):
+        multi_provider_requirement = UniversalComplianceRequirement(
+            id="REQ-1",
+            description="Multi-provider requirement",
+            attributes={},
+            checks={"aws": ["check_a"], "azure": ["check_b"]},
+        )
+        framework = _make_framework([multi_provider_requirement])
+        findings = [
+            _make_finding("check_a", "PASS", provider="aws"),
+            _make_finding("check_b", "FAIL", provider="azure"),
+        ]
+
+        output = OCSFComplianceOutput(
+            findings=findings, framework=framework, provider=None
+        )
+
+        statuses = sorted(
+            compliance_finding.status_code for compliance_finding in output.data
+        )
+        assert statuses == ["FAIL", "PASS"]

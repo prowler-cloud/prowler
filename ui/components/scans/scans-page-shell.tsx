@@ -19,6 +19,7 @@ import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
+import { CliImportBanner } from "./cli-import-banner";
 import { LaunchScanModal } from "./launch-scan-modal";
 import { ScansFilterBar } from "./scans-filter-bar";
 import { useScansFilters } from "./use-scans-filters";
@@ -53,6 +54,7 @@ export function ScansPageShell({
   const hasConnectedProviders = providers.some(
     (provider) => provider.attributes.connection.connected === true,
   );
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
 
@@ -103,6 +105,8 @@ export function ScansPageShell({
           Launch Scan
         </Button>
       </div>
+
+      {isCloudEnvironment && <CliImportBanner />}
 
       <Tabs
         value={filters.activeTab}

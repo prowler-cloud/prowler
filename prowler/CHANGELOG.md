@@ -2,6 +2,35 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.30.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- `elbv2_alb_drop_invalid_header_fields_enabled` check for AWS provider, verifying Application Load Balancers have `routing.http.drop_invalid_header_fields.enabled` set to `true` to mitigate HTTP desync attacks (AWS FSBP ELB.4) [(#11471)](https://github.com/prowler-cloud/prowler/pull/11471)
+
+---
+
+## [5.29.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- GCP `logging_sink_created` now recognizes organization-level aggregated sinks with `includeChildren=True`, avoiding false failures for covered projects [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
+- Jira integration no longer fails with `400 INVALID_INPUT` when a finding has empty fields [(#11474)](https://github.com/prowler-cloud/prowler/pull/11474)
+- GCP `iam_service_account_unused` now passes disabled service accounts instead of failing them, since a disabled account cannot authenticate or be used [(#11467)](https://github.com/prowler-cloud/prowler/pull/11467)
+- AWS AI Security Framework now renders in the dashboard instead of showing "No data found for this compliance", by adding the missing compliance view module [(#11470)](https://github.com/prowler-cloud/prowler/pull/11470)
+
+---
+
+## [5.29.1] (Prowler v5.29.1)
+
+### 🐞 Fixed
+
+- OCSF output writer now re-raises I/O errors (e.g. `ENOSPC`) instead of logging them per finding and leaving a truncated file [(#11421)](https://github.com/prowler-cloud/prowler/pull/11421)
+
+---
+
 ## [5.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added
@@ -20,6 +49,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
+- Broken documentation URLs in Google Workspace check metadata [(#11405)](https://github.com/prowler-cloud/prowler/pull/11405)
 - ENS RD 311/2022 (AWS) compliance mapping: `vpc_different_regions` was uncorrectly mapped under the `mp.com.4` family (Network segregation). That check is now mapped to a new `op.cont.2.aws.vpc.1` requirement under the Continuity of Service control [(#11372)](https://github.com/prowler-cloud/prowler/pull/11372)
 - Compliance CSV row count now matches the UI per requirement by sourcing rows from the framework JSON's `requirement.Checks` instead of the stale `finding.compliance` snapshot [(#11370)](https://github.com/prowler-cloud/prowler/pull/11370)
 - OpenStack provider exception codes moved from the `10000-10999` range, shared with the AlibabaCloud provider, to the free `17000-17999` range to keep error codes unambiguous [(#11382)](https://github.com/prowler-cloud/prowler/pull/11382)

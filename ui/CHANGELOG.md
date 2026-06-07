@@ -2,6 +2,31 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.30.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+
+---
+
+## [1.29.2] (Prowler v5.29.2)
+
+### 🔄 Changed
+
+- Account and provider-type selector triggers now show the provider icon, with a non-deduped icon stack [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
+### 🐞 Fixed
+
+- Add Provider modal now closes without reloading the providers page [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+- Users page now shows the "Delete User" action only on the current user's row, matching the backend rule that a user can only delete their own account [(#11447)](https://github.com/prowler-cloud/prowler/pull/11447)
+
+### 🔐 Security
+
+- Vitest toolchain upgraded `4.0.18` → `4.1.8` to clear two critical `pnpm audit` advisories [(#11424)](https://github.com/prowler-cloud/prowler/pull/11424)
+
+---
+
 ## [1.29.0] (Prowler v5.29.0)
 
 ### 🚀 Added
