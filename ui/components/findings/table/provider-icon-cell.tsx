@@ -1,42 +1,9 @@
 import {
-  AlibabaCloudProviderBadge,
-  AWSProviderBadge,
-  AzureProviderBadge,
-  CloudflareProviderBadge,
-  GCPProviderBadge,
-  GitHubProviderBadge,
-  GoogleWorkspaceProviderBadge,
-  IacProviderBadge,
-  ImageProviderBadge,
-  KS8ProviderBadge,
-  M365ProviderBadge,
-  MongoDBAtlasProviderBadge,
-  OktaProviderBadge,
-  OpenStackProviderBadge,
-  OracleCloudProviderBadge,
-  VercelProviderBadge,
-} from "@/components/icons/providers-badge";
+  PROVIDER_TYPE_DATA,
+  ProviderTypeIcon,
+} from "@/components/icons/providers-badge/provider-type-icon";
 import { cn } from "@/lib/utils";
 import { ProviderType } from "@/types";
-
-export const PROVIDER_ICONS = {
-  aws: AWSProviderBadge,
-  azure: AzureProviderBadge,
-  gcp: GCPProviderBadge,
-  kubernetes: KS8ProviderBadge,
-  m365: M365ProviderBadge,
-  github: GitHubProviderBadge,
-  googleworkspace: GoogleWorkspaceProviderBadge,
-  iac: IacProviderBadge,
-  image: ImageProviderBadge,
-  oraclecloud: OracleCloudProviderBadge,
-  mongodbatlas: MongoDBAtlasProviderBadge,
-  alibabacloud: AlibabaCloudProviderBadge,
-  cloudflare: CloudflareProviderBadge,
-  openstack: OpenStackProviderBadge,
-  vercel: VercelProviderBadge,
-  okta: OktaProviderBadge,
-} as const;
 
 interface ProviderIconCellProps {
   provider: ProviderType;
@@ -49,9 +16,9 @@ export const ProviderIconCell = ({
   size = 26,
   className = "size-8 rounded-md bg-white",
 }: ProviderIconCellProps) => {
-  const IconComponent = PROVIDER_ICONS[provider];
-
-  if (!IconComponent) {
+  // Unknown provider types (present in the data but missing from the shared
+  // PROVIDER_TYPE_DATA map) render an explicit "?" rather than an empty icon.
+  if (!(provider in PROVIDER_TYPE_DATA)) {
     return (
       <div className={cn("flex items-center justify-center", className)}>
         <span className="text-text-neutral-secondary text-xs">?</span>
@@ -66,7 +33,7 @@ export const ProviderIconCell = ({
         className,
       )}
     >
-      <IconComponent width={size} height={size} />
+      <ProviderTypeIcon type={provider} size={size} />
     </div>
   );
 };

@@ -38,6 +38,7 @@ interface ProviderWizardModalProps {
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
   orgInitialData?: OrgWizardInitialData;
+  refreshOnClose?: boolean;
 }
 
 export function ProviderWizardModal({
@@ -45,6 +46,7 @@ export function ProviderWizardModal({
   onOpenChange,
   initialData,
   orgInitialData,
+  refreshOnClose,
 }: ProviderWizardModalProps) {
   const {
     backToProviderFlow,
@@ -72,6 +74,7 @@ export function ProviderWizardModal({
     onOpenChange,
     initialData,
     orgInitialData,
+    refreshOnClose,
   });
   const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}`;
   const { containerRef, sentinelRef, showScrollHint } = useScrollHint({
