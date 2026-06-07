@@ -146,6 +146,19 @@ class TestReturnProwlerProvider:
         with pytest.raises(ValueError):
             return return_prowler_provider(provider)
 
+    def test_return_prowler_provider_external_resolves_via_get_class(self):
+        """An external provider name resolves through the SDK resolver, so any
+        entry-point provider works without a hardcoded branch in the API."""
+        external_class = type("ExternalProvider", (), {})
+        provider = MagicMock()
+        provider.provider = "external-template"
+        with patch(
+            "api.utils.SDKProvider.get_class", return_value=external_class
+        ) as mock_get_class:
+            resolved = return_prowler_provider(provider)
+        mock_get_class.assert_called_once_with("external-template")
+        assert resolved is external_class
+
 
 class TestInitializeProwlerProvider:
     @patch("api.utils.return_prowler_provider")
