@@ -37,6 +37,7 @@ class IAM(GCPService):
                                 display_name=account.get("displayName", ""),
                                 project_id=project_id,
                                 uniqueId=account.get("uniqueId", ""),
+                                disabled=account.get("disabled", False),
                             )
                         )
 
@@ -102,6 +103,7 @@ class ServiceAccount(BaseModel):
     keys: list[Key] = []
     project_id: str
     uniqueId: str
+    disabled: bool = False
 
 
 class AccessApproval(GCPService):

@@ -1222,6 +1222,48 @@ class TestCompliance:
 
             assert "custom_1.0_ext" in frameworks
 
+    @patch("prowler.config.config.importlib.metadata.entry_points")
+    def test_get_available_compliance_includes_external_universal(self, mock_ep):
+        """External universal frameworks under prowler.compliance.universal are
+        listed, for a provider and for the provider=None case that feeds
+        --compliance choices."""
+        import json
+        import os
+        import tempfile
+
+        from prowler.config.config import get_available_compliance_frameworks
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            framework = {
+                "framework": "CustomUniversal",
+                "name": "Custom Universal",
+                "version": "1.0",
+                "description": "Multi-provider",
+                "requirements": [
+                    {
+                        "id": "1",
+                        "name": "r",
+                        "description": "d",
+                        "checks": {"aws": ["c"]},
+                    }
+                ],
+            }
+            with open(os.path.join(tmpdir, "customuniversal_1.0.json"), "w") as f:
+                json.dump(framework, f)
+
+            module = MagicMock()
+            module.__path__ = [tmpdir]
+            ep = _make_entry_point(
+                "anyname", "pkg.compliance", "prowler.compliance.universal"
+            )
+            ep.load.return_value = module
+            mock_ep.side_effect = lambda group: (
+                [ep] if group == "prowler.compliance.universal" else []
+            )
+
+            assert "customuniversal_1.0" in get_available_compliance_frameworks("aws")
+            assert "customuniversal_1.0" in get_available_compliance_frameworks(None)
+
     @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
     @patch("prowler.lib.check.compliance_models.list_compliance_modules")
     def test_compliance_get_bulk_loads_external(self, mock_list_modules, mock_ep):
@@ -1260,6 +1302,49 @@ class TestCompliance:
 
             assert "custom_1.0_fakeexternal" in bulk
             assert bulk["custom_1.0_fakeexternal"].Framework == "Custom"
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_compliance_get_bulk_skips_non_legacy_external_json(
+        self, mock_list_modules, mock_ep
+    ):
+        """A universal-schema JSON registered under prowler.compliance is skipped,
+        not aborting the run via sys.exit."""
+        import json
+        import os
+        import tempfile
+
+        from prowler.lib.check.compliance_models import Compliance
+
+        mock_list_modules.return_value = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_data = {
+                "framework": "Universal",
+                "name": "Universal Framework",
+                "version": "1.0",
+                "description": "Multi-provider",
+                "requirements": [
+                    {
+                        "id": "1",
+                        "name": "r",
+                        "description": "d",
+                        "checks": {"aws": ["c"]},
+                    }
+                ],
+            }
+            with open(os.path.join(tmpdir, "universal_1.0.json"), "w") as f:
+                json.dump(json_data, f)
+
+            mock_module = MagicMock()
+            mock_module.__path__ = [tmpdir]
+            ep = _make_entry_point("aws", "pkg.compliance", "prowler.compliance")
+            ep.load.return_value = mock_module
+            mock_ep.return_value = [ep]
+
+            bulk = Compliance.get_bulk("aws")
+
+        assert "universal_1.0" not in bulk
 
     @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
     @patch("prowler.lib.check.compliance_models.list_compliance_modules")
@@ -1803,10 +1888,63 @@ class TestBaseContractDefaults:
             FakeProviderNoHelpText.from_cli_args(MagicMock(), {})
 
     def test_get_output_options_raises_not_implemented(self):
-        """Base Provider.get_output_options raises NotImplementedError."""
+        """Base Provider.get_output_options raises NotImplementedError; the
+        generic default is applied at the call site via default_output_options."""
         provider = FakeProviderNoHelpText()
         with pytest.raises(NotImplementedError):
             provider.get_output_options(MagicMock(), {})
+
+    def test_default_output_options_builds_generic_default(self):
+        """default_output_options returns a generic ProviderOutputOptions so an
+        external provider without get_output_options still produces output
+        instead of aborting the run."""
+        from prowler.config.config import output_file_timestamp
+        from prowler.providers.common.models import (
+            ProviderOutputOptions,
+            default_output_options,
+        )
+
+        provider = FakeProviderNoHelpText()
+        arguments = Namespace(
+            status=None,
+            output_formats=None,
+            output_directory=None,
+            output_filename=None,
+            verbose=None,
+            only_logs=None,
+            unix_timestamp=None,
+            shodan=None,
+            fixer=None,
+        )
+
+        output_options = default_output_options(provider, arguments, {})
+
+        assert isinstance(output_options, ProviderOutputOptions)
+        assert (
+            output_options.output_filename
+            == f"prowler-output-{provider.type}-{output_file_timestamp}"
+        )
+
+    def test_default_output_options_honors_explicit_filename(self):
+        """A user-supplied output_filename is preserved by default_output_options."""
+        from prowler.providers.common.models import default_output_options
+
+        provider = FakeProviderNoHelpText()
+        arguments = Namespace(
+            status=None,
+            output_formats=None,
+            output_directory=None,
+            output_filename="custom-name",
+            verbose=None,
+            only_logs=None,
+            unix_timestamp=None,
+            shodan=None,
+            fixer=None,
+        )
+
+        output_options = default_output_options(provider, arguments, {})
+
+        assert output_options.output_filename == "custom-name"
 
     def test_get_stdout_detail_raises_not_implemented(self):
         """Base Provider.get_stdout_detail raises NotImplementedError."""
@@ -1819,11 +1957,41 @@ class TestBaseContractDefaults:
         provider = FakeProviderNoHelpText()
         assert provider.get_finding_sort_key() is None
 
-    def test_get_summary_entity_raises_not_implemented(self):
-        """Base Provider.get_summary_entity raises NotImplementedError."""
+    def test_get_summary_entity_returns_type_and_account_default(self):
+        """Base Provider.get_summary_entity returns (type, account_id) so the
+        summary table is not silently dropped for providers that don't override
+        it."""
+        from types import SimpleNamespace
+        from unittest.mock import PropertyMock
+
         provider = FakeProviderNoHelpText()
-        with pytest.raises(NotImplementedError):
-            provider.get_summary_entity()
+        with patch.object(
+            type(provider),
+            "identity",
+            new_callable=PropertyMock,
+            return_value=SimpleNamespace(account_id="acc-123"),
+        ):
+            entity_type, audited_entities = provider.get_summary_entity()
+
+        assert entity_type == provider.type
+        assert audited_entities == "acc-123"
+
+    def test_get_summary_entity_defaults_account_to_empty_string(self):
+        """When the identity has no account_id, audited_entities falls back to ''."""
+        from types import SimpleNamespace
+        from unittest.mock import PropertyMock
+
+        provider = FakeProviderNoHelpText()
+        with patch.object(
+            type(provider),
+            "identity",
+            new_callable=PropertyMock,
+            return_value=SimpleNamespace(),
+        ):
+            entity_type, audited_entities = provider.get_summary_entity()
+
+        assert entity_type == provider.type
+        assert audited_entities == ""
 
     def test_get_finding_output_data_raises_not_implemented(self):
         """Base Provider.get_finding_output_data raises NotImplementedError."""

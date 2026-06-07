@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.gcp.services.logging.logging_service import Logging
 from tests.providers.gcp.gcp_fixtures import (
@@ -66,3 +66,74 @@ class TestLoggingService:
                 == "resource.type=gae_app AND severity>=ERROR"
             )
             assert logging_client.metrics[1].project_id == GCP_PROJECT_ID
+
+    def test_org_sinks_fetched_when_project_has_organization(self):
+        """_get_org_sinks() appends org-level sinks when projects have an org."""
+        from prowler.providers.gcp.models import GCPOrganization, GCPProject
+
+        org_id = "999888777"
+        provider = set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+        provider.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+                organization=GCPOrganization(id=org_id, name=f"organizations/{org_id}"),
+            )
+        }
+
+        mock_client = MagicMock()
+        mock_client.sinks().list().execute.return_value = {
+            "sinks": [
+                {
+                    "name": "org-sink",
+                    "destination": "storage.googleapis.com/org-bucket",
+                    "filter": "all",
+                    "includeChildren": True,
+                }
+            ]
+        }
+        mock_client.sinks().list_next.return_value = None
+        mock_client.projects().metrics().list().execute.return_value = {"metrics": []}
+        mock_client.projects().metrics().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                return_value=mock_client,
+            ),
+        ):
+            logging_svc = Logging(provider)
+
+        org_sinks = [
+            s for s in logging_svc.sinks if s.project_id == f"organizations/{org_id}"
+        ]
+        assert len(org_sinks) == 1
+        assert org_sinks[0].name == "org-sink"
+        assert org_sinks[0].include_children is True
+        assert org_sinks[0].filter == "all"
+
+    def test_org_sinks_skipped_when_no_organization(self):
+        """_get_org_sinks() adds nothing when projects have no organization."""
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+        ):
+            logging_svc = Logging(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
+
+        org_sinks = [
+            s for s in logging_svc.sinks if s.project_id.startswith("organizations/")
+        ]
+        assert org_sinks == []

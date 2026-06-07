@@ -438,7 +438,18 @@ def prowler():
         )
     else:
         # Dynamic fallback: any external/custom provider
-        output_options = global_provider.get_output_options(args, bulk_checks_metadata)
+        try:
+            output_options = global_provider.get_output_options(
+                args, bulk_checks_metadata
+            )
+        except NotImplementedError:
+            # No provider-specific OutputOptions: use the generic default so the
+            # run still produces output instead of aborting.
+            from prowler.providers.common.models import default_output_options
+
+            output_options = default_output_options(
+                global_provider, args, bulk_checks_metadata
+            )
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
