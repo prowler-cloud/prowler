@@ -754,43 +754,10 @@ def generate_compliance_reports(
         provider_uid = provider_obj.uid
         provider_type = provider_obj.provider
 
-    # Check provider compatibility
-    if generate_threatscore and provider_type not in [
-        "aws",
-        "azure",
-        "gcp",
-        "m365",
-        "kubernetes",
-        "alibabacloud",
-    ]:
-        logger.info("Provider %s not supported for ThreatScore report", provider_type)
-        results["threatscore"] = {"upload": False, "path": ""}
-        generate_threatscore = False
-
-    if generate_ens and provider_type not in ["aws", "azure", "gcp"]:
-        logger.info("Provider %s not supported for ENS report", provider_type)
-        results["ens"] = {"upload": False, "path": ""}
-        generate_ens = False
-
-    if generate_nis2 and provider_type not in ["aws", "azure", "gcp"]:
-        logger.info("Provider %s not supported for NIS2 report", provider_type)
-        results["nis2"] = {"upload": False, "path": ""}
-        generate_nis2 = False
-
-    if generate_csa and provider_type not in [
-        "aws",
-        "azure",
-        "gcp",
-        "oraclecloud",
-        "alibabacloud",
-    ]:
-        logger.info("Provider %s not supported for CSA CCM report", provider_type)
-        results["csa"] = {"upload": False, "path": ""}
-        generate_csa = False
-
-    # Load the framework definitions for this provider once. We use this map
-    # both to pick the latest CIS variant and to precompute the set of
-    # check_ids each framework consumes (for findings_cache eviction).
+    # Load the framework definitions for this provider once. We use this map to
+    # gate per-report availability, to pick the latest CIS variant, and to
+    # precompute the set of check_ids each framework consumes (for findings_cache
+    # eviction).
     frameworks_bulk: dict = {}
     try:
         frameworks_bulk = Compliance.get_bulk(provider_type)
@@ -798,6 +765,32 @@ def generate_compliance_reports(
         logger.error("Error loading compliance frameworks for %s: %s", provider_type, e)
         # Fall through; individual frameworks will still try and fail
         # gracefully if their compliance_id is missing.
+
+    # Report availability is derived from the dynamically loaded framework map,
+    # not a hard-coded provider whitelist (which drifts the moment a new
+    # framework JSON ships, and would silently exclude an external provider that
+    # ships the framework). Same approach already used for CIS below.
+    if generate_threatscore and not frameworks_bulk.get(
+        f"prowler_threatscore_{provider_type}"
+    ):
+        logger.info("Provider %s not supported for ThreatScore report", provider_type)
+        results["threatscore"] = {"upload": False, "path": ""}
+        generate_threatscore = False
+
+    if generate_ens and not frameworks_bulk.get(f"ens_rd2022_{provider_type}"):
+        logger.info("Provider %s not supported for ENS report", provider_type)
+        results["ens"] = {"upload": False, "path": ""}
+        generate_ens = False
+
+    if generate_nis2 and not frameworks_bulk.get(f"nis2_{provider_type}"):
+        logger.info("Provider %s not supported for NIS2 report", provider_type)
+        results["nis2"] = {"upload": False, "path": ""}
+        generate_nis2 = False
+
+    if generate_csa and not frameworks_bulk.get(f"csa_ccm_4.0_{provider_type}"):
+        logger.info("Provider %s not supported for CSA CCM report", provider_type)
+        results["csa"] = {"upload": False, "path": ""}
+        generate_csa = False
 
     # For CIS we do NOT pre-check the provider against a hard-coded whitelist
     # (that list drifts the moment a new CIS JSON ships). Instead, we inspect

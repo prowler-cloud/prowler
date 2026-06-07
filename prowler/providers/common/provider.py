@@ -142,6 +142,10 @@ class Provider(ABC):
 
     _cli_help_text: str = ""
 
+    # CLI/SDK-only provider, hidden from the app (API/UI). Defaults True; a
+    # provider opts into the app with ``sdk_only = False``. See get_app_providers().
+    sdk_only: bool = True
+
     @classmethod
     def from_cli_args(cls, arguments: Namespace, fixer_config: dict) -> "Provider":
         """Instantiate the provider from CLI arguments and return the instance.
@@ -208,6 +212,55 @@ class Provider(ABC):
         raise NotImplementedError(
             f"{self.__class__.__name__} has not implemented get_mutelist_finding_args()"
         )
+
+    @classmethod
+    def get_scan_arguments(
+        cls,
+        provider_uid: str,
+        secret: dict,
+        mutelist_content: Optional[dict] = None,
+    ) -> dict:
+        """Build the provider constructor kwargs from a stored uid and secret.
+
+        This is the programmatic construction interface used by callers that
+        persist a provider as a single ``uid`` plus a ``secret`` dict (e.g. the
+        API), as opposed to the CLI which passes explicit per-provider flags.
+        The base implementation passes the secret through and adds the mutelist;
+        providers whose constructor needs the uid (e.g. as a subscription id) or
+        that rename/filter secret keys override this.
+        """
+        kwargs = {**secret}
+        if mutelist_content:
+            kwargs["mutelist_content"] = mutelist_content
+        return kwargs
+
+    @classmethod
+    def get_connection_arguments(cls, provider_uid: str, secret: dict) -> dict:
+        """Build the ``test_connection`` kwargs from a stored uid and secret.
+
+        Companion to :meth:`get_scan_arguments` for the connection check, which
+        often needs a different shape than the constructor. The base passes the
+        secret through; providers add their identity kwarg (and ``provider_id``
+        where their ``test_connection`` expects it).
+        """
+        return {**secret}
+
+    @classmethod
+    def get_credentials_schema(cls) -> dict:
+        """Return the provider's credential schemas keyed by secret type.
+
+        Maps each secret type the provider accepts (``"static"``, ``"role"`` or
+        ``"service_account"``) to the pydantic model that validates a secret of
+        that type. The provider declares which type each schema belongs to, so
+        the API validates a secret against the model for the secret type it is
+        created with and the chosen type stays bound to the shape it claims.
+
+        Each model documents each field via ``Field(description=...)`` and
+        whether it is required (no default) or optional. An empty dict means no
+        schema is declared: the secret is accepted as an object and validated by
+        :meth:`test_connection`.
+        """
+        return {}
 
     def display_compliance_table(
         self,
@@ -626,6 +679,28 @@ class Provider(ABC):
         for ep in importlib.metadata.entry_points(group="prowler.providers"):
             providers.add(ep.name)
         return sorted(providers)
+
+    @staticmethod
+    def get_app_providers() -> list[str]:
+        """Return the providers the app (API/UI) may expose: those with
+        ``sdk_only = False``.
+
+        Counterpart of :meth:`get_available_providers`, which lists every
+        provider for the CLI. A provider whose class cannot be imported is
+        treated as ``sdk_only`` (excluded) so a broken plug-in never leaks in.
+        """
+        app_providers = []
+        for name in Provider.get_available_providers():
+            try:
+                provider_class = Provider.get_class(name)
+            except Exception as error:
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                continue
+            if not getattr(provider_class, "sdk_only", True):
+                app_providers.append(name)
+        return app_providers
 
     @staticmethod
     def is_tool_wrapper_provider(provider: str) -> bool:

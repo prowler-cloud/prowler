@@ -53,6 +53,7 @@ class AlibabacloudProvider(Provider):
     """
 
     _type: str = "alibabacloud"
+    sdk_only: bool = False
     _identity: AlibabaCloudIdentityInfo
     _session: AlibabaCloudSession
     _audit_resources: list = []

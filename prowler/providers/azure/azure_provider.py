@@ -97,6 +97,7 @@ class AzureProvider(Provider):
     """
 
     _type: str = "azure"
+    sdk_only: bool = False
     _session: DefaultAzureCredential
     _identity: AzureIdentityInfo
     _audit_config: dict

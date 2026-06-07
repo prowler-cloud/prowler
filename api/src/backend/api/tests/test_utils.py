@@ -164,6 +164,7 @@ class TestInitializeProwlerProvider:
     @patch("api.utils.return_prowler_provider")
     def test_initialize_prowler_provider(self, mock_return_prowler_provider):
         provider = MagicMock()
+        provider.provider = "aws"
         provider.secret.secret = {"key": "value"}
         mock_return_prowler_provider.return_value = MagicMock()
 
@@ -175,6 +176,7 @@ class TestInitializeProwlerProvider:
         self, mock_return_prowler_provider
     ):
         provider = MagicMock()
+        provider.provider = "aws"
         provider.secret.secret = {"key": "value"}
         mutelist_processor = MagicMock()
         mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
@@ -190,6 +192,7 @@ class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test(self, mock_return_prowler_provider):
         provider = MagicMock()
+        provider.provider = "aws"
         provider.uid = "1234567890"
         provider.secret.secret = {"key": "value"}
         mock_return_prowler_provider.return_value = MagicMock()
@@ -197,6 +200,29 @@ class TestProwlerProviderConnectionTest:
         prowler_provider_connection_test(provider)
         mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
             key="value", provider_id="1234567890", raise_on_exception=False
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_external_uses_contract(
+        self, mock_return_prowler_provider
+    ):
+        """External providers build connection kwargs through the SDK contract
+        (get_connection_arguments), with no provider_id forced by the API."""
+        provider = MagicMock()
+        provider.provider = "external-template"
+        provider.uid = "acme-1"
+        provider.secret.secret = {"api_key": "k"}
+        mock_return_prowler_provider.return_value.get_connection_arguments.return_value = {
+            "api_key": "k"
+        }
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.get_connection_arguments.assert_called_once_with(
+            "acme-1", {"api_key": "k"}
+        )
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            api_key="k", raise_on_exception=False
         )
 
     @pytest.mark.django_db
@@ -573,7 +599,8 @@ class TestGetProwlerProviderKwargs:
         assert result == expected_result
 
     def test_get_prowler_provider_kwargs_unsupported_provider(self):
-        # Setup
+        # A non-built-in provider is resolved dynamically; one that is neither a
+        # built-in nor an installed entry-point provider cannot be resolved.
         provider_uid = "provider_uid"
         secret_dict = {"key": "value"}
         secret_mock = MagicMock()
@@ -584,10 +611,30 @@ class TestGetProwlerProviderKwargs:
         provider.secret = secret_mock
         provider.uid = provider_uid
 
+        with pytest.raises(ValueError):
+            get_prowler_provider_kwargs(provider)
+
+    @patch("api.utils.return_prowler_provider")
+    def test_get_prowler_provider_kwargs_external_uses_contract(
+        self, mock_return_prowler_provider
+    ):
+        """External providers build constructor kwargs through the SDK contract
+        (get_scan_arguments), not a hardcoded branch in the API."""
+        provider = MagicMock()
+        provider.provider = "external-template"
+        provider.uid = "acme-1"
+        provider.secret.secret = {"api_key": "k"}
+        mock_return_prowler_provider.return_value.get_scan_arguments.return_value = {
+            "api_key": "k",
+            "custom": "acme-1",
+        }
+
         result = get_prowler_provider_kwargs(provider)
 
-        expected_result = secret_dict.copy()
-        assert result == expected_result
+        mock_return_prowler_provider.return_value.get_scan_arguments.assert_called_once_with(
+            "acme-1", {"api_key": "k"}, None
+        )
+        assert result == {"api_key": "k", "custom": "acme-1"}
 
     def test_get_prowler_provider_kwargs_no_secret(self):
         # Setup

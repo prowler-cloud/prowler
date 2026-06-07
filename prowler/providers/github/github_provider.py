@@ -91,6 +91,7 @@ class GithubProvider(Provider):
     """
 
     _type: str = "github"
+    sdk_only: bool = False
     _auth_method: str = None
     MAX_REPO_LIST_LINES: int = 10_000
     MAX_REPO_NAME_LENGTH: int = 500

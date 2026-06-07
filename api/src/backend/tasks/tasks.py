@@ -594,7 +594,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     # Check if we need to generate ASFF output for AWS providers with SecurityHub integration
     generate_asff = False
-    if provider_type == "aws":
+    if provider_type == Provider.ProviderChoices.AWS:
         security_hub_integrations = Integration.objects.filter(
             integrationproviderrelationship__provider_id=provider_id,
             integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,

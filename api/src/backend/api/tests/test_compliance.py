@@ -4,6 +4,8 @@ import pytest
 
 from api import compliance as compliance_module
 from api.compliance import (
+    LazyChecksMapping,
+    LazyComplianceTemplate,
     generate_compliance_overview_template,
     generate_scan_compliance,
     get_compliance_frameworks,
@@ -42,12 +44,10 @@ class TestCompliance:
         mock_get_bulk.assert_called_once_with(provider_type)
 
     @patch("api.compliance.get_prowler_provider_checks")
-    @patch("api.models.Provider.ProviderChoices")
+    @patch("api.compliance.SDKProvider.get_available_providers", return_value=["aws"])
     def test_load_prowler_checks(
-        self, mock_provider_choices, mock_get_prowler_provider_checks
+        self, _mock_get_available_providers, mock_get_prowler_provider_checks
     ):
-        mock_provider_choices.values = ["aws"]
-
         mock_get_prowler_provider_checks.return_value = ["check1", "check2", "check3"]
 
         prowler_compliance = {
@@ -165,13 +165,8 @@ class TestCompliance:
             is None
         )
 
-    @patch("api.models.Provider.ProviderChoices")
-    def test_generate_compliance_overview_template(self, mock_provider_choices):
-        mock_provider_choices.values = ["aws"]
-
-        # ``name`` is a reserved MagicMock kwarg (it labels the mock for repr,
-        # it does NOT set a ``.name`` attribute), so it must be assigned
-        # explicitly after construction.
+    @patch("api.compliance.SDKProvider.get_available_providers", return_value=["aws"])
+    def test_generate_compliance_overview_template(self, _mock_get_available_providers):
         requirement1 = MagicMock(
             id="requirement1",
             description="Description of requirement 1",
@@ -321,3 +316,48 @@ class TestGetComplianceFrameworks:
             f"loadable by get_bulk_compliance_frameworks_universal: "
             f"{sorted(missing)}"
         )
+
+
+class TestDynamicProviderDiscovery:
+    """Compliance discovery is sourced from the SDK's available providers, so an
+    externally-registered provider absent from the legacy static enum is
+    discovered without any change to the API."""
+
+    EXTERNAL = "acme-external"
+
+    @patch(
+        "api.compliance.SDKProvider.get_available_providers",
+        return_value=["aws", EXTERNAL],
+    )
+    def test_lazy_template_includes_external_provider(self, _mock_available):
+        template = LazyComplianceTemplate()
+        assert self.EXTERNAL in template
+        assert set(template) == {"aws", self.EXTERNAL}
+
+    @patch(
+        "api.compliance.SDKProvider.get_available_providers",
+        return_value=["aws", EXTERNAL],
+    )
+    def test_lazy_checks_mapping_includes_external_provider(self, _mock_available):
+        checks_mapping = LazyChecksMapping()
+        assert self.EXTERNAL in checks_mapping
+        assert set(checks_mapping) == {"aws", self.EXTERNAL}
+
+    @patch(
+        "api.compliance.SDKProvider.get_available_providers",
+        return_value=[EXTERNAL],
+    )
+    def test_overview_template_iterates_dynamic_providers(self, _mock_available):
+        template = generate_compliance_overview_template({self.EXTERNAL: {}})
+        assert self.EXTERNAL in template
+
+    @patch("api.compliance.get_prowler_provider_checks", return_value=["check1"])
+    @patch(
+        "api.compliance.SDKProvider.get_available_providers",
+        return_value=[EXTERNAL],
+    )
+    def test_load_checks_iterates_dynamic_providers(
+        self, _mock_available, _mock_checks
+    ):
+        checks = load_prowler_checks({self.EXTERNAL: {}})
+        assert self.EXTERNAL in checks

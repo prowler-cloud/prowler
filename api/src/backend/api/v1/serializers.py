@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+from pydantic import ValidationError as PydanticValidationError
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
@@ -74,6 +75,7 @@ from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.provider_types import get_provider_type_choices
 from api.v1.serializer_utils.providers import ProviderSecretField
 from prowler.lib.mutelist.mutelist import Mutelist
+from prowler.providers.common.provider import Provider as SDKProvider
 
 # Base
 
@@ -1542,9 +1544,58 @@ class FindingMetadataSerializer(BaseSerializerV1):
 # Provider secrets
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
+    def _validate_external_provider_secret(
+        provider_type: str, secret_type: str, secret: dict
+    ):
+        """Validate a non-built-in provider's secret against the schema it
+        declares for the given secret type through the SDK contract.
+
+        The provider maps each secret type to one model, so the chosen
+        secret_type stays bound to the shape it claims. Providers that declare
+        no schema have their secret accepted as an object and validated by the
+        provider's ``test_connection``.
+        """
+        if not isinstance(secret, dict):
+            raise serializers.ValidationError({"secret": ["Must be a JSON object."]})
+        schemas = SDKProvider.get_class(provider_type).get_credentials_schema()
+        if not schemas:
+            return
+        schema = schemas.get(secret_type)
+        if schema is None:
+            raise serializers.ValidationError(
+                {
+                    "secret_type": [
+                        f"'{secret_type}' is not supported by provider "
+                        f"'{provider_type}'. Supported types: "
+                        f"{', '.join(sorted(schemas))}."
+                    ]
+                }
+            )
+        try:
+            schema.model_validate(secret)
+        except PydanticValidationError as error:
+            raise serializers.ValidationError(
+                {
+                    "secret": [
+                        f"{'/'.join(str(loc) for loc in item['loc']) or 'secret'}: "
+                        f"{item['msg']}"
+                        for item in error.errors()
+                    ]
+                }
+            )
+
+    @staticmethod
     def validate_secret_based_on_provider(
         provider_type: str, secret_type: ProviderSecret.TypeChoices, secret: dict
     ):
+        # External providers validate against the schemas they declare via the
+        # SDK contract; built-in providers keep their explicit serializers below.
+        if not SDKProvider.is_builtin(provider_type):
+            BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                provider_type, secret_type, secret
+            )
+            return
+
         if secret_type == ProviderSecret.TypeChoices.STATIC:
             if provider_type == Provider.ProviderChoices.AWS.value:
                 serializer = AwsProviderSecret(data=secret)

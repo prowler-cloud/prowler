@@ -648,6 +648,92 @@ class TestGenerateOutputs:
         assert writer.transform_calls == [([raw2], compliance_obj, "cis")]
         assert result == {"upload": True}
 
+    def test_external_provider_falls_back_to_generic_compliance(self):
+        """A provider absent from COMPLIANCE_CLASS_MAP (e.g. an externally
+        registered one) gets GenericCompliance for every framework — the
+        provider-specific writers are never used and nothing errors."""
+        raw = MagicMock()
+        compliance_obj = MagicMock()
+        generic_instances = []
+        specific_instances = []
+
+        class TrackingGeneric:
+            def __init__(self, *args, **kwargs):
+                self._data = []
+                self.close_file = False
+                generic_instances.append(self)
+
+            def transform(self, *args, **kwargs):
+                pass
+
+            def batch_write_data_to_file(self):
+                pass
+
+        class AwsSpecificWriter:
+            def __init__(self, *args, **kwargs):
+                specific_instances.append(self)
+
+            def transform(self, *args, **kwargs):
+                pass
+
+            def batch_write_data_to_file(self):
+                pass
+
+        one_batch = [([raw], True)]
+
+        with (
+            patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
+            patch(
+                "tasks.tasks.Provider.objects.get",
+                return_value=MagicMock(uid="acme-001", provider="local-template"),
+            ),
+            patch("tasks.tasks.initialize_prowler_provider"),
+            patch(
+                "tasks.tasks.Compliance.get_bulk",
+                return_value={"prowlerbaseline_1.0_local-template": compliance_obj},
+            ),
+            patch(
+                "tasks.tasks.get_compliance_frameworks",
+                return_value=["prowlerbaseline_1.0_local-template"],
+            ),
+            patch(
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/outdir", "/tmp/test/compdir"),
+            ),
+            patch("tasks.tasks.FindingOutput._transform_findings_stats"),
+            patch(
+                "tasks.tasks.FindingOutput.transform_api_finding",
+                side_effect=lambda f, _prov: f,
+            ),
+            patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
+            patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
+            patch(
+                "tasks.tasks.Scan.all_objects.filter",
+                return_value=MagicMock(update=lambda **_kw: None),
+            ),
+            patch("tasks.tasks.batched", return_value=one_batch),
+            patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
+            patch("tasks.tasks.rmtree"),
+            patch("tasks.tasks.GenericCompliance", TrackingGeneric),
+            patch(
+                "tasks.tasks.COMPLIANCE_CLASS_MAP",
+                {"aws": [(lambda name: True, AwsSpecificWriter)]},
+            ),
+        ):
+            mock_summary.return_value.exists.return_value = True
+
+            result = generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+        assert result == {"upload": True}
+        # The external provider's framework used the generic writer…
+        assert len(generic_instances) == 1
+        # …and the AWS-specific writer was never instantiated.
+        assert specific_instances == []
+
     # TODO: We need to add a periodic task to delete old output files
     def test_generate_outputs_logs_rmtree_exception(self, caplog):
         mock_finding_output = MagicMock()
@@ -1478,9 +1564,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert (
-                "asff" not in created_writers
-            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "asff" not in created_writers, (
+                "ASFF writer should NOT be created for non-AWS providers"
+            )
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 

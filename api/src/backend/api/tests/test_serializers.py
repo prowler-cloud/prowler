@@ -1,22 +1,99 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
+from pydantic import BaseModel
 from rest_framework.exceptions import ValidationError
 
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
-from api.v1.serializers import ImageProviderSecret, ProviderEnumSerializerField
+from api.v1.serializers import (
+    BaseWriteProviderSecretSerializer,
+    ImageProviderSecret,
+    ProviderEnumSerializerField,
+)
+
+
+class TestExternalProviderSecretValidation:
+    """A non-built-in provider's secret is validated against the schema it
+    declares for the chosen secret type through the SDK contract, or accepted as
+    an object when it declares none (then validated by test_connection)."""
+
+    class _StaticCredentials(BaseModel):
+        api_url: str
+        api_key: str
+
+    class _RoleCredentials(BaseModel):
+        role_arn: str
+
+    def _patch(self, schemas):
+        provider_class = MagicMock()
+        provider_class.get_credentials_schema.return_value = schemas
+        return patch(
+            "api.v1.serializers.SDKProvider.get_class", return_value=provider_class
+        )
+
+    def test_secret_validated_against_its_type_schema(self):
+        with self._patch({"static": self._StaticCredentials}):
+            BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                "external-template", "static", {"api_url": "u", "api_key": "k"}
+            )
+
+    def test_secret_rejected_when_schema_violated(self):
+        with self._patch({"static": self._StaticCredentials}):
+            with pytest.raises(ValidationError):
+                BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                    "external-template", "static", {"api_url": "u"}
+                )
+
+    def test_secret_must_match_its_type_not_another(self):
+        """A secret is validated against the schema for its declared secret_type,
+        not "any declared schema": a role-shaped secret under secret_type=static
+        is rejected. See PR #11402 review (josema-xyz / Alan-TheGentleman)."""
+        schemas = {"static": self._StaticCredentials, "role": self._RoleCredentials}
+        with self._patch(schemas):
+            with pytest.raises(ValidationError):
+                BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                    "external-template", "static", {"role_arn": "arn:aws:iam::x"}
+                )
+
+    def test_rejects_secret_type_not_declared_by_provider(self):
+        with self._patch({"static": self._StaticCredentials}):
+            with pytest.raises(ValidationError):
+                BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                    "external-template", "role", {"role_arn": "arn"}
+                )
+
+    def test_secret_accepted_when_no_schema_declared(self):
+        with self._patch({}):
+            BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                "external-template", "static", {"anything": "goes"}
+            )
+
+    @pytest.mark.parametrize("bad_secret", [["a", "b"], "a-string", None, 42])
+    def test_secret_rejected_when_not_a_json_object(self, bad_secret):
+        """Even with no declared schema, a non-object secret must be rejected so
+        a list/string/null cannot be persisted and blow up later at
+        ``{**secret}``. See PR #11402 review (Alan-TheGentleman)."""
+        with self._patch({}):
+            with pytest.raises(ValidationError):
+                BaseWriteProviderSecretSerializer._validate_external_provider_secret(
+                    "external-template", "static", bad_secret
+                )
 
 
 class TestProviderEnumSerializerField:
-    """The provider field accepts whatever the SDK exposes (built-in or
-    external) and rejects anything else with `invalid_choice`."""
+    """The provider field accepts app-facing providers (``sdk_only = False``)
+    and rejects sdk_only and unknown providers with `invalid_choice`."""
 
-    def test_accepts_sdk_available_provider(self):
+    def test_accepts_app_provider(self):
         field = ProviderEnumSerializerField()
         assert field.run_validation("aws") == "aws"
 
-    def test_accepts_external_provider_absent_from_static_enum(self):
+    def test_rejects_sdk_only_provider(self):
         field = ProviderEnumSerializerField()
-        # `llm` is exposed by the SDK but is not part of the legacy static enum.
-        assert field.run_validation("llm") == "llm"
+        # `llm` is exposed by the SDK but is sdk_only, so the API rejects it.
+        with pytest.raises(ValidationError) as exc:
+            field.run_validation("llm")
+        assert exc.value.detail[0].code == "invalid_choice"
 
     def test_rejects_unknown_provider(self):
         field = ProviderEnumSerializerField()

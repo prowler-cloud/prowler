@@ -15,6 +15,9 @@ All notable changes to the **Prowler API** are documented in this file.
 - Allowlisted idempotent background tasks are no longer lost when a worker is stopped or crashes mid-task; tasks with external side effects are marked terminal instead of blindly re-running [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - A recovered scan rewrites its findings, summaries, attack surface, and compliance data instead of appending to the previous run, so recovery never leaves stale or duplicate materialized rows [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - Provider type is validated against the SDK's available providers instead of a static enum, so the API accepts any installed provider (built-in or external); `Provider.provider` is stored as `varchar` and the native PostgreSQL enum is removed [(#11399)](https://github.com/prowler-cloud/prowler/pull/11399)
+- Compliance framework discovery is sourced from the SDK's available providers instead of a static enum, so an externally-registered provider's compliance frameworks are discoverable without API changes [(#11410)](https://github.com/prowler-cloud/prowler/pull/11410)
+- Compliance report availability (ThreatScore, ENS, NIS2, CSA) is derived from the provider's available compliance frameworks instead of hard-coded provider whitelists, so a provider that ships one of these frameworks gets the report without API changes [(#11412)](https://github.com/prowler-cloud/prowler/pull/11412)
+- Provider types exposed by the API (filter choices, serializer field, creation validation) are now limited to SDK providers that declare `sdk_only = False`, hiding CLI/SDK-only providers such as `llm`, `nhn`, `scaleway`, and `stackit` [(#11427)](https://github.com/prowler-cloud/prowler/pull/11427)
 
 ### 🐞 Fixed
 
