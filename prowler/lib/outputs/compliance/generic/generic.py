@@ -34,60 +34,48 @@ class GenericCompliance(ComplianceOutput):
         Returns:
             - None
         """
+
+        def compliance_row(requirement, attribute, finding=None):
+            # Read attribute fields defensively: GenericCompliance is the
+            # last-resort renderer for any framework, and provider-specific
+            # schemas (e.g. CIS, ENS, ISO27001) do not declare the universal
+            # Section/SubSection/SubGroup/Service/Type/Comment fields.
+            return GenericComplianceModel(
+                Provider=(finding.provider if finding else compliance.Provider.lower()),
+                Description=compliance.Description,
+                AccountId=finding.account_uid if finding else "",
+                Region=finding.region if finding else "",
+                AssessmentDate=str(timestamp),
+                Requirements_Id=requirement.Id,
+                Requirements_Description=requirement.Description,
+                Requirements_Attributes_Section=getattr(attribute, "Section", None),
+                Requirements_Attributes_SubSection=getattr(
+                    attribute, "SubSection", None
+                ),
+                Requirements_Attributes_SubGroup=getattr(attribute, "SubGroup", None),
+                Requirements_Attributes_Service=getattr(attribute, "Service", None),
+                Requirements_Attributes_Type=getattr(attribute, "Type", None),
+                Requirements_Attributes_Comment=getattr(attribute, "Comment", None),
+                Status=finding.status if finding else "MANUAL",
+                StatusExtended=(finding.status_extended if finding else "Manual check"),
+                ResourceId=finding.resource_uid if finding else "manual_check",
+                ResourceName=finding.resource_name if finding else "Manual check",
+                CheckId=finding.check_id if finding else "manual",
+                Muted=finding.muted if finding else False,
+                Framework=compliance.Framework,
+                Name=compliance.Name,
+            )
+
         for finding in findings:
             for requirement in compliance.Requirements:
                 # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
                 if finding.check_id in requirement.Checks:
                     for attribute in requirement.Attributes:
-                        compliance_row = GenericComplianceModel(
-                            Provider=finding.provider,
-                            Description=compliance.Description,
-                            AccountId=finding.account_uid,
-                            Region=finding.region,
-                            AssessmentDate=str(timestamp),
-                            Requirements_Id=requirement.Id,
-                            Requirements_Description=requirement.Description,
-                            Requirements_Attributes_Section=attribute.Section,
-                            Requirements_Attributes_SubSection=attribute.SubSection,
-                            Requirements_Attributes_SubGroup=attribute.SubGroup,
-                            Requirements_Attributes_Service=attribute.Service,
-                            Requirements_Attributes_Type=attribute.Type,
-                            Requirements_Attributes_Comment=attribute.Comment,
-                            Status=finding.status,
-                            StatusExtended=finding.status_extended,
-                            ResourceId=finding.resource_uid,
-                            ResourceName=finding.resource_name,
-                            CheckId=finding.check_id,
-                            Muted=finding.muted,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
+                        self._data.append(
+                            compliance_row(requirement, attribute, finding)
                         )
-                        self._data.append(compliance_row)
         # Add manual requirements to the compliance output
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = GenericComplianceModel(
-                        Provider=compliance.Provider.lower(),
-                        Description=compliance.Description,
-                        AccountId="",
-                        Region="",
-                        AssessmentDate=str(timestamp),
-                        Requirements_Id=requirement.Id,
-                        Requirements_Description=requirement.Description,
-                        Requirements_Attributes_Section=attribute.Section,
-                        Requirements_Attributes_SubSection=attribute.SubSection,
-                        Requirements_Attributes_SubGroup=attribute.SubGroup,
-                        Requirements_Attributes_Service=attribute.Service,
-                        Requirements_Attributes_Type=attribute.Type,
-                        Requirements_Attributes_Comment=attribute.Comment,
-                        Status="MANUAL",
-                        StatusExtended="Manual check",
-                        ResourceId="manual_check",
-                        ResourceName="Manual check",
-                        CheckId="manual",
-                        Muted=False,
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
-                    )
-                    self._data.append(compliance_row)
+                    self._data.append(compliance_row(requirement, attribute))
