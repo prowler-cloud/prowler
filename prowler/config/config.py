@@ -151,8 +151,8 @@ def get_available_compliance_frameworks(provider=None):
                             continue
                     if name not in available_compliance_frameworks:
                         available_compliance_frameworks.append(name)
-    # External compliance via entry points; a provider may be served by
-    # several packages, so iterate every directory it contributes.
+    # External per-provider compliance via entry points; a provider may be
+    # served by several packages, so iterate every directory it contributes.
     ep_dirs = _get_ep_compliance_dirs()
     for prov, paths in ep_dirs.items():
         if provider and prov != provider:
@@ -165,6 +165,32 @@ def get_available_compliance_frameworks(provider=None):
                     name = file.name.removesuffix(".json")
                     if name not in available_compliance_frameworks:
                         available_compliance_frameworks.append(name)
+    # External multi-provider frameworks via the dedicated universal group;
+    # filtered by supports_provider when a provider is given.
+    for ep in importlib.metadata.entry_points(group="prowler.compliance.universal"):
+        try:
+            module = ep.load()
+            path = (
+                module.__path__[0]
+                if hasattr(module, "__path__")
+                else os.path.dirname(module.__file__)
+            )
+        except Exception as error:
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            continue
+        if not os.path.isdir(path):
+            continue
+        for file in os.scandir(path):
+            if file.is_file() and file.name.endswith(".json"):
+                name = file.name.removesuffix(".json")
+                if provider:
+                    framework = load_compliance_framework_universal(file.path)
+                    if framework is None or not framework.supports_provider(provider):
+                        continue
+                if name not in available_compliance_frameworks:
+                    available_compliance_frameworks.append(name)
     return available_compliance_frameworks
 
 

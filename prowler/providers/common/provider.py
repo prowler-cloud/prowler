@@ -175,9 +175,7 @@ class Provider(ABC):
 
     def get_summary_entity(self) -> tuple:
         """Return (entity_type, audited_entities) for the summary table."""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} has not implemented get_summary_entity()"
-        )
+        return (self.type, getattr(self.identity, "account_id", ""))
 
     def get_finding_output_data(self, _check_output) -> dict:
         """Return provider-specific fields for Finding.generate_output()."""
