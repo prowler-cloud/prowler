@@ -9,6 +9,7 @@ from prowler.lib.check.compliance_models import (
     Compliance,
     Compliance_Requirement,
     Generic_Compliance_Requirement_Attribute,
+    ISO27001_2013_Requirement_Attribute,
 )
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.compliance.generic.models import GenericComplianceModel
@@ -198,3 +199,47 @@ class TestAWSGenericCompliance:
         ), f"Expected 1 row driven by framework JSON, got {len(rows)}"
         assert rows[0].Requirements_Id == "req_in_framework"
         assert rows[0].CheckId == "service_check_in_framework"
+
+    def test_transform_tolerates_framework_specific_attribute_schema(self):
+        """GenericCompliance is the documented last-resort renderer, so it must not
+        crash on a framework whose attribute schema lacks the universal fields
+        (Section, SubSection, SubGroup, Service, Type, Comment). ISO27001 declares
+        none of them; missing fields must render as None instead of raising
+        AttributeError and dropping the whole CSV."""
+        framework_name = "ISO27001-2013-External"
+        compliance = Compliance(
+            Framework=framework_name,
+            Name=framework_name,
+            Provider="external",
+            Version="",
+            Description="Framework shipping a provider-specific attribute schema",
+            Requirements=[
+                Compliance_Requirement(
+                    Id="A.5.1.1",
+                    Description="Policies for information security",
+                    Attributes=[
+                        ISO27001_2013_Requirement_Attribute(
+                            Category="Information security policies",
+                            Objetive_ID="A.5.1",
+                            Objetive_Name="Management direction",
+                            Check_Summary="Policy is defined",
+                        )
+                    ],
+                    Checks=["service_test_check_id"],
+                )
+            ],
+        )
+
+        findings = [generate_finding_output(check_id="service_test_check_id")]
+
+        output = GenericCompliance(findings, compliance)
+
+        rows = [row for row in output.data if row.Status != "MANUAL"]
+        assert len(rows) == 1
+        assert rows[0].Requirements_Id == "A.5.1.1"
+        assert rows[0].Requirements_Attributes_Section is None
+        assert rows[0].Requirements_Attributes_SubSection is None
+        assert rows[0].Requirements_Attributes_SubGroup is None
+        assert rows[0].Requirements_Attributes_Service is None
+        assert rows[0].Requirements_Attributes_Type is None
+        assert rows[0].Requirements_Attributes_Comment is None
