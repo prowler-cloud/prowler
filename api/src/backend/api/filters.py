@@ -19,7 +19,6 @@ from api.constants import SEVERITY_ORDER
 from api.db_utils import (
     FindingDeltaEnumField,
     InvitationStateEnumField,
-    ProviderEnumField,
     SeverityEnumField,
     StatusEnumField,
 )
@@ -67,6 +66,7 @@ from api.uuid_utils import (
     uuid7_range,
     uuid7_start,
 )
+from api.provider_types import get_provider_type_choices
 from api.v1.serializers import TaskBase
 
 
@@ -109,11 +109,11 @@ class BaseProviderFilter(FilterSet):
     provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="provider__provider", choices=get_provider_type_choices()
     )
     provider_type__in = ChoiceInFilter(
         field_name="provider__provider",
-        choices=Provider.ProviderChoices.choices,
+        choices=get_provider_type_choices(),
         lookup_expr="in",
     )
 
@@ -133,11 +133,11 @@ class BaseScanProviderFilter(FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="scan__provider__provider", choices=get_provider_type_choices()
     )
     provider_type__in = ChoiceInFilter(
         field_name="scan__provider__provider",
-        choices=Provider.ProviderChoices.choices,
+        choices=get_provider_type_choices(),
         lookup_expr="in",
     )
 
@@ -155,10 +155,10 @@ class CommonFindingFilters(FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
+        choices=get_provider_type_choices(), field_name="scan__provider__provider"
     )
     provider_type__in = ChoiceInFilter(
-        choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
+        choices=get_provider_type_choices(), field_name="scan__provider__provider"
     )
     provider_uid = CharFilter(field_name="scan__provider__uid", lookup_expr="exact")
     provider_uid__in = CharInFilter(field_name="scan__provider__uid", lookup_expr="in")
@@ -356,18 +356,18 @@ class ProviderFilter(FilterSet):
         included. Providers with no connection attempt (status is null) are
         excluded from this filter."""
     )
-    provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
+    provider = ChoiceFilter(choices=get_provider_type_choices())
     provider__in = ChoiceInFilter(
         field_name="provider",
-        choices=Provider.ProviderChoices.choices,
+        choices=get_provider_type_choices(),
         lookup_expr="in",
     )
     provider_type = ChoiceFilter(
-        choices=Provider.ProviderChoices.choices, field_name="provider"
+        choices=get_provider_type_choices(), field_name="provider"
     )
     provider_type__in = ChoiceInFilter(
         field_name="provider",
-        choices=Provider.ProviderChoices.choices,
+        choices=get_provider_type_choices(),
         lookup_expr="in",
     )
 
@@ -381,19 +381,14 @@ class ProviderFilter(FilterSet):
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
         }
-        filter_overrides = {
-            ProviderEnumField: {
-                "filter_class": CharFilter,
-            },
-        }
 
 
 class ProviderRelationshipFilterSet(FilterSet):
     provider_type = ChoiceFilter(
-        choices=Provider.ProviderChoices.choices, field_name="provider__provider"
+        choices=get_provider_type_choices(), field_name="provider__provider"
     )
     provider_type__in = ChoiceInFilter(
-        choices=Provider.ProviderChoices.choices, field_name="provider__provider"
+        choices=get_provider_type_choices(), field_name="provider__provider"
     )
     provider_uid = CharFilter(field_name="provider__uid", lookup_expr="exact")
     provider_uid__in = CharInFilter(field_name="provider__uid", lookup_expr="in")
@@ -998,7 +993,7 @@ class FindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="provider__provider", choices=get_provider_type_choices()
     )
     provider_type__in = CharInFilter(field_name="provider__provider", lookup_expr="in")
 
@@ -1098,7 +1093,7 @@ class LatestFindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="provider__provider", choices=get_provider_type_choices()
     )
     provider_type__in = CharInFilter(field_name="provider__provider", lookup_expr="in")
 
@@ -1301,10 +1296,10 @@ class ScanSummaryFilter(FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="scan__provider__provider", choices=get_provider_type_choices()
     )
     provider_type__in = ChoiceInFilter(
-        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="scan__provider__provider", choices=get_provider_type_choices()
     )
     region = CharFilter(field_name="region")
 
@@ -1324,10 +1319,10 @@ class DailySeveritySummaryFilter(FilterSet):
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="provider__provider", choices=get_provider_type_choices()
     )
     provider_type__in = ChoiceInFilter(
-        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="provider__provider", choices=get_provider_type_choices()
     )
     date_from = DateFilter(method="filter_noop")
     date_to = DateFilter(method="filter_noop")
@@ -1578,11 +1573,11 @@ class ThreatScoreSnapshotFilter(FilterSet):
     provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="provider__provider", choices=get_provider_type_choices()
     )
     provider_type__in = ChoiceInFilter(
         field_name="provider__provider",
-        choices=Provider.ProviderChoices.choices,
+        choices=get_provider_type_choices(),
         lookup_expr="in",
     )
     compliance_id = CharFilter(field_name="compliance_id", lookup_expr="exact")
@@ -1621,11 +1616,11 @@ class ResourceGroupOverviewFilter(FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
-        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+        field_name="scan__provider__provider", choices=get_provider_type_choices()
     )
     provider_type__in = ChoiceInFilter(
         field_name="scan__provider__provider",
-        choices=Provider.ProviderChoices.choices,
+        choices=get_provider_type_choices(),
         lookup_expr="in",
     )
     resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")

@@ -71,6 +71,7 @@ from api.v1.serializer_utils.lighthouse import (
     OpenAICredentialsSerializer,
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
+from api.provider_types import get_provider_type_choices
 from api.v1.serializer_utils.providers import ProviderSecretField
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -854,7 +855,9 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
 # Providers
 class ProviderEnumSerializerField(serializers.ChoiceField):
     def __init__(self, **kwargs):
-        kwargs["choices"] = Provider.ProviderChoices.choices
+        # Accepted values track the SDK's installed providers (built-in or
+        # external), shared with the filters via one cached source.
+        kwargs["choices"] = get_provider_type_choices()
         super().__init__(**kwargs)
 
 
@@ -940,6 +943,12 @@ class ProviderIncludeSerializer(RLSSerializer):
 
 
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    # Declared explicitly so provider validation stays at the serializer layer:
+    # the model column is now a plain varchar with no choices, so without this
+    # an unknown provider would slip through to Provider.clean() instead of
+    # being rejected here with `invalid_choice`.
+    provider = ProviderEnumSerializerField()
+
     class Meta:
         model = Provider
         fields = [
