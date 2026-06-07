@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -57,7 +57,7 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
     );
   },
   MultiSelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+    <div data-testid="trigger">{children}</div>
   ),
   MultiSelectValue: ({ placeholder }: { placeholder: string }) => (
     <span>{placeholder}</span>
@@ -219,5 +219,46 @@ describe("AccountsSelector", () => {
     await user.click(screen.getByRole("button", { name: /production aws/i }));
 
     expect(multiSelectSpy).toHaveBeenLastCalledWith({ open: false });
+  });
+
+  it("shows the provider icon next to the name in the trigger for a single selection", async () => {
+    render(
+      <AccountsSelector
+        providers={providers}
+        onBatchChange={vi.fn()}
+        selectedValues={["provider-1"]}
+      />,
+    );
+
+    const trigger = screen.getByTestId("trigger");
+    expect(await within(trigger).findByText("AWS")).toBeInTheDocument();
+    expect(within(trigger).getByText("Production AWS")).toBeInTheDocument();
+  });
+
+  it("renders one icon per selected account without deduping by provider type", async () => {
+    const secondAws = {
+      ...providers[0],
+      id: "provider-2",
+      attributes: {
+        ...providers[0].attributes,
+        uid: "999999999999",
+        alias: "Staging AWS",
+      },
+    };
+
+    render(
+      <AccountsSelector
+        providers={[providers[0], secondAws]}
+        onBatchChange={vi.fn()}
+        selectedValues={["provider-1", "provider-2"]}
+      />,
+    );
+
+    const trigger = screen.getByTestId("trigger");
+    // Two AWS accounts -> two AWS icons in the trigger (no dedupe).
+    expect(await within(trigger).findAllByText("AWS")).toHaveLength(2);
+    expect(
+      within(trigger).getByText("2 Providers selected"),
+    ).toBeInTheDocument();
   });
 });
