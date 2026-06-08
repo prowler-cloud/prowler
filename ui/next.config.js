@@ -8,13 +8,9 @@ const { withSentryConfig } = require("@sentry/nextjs");
 // HTTP Security Headers
 // 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode.
 //
-// CSP is intentionally STATIC (decision D4): the runtime config island is
-// `type="application/json"` (inert, not governed by `script-src`), so it needs
-// no nonce. Constraint (R2): a runtime `UI_SENTRY_DSN`'s ingest host must fall
-// under the `connect-src` allowlist below — `https://*.sentry.io` /
-// `https://*.ingest.sentry.io` cover Sentry Cloud, but a self-hosted or
-// region-specific Sentry host would be blocked until per-request CSP via
-// middleware lands as a follow-up.
+// CSP is static; the JSON config island is inert (no nonce needed). A runtime
+// Sentry DSN must be in `connect-src` below — `*.sentry.io` covers Sentry Cloud,
+// but a self-hosted/region host is blocked until per-request CSP (middleware) lands.
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://browser.sentry-cdn.com;

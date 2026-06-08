@@ -36,16 +36,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_PROWLER_RELEASE_VERSION
 ENV NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
 
-# TODO
-# UI_GOOGLE_TAG_MANAGER_ID / UI_API_BASE_URL / UI_API_DOCS_URL
-# are no longer build ARGs: they are resolved from the container environment at
-# runtime (see the prod stage and lib/runtime-config.ts), so one image serves
-# every environment.
+# GTM / API base+docs URLs are runtime container env (prod stage), not build ARGs.
 
-# Build-time only: Sentry source-map upload credentials. When all three are
-# supplied, next.config.js applies withSentryConfig and uploads source maps;
-# otherwise the build proceeds with uploads disabled (R7). The runtime
-# UI_SENTRY_DSN is NOT needed at build — it is read from the container env at boot.
+# Build-time only: Sentry source-map upload creds (withSentryConfig runs only
+# when all three are set). The runtime UI_SENTRY_DSN is separate.
 ARG SENTRY_AUTH_TOKEN
 ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 ARG SENTRY_ORG
