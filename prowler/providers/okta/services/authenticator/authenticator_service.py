@@ -21,7 +21,7 @@ def _next_after_cursor(resp) -> Optional[str]:
     if not link:
         return None
     for part in link.split(","):
-        if 'rel="next"' not in part:
+        if "rel=next" not in part.replace(chr(34), ""):
             continue
         url_segment = part.split(";", 1)[0].strip().lstrip("<").rstrip(">")
         cursor = parse_qs(urlparse(url_segment).query).get("after", [None])[0]

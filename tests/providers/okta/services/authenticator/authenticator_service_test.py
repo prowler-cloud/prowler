@@ -115,9 +115,10 @@ class Test_Authenticator_service:
         provider = set_mocked_okta_provider()
         page_1 = _sdk_password_policy("pol-1", "First")
         page_2 = _sdk_password_policy("pol-2", "Second")
+        quote = chr(34)
         next_link = (
             "<https://acme.okta.com/api/v1/policies?type=PASSWORD&after=cursor-2>; "
-            'rel="next"'
+            f"rel={quote}next{quote}"
         )
         calls = []
 

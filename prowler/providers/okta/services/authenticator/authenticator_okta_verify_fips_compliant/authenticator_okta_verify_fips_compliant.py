@@ -48,10 +48,11 @@ class authenticator_okta_verify_fips_compliant(Check):
                 "for enrollment."
             )
         else:
+            current_fips = authenticator.fips or "unset"
             report.status = "FAIL"
             report.status_extended = (
                 "Okta Verify authenticator is active but does not require "
-                f"FIPS-compliant devices for enrollment (current value: "
-                f"{authenticator.fips or 'unset'})."
+                "FIPS-compliant devices for enrollment (current value: "
+                f"{current_fips})."
             )
         return [report]
