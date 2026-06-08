@@ -36,7 +36,7 @@ class network_zone_block_anonymized_proxies(Check):
         if matching_zone:
             report.status = "PASS"
             report.status_extended = (
-                f"Okta Network Zone '{matching_zone.name}' is an {reason}."
+                f"Okta Network Zone {matching_zone.name} is an {reason}."
             )
         else:
             report.status = "FAIL"
