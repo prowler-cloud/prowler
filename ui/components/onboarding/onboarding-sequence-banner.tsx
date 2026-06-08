@@ -9,20 +9,15 @@ import { useOnboardingSequenceStore } from "@/store/onboarding-sequence";
 
 import { getSequenceProgress } from "./onboarding-sequence-banner.logic";
 
-// Flow the "Run a scan" shortcut jumps to. The scans page's OnboardingTrigger
-// re-runs that tour on arrival, re-guiding the user through launching a scan.
+// Target for the "Run a scan" shortcut; the scans page trigger re-runs its tour on arrival.
 const SCAN_FLOW_ID = "view-first-scan";
 
 interface OnboardingSequenceBannerProps {
-  // Server-derived signal (SSR). When the scan state is unknown we pass `true`
-  // (fail-open) so the shortcut never nags a user whose scans we can't read.
+  // Defaults to true (fail-open) when scan state is unknown.
   hasCompletedScan?: boolean;
 }
 
-// Persistent, NON-blocking bottom banner shown while a guided sequence is
-// active. Unlike a Dialog it never traps focus or covers the page, so the user
-// can perform the step's real action (e.g. launch a scan) at their own pace and
-// then click Continue. The banner owns sequence advance/exit; the per-route
+// Non-blocking bottom banner for an active sequence. Owns advance/exit; the per-route
 // tour only shows on arrival and no longer auto-advances on close.
 export function OnboardingSequenceBanner({
   hasCompletedScan = true,
@@ -33,15 +28,12 @@ export function OnboardingSequenceBanner({
     (state) => state.currentFlowId,
   );
 
-  // Self-hide: render nothing unless an active sequence resolves to a known
-  // flow. Derived entirely from the registry — no hardcoded flow list.
   const progress = getSequenceProgress(currentFlowId);
   if (!active || !progress) return null;
 
   const { index, total, flow, nextFlow } = progress;
 
-  // Offer the shortcut only on a data-gated step that still lacks scan data,
-  // and never on the scan step itself (it would point back to the same place).
+  // Shortcut only on a data-gated step that still lacks scan data, not on the scan step itself.
   const scanFlow = getFlowById(SCAN_FLOW_ID);
   const showScanShortcut =
     Boolean(flow.dataRequirementHint) &&
@@ -58,8 +50,7 @@ export function OnboardingSequenceBanner({
   const handleContinue = () => {
     const sequence = useOnboardingSequenceStore.getState();
     if (!nextFlow) {
-      // Last step: end the sequence in place, no navigation.
-      sequence.stop();
+      sequence.stop(); // last step — end in place
       return;
     }
     sequence.advance();
@@ -82,8 +73,7 @@ export function OnboardingSequenceBanner({
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          {/* Polite live region so screen readers announce step transitions
-              when the banner's step-progress text updates on advance. */}
+          {/* Polite live region: screen readers announce step transitions. */}
           <p
             role="status"
             aria-live="polite"

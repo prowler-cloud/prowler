@@ -21,8 +21,7 @@ export function OnboardingCheckpointDialog({
       title="Provider added — keep exploring?"
       description="Your first provider is added. Want a quick guided tour of scans, findings, compliance, and attack paths? You can stop anytime."
       size="lg"
-      // Overlay / Escape / X close maps to "Finish here" so the watcher persists
-      // the handled marker exactly once.
+      // Overlay/Escape/X maps to "Finish here" — persists the handled marker once.
       onOpenChange={(next) => {
         if (!next) onFinish();
       }}

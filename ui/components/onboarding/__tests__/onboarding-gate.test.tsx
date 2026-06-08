@@ -38,10 +38,8 @@ describe("OnboardingGate", () => {
 
   describe("when the user has no providers and no completion record", () => {
     it("shows the Welcome modal", async () => {
-      // Given - a fresh browser with no providers
       render(<OnboardingGate hasProviders={false} />);
 
-      // Then - the gate surfaces the Welcome modal for the first flow
       expect(
         await screen.findByRole("button", { name: /get started/i }),
       ).toBeInTheDocument();
@@ -50,10 +48,8 @@ describe("OnboardingGate", () => {
 
   describe("when the user already has providers", () => {
     it("does not show the Welcome modal", async () => {
-      // Given - a user with providers
       render(<OnboardingGate hasProviders={true} />);
 
-      // Then - the modal is never displayed
       await waitFor(() => {
         expect(
           screen.queryByRole("button", { name: /get started/i }),
@@ -64,7 +60,6 @@ describe("OnboardingGate", () => {
 
   describe("when a completion record already exists in this browser", () => {
     it("does not show the Welcome modal", async () => {
-      // Given - a prior dismissal record for the first flow
       localStorageAdapter.set(addProviderTourId, {
         tourId: addProviderTour.id,
         version: addProviderTour.version,
@@ -74,7 +69,6 @@ describe("OnboardingGate", () => {
 
       render(<OnboardingGate hasProviders={false} />);
 
-      // Then - the gate respects the record and stays silent
       await waitFor(() => {
         expect(
           screen.queryByRole("button", { name: /get started/i }),
@@ -85,11 +79,7 @@ describe("OnboardingGate", () => {
 
   describe("when the gate flow is dismissed but later sequence flows are incomplete", () => {
     it("does not show the Welcome modal for a later flow", async () => {
-      // Given - the gate flow (add-provider) is dismissed; the additional
-      // sequence flows (view-first-scan, explore-findings, view-compliance)
-      // have no record. The mandatory gate must ONLY ever force add-provider —
-      // the later flows are reached via the checkpoint/sequence, never the
-      // gate. So a dismissed add-provider record keeps the gate silent.
+      // Later flows are only reachable via the checkpoint/sequence, never the gate.
       localStorageAdapter.set(addProviderTourId, {
         tourId: addProviderTour.id,
         version: addProviderTour.version,
@@ -99,7 +89,6 @@ describe("OnboardingGate", () => {
 
       render(<OnboardingGate hasProviders={false} />);
 
-      // Then - the gate never surfaces a later flow's modal
       await waitFor(() => {
         expect(
           screen.queryByRole("button", { name: /get started/i }),
@@ -110,12 +99,9 @@ describe("OnboardingGate", () => {
 
   describe("when hasProviders is undefined (fail-open)", () => {
     it("does not show the Welcome modal", async () => {
-      // Given - an ambiguous provider signal (transient / errored). The prop is
-      // optional (`boolean | undefined`) so `undefined` is passed type-cleanly,
-      // mirroring the tri-state the layout forwards on a failed provider fetch.
+      // `undefined` mirrors the tri-state layout forwards on a failed provider fetch.
       render(<OnboardingGate hasProviders={undefined} />);
 
-      // Then - the gate fails open and does not force onboarding
       await waitFor(() => {
         expect(
           screen.queryByRole("button", { name: /get started/i }),
@@ -124,11 +110,8 @@ describe("OnboardingGate", () => {
     });
 
     it("can be mounted with the prop omitted entirely (fail-open)", async () => {
-      // Given - the layout forwards `undefined` (omitted) when the provider
-      // fetch failed; the gate must still fail open rather than force the modal.
       render(<OnboardingGate />);
 
-      // Then - no modal
       await waitFor(() => {
         expect(
           screen.queryByRole("button", { name: /get started/i }),
@@ -139,17 +122,14 @@ describe("OnboardingGate", () => {
 
   describe("when the user accepts the Welcome modal", () => {
     it("navigates to the flow route with the onboarding query param and writes no record", async () => {
-      // Given - the modal is shown for a zero-provider user
       const user = userEvent.setup();
       render(<OnboardingGate hasProviders={false} />);
       const getStarted = await screen.findByRole("button", {
         name: /get started/i,
       });
 
-      // When - the user accepts
       await user.click(getStarted);
 
-      // Then - the gate hands off via the URL and persists nothing yet
       expect(pushMock).toHaveBeenCalledWith(
         "/providers?onboarding=add-provider",
       );
@@ -157,34 +137,28 @@ describe("OnboardingGate", () => {
     });
 
     it("arms the onboarding checkpoint", async () => {
-      // Given - the modal is shown for a zero-provider user
       const user = userEvent.setup();
       render(<OnboardingGate hasProviders={false} />);
       const getStarted = await screen.findByRole("button", {
         name: /get started/i,
       });
 
-      // When - the user accepts
       await user.click(getStarted);
 
-      // Then - the checkpoint is armed so it can fire after the wizard closes
       expect(armMock).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("when the user dismisses the Welcome modal", () => {
     it("writes a dismissed record and stops showing the modal", async () => {
-      // Given - the modal is shown for a zero-provider user
       const user = userEvent.setup();
       render(<OnboardingGate hasProviders={false} />);
       const skip = await screen.findByRole("button", {
         name: /skip for now/i,
       });
 
-      // When - the user skips
       await user.click(skip);
 
-      // Then - a dismissal record is written and the modal closes
       await waitFor(() => {
         expect(
           screen.queryByRole("button", { name: /skip for now/i }),
@@ -196,17 +170,15 @@ describe("OnboardingGate", () => {
     });
 
     it("does NOT arm the onboarding checkpoint", async () => {
-      // Given - the modal is shown for a zero-provider user
       const user = userEvent.setup();
       render(<OnboardingGate hasProviders={false} />);
       const skip = await screen.findByRole("button", {
         name: /skip for now/i,
       });
 
-      // When - the user skips
       await user.click(skip);
 
-      // Then - skipping must never arm the checkpoint (the user opted out)
+      // Skipping must never arm the checkpoint (user opted out).
       expect(armMock).not.toHaveBeenCalled();
     });
   });

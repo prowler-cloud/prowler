@@ -12,8 +12,7 @@ const closeMock = vi.fn();
 
 const CHECKPOINT_MARKER = "prowler.onboarding.checkpoint";
 
-// Drives the store `open` flag the watcher subscribes to. Tests set this before
-// render to simulate the checkpoint being requested open/closed.
+// Tests set this before render to control the store `open` flag the watcher subscribes to.
 let checkpointOpenState = false;
 
 vi.mock("next/navigation", () => ({
@@ -28,7 +27,6 @@ vi.mock("@/store/onboarding-sequence", () => ({
 
 vi.mock("@/store/onboarding-checkpoint", () => ({
   CHECKPOINT_MARKER: "prowler.onboarding.checkpoint",
-  // The watcher reads `open` via a selector hook and calls `close` on resolve.
   useOnboardingCheckpointStore: Object.assign(
     (selector: (state: { open: boolean }) => unknown) =>
       selector({ open: checkpointOpenState }),
@@ -53,22 +51,18 @@ describe("OnboardingCheckpointWatcher", () => {
 
   describe("rendering", () => {
     it("renders the dialog when the store open flag is true", () => {
-      // Given/When - the store requested the checkpoint open
       checkpointOpenState = true;
       render(<OnboardingCheckpointWatcher />);
 
-      // Then - the dialog is shown
       expect(
         screen.getByText("Provider added — keep exploring?"),
       ).toBeInTheDocument();
     });
 
     it("does not render the dialog when the store open flag is false", () => {
-      // Given/When - the store has not requested the checkpoint
       checkpointOpenState = false;
       render(<OnboardingCheckpointWatcher />);
 
-      // Then - nothing is shown
       expect(
         screen.queryByText("Provider added — keep exploring?"),
       ).not.toBeInTheDocument();
@@ -77,19 +71,15 @@ describe("OnboardingCheckpointWatcher", () => {
 
   describe("when the user continues the tour", () => {
     it("marks handled, starts the sequence at the next flow, navigates, and closes the store", async () => {
-      // Given - the dialog is open
       const user = userEvent.setup();
       checkpointOpenState = true;
       render(<OnboardingCheckpointWatcher />);
       await screen.findByText("Provider added — keep exploring?");
 
-      // When - the user continues
       await user.click(
         screen.getByRole("button", { name: /continue the tour/i }),
       );
 
-      // Then - the marker is set, the sequence starts at the flow AFTER
-      // add-provider, the watcher navigates, and it closes the store.
       const nextFlow = getFlowById("view-first-scan");
       expect(window.localStorage.getItem(CHECKPOINT_MARKER)).not.toBeNull();
       expect(closeMock).toHaveBeenCalledTimes(1);
@@ -97,7 +87,7 @@ describe("OnboardingCheckpointWatcher", () => {
         expect(startSequenceMock).toHaveBeenCalledWith(nextFlow.id);
         expect(pushMock).toHaveBeenCalledWith(nextFlow.route);
       } else {
-        // Registry still add-provider-only: guard gracefully.
+        // Guard: registry is still add-provider-only.
         expect(startSequenceMock).not.toHaveBeenCalled();
         expect(pushMock).not.toHaveBeenCalled();
       }
@@ -106,16 +96,13 @@ describe("OnboardingCheckpointWatcher", () => {
 
   describe("when the user finishes here", () => {
     it("marks handled, starts no sequence, does not navigate, and closes the store", async () => {
-      // Given - the dialog is open
       const user = userEvent.setup();
       checkpointOpenState = true;
       render(<OnboardingCheckpointWatcher />);
       await screen.findByText("Provider added — keep exploring?");
 
-      // When - the user finishes here
       await user.click(screen.getByRole("button", { name: /finish here/i }));
 
-      // Then - the marker is set, no sequence starts, no navigation, store closed
       expect(window.localStorage.getItem(CHECKPOINT_MARKER)).not.toBeNull();
       expect(startSequenceMock).not.toHaveBeenCalled();
       expect(pushMock).not.toHaveBeenCalled();

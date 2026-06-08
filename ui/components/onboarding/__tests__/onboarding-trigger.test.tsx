@@ -10,18 +10,13 @@ const pushMock = vi.fn();
 const advanceMock = vi.fn();
 const stopMock = vi.fn();
 
-// Counts every `useDriverTour` invocation. A mounted runner re-invokes the hook
-// on each render; an unmounted runner never invokes it again. This is the
-// signal the regression test reads.
+// Counts hook re-invocations; the regression test uses this to confirm the runner stays mounted.
 const useDriverTourMock = vi.fn();
-// Captures the `onClosed` callback the runner passes to `useDriverTour`, so the
-// close→action wiring can be exercised without driver.js (the hook short-
-// circuits under NODE_ENV==="test").
+// Captures onClosed so close→action wiring can be exercised without driver.js.
 let capturedOnClosed: ((state: string) => void) | undefined;
 
 let searchParamsValue = new URLSearchParams();
 
-// Mutable sequence-slice snapshot the mocked store hook returns.
 let sliceState = {
   active: false,
   currentFlowId: null as string | null,
@@ -50,7 +45,6 @@ vi.mock("@/lib/tours/use-driver-tour", () => ({
 vi.mock("@/store/onboarding-sequence", () => {
   const hook = (selector: (state: typeof sliceState) => unknown) =>
     selector(sliceState);
-  // The runner's `onClosed` reads `getState()` for the imperative advance/stop.
   hook.getState = () => sliceState;
   return { useOnboardingSequenceStore: hook };
 });
@@ -85,15 +79,12 @@ describe("OnboardingTrigger", () => {
 
   describe("when the onboarding param matches this flow (replay)", () => {
     it("force-starts the tour and strips the param", async () => {
-      // Given - the URL carries ?onboarding=add-provider
       searchParamsValue = new URLSearchParams("onboarding=add-provider");
       const replaceStateSpy = vi.spyOn(window.history, "replaceState");
 
-      // When - the trigger mounts
       render(<OnboardingTrigger flow={addProviderFlow} />);
 
-      // Then - it starts the tour and strips the param (preserving pathname)
-      // without a router round-trip.
+      // Param is stripped via history.replaceState (no router round-trip).
       await waitFor(() => expect(startMock).toHaveBeenCalledTimes(1));
       await waitFor(() =>
         expect(replaceStateSpy).toHaveBeenCalledWith(
@@ -103,11 +94,28 @@ describe("OnboardingTrigger", () => {
         ),
       );
     });
+
+    it("strips only the onboarding param and preserves other query params", async () => {
+      searchParamsValue = new URLSearchParams(
+        "scanId=scan-1&onboarding=add-provider&tab=completed",
+      );
+      const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+
+      render(<OnboardingTrigger flow={addProviderFlow} />);
+
+      await waitFor(() => expect(startMock).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(replaceStateSpy).toHaveBeenCalledWith(
+          null,
+          "",
+          `${window.location.pathname}?scanId=scan-1&tab=completed`,
+        ),
+      );
+    });
   });
 
   describe("when the sequence names this flow", () => {
     it("force-starts the tour without stripping any param", async () => {
-      // Given - the sequence is active and points at this route's flow
       setSlice({
         active: true,
         currentFlowId: "add-provider",
@@ -115,10 +123,8 @@ describe("OnboardingTrigger", () => {
       });
       const replaceStateSpy = vi.spyOn(window.history, "replaceState");
 
-      // When - the trigger mounts
       render(<OnboardingTrigger flow={addProviderFlow} />);
 
-      // Then - it starts the tour and does NOT touch the URL (no replay param)
       await waitFor(() => expect(startMock).toHaveBeenCalledTimes(1));
       expect(replaceStateSpy).not.toHaveBeenCalled();
     });
@@ -126,16 +132,13 @@ describe("OnboardingTrigger", () => {
 
   describe("when neither the param nor the sequence names this flow", () => {
     it("renders null and does not start the tour", async () => {
-      // Given - a bare URL and an inactive sequence
       searchParamsValue = new URLSearchParams();
       const replaceStateSpy = vi.spyOn(window.history, "replaceState");
 
-      // When - the trigger mounts
       const { container } = render(
         <OnboardingTrigger flow={addProviderFlow} />,
       );
 
-      // Then - nothing renders and nothing starts
       expect(container).toBeEmptyDOMElement();
       await waitFor(() => expect(startMock).not.toHaveBeenCalled());
       expect(replaceStateSpy).not.toHaveBeenCalled();
@@ -144,34 +147,27 @@ describe("OnboardingTrigger", () => {
 
   describe("when the onboarding param targets a different flow", () => {
     it("does not start the tour", async () => {
-      // Given - the param names another flow and the sequence is inactive
       searchParamsValue = new URLSearchParams("onboarding=explore-findings");
 
-      // When - the trigger mounts for the add-provider flow
       render(<OnboardingTrigger flow={addProviderFlow} />);
 
-      // Then - this trigger stays inert
       await waitFor(() => expect(startMock).not.toHaveBeenCalled());
     });
   });
 
   describe("when a sequence tour completes", () => {
     it("leaves the sequence slice untouched (the banner owns advance now)", async () => {
-      // Given - the sequence is on add-provider
       setSlice({
         active: true,
         currentFlowId: "add-provider",
         mode: "sequence",
       });
 
-      // When - the trigger mounts and the tour finishes on its last step
       render(<OnboardingTrigger flow={addProviderFlow} />);
       await waitFor(() => expect(capturedOnClosed).toBeDefined());
       capturedOnClosed?.("completed");
 
-      // Then - closing the tour no longer auto-advances or navigates. The
-      // persistent banner is the only advance/exit control: the user stays on
-      // the page until they explicitly click Continue.
+      // Banner is the sole advance/exit control; closing the tour must not auto-advance.
       expect(advanceMock).not.toHaveBeenCalled();
       expect(stopMock).not.toHaveBeenCalled();
       expect(pushMock).not.toHaveBeenCalled();
@@ -180,19 +176,17 @@ describe("OnboardingTrigger", () => {
 
   describe("when a sequence tour is dismissed", () => {
     it("leaves the sequence slice untouched (no auto-stop on close)", async () => {
-      // Given - the sequence is on add-provider
       setSlice({
         active: true,
         currentFlowId: "add-provider",
         mode: "sequence",
       });
 
-      // When - the trigger mounts and the user closes the tour mid-way
       render(<OnboardingTrigger flow={addProviderFlow} />);
       await waitFor(() => expect(capturedOnClosed).toBeDefined());
       capturedOnClosed?.("skipped");
 
-      // Then - closing leaves the sequence active; only the banner Exit ends it
+      // Only the banner Exit button ends the sequence; closing the tour must not auto-stop.
       expect(stopMock).not.toHaveBeenCalled();
       expect(advanceMock).not.toHaveBeenCalled();
       expect(pushMock).not.toHaveBeenCalled();
@@ -201,15 +195,13 @@ describe("OnboardingTrigger", () => {
 
   describe("when a replay tour closes", () => {
     it("does not touch the sequence slice", async () => {
-      // Given - a replay request via the param (sequence inactive)
       searchParamsValue = new URLSearchParams("onboarding=add-provider");
 
-      // When - the trigger mounts and the replay tour closes
       render(<OnboardingTrigger flow={addProviderFlow} />);
       await waitFor(() => expect(capturedOnClosed).toBeDefined());
       capturedOnClosed?.("completed");
 
-      // Then - single-flow replay never advances or stops the sequence
+      // Single-flow replay never advances or stops the sequence.
       expect(advanceMock).not.toHaveBeenCalled();
       expect(stopMock).not.toHaveBeenCalled();
       expect(pushMock).not.toHaveBeenCalled();
@@ -218,20 +210,16 @@ describe("OnboardingTrigger", () => {
 
   describe("when the param is cleared after the tour starts (regression)", () => {
     it("keeps the runner mounted and does not restart the tour", async () => {
-      // Given - the URL carries ?onboarding=add-provider and the tour starts
+      // StrictMode-safe latch: stripping the param must not unmount the runner or re-start the tour.
       searchParamsValue = new URLSearchParams("onboarding=add-provider");
       const { rerender } = render(<OnboardingTrigger flow={addProviderFlow} />);
       await waitFor(() => expect(startMock).toHaveBeenCalledTimes(1));
 
       const callsBeforeClear = useDriverTourMock.mock.calls.length;
 
-      // When - the onboarding param is stripped and the component re-renders
       searchParamsValue = new URLSearchParams();
       rerender(<OnboardingTrigger flow={addProviderFlow} />);
 
-      // Then - the runner stays mounted (re-invokes the hook) and the tour is
-      // not started a second time. This is the StrictMode-safe latch regression
-      // guard carried over from ProvidersOnboardingTrigger.
       await waitFor(() =>
         expect(useDriverTourMock.mock.calls.length).toBeGreaterThan(
           callsBeforeClear,

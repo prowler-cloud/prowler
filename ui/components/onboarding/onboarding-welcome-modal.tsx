@@ -25,8 +25,7 @@ export function OnboardingWelcomeModal({
       title={flowTitle}
       description={flowDescription}
       size="lg"
-      // Overlay / Escape / X close counts as a dismiss so the gate persists the
-      // dismissal record exactly once.
+      // Overlay/Escape/X counts as dismiss — gate persists the record once.
       onOpenChange={(next) => {
         if (!next) onDismiss();
       }}

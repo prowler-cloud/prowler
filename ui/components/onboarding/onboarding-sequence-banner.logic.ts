@@ -1,20 +1,14 @@
 import { getOrderedFlows, type OnboardingFlow } from "@/lib/onboarding";
 
-// Pure projection of the active sequence's position, derived entirely from the
-// registry. Keeping this framework-free makes the banner's progress + advance
-// logic unit-testable without React or the Zustand store.
+// Framework-free projection of the active sequence position — unit-testable without React.
 export interface SequenceProgress {
-  // 0-based index of the current flow within the ordered registry.
-  index: number;
+  index: number; // 0-based
   total: number;
   flow: OnboardingFlow;
-  // The next ordered flow, or null when the current flow is the last step.
-  nextFlow: OnboardingFlow | null;
+  nextFlow: OnboardingFlow | null; // null when on the last step
 }
 
-// Resolves the sequence position for `currentFlowId` against the ordered
-// registry. Returns null when there is no active flow id or the id is unknown,
-// so callers can render nothing without special-casing.
+// Returns null when `currentFlowId` is absent or not in the registry.
 export function getSequenceProgress(
   currentFlowId: string | null,
   flows: readonly OnboardingFlow[] = getOrderedFlows(),

@@ -1,29 +1,21 @@
 import type { TourCompletionRecord } from "@/lib/tours/tour-types";
 import type { OnboardingSequenceMode } from "@/store/onboarding-sequence";
 
-// Inputs the generalized `OnboardingTrigger` reads to decide whether THIS
-// route's flow should force-start. Flat args keep the decision framework-free
-// and unit-testable in isolation from the React component.
+// Flat, framework-free inputs for `resolveTriggerRequest` — unit-testable without React.
 export interface TriggerRequestInput {
-  // The `?onboarding=<id>` query param value, or null when absent.
-  param: string | null;
+  param: string | null; // `?onboarding=<id>` value, or null
   sliceActive: boolean;
-  // The flow id the active sequence points at, or null.
-  currentFlowId: string | null;
-  // The id of the flow THIS route owns.
-  flowId: string;
+  currentFlowId: string | null; // flow the active sequence points at
+  flowId: string; // flow this route owns
 }
 
-// The resolved start request, or null when this route's flow should not start.
+// Resolved start request, or null when this route's flow should not start.
 export interface TriggerRequest {
   start: true;
   mode: OnboardingSequenceMode;
 }
 
-// Decides whether (and how) to force-start this route's flow. Replay (the
-// param) takes documented precedence over the sequence so a manual list replay
-// never gets hijacked by an in-flight sequence. Returns null when neither
-// source names this flow.
+// Replay param takes precedence over the sequence so manual replay is never hijacked.
 export function resolveTriggerRequest({
   param,
   sliceActive,
@@ -39,8 +31,7 @@ export function resolveTriggerRequest({
   return null;
 }
 
-// The action a sequence-driven trigger takes once its tour closes. Last-step
-// completion advances the sequence; any user-close (skip/dismiss) ends it.
+// completed → advance the sequence; anything else → stop.
 export type SequenceCloseAction = "advance" | "stop";
 
 export function mapCloseToSequenceAction(
