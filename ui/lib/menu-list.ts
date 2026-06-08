@@ -26,16 +26,21 @@ import {
   LighthouseIcon,
   SupportIcon,
 } from "@/components/icons/Icons";
-import { getRuntimeConfigClient } from "@/lib/get-runtime-config.client";
 import { GroupProps } from "@/types";
 
 interface MenuListOptions {
   pathname: string;
+  // Resolved by the caller from the runtime config island (see
+  // useRuntimeConfig). Passed in rather than read here so the island is never
+  // read during this list's SSR render, which would cause a hydration mismatch.
+  apiDocsUrl?: string | null;
 }
 
-export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
+export const getMenuList = ({
+  pathname,
+  apiDocsUrl = null,
+}: MenuListOptions): GroupProps[] => {
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-  const { apiDocsUrl } = getRuntimeConfigClient();
 
   return [
     {
