@@ -10,7 +10,12 @@ const sentryEnvironment = readEnv(
 
 // Only initialize Sentry if DSN is configured
 if (sentryDsn) {
-  const isProduction = sentryEnvironment === "pro";
+  // R6: default to a non-dev environment so a deployed container with
+  // UI_SENTRY_ENVIRONMENT unset does NOT run in dev mode. Only an explicit
+  // "local" enables development behavior — mirroring the browser SDK
+  // (instrumentation-client.ts) so all runtimes resolve the env identically.
+  const environment = sentryEnvironment ?? "production";
+  const isDevelopment = environment === "local";
 
   /**
    * Edge runtime Sentry configuration
@@ -26,14 +31,14 @@ if (sentryDsn) {
     dsn: sentryDsn,
 
     // 🌍 Environment configuration
-    environment: sentryEnvironment || "local",
+    environment,
 
     // 📦 Release tracking
     release: process.env.SENTRY_RELEASE,
 
     // 📊 Sample Rates - Reduced for edge runtime constraints
     // 50% in dev, 25% in production (edge has lower overhead limits than server)
-    tracesSampleRate: isProduction ? 0.25 : 0.5,
+    tracesSampleRate: isDevelopment ? 0.5 : 0.25,
 
     // 🔌 Integrations - Edge runtime doesn't support all integrations
     integrations: [],

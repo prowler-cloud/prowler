@@ -10,7 +10,12 @@ const sentryEnvironment = readEnv(
 
 // Only initialize Sentry if DSN is configured
 if (sentryDsn) {
-  const isProduction = sentryEnvironment === "pro";
+  // R6: default to a non-dev environment so a deployed container with
+  // UI_SENTRY_ENVIRONMENT unset does NOT run in dev mode (100% sampling). Only
+  // an explicit "local" enables development behavior — mirroring the browser
+  // SDK (instrumentation-client.ts) so all runtimes resolve the env identically.
+  const environment = sentryEnvironment ?? "production";
+  const isDevelopment = environment === "local";
 
   /**
    * Server-side Sentry configuration
@@ -25,15 +30,15 @@ if (sentryDsn) {
     dsn: sentryDsn,
 
     // 🌍 Environment configuration
-    environment: sentryEnvironment || "local",
+    environment,
 
     // 📦 Release tracking
     release: process.env.SENTRY_RELEASE,
 
     // 📊 Sample Rates - Performance monitoring
     // 100% in dev (test everything), 50% in production (balance visibility with costs)
-    tracesSampleRate: isProduction ? 0.5 : 1.0,
-    profilesSampleRate: isProduction ? 0.5 : 1.0,
+    tracesSampleRate: isDevelopment ? 1.0 : 0.5,
+    profilesSampleRate: isDevelopment ? 1.0 : 0.5,
 
     // 🔌 Integrations
     integrations: [
