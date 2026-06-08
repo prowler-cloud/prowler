@@ -226,7 +226,7 @@ constraint-dependencies = [
   "drf-simple-apikey==2.2.1",
   "drf-spectacular==0.27.2",
   "drf-spectacular-jsonapi==0.5.1",
-  "dulwich==0.23.0",
+  "dulwich==1.2.5",
   "duo-client==5.5.0",
   "durationpy==0.10",
   "email-validator==2.2.0",
@@ -354,7 +354,7 @@ constraint-dependencies = [
   "pydantic-core==2.41.5",
   "pygithub==2.8.0",
   "pygments==2.20.0",
-  "pyjwt==2.12.1",
+  "pyjwt==2.13.0",
   "pylint==3.2.5",
   "pymsalruntime==0.18.1",
   "pynacl==1.6.2",
@@ -443,7 +443,15 @@ constraint-dependencies = [
 # The microsoft-kiota-http security bump to 1.9.9 (GHSA-7j59-v9qr-6fq9) requires
 # microsoft-kiota-abstractions>=1.9.9, which a constraint cannot satisfy against the
 # SDK's hard pin; override it to the patched, kiota-aligned version.
+#
+# prowler@master hard-pins dulwich==0.23.0 and pyjwt==2.12.1 in [project.dependencies].
+# dulwich 1.2.5 patches GHSA-897w-fcg9-f6xj (arbitrary file write) and pyjwt 2.13.0
+# patches PYSEC-2026-179 (HMAC/JWK key-confusion); a constraint cannot satisfy these
+# against the SDK's hard pins, so override them to the patched versions until the SDK
+# bump propagates to the pinned master rev.
 override-dependencies = [
   "okta==3.4.2",
-  "microsoft-kiota-abstractions==1.9.9"
+  "microsoft-kiota-abstractions==1.9.9",
+  "dulwich==1.2.5",
+  "pyjwt==2.13.0"
 ]
