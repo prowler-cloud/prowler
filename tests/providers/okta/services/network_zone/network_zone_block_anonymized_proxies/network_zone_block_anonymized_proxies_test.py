@@ -68,6 +68,31 @@ class Test_network_zone_block_anonymized_proxies:
         assert findings[0].status == "PASS"
         assert "Enhanced Dynamic" in findings[0].status_extended
 
+    def test_pass_with_custom_enhanced_dynamic_anonymizer_blocklist(self):
+        zone = network_zone(
+            zone_id="nzo-custom-enhanced",
+            name="Custom Anonymous VPN Blocklist",
+            zone_type="DYNAMIC_V2",
+            system=False,
+            ip_service_categories=["VPN"],
+        )
+        findings = _run_check(build_network_zone_client({zone.id: zone}))
+        assert len(findings) == 1
+        assert findings[0].status == "PASS"
+        assert "Enhanced Dynamic" in findings[0].status_extended
+
+    def test_dynamic_blocklist_without_anonymizer_category_fails(self):
+        zone = network_zone(
+            zone_id="nzo-dynamic",
+            name="Dynamic Blocklist Without Anonymizers",
+            zone_type="DYNAMIC",
+            ip_service_categories=["RISKY_IPS"],
+        )
+        findings = _run_check(build_network_zone_client({zone.id: zone}))
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "do not actively block" in findings[0].status_extended
+
     def test_existing_zones_without_anonymized_proxy_blocklist_fail(self):
         policy_zone = network_zone(
             zone_id="nzo-policy",
