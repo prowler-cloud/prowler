@@ -2,8 +2,6 @@ import json
 from types import SimpleNamespace
 from unittest import mock
 
-from pydantic import ValidationError
-
 from prowler.providers.okta.models import OktaIdentityInfo
 from prowler.providers.okta.services.apitoken.api_token_service import ApiToken
 from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
@@ -122,6 +120,60 @@ class Test_ApiToken_service:
 
         assert service.api_tokens[token.id].owner_roles == []
 
+    def test_falls_back_to_raw_roles_when_sdk_role_is_empty(self):
+        provider = set_mocked_okta_provider()
+        token = _sdk_token()
+
+        async def fake_list_api_tokens(*_a, **_k):
+            return ([token], _resp({}), None)
+
+        async def fake_list_assigned_roles_for_user(user_id, *_a, **_k):
+            assert user_id == token.user_id
+            return ([SimpleNamespace(type=None, label=None)], _resp({}), None)
+
+        async def fake_create_request(*_a, **_k):
+            return ("raw-role-request", None)
+
+        async def fake_execute(request, *_a, **_k):
+            assert request == "raw-role-request"
+            return (
+                _resp({}),
+                json.dumps(
+                    [
+                        {
+                            "id": "ra-super-admin",
+                            "type": "SUPER_ADMIN",
+                            "label": "Super Administrator",
+                        }
+                    ]
+                ),
+                None,
+            )
+
+        async def fake_list_network_zones(*_a, **_k):
+            return ([_sdk_zone("nzo-corp", "Corporate")], _resp({}), None)
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_api_tokens = fake_list_api_tokens
+            mocked.list_assigned_roles_for_user = fake_list_assigned_roles_for_user
+            mocked._list_assigned_roles_for_user_serialize.return_value = (
+                "GET",
+                "/api/v1/users/00uabcdefg1234567890/roles",
+                {},
+                None,
+                None,
+            )
+            mocked._request_executor.create_request = fake_create_request
+            mocked._request_executor.execute = fake_execute
+            mocked.list_network_zones = fake_list_network_zones
+            mocked_client_cls.return_value = mocked
+            service = ApiToken(provider)
+
+        assert service.api_tokens[token.id].owner_roles == ["SUPER_ADMIN"]
+
     def test_paginates_known_network_zones_for_token_validation(self):
         provider = set_mocked_okta_provider()
         token = _sdk_token(include=["nzo-page-2"])
@@ -160,6 +212,51 @@ class Test_ApiToken_service:
             "nzo-page-2",
             "Second",
         }
+
+    def test_falls_back_to_raw_network_zones_when_sdk_listing_fails(self):
+        provider = set_mocked_okta_provider()
+        token = _sdk_token(include=["nzo-raw"])
+
+        async def fake_list_api_tokens(*_a, **_k):
+            return ([token], _resp({}), None)
+
+        async def fake_list_assigned_roles_for_user(*_a, **_k):
+            return ([_sdk_role("READ_ONLY_ADMIN")], _resp({}), None)
+
+        async def fake_list_network_zones(*_a, **_k):
+            raise ValueError("EnhancedDynamicNetworkZone SDK deserialization failed")
+
+        async def fake_create_request(*_a, **_k):
+            return ("raw-zones-request", None)
+
+        async def fake_execute(request, *_a, **_k):
+            assert request == "raw-zones-request"
+            return (
+                _resp({}),
+                json.dumps([{"id": "nzo-raw", "name": "Raw Corporate"}]),
+                None,
+            )
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_api_tokens = fake_list_api_tokens
+            mocked.list_assigned_roles_for_user = fake_list_assigned_roles_for_user
+            mocked.list_network_zones = fake_list_network_zones
+            mocked._list_network_zones_serialize.return_value = (
+                "GET",
+                "/api/v1/zones",
+                {},
+                None,
+                None,
+            )
+            mocked._request_executor.create_request = fake_create_request
+            mocked._request_executor.execute = fake_execute
+            mocked_client_cls.return_value = mocked
+            service = ApiToken(provider)
+
+        assert service.known_network_zone_ids == {"nzo-raw", "Raw Corporate"}
 
     def test_returns_empty_on_token_api_error(self):
         provider = set_mocked_okta_provider()
@@ -517,157 +614,3 @@ class Test_ApiToken_service_group_inherited_roles:
             service = ApiToken(provider)
 
         assert service.api_tokens[token.id].owner_roles == ["SUPER_ADMIN"]
-
-
-class Test_ApiToken_service_sdk_validation_fallback:
-    """Verifies the raw-JSON fallback for the Okta SDK Enhanced Dynamic
-    Zone deserialization bug when listing zones for token validation.
-
-    Without the fallback, `list_network_zones` raises ValidationError
-    on tenants that have Enhanced Dynamic Zones with `asns.include: []`,
-    `known_network_zone_ids` ends up empty, and every token that
-    references a real zone fails as "unknown".
-    """
-
-    @staticmethod
-    def _trigger_real_validation_error() -> ValidationError:
-        try:
-            from okta.models.enhanced_dynamic_network_zone_all_of_asns_include import (  # noqa: E501
-                EnhancedDynamicNetworkZoneAllOfAsnsInclude,
-            )
-
-            EnhancedDynamicNetworkZoneAllOfAsnsInclude.from_dict([])
-        except ValidationError as ve:
-            return ve
-        raise AssertionError("Expected pydantic ValidationError from Okta SDK model")
-
-    def _build_service(self, raw_zones_payload, response=None, token=None):
-        provider = set_mocked_okta_provider()
-        ve = self._trigger_real_validation_error()
-        api_token = token or _sdk_token()
-
-        async def fake_list_api_tokens(*_a, **_k):
-            return ([api_token], _resp({}), None)
-
-        async def fake_list_assigned_roles_for_user(*_a, **_k):
-            return ([], _resp({}), None)
-
-        async def failing_list_network_zones(*_a, **_k):
-            raise ve
-
-        async def fake_raw_create(*_a, **kwargs):
-            return ({"url": kwargs.get("url", "")}, None)
-
-        async def fake_raw_execute(_request):
-            return (response, json.dumps(raw_zones_payload), None)
-
-        sdk_mock = mock.MagicMock()
-        sdk_mock.list_api_tokens = fake_list_api_tokens
-        sdk_mock.list_assigned_roles_for_user = fake_list_assigned_roles_for_user
-        sdk_mock.list_network_zones = failing_list_network_zones
-        sdk_mock._request_executor.create_request = fake_raw_create
-        sdk_mock._request_executor.execute = fake_raw_execute
-
-        with mock.patch(
-            "prowler.providers.okta.lib.service.service.OktaSDKClient",
-            return_value=sdk_mock,
-        ):
-            return ApiToken(provider)
-
-    def test_raw_fallback_collects_zone_ids_and_names(self):
-        zones_payload = [
-            {"id": "nzo-corp", "name": "Corporate", "type": "IP"},
-            {
-                "id": "nzo-enhanced",
-                "name": "DefaultEnhancedDynamicZone",
-                "type": "DYNAMIC_V2",
-                "asns": {"include": [], "exclude": []},
-            },
-        ]
-        service = self._build_service(zones_payload)
-        assert service.known_network_zone_ids == {
-            "nzo-corp",
-            "Corporate",
-            "nzo-enhanced",
-            "DefaultEnhancedDynamicZone",
-        }
-
-    def test_raw_fallback_handles_empty_payload(self):
-        service = self._build_service([])
-        assert service.known_network_zone_ids == set()
-
-    def test_raw_fallback_handles_executor_error(self):
-        provider = set_mocked_okta_provider()
-        ve = self._trigger_real_validation_error()
-
-        async def fake_list_api_tokens(*_a, **_k):
-            return ([], _resp({}), None)
-
-        async def failing_list_network_zones(*_a, **_k):
-            raise ve
-
-        async def fake_raw_create(*_a, **_k):
-            return (None, Exception("network down"))
-
-        sdk_mock = mock.MagicMock()
-        sdk_mock.list_api_tokens = fake_list_api_tokens
-        sdk_mock.list_network_zones = failing_list_network_zones
-        sdk_mock._request_executor.create_request = fake_raw_create
-        sdk_mock._request_executor.execute = mock.AsyncMock()
-
-        with mock.patch(
-            "prowler.providers.okta.lib.service.service.OktaSDKClient",
-            return_value=sdk_mock,
-        ):
-            service = ApiToken(provider)
-
-        assert service.known_network_zone_ids == set()
-
-    def test_raw_fallback_paginates_via_link_header(self):
-        next_link = '<https://acme.okta.com/api/v1/zones?after=cursor-2>; rel="next"'
-        page_1 = [{"id": "nzo-1", "name": "First"}]
-        page_2 = [{"id": "nzo-2", "name": "Second"}]
-
-        provider = set_mocked_okta_provider()
-        ve = self._trigger_real_validation_error()
-        execute_calls = []
-
-        async def fake_list_api_tokens(*_a, **_k):
-            return ([], _resp({}), None)
-
-        async def failing_list_network_zones(*_a, **_k):
-            raise ve
-
-        async def fake_raw_create(*_a, **kwargs):
-            return ({"url": kwargs.get("url", "")}, None)
-
-        async def fake_raw_execute(request):
-            execute_calls.append(request)
-            if len(execute_calls) == 1:
-                return (
-                    SimpleNamespace(headers={"link": next_link}),
-                    json.dumps(page_1),
-                    None,
-                )
-            return (SimpleNamespace(headers={}), json.dumps(page_2), None)
-
-        sdk_mock = mock.MagicMock()
-        sdk_mock.list_api_tokens = fake_list_api_tokens
-        sdk_mock.list_network_zones = failing_list_network_zones
-        sdk_mock._request_executor.create_request = fake_raw_create
-        sdk_mock._request_executor.execute = fake_raw_execute
-
-        with mock.patch(
-            "prowler.providers.okta.lib.service.service.OktaSDKClient",
-            return_value=sdk_mock,
-        ):
-            service = ApiToken(provider)
-
-        assert len(execute_calls) == 2
-        assert "after=cursor-2" in execute_calls[1]["url"]
-        assert service.known_network_zone_ids == {
-            "nzo-1",
-            "First",
-            "nzo-2",
-            "Second",
-        }

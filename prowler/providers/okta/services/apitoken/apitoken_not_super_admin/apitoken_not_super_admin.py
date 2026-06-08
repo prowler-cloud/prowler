@@ -44,7 +44,7 @@ class apitoken_not_super_admin(Check):
             elif owner_has_super_admin(token):
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"API token '{token.name}' is owned by user '{token.user_id}' "
+                    f"API token {token.name} is owned by user {token.user_id} "
                     "with the Super Admin role. Use a dedicated service account "
                     "with least-privilege admin roles instead."
                 )
@@ -63,7 +63,7 @@ class apitoken_not_super_admin(Check):
                 )
                 report.status = "PASS"
                 report.status_extended = (
-                    f"API token '{token.name}' owner '{token.user_id}' is not "
+                    f"API token {token.name} owner {token.user_id} is not "
                     f"assigned Super Admin ({roles}).{caveat}"
                 )
             findings.append(report)

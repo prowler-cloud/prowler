@@ -1,8 +1,7 @@
 import json
 from typing import Optional
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.service import OktaService
@@ -53,6 +52,22 @@ def _role_to_string(role) -> str:
     """
     inner = getattr(role, "actual_instance", None) or role
     return _value(getattr(inner, "type", None)) or _value(getattr(inner, "label", None))
+
+
+def _json_body(response_body) -> list | dict:
+    """Decode an Okta SDK raw response body."""
+    if not response_body:
+        return []
+    if isinstance(response_body, bytes):
+        response_body = response_body.decode("utf-8")
+    return json.loads(response_body)
+
+
+def _raw_value(item, key: str) -> str:
+    """Return a string value from an SDK model or raw dictionary."""
+    if isinstance(item, dict):
+        return _value(item.get(key))
+    return _value(getattr(item, key, None))
 
 
 class ApiToken(OktaService):
@@ -158,7 +173,67 @@ class ApiToken(OktaService):
         if err is not None:
             logger.error(f"Error listing roles for token owner {user_id}: {err}")
             return []
-        return [_role_to_string(role) for role in items if _role_to_string(role)]
+        roles = [_role_to_string(role) for role in items if _role_to_string(role)]
+        if roles or not items:
+            return roles
+
+        # Belt-and-suspenders: when the SDK's typed parse returns items
+        # but every projection ends up empty (a discriminator surface we
+        # don't yet handle, a future schema change, …), fall back to the
+        # raw JSON. The `_role_to_string` unwrap above already covers the
+        # known `ListGroupAssignedRoles200ResponseInner` oneOf wrapper
+        # bug — this fallback exists for whatever the next SDK quirk is.
+        return await self._fetch_user_role_types_raw(user_id)
+
+    async def _fetch_user_role_types_raw(self, user_id: str) -> list[str]:
+        """Return user role types from the SDK raw response when typed models are empty."""
+        serializer = getattr(
+            self.client, "_list_assigned_roles_for_user_serialize", None
+        )
+        if serializer is None:
+            return []
+        try:
+            method, url, headers, body, post_params = serializer(
+                user_id=user_id,
+                expand=None,
+                _request_auth=None,
+                _content_type=None,
+                _headers=None,
+                _host_index=0,
+            )
+            request, error = await self.client._request_executor.create_request(
+                method,
+                url,
+                body,
+                headers,
+                post_params if post_params else None,
+                keep_empty_params=False,
+            )
+            if error:
+                logger.error(f"Error creating raw roles request for {user_id}: {error}")
+                return []
+            _response, response_body, error = (
+                await self.client._request_executor.execute(request)
+            )
+            if error:
+                logger.error(
+                    f"Error listing raw roles for token owner {user_id}: {error}"
+                )
+                return []
+            raw_items = _json_body(response_body)
+            if not isinstance(raw_items, list):
+                return []
+            roles = [
+                _value(role.get("type")) or _value(role.get("label"))
+                for role in raw_items
+                if isinstance(role, dict)
+            ]
+            return [role for role in roles if role]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
 
     async def _fetch_group_inherited_role_types(self, user_id: str) -> list[str]:
         """Return roles inherited via the user's group memberships.
@@ -168,9 +243,21 @@ class ApiToken(OktaService):
         """
         if self.missing_scope["user_roles"] or self.missing_scope["user_groups"]:
             return []
-        groups, _resp, err = _normalise_sdk_result(
-            await self.client.list_user_groups(user_id)
-        )
+        # Defensive try/except: tenants we've seen in the wild return 403
+        # on `/api/v1/users/{id}/groups` even when `okta.groups.read` is
+        # granted (admin-role on the service app gates the response
+        # separately). Treat any failure as "no inherited roles" so the
+        # caller still surfaces direct roles cleanly.
+        try:
+            groups, _resp, err = _normalise_sdk_result(
+                await self.client.list_user_groups(user_id)
+            )
+        except Exception as error:
+            logger.error(
+                f"Error listing groups for token owner {user_id}: "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return []
         if err is not None:
             logger.error(f"Error listing groups for token owner {user_id}: {err}")
             return []
@@ -219,31 +306,13 @@ class ApiToken(OktaService):
 
     async def _fetch_known_network_zone_ids(self) -> set[str]:
         identifiers: set[str] = set()
-        try:
-            items, err = await self._fetch_all_network_zones()
-        except ValidationError as ve:
-            # Upstream Okta SDK ↔ Management API schema drift: the SDK
-            # generates `EnhancedDynamicNetworkZoneAllOfAsnsInclude` as an
-            # object-shaped pydantic model, but the API returns
-            # `asns.include` as a JSON array (typically `[]`), so pydantic
-            # rejects the whole zone list. Fall back to a raw-JSON fetch
-            # so the API-token zone-restriction check isn't blocked by an
-            # upstream SDK bug. Mirrors `application_service`'s raw
-            # `list_policy_rules` fallback. Should be removed (and ideally
-            # replaced with the shared `raw_fetch` helper introduced by
-            # PR #11496) once upstream fixes the SDK.
-            logger.warning(
-                f"Okta SDK raised ValidationError parsing Network Zones "
-                f"({ve.error_count()} error(s)) — falling back to raw-JSON "
-                "parse for API token zone validation."
-            )
-            return await self._fetch_known_network_zone_ids_raw()
+        items, err = await self._fetch_all_network_zones()
         if err is not None:
             logger.error(f"Error listing Network Zones for API token checks: {err}")
             return identifiers
         for zone in items:
-            zone_id = _value(getattr(zone, "id", None))
-            zone_name = _value(getattr(zone, "name", None))
+            zone_id = _raw_value(zone, "id")
+            zone_name = _raw_value(zone, "name")
             if zone_id:
                 identifiers.add(zone_id)
             if zone_name:
@@ -252,84 +321,56 @@ class ApiToken(OktaService):
 
     async def _fetch_all_network_zones(self) -> tuple[list, object]:
         """Drain all Network Zone pages for API token reference validation."""
-        return await self._paginate(
-            lambda after: self.client.list_network_zones(after=after, limit=200)
-        )
-
-    async def _fetch_known_network_zone_ids_raw(self) -> set[str]:
-        """Raw-JSON fallback for `list_network_zones`.
-
-        Drains `/api/v1/zones?limit=200` via the SDK request executor,
-        following the `Link: rel="next"` cursor across pages so the
-        fallback doesn't silently truncate at the first page. Only the
-        `id` and `name` fields are read — enough to populate the lookup
-        set used by `apitoken_restricted_to_network_zone`.
-        """
-        identifiers: set[str] = set()
-        current_path = _set_query("/api/v1/zones", {"limit": "200"})
-        while True:
-            request, error = await self.client._request_executor.create_request(
-                method="GET",
-                url=current_path,
-                body=None,
-                headers={"Accept": "application/json"},
+        try:
+            return await self._paginate(
+                lambda after: self.client.list_network_zones(after=after, limit=200)
             )
-            if error is not None:
-                logger.error(
-                    f"Raw Network Zones fetch (create_request) failed: {error}"
-                )
-                return identifiers
+        except Exception as error:
+            logger.warning(
+                "Typed Okta SDK Network Zone listing failed for API token "
+                f"validation; falling back to raw SDK response: {error}"
+            )
+            return await self._fetch_all_network_zones_raw()
 
+    async def _fetch_all_network_zones_raw(self) -> tuple[list, object]:
+        """Drain Network Zone pages from the SDK raw response."""
+        serializer = getattr(self.client, "_list_network_zones_serialize", None)
+        if serializer is None:
+            return [], None
+        zones = []
+        after = None
+        while True:
+            method, url, headers, body, post_params = serializer(
+                after=after,
+                filter=None,
+                limit=200,
+                _request_auth=None,
+                _content_type=None,
+                _headers=None,
+                _host_index=0,
+            )
+            request, error = await self.client._request_executor.create_request(
+                method,
+                url,
+                body,
+                headers,
+                post_params if post_params else None,
+                keep_empty_params=False,
+            )
+            if error:
+                return zones, error
             response, response_body, error = (
                 await self.client._request_executor.execute(request)
             )
-            if error is not None:
-                logger.error(f"Raw Network Zones fetch (execute) failed: {error}")
-                return identifiers
-
-            if isinstance(response_body, (bytes, bytearray)):
-                try:
-                    response_body = response_body.decode("utf-8")
-                except UnicodeDecodeError as decode_err:
-                    logger.error(
-                        f"Could not decode Network Zones response: {decode_err}"
-                    )
-                    return identifiers
-            if not response_body:
+            if error:
+                return zones, error
+            raw_items = _json_body(response_body)
+            if isinstance(raw_items, list):
+                zones.extend(raw_items)
+            after = _next_after_cursor(response)
+            if not after:
                 break
-            try:
-                zones_data = json.loads(response_body)
-            except json.JSONDecodeError as decode_err:
-                logger.error(f"Could not parse Network Zones JSON: {decode_err}")
-                return identifiers
-
-            if not isinstance(zones_data, list):
-                logger.error(
-                    f"Unexpected raw Network Zones payload shape: "
-                    f"got {type(zones_data).__name__}, expected list"
-                )
-                return identifiers
-
-            for zone_dict in zones_data:
-                if not isinstance(zone_dict, dict):
-                    continue
-                zone_id = zone_dict.get("id")
-                zone_name = zone_dict.get("name")
-                if zone_id:
-                    identifiers.add(str(zone_id))
-                if zone_name:
-                    identifiers.add(str(zone_name))
-
-            cursor = _next_after_cursor(response)
-            if not cursor:
-                break
-            # `_next_after_cursor` URL-decodes via `parse_qs`; `_set_query`
-            # delegates to `urlencode`, which re-quotes the cursor so it
-            # round-trips correctly through any opaque characters.
-            current_path = _set_query(
-                "/api/v1/zones", {"limit": "200", "after": cursor}
-            )
-        return identifiers
+        return zones, None
 
     @staticmethod
     async def _paginate(fetch) -> tuple[list, object]:
@@ -350,14 +391,6 @@ class ApiToken(OktaService):
                 return all_items, err
             all_items.extend(items)
         return all_items, None
-
-
-def _set_query(path: str, params: dict) -> str:
-    """Return `path` with the given query params merged in (overriding existing)."""
-    parsed = urlparse(path)
-    qs = dict(parse_qsl(parsed.query))
-    qs.update({k: v for k, v in params.items() if v is not None})
-    return urlunparse(parsed._replace(query=urlencode(qs)))
 
 
 class OktaApiToken(BaseModel):

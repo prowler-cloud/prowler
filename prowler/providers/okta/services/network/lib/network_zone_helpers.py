@@ -51,14 +51,18 @@ def compliant_anonymized_proxy_blocklist(
     """Find the Network Zone that satisfies anonymized-proxy blocklisting."""
     for zone in active_blocklist_zones(network_zones):
         if is_ip_blocklist_with_entries(zone):
-            return zone, "active IP blocklist with gateway or proxy IP entries"
+            return (
+                zone,
+                "active manual IP blocklist with gateway or proxy IP entries; "
+                "Prowler cannot verify full anonymizer coverage for static entries",
+            )
         if is_enhanced_dynamic_anonymizer_blocklist(zone):
             return zone, "active Enhanced Dynamic Zone blocklist for anonymizers"
     return None, ""
 
 
 _SCOPE_ADVICE = (
-    "Grant it on the service app's Okta API Scopes tab in the Okta Admin "
+    "Grant it on the Okta API Scopes tab of the service app in the Okta Admin "
     "Console, then re-run the check."
 )
 

@@ -1,21 +1,23 @@
 import atexit
 import logging
 import threading
+
 from contextlib import contextmanager
 from typing import Any, Iterator
 from uuid import UUID
 
 import neo4j
 import neo4j.exceptions
+
 from config.env import env
 from django.conf import settings
+
+from api.attack_paths.retryable_session import RetryableSession
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     PROVIDER_RESOURCE_LABEL,
     get_provider_label,
 )
-
-from api.attack_paths.retryable_session import RetryableSession
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
@@ -28,6 +30,9 @@ READ_QUERY_TIMEOUT_SECONDS = env.int(
     "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
 )
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
+# Shorter than CONN_ACQUISITION_TIMEOUT — the driver requires acquisition to be
+# the longer of the two (it may include opening a new connection).
+CONNECTION_TIMEOUT = env.int("NEO4J_CONNECTION_TIMEOUT", default=5)
 CONN_ACQUISITION_TIMEOUT = env.int("NEO4J_CONN_ACQUISITION_TIMEOUT", default=15)
 READ_EXCEPTION_CODES = [
     "Neo.ClientError.Statement.AccessMode",
@@ -58,15 +63,24 @@ def init_driver() -> neo4j.Driver:
             uri = get_uri()
             config = settings.DATABASES["neo4j"]
 
-            _driver = neo4j.GraphDatabase.driver(
+            driver = neo4j.GraphDatabase.driver(
                 uri,
                 auth=(config["USER"], config["PASSWORD"]),
                 keep_alive=True,
                 max_connection_lifetime=7200,
+                connection_timeout=CONNECTION_TIMEOUT,
                 connection_acquisition_timeout=CONN_ACQUISITION_TIMEOUT,
                 max_connection_pool_size=50,
             )
-            _driver.verify_connectivity()
+            # Publish the singleton only after connectivity is verified so a
+            # failed probe does not leave an unverified driver behind. Close the
+            # driver on failure so a repeatedly-probed outage cannot leak pools.
+            try:
+                driver.verify_connectivity()
+            except Exception:
+                driver.close()
+                raise
+            _driver = driver
 
             # Register cleanup handler (only runs once since we're inside the _driver is None block)
             atexit.register(close_driver)

@@ -52,7 +52,8 @@ class Test_network_zone_block_anonymized_proxies:
         assert len(findings) == 1
         assert findings[0].status == "PASS"
         assert findings[0].resource_id == zone.id
-        assert "gateway" in findings[0].status_extended
+        assert "manual IP blocklist" in findings[0].status_extended
+        assert "cannot verify full anonymizer coverage" in findings[0].status_extended
 
     def test_pass_with_active_enhanced_dynamic_anonymizer_blocklist(self):
         zone = network_zone(
