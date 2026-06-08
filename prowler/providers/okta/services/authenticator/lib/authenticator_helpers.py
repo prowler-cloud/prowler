@@ -5,7 +5,7 @@ from prowler.providers.okta.services.authenticator.authenticator_service import 
 )
 
 _SCOPE_ADVICE = (
-    "Grant it on the service app's Okta API Scopes tab in the Okta Admin "
+    "Grant it on the Okta API Scopes tab of the service app in the Okta Admin "
     "Console, then re-run the check."
 )
 

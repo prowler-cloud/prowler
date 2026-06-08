@@ -6,7 +6,7 @@ from prowler.providers.okta.services.authenticator.authenticator_service import 
 )
 
 _SCOPE_ADVICE = (
-    "Grant it on the service app's Okta API Scopes tab in the Okta Admin "
+    "Grant it on the Okta API Scopes tab of the service app in the Okta Admin "
     "Console, then re-run the check."
 )
 
@@ -31,7 +31,7 @@ def active_password_policies(
 def password_policy_label(policy: PasswordPolicy) -> str:
     kind = "default" if policy.is_default else "custom"
     priority = policy.priority if policy.priority is not None else "unset"
-    return f"Password Policy '{policy.name}' (priority {priority}, {kind})"
+    return f"Password Policy {policy.name} (priority {priority}, {kind})"
 
 
 def no_active_password_policies_finding(
