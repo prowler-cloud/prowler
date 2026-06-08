@@ -44,4 +44,17 @@ describe("Button", () => {
       "size-7",
     );
   });
+
+  it("renders the bare variant chrome-free (no background or border)", () => {
+    render(
+      <Button variant="bare" size="icon-sm" aria-label="Toggle sidebar">
+        <svg />
+      </Button>,
+    );
+
+    const button = screen.getByRole("button", { name: "Toggle sidebar" });
+    expect(button).toHaveClass("bg-transparent");
+    expect(button).toHaveClass("border-0");
+    expect(button).toHaveClass("p-0");
+  });
 });
