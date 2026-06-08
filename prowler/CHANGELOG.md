@@ -14,7 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `elbv2_alb_drop_invalid_header_fields_enabled` check for AWS provider, verifying Application Load Balancers have `routing.http.drop_invalid_header_fields.enabled` set to `true` to mitigate HTTP desync attacks (AWS FSBP ELB.4) [(#11471)](https://github.com/prowler-cloud/prowler/pull/11471)
 - `user`, `systemlog` and `idp` service for Okta provider with `user_inactivity_automation_35d_enabled`, `systemlog_streaming_enabled` and `idp_smart_card_dod_approved_ca` checks [(#11496)](https://github.com/prowler-cloud/prowler/pull/11496)
 - External multi-provider compliance frameworks can be registered via the `prowler.compliance.universal` entry point group [(#11490)](https://github.com/prowler-cloud/prowler/pull/11490)
-- Dashboard renders compliance frameworks from dynamically-discovered (entry-point) providers via a generic fallback renderer; unknown compliance modules now produce a data-readable view instead of "No data found for this compliance"
+- Dashboard renders compliance frameworks from dynamically-discovered (entry-point) providers via a generic fallback renderer; unknown compliance modules now produce a data-readable view instead of "No data found for this compliance" [(#11503)](https://github.com/prowler-cloud/prowler/pull/11503)
 
 ### 🐞 Fixed
 
