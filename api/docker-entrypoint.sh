@@ -68,6 +68,10 @@ manage_db_partitions() {
   fi
 }
 
+# Identify this process to Postgres (application_name=<component>:<alias>) so
+# connections are attributable in pg_stat_activity / Performance Insights.
+export DJANGO_APP_COMPONENT="$1"
+
 case "$1" in
   dev)
     apply_migrations
