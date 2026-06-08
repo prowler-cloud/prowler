@@ -21,6 +21,8 @@ def set_mocked_okta_provider(
                 "okta.brands.read",
                 "okta.apps.read",
                 "okta.networkZones.read",
+                "okta.logStreams.read",
+                "okta.idps.read",
             ],
             private_key=OKTA_PRIVATE_KEY,
         )
@@ -33,6 +35,8 @@ def set_mocked_okta_provider(
                 "okta.brands.read",
                 "okta.apps.read",
                 "okta.networkZones.read",
+                "okta.logStreams.read",
+                "okta.idps.read",
             ],
         )
 

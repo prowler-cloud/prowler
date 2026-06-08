@@ -37,6 +37,8 @@ DEFAULT_SCOPES = [
     "okta.brands.read",
     "okta.apps.read",
     "okta.networkZones.read",
+    "okta.logStreams.read",
+    "okta.idps.read",
 ]
 # Accept only Okta-managed domains. Custom (vanity) domains are rejected on
 # purpose — they're a recurring source of typos and silent misconfig and
