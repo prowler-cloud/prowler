@@ -18,7 +18,7 @@ export function ContentLayout({
   return (
     <>
       <Navbar title={title} icon={icon} onboardingAction={onboardingAction} />
-      <div className="px-6 py-4 sm:px-8">{children}</div>
+      <div className="py-4 pr-6">{children}</div>
     </>
   );
 }

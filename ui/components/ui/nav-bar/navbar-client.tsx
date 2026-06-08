@@ -66,7 +66,7 @@ export function NavbarClient({
 
   return (
     <header className="sticky top-0 z-10 w-full pt-4 backdrop-blur-sm">
-      <div className="mx-4 flex h-14 items-center sm:mx-8">
+      <div className="flex h-14 items-center pr-6">
         <div className="flex items-center gap-2">
           <SheetMenu />
           <div className="hidden lg:block">
