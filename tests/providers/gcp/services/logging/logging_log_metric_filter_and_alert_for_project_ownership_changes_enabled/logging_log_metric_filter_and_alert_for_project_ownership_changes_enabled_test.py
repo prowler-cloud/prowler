@@ -431,7 +431,7 @@ class Test_logging_log_metric_filter_and_alert_for_project_ownership_changes_ena
             )
 
             logging_client.region = GCP_EU1_LOCATION
-            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.project_ids = [GCP_PROJECT_ID, "central-logging-project"]
             logging_client.projects = {
                 GCP_PROJECT_ID: GCPProject(
                     id=GCP_PROJECT_ID,
@@ -520,7 +520,7 @@ class Test_logging_log_metric_filter_and_alert_for_project_ownership_changes_ena
             )
 
             logging_client.region = GCP_EU1_LOCATION
-            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.project_ids = [GCP_PROJECT_ID, "central-logging-project"]
             logging_client.projects = {
                 GCP_PROJECT_ID: GCPProject(
                     id=GCP_PROJECT_ID,

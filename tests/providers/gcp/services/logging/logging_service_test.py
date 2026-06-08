@@ -190,6 +190,7 @@ class TestGetProjectsCoveredByAggregatedMetric:
         include_children=True,
         bucket_name=None,
         sink_destination=None,
+        sink_filter="all",
         with_alert=True,
         project_org_id=None,
     ):
@@ -234,7 +235,7 @@ class TestGetProjectsCoveredByAggregatedMetric:
             Sink(
                 name="org-sink",
                 destination=sink_destination,
-                filter="all",
+                filter=sink_filter,
                 project_id=f"organizations/{self.ORG}",
                 include_children=include_children,
             )
@@ -282,6 +283,12 @@ class TestGetProjectsCoveredByAggregatedMetric:
 
     def test_not_covered_when_sink_not_include_children(self):
         logging_client, monitoring_client = self._clients(include_children=False)
+        assert self._run(logging_client, monitoring_client) == {}
+
+    def test_not_covered_when_sink_filter_is_restrictive(self):
+        logging_client, monitoring_client = self._clients(
+            sink_filter='resource.type="gce_instance"'
+        )
         assert self._run(logging_client, monitoring_client) == {}
 
     def test_not_covered_when_sink_destination_bucket_differs(self):

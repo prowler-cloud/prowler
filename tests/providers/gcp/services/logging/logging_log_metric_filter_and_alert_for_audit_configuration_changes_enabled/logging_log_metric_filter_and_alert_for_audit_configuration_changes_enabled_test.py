@@ -299,8 +299,7 @@ class Test_logging_log_metric_filter_and_alert_for_audit_configuration_changes_e
             )
 
             logging_client.region = GCP_EU1_LOCATION
-            # Only the CHILD project is scanned; the central metric lives elsewhere.
-            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.project_ids = [GCP_PROJECT_ID, "central-logging-project"]
             logging_client.projects = {
                 GCP_PROJECT_ID: GCPProject(
                     id=GCP_PROJECT_ID,
@@ -313,7 +312,7 @@ class Test_logging_log_metric_filter_and_alert_for_audit_configuration_changes_e
                     ),
                 )
             }
-            # Bucket-scoped central metric, in the logging project (not scanned here).
+            # Bucket-scoped central metric, in the scanned logging project.
             logging_client.metrics = [
                 Metric(
                     name="central-audit-config-metric",
@@ -391,7 +390,7 @@ class Test_logging_log_metric_filter_and_alert_for_audit_configuration_changes_e
             )
 
             logging_client.region = GCP_EU1_LOCATION
-            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.project_ids = [GCP_PROJECT_ID, "central-logging-project"]
             logging_client.projects = {
                 GCP_PROJECT_ID: GCPProject(
                     id=GCP_PROJECT_ID,

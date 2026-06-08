@@ -155,6 +155,8 @@ def get_projects_covered_by_aggregated_metric(
     for sink in logging_client.sinks:
         if not getattr(sink, "include_children", False):
             continue
+        if getattr(sink, "filter", "all") != "all":
+            continue
         for bucket, metric_name in bucket_to_metric.items():
             # sink.destination e.g. "logging.googleapis.com/projects/.../buckets/X";
             # metric.bucket_name e.g. "projects/.../buckets/X".
