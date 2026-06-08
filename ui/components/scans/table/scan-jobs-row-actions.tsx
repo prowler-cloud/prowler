@@ -170,6 +170,18 @@ export function ScanJobsRowActions({
   return (
     <div className="flex items-center justify-end">
       <ActionDropdown>
+        {canEditSchedule && (
+          <ActionDropdownItem
+            icon={<CalendarClock />}
+            label="Edit Scan Schedule"
+            onSelect={() => void openScheduleEditor()}
+          />
+        )}
+        <ActionDropdownItem
+          icon={<Pencil />}
+          label="Edit Scan Alias"
+          onSelect={() => setEditOpen(true)}
+        />
         {isCompleted && (
           <>
             <ActionDropdownItem
@@ -195,19 +207,6 @@ export function ScanJobsRowActions({
             icon={<TriangleAlert />}
             label="View error details"
             onSelect={() => void openErrorDetails()}
-          />
-        )}
-        {/* TODO: Expand Edit to also cover schedule once the backend exposes a schedule update endpoint. */}
-        <ActionDropdownItem
-          icon={<Pencil />}
-          label="Edit"
-          onSelect={() => setEditOpen(true)}
-        />
-        {canEditSchedule && (
-          <ActionDropdownItem
-            icon={<CalendarClock />}
-            label="Edit Scan Schedule"
-            onSelect={() => void openScheduleEditor()}
           />
         )}
         {/* TODO: Restore Cancel Scan once the backend exposes a public scan cancellation endpoint. */}

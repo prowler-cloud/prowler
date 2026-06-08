@@ -142,11 +142,19 @@ export function LaunchStep({
       const scanResult = await launchOnDemandScan();
 
       if (scanResult?.error) {
+        // Partial success: the schedule persisted but the initial scan did not launch.
         setIsLaunching(false);
+        onClose();
         toast({
-          variant: "destructive",
           title: "Scan schedule saved",
-          description: `Initial scan failed: ${String(scanResult.error)}`,
+          description: `The schedule was saved, but the initial scan could not be launched: ${String(scanResult.error)}`,
+          action: (
+            <ToastAction altText="Go to scans" asChild>
+              <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>
+                Go to scans
+              </Link>
+            </ToastAction>
+          ),
         });
         return;
       }

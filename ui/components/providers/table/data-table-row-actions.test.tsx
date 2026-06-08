@@ -10,9 +10,16 @@ import {
   ProvidersTableRow,
 } from "@/types/providers-table";
 
-const { checkConnectionProviderMock, getScheduleMock } = vi.hoisted(() => ({
-  checkConnectionProviderMock: vi.fn(),
-  getScheduleMock: vi.fn(),
+const { checkConnectionProviderMock, getScheduleMock, pushMock } = vi.hoisted(
+  () => ({
+    checkConnectionProviderMock: vi.fn(),
+    getScheduleMock: vi.fn(),
+    pushMock: vi.fn(),
+  }),
+);
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock }),
 }));
 
 vi.mock("@/actions/organizations/organizations", () => ({
@@ -213,6 +220,62 @@ describe("DataTableRowActions", () => {
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("Delete Provider")).toBeInTheDocument();
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+  });
+
+  it("navigates to the provider-filtered scan jobs from View Scan Jobs", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("View Scan Jobs"));
+
+    // Then: navigates with the key the scans filter bar binds to
+    // (provider_uid__in), URL-encoded, so the provider is pre-selected.
+    expect(pushMock).toHaveBeenCalledWith(
+      "/scans?filter%5Bprovider_uid__in%5D=111111111111",
+    );
+  });
+
+  it("URL-encodes provider UIDs that contain unsafe characters (e.g. GitHub)", async () => {
+    // Given a GitHub provider whose UID is a URL.
+    const user = userEvent.setup();
+    const row = createRow(true);
+    (
+      row.original as unknown as { attributes: { uid: string } }
+    ).attributes.uid = "https://github.com/prowler-cloud/prowler";
+
+    render(
+      <DataTableRowActions
+        row={row}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("View Scan Jobs"));
+
+    // Then the ':' and '/' are encoded instead of leaking into the URL raw.
+    expect(pushMock).toHaveBeenCalledWith(
+      "/scans?filter%5Bprovider_uid__in%5D=https%3A%2F%2Fgithub.com%2Fprowler-cloud%2Fprowler",
+    );
   });
 
   it("opens Edit Scan Schedule for Prowler Cloud subscribed provider rows", async () => {

@@ -1,7 +1,15 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { CalendarClock, KeyRound, Pencil, Rocket, Trash2 } from "lucide-react";
+import {
+  CalendarClock,
+  KeyRound,
+  Pencil,
+  Rocket,
+  Timer,
+  Trash2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
@@ -234,6 +242,7 @@ export function DataTableRowActions({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const rowData = row.original;
   const isOrganizationRow = isProvidersOrganizationRow(rowData);
@@ -447,6 +456,20 @@ export function DataTableRowActions({
             icon={<Pencil />}
             label="Edit Provider Alias"
             onSelect={() => setIsEditOpen(true)}
+          />
+          <ActionDropdownItem
+            icon={<Timer />}
+            label="View Scan Jobs"
+            onSelect={() => {
+              // Use the same key the scans filter bar binds to
+              // (`provider_uid__in`) so the provider is pre-selected in the UI,
+              // and URLSearchParams to encode UIDs that contain URL-unsafe chars
+              // (e.g. GitHub UIDs like https://github.com/org/repo).
+              const params = new URLSearchParams({
+                "filter[provider_uid__in]": providerUid,
+              });
+              router.push(`/scans?${params.toString()}`);
+            }}
           />
           {canEditSchedule && (
             <ActionDropdownItem
