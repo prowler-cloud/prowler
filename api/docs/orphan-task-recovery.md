@@ -17,9 +17,10 @@ watchdog covers the summary/aggregation and deletion tasks.
    before it is force-killed. `scan-perform`, `scan-perform-scheduled` and
    `integration-jira` opt out of redelivery with `acks_late=False`, so a crash drops
    them rather than re-running and duplicating findings or Jira issues. Other
-   non-recovered side-effect tasks keep `acks_late=True`; a redelivery there rebuilds
-   from worker-local state that did not survive the crash, so it no-ops instead of
-   duplicating.
+   non-recovered side-effect tasks keep `acks_late=True`, so the broker can still
+   re-deliver them after a worker loss: the S3 upload rebuilds from worker-local files
+   that did not survive the crash and so no-ops, but Security Hub re-reads findings from
+   the DB and re-sends them to AWS.
 
 2. **Periodic watchdog.** A Beat task, `reconcile-orphan-tasks`, runs every couple of
    minutes (a `django_celery_beat` periodic task created by migration). For each
@@ -77,6 +78,10 @@ Recovery is opt-in: with the master flag off (the default) the sweep does nothin
 Once enabled, the per-group flags default to on, so every group recovers unless you
 turn one off; a task whose group flag is off is marked terminal instead of
 re-enqueued.
+
+Turning recovery off only disables this watchdog sweep; it does not change Celery's
+broker-level redelivery (`task_acks_late`/`task_reject_on_worker_lost`), which still
+re-delivers tasks that keep `acks_late=True` on worker loss, independently of this flag.
 
 `task_acks_late` and `task_reject_on_worker_lost` are enabled in `config/celery.py`.
 

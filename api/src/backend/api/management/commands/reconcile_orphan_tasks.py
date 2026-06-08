@@ -40,10 +40,13 @@ class Command(BaseCommand):
             return
 
         if result.get("enabled") is False:
-            self.stdout.write(
+            message = (
                 "Task recovery is disabled (DJANGO_TASK_RECOVERY_ENABLED is off); "
                 "no orphans were recovered."
             )
+            if result.get("attack_paths") is not None:
+                message += " Attack-paths stale cleanup still ran."
+            self.stdout.write(message)
             return
 
         self.stdout.write(
