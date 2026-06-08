@@ -14,6 +14,7 @@ import { toast } from "@/components/ui/toast";
 import {
   buildScheduleUpdatePayload,
   getScheduleFormValues,
+  isScheduleConfigured,
   scheduleFormSchema,
 } from "@/lib/schedules";
 import type { ProviderType, ScheduleProps } from "@/types";
@@ -65,7 +66,9 @@ function EditScanScheduleForm({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: getScheduleFormValues(schedule?.attributes),
   });
-  const hasSchedule = schedule?.attributes.scan_hour !== null;
+  const hasSchedule = schedule
+    ? isScheduleConfigured(schedule.attributes)
+    : false;
 
   const onSubmit = form.handleSubmit(async (values) => {
     const result = await updateSchedule(

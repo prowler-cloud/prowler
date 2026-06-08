@@ -1,6 +1,8 @@
 "use client";
 
+import { format } from "date-fns";
 import { CalendarClock } from "lucide-react";
+import type { ReactNode } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
 import {
@@ -14,7 +16,11 @@ import {
   SelectValue,
 } from "@/components/shadcn";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
-import { formatScheduleHour, getBrowserTimezone } from "@/lib/schedules";
+import {
+  formatScheduleHour,
+  getBrowserTimezone,
+  getNextScheduledRun,
+} from "@/lib/schedules";
 import { SCHEDULE_FREQUENCY, type ScheduleFormValues } from "@/types/schedules";
 
 const FREQUENCY_OPTIONS = [
@@ -57,12 +63,14 @@ interface ScanScheduleFieldsProps {
 
 function NumberSelect({
   label,
+  labelAddon,
   value,
   values,
   onChange,
   disabled,
 }: {
   label: string;
+  labelAddon?: ReactNode;
   value: number;
   values: ReadonlyArray<{ value: number; label: string }>;
   onChange: (value: number) => void;
@@ -70,7 +78,10 @@ function NumberSelect({
 }) {
   return (
     <Field>
-      <FieldLabel>{label}</FieldLabel>
+      <div className="flex items-center justify-between gap-2">
+        <FieldLabel>{label}</FieldLabel>
+        {labelAddon}
+      </div>
       <Select
         value={String(value)}
         onValueChange={(nextValue) => onChange(Number(nextValue))}
@@ -101,8 +112,15 @@ export function ScanScheduleFields({
 }: ScanScheduleFieldsProps) {
   const frequency = form.watch("frequency");
   const hour = form.watch("hour");
+  const dayOfWeek = form.watch("dayOfWeek");
+  const dayOfMonth = form.watch("dayOfMonth");
   const timezone = getBrowserTimezone();
-  const frequencyDisabled = disabled || !canUseAdvancedSchedule;
+  // In OSS (non-Cloud) the advanced cadence and time are locked: `/schedules/daily`
+  // ignores them, so they are display-only with a Cloud upsell.
+  const advancedDisabled = disabled || !canUseAdvancedSchedule;
+  const cloudUpgradeBadge = showCloudUpgradeBadge ? (
+    <CloudFeatureBadgeLink size="sm" />
+  ) : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -120,10 +138,11 @@ export function ScanScheduleFields({
           render={({ field }) => (
             <NumberSelect
               label="Scan Time"
+              labelAddon={cloudUpgradeBadge}
               value={field.value}
               values={HOUR_OPTIONS}
               onChange={field.onChange}
-              disabled={disabled}
+              disabled={advancedDisabled}
             />
           )}
         />
@@ -135,7 +154,7 @@ export function ScanScheduleFields({
             <Field>
               <div className="flex items-center justify-between gap-2">
                 <FieldLabel>Repeats</FieldLabel>
-                {showCloudUpgradeBadge && <CloudFeatureBadgeLink size="sm" />}
+                {cloudUpgradeBadge}
               </div>
               <Select
                 value={
@@ -144,7 +163,7 @@ export function ScanScheduleFields({
                     : SCHEDULE_FREQUENCY.DAILY
                 }
                 onValueChange={field.onChange}
-                disabled={frequencyDisabled}
+                disabled={advancedDisabled}
               >
                 <SelectTrigger aria-label="Repeats">
                   <SelectValue />
@@ -197,12 +216,30 @@ export function ScanScheduleFields({
         />
       )}
 
-      {showNextScheduledCopy && (
-        <p className="text-text-neutral-secondary text-sm">
-          The next scheduled scan will start on: MM/DD/YY @{" "}
-          {formatScheduleHour(hour)} {timezone}
-        </p>
-      )}
+      {showNextScheduledCopy &&
+        (canUseAdvancedSchedule ? (
+          <p className="text-text-neutral-secondary text-sm">
+            The next scheduled scan will start on:{" "}
+            {format(
+              getNextScheduledRun(
+                {
+                  frequency,
+                  hour,
+                  dayOfWeek,
+                  dayOfMonth,
+                  launchInitialScan: false,
+                },
+                new Date(),
+              ),
+              "MMM d, yyyy",
+            )}{" "}
+            @ {formatScheduleHour(hour)} {timezone}
+          </p>
+        ) : (
+          <p className="text-text-neutral-secondary text-sm">
+            A daily scan will run automatically once the account is connected.
+          </p>
+        ))}
 
       {showLaunchInitialScan && (
         <Controller

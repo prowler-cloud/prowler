@@ -2,12 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildScheduleUpdatePayload,
+  formatScheduleHour,
   getBrowserTimezone,
+  getNextScheduledRun,
   getScanScheduleCapability,
+  getScheduleFormValues,
+  isScheduleConfigured,
 } from "@/lib/schedules";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   SCHEDULE_FREQUENCY,
+  type ScheduleAttributes,
 } from "@/types/schedules";
 
 describe("schedule payload mapping", () => {
@@ -56,7 +61,7 @@ describe("schedule payload mapping", () => {
     const payload = buildScheduleUpdatePayload(values);
 
     // Then
-    expect(payload).toMatchObject({
+    expect(payload).toEqual({
       scan_enabled: true,
       scan_frequency: SCHEDULE_FREQUENCY.INTERVAL,
       scan_hour: 23,
@@ -67,7 +72,7 @@ describe("schedule payload mapping", () => {
     });
   });
 
-  it("maps weekly schedules with 0 as Sunday", () => {
+  it("maps weekly schedules with 0 as Sunday and clears interval/month", () => {
     // Given
     const values = {
       frequency: SCHEDULE_FREQUENCY.WEEKLY,
@@ -81,15 +86,18 @@ describe("schedule payload mapping", () => {
     const payload = buildScheduleUpdatePayload(values);
 
     // Then
-    expect(payload).toMatchObject({
+    expect(payload).toEqual({
+      scan_enabled: true,
       scan_frequency: SCHEDULE_FREQUENCY.WEEKLY,
-      scan_day_of_week: 0,
+      scan_hour: 6,
+      scan_timezone: "Europe/Madrid",
       scan_interval_hours: null,
+      scan_day_of_week: 0,
       scan_day_of_month: null,
     });
   });
 
-  it("maps monthly schedules with day of month from 1 to 28", () => {
+  it("maps monthly schedules and keeps scan_hour 0 (not falsy-coerced)", () => {
     // Given
     const values = {
       frequency: SCHEDULE_FREQUENCY.MONTHLY,
@@ -103,12 +111,203 @@ describe("schedule payload mapping", () => {
     const payload = buildScheduleUpdatePayload(values);
 
     // Then
-    expect(payload).toMatchObject({
+    expect(payload).toEqual({
+      scan_enabled: true,
       scan_frequency: SCHEDULE_FREQUENCY.MONTHLY,
-      scan_day_of_month: 28,
+      scan_hour: 0,
+      scan_timezone: "Europe/Madrid",
       scan_interval_hours: null,
       scan_day_of_week: null,
+      scan_day_of_month: 28,
     });
+  });
+});
+
+describe("formatScheduleHour", () => {
+  it.each([
+    [0, "12:00am"],
+    [12, "12:00pm"],
+    [13, "1:00pm"],
+    [23, "11:00pm"],
+    [-1, "11:00pm"],
+    [24, "12:00am"],
+  ])("formats hour %i as %s", (hour, expected) => {
+    expect(formatScheduleHour(hour)).toBe(expected);
+  });
+});
+
+describe("isScheduleConfigured", () => {
+  it("treats a null scan_hour as not configured", () => {
+    expect(isScheduleConfigured({ scan_hour: null })).toBe(false);
+  });
+
+  it("treats scan_hour 0 (midnight) as configured", () => {
+    expect(isScheduleConfigured({ scan_hour: 0 })).toBe(true);
+  });
+
+  it("treats a set scan_hour as configured", () => {
+    expect(isScheduleConfigured({ scan_hour: 14 })).toBe(true);
+  });
+});
+
+describe("getScheduleFormValues", () => {
+  const buildAttributes = (
+    overrides: Partial<ScheduleAttributes> = {},
+  ): ScheduleAttributes => ({
+    scan_enabled: true,
+    scan_frequency: SCHEDULE_FREQUENCY.WEEKLY,
+    scan_hour: 9,
+    scan_timezone: "Europe/Madrid",
+    scan_interval_hours: null,
+    scan_day_of_week: 4,
+    scan_day_of_month: 20,
+    ...overrides,
+  });
+
+  it("returns defaults when there is no schedule", () => {
+    expect(getScheduleFormValues(null)).toEqual({
+      frequency: SCHEDULE_FREQUENCY.DAILY,
+      hour: 0,
+      dayOfWeek: 1,
+      dayOfMonth: 1,
+      launchInitialScan: false,
+    });
+  });
+
+  it("returns defaults when scan_hour is null (unconfigured provider)", () => {
+    expect(getScheduleFormValues(buildAttributes({ scan_hour: null }))).toEqual(
+      {
+        frequency: SCHEDULE_FREQUENCY.DAILY,
+        hour: 0,
+        dayOfWeek: 1,
+        dayOfMonth: 1,
+        launchInitialScan: false,
+      },
+    );
+  });
+
+  it("maps a configured schedule onto the form", () => {
+    expect(getScheduleFormValues(buildAttributes())).toEqual({
+      frequency: SCHEDULE_FREQUENCY.WEEKLY,
+      hour: 9,
+      dayOfWeek: 4,
+      dayOfMonth: 20,
+      launchInitialScan: false,
+    });
+  });
+
+  it("falls back to default day fields when the schedule leaves them null", () => {
+    const values = getScheduleFormValues(
+      buildAttributes({ scan_day_of_week: null, scan_day_of_month: null }),
+    );
+    expect(values.dayOfWeek).toBe(1);
+    expect(values.dayOfMonth).toBe(1);
+  });
+});
+
+describe("getNextScheduledRun", () => {
+  const baseValues = {
+    frequency: SCHEDULE_FREQUENCY.DAILY,
+    hour: 14,
+    dayOfWeek: 5,
+    dayOfMonth: 15,
+    launchInitialScan: false,
+  };
+  // Wednesday 2026-06-10 10:30 local.
+  const now = new Date(2026, 5, 10, 10, 30, 0, 0);
+
+  const parts = (date: Date) => ({
+    year: date.getFullYear(),
+    month: date.getMonth(),
+    day: date.getDate(),
+    hour: date.getHours(),
+  });
+
+  it("DAILY: same day when the hour is still ahead", () => {
+    expect(
+      parts(getNextScheduledRun({ ...baseValues, hour: 14 }, now)),
+    ).toEqual({ year: 2026, month: 5, day: 10, hour: 14 });
+  });
+
+  it("DAILY: next day when the hour already passed", () => {
+    expect(parts(getNextScheduledRun({ ...baseValues, hour: 8 }, now))).toEqual(
+      {
+        year: 2026,
+        month: 5,
+        day: 11,
+        hour: 8,
+      },
+    );
+  });
+
+  it("INTERVAL: now + 48h", () => {
+    const next = getNextScheduledRun(
+      { ...baseValues, frequency: SCHEDULE_FREQUENCY.INTERVAL },
+      now,
+    );
+    expect(next.getTime()).toBe(now.getTime() + 48 * 60 * 60 * 1000);
+  });
+
+  it("WEEKLY: advances to the target weekday this week", () => {
+    expect(
+      parts(
+        getNextScheduledRun(
+          {
+            ...baseValues,
+            frequency: SCHEDULE_FREQUENCY.WEEKLY,
+            dayOfWeek: 5,
+            hour: 9,
+          },
+          now,
+        ),
+      ),
+    ).toEqual({ year: 2026, month: 5, day: 12, hour: 9 });
+  });
+
+  it("WEEKLY: jumps a week when the target day/hour already passed today", () => {
+    expect(
+      parts(
+        getNextScheduledRun(
+          {
+            ...baseValues,
+            frequency: SCHEDULE_FREQUENCY.WEEKLY,
+            dayOfWeek: 3,
+            hour: 8,
+          },
+          now,
+        ),
+      ),
+    ).toEqual({ year: 2026, month: 5, day: 17, hour: 8 });
+  });
+
+  it("MONTHLY: this month when the day is still ahead", () => {
+    expect(
+      parts(
+        getNextScheduledRun(
+          {
+            ...baseValues,
+            frequency: SCHEDULE_FREQUENCY.MONTHLY,
+            dayOfMonth: 15,
+          },
+          now,
+        ),
+      ),
+    ).toEqual({ year: 2026, month: 5, day: 15, hour: 14 });
+  });
+
+  it("MONTHLY: next month when the day already passed", () => {
+    expect(
+      parts(
+        getNextScheduledRun(
+          {
+            ...baseValues,
+            frequency: SCHEDULE_FREQUENCY.MONTHLY,
+            dayOfMonth: 5,
+          },
+          now,
+        ),
+      ),
+    ).toEqual({ year: 2026, month: 6, day: 5, hour: 14 });
   });
 });
 
