@@ -20,7 +20,7 @@ from py_ocsf_models.objects.analytic import Analytic
 from py_ocsf_models.objects.cloud import Cloud
 from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
-from py_ocsf_models.objects.mitre_attack import MITREAttack, Tactic, Technique
+from py_ocsf_models.objects.mitre_attack import MITREAttack
 from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
@@ -28,7 +28,7 @@ from py_ocsf_models.objects.resource_details import ResourceDetails
 from pydantic.v1 import BaseModel as V1BaseModel
 
 from prowler.config.config import prowler_version
-from prowler.lib.outputs.ocsf.ocsf import OCSF, _load_mitre_technique_map
+from prowler.lib.outputs.ocsf.ocsf import OCSF
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
 
