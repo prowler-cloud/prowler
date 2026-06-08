@@ -251,4 +251,45 @@ def test_admincenter__get_groups_maps_group_types():
     assert groups["id-1"].group_types == ["Unified"]
     assert groups["id-2"].group_types == []
     assert groups["id-3"].group_types == []
-    assert groups["id-3"].visibility == "Public"
+    assert groups["id-3"].visibility == "Public" 
+
+def test_admincenter__get_groups_paginates():
+    admincenter_service = AdminCenter.__new__(AdminCenter)
+
+    page1 = SimpleNamespace(
+        value=[
+            SimpleNamespace(
+                id="id-1",
+                display_name="Group 1",
+                visibility="Public",
+                group_types=["Unified"],
+            )
+        ],
+        odata_next_link="https://graph.microsoft.com/v1.0/groups?$skiptoken=abc",
+    )
+    page2 = SimpleNamespace(
+        value=[
+            SimpleNamespace(
+                id="id-2",
+                display_name="Group 2",
+                visibility="Private",
+                group_types=[],
+            )
+        ],
+        odata_next_link=None,
+    )
+
+    mock_with_url = SimpleNamespace(get=AsyncMock(return_value=page2))
+
+    admincenter_service.client = SimpleNamespace(
+        groups=SimpleNamespace(
+            get=AsyncMock(return_value=page1),
+            with_url=MagicMock(return_value=mock_with_url),
+        )
+    )
+
+    groups = asyncio.run(admincenter_service._get_groups())
+
+    assert len(groups) == 2
+    assert "id-1" in groups
+    assert "id-2" in groups
