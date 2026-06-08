@@ -5,9 +5,7 @@ import {
   type TourStepHandlers,
 } from "./tour-types";
 
-// The literal targets this tour anchors, as a const map. `defineTour<...>`
-// preserves the union so `useDriverTour` can validate `stepHandlers` keys and
-// `waitForStep` arguments against exactly these values.
+// Const map keeps the union narrow so `useDriverTour` can validate step keys.
 export const ADD_PROVIDER_TOUR_TARGETS = {
   TRIGGER: "trigger",
   PROVIDER_TYPE: "provider-type",
@@ -19,12 +17,9 @@ export type AddProviderTourTarget =
 export const addProviderTour = defineTour<AddProviderTourTarget>({
   id: "add-provider",
   version: 1,
-  // Scopes the `tour:check` / `prowler-tour` drift check to the providers tree
-  // where the `trigger` and `provider-type` anchors live.
   coversFiles: ["ui/components/providers/**"],
   steps: [
     {
-      // Modal welcome step — no `target`, rendered as a centered popover.
       title: "Connect your first provider",
       description:
         "Prowler scans the cloud accounts you connect. Let's walk through adding your first provider so scans have something to assess.",
@@ -48,13 +43,8 @@ export const addProviderTour = defineTour<AddProviderTourTarget>({
   ],
 });
 
-// Step handlers are intentionally NOT part of the `TourDefinition` (which is the
-// CI-scanned, serializable shape). They are passed to `useDriverTour` at
-// consumption time. The factory takes the imperative wizard-open callback the
-// providers page owns (finalized in Slice C) so the tour file stays free of
-// page-level plumbing. The `trigger` step opens the wizard, then waits for the
-// `provider-type` anchor to mount before advancing; `provider-type` is the last
-// anchored step and releases control back to the user on completion.
+// Step handlers are passed to `useDriverTour` at consumption time (not part of `TourDefinition`).
+// `trigger` opens the wizard and waits for `provider-type` to mount before advancing.
 export function createAddProviderTourStepHandlers(openWizard: () => void): {
   [K in AddProviderTourTarget]?: TourStepHandlers<AddProviderTourTarget>;
 } {

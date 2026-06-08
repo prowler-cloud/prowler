@@ -64,18 +64,14 @@ export type AttackPathsTourTarget = NonNullable<
   (typeof attackPathsTour.steps)[number]["target"]
 >;
 
-// The auto-demo policy below is intentionally generic and expected to evolve as
-// new providers/queries land. It lives in the tour layer (not the page) so the
-// "what does the guided run pick" decision can change without touching the page.
-
+// Demo-pick logic lives here so page code never decides what to auto-run.
 // Preferred demo query: well-known and usually returns findings.
 const PREFERRED_DEMO_QUERY_ID = "aws-iam-statements-allow-all-actions";
 
 const isReadyScan = (scan: AttackPathScan): boolean =>
   scan.attributes.graph_data_ready;
 
-// Predefined queries are AWS-only; prefer a ready AWS scan, then fall back to
-// any ready scan so the demo still advances on non-AWS-only tenants.
+// Prefer a ready AWS scan; fall back to any ready scan for non-AWS tenants.
 export function pickDemoScan(
   scans: readonly AttackPathScan[],
 ): AttackPathScan | undefined {
@@ -85,8 +81,7 @@ export function pickDemoScan(
   return preferredAws ?? scans.find(isReadyScan);
 }
 
-// The demo query must run with no further input: skip Custom (needs Cypher) and
-// any query with required parameters, then fall back to any parameter-free query.
+// Runnable = no required params and not Custom (needs manual Cypher).
 export function pickDemoQuery(
   queries: readonly AttackPathQuery[],
 ): AttackPathQuery | undefined {

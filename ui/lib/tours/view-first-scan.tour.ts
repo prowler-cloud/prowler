@@ -4,9 +4,7 @@ import {
   TOUR_STEP_SIDES,
 } from "./tour-types";
 
-// The literal targets this tour anchors, as a const map. `defineTour<...>`
-// preserves the union so `useDriverTour` can validate `stepHandlers` keys and
-// `waitForStep` arguments against exactly these values.
+// Const map keeps the union narrow so `useDriverTour` can validate step keys.
 export const VIEW_FIRST_SCAN_TOUR_TARGETS = {
   LAUNCH: "launch",
   TABS: "tabs",
@@ -18,12 +16,9 @@ export type ViewFirstScanTourTarget =
 export const viewFirstScanTour = defineTour<ViewFirstScanTourTarget>({
   id: "view-first-scan",
   version: 1,
-  // Scopes the `tour:check` / `prowler-tour` drift check to the scans route and
-  // component trees where the `launch` and `tabs` anchors live.
   coversFiles: ["ui/app/(prowler)/scans/**", "ui/components/scans/**"],
   steps: [
     {
-      // Modal welcome step — no `target`, rendered as a centered popover.
       title: "This is Scan Jobs",
       description:
         "Scan Jobs is where you run and track scans against your connected providers.",

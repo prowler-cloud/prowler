@@ -10,8 +10,7 @@ import {
   pickDemoScan,
 } from "../attack-paths.tour";
 
-// Only these step targets carry a `data-tour-id` in the page; modal steps have
-// no target. Keep in sync with the tour:check anchor gate.
+// Only these carry a `data-tour-id` in the page; keep in sync with tour:check.
 const ALLOWED_TARGETS = [
   "intro",
   "scan-list",

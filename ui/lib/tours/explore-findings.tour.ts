@@ -4,9 +4,7 @@ import {
   TOUR_STEP_SIDES,
 } from "./tour-types";
 
-// The literal targets this tour anchors, as a const map. `defineTour<...>`
-// preserves the union so `useDriverTour` can validate `stepHandlers` keys and
-// `waitForStep` arguments against exactly these values.
+// Const map keeps the union narrow so `useDriverTour` can validate step keys.
 export const EXPLORE_FINDINGS_TOUR_TARGETS = {
   FILTERS: "filters",
   TABLE: "table",
@@ -18,20 +16,15 @@ export type ExploreFindingsTourTarget =
 export const exploreFindingsTour = defineTour<ExploreFindingsTourTarget>({
   id: "explore-findings",
   version: 1,
-  // Scopes the `tour:check` / `prowler-tour` drift check to the findings route
-  // and component trees where the `filters` and `table` anchors live.
   coversFiles: ["ui/app/(prowler)/findings/**", "ui/components/findings/**"],
   steps: [
     {
-      // Modal welcome step — no `target`, rendered as a centered popover.
       title: "Explore your findings",
       description:
         "Findings are the issues Prowler detected across your scans, grouped so you can act on what matters most.",
     },
     {
-      // `filters` is anchored before `table`: the filter controls render
-      // immediately, while the table mounts after its Suspense boundary
-      // resolves, so this ordering keeps both anchors resolvable in turn.
+      // `filters` renders immediately; `table` waits on Suspense — order matters.
       target: "filters",
       side: TOUR_STEP_SIDES.BOTTOM,
       align: TOUR_STEP_ALIGNMENTS.START,
