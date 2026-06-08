@@ -35,12 +35,12 @@ Sentry.captureException(error, {
 ## Environment Variables
 
 Runtime environment variables (supplied to the running container; a single
-`WEB_APP_SENTRY_DSN` / `WEB_APP_SENTRY_ENVIRONMENT` now serves both server and
+`UI_SENTRY_DSN` / `UI_SENTRY_ENVIRONMENT` now serves both server and
 browser):
 
 ```env
-WEB_APP_SENTRY_DSN=https://YOUR_KEY@o0.ingest.sentry.io/0
-WEB_APP_SENTRY_ENVIRONMENT=production
+UI_SENTRY_DSN=https://YOUR_KEY@o0.ingest.sentry.io/0
+UI_SENTRY_ENVIRONMENT=production
 ```
 
 Build-time only (for source-map upload via `withSentryConfig`):

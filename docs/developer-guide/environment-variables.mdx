@@ -1,0 +1,53 @@
+---
+title: 'Environment Variable Naming Convention'
+---
+
+Prowler is a monorepo composed of several runtime components — Prowler App (the web user interface), Prowler API (the backend), Prowler SDK, and Prowler MCP Server (Model Context Protocol) — that frequently share a single `.env` file. To keep that shared configuration unambiguous, each component namespaces its environment variables with a component-specific prefix.
+
+## Component Prefixes
+
+Each component owns a dedicated prefix for the environment variables it reads:
+
+| Component | Prefix | Status |
+|-----------|--------|--------|
+| Prowler App (web UI) | `UI_` | Adopted |
+| Prowler API (backend) | `API_` | Planned |
+| Prowler SDK | `SDK_` | Planned |
+| Prowler MCP Server | `MCP_` | Planned |
+
+## Why Component Prefixes Matter
+
+Component prefixes solve three concrete problems in a shared configuration file:
+
+- **Collisions in a shared `.env`:** Several components historically read identically named variables. The API base URL, for example, is consumed by more than one component, so a single unprefixed name is ambiguous. A component prefix removes that ambiguity.
+- **Explicit ownership:** A prefix states, at a glance, which component consumes a variable.
+- **Reduced accidental exposure:** For Prowler App, scoping browser-facing configuration under one intentional prefix prevents server-only values from leaking into the client bundle.
+
+## Prowler App
+
+Prowler App has adopted the `UI_` prefix. Its public configuration is resolved from the container environment at runtime rather than inlined at build time, so a single pre-built image serves any deployment. For the operational details on changing these values without rebuilding the image, see [Troubleshooting](/troubleshooting).
+
+The former build-time variables map to the new runtime variables as follows:
+
+| Former variable | New variable |
+|-----------------|--------------|
+| `NEXT_PUBLIC_API_BASE_URL` | `UI_API_BASE_URL` |
+| `NEXT_PUBLIC_API_DOCS_URL` | `UI_API_DOCS_URL` |
+| `NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID` | `UI_GOOGLE_TAG_MANAGER_ID` |
+| `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN` | `UI_SENTRY_DSN` |
+| `NEXT_PUBLIC_SENTRY_ENVIRONMENT`, `SENTRY_ENVIRONMENT` | `UI_SENTRY_ENVIRONMENT` |
+
+The build-time-only Sentry variables used for source-map upload — `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`, and `SENTRY_RELEASE` — keep their names, as they are not part of the App's runtime configuration.
+
+## Upcoming Breaking Change
+
+<Warning>
+Adopting the `API_`, `SDK_`, and `MCP_` prefixes for Prowler API, Prowler SDK, and Prowler MCP Server is a planned breaking change in a future release. Migrate environment configuration to the new names when upgrading.
+</Warning>
+
+Prowler API, Prowler SDK, and Prowler MCP Server have not yet adopted the convention. In a future release, the variables each of these components reads will be namespaced under `API_`, `SDK_`, and `MCP_` respectively. The per-component mapping from current to prefixed names will be documented when each change is released.
+
+## Deprecated Names
+
+- **Prowler App:** The former `NEXT_PUBLIC_*` build-time variables (and the server-side `SENTRY_DSN` / `SENTRY_ENVIRONMENT`) are deprecated and no longer read. Set the `UI_*` runtime variables on the running container instead.
+- **Prowler API, Prowler SDK, and Prowler MCP Server:** The current, unprefixed variable names are deprecated. They continue to work today and will be removed once the prefixed convention is adopted for each component, as described in [Upcoming Breaking Change](#upcoming-breaking-change).

@@ -212,18 +212,18 @@ services:
   ui:
     image: prowlercloud/prowler-ui:stable
     environment:
-      WEB_APP_API_BASE_URL: https://prowler.example.com/api/v1
-      WEB_APP_API_DOCS_URL: https://prowler.example.com/api/v1/docs
+      UI_API_BASE_URL: https://prowler.example.com/api/v1
+      UI_API_DOCS_URL: https://prowler.example.com/api/v1/docs
     # ... rest of configuration
 ```
 
 The same values can be supplied through your `.env` file:
 
 ```bash
-WEB_APP_API_BASE_URL=https://prowler.example.com/api/v1
-WEB_APP_API_DOCS_URL=https://prowler.example.com/api/v1/docs
+UI_API_BASE_URL=https://prowler.example.com/api/v1
+UI_API_DOCS_URL=https://prowler.example.com/api/v1/docs
 ```
 
 <Note>
-Earlier releases inlined these values into the JavaScript bundle at build time (via the `NEXT_PUBLIC_` prefix) and required a rebuild with `--build-arg`. That is no longer necessary: `WEB_APP_API_BASE_URL` and `WEB_APP_API_DOCS_URL` are read at container start, so updating them and restarting is sufficient.
+Earlier releases inlined these values into the JavaScript bundle at build time (via the `NEXT_PUBLIC_` prefix) and required a rebuild with `--build-arg`. That is no longer necessary: `UI_API_BASE_URL` and `UI_API_DOCS_URL` are read at container start, so updating them and restarting is sufficient.
 </Note>

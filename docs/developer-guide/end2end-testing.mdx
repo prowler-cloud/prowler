@@ -221,9 +221,9 @@ Before running E2E tests:
     ```
 
 - **Ensure Prowler API is available**
-  - By default, Playwright uses `WEB_APP_API_BASE_URL=http://localhost:8080/api/v1` (configured in `playwright.config.ts`).
+  - By default, Playwright uses `UI_API_BASE_URL=http://localhost:8080/api/v1` (configured in `playwright.config.ts`).
   - Start Prowler API so it is reachable on that URL (for example, via `docker-compose-dev.yml` or the development orchestration used locally).
-  - If a different API URL is required, set `WEB_APP_API_BASE_URL` accordingly before running the tests.
+  - If a different API URL is required, set `UI_API_BASE_URL` accordingly before running the tests.
 
 - **Ensure Prowler App UI is available**
   - Playwright automatically starts the Next.js server through the `webServer` block in `playwright.config.ts` (`pnpm run dev` by default).
