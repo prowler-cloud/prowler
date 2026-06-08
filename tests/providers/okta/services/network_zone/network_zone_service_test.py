@@ -45,6 +45,11 @@ def _sdk_zone(
     )
 
 
+class _ValueObject:
+    def __init__(self, value: str):
+        self.value = value
+
+
 class Test_network_zone_pagination:
     def test_no_link_header_returns_none(self):
         assert _next_after_cursor(_resp({})) is None
@@ -139,7 +144,7 @@ class Test_NetworkZone_service:
         assert calls == [None, "cursor-2"]
         assert set(service.network_zones.keys()) == {"nzo-1", "nzo-2"}
 
-    def test_returns_empty_on_api_error(self):
+    def test_preserves_sdk_error_reason_on_api_error(self):
         provider = set_mocked_okta_provider()
 
         async def failing(*_a, **_k):
@@ -154,6 +159,7 @@ class Test_NetworkZone_service:
             service = NetworkZone(provider)
 
         assert service.network_zones == {}
+        assert service.retrieval_error == "Error listing Network Zones: forbidden"
 
     def test_build_zone_extracts_sdk_network_zone_address_values(self):
         from okta.models.network_zone_address import NetworkZoneAddress
@@ -179,6 +185,23 @@ class Test_NetworkZone_service:
 
         assert built_zone.gateways == ["203.0.113.10/32"]
         assert built_zone.proxies == ["198.51.100.10/32"]
+
+    def test_build_zone_normalizes_sdk_value_objects_to_strings(self):
+        zone = _sdk_zone(
+            "nzo-sdk-values",
+            "SDK Values",
+            gateways=[_ValueObject("203.0.113.10/32")],
+            proxies=[_ValueObject("198.51.100.10/32")],
+        )
+        zone.asns = SimpleNamespace(include=[_ValueObject("64512")], exclude=[])
+        zone.locations = SimpleNamespace(include=[_ValueObject("US")], exclude=[])
+
+        built_zone = NetworkZone._build_zone(zone)
+
+        assert built_zone.gateways == ["203.0.113.10/32"]
+        assert built_zone.proxies == ["198.51.100.10/32"]
+        assert built_zone.asns == ["64512"]
+        assert built_zone.locations == ["US"]
 
     def test_build_zone_extracts_sdk_enhanced_dynamic_category_values(self):
         from okta.models.enhanced_dynamic_network_zone_all_of_ip_service_categories import (
@@ -348,6 +371,10 @@ class Test_NetworkZone_service_sdk_validation_fallback:
             service = NetworkZone(provider)
 
         assert service.network_zones == {}
+        assert (
+            service.retrieval_error
+            == "Raw Network Zones fetch (create_request) failed: network down"
+        )
 
     def test_raw_fallback_handles_execute_error(self):
         service = self._build_service_with_raw_response(
@@ -356,6 +383,10 @@ class Test_NetworkZone_service_sdk_validation_fallback:
         )
 
         assert service.network_zones == {}
+        assert (
+            service.retrieval_error
+            == "Raw Network Zones fetch (execute) failed: timeout"
+        )
 
     def test_raw_fallback_decodes_bytes_response_body(self):
         service = self._build_service_with_raw_payload(
@@ -377,16 +408,22 @@ class Test_NetworkZone_service_sdk_validation_fallback:
         service = self._build_service_with_raw_response(b"\xff")
 
         assert service.network_zones == {}
+        assert "Could not decode Network Zones response" in service.retrieval_error
 
     def test_raw_fallback_handles_invalid_json_response_body(self):
         service = self._build_service_with_raw_response("{")
 
         assert service.network_zones == {}
+        assert "Could not parse Network Zones JSON" in service.retrieval_error
 
     def test_raw_fallback_handles_unexpected_payload_shape(self):
         service = self._build_service_with_raw_payload({"id": "nzo-not-a-list"})
 
         assert service.network_zones == {}
+        assert (
+            service.retrieval_error
+            == "Unexpected raw Network Zones payload shape: got dict, expected list"
+        )
 
     def test_raw_fallback_skips_non_dict_payload_items(self):
         service = self._build_service_with_raw_payload(

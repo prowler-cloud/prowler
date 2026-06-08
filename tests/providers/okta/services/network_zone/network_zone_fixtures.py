@@ -4,10 +4,15 @@ from prowler.providers.okta.services.network.network_zone_service import OktaNet
 from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
 
 
-def build_network_zone_client(zones: dict = None, missing_scope: dict = None):
+def build_network_zone_client(
+    zones: dict = None,
+    missing_scope: dict = None,
+    retrieval_error: str | None = None,
+):
     client = mock.MagicMock()
     client.network_zones = zones or {}
     client.missing_scope = missing_scope or {"network_zones": None}
+    client.retrieval_error = retrieval_error
     client.provider = set_mocked_okta_provider()
     return client
 

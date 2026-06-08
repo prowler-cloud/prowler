@@ -46,11 +46,35 @@ class Test_network_zone_block_anonymized_proxies:
         assert findings[0].status == "MANUAL"
         assert "okta.networkZones.read" in findings[0].status_extended
 
-    def test_pass_with_active_ip_blocklist_gateway(self):
+    def test_sdk_network_zone_retrieval_error_is_manual(self):
+        findings = _run_check(
+            build_network_zone_client(
+                {},
+                retrieval_error="Error listing Network Zones: forbidden",
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "could not be retrieved" in findings[0].status_extended
+        assert "forbidden" in findings[0].status_extended
+
+    def test_raw_network_zone_retrieval_error_is_manual(self):
+        findings = _run_check(
+            build_network_zone_client(
+                {},
+                retrieval_error="Raw Network Zones fetch (execute) failed: timeout",
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "could not be retrieved" in findings[0].status_extended
+        assert "timeout" in findings[0].status_extended
+
+    def test_active_ip_blocklist_gateway_is_manual(self):
         zone = network_zone(gateways=["198.51.100.10/32"])
         findings = _run_check(build_network_zone_client({zone.id: zone}))
         assert len(findings) == 1
-        assert findings[0].status == "PASS"
+        assert findings[0].status == "MANUAL"
         assert findings[0].resource_id == zone.id
         assert "manual IP blocklist" in findings[0].status_extended
         assert "cannot verify full anonymizer coverage" in findings[0].status_extended
@@ -87,6 +111,19 @@ class Test_network_zone_block_anonymized_proxies:
             name="Dynamic Blocklist Without Anonymizers",
             zone_type="DYNAMIC",
             ip_service_categories=["RISKY_IPS"],
+        )
+        findings = _run_check(build_network_zone_client({zone.id: zone}))
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "do not actively block" in findings[0].status_extended
+
+    def test_default_enhanced_dynamic_zone_without_categories_fails(self):
+        zone = network_zone(
+            zone_id="nzo-default-enhanced",
+            name="DefaultEnhancedDynamicZone",
+            zone_type="DYNAMIC_V2",
+            system=True,
+            ip_service_categories=[],
         )
         findings = _run_check(build_network_zone_client({zone.id: zone}))
         assert len(findings) == 1
