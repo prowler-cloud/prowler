@@ -36,6 +36,7 @@ DEFAULT_SCOPES = [
     "okta.policies.read",
     "okta.brands.read",
     "okta.apps.read",
+    "okta.networkZones.read",
     "okta.logStreams.read",
     "okta.idps.read",
 ]
