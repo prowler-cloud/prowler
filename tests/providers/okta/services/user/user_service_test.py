@@ -1,9 +1,11 @@
+import json
 from unittest import mock
 
 from prowler.providers.okta.services.user.user_service import (
     ExternalDirectoryIdp,
     User,
     UserAutomation,
+    _raw_rule_to_automation,
     _rule_to_automation,
 )
 from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
@@ -165,3 +167,213 @@ class Test_User_service:
         assert isinstance(
             service.external_directory_idps["0oa-ad"], ExternalDirectoryIdp
         )
+
+
+class Test_raw_rule_to_automation:
+    def test_projects_inactivity_and_lifecycle(self):
+        # Real API shape: inactivity + groups live on the POLICY,
+        # lifecycle action lives on the RULE under
+        # `actions.updateUserLifecycle.targetStatus`.
+        policy = {
+            "id": "pol-1",
+            "name": "TestCheck",
+            "status": "ACTIVE",
+            "conditions": {
+                "people": {
+                    "users": {"inactivity": {"number": 35, "unit": "DAYS"}},
+                    "groups": {"include": ["everyone"]},
+                }
+            },
+            "type": "USER_LIFECYCLE",
+        }
+        rule = {
+            "id": "rule-1",
+            "name": "lifecycle-rule-1",
+            "status": "ACTIVE",
+            "conditions": {},
+            "actions": {
+                "updateUserLifecycle": {
+                    "targetStatus": "SUSPENDED",
+                    "quietPeriod": {"number": 0, "unit": "DAYS"},
+                }
+            },
+        }
+        m = _raw_rule_to_automation(rule, policy, "pol-1", "TestCheck", "ACTIVE")
+        assert isinstance(m, UserAutomation)
+        assert m.id == "rule-1"
+        assert m.status == "ACTIVE"
+        assert m.schedule_status == "ACTIVE"
+        assert m.inactivity_days == 35
+        assert m.lifecycle_action == "SUSPENDED"
+        assert m.applies_to_groups == ["everyone"]
+        assert m.policy_id == "pol-1"
+        assert m.policy_name == "TestCheck"
+
+    def test_returns_none_when_id_missing(self):
+        assert _raw_rule_to_automation({"name": "x"}, {}, "pol", "P", "ACTIVE") is None
+
+    def test_ignores_non_days_unit(self):
+        policy = {
+            "id": "pol",
+            "conditions": {
+                "people": {"users": {"inactivity": {"number": 5, "unit": "WEEKS"}}}
+            },
+        }
+        rule = {"id": "rule-2", "actions": {}}
+        m = _raw_rule_to_automation(rule, policy, "pol", "P", "ACTIVE")
+        assert m.inactivity_days is None
+
+    def test_missing_policy_dict_gives_empty_inactivity_and_groups(self):
+        rule = {
+            "id": "rule-3",
+            "actions": {"updateUserLifecycle": {"targetStatus": "SUSPENDED"}},
+        }
+        m = _raw_rule_to_automation(rule, None, "pol", "P", "ACTIVE")
+        assert m.inactivity_days is None
+        assert m.applies_to_groups == []
+        assert m.lifecycle_action == "SUSPENDED"
+
+
+class Test_User_service_sdk_discriminator_fallback:
+    """Verifies the raw-JSON fallback when the SDK can't deserialize USER_LIFECYCLE.
+
+    Okta SDK 3.4.2 ships a `Policy.from_dict` discriminator mapping that
+    omits `USER_LIFECYCLE`, so the typed call raises ValueError. Without
+    the fallback the whole automations list is lost; with it the raw
+    JSON path projects each rule onto a `UserAutomation` snapshot.
+    """
+
+    def test_raw_fallback_projects_user_lifecycle_policy_rules(self):
+        provider = set_mocked_okta_provider()
+
+        # Real API shape: inactivity + groups on POLICY, lifecycle
+        # action on RULE under `actions.updateUserLifecycle.targetStatus`.
+        policy_payload = [
+            {
+                "id": "pol-1",
+                "name": "TestCheck",
+                "status": "ACTIVE",
+                "type": "USER_LIFECYCLE",
+                "conditions": {
+                    "people": {
+                        "users": {"inactivity": {"number": 35, "unit": "DAYS"}},
+                        "groups": {"include": ["everyone"]},
+                    }
+                },
+            }
+        ]
+        rules_payload = [
+            {
+                "id": "rule-1",
+                "name": "lifecycle-rule-1",
+                "status": "ACTIVE",
+                "conditions": {},
+                "actions": {
+                    "updateUserLifecycle": {
+                        "targetStatus": "SUSPENDED",
+                        "quietPeriod": {"number": 0, "unit": "DAYS"},
+                    }
+                },
+            }
+        ]
+
+        async def failing_list_policies(*_a, **_k):
+            raise ValueError(
+                "Policy failed to lookup discriminator value from {...}. "
+                "Discriminator property name: type, mapping: {...}"
+            )
+
+        async def fake_list_idps(*_a, **_k):
+            return ([], _resp({}), None)
+
+        async def fake_raw_create(*_a, **kwargs):
+            url = kwargs.get("url", "") or ""
+            return ({"url": url}, None)
+
+        async def fake_raw_execute(request):
+            url = request.get("url", "")
+            if "/api/v1/policies/pol-1/rules" in url:
+                return (None, json.dumps(rules_payload), None)
+            if "/api/v1/policies" in url:
+                return (None, json.dumps(policy_payload), None)
+            return (None, "[]", None)
+
+        sdk = mock.MagicMock()
+        sdk.list_policies = failing_list_policies
+        sdk.list_identity_providers = fake_list_idps
+        sdk._request_executor.create_request = fake_raw_create
+        sdk._request_executor.execute = fake_raw_execute
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient",
+            return_value=sdk,
+        ):
+            service = User(provider)
+
+        assert "rule-1" in service.automations
+        a = service.automations["rule-1"]
+        assert a.inactivity_days == 35
+        assert a.lifecycle_action == "SUSPENDED"
+        assert a.schedule_status == "ACTIVE"
+        assert a.policy_id == "pol-1"
+        assert a.policy_name == "TestCheck"
+
+    def test_raw_fallback_emits_shell_for_policy_with_no_rules(self):
+        # Mirrors the real-world tenant state where an admin clicked
+        # "Add Automation" in the UI but never configured conditions or
+        # actions. The policy exists; it has zero rules. The raw fallback
+        # must surface the policy as a shell UserAutomation so the check
+        # FAILs with a specific message instead of dropping it.
+        provider = set_mocked_okta_provider()
+
+        async def failing_list_policies(*_a, **_k):
+            raise ValueError("missing discriminator mapping")
+
+        async def fake_list_idps(*_a, **_k):
+            return ([], _resp({}), None)
+
+        async def fake_raw_create(*_a, **kwargs):
+            return ({"url": kwargs.get("url", "") or ""}, None)
+
+        async def fake_raw_execute(request):
+            url = request.get("url", "")
+            if "/api/v1/policies/pol-empty/rules" in url:
+                return (None, "[]", None)
+            if "/api/v1/policies" in url:
+                return (
+                    None,
+                    json.dumps(
+                        [
+                            {
+                                "id": "pol-empty",
+                                "name": "TestCheck",
+                                "status": "INACTIVE",
+                                "type": "USER_LIFECYCLE",
+                            }
+                        ]
+                    ),
+                    None,
+                )
+            return (None, "[]", None)
+
+        sdk = mock.MagicMock()
+        sdk.list_policies = failing_list_policies
+        sdk.list_identity_providers = fake_list_idps
+        sdk._request_executor.create_request = fake_raw_create
+        sdk._request_executor.execute = fake_raw_execute
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient",
+            return_value=sdk,
+        ):
+            service = User(provider)
+
+        assert "pol-empty" in service.automations
+        shell = service.automations["pol-empty"]
+        assert shell.name == "TestCheck"
+        assert shell.status == "INACTIVE"
+        assert shell.schedule_status == "INACTIVE"
+        assert shell.inactivity_days is None
+        assert shell.lifecycle_action is None
+        assert shell.applies_to_groups == []
+        assert shell.policy_id == "pol-empty"

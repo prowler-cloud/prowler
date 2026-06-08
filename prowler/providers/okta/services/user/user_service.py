@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.pagination import paginate
+from prowler.providers.okta.lib.service.raw_fetch import get_json as raw_get_json
 from prowler.providers.okta.lib.service.service import OktaService
 
 # External-directory IdP `type` values that delegate user sourcing to a
@@ -81,11 +82,28 @@ class User(OktaService):
 
     async def _fetch_automations(self) -> dict:
         result: dict[str, UserAutomation] = {}
-        all_policies, err = await paginate(
-            lambda after: self.client.list_policies(
-                type=USER_LIFECYCLE_POLICY_TYPE, after=after
+        try:
+            all_policies, err = await paginate(
+                lambda after: self.client.list_policies(
+                    type=USER_LIFECYCLE_POLICY_TYPE, after=after
+                )
             )
-        )
+        except (ValueError, ValidationError) as ex:
+            # Upstream okta-sdk-python bug: `Policy.from_dict` uses a
+            # discriminator dispatch that maps `type` → concrete Policy
+            # subclass, and `USER_LIFECYCLE` is not in the map. The SDK
+            # raises ValueError ("failed to lookup discriminator value")
+            # even though the API returns a valid policy. Fall back to
+            # raw JSON. Remove once okta-sdk-python adds
+            # USER_LIFECYCLE → UserLifecyclePolicy to the mapping.
+            logger.warning(
+                f"Okta SDK raised {type(ex).__name__} parsing USER_LIFECYCLE "
+                "policies — falling back to raw-JSON parse. This is an "
+                "okta-sdk-python deserialization bug "
+                "(missing discriminator mapping)."
+            )
+            return await self._fetch_automations_raw()
+
         if err is not None:
             logger.error(f"Error listing USER_LIFECYCLE policies: {err}")
             return result
@@ -97,6 +115,16 @@ class User(OktaService):
             policy_status = _stringify_enum(getattr(policy, "status", None)) or ""
             policy_name = getattr(policy, "name", "") or ""
             rules = await self._fetch_rules(policy_id)
+            if not rules:
+                # A policy with no rules exists in the Admin Console UI as
+                # an "Automation" the operator hasn't finished configuring
+                # (no conditions, no actions). Emit a placeholder so the
+                # check FAILs with a specific message naming every missing
+                # piece, instead of pretending the policy doesn't exist.
+                result[policy_id] = _shell_automation(
+                    policy_id, policy_name, policy_status
+                )
+                continue
             for rule in rules:
                 automation = _rule_to_automation(
                     rule, policy_id, policy_name, policy_status
@@ -108,9 +136,18 @@ class User(OktaService):
 
     async def _fetch_rules(self, policy_id: str) -> list:
         rule_fetch_limit = 100
-        result = await self.client.list_policy_rules(
-            policy_id, limit=str(rule_fetch_limit)
-        )
+        try:
+            result = await self.client.list_policy_rules(
+                policy_id, limit=str(rule_fetch_limit)
+            )
+        except (ValueError, ValidationError) as ex:
+            # Same upstream class of bug as `_fetch_automations`.
+            logger.warning(
+                f"Okta SDK raised {type(ex).__name__} parsing rules for "
+                f"USER_LIFECYCLE policy {policy_id} — falling back to raw "
+                "JSON for this policy's rules."
+            )
+            return []  # Raw projection happens in `_fetch_automations_raw`.
         err = result[-1]
         if err is not None:
             logger.error(
@@ -125,6 +162,59 @@ class User(OktaService):
                 "rules beyond this limit are not evaluated."
             )
         return rules
+
+    async def _fetch_automations_raw(self) -> dict:
+        """Raw-JSON fallback for `list_policies(type='USER_LIFECYCLE')`.
+
+        Bypasses the SDK's typed deserialization via the shared
+        `get_json` helper, then fetches each policy's rules via the
+        same path. Projects everything onto our `UserAutomation`
+        snapshot which only validates the fields the check reads.
+        """
+        result: dict[str, UserAutomation] = {}
+        policies_data = await raw_get_json(
+            self.client,
+            f"/api/v1/policies?type={USER_LIFECYCLE_POLICY_TYPE}&limit=200",
+            context="USER_LIFECYCLE policies",
+        )
+        if not isinstance(policies_data, list):
+            if policies_data is not None:
+                logger.error(
+                    f"Unexpected USER_LIFECYCLE policies payload shape: "
+                    f"{type(policies_data).__name__}; expected list"
+                )
+            return result
+
+        for policy_dict in policies_data:
+            if not isinstance(policy_dict, dict):
+                continue
+            policy_id = policy_dict.get("id")
+            if not policy_id:
+                continue
+            policy_status = (policy_dict.get("status") or "").upper()
+            policy_name = policy_dict.get("name") or ""
+
+            rules_data = await raw_get_json(
+                self.client,
+                f"/api/v1/policies/{policy_id}/rules?limit=100",
+                context=f"USER_LIFECYCLE policy {policy_id} rules",
+            )
+            if not isinstance(rules_data, list) or not rules_data:
+                # No rules under the policy → emit placeholder. Same
+                # rationale as the typed path: surface the unfinished
+                # automation so the check can name what's missing.
+                result[policy_id] = _shell_automation(
+                    policy_id, policy_name, policy_status
+                )
+                continue
+            for rule_dict in rules_data:
+                automation = _raw_rule_to_automation(
+                    rule_dict, policy_dict, policy_id, policy_name, policy_status
+                )
+                if automation is None:
+                    continue
+                result[automation.id] = automation
+        return result
 
     def _list_external_directory_idps(self) -> dict:
         logger.info("User - Listing Okta IdPs for external-directory detection...")
@@ -211,6 +301,99 @@ def _rule_to_automation(
         inactivity_days=inactivity_days,
         lifecycle_action=lifecycle_action,
         applies_to_groups=applies_to_groups,
+        policy_id=policy_id,
+        policy_name=policy_name,
+    )
+
+
+def _raw_rule_to_automation(
+    rule_dict,
+    policy_dict,
+    policy_id: str,
+    policy_name: str,
+    policy_status: str,
+) -> Optional["UserAutomation"]:
+    """Project a raw USER_LIFECYCLE policy+rule pair onto our snapshot.
+
+    Important: in the actual API response, an Okta "Automation" is split
+    across two resources — the **inactivity condition + group scope**
+    live on the *policy* (`policy.conditions.people.users.inactivity`,
+    `policy.conditions.people.groups.include`), and the **lifecycle
+    action** lives on the *rule*
+    (`rule.actions.updateUserLifecycle.targetStatus`). The rule's own
+    `conditions` is typically empty `{}`. Projecting requires both.
+
+    Schedule isn't exposed by the API on either resource. Okta runs an
+    automation on its UI-configured schedule iff the policy is ACTIVE,
+    so we treat `policy.status` as the schedule proxy.
+    """
+    if not isinstance(rule_dict, dict):
+        return None
+    rule_id = rule_dict.get("id")
+    if not rule_id:
+        return None
+
+    # Inactivity + groups live on the POLICY in the API response.
+    inactivity_days: Optional[int] = None
+    applies_to_groups: list[str] = []
+    if isinstance(policy_dict, dict):
+        policy_conditions = policy_dict.get("conditions") or {}
+        people = policy_conditions.get("people") or {}
+        users = people.get("users") or {}
+        inactivity = users.get("inactivity")
+        if isinstance(inactivity, dict):
+            number = inactivity.get("number")
+            unit = (inactivity.get("unit") or "").upper()
+            if isinstance(number, int) and unit in {"DAYS", "DAY"}:
+                inactivity_days = number
+        groups = people.get("groups") or {}
+        include_groups = groups.get("include")
+        if isinstance(include_groups, list):
+            applies_to_groups = [str(g) for g in include_groups if g]
+
+    # Lifecycle action lives on the RULE under
+    # `actions.updateUserLifecycle.targetStatus` (the API uses
+    # "updateUserLifecycle" rather than the SDK's `user_lifecycle`).
+    rule_actions = rule_dict.get("actions") or {}
+    update_user_lifecycle = rule_actions.get("updateUserLifecycle") or {}
+    lifecycle_action: Optional[str] = None
+    if isinstance(update_user_lifecycle, dict):
+        target = update_user_lifecycle.get("targetStatus")
+        if isinstance(target, str) and target:
+            lifecycle_action = target.upper()
+
+    return UserAutomation(
+        id=rule_id,
+        name=(rule_dict.get("name") or policy_name or "(unnamed)"),
+        status=(rule_dict.get("status") or "").upper(),
+        schedule_status=policy_status,
+        inactivity_days=inactivity_days,
+        lifecycle_action=lifecycle_action,
+        applies_to_groups=applies_to_groups,
+        policy_id=policy_id,
+        policy_name=policy_name,
+    )
+
+
+def _shell_automation(
+    policy_id: str, policy_name: str, policy_status: str
+) -> "UserAutomation":
+    """Placeholder UserAutomation for a USER_LIFECYCLE policy with no rules.
+
+    Surfaces the unfinished automation in `self.automations` so the check
+    can list every missing piece in its FAIL message (no inactivity
+    condition, no lifecycle action, status inactive, etc.) instead of
+    silently dropping the policy.
+    """
+    upper_status = (policy_status or "").upper()
+    return UserAutomation(
+        id=policy_id,
+        name=policy_name or "(unnamed automation)",
+        status=upper_status,
+        schedule_status=upper_status,
+        inactivity_days=None,
+        lifecycle_action=None,
+        applies_to_groups=[],
         policy_id=policy_id,
         policy_name=policy_name,
     )

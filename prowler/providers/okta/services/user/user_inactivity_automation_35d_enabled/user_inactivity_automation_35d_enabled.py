@@ -168,35 +168,23 @@ def _closest_candidate(automations):
 
 def _failure_message(automation, threshold_days):
     if automation is None:
-        return (
-            "No Okta automation satisfies the inactivity requirement. Create "
-            "one that suspends or deactivates users after "
-            f"{threshold_days} days of inactivity with an active schedule and "
-            "an Everyone-equivalent group scope."
-        )
+        return f"No Okta automation enforces {threshold_days}-day inactivity disable."
     issues = []
     if automation.status.upper() != "ACTIVE":
-        issues.append(f"status is `{automation.status or 'unset'}` (expected `ACTIVE`)")
+        issues.append(f"status {automation.status or 'unset'}")
     if automation.schedule_status.upper() != "ACTIVE":
-        issues.append(
-            f"schedule status is `{automation.schedule_status or 'unset'}` "
-            "(expected `ACTIVE`)"
-        )
+        issues.append(f"schedule {automation.schedule_status or 'unset'}")
     if automation.inactivity_days is None:
-        issues.append("no `userInactivity` condition with `unit=DAYS` is configured")
+        issues.append("no inactivity condition")
     elif automation.inactivity_days > threshold_days:
         issues.append(
-            f"inactivity threshold is {automation.inactivity_days} days "
-            f"(expected ≤ {threshold_days})"
+            f"inactivity {automation.inactivity_days}d (max {threshold_days}d)"
         )
     action = (automation.lifecycle_action or "").upper()
     if action not in SUSPENSION_LIFECYCLE_ACTIONS:
-        issues.append(
-            f"lifecycle action is `{automation.lifecycle_action or 'unset'}` "
-            "(expected `SUSPENDED`, `DEACTIVATED`, or `DEPROVISIONED`)"
-        )
-    detail = "; ".join(issues) if issues else "the configuration is incomplete"
+        issues.append(f"action {automation.lifecycle_action or 'unset'}")
+    detail = ", ".join(issues) if issues else "incomplete"
     return (
-        f"Okta automation '{automation.name}' does not satisfy the "
-        f"{threshold_days}-day inactivity requirement: {detail}."
+        f"Okta automation '{automation.name}' fails {threshold_days}d "
+        f"inactivity: {detail}."
     )

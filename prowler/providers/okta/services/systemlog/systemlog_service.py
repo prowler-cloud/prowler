@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.pagination import paginate
+from prowler.providers.okta.lib.service.raw_fetch import get_json as raw_get_json
 from prowler.providers.okta.lib.service.service import OktaService
 
 REQUIRED_SCOPES: dict[str, str] = {
@@ -50,9 +51,25 @@ class SystemLog(OktaService):
 
     async def _fetch_log_streams(self) -> dict:
         result: dict[str, LogStream] = {}
-        all_streams, err = await paginate(
-            lambda after: self.client.list_log_streams(after=after)
-        )
+        try:
+            all_streams, err = await paginate(
+                lambda after: self.client.list_log_streams(after=after)
+            )
+        except ValidationError as ve:
+            # Upstream okta-sdk-python bug: e.g. `LogStreamSettingsAws`'s
+            # `eventSourceName` validator regex is `^[a-zA-Z0-9.\-_]$` —
+            # missing the `+` quantifier, so it rejects every
+            # multi-character name. Fall back to raw JSON so the check
+            # can still evaluate the tenant's actual log-stream state.
+            # Remove this workaround once okta-sdk-python fixes the
+            # validator (issue to be filed upstream).
+            logger.warning(
+                f"Okta SDK raised ValidationError parsing log streams "
+                f"({ve.error_count()} error(s)) — falling back to raw-JSON "
+                "parse. This is an okta-sdk-python deserialization bug."
+            )
+            return await self._fetch_log_streams_raw()
+
         if err is not None:
             logger.error(f"Error listing log streams: {err}")
             return result
@@ -66,6 +83,42 @@ class SystemLog(OktaService):
                 name=getattr(stream, "name", "") or "",
                 status=getattr(stream, "status", "") or "",
                 type=_stringify_enum(getattr(stream, "type", None)) or "",
+            )
+        return result
+
+    async def _fetch_log_streams_raw(self) -> dict:
+        """Raw-JSON fallback for `list_log_streams`.
+
+        Bypasses the SDK's typed deserialization via the shared
+        `get_json` helper, and projects the response onto our own
+        pydantic snapshot which only validates the four fields the
+        check reads. Keeps the check evaluable on tenants whose
+        Log Stream settings happen to trip an SDK enum/regex validator.
+        """
+        result: dict[str, LogStream] = {}
+        data = await raw_get_json(
+            self.client,
+            "/api/v1/logStreams?limit=200",
+            context="log streams",
+        )
+        if not isinstance(data, list):
+            if data is not None:
+                logger.error(
+                    f"Unexpected log streams payload shape: "
+                    f"{type(data).__name__}; expected list"
+                )
+            return result
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            stream_id = item.get("id")
+            if not stream_id:
+                continue
+            result[stream_id] = LogStream(
+                id=stream_id,
+                name=item.get("name") or "",
+                status=(item.get("status") or "").upper(),
+                type=item.get("type") or "",
             )
         return result
 

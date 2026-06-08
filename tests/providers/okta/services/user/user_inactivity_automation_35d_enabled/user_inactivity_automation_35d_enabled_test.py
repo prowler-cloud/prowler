@@ -53,7 +53,7 @@ class Test_user_inactivity_automation_35d_enabled:
         )
         findings = _run_check(client)
         assert findings[0].status == "FAIL"
-        assert "expected ≤ 35" in findings[0].status_extended
+        assert "inactivity 90d (max 35d)" in findings[0].status_extended
 
     def test_fail_when_status_inactive(self):
         client = build_user_client(
@@ -61,7 +61,7 @@ class Test_user_inactivity_automation_35d_enabled:
         )
         findings = _run_check(client)
         assert findings[0].status == "FAIL"
-        assert "status is `INACTIVE`" in findings[0].status_extended
+        assert "status INACTIVE" in findings[0].status_extended
 
     def test_fail_when_schedule_inactive(self):
         client = build_user_client(
@@ -69,7 +69,7 @@ class Test_user_inactivity_automation_35d_enabled:
         )
         findings = _run_check(client)
         assert findings[0].status == "FAIL"
-        assert "schedule status is `INACTIVE`" in findings[0].status_extended
+        assert "schedule INACTIVE" in findings[0].status_extended
 
     def test_fail_when_wrong_lifecycle_action(self):
         client = build_user_client(
@@ -77,13 +77,41 @@ class Test_user_inactivity_automation_35d_enabled:
         )
         findings = _run_check(client)
         assert findings[0].status == "FAIL"
-        assert "lifecycle action" in findings[0].status_extended
+        assert "action ACTIVE" in findings[0].status_extended
 
     def test_fail_when_no_automations(self):
         client = build_user_client(automations={})
         findings = _run_check(client)
         assert findings[0].status == "FAIL"
         assert "No Okta Workflows automations" in findings[0].status_extended
+
+    def test_fail_lists_every_missing_piece_for_unfinished_automation(self):
+        # Mirrors the real-world case where an admin clicks "Add Automation"
+        # in the UI but never configures conditions or actions. The service
+        # emits a placeholder UserAutomation so the check FAILs with a
+        # specific message instead of pretending the policy doesn't exist.
+        from prowler.providers.okta.services.user.user_service import UserAutomation
+
+        shell = UserAutomation(
+            id="pol-1",
+            name="TestCheck",
+            status="INACTIVE",
+            schedule_status="INACTIVE",
+            inactivity_days=None,
+            lifecycle_action=None,
+            applies_to_groups=[],
+            policy_id="pol-1",
+            policy_name="TestCheck",
+        )
+        client = build_user_client(automations={"pol-1": shell})
+        findings = _run_check(client)
+        assert findings[0].status == "FAIL"
+        msg = findings[0].status_extended
+        assert "TestCheck" in msg
+        assert "status INACTIVE" in msg
+        assert "schedule INACTIVE" in msg
+        assert "no inactivity condition" in msg
+        assert "action unset" in msg
 
     def test_manual_na_when_external_directory_idp_present(self):
         client = build_user_client(
