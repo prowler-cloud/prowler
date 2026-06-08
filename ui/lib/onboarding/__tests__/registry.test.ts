@@ -17,9 +17,7 @@ import {
   onboardingFlows,
 } from "../registry";
 
-// Minimal valid TourDefinition stub used to build OnboardingFlow fixtures.
-// The registry never reads tour internals beyond { id, version } (TourId), so
-// a flat definition is sufficient for these pure-logic tests.
+// Registry only reads { id, version } from tours, so a flat stub is sufficient.
 const buildTour = (id: string, version = 1): TourDefinition => ({
   id,
   version,
@@ -50,8 +48,7 @@ const completedRecord = (
   completedAt: "2026-01-15T12:00:00.000Z",
 });
 
-// In-memory store implementing the TourCompletionStore contract. Injecting it
-// keeps getFirstIncompleteFlow unit-testable with no localStorage mocking.
+// In-memory store so getFirstIncompleteFlow is testable without localStorage.
 const fakeStore = (
   seed: Record<string, TourCompletionRecord> = {},
 ): TourCompletionStore => {
@@ -70,7 +67,6 @@ const fakeStore = (
 
 describe("OnboardingFlow / OnboardingContext types", () => {
   it("compiles a fully-populated OnboardingFlow against the declared contract", () => {
-    // Given - a flow object that exercises every field of the contract
     const ctx: OnboardingContext = { hasProviders: false };
     const flow: OnboardingFlow = {
       id: "add-provider",
@@ -82,7 +78,6 @@ describe("OnboardingFlow / OnboardingContext types", () => {
       isComplete: (c: OnboardingContext) => c.hasProviders,
     };
 
-    // When / Then - the contract resolves at runtime
     expect(flow.id).toBe("add-provider");
     expect(flow.order).toBe(1);
     expect(flow.route).toBe("/providers");
@@ -93,10 +88,7 @@ describe("OnboardingFlow / OnboardingContext types", () => {
 
 describe("onboardingFlows (production registry)", () => {
   it("registers the add-provider flow as the first onboarding flow", () => {
-    // Given / When - the production registry after Slice B registration
     const addProvider = getFlowById("add-provider", onboardingFlows);
-
-    // Then - the entry exists with its declared contract
     expect(addProvider).toBeDefined();
     expect(addProvider?.order).toBe(1);
     expect(addProvider?.route).toBe("/providers");
@@ -104,19 +96,13 @@ describe("onboardingFlows (production registry)", () => {
   });
 
   it("treats add-provider as complete when the context reports providers", () => {
-    // Given - the production add-provider flow's completion predicate
     const addProvider = getFlowById("add-provider", onboardingFlows);
-
-    // Then - isComplete delegates to the server-derived hasProviders signal
     expect(addProvider?.isComplete?.({ hasProviders: true })).toBe(true);
     expect(addProvider?.isComplete?.({ hasProviders: false })).toBe(false);
   });
 
   it("registers the view-first-scan flow at order 2 on the scans route", () => {
-    // Given / When - the sequence flow added in Slice 4
     const flow = getFlowById("view-first-scan", onboardingFlows);
-
-    // Then - declared contract: order, route, and a matching tour id
     expect(flow).toBeDefined();
     expect(flow?.order).toBe(2);
     expect(flow?.route).toBe("/scans");
@@ -124,10 +110,7 @@ describe("onboardingFlows (production registry)", () => {
   });
 
   it("registers the explore-findings flow at order 3 on the findings route", () => {
-    // Given / When - the sequence flow added in Slice 5
     const flow = getFlowById("explore-findings", onboardingFlows);
-
-    // Then - declared contract: order, route, and a matching tour id
     expect(flow).toBeDefined();
     expect(flow?.order).toBe(3);
     expect(flow?.route).toBe("/findings");
@@ -135,10 +118,7 @@ describe("onboardingFlows (production registry)", () => {
   });
 
   it("registers the view-compliance flow at order 4 on the compliance route", () => {
-    // Given / When - the sequence flow added in Slice 6
     const flow = getFlowById("view-compliance", onboardingFlows);
-
-    // Then - declared contract: order, route, and a matching tour id
     expect(flow).toBeDefined();
     expect(flow?.order).toBe(4);
     expect(flow?.route).toBe("/compliance");
@@ -146,10 +126,7 @@ describe("onboardingFlows (production registry)", () => {
   });
 
   it("registers the attack-paths flow at order 5 on the attack-paths route", () => {
-    // Given / When - the integration flow added in Slice 7
     const flow = getFlowById("attack-paths", onboardingFlows);
-
-    // Then - declared contract: order, route, and a matching tour id
     expect(flow).toBeDefined();
     expect(flow?.order).toBe(5);
     expect(flow?.route).toBe("/attack-paths");
@@ -157,10 +134,8 @@ describe("onboardingFlows (production registry)", () => {
   });
 
   it("flags attack-paths with ownsAutoOpen so the shared trigger never drives it", () => {
-    // Given / When - the attack-paths page owns its own driver (Decision 4)
+    // attack-paths page owns its own driver; all other flows must be falsy
     const attackPaths = getFlowById("attack-paths", onboardingFlows);
-
-    // Then - only attack-paths carries the flag; every other flow is falsy
     expect(attackPaths?.ownsAutoOpen).toBe(true);
     for (const flow of onboardingFlows) {
       if (flow.id === "attack-paths") continue;
@@ -169,7 +144,6 @@ describe("onboardingFlows (production registry)", () => {
   });
 
   it("sets a data requirement hint on the scan-dependent flows only", () => {
-    // Given / When - the flows whose pages render nothing without scan data
     const scanDependent = [
       "explore-findings",
       "view-compliance",
@@ -179,13 +153,10 @@ describe("onboardingFlows (production registry)", () => {
     const expectedHint =
       "This step needs a completed scan to show data. Launch a scan first, or continue anyway.";
 
-    // Then - the three data-dependent steps carry the hint verbatim
     for (const id of scanDependent) {
       const flow = getFlowById(id, onboardingFlows);
       expect(flow?.dataRequirementHint).toBe(expectedHint);
     }
-
-    // And - the self-contained steps carry no hint
     for (const id of standalone) {
       const flow = getFlowById(id, onboardingFlows);
       expect(flow?.dataRequirementHint).toBeUndefined();
@@ -193,10 +164,7 @@ describe("onboardingFlows (production registry)", () => {
   });
 
   it("orders the five sequence flows 1..5 by registry order", () => {
-    // Given / When - the production registry after Slices 4-7 registration
     const ordered = getOrderedFlows(onboardingFlows);
-
-    // Then - the guided sequence advances in declared order
     expect(ordered.map((flow) => flow.id)).toEqual([
       "add-provider",
       "view-first-scan",
@@ -209,7 +177,6 @@ describe("onboardingFlows (production registry)", () => {
 
 describe("public api barrel", () => {
   it("re-exports the registry and gate-decision surface", () => {
-    // Given / When / Then - the index forwards the same callable references
     expect(onboardingPublicApi.getOrderedFlows).toBe(getOrderedFlows);
     expect(onboardingPublicApi.getFlowById).toBe(getFlowById);
     expect(onboardingPublicApi.getFirstIncompleteFlow).toBe(
@@ -222,51 +189,34 @@ describe("public api barrel", () => {
 
 describe("getOrderedFlows", () => {
   it("returns an empty array when the registry has no flows", () => {
-    // Given - the empty production registry
-    // When
-    const result = getOrderedFlows([]);
-
-    // Then
-    expect(result).toEqual([]);
+    expect(getOrderedFlows([])).toEqual([]);
   });
 
   it("sorts ascending by order, stably preserving array position on ties", () => {
-    // Given - entries declared out of order, plus a tie on order 2
     const second = buildFlow({ id: "second", order: 2 });
     const first = buildFlow({ id: "first", order: 1 });
     const secondTie = buildFlow({ id: "second-tie", order: 2 });
     const flows = [second, first, secondTie];
 
-    // When
-    const result = getOrderedFlows(flows);
-
-    // Then - order 1 first, then the two order-2 entries in original sequence
-    expect(result.map((f) => f.id)).toEqual(["first", "second", "second-tie"]);
+    // order 1 first, then the two order-2 entries in original sequence
+    expect(getOrderedFlows(flows).map((f) => f.id)).toEqual([
+      "first",
+      "second",
+      "second-tie",
+    ]);
   });
 });
 
 describe("getFlowById", () => {
   it("returns the matching flow when the id exists", () => {
-    // Given
     const addProvider = buildFlow({ id: "add-provider", order: 1 });
     const flows = [addProvider, buildFlow({ id: "other", order: 2 })];
-
-    // When
-    const result = getFlowById("add-provider", flows);
-
-    // Then
-    expect(result).toBe(addProvider);
+    expect(getFlowById("add-provider", flows)).toBe(addProvider);
   });
 
   it("returns undefined when the id is unknown", () => {
-    // Given
     const flows = [buildFlow({ id: "add-provider", order: 1 })];
-
-    // When
-    const result = getFlowById("unknown-xyz", flows);
-
-    // Then
-    expect(result).toBeUndefined();
+    expect(getFlowById("unknown-xyz", flows)).toBeUndefined();
   });
 });
 
@@ -274,35 +224,19 @@ describe("getFirstIncompleteFlow", () => {
   const ctx: OnboardingContext = { hasProviders: false };
 
   it("returns undefined when the registry is empty", () => {
-    // Given - no flows
-    // When
-    const result = getFirstIncompleteFlow(ctx, fakeStore(), []);
-
-    // Then
-    expect(result).toBeUndefined();
+    expect(getFirstIncompleteFlow(ctx, fakeStore(), [])).toBeUndefined();
   });
 
   it("returns undefined when every flow is complete via isComplete(ctx)", () => {
-    // Given - both flows report complete through their predicate
     const flows = [
       buildFlow({ id: "a", order: 1, isComplete: () => true }),
       buildFlow({ id: "b", order: 2, isComplete: () => true }),
     ];
-
-    // When
-    const result = getFirstIncompleteFlow(ctx, fakeStore(), flows);
-
-    // Then
-    expect(result).toBeUndefined();
+    expect(getFirstIncompleteFlow(ctx, fakeStore(), flows)).toBeUndefined();
   });
 
   it("returns the second flow when the first is complete via store record", () => {
-    // Given - first flow has a persisted completion record, second does not
-    const first = buildFlow({
-      id: "first",
-      order: 1,
-      tour: buildTour("first"),
-    });
+    const first = buildFlow({ id: "first", order: 1, tour: buildTour("first") });
     const second = buildFlow({
       id: "second",
       order: 2,
@@ -310,15 +244,11 @@ describe("getFirstIncompleteFlow", () => {
     });
     const store = fakeStore({ "first.v1": completedRecord("first") });
 
-    // When
-    const result = getFirstIncompleteFlow(ctx, store, [second, first]);
-
-    // Then - ordered evaluation skips the recorded flow, returns the next
-    expect(result).toBe(second);
+    // ordered evaluation skips the recorded flow
+    expect(getFirstIncompleteFlow(ctx, store, [second, first])).toBe(second);
   });
 
   it("passes the provided context object through to isComplete", () => {
-    // Given - a predicate that captures the context it receives
     let received: OnboardingContext | undefined;
     const flow = buildFlow({
       id: "captures",
@@ -330,48 +260,32 @@ describe("getFirstIncompleteFlow", () => {
     });
     const providedCtx: OnboardingContext = { hasProviders: true };
 
-    // When
     const result = getFirstIncompleteFlow(providedCtx, fakeStore(), [flow]);
 
-    // Then - the exact context object was forwarded, flow counted complete
     expect(received).toBe(providedCtx);
     expect(result).toBeUndefined();
   });
 
   it("treats isComplete(ctx) === true as complete even when a store record is absent", () => {
-    // Given - no store record at all, but predicate says complete
     const flow = buildFlow({
       id: "predicate-wins",
       order: 1,
       tour: buildTour("predicate-wins"),
       isComplete: () => true,
     });
-
-    // When
-    const result = getFirstIncompleteFlow(ctx, fakeStore(), [flow]);
-
-    // Then
-    expect(result).toBeUndefined();
+    expect(getFirstIncompleteFlow(ctx, fakeStore(), [flow])).toBeUndefined();
   });
 
   it("returns the first incomplete flow when neither predicate nor record marks it complete", () => {
-    // Given - first flow incomplete (no record, no predicate), second complete
-    const first = buildFlow({
-      id: "first",
-      order: 1,
-      tour: buildTour("first"),
-    });
+    const first = buildFlow({ id: "first", order: 1, tour: buildTour("first") });
     const second = buildFlow({
       id: "second",
       order: 2,
       tour: buildTour("second"),
       isComplete: () => true,
     });
-
-    // When
-    const result = getFirstIncompleteFlow(ctx, fakeStore(), [first, second]);
-
-    // Then
-    expect(result).toBe(first);
+    expect(getFirstIncompleteFlow(ctx, fakeStore(), [first, second])).toBe(
+      first,
+    );
   });
 });

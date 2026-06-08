@@ -1,5 +1,4 @@
-// Public surface for the onboarding system. Consumers import from
-// `@/lib/onboarding` rather than reaching into individual modules.
+// Public barrel — import from `@/lib/onboarding`, not individual modules.
 
 export type { GateDecisionInput } from "./gate-decision";
 export { shouldStartOnboarding } from "./gate-decision";

@@ -1,16 +1,12 @@
 import type { TourDefinition } from "@/lib/tours/tour-types";
 
-// Server-derived signals the gate and flow-completion checks consult.
-// Kept intentionally minimal: only `hasProviders` is needed today, and the
-// shape is the single argument passed to every `isComplete(ctx)` predicate.
+// Single argument passed to every `isComplete(ctx)` predicate.
 export interface OnboardingContext {
   hasProviders: boolean;
 }
 
-// A single onboarding flow. The flow *is* its tour: completion persistence
-// reuses the tour's own `TourCompletionRecord` (via the tour's id/version),
-// so there is no second source of truth. `order` is an explicit integer
-// (gaps allowed) so reordering is a data edit, never a code move.
+// Completion is persisted via the tour's own id/version — no second source of truth.
+// `order` gaps are allowed; reordering is a data edit.
 export interface OnboardingFlow {
   id: string;
   order: number;
@@ -19,11 +15,8 @@ export interface OnboardingFlow {
   route: string;
   tour: TourDefinition;
   isComplete?: (ctx: OnboardingContext) => boolean;
-  // When true, the route's PAGE already drives this flow's tour (e.g.
-  // attack-paths). The shared OnboardingTrigger must NOT mount a runner for it;
-  // the page owns auto-open and reports completion to the sequence slice.
+  // When true, the page owns auto-open; OnboardingTrigger must not mount a second runner.
   ownsAutoOpen?: boolean;
-  // Hint shown in the sequence banner when this step needs scan data to display
-  // anything meaningful, so the user knows they can launch a scan or continue.
+  // Shown in the sequence banner when the step needs a completed scan to display data.
   dataRequirementHint?: string;
 }

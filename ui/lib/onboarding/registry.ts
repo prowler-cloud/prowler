@@ -8,15 +8,11 @@ import { viewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 
 import type { OnboardingContext, OnboardingFlow } from "./onboarding-types";
 
-// Shared hint for steps whose pages render nothing until a scan has completed.
-// Surfaced in the sequence banner so the user can launch a scan first or move
-// on at their own pace.
+// Shown in the sequence banner when the step needs a completed scan.
 const SCAN_DATA_HINT =
   "This step needs a completed scan to show data. Launch a scan first, or continue anyway.";
 
-// Single source of truth for onboarding flows. Adding a flow is one entry here
-// plus its `*.tour.ts` file — no gate, modal, or nav edits required. `order`
-// is an explicit integer (gaps allowed) so reordering is a data edit.
+// Add a flow: one entry here + a `*.tour.ts` file. No gate/modal/nav edits needed.
 export const onboardingFlows: readonly OnboardingFlow[] = [
   {
     id: "add-provider",
@@ -26,8 +22,7 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
       "Connect a cloud account so Prowler has something to scan and assess.",
     route: "/providers",
     tour: addProviderTour,
-    // Server-derived authority: a user who already has providers is never
-    // gated into this flow, even with no local completion record.
+    // Server-derived: existing providers bypass this flow regardless of local record.
     isComplete: (ctx) => ctx.hasProviders,
   },
   {
@@ -65,14 +60,11 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     route: "/attack-paths",
     tour: attackPathsTour,
     dataRequirementHint: SCAN_DATA_HINT,
-    // The attack-paths PAGE already drives this tour, so the shared
-    // OnboardingTrigger must NOT mount a second runner.
-    ownsAutoOpen: true,
+    ownsAutoOpen: true, // page drives this tour; OnboardingTrigger must not mount a second runner
   },
 ];
 
-// Stable sort by `order`: entries sharing an `order` keep their original
-// relative position. `flows` defaults to the production registry; tests inject.
+// Stable sort by `order`; `flows` defaults to the production registry so tests can inject.
 export function getOrderedFlows(
   flows: readonly OnboardingFlow[] = onboardingFlows,
 ): OnboardingFlow[] {
@@ -89,8 +81,7 @@ export function getFlowById(
   return flows.find((flow) => flow.id === id);
 }
 
-// A flow is complete when its server-derived predicate says so OR a tour
-// completion record already exists in the store for its tour.
+// Complete when the server predicate returns true or a tour completion record exists.
 function isFlowComplete(
   flow: OnboardingFlow,
   ctx: OnboardingContext,
@@ -100,9 +91,8 @@ function isFlowComplete(
   return store.get(flow.tour) !== null;
 }
 
-// First incomplete flow by `order`, or `undefined` when all are complete. The
-// store is injected (default `localStorageAdapter`) so the function stays pure
-// and unit-testable without mocking localStorage.
+// Returns the first incomplete flow by order, or `undefined` if all are done.
+// Store is injected (default: localStorageAdapter) for testability.
 export function getFirstIncompleteFlow(
   ctx: OnboardingContext,
   store: TourCompletionStore = localStorageAdapter,
