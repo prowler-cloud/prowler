@@ -1,21 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { TourCompletionStore } from "@/lib/tours/store/tour-completion-store";
-import type {
-  TourCompletionRecord,
-  TourDefinition,
-  TourId,
-} from "@/lib/tours/tour-types";
-import { TOUR_COMPLETION_STATES } from "@/lib/tours/tour-types";
+import type { TourDefinition } from "@/lib/tours/tour-types";
 
 import * as onboardingPublicApi from "../index";
 import type { OnboardingContext, OnboardingFlow } from "../onboarding-types";
-import {
-  getFirstIncompleteFlow,
-  getFlowById,
-  getOrderedFlows,
-  onboardingFlows,
-} from "../registry";
+import { getFlowById, getOrderedFlows, onboardingFlows } from "../registry";
 
 // Registry only reads { id, version } from tours, so a flat stub is sufficient.
 const buildTour = (id: string, version = 1): TourDefinition => ({
@@ -37,33 +26,6 @@ const buildFlow = (
   isComplete: overrides.isComplete,
   ownsAutoOpen: overrides.ownsAutoOpen,
 });
-
-const completedRecord = (
-  tourId: string,
-  version = 1,
-): TourCompletionRecord => ({
-  tourId,
-  version,
-  state: TOUR_COMPLETION_STATES.COMPLETED,
-  completedAt: "2026-01-15T12:00:00.000Z",
-});
-
-// In-memory store so getFirstIncompleteFlow is testable without localStorage.
-const fakeStore = (
-  seed: Record<string, TourCompletionRecord> = {},
-): TourCompletionStore => {
-  const data = new Map<string, TourCompletionRecord>(Object.entries(seed));
-  const key = (id: TourId) => `${id.id}.v${id.version}`;
-  return {
-    get: (id) => data.get(key(id)) ?? null,
-    set: (id, record) => {
-      data.set(key(id), record);
-    },
-    clear: (id) => {
-      data.delete(key(id));
-    },
-  };
-};
 
 describe("OnboardingFlow / OnboardingContext types", () => {
   it("compiles a fully-populated OnboardingFlow against the declared contract", () => {
@@ -179,9 +141,6 @@ describe("public api barrel", () => {
   it("re-exports the registry and gate-decision surface", () => {
     expect(onboardingPublicApi.getOrderedFlows).toBe(getOrderedFlows);
     expect(onboardingPublicApi.getFlowById).toBe(getFlowById);
-    expect(onboardingPublicApi.getFirstIncompleteFlow).toBe(
-      getFirstIncompleteFlow,
-    );
     expect(onboardingPublicApi.onboardingFlows).toBe(onboardingFlows);
     expect(typeof onboardingPublicApi.shouldStartOnboarding).toBe("function");
   });
@@ -220,72 +179,8 @@ describe("getFlowById", () => {
   });
 });
 
-describe("getFirstIncompleteFlow", () => {
-  const ctx: OnboardingContext = { hasProviders: false };
-
-  it("returns undefined when the registry is empty", () => {
-    expect(getFirstIncompleteFlow(ctx, fakeStore(), [])).toBeUndefined();
-  });
-
-  it("returns undefined when every flow is complete via isComplete(ctx)", () => {
-    const flows = [
-      buildFlow({ id: "a", order: 1, isComplete: () => true }),
-      buildFlow({ id: "b", order: 2, isComplete: () => true }),
-    ];
-    expect(getFirstIncompleteFlow(ctx, fakeStore(), flows)).toBeUndefined();
-  });
-
-  it("returns the second flow when the first is complete via store record", () => {
-    const first = buildFlow({ id: "first", order: 1, tour: buildTour("first") });
-    const second = buildFlow({
-      id: "second",
-      order: 2,
-      tour: buildTour("second"),
-    });
-    const store = fakeStore({ "first.v1": completedRecord("first") });
-
-    // ordered evaluation skips the recorded flow
-    expect(getFirstIncompleteFlow(ctx, store, [second, first])).toBe(second);
-  });
-
-  it("passes the provided context object through to isComplete", () => {
-    let received: OnboardingContext | undefined;
-    const flow = buildFlow({
-      id: "captures",
-      order: 1,
-      isComplete: (c) => {
-        received = c;
-        return c.hasProviders;
-      },
-    });
-    const providedCtx: OnboardingContext = { hasProviders: true };
-
-    const result = getFirstIncompleteFlow(providedCtx, fakeStore(), [flow]);
-
-    expect(received).toBe(providedCtx);
-    expect(result).toBeUndefined();
-  });
-
-  it("treats isComplete(ctx) === true as complete even when a store record is absent", () => {
-    const flow = buildFlow({
-      id: "predicate-wins",
-      order: 1,
-      tour: buildTour("predicate-wins"),
-      isComplete: () => true,
-    });
-    expect(getFirstIncompleteFlow(ctx, fakeStore(), [flow])).toBeUndefined();
-  });
-
-  it("returns the first incomplete flow when neither predicate nor record marks it complete", () => {
-    const first = buildFlow({ id: "first", order: 1, tour: buildTour("first") });
-    const second = buildFlow({
-      id: "second",
-      order: 2,
-      tour: buildTour("second"),
-      isComplete: () => true,
-    });
-    expect(getFirstIncompleteFlow(ctx, fakeStore(), [first, second])).toBe(
-      first,
-    );
+describe("getFlowById fallback", () => {
+  it("returns undefined for an unknown id against the production registry", () => {
+    expect(getFlowById("does-not-exist", onboardingFlows)).toBeUndefined();
   });
 });

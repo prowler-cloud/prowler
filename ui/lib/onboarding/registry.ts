@@ -1,12 +1,10 @@
 import { addProviderTour } from "@/lib/tours/add-provider.tour";
 import { attackPathsTour } from "@/lib/tours/attack-paths.tour";
 import { exploreFindingsTour } from "@/lib/tours/explore-findings.tour";
-import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
-import type { TourCompletionStore } from "@/lib/tours/store/tour-completion-store";
 import { viewComplianceTour } from "@/lib/tours/view-compliance.tour";
 import { viewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 
-import type { OnboardingContext, OnboardingFlow } from "./onboarding-types";
+import type { OnboardingFlow } from "./onboarding-types";
 
 // Shown in the sequence banner when the step needs a completed scan.
 const SCAN_DATA_HINT =
@@ -79,26 +77,4 @@ export function getFlowById(
   flows: readonly OnboardingFlow[] = onboardingFlows,
 ): OnboardingFlow | undefined {
   return flows.find((flow) => flow.id === id);
-}
-
-// Complete when the server predicate returns true or a tour completion record exists.
-function isFlowComplete(
-  flow: OnboardingFlow,
-  ctx: OnboardingContext,
-  store: TourCompletionStore,
-): boolean {
-  if (flow.isComplete?.(ctx) === true) return true;
-  return store.get(flow.tour) !== null;
-}
-
-// Returns the first incomplete flow by order, or `undefined` if all are done.
-// Store is injected (default: localStorageAdapter) for testability.
-export function getFirstIncompleteFlow(
-  ctx: OnboardingContext,
-  store: TourCompletionStore = localStorageAdapter,
-  flows: readonly OnboardingFlow[] = onboardingFlows,
-): OnboardingFlow | undefined {
-  return getOrderedFlows(flows).find(
-    (flow) => !isFlowComplete(flow, ctx, store),
-  );
 }
