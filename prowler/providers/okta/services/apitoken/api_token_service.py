@@ -1,13 +1,13 @@
-import json
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from prowler.lib.logger import logger
-from prowler.providers.okta.lib.service.service import OktaService
-from prowler.providers.okta.services.network.network_zone_service import (
-    _next_after_cursor,
+from prowler.providers.okta.lib.service.pagination import paginate as _paginate_shared
+from prowler.providers.okta.lib.service.raw_fetch import (
+    get_json_paginated as _raw_get_json_paginated,
 )
+from prowler.providers.okta.lib.service.service import OktaService
 
 REQUIRED_SCOPES: dict[str, str] = {
     "api_tokens": "okta.apiTokens.read",
@@ -19,16 +19,6 @@ REQUIRED_SCOPES: dict[str, str] = {
     # to enumerate the user's groups.
     "user_groups": "okta.groups.read",
 }
-
-
-def _normalise_sdk_result(result) -> tuple[list, object, object]:
-    """Return `(items, response, error)` for Okta SDK list call variants."""
-    if isinstance(result, tuple):
-        err = result[-1]
-        items = result[0] or []
-        resp = result[1] if len(result) >= 3 else None
-        return list(items), resp, err
-    return list(result or []), None, None
 
 
 def _value(value) -> str:
@@ -52,15 +42,6 @@ def _role_to_string(role) -> str:
     """
     inner = getattr(role, "actual_instance", None) or role
     return _value(getattr(inner, "type", None)) or _value(getattr(inner, "label", None))
-
-
-def _json_body(response_body) -> list | dict:
-    """Decode an Okta SDK raw response body."""
-    if not response_body:
-        return []
-    if isinstance(response_body, bytes):
-        response_body = response_body.decode("utf-8")
-    return json.loads(response_body)
 
 
 def _raw_value(item, key: str) -> str:
@@ -107,11 +88,17 @@ class ApiToken(OktaService):
             return {}
 
     async def _fetch_api_tokens(self) -> dict[str, "OktaApiToken"]:
+        # `list_api_tokens` is non-paginated in the SDK (no `after`
+        # parameter); we inline the tuple unwrap rather than going
+        # through `paginate`. Same pattern application_service uses for
+        # `get_first_party_app_settings`.
         result: dict[str, OktaApiToken] = {}
-        items, _resp, err = _normalise_sdk_result(await self.client.list_api_tokens())
+        sdk_result = await self.client.list_api_tokens()
+        err = sdk_result[-1]
         if err is not None:
             logger.error(f"Error listing API tokens: {err}")
             return result
+        items = sdk_result[0] or []
 
         for token in items:
             token_id = _value(getattr(token, "id", None))
@@ -167,12 +154,14 @@ class ApiToken(OktaService):
         """Return roles assigned directly to the user (no group inheritance)."""
         if self.missing_scope["user_roles"]:
             return []
-        items, _resp, err = _normalise_sdk_result(
-            await self.client.list_assigned_roles_for_user(user_id)
-        )
+        # `list_assigned_roles_for_user` is non-paginated in the SDK
+        # (no `after` parameter); inline the tuple unwrap.
+        sdk_result = await self.client.list_assigned_roles_for_user(user_id)
+        err = sdk_result[-1]
         if err is not None:
             logger.error(f"Error listing roles for token owner {user_id}: {err}")
             return []
+        items = sdk_result[0] or []
         roles = [_role_to_string(role) for role in items if _role_to_string(role)]
         if roles or not items:
             return roles
@@ -186,54 +175,26 @@ class ApiToken(OktaService):
         return await self._fetch_user_role_types_raw(user_id)
 
     async def _fetch_user_role_types_raw(self, user_id: str) -> list[str]:
-        """Return user role types from the SDK raw response when typed models are empty."""
-        serializer = getattr(
-            self.client, "_list_assigned_roles_for_user_serialize", None
+        """Return user role types from the raw response when typed models are empty.
+
+        Uses the shared `get_json_paginated` helper so any `Link: next`
+        header the API returns is followed (role lists are typically
+        small, but the SDK doesn't paginate this endpoint at all so the
+        only correct way to drain it lives here).
+        """
+        raw_items = await _raw_get_json_paginated(
+            self.client,
+            f"/api/v1/users/{user_id}/roles",
+            context=f"user roles for {user_id}",
         )
-        if serializer is None:
+        if raw_items is None:
             return []
-        try:
-            method, url, headers, body, post_params = serializer(
-                user_id=user_id,
-                expand=None,
-                _request_auth=None,
-                _content_type=None,
-                _headers=None,
-                _host_index=0,
-            )
-            request, error = await self.client._request_executor.create_request(
-                method,
-                url,
-                body,
-                headers,
-                post_params if post_params else None,
-                keep_empty_params=False,
-            )
-            if error:
-                logger.error(f"Error creating raw roles request for {user_id}: {error}")
-                return []
-            _response, response_body, error = (
-                await self.client._request_executor.execute(request)
-            )
-            if error:
-                logger.error(
-                    f"Error listing raw roles for token owner {user_id}: {error}"
-                )
-                return []
-            raw_items = _json_body(response_body)
-            if not isinstance(raw_items, list):
-                return []
-            roles = [
-                _value(role.get("type")) or _value(role.get("label"))
-                for role in raw_items
-                if isinstance(role, dict)
-            ]
-            return [role for role in roles if role]
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return []
+        roles = [
+            _value(role.get("type")) or _value(role.get("label"))
+            for role in raw_items
+            if isinstance(role, dict)
+        ]
+        return [role for role in roles if role]
 
     async def _fetch_group_inherited_role_types(self, user_id: str) -> list[str]:
         """Return roles inherited via the user's group memberships.
@@ -249,18 +210,18 @@ class ApiToken(OktaService):
         # separately). Treat any failure as "no inherited roles" so the
         # caller still surfaces direct roles cleanly.
         try:
-            groups, _resp, err = _normalise_sdk_result(
-                await self.client.list_user_groups(user_id)
-            )
+            sdk_result = await self.client.list_user_groups(user_id)
         except Exception as error:
             logger.error(
                 f"Error listing groups for token owner {user_id}: "
                 f"{error.__class__.__name__}: {error}"
             )
             return []
+        err = sdk_result[-1]
         if err is not None:
             logger.error(f"Error listing groups for token owner {user_id}: {err}")
             return []
+        groups = sdk_result[0] or []
         roles: list[str] = []
         for group in groups:
             group_id = _value(getattr(group, "id", None))
@@ -285,12 +246,12 @@ class ApiToken(OktaService):
 
     async def _fetch_group_role_types(self, group_id: str) -> list[str]:
         """Return role types assigned to `group_id`."""
-        items, _resp, err = _normalise_sdk_result(
-            await self.client.list_group_assigned_roles(group_id)
-        )
+        sdk_result = await self.client.list_group_assigned_roles(group_id)
+        err = sdk_result[-1]
         if err is not None:
             logger.error(f"Error listing roles for group {group_id}: {err}")
             return []
+        items = sdk_result[0] or []
         return [_role_to_string(role) for role in items if _role_to_string(role)]
 
     def _list_known_network_zone_ids(self) -> set[str]:
@@ -320,77 +281,37 @@ class ApiToken(OktaService):
         return identifiers
 
     async def _fetch_all_network_zones(self) -> tuple[list, object]:
-        """Drain all Network Zone pages for API token reference validation."""
+        """Drain all Network Zone pages for API token reference validation.
+
+        Catches the upstream Okta SDK ↔ Management API schema drift on
+        Enhanced Dynamic Zones (object-shaped pydantic model where the
+        API returns a JSON array) the same way `network_zone_service`
+        does. `(ValueError, ValidationError)` covers both discriminator
+        misses and model mismatches — matching the `user_service`
+        precedent.
+        """
         try:
-            return await self._paginate(
+            return await _paginate_shared(
                 lambda after: self.client.list_network_zones(after=after, limit=200)
             )
-        except Exception as error:
+        except (ValueError, ValidationError) as ex:
             logger.warning(
-                "Typed Okta SDK Network Zone listing failed for API token "
-                f"validation; falling back to raw SDK response: {error}"
+                f"Okta SDK raised {type(ex).__name__} parsing Network Zones "
+                "for API token validation — falling back to raw-JSON parse."
             )
             return await self._fetch_all_network_zones_raw()
 
     async def _fetch_all_network_zones_raw(self) -> tuple[list, object]:
-        """Drain Network Zone pages from the SDK raw response."""
-        serializer = getattr(self.client, "_list_network_zones_serialize", None)
-        if serializer is None:
-            return [], None
-        zones = []
-        after = None
-        while True:
-            method, url, headers, body, post_params = serializer(
-                after=after,
-                filter=None,
-                limit=200,
-                _request_auth=None,
-                _content_type=None,
-                _headers=None,
-                _host_index=0,
-            )
-            request, error = await self.client._request_executor.create_request(
-                method,
-                url,
-                body,
-                headers,
-                post_params if post_params else None,
-                keep_empty_params=False,
-            )
-            if error:
-                return zones, error
-            response, response_body, error = (
-                await self.client._request_executor.execute(request)
-            )
-            if error:
-                return zones, error
-            raw_items = _json_body(response_body)
-            if isinstance(raw_items, list):
-                zones.extend(raw_items)
-            after = _next_after_cursor(response)
-            if not after:
-                break
-        return zones, None
-
-    @staticmethod
-    async def _paginate(fetch) -> tuple[list, object]:
-        """Drain all pages of an SDK list call using Okta Link cursors."""
-        all_items = []
-        result = await fetch(None)
-        items, resp, err = _normalise_sdk_result(result)
-        if err is not None:
-            return [], err
-        all_items.extend(items)
-        while True:
-            cursor = _next_after_cursor(resp)
-            if not cursor:
-                break
-            result = await fetch(cursor)
-            items, resp, err = _normalise_sdk_result(result)
-            if err is not None:
-                return all_items, err
-            all_items.extend(items)
-        return all_items, None
+        """Drain Network Zone pages via the shared raw-JSON helper."""
+        items = await _raw_get_json_paginated(
+            self.client,
+            "/api/v1/zones",
+            page_size=200,
+            context="Network Zones for API token validation",
+        )
+        if items is None:
+            return [], Exception("raw Network Zones fetch failed; see logs")
+        return items, None
 
 
 class OktaApiToken(BaseModel):
