@@ -7,7 +7,6 @@ const CHECKPOINT_MARKER = "prowler.onboarding.checkpoint";
 describe("useOnboardingCheckpointStore", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    // Reset to a clean, disarmed/closed baseline between tests.
     useOnboardingCheckpointStore.setState({ armed: false, open: false });
   });
 
@@ -40,8 +39,7 @@ describe("useOnboardingCheckpointStore", () => {
   });
 
   it("does NOT open when not armed even if a provider connected", () => {
-    // Given - the user is an established user who never went through onboarding
-    // (the gate never armed the checkpoint), then adds another provider.
+    // Covers established users who skipped onboarding but later add a provider.
     useOnboardingCheckpointStore
       .getState()
       .requestOpenOnWizardClose({ providerConnected: true });

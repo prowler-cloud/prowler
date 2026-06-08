@@ -2,9 +2,7 @@ import { create } from "zustand";
 
 import { getFlowById, getOrderedFlows } from "@/lib/onboarding";
 
-// Distinguishes a slice-driven start ("sequence") from a param-driven replay
-// ("replay"). The trigger sets "replay" when it processes a `?onboarding=` param
-// so a single flow is replayed without touching the sequence.
+// "sequence" = slice-driven; "replay" = single-flow replay from ?onboarding= param.
 export type OnboardingSequenceMode = "sequence" | "replay";
 
 interface OnboardingSequenceState {
@@ -12,25 +10,16 @@ interface OnboardingSequenceState {
   currentFlowId: string | null;
   mode: OnboardingSequenceMode | null;
 
-  // Begin a guided sequence at `startFlowId` (defaults to the first ordered
-  // flow). Falls back to the first ordered flow when the id is unknown.
   startSequence: (startFlowId?: string) => void;
-  // Move to the next ordered flow after the current one. Clears state when the
-  // current flow is the last (sequence finished).
+  // Advances to next flow; clears state when the current flow is last.
   advance: () => void;
-  // Jump the active sequence to a specific known flow (e.g. the banner's
-  // "Run a scan" shortcut re-pointing back to the scan step). No-op when the id
-  // is not in the registry, so callers never need to guard.
+  // Jumps to a known flow. No-op for unknown ids.
   goToFlow: (flowId: string) => void;
-  // End the sequence immediately (user closed a tour, or finished). Resets all.
   stop: () => void;
 }
 
-// Ephemeral, NOT persisted: persisting `active`/`currentFlowId` would resurrect
-// a sequence after a hard refresh, violating "refresh mid-sequence must not
-// re-fire". The slice is the transient hand-off carrier across `router.push`
-// navigations within a single SPA session; durable "already saw this" memory
-// stays in the per-tour localStorage `TourCompletionRecord` (untouched here).
+// Ephemeral, NOT persisted: persisting would resurrect sequences after refresh.
+// Durable completion memory stays in the per-tour localStorage TourCompletionRecord.
 export const useOnboardingSequenceStore = create<OnboardingSequenceState>(
   (set, get) => ({
     active: false,
