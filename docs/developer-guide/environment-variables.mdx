@@ -49,5 +49,5 @@ Prowler API, Prowler SDK, and Prowler MCP Server have not yet adopted the conven
 
 ## Deprecated Names
 
-- **Prowler App:** The former `NEXT_PUBLIC_*` build-time variables (and the server-side `SENTRY_DSN` / `SENTRY_ENVIRONMENT`) are deprecated and no longer read. Set the `UI_*` runtime variables on the running container instead.
+- **Prowler App:** The bare server-side `SENTRY_DSN` and `SENTRY_ENVIRONMENT` are no longer read; the server and edge runtimes now read `UI_SENTRY_DSN` and `UI_SENTRY_ENVIRONMENT`. The former `NEXT_PUBLIC_*` build-time variables are deprecated but still read at runtime as a fallback when the matching `UI_*` variable is unset. This fallback will be removed in a future release, so set the `UI_*` runtime variables on the running container.
 - **Prowler API, Prowler SDK, and Prowler MCP Server:** The current, unprefixed variable names are deprecated. They continue to work today and will be removed once the prefixed convention is adopted for each component, as described in [Upcoming Breaking Change](#upcoming-breaking-change).
