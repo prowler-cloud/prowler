@@ -1,156 +1,83 @@
-/* All colors must use design tokens from globals.css; raw rgb() is allowed only
- * in box-shadow geometry. driver.js injects plain DOM, so these styles mirror
- * the shadcn Card/Button variants directly. */
+.driver-active .driver-overlay,
+.driver-active * {
+  pointer-events: none;
+}
+
+.driver-active .driver-active-element,
+.driver-active .driver-active-element *,
+.driver-popover,
+.driver-popover * {
+  pointer-events: auto;
+}
+
+@keyframes driver-fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.driver-fade .driver-overlay,
+.driver-fade .driver-popover {
+  animation: driver-fade-in 0.2s ease-in-out;
+}
 
 .driver-popover.prowler-theme {
-  background-color: var(--bg-neutral-tertiary);
-  color: var(--text-neutral-primary);
-  border: 1px solid var(--border-neutral-tertiary);
-  border-radius: 0.75rem;
-  box-shadow:
-    0 1px 0 0 rgb(255 255 255 / 0.04) inset,
-    0 24px 48px -16px rgb(0 0 0 / 0.65),
-    0 8px 16px -8px rgb(0 0 0 / 0.45);
-  padding: 1rem;
-  min-width: 300px;
-  max-width: 360px;
+  all: unset;
+  box-sizing: border-box;
+  margin: 0;
+  width: min(300px, calc(100vw - 32px));
+  min-width: min(250px, calc(100vw - 32px));
+  max-width: 300px;
+  font-family: inherit;
+  z-index: 1000000000;
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+
+.driver-popover.prowler-theme * {
+  box-sizing: border-box;
   font-family: inherit;
 }
 
 .driver-popover.prowler-theme .driver-popover-title {
-  color: var(--text-neutral-primary);
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.005em;
-  padding-right: 1.5rem;
+  display: block;
+  position: relative;
+  margin: 0;
 }
 
 .driver-popover.prowler-theme .driver-popover-description {
-  color: var(--text-neutral-secondary);
-  font-size: 0.875rem;
-  line-height: 1.55;
-  margin-top: 0.5rem;
-}
-
-.driver-popover.prowler-theme .driver-popover-progress-text {
-  color: var(--text-neutral-tertiary);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.driver-popover.prowler-theme .driver-popover-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-top: 1.125rem;
-  padding-top: 0.875rem;
-  border-top: 1px solid var(--border-neutral-primary);
-}
-
-.driver-popover.prowler-theme .driver-popover-navigation-btns {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.driver-popover.prowler-theme .driver-popover-footer button {
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  min-height: 2rem;
-  padding: 0 0.75rem;
-  border-radius: 0.5rem;
-  line-height: 1.25rem;
-  text-shadow: none;
-  cursor: pointer;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease,
-    border-color 150ms ease,
-    box-shadow 150ms ease,
-    transform 120ms ease;
-}
-
-.driver-popover.prowler-theme .driver-popover-footer button:focus-visible {
-  outline: 2px solid var(--bg-button-primary);
-  outline-offset: 2px;
-}
-
-.driver-popover.prowler-theme .driver-popover-prev-btn {
-  background-color: transparent;
-  color: var(--text-neutral-secondary);
-  border: 1px solid var(--border-neutral-tertiary);
-}
-
-.driver-popover.prowler-theme .driver-popover-prev-btn:hover,
-.driver-popover.prowler-theme .driver-popover-prev-btn:focus {
-  background-color: var(--bg-tag-primary);
-  color: var(--text-neutral-primary);
-  border-color: var(--border-neutral-tertiary);
-}
-
-.driver-popover.prowler-theme .driver-popover-prev-btn:active {
-  transform: translateY(1px);
-}
-
-.driver-popover.prowler-theme .driver-popover-next-btn {
-  background-color: var(--bg-button-primary);
-  color: var(--text-button-primary);
-  border: 1px solid var(--bg-button-primary);
-}
-
-.driver-popover.prowler-theme .driver-popover-next-btn:hover,
-.driver-popover.prowler-theme .driver-popover-next-btn:focus {
-  background-color: var(--bg-button-primary-hover);
-  border-color: var(--bg-button-primary-hover);
-  box-shadow: 0 0 0 4px
-    color-mix(in srgb, var(--bg-button-primary) 18%, transparent);
-}
-
-.driver-popover.prowler-theme .driver-popover-next-btn:active {
-  transform: translateY(1px);
-  box-shadow: none;
+  margin-bottom: 0;
 }
 
 .driver-popover.prowler-theme .driver-popover-close-btn {
-  position: absolute;
-  top: 0.625rem;
-  right: 0.625rem;
-  width: 1.75rem;
-  height: 1.75rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  color: var(--text-neutral-tertiary);
-  font-size: 1.125rem;
-  line-height: 1;
-  background: transparent;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease;
+  z-index: 1;
 }
 
-.driver-popover.prowler-theme .driver-popover-close-btn:hover,
-.driver-popover.prowler-theme .driver-popover-close-btn:focus-visible {
-  background-color: var(--bg-tag-primary);
-  color: var(--text-neutral-primary);
-  outline: none;
+.driver-popover.prowler-theme .driver-popover-btn-disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-/* No pointer arrow on tour popovers — the highlighted stage already anchors
-   the card to its target, so the arrow is visual noise. */
+:not(body):has(> .driver-active-element) {
+  overflow: hidden !important;
+}
+
+.driver-no-interaction,
+.driver-no-interaction * {
+  pointer-events: none !important;
+}
+
 .driver-popover.prowler-theme .driver-popover-arrow {
   display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .driver-popover.prowler-theme,
-  .driver-popover.prowler-theme .driver-popover-footer button {
+  .driver-popover.prowler-theme {
     transition: none !important;
   }
 }

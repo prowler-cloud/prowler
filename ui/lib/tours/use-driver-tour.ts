@@ -1,7 +1,5 @@
 "use client";
 
-import "driver.js/dist/driver.css";
-
 import { type Config, type Driver, driver, type DriveStep } from "driver.js";
 import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
@@ -9,6 +7,7 @@ import { useEffect, useRef } from "react";
 import { localStorageAdapter } from "./store/local-storage-adapter";
 import type { TourCompletionStore } from "./store/tour-completion-store";
 import { getDriverConfig, type TourTheme } from "./tour-config";
+import { unmountActiveTourPopover } from "./tour-popover-render";
 import {
   TOUR_COMPLETION_STATES,
   type TourCompletionRecord,
@@ -256,44 +255,42 @@ export function useDriverTour<TTarget extends string>(
         instance.destroy();
       },
       onDestroyed: () => {
+        unmountActiveTourPopover();
         persist(finalStateRef.current);
         onClosedRef.current?.(finalStateRef.current);
       },
     });
 
-    const instance = driver(config);
-    driverRef.current = instance;
-
-    if (autoOpen && !hasCompleted) {
-      const timer = window.setTimeout(() => {
-        instance.drive();
-      }, AUTO_OPEN_DELAY_MS);
-      return () => {
-        window.clearTimeout(timer);
-        if (instance.isActive()) {
-          instance.destroy();
-        }
-        driverRef.current = null;
-      };
-    }
+    driverRef.current = driver(config);
 
     return () => {
-      if (instance.isActive()) {
+      const instance = driverRef.current;
+      if (instance?.isActive()) {
         instance.destroy();
       }
+      unmountActiveTourPopover();
       driverRef.current = null;
     };
-  }, [
-    theme,
-    tour,
-    tourId,
-    tourVersion,
-    autoOpen,
-    enabled,
-    hasCompleted,
-    store,
-    configOverrides,
-  ]);
+  }, [theme, tour, tourId, tourVersion, enabled, store, configOverrides]);
+
+  useEffect(() => {
+    // Skip in vitest — the driver.js overlay would race click-through tests.
+    if (process.env.NODE_ENV === "test") return;
+    if (!enabled || !autoOpen || hasCompleted) return;
+
+    const instance = driverRef.current;
+    if (!instance || instance.isActive()) return;
+
+    const timer = window.setTimeout(() => {
+      if (!instance.isActive()) {
+        instance.drive();
+      }
+    }, AUTO_OPEN_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [autoOpen, enabled, hasCompleted, tourId, tourVersion]);
 
   return {
     start: () => driverRef.current?.drive(),

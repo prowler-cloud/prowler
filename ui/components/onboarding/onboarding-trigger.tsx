@@ -122,12 +122,23 @@ function OnboardingTourRunner<TTarget extends string>({
   });
 
   // replaceState (not router.replace) avoids a useSearchParams re-trigger that would
-  // drop the latched runner; one start per key already handles StrictMode double-invoke.
+  // drop the latched runner. The microtask keeps driver.js/flushSync outside
+  // React's mount lifecycle.
   useMountEffect(() => {
-    start();
-    if (mode === "replay") {
-      stripOnboardingParamFromLocation(queryString);
-    }
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+
+      start();
+      if (mode === "replay") {
+        stripOnboardingParamFromLocation(queryString);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   });
 
   return null;

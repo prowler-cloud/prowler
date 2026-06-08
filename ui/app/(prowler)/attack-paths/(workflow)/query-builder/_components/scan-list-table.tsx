@@ -295,6 +295,9 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
             handleSelectScan(row.original.id);
           }
         }}
+        getRowAttributes={(row) =>
+          row.index === 0 ? { "data-tour-id": "attack-paths-scan-list" } : {}
+        }
         enableRowSelection
         rowSelection={getSelectedRowSelection(paginatedScans, selectedScanId)}
       />

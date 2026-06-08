@@ -429,9 +429,7 @@ export default function AttackPathsPage() {
       ) : (
         <>
           <Suspense fallback={<div>Loading scans...</div>}>
-            <div data-tour-id="attack-paths-scan-list">
-              <ScanListTable scans={scans} />
-            </div>
+            <ScanListTable scans={scans} />
           </Suspense>
 
           {isViewingPreviousCycleData && (
@@ -674,9 +672,20 @@ interface AttackPathsReplayTriggerProps {
 }
 
 // Conditional-mount trigger: the parent renders this only when the replay
-// should start, so `useMountEffect` runs `onReplay` exactly once on mount —
-// replacing the previous run-once `useRef` guard inside an effect.
+// should start. The microtask keeps driver.js/flushSync outside React's
+// mount lifecycle while still running before the next browser task.
 function AttackPathsReplayTrigger({ onReplay }: AttackPathsReplayTriggerProps) {
-  useMountEffect(onReplay);
+  useMountEffect(() => {
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) onReplay();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  });
+
   return null;
 }

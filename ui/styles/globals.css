@@ -1,7 +1,6 @@
 @import "tailwindcss";
 /* All @import rules must precede @config/@source — a late @import is invalid
- * per the CSS spec and lightningcss (Tailwind v4) silently drops it, which
- * would strip the driver.js tour popover theme and break dark mode. */
+ * per the CSS spec and lightningcss (Tailwind v4) silently drops it. */
 @import "./tours.css";
 
 @config "../tailwind.config.js";
@@ -21,7 +20,6 @@
   --bg-button-tertiary-hover: var(--color-blue-500);
   --bg-button-tertiary-active: var(--color-indigo-600);
   --bg-button-disabled: var(--color-neutral-300);
-  --text-button-primary: #0a0a0a;
 
   /* Radar Map */
   --bg-radar-map: #b51c8033;
@@ -57,10 +55,6 @@
   --bg-neutral-primary: #fdfdfd;
   --bg-neutral-secondary: var(--color-white);
   --bg-neutral-tertiary: #fbfdfd;
-
-  /* Popover / Floating Surfaces (shadcn) */
-  --popover: var(--bg-neutral-secondary);
-  --popover-foreground: var(--text-neutral-primary);
   --bg-tag-primary: var(--color-slate-50);
   --bg-pass-primary: var(--color-emerald-400);
   --bg-pass-secondary: var(--color-emerald-50);
@@ -111,7 +105,6 @@
   --bg-button-tertiary-hover: var(--color-blue-400);
   --bg-button-tertiary-active: var(--color-blue-600);
   --bg-button-disabled: var(--color-neutral-700);
-  --text-button-primary: #0a0a0a;
 
   /* Neutral Map */
   --bg-neutral-map: var(--color-gray-800);
@@ -143,10 +136,6 @@
   --bg-neutral-primary: #000000;
   --bg-neutral-secondary: var(--color-stone-950);
   --bg-neutral-tertiary: #121110;
-
-  /* Popover / Floating Surfaces (shadcn) */
-  --popover: var(--bg-neutral-secondary);
-  --popover-foreground: var(--text-neutral-primary);
   --bg-tag-primary: var(--color-slate-950);
   --bg-pass-primary: var(--color-green-400);
   --bg-pass-secondary: var(--color-emerald-900);
@@ -246,10 +235,6 @@
   --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
-
-  /* Popover / Floating Surfaces (shadcn) */
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);

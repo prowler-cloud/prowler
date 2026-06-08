@@ -1,5 +1,7 @@
 import type { Config } from "driver.js";
 
+import { renderTourPopover } from "./tour-popover-render";
+
 export const TOUR_THEMES = {
   LIGHT: "light",
   DARK: "dark",
@@ -31,6 +33,7 @@ export const baseDriverConfig: Config = {
   doneBtnText: "Got it",
   allowKeyboardControl: true,
   disableActiveInteraction: false,
+  onPopoverRender: renderTourPopover,
 };
 
 // driver.js exposes `overlayColor` only via JS (no CSS variable hook), so the

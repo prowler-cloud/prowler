@@ -24,4 +24,10 @@ describe("AttackPathsPage", () => {
     );
     expect(source).toContain("startAttackPathsTour()");
   });
+
+  it("defers attack-paths replay start outside the mount lifecycle", () => {
+    // Then
+    expect(source).toContain("queueMicrotask");
+    expect(source).toContain("cancelled");
+  });
 });
