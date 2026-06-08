@@ -2,6 +2,7 @@ from prowler.lib.check.models import Check, CheckReportOkta
 from prowler.providers.okta.services.network.lib.network_zone_helpers import (
     compliant_anonymized_proxy_blocklist,
     missing_network_zone_scope_finding,
+    static_ip_blocklist_evidence,
 )
 from prowler.providers.okta.services.network.network_zone_client import (
     network_zone_client,
@@ -25,11 +26,32 @@ class network_zone_block_anonymized_proxies(Check):
                 )
             ]
 
+        retrieval_error = getattr(network_zone_client, "retrieval_error", None)
+        if retrieval_error:
+            resource = NetworkZoneSummary(
+                id="network-zones-retrieval-error",
+                name="(retrieval failed)",
+            )
+            report = CheckReportOkta(
+                metadata=self.metadata(), resource=resource, org_domain=org_domain
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Okta Network Zones could not be retrieved or validated. "
+                f"Reason: {retrieval_error}"
+            )
+            return [report]
+
         matching_zone, reason = compliant_anonymized_proxy_blocklist(
             network_zone_client.network_zones
         )
+        manual_zone = (
+            None
+            if matching_zone
+            else static_ip_blocklist_evidence(network_zone_client.network_zones)
+        )
 
-        resource = matching_zone or NetworkZoneSummary()
+        resource = matching_zone or manual_zone or NetworkZoneSummary()
         report = CheckReportOkta(
             metadata=self.metadata(), resource=resource, org_domain=org_domain
         )
@@ -37,6 +59,13 @@ class network_zone_block_anonymized_proxies(Check):
             report.status = "PASS"
             report.status_extended = (
                 f"Okta Network Zone {matching_zone.name} is an {reason}."
+            )
+        elif manual_zone:
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Okta Network Zone {manual_zone.name} is an active manual IP "
+                "blocklist with gateway or proxy IP entries; Prowler cannot "
+                "verify full anonymizer coverage for static entries."
             )
         else:
             report.status = "FAIL"

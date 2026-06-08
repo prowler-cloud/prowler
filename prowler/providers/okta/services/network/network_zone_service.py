@@ -60,9 +60,14 @@ class NetworkZone(OktaService):
             resource: (scope if granted and scope not in granted else None)
             for resource, scope in REQUIRED_SCOPES.items()
         }
+        self.retrieval_error: str | None = None
         self.network_zones: dict[str, OktaNetworkZone] = (
             {} if self.missing_scope["network_zones"] else self._list_network_zones()
         )
+
+    def _set_retrieval_error(self, message: str) -> None:
+        self.retrieval_error = message
+        logger.error(message)
 
     def _list_network_zones(self) -> dict[str, "OktaNetworkZone"]:
         """List all Network Zones visible to the configured Okta service app."""
@@ -70,8 +75,9 @@ class NetworkZone(OktaService):
         try:
             return self._run(self._fetch_all())
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            line_number = getattr(error.__traceback__, "tb_lineno", "unknown")
+            self._set_retrieval_error(
+                f"{error.__class__.__name__}[{line_number}]: {error}"
             )
             return {}
 
@@ -98,7 +104,7 @@ class NetworkZone(OktaService):
             )
             return await self._fetch_all_raw()
         if err is not None:
-            logger.error(f"Error listing Network Zones: {err}")
+            self._set_retrieval_error(f"Error listing Network Zones: {err}")
             return result
 
         for zone in all_zones:
@@ -128,7 +134,7 @@ class NetworkZone(OktaService):
                 headers={"Accept": "application/json"},
             )
             if error is not None:
-                logger.error(
+                self._set_retrieval_error(
                     f"Raw Network Zones fetch (create_request) failed: {error}"
                 )
                 return result
@@ -137,25 +143,29 @@ class NetworkZone(OktaService):
                 await self.client._request_executor.execute(request)
             )
             if error is not None:
-                logger.error(f"Raw Network Zones fetch (execute) failed: {error}")
+                self._set_retrieval_error(
+                    f"Raw Network Zones fetch (execute) failed: {error}"
+                )
                 return result
 
             if isinstance(response_body, (bytes, bytearray)):
                 try:
                     response_body = response_body.decode("utf-8")
                 except UnicodeDecodeError as decode_err:
-                    logger.error(
+                    self._set_retrieval_error(
                         f"Could not decode Network Zones response: {decode_err}"
                     )
                     return result
             try:
                 zones_data = json.loads(response_body) if response_body else []
             except json.JSONDecodeError as decode_err:
-                logger.error(f"Could not parse Network Zones JSON: {decode_err}")
+                self._set_retrieval_error(
+                    f"Could not parse Network Zones JSON: {decode_err}"
+                )
                 return result
 
             if not isinstance(zones_data, list):
-                logger.error(
+                self._set_retrieval_error(
                     f"Unexpected raw Network Zones payload shape: "
                     f"got {type(zones_data).__name__}, expected list"
                 )

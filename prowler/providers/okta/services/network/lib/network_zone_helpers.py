@@ -35,8 +35,6 @@ def is_enhanced_dynamic_anonymizer_blocklist(zone: OktaNetworkZone) -> bool:
     """Return True for active Enhanced Dynamic blocklists covering anonymizers."""
     if zone.type.upper() != "DYNAMIC_V2":
         return False
-    if zone.system and zone.name == "DefaultEnhancedDynamicZone":
-        return True
     categories = [category.upper() for category in zone.ip_service_categories]
     return any(
         marker in category
@@ -50,15 +48,19 @@ def compliant_anonymized_proxy_blocklist(
 ) -> tuple[OktaNetworkZone | None, str]:
     """Find the Network Zone that satisfies anonymized-proxy blocklisting."""
     for zone in active_blocklist_zones(network_zones):
-        if is_ip_blocklist_with_entries(zone):
-            return (
-                zone,
-                "active manual IP blocklist with gateway or proxy IP entries; "
-                "Prowler cannot verify full anonymizer coverage for static entries",
-            )
         if is_enhanced_dynamic_anonymizer_blocklist(zone):
             return zone, "active Enhanced Dynamic Zone blocklist for anonymizers"
     return None, ""
+
+
+def static_ip_blocklist_evidence(
+    network_zones: dict[str, OktaNetworkZone],
+) -> OktaNetworkZone | None:
+    """Return static IP blocklist evidence that requires human validation."""
+    for zone in active_blocklist_zones(network_zones):
+        if is_ip_blocklist_with_entries(zone):
+            return zone
+    return None
 
 
 _SCOPE_ADVICE = (
