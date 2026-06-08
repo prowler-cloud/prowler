@@ -182,52 +182,20 @@ def _make_app():
     return ApiConfig("api", api)
 
 
-def test_ready_initializes_driver_for_api_process(monkeypatch):
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["gunicorn"],
+        ["celery", "-A", "api"],
+        ["manage.py", "migrate"],
+    ],
+    ids=["api", "celery", "manage_py"],
+)
+def test_ready_never_eagerly_initializes_neo4j_driver(monkeypatch, argv):
+    """ready() must never contact Neo4j; the driver is created lazily on first use."""
     config = _make_app()
-    _set_argv(monkeypatch, ["gunicorn"])
+    _set_argv(monkeypatch, argv)
     _set_testing(monkeypatch, False)
-
-    with (
-        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
-        patch("api.attack_paths.database.init_driver") as init_driver,
-    ):
-        config.ready()
-
-    init_driver.assert_called_once()
-
-
-def test_ready_skips_driver_for_celery(monkeypatch):
-    config = _make_app()
-    _set_argv(monkeypatch, ["celery", "-A", "api"])
-    _set_testing(monkeypatch, False)
-
-    with (
-        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
-        patch("api.attack_paths.database.init_driver") as init_driver,
-    ):
-        config.ready()
-
-    init_driver.assert_not_called()
-
-
-def test_ready_skips_driver_for_manage_py_skip_command(monkeypatch):
-    config = _make_app()
-    _set_argv(monkeypatch, ["manage.py", "migrate"])
-    _set_testing(monkeypatch, False)
-
-    with (
-        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
-        patch("api.attack_paths.database.init_driver") as init_driver,
-    ):
-        config.ready()
-
-    init_driver.assert_not_called()
-
-
-def test_ready_skips_driver_when_testing(monkeypatch):
-    config = _make_app()
-    _set_argv(monkeypatch, ["gunicorn"])
-    _set_testing(monkeypatch, True)
 
     with (
         patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),

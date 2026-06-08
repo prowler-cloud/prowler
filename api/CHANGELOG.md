@@ -21,6 +21,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.30.3] (Prowler v5.29.3)
+
+### 🐞 Fixed
+
+- API startup no longer crashes when Neo4j is unreachable, as the Neo4j driver now connects lazily on first use rather than during app initialization [(#11491)](https://github.com/prowler-cloud/prowler/pull/11491)
+
+---
+
 ## [1.30.1] (Prowler v5.29.1)
 
 ### 🐞 Fixed

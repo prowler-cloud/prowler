@@ -116,21 +116,23 @@ class TestConnectionAcquisitionTimeout:
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         original_driver = db_module._driver
-        original_timeout = db_module.CONN_ACQUISITION_TIMEOUT
+        original_acq_timeout = db_module.CONN_ACQUISITION_TIMEOUT
+        original_conn_timeout = db_module.CONNECTION_TIMEOUT
 
         db_module._driver = None
 
         yield
 
         db_module._driver = original_driver
-        db_module.CONN_ACQUISITION_TIMEOUT = original_timeout
+        db_module.CONN_ACQUISITION_TIMEOUT = original_acq_timeout
+        db_module.CONNECTION_TIMEOUT = original_conn_timeout
 
     @patch("api.attack_paths.database.settings")
     @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
     def test_driver_receives_configured_timeout(
         self, mock_driver_factory, mock_settings
     ):
-        """init_driver() should pass CONN_ACQUISITION_TIMEOUT to the neo4j driver."""
+        """init_driver() should pass the configured timeouts to the neo4j driver."""
         mock_driver_factory.return_value = MagicMock()
         mock_settings.DATABASES = {
             "neo4j": {
@@ -141,11 +143,13 @@ class TestConnectionAcquisitionTimeout:
             }
         }
         db_module.CONN_ACQUISITION_TIMEOUT = 42
+        db_module.CONNECTION_TIMEOUT = 7
 
         db_module.init_driver()
 
         _, kwargs = mock_driver_factory.call_args
         assert kwargs["connection_acquisition_timeout"] == 42
+        assert kwargs["connection_timeout"] == 7
 
 
 class TestAtexitRegistration:
