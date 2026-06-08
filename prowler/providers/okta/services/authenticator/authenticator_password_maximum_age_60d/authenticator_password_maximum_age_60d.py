@@ -8,7 +8,12 @@ from prowler.providers.okta.services.authenticator.lib.password_policy_helpers i
 
 
 class authenticator_password_maximum_age_60d(Check):
-    """Ensure Okta Password Policies enforce the required STIG setting."""
+    """STIG V-273201 / OKTA-APP-000745.
+
+    Every active Okta Password Policy must enforce a 60-day maximum password age.
+    The check emits one finding per active policy so a weaker
+    custom policy cannot hide behind a compliant default.
+    """
 
     def execute(self) -> list[CheckReportOkta]:
         """Evaluate all active Okta Password Policies."""

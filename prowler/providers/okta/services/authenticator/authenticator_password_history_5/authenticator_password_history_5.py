@@ -8,7 +8,12 @@ from prowler.providers.okta.services.authenticator.lib.password_policy_helpers i
 
 
 class authenticator_password_history_5(Check):
-    """Ensure Okta Password Policies enforce the required STIG setting."""
+    """STIG V-273209 / OKTA-APP-003010.
+
+    Every active Okta Password Policy must remember at least the last 5 previous passwords.
+    The check emits one finding per active policy so a weaker
+    custom policy cannot hide behind a compliant default.
+    """
 
     def execute(self) -> list[CheckReportOkta]:
         """Evaluate all active Okta Password Policies."""

@@ -14,7 +14,14 @@ _SCOPE_ADVICE = (
 def active_password_policies(
     password_policies: dict[str, PasswordPolicy],
 ) -> list[PasswordPolicy]:
-    """Return active password policies sorted by priority."""
+    """Return active password policies sorted by priority.
+
+    Treats `policy.status == ""` as ACTIVE: the typed Okta SDK
+    occasionally returns policies without a `status` field populated
+    (the SDK enum doesn't cover every server-side value Okta has
+    shipped). Dropping those would silently hide real policies — we
+    'd rather evaluate them and let the per-field comparator decide.
+    """
     return sorted(
         [
             policy

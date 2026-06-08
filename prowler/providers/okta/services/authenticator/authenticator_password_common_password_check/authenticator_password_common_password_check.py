@@ -8,7 +8,12 @@ from prowler.providers.okta.services.authenticator.lib.password_policy_helpers i
 
 
 class authenticator_password_common_password_check(Check):
-    """Ensure Okta Password Policies enforce the required STIG setting."""
+    """STIG V-273208 / OKTA-APP-002980.
+
+    Every active Okta Password Policy must reject passwords found in the common-password dictionary.
+    The check emits one finding per active policy so a weaker
+    custom policy cannot hide behind a compliant default.
+    """
 
     def execute(self) -> list[CheckReportOkta]:
         """Evaluate all active Okta Password Policies."""

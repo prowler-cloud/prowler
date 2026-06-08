@@ -10,7 +10,10 @@ from prowler.providers.okta.services.authenticator.lib.authenticator_helpers imp
 
 
 class authenticator_smart_card_active(Check):
-    """Ensure the Smart Card IdP authenticator is active."""
+    """STIG V-273204 / OKTA-APP-001670.
+
+    The check requires Okta to configure and activate the Smart Card (PIV) authenticator.
+    """
 
     def execute(self) -> list[CheckReportOkta]:
         """Evaluate the Smart Card IdP authenticator status."""

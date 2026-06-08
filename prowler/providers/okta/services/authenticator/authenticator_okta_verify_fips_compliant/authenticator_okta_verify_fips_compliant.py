@@ -10,7 +10,10 @@ from prowler.providers.okta.services.authenticator.lib.authenticator_helpers imp
 
 
 class authenticator_okta_verify_fips_compliant(Check):
-    """Ensure Okta Verify restricts enrollment to FIPS-compliant devices."""
+    """STIG V-273205 / OKTA-APP-001700.
+
+    The check requires Okta to restrict Okta Verify enrollment to FIPS-compliant devices.
+    """
 
     def execute(self) -> list[CheckReportOkta]:
         """Evaluate Okta Verify FIPS compliance settings."""
@@ -36,10 +39,14 @@ class authenticator_okta_verify_fips_compliant(Check):
         report = CheckReportOkta(
             metadata=self.metadata(), resource=resource, org_domain=org_domain
         )
-        if not authenticator or authenticator.status.upper() != "ACTIVE":
+        if not authenticator:
+            report.status = "FAIL"
+            report.status_extended = "Okta Verify authenticator is missing."
+        elif authenticator.status.upper() != "ACTIVE":
             report.status = "FAIL"
             report.status_extended = (
-                "Okta Verify authenticator is not active or missing."
+                f"Okta Verify authenticator is not active; current status is "
+                f"{authenticator.status}."
             )
         elif authenticator.fips.upper() == "REQUIRED":
             report.status = "PASS"

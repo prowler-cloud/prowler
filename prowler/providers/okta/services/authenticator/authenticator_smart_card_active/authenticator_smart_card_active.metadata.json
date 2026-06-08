@@ -1,7 +1,7 @@
 {
   "Provider": "okta",
   "CheckID": "authenticator_smart_card_active",
-  "CheckTitle": "Okta Smart Card authenticator is active",
+  "CheckTitle": "Okta Smart Card IdP authenticator is configured and active",
   "CheckType": [],
   "ServiceName": "authenticator",
   "SubServiceName": "",
@@ -9,21 +9,22 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "**Okta Smart Card authentication** should be configured and active when certificate-based authentication is required by the STIG.",
-  "Risk": "**Missing Smart Card authentication** prevents users from satisfying mandated certificate-based authentication and can force weaker fallback authentication paths.",
+  "Description": "The **Smart Card IdP authenticator** (`smart_card_idp`) must exist in the org and be in the `ACTIVE` status so certificate-based authentication is available to users and apps that require it.\n\nThe check resolves the authenticator by its built-in `key`. Missing and inactive authenticators surface as distinct FAIL findings.",
+  "Risk": "Without an active Smart Card authenticator, users cannot satisfy mandated certificate-based authentication and may be forced onto weaker fallback paths.\n\n- **Mandated CAC/PIV use** cannot be enforced\n- **Compliance gaps** for environments that require X.509 certificate authentication\n- **Fallback to password-only** sign-in for affected groups",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/authenticator"
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Authenticator/",
+    "https://help.okta.com/en-us/content/topics/security/authenticators-smartcard.htm"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "Security > Authenticators: add or activate the Smart Card IdP authenticator.",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Authenticators**.\n3. If the **Smart Card IdP** authenticator is not listed, click **Add Authenticator** and add it.\n4. Open the authenticator and switch its status to **ACTIVE**.\n5. Bind it to the Authentication Policies that require certificate-based auth.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "**Configure and activate the Smart Card IdP authenticator** so certificate-based authentication is available for users and apps that require it.",
+      "Text": "Ensure the **Smart Card IdP** authenticator is:\n- Present in the org (`key = smart_card_idp`)\n- In the `ACTIVE` status\n- Referenced by every Authentication Policy that requires certificate-based authentication\n\nIf certificate-based authentication is not in scope for the organization, mute the check rather than disabling the authenticator.",
       "Url": "https://hub.prowler.com/check/authenticator_smart_card_active"
     }
   },
@@ -32,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Aligns with DISA STIG V-273204 / OKTA-APP-001670."
 }

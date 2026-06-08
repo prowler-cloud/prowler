@@ -8,7 +8,12 @@ from prowler.providers.okta.services.authenticator.lib.password_policy_helpers i
 
 
 class authenticator_password_minimum_age_24h(Check):
-    """Ensure Okta Password Policies enforce the required STIG setting."""
+    """STIG V-273200 / OKTA-APP-000740.
+
+    Every active Okta Password Policy must enforce a 24-hour minimum password age.
+    The check emits one finding per active policy so a weaker
+    custom policy cannot hide behind a compliant default.
+    """
 
     def execute(self) -> list[CheckReportOkta]:
         """Evaluate all active Okta Password Policies."""

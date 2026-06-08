@@ -8,7 +8,12 @@ from prowler.providers.okta.services.authenticator.lib.password_policy_helpers i
 
 
 class authenticator_password_minimum_length_15(Check):
-    """Ensure Okta Password Policies enforce the required STIG setting."""
+    """STIG V-273195 / OKTA-APP-000650.
+
+    Every active Okta Password Policy must enforce a minimum password length of 15 characters.
+    The check emits one finding per active policy so a weaker
+    custom policy cannot hide behind a compliant default.
+    """
 
     def execute(self) -> list[CheckReportOkta]:
         """Evaluate all active Okta Password Policies."""

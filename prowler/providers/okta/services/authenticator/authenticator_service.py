@@ -1,43 +1,15 @@
 from typing import Optional
-from urllib.parse import parse_qs, urlparse
 
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.okta.lib.service.pagination import paginate as _paginate_shared
 from prowler.providers.okta.lib.service.service import OktaService
 
 REQUIRED_SCOPES: dict[str, str] = {
     "password_policies": "okta.policies.read",
     "authenticators": "okta.authenticators.read",
 }
-
-
-def _next_after_cursor(resp) -> Optional[str]:
-    """Extract the Okta pagination cursor from a Link header."""
-    if resp is None:
-        return None
-    headers = getattr(resp, "headers", None) or {}
-    link = headers.get("link") or headers.get("Link") or ""
-    if not link:
-        return None
-    for part in link.split(","):
-        if "rel=next" not in part.replace(chr(34), ""):
-            continue
-        url_segment = part.split(";", 1)[0].strip().lstrip("<").rstrip(">")
-        cursor = parse_qs(urlparse(url_segment).query).get("after", [None])[0]
-        if cursor:
-            return cursor
-    return None
-
-
-def _normalise_sdk_result(result) -> tuple[list, object, object]:
-    """Return `(items, response, error)` for Okta SDK list call variants."""
-    if isinstance(result, tuple):
-        err = result[-1]
-        items = result[0] or []
-        resp = result[1] if len(result) >= 3 else None
-        return list(items), resp, err
-    return list(result or []), None, None
 
 
 def _value(value) -> str:
@@ -60,15 +32,50 @@ def _int_or_none(value) -> Optional[int]:
 
 
 def _bool_or_none(value) -> Optional[bool]:
+    """Coerce common Okta boolean shapes into a real `Optional[bool]`.
+
+    The Okta SDK typed `bool` fields are already real booleans, but the
+    raw-JSON fallback paths in sibling services have surfaced both
+    JSON-style booleans (`true`/`false` as Python `bool` after `json.loads`)
+    and string-flavored ones (`"true"`/`"false"`). `bool("false")` is
+    `True` — so naive coercion silently flips the meaning. Reject that
+    explicitly.
+    """
     if value is None:
         return None
     if isinstance(value, bool):
         return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes"}:
+            return True
+        if normalized in {"false", "0", "no", ""}:
+            return False
+        return None
     return bool(value)
 
 
 class Authenticator(OktaService):
-    """Fetches Okta Password Policies and Authenticators for STIG checks."""
+    """Fetches Okta Password Policies and Authenticators for STIG checks.
+
+    Populates:
+    - `self.password_policies` — keyed by policy id. Each `PasswordPolicy`
+      carries the projected fields the 10 password-policy checks read
+      (length, complexity, age, history, lockout, common-password
+      dictionary). The complete typed SDK response is collapsed into a
+      flat dataclass so the checks never reach back into the SDK shape.
+    - `self.authenticators` — keyed by authenticator id. Used by the
+      two non-password checks (Smart Card IdP, Okta Verify FIPS).
+
+    Before each fetch the service compares its required OAuth scope
+    (see `REQUIRED_SCOPES`) against the access token's granted scopes
+    (`provider.identity.granted_scopes`). When a scope is known to be
+    missing, the fetch is skipped and recorded in `self.missing_scope`
+    so each check can emit an explicit MANUAL finding instead of a
+    misleading "no resources returned". Empty granted_scopes means
+    "unknown" — the service attempts the fetch and lets the SDK fail
+    loudly.
+    """
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
@@ -99,7 +106,7 @@ class Authenticator(OktaService):
 
     async def _fetch_password_policies(self) -> dict[str, "PasswordPolicy"]:
         result: dict[str, PasswordPolicy] = {}
-        items, err = await self._paginate(
+        items, err = await _paginate_shared(
             lambda after: self.client.list_policies(
                 type="PASSWORD", after=after, limit="200"
             )
@@ -125,38 +132,22 @@ class Authenticator(OktaService):
             return {}
 
     async def _fetch_authenticators(self) -> dict[str, "OktaAuthenticator"]:
+        # `list_authenticators` is non-paginated in the SDK (no `after`
+        # parameter); inline the tuple unwrap rather than going through
+        # `paginate`. Same shape `application_service` uses for
+        # `get_first_party_app_settings`.
         result: dict[str, OktaAuthenticator] = {}
-        items, _resp, err = _normalise_sdk_result(
-            await self.client.list_authenticators()
-        )
+        sdk_result = await self.client.list_authenticators()
+        err = sdk_result[-1]
         if err is not None:
             logger.error(f"Error listing authenticators: {err}")
             return result
+        items = sdk_result[0] or []
 
         for authenticator in items:
             auth_obj = self._build_authenticator(authenticator)
             result[auth_obj.id] = auth_obj
         return result
-
-    @staticmethod
-    async def _paginate(fetch):
-        """Drain all pages of an SDK list call using Okta Link headers."""
-        all_items = []
-        result = await fetch(None)
-        items, resp, err = _normalise_sdk_result(result)
-        if err is not None:
-            return [], err
-        all_items.extend(items)
-        while True:
-            cursor = _next_after_cursor(resp)
-            if not cursor:
-                break
-            result = await fetch(cursor)
-            items, resp, err = _normalise_sdk_result(result)
-            if err is not None:
-                return all_items, err
-            all_items.extend(items)
-        return all_items, None
 
     @staticmethod
     def _build_password_policy(policy) -> "PasswordPolicy":

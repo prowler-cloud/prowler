@@ -1,7 +1,7 @@
 {
   "Provider": "okta",
   "CheckID": "authenticator_okta_verify_fips_compliant",
-  "CheckTitle": "Okta Verify requires FIPS-compliant devices",
+  "CheckTitle": "Okta Verify authenticator is active and restricts enrollment to FIPS-compliant devices",
   "CheckType": [],
   "ServiceName": "authenticator",
   "SubServiceName": "",
@@ -9,10 +9,11 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "**Okta Verify FIPS compliance** should require FIPS-compliant devices for enrollment when the organization mandates FIPS-approved authenticator usage.",
-  "Risk": "**Non-FIPS Okta Verify enrollment** can let users authenticate with devices that do not meet required cryptographic assurance, weakening regulated access controls.",
+  "Description": "The **Okta Verify authenticator** (`okta_verify`) must be present, in the `ACTIVE` status, and configured to require FIPS-compliant devices for enrollment (`settings.compliance.fips == REQUIRED`).\n\nMissing, inactive, and active-but-non-FIPS authenticators surface as distinct FAIL findings so the operator can act on the specific gap.",
+  "Risk": "Without FIPS-required enrollment, users can authenticate with devices whose cryptographic modules are not FIPS-validated.\n\n- **Regulatory exposure** under frameworks that mandate FIPS-validated cryptography\n- **Inconsistent assurance** across the user population\n- **Weak baseline** if the authenticator is active but the FIPS flag is `OPTIONAL` or unset",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Authenticator/",
     "https://help.okta.com/en-us/content/topics/mobile/ov-admin-config.htm",
     "https://support.okta.com/help/s/article/How-to-Enable-FIPS-Encryption-on-Okta-Verify?language=en_US"
   ],
@@ -20,11 +21,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "Security > Authenticators > Okta Verify: set FIPS Compliance to users enrolling in Okta Verify can use FIPS compliant devices only.",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Authenticators**.\n3. Activate the **Okta Verify** authenticator if it is not already `ACTIVE`.\n4. Open the authenticator's settings and set *FIPS Compliance* to **Users enrolling in Okta Verify can use FIPS compliant devices only**.\n5. Save the authenticator.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "**Enable FIPS compliance for Okta Verify** and restrict enrollment to FIPS-compliant devices where the organization requires FIPS assurance.",
+      "Text": "Ensure the **Okta Verify** authenticator is:\n- Present in the org (`key = okta_verify`)\n- In the `ACTIVE` status\n- Configured so *FIPS Compliance* is **Required** (`settings.compliance.fips == REQUIRED`)\n\nIf the organization does not require FIPS-validated authenticators, mute the check rather than disabling the FIPS toggle on a partial population.",
       "Url": "https://hub.prowler.com/check/authenticator_okta_verify_fips_compliant"
     }
   },
@@ -33,5 +34,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Aligns with DISA STIG V-273205 / OKTA-APP-001700."
 }

@@ -13,7 +13,14 @@ _SCOPE_ADVICE = (
 def find_authenticator_by_key(
     authenticators: dict[str, OktaAuthenticator], key: str
 ) -> OktaAuthenticator | None:
-    """Return the first authenticator with the requested key."""
+    """Return the first authenticator with the requested key.
+
+    Okta enforces unique authenticator `key` values per org for built-in
+    types (`okta_verify`, `smart_card_idp`, etc.), so the "first match"
+    is the only match in practice. If a future Okta release relaxes
+    that and returns duplicates, only the first is evaluated — STIG
+    semantics need refining at that point.
+    """
     for authenticator in authenticators.values():
         if authenticator.key == key:
             return authenticator

@@ -51,7 +51,16 @@ class Test_authenticator_okta_verify_fips_compliant:
         findings = _run_check(build_authenticator_client(authenticators={}))
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
-        assert "Okta Verify authenticator is not active" in findings[0].status_extended
+        assert "Okta Verify authenticator is missing." in findings[0].status_extended
+
+    def test_inactive_okta_verify_surfaces_current_status(self):
+        okta_verify = authenticator(key="okta_verify", status="INACTIVE")
+        findings = _run_check(
+            build_authenticator_client(authenticators={okta_verify.id: okta_verify})
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "INACTIVE" in findings[0].status_extended
 
     def test_missing_authenticators_scope_is_manual(self):
         findings = _run_check(
