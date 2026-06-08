@@ -1,9 +1,7 @@
 import type { TourCompletionRecord, TourId } from "../tour-types";
 import type { TourCompletionStore } from "./tour-completion-store";
 
-// All tour completion records live under ONE localStorage key, as a single
-// object keyed by `<id>.v<version>`, instead of one key per tour. This keeps the
-// browser storage namespace tidy and lets callers never hand-build keys.
+// All records share ONE localStorage key, keyed by `<id>.v<version>`.
 const STORAGE_KEY = "prowler.tours";
 
 type ToursObject = Record<string, TourCompletionRecord>;

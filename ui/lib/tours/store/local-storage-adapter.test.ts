@@ -4,7 +4,7 @@ import { TOUR_COMPLETION_STATES } from "../tour-types";
 import { buildStorageKey, localStorageAdapter } from "./local-storage-adapter";
 
 const TOUR_ID = { id: "attack-paths", version: 1 };
-// All records live under this single key as one object.
+// All tour records share one key as a single object — no per-tour proliferation.
 const STORAGE_KEY = "prowler.tours";
 
 const sampleRecord = {
@@ -54,7 +54,6 @@ describe("localStorageAdapter", () => {
     localStorageAdapter.set(TOUR_ID, sampleRecord);
     localStorageAdapter.set({ id: "add-provider", version: 1 }, sampleRecord);
 
-    // A single key holds both records — no per-tour key proliferation.
     expect(window.localStorage.length).toBe(1);
     expect(window.localStorage.key(0)).toBe(STORAGE_KEY);
   });

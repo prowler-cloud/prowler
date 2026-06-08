@@ -5,24 +5,18 @@ import { useSyncExternalStore } from "react";
 import { localStorageAdapter } from "./store/local-storage-adapter";
 import type { TourCompletionRecord, TourId } from "./tour-types";
 
-// Cross-tab storage updates. Same-tab writes come from event handlers that also
-// drive their own session state, so they do not rely on this subscription.
+// Subscribes to cross-tab storage events only; same-tab writes manage their own state.
 function subscribe(callback: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   window.addEventListener("storage", callback);
   return () => window.removeEventListener("storage", callback);
 }
 
-// `useSyncExternalStore` bails out of re-rendering only when `getSnapshot`
-// returns a reference-equal value. `localStorageAdapter.get` re-parses JSON into
-// a fresh object every call, so we cache the parsed record per tour and reuse it
-// while the serialized form is unchanged — keeping the snapshot stable.
+// `localStorageAdapter.get` re-parses JSON each call; cache by serialized form to keep snapshot reference-stable.
 const recordCache = new Map<string, TourCompletionRecord | null>();
 const serializedCache = new Map<string, string | null>();
 
-// SSR-safe read of a tour's completion record. The server snapshot is `null`
-// (no localStorage), so the first client render matches the server and there is
-// no hydration mismatch — replacing a client-only `useEffect` read.
+// Server snapshot is `null` (no localStorage), avoiding hydration mismatch.
 export function useTourCompletion(
   tour: TourId | null,
 ): TourCompletionRecord | null {

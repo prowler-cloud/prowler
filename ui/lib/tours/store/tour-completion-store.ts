@@ -1,7 +1,6 @@
 import type { TourCompletionRecord, TourId } from "../tour-types";
 
-// Swap point for persistence backends. Consumers must never branch on the
-// implementation; all adapters honor this contract.
+// Persistence backend contract; swap the adapter without touching consumers.
 export interface TourCompletionStore {
   get(id: TourId): TourCompletionRecord | null;
   set(id: TourId, record: TourCompletionRecord): void;

@@ -42,9 +42,7 @@ export interface TourCompletionRecord {
   completedAt: string;
 }
 
-// Modal step omits `target`; anchored step provides the `data-tour-id` value
-// (no brackets). `TTarget` narrows `target` to the literal union declared
-// by a specific tour.
+// Modal step omits `target`; anchored step provides the `data-tour-id` value (no brackets).
 export interface TourStep<TTarget extends string = string> {
   target?: TTarget;
   title?: string;
@@ -62,8 +60,7 @@ export interface TourDefinition<TTarget extends string = string> {
   steps: ReadonlyArray<TourStep<TTarget>>;
 }
 
-// `waitForStep` resolves when an element with
-// `data-tour-id="<tour-id>-<target>"` appears in the document.
+// `waitForStep` resolves when `data-tour-id="<tour-id>-<target>"` appears in the document.
 export interface TourStepHandlerContext<TTarget extends string = string> {
   waitForStep: (
     target: TTarget,
@@ -81,9 +78,7 @@ export interface TourStepHandlers<TTarget extends string = string> {
   onPrev?: (context: TourStepHandlerContext<TTarget>) => void | Promise<void>;
 }
 
-// Use instead of `: TourDefinition` so the inferred type preserves literal
-// step targets and `useDriverTour` can validate `stepHandlers` keys and
-// `waitForStep` arguments against them.
+// Use instead of `: TourDefinition` to preserve literal step targets for `stepHandlers`/`waitForStep` validation.
 export function defineTour<const TTarget extends string>(
   definition: TourDefinition<TTarget>,
 ): TourDefinition<TTarget> {

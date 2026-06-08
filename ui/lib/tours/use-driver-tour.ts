@@ -32,12 +32,7 @@ export interface UseDriverTourOptions<TTarget extends string = string> {
   configOverrides?: Partial<Config>;
   /** Indexed by step `target`; overrides driver.js's default Next/Back for that step. */
   stepHandlers?: { [K in TTarget]?: TourStepHandlers<TTarget> };
-  /**
-   * Fired once when the tour is destroyed (completed OR user-dismissed), with
-   * the final persisted state. Additive: existing callers omit it and keep the
-   * current behavior. Invoked from inside `onDestroyed`, AFTER persist, via a
-   * ref so a changing callback identity never recreates the driver.
-   */
+  /** Fired after persist when the tour is destroyed; invoked via ref so identity changes don't recreate the driver. */
   onClosed?: (state: TourCompletionRecord["state"]) => void;
 }
 
@@ -140,10 +135,7 @@ function buildHandlerContext<TTarget extends string>(
   };
 }
 
-// Rebuilds the driver instance when the active theme changes. Generic over
-// `TTarget` so `stepHandlers` keys and `waitForStep` calls are validated
-// against the literal union declared by `tour` (when authored via
-// `defineTour`).
+// Generic over `TTarget` so `stepHandlers` keys and `waitForStep` calls are type-checked against the tour's literal union.
 export function useDriverTour<TTarget extends string>(
   tour: TourDefinition<TTarget>,
   options: UseDriverTourOptions<TTarget> = {},
@@ -164,10 +156,7 @@ export function useDriverTour<TTarget extends string>(
   const finalStateRef = useRef<TourCompletionRecord["state"]>(
     TOUR_COMPLETION_STATES.DISMISSED,
   );
-  // Ref so driver.js closures read the latest handler each step without
-  // recreating the driver every render. Widened internally because indexing
-  // `{ [K in TTarget]?: ... }` by a generic `TTarget` resolves to `never`;
-  // the outer prop is the type-safe surface.
+  // Widened internally: indexing `{ [K in TTarget]?: ... }` by a generic `TTarget` resolves to `never`.
   const stepHandlersRef = useRef<
     Record<string, TourStepHandlers<TTarget> | undefined> | undefined
   >(stepHandlers as Record<string, TourStepHandlers<TTarget> | undefined>);
@@ -175,8 +164,7 @@ export function useDriverTour<TTarget extends string>(
     | Record<string, TourStepHandlers<TTarget> | undefined>
     | undefined;
 
-  // Ref so a changing `onClosed` identity never recreates the driver (mirrors
-  // `stepHandlersRef`). NOT added to the effect dependency array.
+  // Stable ref — not in the effect dep array, so changing identity never recreates the driver.
   const onClosedRef = useRef<
     ((state: TourCompletionRecord["state"]) => void) | undefined
   >(onClosed);
@@ -212,8 +200,7 @@ export function useDriverTour<TTarget extends string>(
       const target = step.target;
       if (!target) return driveStep;
 
-      // Wire next/prev via the ref so handler identity changes don't
-      // recreate the driver between renders.
+      // Read handlers via ref so identity changes don't recreate the driver.
       driveStep.popover = {
         ...driveStep.popover,
         onNextClick: (_element, _step, { driver: instance }) => {
