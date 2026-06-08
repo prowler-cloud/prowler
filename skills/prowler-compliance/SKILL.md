@@ -59,7 +59,7 @@ See "Compliance Framework Location" and "Framework-Specific Attribute Structures
 
 **Every framework directory follows this exact convention** — do not deviate:
 
-```
+```text
 {framework}/
 ├── __init__.py
 ├── {framework}.py            # ONLY get_{framework}_table() — NO function docstring
@@ -85,7 +85,7 @@ See "Compliance Framework Location" and "Framework-Specific Attribute Structures
 
 ### The CLI Pipeline (end-to-end)
 
-```
+```text
 prowler aws --compliance ccc_aws
     ↓
 Compliance.get_bulk("aws")  → parses prowler/compliance/aws/*.json
@@ -483,6 +483,7 @@ Prowler ThreatScore is a custom security scoring framework developed by Prowler 
 ## Available Compliance Frameworks
 
 ### AWS (41 frameworks)
+
 | Framework | File Name |
 |-----------|-----------|
 | CIS 1.4, 1.5, 2.0, 3.0, 4.0, 5.0 | `cis_{version}_aws.json` |
@@ -508,6 +509,7 @@ Prowler ThreatScore is a custom security scoring framework developed by Prowler 
 | NIS2 | `nis2_aws.json` |
 
 ### Azure (15+ frameworks)
+
 | Framework | File Name |
 |-----------|-----------|
 | CIS 2.0, 2.1, 3.0, 4.0 | `cis_{version}_azure.json` |
@@ -518,6 +520,7 @@ Prowler ThreatScore is a custom security scoring framework developed by Prowler 
 | NIST CSF 2.0 | `nist_csf_2.0_azure.json` |
 
 ### GCP (15+ frameworks)
+
 | Framework | File Name |
 |-----------|-----------|
 | CIS 2.0, 3.0, 4.0 | `cis_{version}_gcp.json` |
@@ -528,6 +531,7 @@ Prowler ThreatScore is a custom security scoring framework developed by Prowler 
 | NIST CSF 2.0 | `nist_csf_2.0_gcp.json` |
 
 ### Kubernetes (6 frameworks)
+
 | Framework | File Name |
 |-----------|-----------|
 | CIS 1.8, 1.10, 1.11 | `cis_{version}_kubernetes.json` |
@@ -561,7 +565,7 @@ done
 
 The sync tooling is split into three layers so adding a new framework only takes a YAML config (and optionally a new parser module for an unfamiliar upstream format):
 
-```
+```text
 skills/prowler-compliance/assets/
 ├── sync_framework.py          # generic runner — works for any framework
 ├── configs/
@@ -902,7 +906,7 @@ Add fixtures to `tests/lib/outputs/compliance/fixtures.py`: one `Compliance` obj
 
 **The table dispatcher file (`{framework}.py`) MUST NOT import `Finding`** (directly or transitively). The cycle is:
 
-```
+```text
 compliance.compliance imports get_{framework}_table
   → {framework}.py imports ComplianceOutput
   → compliance_output imports Finding

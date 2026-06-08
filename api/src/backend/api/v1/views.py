@@ -116,6 +116,7 @@ from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
+    get_prowler_provider_compliance,
 )
 from api.constants import SEVERITY_ORDER
 from api.db_router import MainRouter
@@ -1849,7 +1850,42 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             200: OpenApiResponse(
                 description="CSV file containing the compliance report"
             ),
-            404: OpenApiResponse(description="Compliance report not found"),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="Compliance report not found, or the scan has no reports yet"
+            ),
+        },
+        request=None,
+    ),
+    compliance_ocsf=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve compliance report as OCSF JSON",
+        description=(
+            "Download a specific compliance report as an OCSF JSON file. "
+            "Only universal frameworks that declare an output configuration "
+            "produce this artifact (currently 'dora' and 'csa_ccm_4.0'); any "
+            "other framework returns 404."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                type=str,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="The compliance report name, like 'dora'",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="OCSF JSON file containing the compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="Compliance report not found, the framework does "
+                "not provide an OCSF export, or the scan has no reports yet"
+            ),
         },
         request=None,
     ),
@@ -1992,35 +2028,23 @@ class ScanViewSet(BaseRLSViewSet):
         return queryset.select_related("provider", "task")
 
     def get_serializer_class(self):
-        if self.action == "create":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-            return ScanCreateSerializer
-        elif self.action == "partial_update":
+        if self.action == "partial_update":
             return ScanUpdateSerializer
-        elif self.action == "report":
+
+        action_defaults = {
+            "create": ScanCreateSerializer,
+            "report": ScanReportSerializer,
+            "compliance": ScanComplianceReportSerializer,
+            "compliance_ocsf": ScanComplianceReportSerializer,
+        }
+        response_only_actions = {"threatscore", "ens", "nis2", "csa", "cis"}
+
+        if self.action in action_defaults or self.action in response_only_actions:
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
-            return ScanReportSerializer
-        elif self.action == "compliance":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-            return ScanComplianceReportSerializer
-        elif self.action == "threatscore":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-        elif self.action == "ens":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-        elif self.action == "nis2":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-        elif self.action == "csa":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-        elif self.action == "cis":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
+            if self.action in action_defaults:
+                return action_defaults[self.action]
+
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -2059,12 +2083,17 @@ class ScanViewSet(BaseRLSViewSet):
         if scan_instance.state == StateChoices.EXECUTING and scan_instance.task:
             task = scan_instance.task
         else:
-            try:
-                task = Task.objects.get(
+            # A scan can have several `scan-report` tasks (e.g. re-runs); take the
+            # most recent one. `.first()` also avoids `MultipleObjectsReturned`.
+            task = (
+                Task.objects.filter(
                     task_runner_task__task_name="scan-report",
                     task_runner_task__task_kwargs__contains=str(scan_instance.id),
                 )
-            except Task.DoesNotExist:
+                .order_by("-inserted_at")
+                .first()
+            )
+            if task is None:
                 return None
 
         self.response_serializer_class = TaskSerializer
@@ -2139,27 +2168,32 @@ class ScanViewSet(BaseRLSViewSet):
                         status=status.HTTP_502_BAD_GATEWAY,
                     )
                 contents = resp.get("Contents", [])
-                keys = []
+                matches = []
                 for obj in contents:
                     key = obj["Key"]
                     key_basename = os.path.basename(key)
                     if any(ch in suffix for ch in ("*", "?", "[")):
                         if fnmatch.fnmatch(key_basename, suffix):
-                            keys.append(key)
+                            matches.append(obj)
                     elif key_basename == suffix:
-                        keys.append(key)
+                        matches.append(obj)
                     elif key.endswith(suffix):
                         # Backward compatibility if suffix already includes directories
-                        keys.append(key)
-                if not keys:
+                        matches.append(obj)
+                if not matches:
                     return Response(
                         {
                             "detail": f"No compliance file found for name '{os.path.splitext(suffix)[0]}'."
                         },
                         status=status.HTTP_404_NOT_FOUND,
                     )
-                # path_pattern here is prefix, but in compliance we build correct suffix check before
-                key = keys[0]
+                # Return the most recently modified match (latest report) when
+                # several files share the prefix/suffix. `list_objects_v2` always
+                # returns `LastModified`; the fallback keeps ordering deterministic
+                # if it is ever absent.
+                key = max(matches, key=lambda o: (o.get("LastModified", ""), o["Key"]))[
+                    "Key"
+                ]
             else:
                 # path_pattern is exact key; HEAD before presigning to preserve the 404 contract.
                 key = path_pattern
@@ -2209,7 +2243,9 @@ class ScanViewSet(BaseRLSViewSet):
                     },
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            filepath = files[0]
+            # Return the most recently modified match (latest report) when the
+            # pattern resolves to several files.
+            filepath = max(files, key=os.path.getmtime)
             with open(filepath, "rb") as f:
                 content = f.read()
             filename = os.path.basename(filepath)
@@ -2257,20 +2293,16 @@ class ScanViewSet(BaseRLSViewSet):
         content, filename = loader
         return self._serve_file(content, filename, "application/x-zip-compressed")
 
-    @action(
-        detail=True,
-        methods=["get"],
-        url_path="compliance/(?P<name>[^/]+)",
-        url_name="compliance",
-    )
-    def compliance(self, request, pk=None, name=None):
-        scan = self.get_object()
-        if name not in get_compliance_frameworks(scan.provider.provider):
-            return Response(
-                {"detail": f"Compliance '{name}' not found."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+    def _serve_compliance_artifact(self, scan, name, file_extension, content_type):
+        """Resolve and serve a per-framework compliance artifact from disk/S3.
 
+        Shared by the CSV and OCSF compliance download actions. Both are
+        path-based (no query params) on purpose: ``get_object`` runs
+        ``filter_queryset``, which triggers JSON:API's
+        ``QueryParameterValidationFilter`` and 400s on any non-JSON:API
+        query param, so a ``?format=`` / ``?type=`` selector is not viable
+        here — the format is encoded in the route instead.
+        """
         running_resp = self._get_task_status(scan)
         if running_resp:
             return running_resp
@@ -2287,25 +2319,66 @@ class ScanViewSet(BaseRLSViewSet):
             bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
             key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
             prefix = os.path.join(
-                os.path.dirname(key_prefix), "compliance", f"{name}.csv"
+                os.path.dirname(key_prefix), "compliance", f"{name}.{file_extension}"
             )
             loader = self._load_file(
                 prefix,
                 s3=True,
                 bucket=bucket,
                 list_objects=True,
-                content_type="text/csv",
+                content_type=content_type,
             )
         else:
             base = os.path.dirname(scan.output_location)
-            pattern = os.path.join(base, "compliance", f"*_{name}.csv")
+            pattern = os.path.join(base, "compliance", f"*_{name}.{file_extension}")
             loader = self._load_file(pattern, s3=False)
 
         if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
-        return self._serve_file(content, filename, "text/csv")
+        return self._serve_file(content, filename, content_type)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="compliance/(?P<name>[^/]+)",
+        url_name="compliance",
+    )
+    def compliance(self, request, pk=None, name=None):
+        scan = self.get_object()
+        if name not in get_compliance_frameworks(scan.provider.provider):
+            return Response(
+                {"detail": f"Compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return self._serve_compliance_artifact(scan, name, "csv", "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="compliance/(?P<name>[^/]+)/ocsf",
+        url_name="compliance-ocsf",
+    )
+    def compliance_ocsf(self, request, pk=None, name=None):
+        scan = self.get_object()
+        if name not in get_compliance_frameworks(scan.provider.provider):
+            return Response(
+                {"detail": f"Compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        universal_bulk = get_prowler_provider_compliance(scan.provider.provider)
+        framework_obj = universal_bulk.get(name)
+        if not (framework_obj and getattr(framework_obj, "outputs", None)):
+            return Response(
+                {"detail": f"Compliance '{name}' does not provide an OCSF export."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return self._serve_compliance_artifact(
+            scan, name, "ocsf.json", "application/json"
+        )
 
     @action(
         detail=True,
@@ -3748,6 +3821,16 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         if self.action == "retrieve":
             return queryset
         return super().filter_queryset(queryset)
+
+    def _optimize_tags_loading(self, queryset):
+        """Prefetch resource tags to avoid N+1 queries when serializing findings"""
+        return queryset.prefetch_related(
+            Prefetch(
+                "resources__tags",
+                queryset=ResourceTag.objects.filter(tenant_id=self.request.tenant_id),
+                to_attr="prefetched_tags",
+            )
+        )
 
     def list(self, request, *args, **kwargs):
         filtered_queryset = self.filter_queryset(self.get_queryset())
@@ -7484,14 +7567,17 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     def _get_latest_findings_per_provider(self, filtered_queryset):
         """Keep only findings from each provider's most recent completed scan."""
-        latest_scan_ids = (
+        # Materialize to a literal IN list. Left as a subquery, Postgres can't
+        # estimate the match count and picks a serial nested loop on
+        # resource_finding_mappings when one scan dominates findings
+        latest_scan_ids = list(
             Scan.objects.filter(
                 tenant_id=self.request.tenant_id,
                 state=StateChoices.COMPLETED,
             )
             .order_by("provider_id", "-completed_at", "-inserted_at")
             .distinct("provider_id")
-            .values("id")
+            .values_list("id", flat=True)
         )
         return filtered_queryset.filter(scan_id__in=latest_scan_ids)
 

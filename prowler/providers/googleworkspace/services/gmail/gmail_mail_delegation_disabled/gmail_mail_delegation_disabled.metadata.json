@@ -13,8 +13,8 @@
   "Risk": "If users can delegate access to their mailbox, an attacker who compromises one account could silently delegate access to maintain persistent email surveillance. This also increases the risk of **insider threats** and **data exfiltration** through shared mailbox access.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7223765",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/let-users-delegate-access-to-a-gmail-account",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

@@ -85,11 +85,6 @@ from prowler.lib.outputs.compliance.compliance import (
     display_compliance_table,
     process_universal_compliance_frameworks,
 )
-from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
-from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
-from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
-from prowler.lib.outputs.compliance.csa.csa_gcp import GCPCSA
-from prowler.lib.outputs.compliance.csa.csa_oraclecloud import OracleCloudCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -158,6 +153,7 @@ from prowler.providers.okta.models import OktaOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
 from prowler.providers.scaleway.models import ScalewayOutputOptions
+from prowler.providers.stackit.models import StackITOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
 
 
@@ -414,6 +410,10 @@ def prowler():
         output_options = LLMOutputOptions(args, bulk_checks_metadata)
     elif provider == "oraclecloud":
         output_options = OCIOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "stackit":
+        output_options = StackITOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "alibabacloud":
@@ -801,18 +801,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5)
                 c5.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_aws":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_aws = AWSCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_aws)
-                csa_ccm_4_0_aws.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -916,18 +904,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5_azure)
                 c5_azure.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_azure":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_azure = AzureCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_azure)
-                csa_ccm_4_0_azure.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -1031,18 +1007,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5_gcp)
                 c5_gcp.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_gcp":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_gcp = GCPCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_gcp)
-                csa_ccm_4_0_gcp.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -1277,18 +1241,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_oraclecloud":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_oraclecloud = OracleCloudCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_oraclecloud)
-                csa_ccm_4_0_oraclecloud.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -1317,18 +1269,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_alibabacloud":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_alibabacloud = AlibabaCloudCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_alibabacloud)
-                csa_ccm_4_0_alibabacloud.batch_write_data_to_file()
             elif compliance_name == "prowler_threatscore_alibabacloud":
                 filename = (
                     f"{output_options.output_directory}/compliance/"

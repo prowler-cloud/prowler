@@ -31,23 +31,6 @@ export const editRoleFormSchema = z.object({
   groups: z.array(z.string()).optional(),
 });
 
-export const editScanFormSchema = (currentName: string) =>
-  z.object({
-    scanName: z
-      .string()
-      .refine((val) => val === "" || val.length >= 3, {
-        message: "Must be empty or have at least 3 characters.",
-      })
-      .refine((val) => val === "" || val.length <= 32, {
-        message: "Must not exceed 32 characters.",
-      })
-      .refine((val) => val !== currentName, {
-        message: "The new name must be different from the current one.",
-      })
-      .optional(),
-    scanId: z.string(),
-  });
-
 export const onDemandScanFormSchema = () =>
   z.object({
     [ProviderCredentialFields.PROVIDER_ID]: z.string(),

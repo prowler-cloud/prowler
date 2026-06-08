@@ -1,0 +1,16 @@
+node_modules/
+ui/node_modules/
+.git/
+.venv/
+**/.venv/
+dist/
+build/
+htmlcov/
+.next/
+ui/.next/
+ui/out/
+contrib/
+
+# Auto-generated content (keepachangelog format legitimately repeats section headings).
+# Revisit with the team — see beads task on markdownlint rule triage.
+**/CHANGELOG.md

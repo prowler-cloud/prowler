@@ -353,4 +353,36 @@ describe("MultiSelect", () => {
 
     expect(onValuesChange).toHaveBeenCalledWith(["aws-prod", "azure-dev"]);
   });
+
+  it("does not select disabled options", async () => {
+    const user = userEvent.setup();
+    const onValuesChange = vi.fn();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={onValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="aws-disconnected" disabled>
+            Disconnected AWS
+          </MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+
+    const disabledOption = screen.getByRole("option", {
+      name: /disconnected aws/i,
+    });
+
+    expect(disabledOption).toHaveAttribute("data-disabled", "true");
+    expect(disabledOption).toHaveAttribute("aria-disabled", "true");
+
+    await user.click(disabledOption);
+
+    expect(onValuesChange).not.toHaveBeenCalled();
+  });
 });
