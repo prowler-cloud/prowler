@@ -16,4 +16,12 @@ describe("AttackPathsPage", () => {
       "Select a scan, build a query, and visualize Attack Paths in your",
     );
   });
+
+  it("force-starts attack-paths replay from the onboarding query param", () => {
+    // Then
+    expect(source).toContain(
+      'searchParams.get("onboarding") === "attack-paths"',
+    );
+    expect(source).toContain("startAttackPathsTour()");
+  });
 });
