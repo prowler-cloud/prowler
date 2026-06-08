@@ -4,10 +4,11 @@ import sys
 
 from pathlib import Path
 
-from config.custom_logging import BackendLogger
-from config.env import env
 from django.apps import AppConfig
 from django.conf import settings
+
+from config.custom_logging import BackendLogger
+from config.env import env
 
 logger = logging.getLogger(BackendLogger.API)
 

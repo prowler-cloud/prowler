@@ -11,13 +11,13 @@ import neo4j.exceptions
 
 from config.env import env
 from django.conf import settings
+
+from api.attack_paths.retryable_session import RetryableSession
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     PROVIDER_RESOURCE_LABEL,
     get_provider_label,
 )
-
-from api.attack_paths.retryable_session import RetryableSession
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
@@ -30,8 +30,8 @@ READ_QUERY_TIMEOUT_SECONDS = env.int(
     "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
 )
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
-# Kept below CONN_ACQUISITION_TIMEOUT: the driver requires the acquisition
-# timeout to be the longer of the two (it may include opening a new connection).
+# Shorter than CONN_ACQUISITION_TIMEOUT — the driver requires acquisition to be
+# the longer of the two (it may include opening a new connection).
 CONNECTION_TIMEOUT = env.int("NEO4J_CONNECTION_TIMEOUT", default=5)
 CONN_ACQUISITION_TIMEOUT = env.int("NEO4J_CONN_ACQUISITION_TIMEOUT", default=15)
 READ_EXCEPTION_CODES = [
@@ -73,8 +73,13 @@ def init_driver() -> neo4j.Driver:
                 max_connection_pool_size=50,
             )
             # Publish the singleton only after connectivity is verified so a
-            # failed probe does not leave an unverified driver behind.
-            driver.verify_connectivity()
+            # failed probe does not leave an unverified driver behind. Close the
+            # driver on failure so a repeatedly-probed outage cannot leak pools.
+            try:
+                driver.verify_connectivity()
+            except Exception:
+                driver.close()
+                raise
             _driver = driver
 
             # Register cleanup handler (only runs once since we're inside the _driver is None block)

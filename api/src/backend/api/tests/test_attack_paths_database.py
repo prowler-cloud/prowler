@@ -1,15 +1,16 @@
 """
 Tests for Neo4j database lazy initialization.
 
-The Neo4j driver connects on first use by default. API processes may
-eagerly initialize the driver during app startup, while Celery workers
-remain lazy. These tests validate the database module behavior itself.
+The Neo4j driver is created on first use for every process type; app startup
+never contacts Neo4j. These tests validate the database module behavior itself.
 """
 
 import threading
+
 from unittest.mock import MagicMock, patch
 
 import neo4j
+import neo4j.exceptions
 import pytest
 
 import api.attack_paths.database as db_module
@@ -58,6 +59,32 @@ class TestLazyInitialization:
         mock_driver.verify_connectivity.assert_called_once()
         assert result is mock_driver
         assert db_module._driver is mock_driver
+
+    @patch("api.attack_paths.database.settings")
+    @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
+    def test_init_driver_leaves_driver_none_when_verify_fails(
+        self, mock_driver_factory, mock_settings
+    ):
+        """A failed verify_connectivity() must not publish or leak the driver."""
+        mock_driver = MagicMock()
+        mock_driver.verify_connectivity.side_effect = (
+            neo4j.exceptions.ServiceUnavailable("down")
+        )
+        mock_driver_factory.return_value = mock_driver
+        mock_settings.DATABASES = {
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": 7687,
+                "USER": "neo4j",
+                "PASSWORD": "password",
+            }
+        }
+
+        with pytest.raises(neo4j.exceptions.ServiceUnavailable):
+            db_module.init_driver()
+
+        assert db_module._driver is None
+        mock_driver.close.assert_called_once()
 
     @patch("api.attack_paths.database.settings")
     @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
