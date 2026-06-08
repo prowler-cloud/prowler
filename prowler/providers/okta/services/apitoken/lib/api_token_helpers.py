@@ -3,7 +3,7 @@ from prowler.providers.okta.services.apitoken.api_token_service import OktaApiTo
 
 ANYWHERE_CONNECTIONS = {"", "ANYWHERE", "ANY_IP"}
 _SCOPE_ADVICE = (
-    "Grant it on the service app's Okta API Scopes tab in the Okta Admin "
+    "Grant it on the Okta API Scopes tab of the service app in the Okta Admin "
     "Console, then re-run the check."
 )
 
@@ -16,14 +16,14 @@ def network_zone_restriction_status(
     if connection in ANYWHERE_CONNECTIONS:
         return (
             "FAIL",
-            f"API token '{token.name}' can be used from any IP address. "
+            f"API token {token.name} can be used from any IP address. "
             "Restrict the token to one or more known Okta Network Zones.",
         )
 
     if not token.network_includes:
         return (
             "FAIL",
-            f"API token '{token.name}' does not allowlist a specific Okta "
+            f"API token {token.name} does not allowlist a specific Okta "
             "Network Zone. Excluded zones do not restrict the token to trusted "
             "source networks.",
         )
@@ -34,13 +34,13 @@ def network_zone_restriction_status(
     if unknown_zones:
         return (
             "FAIL",
-            f"API token '{token.name}' references unknown Network Zone(s): "
+            f"API token {token.name} references unknown Network Zone(s): "
             f"{', '.join(unknown_zones)}.",
         )
 
     return (
         "PASS",
-        f"API token '{token.name}' is restricted to known Okta Network Zone(s): "
+        f"API token {token.name} is restricted to known Okta Network Zone(s): "
         f"{', '.join(token.network_includes)}.",
     )
 
@@ -91,7 +91,7 @@ def missing_network_zone_scope_for_token_finding(
     report.status = "MANUAL"
     report.status_extended = (
         f"Could not validate Network Zone restrictions for API token "
-        f"'{token.name}': the Okta service app is missing the required "
+        f"{token.name}: the Okta service app is missing the required "
         f"`{scope}` API scope. {_SCOPE_ADVICE}"
     )
     return report
@@ -104,8 +104,8 @@ def missing_user_roles_scope_for_token_finding(
     report = CheckReportOkta(metadata=metadata, resource=token, org_domain=org_domain)
     report.status = "MANUAL"
     report.status_extended = (
-        f"Could not retrieve admin roles for API token '{token.name}' owner "
-        f"'{token.user_id}': the Okta service app is missing the required "
+        f"Could not retrieve admin roles for API token {token.name} owner "
+        f"{token.user_id}: the Okta service app is missing the required "
         f"`{scope}` API scope. {_SCOPE_ADVICE}"
     )
     return report

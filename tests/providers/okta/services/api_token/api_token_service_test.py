@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 from unittest import mock
 
@@ -96,6 +97,60 @@ class Test_ApiToken_service:
 
         assert service.api_tokens[token.id].owner_roles == []
 
+    def test_falls_back_to_raw_roles_when_sdk_role_is_empty(self):
+        provider = set_mocked_okta_provider()
+        token = _sdk_token()
+
+        async def fake_list_api_tokens(*_a, **_k):
+            return ([token], _resp({}), None)
+
+        async def fake_list_assigned_roles_for_user(user_id, *_a, **_k):
+            assert user_id == token.user_id
+            return ([SimpleNamespace(type=None, label=None)], _resp({}), None)
+
+        async def fake_create_request(*_a, **_k):
+            return ("raw-role-request", None)
+
+        async def fake_execute(request, *_a, **_k):
+            assert request == "raw-role-request"
+            return (
+                _resp({}),
+                json.dumps(
+                    [
+                        {
+                            "id": "ra-super-admin",
+                            "type": "SUPER_ADMIN",
+                            "label": "Super Administrator",
+                        }
+                    ]
+                ),
+                None,
+            )
+
+        async def fake_list_network_zones(*_a, **_k):
+            return ([_sdk_zone("nzo-corp", "Corporate")], _resp({}), None)
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_api_tokens = fake_list_api_tokens
+            mocked.list_assigned_roles_for_user = fake_list_assigned_roles_for_user
+            mocked._list_assigned_roles_for_user_serialize.return_value = (
+                "GET",
+                "/api/v1/users/00uabcdefg1234567890/roles",
+                {},
+                None,
+                None,
+            )
+            mocked._request_executor.create_request = fake_create_request
+            mocked._request_executor.execute = fake_execute
+            mocked.list_network_zones = fake_list_network_zones
+            mocked_client_cls.return_value = mocked
+            service = ApiToken(provider)
+
+        assert service.api_tokens[token.id].owner_roles == ["SUPER_ADMIN"]
+
     def test_paginates_known_network_zones_for_token_validation(self):
         provider = set_mocked_okta_provider()
         token = _sdk_token(include=["nzo-page-2"])
@@ -132,6 +187,51 @@ class Test_ApiToken_service:
             "nzo-page-2",
             "Second",
         }
+
+    def test_falls_back_to_raw_network_zones_when_sdk_listing_fails(self):
+        provider = set_mocked_okta_provider()
+        token = _sdk_token(include=["nzo-raw"])
+
+        async def fake_list_api_tokens(*_a, **_k):
+            return ([token], _resp({}), None)
+
+        async def fake_list_assigned_roles_for_user(*_a, **_k):
+            return ([_sdk_role("READ_ONLY_ADMIN")], _resp({}), None)
+
+        async def fake_list_network_zones(*_a, **_k):
+            raise ValueError("EnhancedDynamicNetworkZone SDK deserialization failed")
+
+        async def fake_create_request(*_a, **_k):
+            return ("raw-zones-request", None)
+
+        async def fake_execute(request, *_a, **_k):
+            assert request == "raw-zones-request"
+            return (
+                _resp({}),
+                json.dumps([{"id": "nzo-raw", "name": "Raw Corporate"}]),
+                None,
+            )
+
+        with mock.patch(
+            "prowler.providers.okta.lib.service.service.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_api_tokens = fake_list_api_tokens
+            mocked.list_assigned_roles_for_user = fake_list_assigned_roles_for_user
+            mocked.list_network_zones = fake_list_network_zones
+            mocked._list_network_zones_serialize.return_value = (
+                "GET",
+                "/api/v1/zones",
+                {},
+                None,
+                None,
+            )
+            mocked._request_executor.create_request = fake_create_request
+            mocked._request_executor.execute = fake_execute
+            mocked_client_cls.return_value = mocked
+            service = ApiToken(provider)
+
+        assert service.known_network_zone_ids == {"nzo-raw", "Raw Corporate"}
 
     def test_returns_empty_on_token_api_error(self):
         provider = set_mocked_okta_provider()

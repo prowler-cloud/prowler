@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -33,6 +34,22 @@ def _value(value) -> str:
     if enum_value is not None:
         return str(enum_value)
     return str(value)
+
+
+def _json_body(response_body) -> list | dict:
+    """Decode an Okta SDK raw response body."""
+    if not response_body:
+        return []
+    if isinstance(response_body, bytes):
+        response_body = response_body.decode("utf-8")
+    return json.loads(response_body)
+
+
+def _raw_value(item, key: str) -> str:
+    """Return a string value from an SDK model or raw dictionary."""
+    if isinstance(item, dict):
+        return _value(item.get(key))
+    return _value(getattr(item, key, None))
 
 
 class ApiToken(OktaService):
@@ -105,7 +122,62 @@ class ApiToken(OktaService):
             role_type = _value(getattr(role, "type", None))
             role_label = _value(getattr(role, "label", None))
             roles.append(role_type or role_label)
-        return [role for role in roles if role]
+        roles = [role for role in roles if role]
+        if roles or not items:
+            return roles
+
+        raw_roles = await self._fetch_user_role_types_raw(user_id)
+        return raw_roles or roles
+
+    async def _fetch_user_role_types_raw(self, user_id: str) -> list[str]:
+        """Return user role types from the SDK raw response when typed models are empty."""
+        serializer = getattr(
+            self.client, "_list_assigned_roles_for_user_serialize", None
+        )
+        if serializer is None:
+            return []
+        try:
+            method, url, headers, body, post_params = serializer(
+                user_id=user_id,
+                expand=None,
+                _request_auth=None,
+                _content_type=None,
+                _headers=None,
+                _host_index=0,
+            )
+            request, error = await self.client._request_executor.create_request(
+                method,
+                url,
+                body,
+                headers,
+                post_params if post_params else None,
+                keep_empty_params=False,
+            )
+            if error:
+                logger.error(f"Error creating raw roles request for {user_id}: {error}")
+                return []
+            _response, response_body, error = (
+                await self.client._request_executor.execute(request)
+            )
+            if error:
+                logger.error(
+                    f"Error listing raw roles for token owner {user_id}: {error}"
+                )
+                return []
+            raw_items = _json_body(response_body)
+            if not isinstance(raw_items, list):
+                return []
+            roles = [
+                _value(role.get("type")) or _value(role.get("label"))
+                for role in raw_items
+                if isinstance(role, dict)
+            ]
+            return [role for role in roles if role]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
 
     def _list_known_network_zone_ids(self) -> set[str]:
         """List known Network Zone ids and names for token condition validation."""
@@ -125,8 +197,8 @@ class ApiToken(OktaService):
             logger.error(f"Error listing Network Zones for API token checks: {err}")
             return identifiers
         for zone in items:
-            zone_id = _value(getattr(zone, "id", None))
-            zone_name = _value(getattr(zone, "name", None))
+            zone_id = _raw_value(zone, "id")
+            zone_name = _raw_value(zone, "name")
             if zone_id:
                 identifiers.add(zone_id)
             if zone_name:
@@ -135,9 +207,56 @@ class ApiToken(OktaService):
 
     async def _fetch_all_network_zones(self) -> tuple[list, object]:
         """Drain all Network Zone pages for API token reference validation."""
-        return await self._paginate(
-            lambda after: self.client.list_network_zones(after=after, limit=200)
-        )
+        try:
+            return await self._paginate(
+                lambda after: self.client.list_network_zones(after=after, limit=200)
+            )
+        except Exception as error:
+            logger.warning(
+                "Typed Okta SDK Network Zone listing failed for API token "
+                f"validation; falling back to raw SDK response: {error}"
+            )
+            return await self._fetch_all_network_zones_raw()
+
+    async def _fetch_all_network_zones_raw(self) -> tuple[list, object]:
+        """Drain Network Zone pages from the SDK raw response."""
+        serializer = getattr(self.client, "_list_network_zones_serialize", None)
+        if serializer is None:
+            return [], None
+        zones = []
+        after = None
+        while True:
+            method, url, headers, body, post_params = serializer(
+                after=after,
+                filter=None,
+                limit=200,
+                _request_auth=None,
+                _content_type=None,
+                _headers=None,
+                _host_index=0,
+            )
+            request, error = await self.client._request_executor.create_request(
+                method,
+                url,
+                body,
+                headers,
+                post_params if post_params else None,
+                keep_empty_params=False,
+            )
+            if error:
+                return zones, error
+            response, response_body, error = (
+                await self.client._request_executor.execute(request)
+            )
+            if error:
+                return zones, error
+            raw_items = _json_body(response_body)
+            if isinstance(raw_items, list):
+                zones.extend(raw_items)
+            after = _next_after_cursor(response)
+            if not after:
+                break
+        return zones, None
 
     @staticmethod
     async def _paginate(fetch) -> tuple[list, object]:
