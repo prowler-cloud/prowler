@@ -39,6 +39,26 @@ class Test_user_inactivity_automation_35d_enabled:
         assert "Inactivity 35d" in findings[0].status_extended
         assert "SUSPENDED" in findings[0].status_extended
 
+    def test_pass_message_names_groups_and_asks_for_coverage_verification(self):
+        # Okta has no built-in Everyone group ID and group names vary by
+        # tenant (e.g. "pepito"), so we can't assert tenant-wide coverage
+        # automatically — surface the group IDs and let the operator verify.
+        client = build_user_client(
+            automations={"auto-1": automation(groups=["grp-A", "grp-B"])}
+        )
+        findings = _run_check(client)
+        assert findings[0].status == "PASS"
+        assert "grp-A, grp-B" in findings[0].status_extended
+        assert "cover every user" in findings[0].status_extended
+
+    def test_fail_when_applies_to_no_group(self):
+        # An automation with empty `people.groups.include` runs against
+        # nobody — Okta does not implicitly cover every user.
+        client = build_user_client(automations={"auto-1": automation(groups=[])})
+        findings = _run_check(client)
+        assert findings[0].status == "FAIL"
+        assert "no group scope" in findings[0].status_extended
+
     def test_pass_when_lower_threshold(self):
         # Inactivity threshold lower than the default is still compliant.
         client = build_user_client(

@@ -5,7 +5,9 @@ from pydantic import BaseModel, ValidationError
 
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.pagination import paginate as _paginate_shared
-from prowler.providers.okta.lib.service.raw_fetch import get_json as _raw_get_json
+from prowler.providers.okta.lib.service.raw_fetch import (
+    get_json_paginated as _raw_get_json_paginated,
+)
 from prowler.providers.okta.lib.service.service import OktaService
 
 # These three keys are Okta-platform constants, not tenant-configurable:
@@ -299,33 +301,23 @@ class Application(OktaService):
         """Raw-JSON fallback for `list_policy_rules`.
 
         Bypasses the Okta SDK's typed deserialization by calling the
-        request executor directly via the shared `get_json` helper, and
-        projects the response onto our own pydantic snapshot which only
+        request executor directly via the shared `get_json_paginated`
+        helper, which follows `Link: rel=next` so policies with more
+        rules than `rule_fetch_limit` are not silently truncated.
+        Projects the response onto our own pydantic snapshot which only
         validates the fields the STIG checks actually read. This keeps
         the checks evaluable on tenants where the Management API returns
         values the SDK validators reject.
         """
-        rules_data = await _raw_get_json(
+        rules_data = await _raw_get_json_paginated(
             self.client,
-            f"/api/v1/policies/{policy_id}/rules?limit={rule_fetch_limit}",
+            f"/api/v1/policies/{policy_id}/rules",
+            page_size=rule_fetch_limit,
             context=f"access policy {policy_id} rules",
         )
-        if rules_data is None or not isinstance(rules_data, list):
-            if rules_data is not None:
-                logger.error(
-                    f"Unexpected raw rules payload shape for {policy_id}: "
-                    f"got {type(rules_data).__name__}, expected list"
-                )
+        if rules_data is None:
             return AuthenticationPolicy(
                 id=policy_id, name="", status="", is_default=False, rules=[]
-            )
-
-        if len(rules_data) >= rule_fetch_limit:
-            logger.warning(
-                f"Access policy {policy_id} returned {len(rules_data)} rules "
-                f"via raw-JSON fallback — the per-policy fetch limit "
-                f"({rule_fetch_limit}) was hit; any rules beyond this limit "
-                "are not evaluated by Prowler."
             )
         rules_out = [_raw_rule_to_model(rule) for rule in rules_data]
         return AuthenticationPolicy(

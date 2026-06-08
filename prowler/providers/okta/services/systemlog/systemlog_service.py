@@ -4,7 +4,9 @@ from pydantic import BaseModel, ValidationError
 
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.pagination import paginate
-from prowler.providers.okta.lib.service.raw_fetch import get_json as raw_get_json
+from prowler.providers.okta.lib.service.raw_fetch import (
+    get_json_paginated as raw_get_json_paginated,
+)
 from prowler.providers.okta.lib.service.service import OktaService
 
 REQUIRED_SCOPES: dict[str, str] = {
@@ -90,23 +92,21 @@ class SystemLog(OktaService):
         """Raw-JSON fallback for `list_log_streams`.
 
         Bypasses the SDK's typed deserialization via the shared
-        `get_json` helper, and projects the response onto our own
-        pydantic snapshot which only validates the four fields the
-        check reads. Keeps the check evaluable on tenants whose
-        Log Stream settings happen to trip an SDK enum/regex validator.
+        `get_json_paginated` helper (which follows the `Link: rel=next`
+        cursor so tenants with >200 streams are not silently truncated),
+        and projects the response onto our own pydantic snapshot which
+        only validates the four fields the check reads. Keeps the check
+        evaluable on tenants whose Log Stream settings happen to trip
+        an SDK enum/regex validator.
         """
         result: dict[str, LogStream] = {}
-        data = await raw_get_json(
+        data = await raw_get_json_paginated(
             self.client,
-            "/api/v1/logStreams?limit=200",
+            "/api/v1/logStreams",
+            page_size=200,
             context="log streams",
         )
-        if not isinstance(data, list):
-            if data is not None:
-                logger.error(
-                    f"Unexpected log streams payload shape: "
-                    f"{type(data).__name__}; expected list"
-                )
+        if data is None:
             return result
         for item in data:
             if not isinstance(item, dict):

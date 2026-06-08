@@ -36,6 +36,8 @@ def automation(
     lifecycle_action: str = "SUSPENDED",
     groups: list = None,
 ):
+    # `groups is None` keeps the "Everyone-equivalent" default; passing
+    # `groups=[]` lets a test exercise the empty-scope FAIL path.
     return UserAutomation(
         id=automation_id,
         name=name,
@@ -43,7 +45,7 @@ def automation(
         schedule_status=schedule_status,
         inactivity_days=inactivity_days,
         lifecycle_action=lifecycle_action,
-        applies_to_groups=groups or ["everyone"],
+        applies_to_groups=["everyone"] if groups is None else groups,
     )
 
 

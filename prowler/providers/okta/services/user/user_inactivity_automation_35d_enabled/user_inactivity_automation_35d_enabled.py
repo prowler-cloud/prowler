@@ -108,12 +108,17 @@ class user_inactivity_automation_35d_enabled(Check):
                     org_domain=org_domain,
                 )
                 report.status = "PASS"
+                groups_label = ", ".join(automation.applies_to_groups)
                 report.status_extended = (
                     f"Okta automation '{automation.name}' is ACTIVE with an "
                     f"active schedule, triggers after "
                     f"{automation.inactivity_days} days of inactivity, and "
                     f"changes the user state to "
-                    f"{automation.lifecycle_action or 'unset'}."
+                    f"{automation.lifecycle_action or 'unset'}. "
+                    f"Applied to group(s): {groups_label}. Verify that these "
+                    "group(s) cover every user. Okta has no built-in "
+                    "'Everyone' group ID, so tenant-wide coverage cannot be "
+                    "asserted automatically."
                 )
                 findings.append(report)
             return findings
@@ -138,12 +143,19 @@ class user_inactivity_automation_35d_enabled(Check):
 
 
 def _is_compliant(automation: UserAutomation, threshold_days: int) -> bool:
+    # `applies_to_groups` must be non-empty — Okta USER_LIFECYCLE policies
+    # do not implicitly cover every user; the scope is whatever group IDs
+    # the operator put in `people.groups.include`. An empty scope means
+    # the automation runs against nobody. Operator must still verify those
+    # group(s) cover the intended user population (surfaced in the PASS
+    # status_extended).
     return bool(
         automation.status.upper() == "ACTIVE"
         and automation.schedule_status.upper() == "ACTIVE"
         and automation.inactivity_days is not None
         and automation.inactivity_days <= threshold_days
         and (automation.lifecycle_action or "").upper() in SUSPENSION_LIFECYCLE_ACTIONS
+        and bool(automation.applies_to_groups)
     )
 
 
@@ -183,6 +195,8 @@ def _failure_message(automation, threshold_days):
     action = (automation.lifecycle_action or "").upper()
     if action not in SUSPENSION_LIFECYCLE_ACTIONS:
         issues.append(f"action {automation.lifecycle_action or 'unset'}")
+    if not automation.applies_to_groups:
+        issues.append("no group scope")
     detail = ", ".join(issues) if issues else "incomplete"
     return (
         f"Okta automation '{automation.name}' fails {threshold_days}d "

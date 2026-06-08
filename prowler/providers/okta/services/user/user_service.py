@@ -4,7 +4,9 @@ from pydantic import BaseModel, ValidationError
 
 from prowler.lib.logger import logger
 from prowler.providers.okta.lib.service.pagination import paginate
-from prowler.providers.okta.lib.service.raw_fetch import get_json as raw_get_json
+from prowler.providers.okta.lib.service.raw_fetch import (
+    get_json_paginated as raw_get_json_paginated,
+)
 from prowler.providers.okta.lib.service.service import OktaService
 
 # External-directory IdP `type` values that delegate user sourcing to a
@@ -115,6 +117,16 @@ class User(OktaService):
             policy_status = _stringify_enum(getattr(policy, "status", None)) or ""
             policy_name = getattr(policy, "name", "") or ""
             rules = await self._fetch_rules(policy_id)
+            if rules is None:
+                # Rule typed parsing tripped an SDK validator. Re-run the
+                # whole automation discovery via raw JSON so we don't lose
+                # the rule data for this — or any other — policy. Cheaper
+                # than mixing typed and raw projections.
+                logger.warning(
+                    f"Rule typed parsing failed for USER_LIFECYCLE policy "
+                    f"{policy_id} — re-running all automations via raw-JSON."
+                )
+                return await self._fetch_automations_raw()
             if not rules:
                 # A policy with no rules exists in the Admin Console UI as
                 # an "Automation" the operator hasn't finished configuring
@@ -126,28 +138,35 @@ class User(OktaService):
                 )
                 continue
             for rule in rules:
-                automation = _rule_to_automation(
-                    rule, policy_id, policy_name, policy_status
-                )
+                automation = _rule_to_automation(rule, policy)
                 if automation is None:
                     continue
                 result[automation.id] = automation
         return result
 
-    async def _fetch_rules(self, policy_id: str) -> list:
+    async def _fetch_rules(self, policy_id: str) -> Optional[list]:
+        """Return the policy's typed rules, or None to signal raw fallback.
+
+        The Okta SDK's `list_policy_rules` shares the same brittle typed
+        deserialization as `list_policies` (strict pydantic validators
+        rejecting values the API actually returns). When that happens the
+        caller can't reuse any of the typed projection for this policy —
+        we return None as a sentinel and the caller re-runs the whole
+        discovery via `_fetch_automations_raw`. Returning `[]` would
+        otherwise misclassify the policy as an "unfinished automation"
+        and FAIL it.
+        """
         rule_fetch_limit = 100
         try:
             result = await self.client.list_policy_rules(
                 policy_id, limit=str(rule_fetch_limit)
             )
         except (ValueError, ValidationError) as ex:
-            # Same upstream class of bug as `_fetch_automations`.
             logger.warning(
                 f"Okta SDK raised {type(ex).__name__} parsing rules for "
-                f"USER_LIFECYCLE policy {policy_id} — falling back to raw "
-                "JSON for this policy's rules."
+                f"USER_LIFECYCLE policy {policy_id} — signaling raw fallback."
             )
-            return []  # Raw projection happens in `_fetch_automations_raw`.
+            return None
         err = result[-1]
         if err is not None:
             logger.error(
@@ -167,22 +186,18 @@ class User(OktaService):
         """Raw-JSON fallback for `list_policies(type='USER_LIFECYCLE')`.
 
         Bypasses the SDK's typed deserialization via the shared
-        `get_json` helper, then fetches each policy's rules via the
-        same path. Projects everything onto our `UserAutomation`
+        `get_json_paginated` helper, then drains each policy's rules
+        via the same path. Projects everything onto our `UserAutomation`
         snapshot which only validates the fields the check reads.
         """
         result: dict[str, UserAutomation] = {}
-        policies_data = await raw_get_json(
+        policies_data = await raw_get_json_paginated(
             self.client,
-            f"/api/v1/policies?type={USER_LIFECYCLE_POLICY_TYPE}&limit=200",
+            f"/api/v1/policies?type={USER_LIFECYCLE_POLICY_TYPE}",
+            page_size=200,
             context="USER_LIFECYCLE policies",
         )
-        if not isinstance(policies_data, list):
-            if policies_data is not None:
-                logger.error(
-                    f"Unexpected USER_LIFECYCLE policies payload shape: "
-                    f"{type(policies_data).__name__}; expected list"
-                )
+        if policies_data is None:
             return result
 
         for policy_dict in policies_data:
@@ -194,12 +209,13 @@ class User(OktaService):
             policy_status = (policy_dict.get("status") or "").upper()
             policy_name = policy_dict.get("name") or ""
 
-            rules_data = await raw_get_json(
+            rules_data = await raw_get_json_paginated(
                 self.client,
-                f"/api/v1/policies/{policy_id}/rules?limit=100",
+                f"/api/v1/policies/{policy_id}/rules",
+                page_size=100,
                 context=f"USER_LIFECYCLE policy {policy_id} rules",
             )
-            if not isinstance(rules_data, list) or not rules_data:
+            if not rules_data:
                 # No rules under the policy → emit placeholder. Same
                 # rationale as the typed path: surface the unfinished
                 # automation so the check can name what's missing.
@@ -254,17 +270,31 @@ class User(OktaService):
         return result
 
 
-def _rule_to_automation(
-    rule, policy_id: str, policy_name: str, policy_status: str
-) -> Optional["UserAutomation"]:
-    """Project a USER_LIFECYCLE policy rule onto our automation snapshot."""
+def _rule_to_automation(rule, policy) -> Optional["UserAutomation"]:
+    """Project a typed USER_LIFECYCLE policy + rule pair onto our snapshot.
+
+    Important: in the actual API response, an Okta "Automation" is split
+    across two resources — the **inactivity condition + group scope**
+    live on the *policy* (`policy.conditions.people.users.inactivity`,
+    `policy.conditions.people.groups.include`), and the **lifecycle
+    action** lives on the *rule* (`rule.actions.user_lifecycle.action`
+    on the typed model; `updateUserLifecycle.targetStatus` on raw JSON).
+    The rule's own `conditions` is typically empty. Projecting requires
+    both — kept aligned with `_raw_rule_to_automation` so the two paths
+    yield identical snapshots.
+    """
     rule_id = getattr(rule, "id", "") or ""
     if not rule_id:
         return None
 
+    policy_id = getattr(policy, "id", "") or ""
+    policy_name = getattr(policy, "name", "") or ""
+    policy_status = (_stringify_enum(getattr(policy, "status", None)) or "").upper()
+
+    # Inactivity + groups live on the POLICY in the API response.
     inactivity_days: Optional[int] = None
     applies_to_groups: list[str] = []
-    conditions = getattr(rule, "conditions", None)
+    conditions = getattr(policy, "conditions", None)
     people = getattr(conditions, "people", None) if conditions else None
     users = getattr(people, "users", None) if people else None
     inactivity = getattr(users, "inactivity", None) if users else None
@@ -278,6 +308,7 @@ def _rule_to_automation(
     if include_groups:
         applies_to_groups = [str(g) for g in include_groups if g]
 
+    # Lifecycle action lives on the RULE.
     actions = getattr(rule, "actions", None)
     user_lifecycle = (
         getattr(actions, "user_lifecycle", None) if actions else None
@@ -297,7 +328,7 @@ def _rule_to_automation(
         id=rule_id,
         name=rule_name,
         status=rule_status.upper(),
-        schedule_status=policy_status.upper(),
+        schedule_status=policy_status,
         inactivity_days=inactivity_days,
         lifecycle_action=lifecycle_action,
         applies_to_groups=applies_to_groups,
