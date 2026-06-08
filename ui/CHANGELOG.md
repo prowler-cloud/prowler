@@ -2,16 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [1.30.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
-
----
-
 ## [1.29.3] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
@@ -20,7 +10,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
->>>>>>> 5a2226c02 (fix(ui): preserve active tab styling with tooltips (#11493))
 ## [1.29.2] (Prowler v5.29.2)
 
 ### 🔄 Changed
