@@ -85,8 +85,8 @@ Follow the [Okta Authentication](/user-guide/providers/okta/authentication) guid
 export OKTA_ORG_DOMAIN="acme.okta.com"
 export OKTA_CLIENT_ID="0oa1234567890abcdef"
 export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
-# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read"
-export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read"
+# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read,okta.logStreams.read,okta.idps.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.logStreams.read,okta.idps.read"
 ```
 
 The private key file may contain either a PEM-encoded RSA key or a JWK JSON document.
@@ -143,10 +143,13 @@ prowler okta --config-file /path/to/config.yaml
 
 Prowler for Okta includes security checks across the following services:
 
-| Service         | Description                                                                                                                            |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sign-On**     | Global session policy controls (idle timeout, lifetime, rule priority and ordering)                                                    |
-| **Application** | Okta Admin Console sign-on settings plus Authentication Policy controls for Okta applications (session idle, MFA, phishing resistance, network zones) |
+| Service               | Description                                                                                                                                           |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sign-On**           | Global session policy controls (idle timeout, lifetime, rule priority and ordering)                                                                   |
+| **Application**       | Okta Admin Console sign-on settings plus Authentication Policy controls for Okta applications (session idle, MFA, phishing resistance, network zones) |
+| **User**              | User lifecycle automations (inactivity-based deprovisioning)                                                                                          |
+| **System Log**        | Log Stream configuration that off-loads audit records to a central SIEM                                                                               |
+| **Identity Provider** | Identity Providers, including Smart Card (X509) IdP status and certificate-chain visibility                                                           |
 
 ## Troubleshooting
 
@@ -158,11 +161,13 @@ This is stricter than simply finding the same timeout value somewhere else in th
 
 ### Default Scopes
 
-Prowler requests a fixed set of OAuth scopes on every token exchange. The defaults cover every bundled check across the Sign-On and Application services:
+Prowler requests a fixed set of OAuth scopes on every token exchange. The defaults cover every bundled check across the Sign-On, Application, User, System Log, and Identity Provider services:
 
 - `okta.policies.read`
 - `okta.brands.read`
 - `okta.apps.read`
+- `okta.logStreams.read`
+- `okta.idps.read`
 
 The service app must have these scopes granted in the **Okta API Scopes** tab. When the granted set is narrower than the requested set, the token request fails with an `invalid_scope` error and the scan stops at provider initialization.
 
@@ -170,10 +175,10 @@ When additional checks are enabled — or when running against a service app tha
 
 ```bash
 # Environment variable — comma-separated
-export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.users.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.logStreams.read,okta.idps.read,okta.users.read"
 
 # CLI flag — space-separated
-prowler okta --okta-scopes okta.policies.read okta.brands.read okta.apps.read okta.users.read
+prowler okta --okta-scopes okta.policies.read okta.brands.read okta.apps.read okta.logStreams.read okta.idps.read okta.users.read
 ```
 
 For the full catalog of OAuth scopes exposed by the Okta Management API, refer to the [Okta OAuth 2.0 scopes documentation](https://developer.okta.com/docs/api/oauth2/).
