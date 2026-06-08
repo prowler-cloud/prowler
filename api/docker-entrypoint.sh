@@ -69,8 +69,13 @@ manage_db_partitions() {
 }
 
 # Identify this process to Postgres (application_name=<component>:<alias>) so
-# connections are attributable by component in pg_stat_activity.
-export DJANGO_APP_COMPONENT="$1"
+# connections are attributable by component in pg_stat_activity. Web tiers
+# report "api"; everything else uses the launch subcommand.
+case "$1" in
+  prod|dev) DJANGO_APP_COMPONENT="api" ;;
+  *)        DJANGO_APP_COMPONENT="$1" ;;
+esac
+export DJANGO_APP_COMPONENT
 
 case "$1" in
   dev)
