@@ -47,7 +47,7 @@ describe("sentry.server.config", () => {
     expect(initMock).not.toHaveBeenCalled();
   });
 
-  it("should default to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT does not enable dev sampling (R6)", async () => {
+  it("should default to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT does not enable dev sampling", async () => {
     // Given - DSN set but environment unset
     vi.stubEnv("UI_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
 

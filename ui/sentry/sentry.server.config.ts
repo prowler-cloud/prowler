@@ -10,10 +10,10 @@ const sentryEnvironment = readEnv(
 
 // Only initialize Sentry if DSN is configured
 if (sentryDsn) {
-  // R6: default to a non-dev environment so a deployed container with
-  // UI_SENTRY_ENVIRONMENT unset does NOT run in dev mode (100% sampling). Only
-  // an explicit "local" enables development behavior — mirroring the browser
-  // SDK (instrumentation-client.ts) so all runtimes resolve the env identically.
+  // Default to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT never
+  // runs in dev mode (100% sampling); only an explicit "local" enables it.
+  // Mirrors the browser SDK (instrumentation-client.ts) so all runtimes resolve
+  // the env identically.
   const environment = sentryEnvironment ?? "production";
   const isDevelopment = environment === "local";
 

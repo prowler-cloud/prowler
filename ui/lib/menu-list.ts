@@ -30,9 +30,8 @@ import { GroupProps } from "@/types";
 
 interface MenuListOptions {
   pathname: string;
-  // Resolved by the caller from the runtime config island (see
-  // useRuntimeConfig). Passed in rather than read here so the island is never
-  // read during this list's SSR render, which would cause a hydration mismatch.
+  // Passed in (not read here) so the island isn't read during SSR — that would
+  // cause a hydration mismatch. See useRuntimeConfig.
   apiDocsUrl?: string | null;
 }
 

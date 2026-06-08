@@ -73,16 +73,11 @@ export class RuntimeConfigPage extends BasePage {
   }
 
   /**
-   * Ordering guarantee: the inert island appears in document order before the
-   * first ordered client bundle `<script src>`, so module-load consumers read
-   * it before the client entry executes.
-   *
-   * Next.js emits `async` chunk-preload `<script src>` into `<head>` ahead of
-   * the island; `async` scripts load out of order, never block parsing, and
-   * don't read the config, so they're irrelevant to the race. What must hold
-   * is that no ordered (non-`async`) external bundle precedes the inline
-   * island — that bundle is the client entry that calls
-   * getRuntimeConfigClient(), and it must run after the island exists.
+   * The island must precede the first ordered (non-`async`) bundle
+   * `<script src>` — that bundle is the client entry calling
+   * getRuntimeConfigClient(), so the island must exist before it runs. Next.js's
+   * `async` chunk-preloads load out of order and don't read the config, so they
+   * are excluded.
    */
   async verifyIslandPrecedesClientBundle(): Promise<void> {
     const precedes = await this.page.evaluate((id) => {

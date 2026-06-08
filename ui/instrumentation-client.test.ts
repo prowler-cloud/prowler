@@ -77,7 +77,7 @@ describe("instrumentation-client Sentry init", () => {
     expect(initMock).not.toHaveBeenCalled();
   });
 
-  it("defaults to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT does not enable dev mode (R6)", async () => {
+  it("defaults to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT does not enable dev mode", async () => {
     // Given - DSN set but environment unset
     getConfigMock.mockReturnValue({
       ...EMPTY_RUNTIME_PUBLIC_CONFIG,

@@ -8,13 +8,9 @@ import {
   type RuntimePublicConfig,
 } from "@/lib/runtime-config.shared";
 
-// The runtime config lives in a <head> data island that only exists in the
-// browser, so the server render — and the first client render during
-// hydration — must see the empty config to stay in sync. useSyncExternalStore
-// returns getServerSnapshot during SSR/hydration and swaps to the island value
-// afterwards, so config-derived markup never triggers a hydration mismatch.
-// Both snapshots are referentially stable (memoized getter / module constant),
-// which useSyncExternalStore requires.
+// The island is browser-only, so SSR and the first hydration render must see
+// the empty config to avoid a mismatch; useSyncExternalStore swaps to the
+// island value afterwards. Both snapshots must be referentially stable.
 const subscribe = () => () => {}; // config is immutable after load — never notifies
 
 const getServerSnapshot = (): RuntimePublicConfig =>

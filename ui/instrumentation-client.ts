@@ -34,10 +34,9 @@ const { sentryDsn, sentryEnvironment } = getRuntimeConfigClient();
 
 // Only initialize Sentry in the browser when a runtime DSN is configured.
 if (typeof window !== "undefined" && sentryDsn) {
-  // R6: default to a non-dev environment so a deployed container with
-  // UI_SENTRY_ENVIRONMENT unset does NOT run the browser SDK in dev mode
-  // (verbose debug logging, 100% sampling, synthetic dev user). Only an
-  // explicit "local" enables development behavior.
+  // Default to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT never
+  // runs the browser SDK in dev mode (debug logging, 100% sampling, synthetic
+  // dev user); only an explicit "local" enables it.
   const environment = sentryEnvironment ?? "production";
   const isDevelopment = environment === "local";
 
