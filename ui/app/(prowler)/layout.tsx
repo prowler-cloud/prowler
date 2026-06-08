@@ -52,23 +52,14 @@ export default async function RootLayout({
     getProviders({ page: 1, pageSize: 1 }),
     getScansByState(),
   ]);
-  // Fail-open: if the scan fetch fails or returns no parseable data we treat
-  // the user as already having scan data, so the banner's "Run a scan"
-  // shortcut never nags someone whose scan state we can't determine.
+  // Fail-open: unknown scan state is treated as "has data" so the banner never nags.
   const hasCompletedScan = Array.isArray(scansByState?.data)
     ? scansByState.data.some(
         (scan: { attributes?: { state?: string } }) =>
           scan.attributes?.state === SCAN_STATES.COMPLETED,
       )
     : true;
-  // Tri-state on purpose: a SUCCESSFUL fetch carries `data` (an array, possibly
-  // empty); a FAILED/ambiguous fetch yields `undefined` (network error) or an
-  // error envelope without `data`. Collapsing the failure to `false` would
-  // force the mandatory onboarding gate onto an existing user during an API
-  // outage, so we keep `undefined` distinct and let the gate fail open.
-  //   - success with providers -> true
-  //   - success, zero providers -> false
-  //   - failed/ambiguous fetch  -> undefined
+  // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
   const hasProviders =
     providersData?.data === undefined
       ? undefined
@@ -86,23 +77,12 @@ export default async function RootLayout({
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <NavigationProgress />
-          {/* Store keeps a plain boolean: existing sidebar/empty-state
-              behavior is unchanged. Only the gate gets the tri-state so it can
-              fail open on an unknown provider signal. */}
+          {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
           <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
           <OnboardingGate hasProviders={hasProviders} />
-          {/* Layout-level watcher: subscribes to the onboarding-checkpoint
-              store `open` flag. The flag is armed by the gate's "Get started"
-              accept and raised explicitly when the provider wizard closes
-              having connected a provider, so the checkpoint fires once after
-              the wizard closes — never mid-wizard, and never for an established
-              user who simply adds another provider. One mount point so it
-              survives the post-connect navigation. */}
+          {/* Single mount point so the watcher survives post-connect navigation. */}
           <OnboardingCheckpointWatcher />
-          {/* Persistent, non-blocking bottom banner shown only while a guided
-              sequence is active. It self-hides otherwise and owns the manual
-              Continue (advance + navigate) and Exit (stop) controls, replacing
-              the old auto-advance that jumped to empty pages before a scan. */}
+          {/* Persistent banner shown only while a guided sequence is active. */}
           <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
           <MainLayout>{children}</MainLayout>
           <Toaster />

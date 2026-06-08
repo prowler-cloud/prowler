@@ -1,25 +1,68 @@
 "use client";
 
-import { BellRing } from "lucide-react";
+import { BellRing, Info } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
-import { Button } from "@/components/shadcn";
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { BreadcrumbNavigation } from "@/components/ui";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { getFlowById } from "@/lib/onboarding";
+import { useTourCompletion } from "@/lib/tours/use-tour-completion";
+import { cn } from "@/lib/utils";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
 import { SidebarToggle } from "../sidebar/sidebar-toggle";
 import { UserNav } from "../user-nav/user-nav";
 
+export interface OnboardingActionConfig {
+  flowId: string;
+  fallbackFlowId?: string;
+  useFallback?: boolean;
+}
+
 interface NavbarClientProps {
   title: string;
   icon?: string | ReactNode;
+  onboardingAction?: OnboardingActionConfig;
   feedsSlot?: ReactNode;
 }
 
-export function NavbarClient({ title, icon, feedsSlot }: NavbarClientProps) {
+export function NavbarClient({
+  title,
+  icon,
+  onboardingAction,
+  feedsSlot,
+}: NavbarClientProps) {
   const { isOpen, toggleOpen } = useSidebar();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetFlowId =
+    onboardingAction?.useFallback && onboardingAction.fallbackFlowId
+      ? onboardingAction.fallbackFlowId
+      : onboardingAction?.flowId;
+  const flow = targetFlowId ? getFlowById(targetFlowId) : undefined;
+  // Pulse only until the tour is seen; any close (completed/skipped/dismissed)
+  // calms it. The replay button itself stays.
+  const seen = useTourCompletion(flow?.tour ?? null) !== null;
+
+  const replayFlow = () => {
+    if (!flow) return;
+
+    const params =
+      flow.route === pathname
+        ? new URLSearchParams(searchParams?.toString())
+        : new URLSearchParams();
+    params.set("onboarding", flow.id);
+    router.push(`${flow.route}?${params.toString()}`);
+  };
 
   return (
     <header className="sticky top-0 z-10 w-full pt-4 backdrop-blur-sm">
@@ -33,6 +76,30 @@ export function NavbarClient({ title, icon, feedsSlot }: NavbarClientProps) {
             mode="auto"
             title={title}
             icon={icon}
+            titleAction={
+              flow ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={`Start product tour: ${flow.title}`}
+                      onClick={replayFlow}
+                    >
+                      <Info
+                        className={cn(
+                          "text-bg-data-info size-4",
+                          !seen && "animate-pulse",
+                        )}
+                        aria-hidden="true"
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>See how it works</TooltipContent>
+                </Tooltip>
+              ) : null
+            }
             paramToPreserve="scanId"
           />
         </div>
