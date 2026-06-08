@@ -310,12 +310,12 @@ ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
 
 def label_postgres_connections(databases):
     """Tag each Postgres connection with ``application_name="<component>:<alias>"``
-    so connections are attributable in ``pg_stat_activity`` and the Performance
-    Insights "Application" dimension. The component (api / worker / scan / ...) is
-    injected per process by the container entrypoint via ``DJANGO_APP_COMPONENT``;
-    the alias distinguishes which pool inside the process owns the connection.
-    The neo4j entry is skipped (not a Postgres backend). Postgres truncates
-    ``application_name`` at 63 bytes.
+    so connections are attributable by component in ``pg_stat_activity`` (and any
+    tooling that surfaces ``application_name``). The component (api / worker /
+    scan / ...) is injected per process by the container entrypoint via
+    ``DJANGO_APP_COMPONENT``; the alias distinguishes which pool inside the
+    process owns the connection. The neo4j entry is skipped (not a Postgres
+    backend). Postgres truncates ``application_name`` at 63 bytes.
     """
     component = env.str("DJANGO_APP_COMPONENT", default="api")
     for alias, config in databases.items():
