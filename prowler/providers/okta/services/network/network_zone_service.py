@@ -1,43 +1,17 @@
-import json
 from typing import Optional
-from urllib.parse import parse_qs, quote, urlparse
 
 from pydantic import BaseModel, Field, ValidationError
 
 from prowler.lib.logger import logger
+from prowler.providers.okta.lib.service.pagination import paginate as _paginate_shared
+from prowler.providers.okta.lib.service.raw_fetch import (
+    get_json_paginated as _raw_get_json_paginated,
+)
 from prowler.providers.okta.lib.service.service import OktaService
 
 REQUIRED_SCOPES: dict[str, str] = {
     "network_zones": "okta.networkZones.read",
 }
-
-
-def _next_after_cursor(resp) -> Optional[str]:
-    """Extract the Okta pagination cursor from a Link header."""
-    if resp is None:
-        return None
-    headers = getattr(resp, "headers", None) or {}
-    link = headers.get("link") or headers.get("Link") or ""
-    if not link:
-        return None
-    for part in link.split(","):
-        if 'rel="next"' not in part:
-            continue
-        url_segment = part.split(";", 1)[0].strip().lstrip("<").rstrip(">")
-        cursor = parse_qs(urlparse(url_segment).query).get("after", [None])[0]
-        if cursor:
-            return cursor
-    return None
-
-
-def _normalise_sdk_result(result) -> tuple[list, object, object]:
-    """Return `(items, response, error)` for Okta SDK list call variants."""
-    if isinstance(result, tuple):
-        err = result[-1]
-        items = result[0] or []
-        resp = result[1] if len(result) >= 3 else None
-        return list(items), resp, err
-    return list(result or []), None, None
 
 
 def _value(value) -> str:
@@ -84,10 +58,10 @@ class NetworkZone(OktaService):
     async def _fetch_all(self) -> dict[str, "OktaNetworkZone"]:
         result: dict[str, OktaNetworkZone] = {}
         try:
-            all_zones, err = await self._paginate(
+            all_zones, err = await _paginate_shared(
                 lambda after: self.client.list_network_zones(after=after, limit=200)
             )
-        except ValidationError as ve:
+        except (ValueError, ValidationError) as ex:
             # Upstream Okta SDK ↔ Management API schema drift: the SDK
             # generates `EnhancedDynamicNetworkZoneAllOfAsnsInclude` as an
             # object-shaped pydantic model, but the API returns
@@ -95,12 +69,16 @@ class NetworkZone(OktaService):
             # rejects the whole zone with `model_type` errors. Fall back
             # to a raw-JSON fetch so STIG evaluation isn't blocked by an
             # upstream SDK bug. Same workaround shape as
-            # `application_service._fetch_access_policy_raw`.
+            # `application_service._fetch_access_policy_raw`. The wider
+            # `(ValueError, ValidationError)` catch matches the
+            # `user_service` precedent — the SDK raises either depending
+            # on whether the failure is a discriminator miss or a model
+            # mismatch.
             logger.warning(
-                f"Okta SDK raised ValidationError parsing Network Zones "
-                f"({ve.error_count()} error(s)) — falling back to raw-JSON "
-                "parse. This is an okta-sdk-python deserialization bug; the "
-                "workaround should be removed once upstream fixes it."
+                f"Okta SDK raised {type(ex).__name__} parsing Network Zones — "
+                "falling back to raw-JSON parse. This is an okta-sdk-python "
+                "deserialization bug; the workaround should be removed once "
+                "upstream fixes it."
             )
             return await self._fetch_all_raw()
         if err is not None:
@@ -115,92 +93,29 @@ class NetworkZone(OktaService):
     async def _fetch_all_raw(self) -> dict[str, "OktaNetworkZone"]:
         """Raw-JSON fallback for `list_network_zones`.
 
-        Bypasses the Okta SDK's typed deserialization by calling the
-        request executor directly without a response type. The response
-        body is `json.loads`-ed and projected onto our own pydantic
-        snapshot, which only validates the fields the STIG checks read.
+        Bypasses the SDK's typed deserialization via the shared
+        `get_json_paginated` helper, then projects each zone onto our
+        own pydantic snapshot — which only validates the fields the
+        STIG checks actually read.
         """
         result: dict[str, OktaNetworkZone] = {}
-        after: Optional[str] = None
-        while True:
-            # `_next_after_cursor` URL-decodes via `parse_qs`, so re-encode
-            # before re-inserting to round-trip any special characters in
-            # the opaque cursor (e.g. `=`, `+`).
-            query = "limit=200" + (f"&after={quote(after, safe='')}" if after else "")
-            request, error = await self.client._request_executor.create_request(
-                method="GET",
-                url=f"/api/v1/zones?{query}",
-                body=None,
-                headers={"Accept": "application/json"},
+        zones_data = await _raw_get_json_paginated(
+            self.client,
+            "/api/v1/zones",
+            page_size=200,
+            context="Network Zones",
+        )
+        if zones_data is None:
+            self._set_retrieval_error(
+                "Raw Network Zones fetch failed; see logs for details."
             )
-            if error is not None:
-                self._set_retrieval_error(
-                    f"Raw Network Zones fetch (create_request) failed: {error}"
-                )
-                return result
-
-            response, response_body, error = (
-                await self.client._request_executor.execute(request)
-            )
-            if error is not None:
-                self._set_retrieval_error(
-                    f"Raw Network Zones fetch (execute) failed: {error}"
-                )
-                return result
-
-            if isinstance(response_body, (bytes, bytearray)):
-                try:
-                    response_body = response_body.decode("utf-8")
-                except UnicodeDecodeError as decode_err:
-                    self._set_retrieval_error(
-                        f"Could not decode Network Zones response: {decode_err}"
-                    )
-                    return result
-            try:
-                zones_data = json.loads(response_body) if response_body else []
-            except json.JSONDecodeError as decode_err:
-                self._set_retrieval_error(
-                    f"Could not parse Network Zones JSON: {decode_err}"
-                )
-                return result
-
-            if not isinstance(zones_data, list):
-                self._set_retrieval_error(
-                    f"Unexpected raw Network Zones payload shape: "
-                    f"got {type(zones_data).__name__}, expected list"
-                )
-                return result
-
-            for zone_dict in zones_data:
-                if not isinstance(zone_dict, dict):
-                    continue
-                zone_obj = _raw_zone_to_model(zone_dict)
-                result[zone_obj.id] = zone_obj
-
-            after = _next_after_cursor(response)
-            if not after:
-                break
+            return result
+        for zone_dict in zones_data:
+            if not isinstance(zone_dict, dict):
+                continue
+            zone_obj = _raw_zone_to_model(zone_dict)
+            result[zone_obj.id] = zone_obj
         return result
-
-    @staticmethod
-    async def _paginate(fetch):
-        """Drain all pages of an SDK list call using Okta Link headers."""
-        all_items = []
-        result = await fetch(None)
-        items, resp, err = _normalise_sdk_result(result)
-        if err is not None:
-            return [], err
-        all_items.extend(items)
-        while True:
-            cursor = _next_after_cursor(resp)
-            if not cursor:
-                break
-            result = await fetch(cursor)
-            items, resp, err = _normalise_sdk_result(result)
-            if err is not None:
-                return all_items, err
-            all_items.extend(items)
-        return all_items, None
 
     @staticmethod
     def _build_zone(zone) -> "OktaNetworkZone":
