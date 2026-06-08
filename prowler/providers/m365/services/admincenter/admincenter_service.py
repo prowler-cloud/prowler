@@ -173,24 +173,28 @@ class AdminCenter(M365Service):
         logger.info("M365 - Getting groups...")
         groups = {}
         try:
-            groups_list = await self.client.groups.get()
-            groups.update({})
-            for group in groups_list.value:
-                groups.update(
-                    {
-                        group.id: Group(
-                            id=group.id,
-                            name=getattr(group, "display_name", ""),
-                            visibility=getattr(group, "visibility", ""),
-                            group_types=getattr(group, "group_types", []) or [],
+            groups_response = await self.client.groups.get()
+            while groups_response:
+                for group in getattr(groups_response, "value", []) or []:
+                    groups.update(
+                        {
+                            group.id: Group(
+                                id=group.id,
+                                name=getattr(group, "display_name", ""),
+                                visibility=getattr(group, "visibility", ""),
+                                group_types=getattr(group, "group_types", []) or [],
                         )
                     }
                 )
+                next_link = getattr(groups_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                groups_response = await self.client.groups.with_url(next_link).get()
 
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+          logger.error(
+              f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
         return groups
 
     async def _get_password_policy(self):
