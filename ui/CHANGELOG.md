@@ -7,9 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
-- In-product tour for the Attack Paths workflow [(#11383)](https://github.com/prowler-cloud/prowler/pull/11383)
-- Extensible onboarding system with a guided add-provider tour: a mandatory Welcome modal for zero-provider users and a "Product tour" restart entry in the avatar menu [(#11430)](https://github.com/prowler-cloud/prowler/pull/11430)
-- Guided onboarding sequence after the first provider is added: a checkpoint dialog starts a sequence across three new tours (`view-first-scan`, `explore-findings`, `view-compliance`) plus the existing Attack Paths tour, driven by a persistent banner to advance manually (Continue/Exit) with per-step data hints; closing a step's tour leaves the sequence active. The avatar "Product tour" menu now lists every flow for single-flow replay [(#11430)](https://github.com/prowler-cloud/prowler/pull/11430)
+- Guided product onboarding for new users — step-by-step tours covering providers, scans, findings, compliance, and attack paths, replayable anytime from the info icon in the page header [(#11430)](https://github.com/prowler-cloud/prowler/pull/11430)
 
 ---
 
