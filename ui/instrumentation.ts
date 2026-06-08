@@ -19,11 +19,13 @@ import "@/lib/env";
 
 import * as Sentry from "@sentry/nextjs";
 
-const WEB_APP_SENTRY_DSN = process.env.WEB_APP_SENTRY_DSN;
+import { readEnv } from "@/lib/runtime-env";
+
+const sentryDsn = readEnv("UI_SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN");
 
 export async function register() {
   // Skip Sentry initialization if DSN is not configured
-  if (!WEB_APP_SENTRY_DSN) {
+  if (!sentryDsn) {
     return;
   }
 
@@ -38,6 +40,6 @@ export async function register() {
 }
 
 // Only capture request errors if Sentry is configured
-export const onRequestError = WEB_APP_SENTRY_DSN
+export const onRequestError = sentryDsn
   ? Sentry.captureRequestError
   : undefined;

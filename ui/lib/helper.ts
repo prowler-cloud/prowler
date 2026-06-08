@@ -11,11 +11,13 @@ import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
+import { readEnv } from "@/lib/runtime-env";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL;
 export const apiBaseUrl =
-  process.env.WEB_APP_API_BASE_URL ?? "http://localhost:8080/api/v1";
+  readEnv("UI_API_BASE_URL", "NEXT_PUBLIC_API_BASE_URL") ??
+  "http://localhost:8080/api/v1";
 
 /**
  * Extracts a form value from a FormData object

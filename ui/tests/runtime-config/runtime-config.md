@@ -13,7 +13,7 @@ island injected into `<head>` (Sentry, GTM, API base/docs URL, reserved keys).
 
 **Preconditions:**
 
-- UI server running with `WEB_APP_API_BASE_URL` set (the playwright `webServer` provides it).
+- UI server running with `UI_API_BASE_URL` set (the playwright `webServer` provides it).
 
 ### Flow Steps:
 
@@ -40,7 +40,7 @@ island injected into `<head>` (Sentry, GTM, API base/docs URL, reserved keys).
 
 **Preconditions:**
 
-- UI server running. `WEB_APP_SENTRY_DSN` may be set or unset.
+- UI server running. `UI_SENTRY_DSN` may be set or unset.
 
 ### Flow Steps:
 
@@ -68,7 +68,7 @@ island injected into `<head>` (Sentry, GTM, API base/docs URL, reserved keys).
 
 **Preconditions:**
 
-- UI server running with `WEB_APP_SENTRY_DSN` and `WEB_APP_GOOGLE_TAG_MANAGER_ID` unset (the Enterprise default; the test skips when either is configured).
+- UI server running with `UI_SENTRY_DSN` and `UI_GOOGLE_TAG_MANAGER_ID` unset (the Enterprise default; the test skips when either is configured).
 
 ### Flow Steps:
 

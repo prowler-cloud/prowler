@@ -1,10 +1,16 @@
 import * as Sentry from "@sentry/nextjs";
 
-const WEB_APP_SENTRY_DSN = process.env.WEB_APP_SENTRY_DSN;
+import { readEnv } from "@/lib/runtime-env";
+
+const sentryDsn = readEnv("UI_SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN");
+const sentryEnvironment = readEnv(
+  "UI_SENTRY_ENVIRONMENT",
+  "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
+);
 
 // Only initialize Sentry if DSN is configured
-if (WEB_APP_SENTRY_DSN) {
-  const isProduction = process.env.WEB_APP_SENTRY_ENVIRONMENT === "pro";
+if (sentryDsn) {
+  const isProduction = sentryEnvironment === "pro";
 
   /**
    * Edge runtime Sentry configuration
@@ -17,10 +23,10 @@ if (WEB_APP_SENTRY_DSN) {
    */
   Sentry.init({
     // 📍 DSN - Data Source Name (identifies your Sentry project)
-    dsn: WEB_APP_SENTRY_DSN,
+    dsn: sentryDsn,
 
     // 🌍 Environment configuration
-    environment: process.env.WEB_APP_SENTRY_ENVIRONMENT || "local",
+    environment: sentryEnvironment || "local",
 
     // 📦 Release tracking
     release: process.env.SENTRY_RELEASE,

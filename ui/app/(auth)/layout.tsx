@@ -10,6 +10,7 @@ import { NavigationProgress, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
+import { readEnv } from "@/lib/runtime-env";
 
 import { Providers } from "../providers";
 
@@ -42,7 +43,10 @@ export default async function AuthLayout({
   await connection();
 
   // Server-side runtime read. Empty/unset id ⇒ GoogleTagManager is not mounted
-  const gtmId = process.env.WEB_APP_GOOGLE_TAG_MANAGER_ID;
+  const gtmId = readEnv(
+    "UI_GOOGLE_TAG_MANAGER_ID",
+    "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
+  );
 
   return (
     <html suppressHydrationWarning lang="en">

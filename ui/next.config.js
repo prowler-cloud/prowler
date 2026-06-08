@@ -10,7 +10,7 @@ const { withSentryConfig } = require("@sentry/nextjs");
 //
 // CSP is intentionally STATIC (decision D4): the runtime config island is
 // `type="application/json"` (inert, not governed by `script-src`), so it needs
-// no nonce. Constraint (R2): a runtime `WEB_APP_SENTRY_DSN`'s ingest host must fall
+// no nonce. Constraint (R2): a runtime `UI_SENTRY_DSN`'s ingest host must fall
 // under the `connect-src` allowlist below — `https://*.sentry.io` /
 // `https://*.ingest.sentry.io` cover Sentry Cloud, but a self-hosted or
 // region-specific Sentry host would be blocked until per-request CSP via

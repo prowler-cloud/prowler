@@ -10,7 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
-- Public SaaS config (Sentry, Google Tag Manager, API base/docs URL) now resolves at container runtime instead of build time; self-hosted deployments must set the UI config through the new `WEB_APP_`-prefixed env vars (`WEB_APP_API_BASE_URL`, `WEB_APP_API_DOCS_URL`, `WEB_APP_GOOGLE_TAG_MANAGER_ID`, `WEB_APP_SENTRY_DSN`, `WEB_APP_SENTRY_ENVIRONMENT`) [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- Public SaaS config (Sentry, Google Tag Manager, API base/docs URL) now resolves at container runtime instead of build time; self-hosted deployments set the UI config through the new `UI_`-prefixed env vars (`UI_API_BASE_URL`, `UI_API_DOCS_URL`, `UI_GOOGLE_TAG_MANAGER_ID`, `UI_SENTRY_DSN`, `UI_SENTRY_ENVIRONMENT`), with the previous `NEXT_PUBLIC_*` names still honored as a deprecated fallback [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 
 ---
 

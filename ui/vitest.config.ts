@@ -5,8 +5,7 @@ import type { TestProjectConfiguration } from "vitest/config";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig(() => {
-  const apiBaseUrl =
-    process.env.WEB_APP_API_BASE_URL ?? "http://localhost/api/v1";
+  const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
 
   return {
     plugins: [react()],
@@ -75,7 +74,7 @@ export default defineConfig(() => {
       ] as TestProjectConfiguration[],
     },
     define: {
-      "process.env.WEB_APP_API_BASE_URL": JSON.stringify(apiBaseUrl),
+      "process.env.UI_API_BASE_URL": JSON.stringify(apiBaseUrl),
       // `next/dist/server/web/spec-extension/user-agent.js` references
       // `__dirname` directly and is pulled in transitively via `next-auth`.
       // Vite serves it to the browser where that global doesn't exist, so we

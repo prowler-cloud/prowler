@@ -153,8 +153,8 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
     env: {
-      WEB_APP_API_BASE_URL:
-        process.env.WEB_APP_API_BASE_URL || "http://localhost:8080/api/v1",
+      UI_API_BASE_URL:
+        process.env.UI_API_BASE_URL || "http://localhost:8080/api/v1",
       AUTH_URL: process.env.AUTH_URL || "http://localhost:3000",
       AUTH_SECRET: process.env.AUTH_SECRET || "fallback-ci-secret-for-testing",
       AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "true",

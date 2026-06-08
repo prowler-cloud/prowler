@@ -21,8 +21,8 @@ fullnameOverride: ""
 
 secrets:
   SITE_URL: http://localhost:3000
-  WEB_APP_API_BASE_URL: http://prowler-api:8080/api/v1
-  WEB_APP_API_DOCS_URL: http://prowler-api:8080/api/v1/docs
+  UI_API_BASE_URL: http://prowler-api:8080/api/v1
+  UI_API_DOCS_URL: http://prowler-api:8080/api/v1/docs
   AUTH_TRUST_HOST: True
   UI_PORT: 3000
   # openssl rand -base64 32

@@ -5,17 +5,28 @@ declare global {
       NODE_ENV: "development" | "production" | "test";
       NEXT_RUNTIME?: "nodejs" | "edge";
 
-      // WEB_APP prefix
-      // Runtime public config read server-side per request,
-      WEB_APP_API_BASE_URL: string;
-      WEB_APP_API_DOCS_URL?: string;
+      // UI prefix — runtime public config, read server-side per request and
+      // exposed to the browser via the runtime data island. Each var keeps its
+      // deprecated NEXT_PUBLIC_* name as a runtime fallback (see readEnv).
+      /** @deprecated use UI_API_BASE_URL */
+      NEXT_PUBLIC_API_BASE_URL?: string;
+      UI_API_BASE_URL: string;
+      /** @deprecated use UI_API_DOCS_URL */
+      NEXT_PUBLIC_API_DOCS_URL?: string;
+      UI_API_DOCS_URL?: string;
 
       // GTM
-      WEB_APP_GOOGLE_TAG_MANAGER_ID?: string;
+      /** @deprecated use UI_GOOGLE_TAG_MANAGER_ID */
+      NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID?: string;
+      UI_GOOGLE_TAG_MANAGER_ID?: string;
 
       // SENTRY
-      WEB_APP_SENTRY_DSN?: string;
-      WEB_APP_SENTRY_ENVIRONMENT?: string;
+      /** @deprecated use UI_SENTRY_DSN */
+      NEXT_PUBLIC_SENTRY_DSN?: string;
+      UI_SENTRY_DSN?: string;
+      /** @deprecated use UI_SENTRY_ENVIRONMENT */
+      NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
+      UI_SENTRY_ENVIRONMENT?: string;
 
       // Build-time public config
       NEXT_PUBLIC_IS_CLOUD_ENV?: "true" | "false";

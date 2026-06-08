@@ -3,7 +3,7 @@
  *
  * This file runs on the client BEFORE React hydration. It is responsible for:
  * - Initializing browser Sentry from the runtime data island, so a single
- *   prebuilt image enables/disables Sentry per deployment via `WEB_APP_SENTRY_DSN`
+ *   prebuilt image enables/disables Sentry per deployment via `UI_SENTRY_DSN`
  *   (unset DSN ⇒ `Sentry.init` is never called ⇒ zero egress).
  * - Driving the navigation progress bar on router transitions.
  *
@@ -35,7 +35,7 @@ const { sentryDsn, sentryEnvironment } = getRuntimeConfigClient();
 // Only initialize Sentry in the browser when a runtime DSN is configured.
 if (typeof window !== "undefined" && sentryDsn) {
   // R6: default to a non-dev environment so a deployed container with
-  // WEB_APP_SENTRY_ENVIRONMENT unset does NOT run the browser SDK in dev mode
+  // UI_SENTRY_ENVIRONMENT unset does NOT run the browser SDK in dev mode
   // (verbose debug logging, 100% sampling, synthetic dev user). Only an
   // explicit "local" enables development behavior.
   const environment = sentryEnvironment ?? "production";

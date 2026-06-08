@@ -37,7 +37,7 @@ ARG NEXT_PUBLIC_PROWLER_RELEASE_VERSION
 ENV NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
 
 # TODO
-# WEB_APP_GOOGLE_TAG_MANAGER_ID / WEB_APP_API_BASE_URL / WEB_APP_API_DOCS_URL
+# UI_GOOGLE_TAG_MANAGER_ID / UI_API_BASE_URL / UI_API_DOCS_URL
 # are no longer build ARGs: they are resolved from the container environment at
 # runtime (see the prod stage and lib/runtime-config.ts), so one image serves
 # every environment.
@@ -45,7 +45,7 @@ ENV NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
 # Build-time only: Sentry source-map upload credentials. When all three are
 # supplied, next.config.js applies withSentryConfig and uploads source maps;
 # otherwise the build proceeds with uploads disabled (R7). The runtime
-# WEB_APP_SENTRY_DSN is NOT needed at build — it is read from the container env at boot.
+# UI_SENTRY_DSN is NOT needed at build — it is read from the container env at boot.
 ARG SENTRY_AUTH_TOKEN
 ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 ARG SENTRY_ORG
@@ -91,8 +91,8 @@ ENV HOSTNAME="0.0.0.0"
 # Runtime configuration is read by `node server.js` at container start and is
 # NOT baked into the image. Supply it via your orchestrator (docker-compose,
 # Helm/K8s):
-#   - required: WEB_APP_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
-#   - optional: WEB_APP_API_DOCS_URL, WEB_APP_GOOGLE_TAG_MANAGER_ID, WEB_APP_SENTRY_DSN, WEB_APP_SENTRY_ENVIRONMENT
+#   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
+#   - optional: UI_API_DOCS_URL, UI_GOOGLE_TAG_MANAGER_ID, UI_SENTRY_DSN, UI_SENTRY_ENVIRONMENT
 #   - reserved: POSTHOG_KEY, POSTHOG_HOST, REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output

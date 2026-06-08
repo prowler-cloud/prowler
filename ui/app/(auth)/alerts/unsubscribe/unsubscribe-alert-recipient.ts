@@ -1,3 +1,5 @@
+import { readEnv } from "@/lib/runtime-env";
+
 interface AlertUnsubscribeApiResponse {
   state?: string;
   message?: string;
@@ -41,7 +43,7 @@ const toState = (payload: unknown): string => {
 export const unsubscribeAlertRecipient = async (
   token?: string,
 ): Promise<AlertUnsubscribeResult> => {
-  const apiBaseUrl = process.env.WEB_APP_API_BASE_URL;
+  const apiBaseUrl = readEnv("UI_API_BASE_URL", "NEXT_PUBLIC_API_BASE_URL");
   if (!apiBaseUrl) {
     return {
       ok: false,
