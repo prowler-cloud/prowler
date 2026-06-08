@@ -1,4 +1,7 @@
+import json
 from unittest import mock
+
+from okta.models.identity_provider_protocol import IdentityProviderProtocol
 
 from prowler.providers.okta.services.idp.idp_service import Idp, OktaIdentityProvider
 from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
@@ -11,6 +14,10 @@ def _resp(headers: dict = None):
 
 
 def _fake_idp(idp_id, name, type_, status="ACTIVE", issuer=None, kid=None):
+    # Build a real `IdentityProviderProtocol` when issuer/kid are provided
+    # so the test exercises the SDK's Pydantic v2 oneOf wrapper — credentials
+    # live on `actual_instance`, not directly on the wrapper. MagicMock
+    # auto-attribute-creation would otherwise hide a missed unwrap.
     idp = mock.MagicMock()
     idp.id = idp_id
     idp.name = name
@@ -19,8 +26,14 @@ def _fake_idp(idp_id, name, type_, status="ACTIVE", issuer=None, kid=None):
     if issuer is None and kid is None:
         idp.protocol = None
     else:
-        idp.protocol.credentials.trust.issuer = issuer
-        idp.protocol.credentials.trust.kid = kid
+        idp.protocol = IdentityProviderProtocol.from_json(
+            json.dumps(
+                {
+                    "type": "MTLS",
+                    "credentials": {"trust": {"issuer": issuer, "kid": kid}},
+                }
+            )
+        )
     return idp
 
 

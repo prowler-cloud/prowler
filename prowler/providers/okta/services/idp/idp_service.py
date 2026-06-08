@@ -83,11 +83,18 @@ class Idp(OktaService):
 
 
 def _trust_fields(idp) -> tuple[Optional[str], Optional[str]]:
-    """Extract `issuer` and `kid` from an `X509` IdP's protocol.credentials.trust."""
+    """Extract `issuer` and `kid` from an `X509` IdP's protocol.credentials.trust.
+
+    The SDK exposes `IdentityProvider.protocol` as `IdentityProviderProtocol`,
+    a Pydantic v2 oneOf wrapper that holds the concrete protocol (ProtocolMtls
+    for X509 IdPs) on `actual_instance`. `credentials` is not proxied on the
+    wrapper, so reading it directly returns None — we have to unwrap first.
+    """
     protocol = getattr(idp, "protocol", None)
     if protocol is None:
         return None, None
-    credentials = getattr(protocol, "credentials", None)
+    actual_protocol = getattr(protocol, "actual_instance", None) or protocol
+    credentials = getattr(actual_protocol, "credentials", None)
     if credentials is None:
         return None, None
     trust = getattr(credentials, "trust", None)
