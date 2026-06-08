@@ -18,7 +18,10 @@ class apitoken_restricted_to_network_zone(Check):
         if missing_api_token_scope:
             return [
                 missing_api_token_scope_finding(
-                    self.metadata(), org_domain, missing_api_token_scope
+                    self.metadata(),
+                    org_domain,
+                    missing_api_token_scope,
+                    additional_required=["okta.networkZones.read"],
                 )
             ]
 

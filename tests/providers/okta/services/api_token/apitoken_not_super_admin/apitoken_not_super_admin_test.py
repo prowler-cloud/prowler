@@ -42,6 +42,8 @@ class Test_apitoken_not_super_admin:
         assert len(findings) == 1
         assert findings[0].status == "MANUAL"
         assert "okta.apiTokens.read" in findings[0].status_extended
+        assert "okta.roles.read" in findings[0].status_extended
+        assert "okta.groups.read" in findings[0].status_extended
 
     def test_missing_user_roles_scope_is_manual(self):
         token = api_token(owner_roles=[])
@@ -69,3 +71,29 @@ class Test_apitoken_not_super_admin:
         assert len(findings) == 1
         assert findings[0].status == "FAIL"
         assert "Super Admin" in findings[0].status_extended
+
+    def test_missing_groups_scope_adds_best_effort_caveat_on_pass(self):
+        token = api_token(owner_roles=["READ_ONLY_ADMIN"])
+        findings = _run_check(
+            build_api_token_client(
+                {token.id: token},
+                missing_scope={"user_groups": "okta.groups.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "PASS"
+        assert "Group-inherited roles were not checked" in findings[0].status_extended
+        assert "okta.groups.read" in findings[0].status_extended
+
+    def test_missing_groups_scope_does_not_caveat_when_owner_is_super_admin(self):
+        token = api_token(owner_roles=["SUPER_ADMIN"])
+        findings = _run_check(
+            build_api_token_client(
+                {token.id: token},
+                missing_scope={"user_groups": "okta.groups.read"},
+            )
+        )
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "Super Admin" in findings[0].status_extended
+        assert "Group-inherited" not in findings[0].status_extended

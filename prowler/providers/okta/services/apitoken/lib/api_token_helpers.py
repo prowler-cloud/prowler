@@ -65,9 +65,19 @@ def owner_has_super_admin(token: OktaApiToken) -> bool:
 
 
 def missing_api_token_scope_finding(
-    metadata, org_domain: str, scope: str
+    metadata,
+    org_domain: str,
+    scope: str,
+    additional_required: list[str] | None = None,
 ) -> CheckReportOkta:
-    """Build the MANUAL finding emitted when API tokens cannot be listed."""
+    """Build the MANUAL finding emitted when API tokens cannot be listed.
+
+    `additional_required` lets the calling check name the secondary
+    scopes it also needs (e.g. `okta.roles.read` for the Super Admin
+    check, `okta.networkZones.read` for the zone-restriction check) so
+    the operator can grant everything in one go instead of re-running
+    once per missing scope.
+    """
     resource = OktaApiToken(
         id="api-tokens-scope-missing",
         name="(scope not granted)",
@@ -76,11 +86,30 @@ def missing_api_token_scope_finding(
         metadata=metadata, resource=resource, org_domain=org_domain
     )
     report.status = "MANUAL"
+    if additional_required:
+        extras = f" This check also requires {_format_scope_list(additional_required)}."
+        advice = (
+            "Grant them on the service app's Okta API Scopes tab in the Okta "
+            "Admin Console, then re-run the check."
+        )
+    else:
+        extras = ""
+        advice = _SCOPE_ADVICE
     report.status_extended = (
         f"Could not retrieve Okta API token metadata: the Okta service app "
-        f"is missing the required `{scope}` API scope. {_SCOPE_ADVICE}"
+        f"is missing the required `{scope}` API scope.{extras} {advice}"
     )
     return report
+
+
+def _format_scope_list(scopes: list[str]) -> str:
+    """Format a list of scope names as backticked, comma-joined text."""
+    formatted = [f"`{scope}`" for scope in scopes]
+    if len(formatted) == 1:
+        return formatted[0]
+    if len(formatted) == 2:
+        return " and ".join(formatted)
+    return ", ".join(formatted[:-1]) + f", and {formatted[-1]}"
 
 
 def missing_network_zone_scope_for_token_finding(

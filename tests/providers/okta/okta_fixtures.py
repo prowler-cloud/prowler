@@ -23,6 +23,7 @@ def set_mocked_okta_provider(
                 "okta.networkZones.read",
                 "okta.apiTokens.read",
                 "okta.roles.read",
+                "okta.groups.read",
             ],
             private_key=OKTA_PRIVATE_KEY,
         )
@@ -37,6 +38,7 @@ def set_mocked_okta_provider(
                 "okta.networkZones.read",
                 "okta.apiTokens.read",
                 "okta.roles.read",
+                "okta.groups.read",
             ],
         )
 

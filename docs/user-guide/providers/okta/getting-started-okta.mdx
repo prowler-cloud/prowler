@@ -12,7 +12,7 @@ Set up authentication for Okta with the [Okta Authentication](/user-guide/provid
 
 - An Okta organization. The UI examples below use **Identity Engine** terminology such as **Global Session Policy**; Classic Engine exposes the equivalent sign-on policy concepts under older names.
 - A **Super Administrator** account on that organization for the one-time service-app setup.
-- An **API Services** app integration in the Okta Admin Console with the `okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.networkZones.read`, `okta.apiTokens.read`, and `okta.roles.read` scopes granted and an admin role assigned. **Read-Only Administrator** covers every `signon` check and runs the per-app network-zone check against the apps the service app can see (under Read-Only Administrator that is typically only the service app's own row — the rest of the org's app inventory stays invisible). **Super Administrator** is required additionally to evaluate the five first-party application checks (Okta Admin Console / Okta Dashboard idle timeout, MFA, phishing-resistant authentication) and to widen the network-zone check to the full app inventory — see [Okta Authentication](/user-guide/providers/okta/authentication#required-admin-role) for the full breakdown.
+- An **API Services** app integration in the Okta Admin Console with the `okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.networkZones.read`, `okta.apiTokens.read`, `okta.roles.read`, and `okta.groups.read` scopes granted and an admin role assigned. **Read-Only Administrator** covers every `signon` check and runs the per-app network-zone check against the apps the service app can see (under Read-Only Administrator that is typically only the service app's own row — the rest of the org's app inventory stays invisible). **Super Administrator** is required additionally to evaluate the five first-party application checks (Okta Admin Console / Okta Dashboard idle timeout, MFA, phishing-resistant authentication) and to widen the network-zone check to the full app inventory — see [Okta Authentication](/user-guide/providers/okta/authentication#required-admin-role) for the full breakdown.
 - Python 3.10+ and Prowler 5.27.0 or later installed locally.
 
 <CardGroup cols={2}>
@@ -85,8 +85,8 @@ Follow the [Okta Authentication](/user-guide/providers/okta/authentication) guid
 export OKTA_ORG_DOMAIN="acme.okta.com"
 export OKTA_CLIENT_ID="0oa1234567890abcdef"
 export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
-# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read"
-export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read"
+# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read,okta.groups.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read,okta.groups.read"
 ```
 
 The private key file may contain either a PEM-encoded RSA key or a JWK JSON document.
@@ -168,17 +168,18 @@ Prowler requests a fixed set of OAuth scopes on every token exchange. The defaul
 - `okta.networkZones.read`
 - `okta.apiTokens.read`
 - `okta.roles.read`
+- `okta.groups.read`
 
-The service app must have these scopes granted in the **Okta API Scopes** tab. When the granted set is narrower than the requested set, the token request fails with an `invalid_scope` error and the scan stops at provider initialization.
+The service app must have these scopes granted in the **Okta API Scopes** tab. `okta.groups.read` is required so the API token Super Admin check can resolve admin roles inherited via group membership; without it the check falls back to direct-only role assignments and emits a best-effort caveat. When the granted set is narrower than the requested set, the token request fails with an `invalid_scope` error and the scan stops at provider initialization.
 
 When additional checks are enabled — or when running against a service app that exposes a different scope set — override the default with `OKTA_SCOPES` (comma-separated string for the env var) or `--okta-scopes` (space-separated list for the CLI):
 
 ```bash
 # Environment variable — comma-separated
-export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read,okta.groups.read"
 
 # CLI flag — space-separated
-prowler okta --okta-scopes okta.policies.read okta.brands.read okta.apps.read okta.networkZones.read okta.apiTokens.read okta.roles.read
+prowler okta --okta-scopes okta.policies.read okta.brands.read okta.apps.read okta.networkZones.read okta.apiTokens.read okta.roles.read okta.groups.read
 ```
 
 For the full catalog of OAuth scopes exposed by the Okta Management API, refer to the [Okta OAuth 2.0 scopes documentation](https://developer.okta.com/docs/api/oauth2/).
