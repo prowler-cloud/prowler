@@ -3,9 +3,6 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.okta.lib.service.pagination import (  # noqa: F401 — re-exported for existing test imports
-    next_after_cursor as _next_after_cursor,
-)
 from prowler.providers.okta.lib.service.pagination import paginate as _paginate_shared
 from prowler.providers.okta.lib.service.service import OktaService
 
