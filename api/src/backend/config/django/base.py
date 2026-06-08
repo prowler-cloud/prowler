@@ -319,6 +319,7 @@ TASK_RECOVERY_DELETIONS_ENABLED = env.bool(
     "DJANGO_TASK_RECOVERY_DELETIONS_ENABLED", True
 )
 
+
 def label_postgres_connections(databases):
     """Tag each Postgres connection with ``application_name="<component>:<alias>"``
     so connections are attributable by component in ``pg_stat_activity`` (and any
