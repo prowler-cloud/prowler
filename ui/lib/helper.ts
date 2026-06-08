@@ -15,9 +15,10 @@ import { readEnv } from "@/lib/runtime-env";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL;
-export const apiBaseUrl =
-  readEnv("UI_API_BASE_URL", "NEXT_PUBLIC_API_BASE_URL") ??
-  "http://localhost:8080/api/v1";
+export const apiBaseUrl = readEnv(
+  "UI_API_BASE_URL",
+  "NEXT_PUBLIC_API_BASE_URL",
+);
 
 /**
  * Extracts a form value from a FormData object
