@@ -16,7 +16,13 @@ def set_mocked_okta_provider(
         session = OktaSession(
             org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
-            scopes=["okta.policies.read", "okta.brands.read", "okta.apps.read"],
+            scopes=[
+                "okta.policies.read",
+                "okta.brands.read",
+                "okta.apps.read",
+                "okta.logStreams.read",
+                "okta.idps.read",
+            ],
             private_key=OKTA_PRIVATE_KEY,
         )
     if identity is None:
@@ -27,6 +33,8 @@ def set_mocked_okta_provider(
                 "okta.policies.read",
                 "okta.brands.read",
                 "okta.apps.read",
+                "okta.logStreams.read",
+                "okta.idps.read",
             ],
         )
 

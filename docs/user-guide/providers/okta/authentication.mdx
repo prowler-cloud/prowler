@@ -35,14 +35,18 @@ The bundled checks require the following read-only scopes:
 - `okta.policies.read`
 - `okta.brands.read`
 - `okta.apps.read`
+- `okta.logStreams.read`
+- `okta.idps.read`
 
 Additional scopes will be needed as more services and checks are added. These are the current ones needed:
 
 | Scope | Used by |
 |---|---|
-| `okta.policies.read` | Sign-on, password, and authentication policies |
+| `okta.policies.read` | Sign-on, password, authentication, and `USER_LIFECYCLE` (Workflow > Automations) policies |
 | `okta.brands.read` | Sign-in page customizations (DOD Notice and Consent Banner check) |
 | `okta.apps.read` | First-party app settings (Okta Admin Console session), integrated app inventory, and the Authentication Policies bound to Okta applications |
+| `okta.logStreams.read` | Log Stream configuration (`/api/v1/logStreams`) |
+| `okta.idps.read` | Identity Providers, including Smart Card (X509) IdPs (`/api/v1/idps`) |
 
 ### Required Admin Role
 
@@ -68,7 +72,9 @@ Okta filters the first-party apps (`saasure`, `okta_enduser`) out of `/api/v1/ap
 
 A fifth check — `application_admin_console_session_idle_timeout_15min` (STIG V-273187) — also requires Super Administrator: it calls `GET /api/v1/first-party-app-settings/admin-console`, which returns `403 E0000006` for every role below Super Administrator.
 
-When the service app runs with Read-Only Administrator, the five checks listed in this section return **MANUAL** instead of PASS/FAIL — the rest of the scan keeps running.
+`user_inactivity_automation_35d_enabled` (STIG V-273188) reads `USER_LIFECYCLE` policies (`list_policies(type='USER_LIFECYCLE')`) using the `okta.policies.read` scope. The Read-Only Administrator role is enough to list them; no Super Administrator requirement.
+
+When the service app runs with Read-Only Administrator, the checks listed in this section return **MANUAL** instead of PASS/FAIL — the rest of the scan keeps running.
 
 <Note>
 Read-Only Administrator stays the recommended default for the least-privilege framing that aligns with DISA STIG. Assign Super Administrator on a separate run when full coverage of the first-party app checks is needed.
@@ -158,8 +164,8 @@ export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
 # or
 export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 
-# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read"
-export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read"
+# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read,okta.logStreams.read,okta.idps.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.logStreams.read,okta.idps.read"
 
 uv run python prowler-cli.py okta
 ```
