@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getAllProviders } from "@/actions/providers";
@@ -69,18 +70,37 @@ export default async function Scans({
   const thereIsNoProviders = providers.length === 0;
   const thereIsNoProvidersConnected =
     !thereIsNoProviders && connectedProviders.length === 0;
+  const missingScanPrerequisite =
+    thereIsNoProviders || thereIsNoProvidersConnected;
+
+  if (
+    missingScanPrerequisite &&
+    resolvedSearchParams.onboarding === "view-first-scan"
+  ) {
+    redirect("/providers?onboarding=add-provider");
+  }
 
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
   );
-  const activeScanCount =
-    thereIsNoProviders || thereIsNoProvidersConnected
-      ? 0
-      : await getActiveScanCount(resolvedSearchParams);
+  const activeScanCount = missingScanPrerequisite
+    ? 0
+    : await getActiveScanCount(resolvedSearchParams);
+  const onboardingAction = missingScanPrerequisite
+    ? {
+        flowId: "view-first-scan",
+        fallbackFlowId: "add-provider",
+        useFallback: true,
+      }
+    : { flowId: "view-first-scan" };
 
   return (
-    <ContentLayout title="Scan Jobs" icon="lucide:timer">
-      {thereIsNoProviders || thereIsNoProvidersConnected ? (
+    <ContentLayout
+      title="Scan Jobs"
+      icon="lucide:timer"
+      onboardingAction={onboardingAction}
+    >
+      {missingScanPrerequisite ? (
         <ScansProvidersEmptyState thereIsNoProviders={thereIsNoProviders} />
       ) : (
         <ScansPageShell

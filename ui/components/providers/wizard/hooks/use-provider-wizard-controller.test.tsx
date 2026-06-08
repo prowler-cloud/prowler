@@ -70,8 +70,6 @@ describe("useProviderWizardController", () => {
   });
 
   it("requests the onboarding checkpoint with providerConnected:true when a provider was created", () => {
-    // Given - the connect step created a provider record (setProvider sets the
-    // store providerId before the wizard closes)
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
       useProviderWizardController({
@@ -88,20 +86,17 @@ describe("useProviderWizardController", () => {
       });
     });
 
-    // When - the wizard closes
     act(() => {
       result.current.handleClose();
     });
 
-    // Then - the checkpoint is asked to open, reading the providerId BEFORE the
-    // reset cleared it
+    // providerId is read before the store reset clears it.
     expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
       providerConnected: true,
     });
   });
 
   it("requests the onboarding checkpoint with providerConnected:false when no provider was created", () => {
-    // Given - the user opened the wizard but closed it without connecting
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
       useProviderWizardController({
@@ -110,12 +105,10 @@ describe("useProviderWizardController", () => {
       }),
     );
 
-    // When - the wizard closes with no provider in the store
     act(() => {
       result.current.handleClose();
     });
 
-    // Then - the checkpoint is told no provider connected
     expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
       providerConnected: false,
     });
@@ -243,7 +236,7 @@ describe("useProviderWizardController", () => {
       result.current.handleTestSuccess();
     });
 
-    // Then: credential rotation never surfaces the launch/schedule step
+    // Credential rotation skips the launch/schedule step.
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(refreshMock).toHaveBeenCalledTimes(1);
     expect(result.current.currentStep).not.toBe(PROVIDER_WIZARD_STEP.LAUNCH);
@@ -342,7 +335,7 @@ describe("useProviderWizardController", () => {
       result.current.setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
     });
 
-    // When: provider data refreshes while modal is still open
+    // Provider data refreshes while modal is still open — user progress must be kept.
     rerender({
       open: true,
       initialData: {
@@ -355,7 +348,6 @@ describe("useProviderWizardController", () => {
       },
     });
 
-    // Then: keep user progress in the current flow
     expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.TEST);
     expect(useProviderWizardStore.getState().via).toBe("service-account");
   });

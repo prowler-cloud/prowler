@@ -51,9 +51,7 @@ interface UseProviderWizardControllerProps {
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
   orgInitialData?: OrgWizardInitialData;
-  // When false, the caller skips the post-close router.refresh() and relies on
-  // the provider-creation actions' revalidatePath("/providers") to refresh the
-  // data. Defaults to true so standalone callers keep refreshing.
+  // When false, skips post-close router.refresh() — caller relies on revalidatePath instead.
   refreshOnClose?: boolean;
 }
 
@@ -182,10 +180,7 @@ export function useProviderWizardController({
   const isOrgDirectEntry = Boolean(orgInitialData);
 
   const handleClose = () => {
-    // Capture whether a provider was created in this session BEFORE the reset
-    // clears `providerId`. The connect step calls `setProvider` once the
-    // provider record is created server-side, so a non-null id means the wizard
-    // closed having connected a provider.
+    // Read providerId before reset clears it — non-null means a provider was connected.
     const connectedProviderId = useProviderWizardStore.getState().providerId;
 
     resetProviderWizard();
@@ -198,10 +193,7 @@ export function useProviderWizardController({
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
 
-    // Explicitly request the onboarding checkpoint on wizard close. The store
-    // gates it on `armed` (set only when the user started onboarding) and the
-    // handled marker, so an established user adding another provider never sees
-    // the dialog.
+    // Only fires the checkpoint dialog if the store is armed (user started onboarding).
     useOnboardingCheckpointStore.getState().requestOpenOnWizardClose({
       providerConnected: connectedProviderId !== null,
     });

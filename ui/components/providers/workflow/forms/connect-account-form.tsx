@@ -147,7 +147,6 @@ function applyBackStep({
   setPrevStep: Dispatch<SetStateAction<number>>;
   setAwsMethod: Dispatch<SetStateAction<"single" | null>>;
 }) {
-  // If in UID form after choosing single, go back to method selector
   if (prevStep === 2 && awsMethod === "single") {
     setAwsMethod(null);
     form.setValue("providerUid", "", { shouldValidate: false });
@@ -156,17 +155,14 @@ function applyBackStep({
   }
 
   setPrevStep((prev) => prev - 1);
-  // Deselect the providerType if the user is going back to the first step
   if (prevStep === 2) {
     form.setValue("providerType", undefined as unknown as ProviderType, {
       shouldValidate: false,
     });
     setAwsMethod(null);
   }
-  // Reset the providerUid and providerAlias fields when going back
   form.setValue("providerUid", "", { shouldValidate: false });
   form.setValue("providerAlias", "", { shouldValidate: false });
-  // Clear all validation errors so the radio buttons don't show red borders
   form.clearErrors();
 }
 
@@ -215,7 +211,6 @@ export const ConnectAccountForm = ({
       const data = await addProvider(formData);
 
       if (data?.errors && data.errors.length > 0) {
-        // Handle server-side validation errors
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
           const pointer = error.source?.pointer;
@@ -250,7 +245,6 @@ export const ConnectAccountForm = ({
         });
         return;
       } else {
-        // Go to the next step after successful submission
         const {
           id,
           attributes: { provider: createdProviderType, uid, alias },

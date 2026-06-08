@@ -23,8 +23,6 @@ import { createAddProviderTourStepHandlers } from "@/lib/tours/add-provider.tour
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
 
-// Resolved once: the registry is static, so the add-provider flow that this
-// route owns never changes at runtime.
 const addProviderFlow = getFlowById("add-provider")!;
 
 interface ProvidersAccountsViewProps {
@@ -77,12 +75,8 @@ export function ProvidersAccountsView({
     setProviderWizardInitialData(undefined);
     setOrgWizardInitialData(undefined);
 
-    // Only clean the one-shot ?addProvider intent from the URL bar, via the
-    // History API so it does NOT trigger an RSC refetch. We must not refresh
-    // here: the provider-creation actions (addProvider / addCredentialsProvider
-    // / checkConnectionProvider) already revalidatePath("/providers"), so the
-    // table updates behind the modal. A router.refresh()/replace() on close
-    // re-ran the whole /providers Server Component, which read as a full reload.
+    // Remove ?addProvider via History API (not router.replace) to avoid an RSC refetch;
+    // revalidatePath in the creation actions already refreshes the table.
     if (searchParams.has(ADD_PROVIDER_SEARCH_PARAM)) {
       const params = new URLSearchParams(searchParams.toString());
       params.delete(ADD_PROVIDER_SEARCH_PARAM);
@@ -97,10 +91,7 @@ export function ProvidersAccountsView({
 
   return (
     <>
-      {/* Renders null; reads the sequence slice + ?onboarding param and force-
-          starts the add-provider tour, wiring the tour's wizard-open step to
-          this view's imperative open. Suspense satisfies the App Router
-          requirement around `useSearchParams`. */}
+      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
       <Suspense fallback={null}>
         <OnboardingTrigger
           flow={addProviderFlow}

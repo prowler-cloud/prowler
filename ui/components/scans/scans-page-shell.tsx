@@ -21,8 +21,6 @@ import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
-// Resolved once: the registry is static, so the flow this route owns never
-// changes at runtime.
 const viewFirstScanFlow = getFlowById("view-first-scan")!;
 
 import { CliImportBanner } from "./cli-import-banner";
@@ -86,9 +84,7 @@ export function ScansPageShell({
 
   return (
     <div className="flex flex-col gap-[18px]">
-      {/* Renders null; reads the sequence slice + ?onboarding param and force-
-          starts the view-first-scan tour. Suspense satisfies the App Router
-          requirement around `useSearchParams`. */}
+      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
       <Suspense fallback={null}>
         <OnboardingTrigger flow={viewFirstScanFlow} />
       </Suspense>

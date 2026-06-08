@@ -9,8 +9,6 @@ import { getFlowById } from "@/lib/onboarding";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { ScanEntity } from "@/types/scans";
 
-// Resolved once: the registry is static, so the flow this route owns never
-// changes at runtime.
 const viewComplianceFlow = getFlowById("view-compliance")!;
 
 interface ComplianceOverviewGridProps {
@@ -41,9 +39,7 @@ export const ComplianceOverviewGrid = ({
 
   return (
     <>
-      {/* Renders null; reads the sequence slice + ?onboarding param and force-
-          starts the view-compliance tour. Suspense satisfies the App Router
-          requirement around `useSearchParams`. */}
+      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
       <Suspense fallback={null}>
         <OnboardingTrigger flow={viewComplianceFlow} />
       </Suspense>

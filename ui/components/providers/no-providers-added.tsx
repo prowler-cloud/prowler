@@ -13,9 +13,7 @@ const NO_PROVIDERS_ADDED_ACTION = {
 
 interface NoProvidersAddedBaseProps {
   containerClassName?: string;
-  // Tour anchor for the CTA button. The add-provider onboarding tour runs in the
-  // zero-provider state, where this empty state replaces the table's
-  // AddProviderButton, so the anchor must ride along here too.
+  // Tour anchor for the CTA; needed because this empty state replaces the table's AddProviderButton.
   ctaTourId?: string;
 }
 

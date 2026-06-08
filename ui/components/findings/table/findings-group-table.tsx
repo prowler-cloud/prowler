@@ -56,23 +56,17 @@ export function FindingsGroupTable({
   const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
     null,
   );
-  // Separate display state (updates on keystroke) from committed search (updates on Enter only).
-  // This prevents InlineResourceContainer from remounting on every keystroke.
+  // Separate input (keystroke) from committed search (Enter) to avoid remounting InlineResourceContainer.
   const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
 
-  // State resets (selection, drill-down) are handled by the parent via
-  // key={groupKey} — when data changes, the component remounts with fresh state.
-
   const safeData = data ?? [];
   const hasResourceSelection = resourceSelection.length > 0;
   const filters = resolvedFilters;
 
-  // Get selected group check IDs. When the expanded group has individual resource
-  // selections, exclude it from group-level mute targets — the resource-level
-  // FloatingMuteButton handles those.
+  // Exclude expanded group from group-level mutes when it has resource selections.
   const selectedCheckIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
     .map((idx) => safeData[parseInt(idx)]?.checkId)
@@ -86,7 +80,6 @@ export function FindingsGroupTable({
     .map((idx) => safeData[parseInt(idx)])
     .filter(Boolean);
 
-  // Count of selectable rows (groups where not ALL findings are muted)
   const selectableRowCount = safeData.filter((g) =>
     canMuteFindingGroup({
       resourcesFail: g.resourcesFail,
@@ -132,7 +125,6 @@ export function FindingsGroupTable({
     return Array.from(new Set(results.flat()));
   };
 
-  /** Shared resolver for group row action dropdowns (via context). */
   const resolveMuteIds = async (checkIds: string[]) =>
     resolveGroupMuteIds(checkIds);
 
@@ -145,10 +137,9 @@ export function FindingsGroupTable({
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
-    // No resources in the group → nothing to show, skip drill-down
     if (!canDrillDownFindingGroup(group)) return;
 
-    // Toggle: same group = collapse, different = switch
+    // Toggle: same group collapses, different group switches
     if (expandedCheckId === checkId) {
       handleCollapse();
       return;
@@ -205,9 +196,7 @@ export function FindingsGroupTable({
         resolveMuteIds,
       }}
     >
-      {/* Anchor for the explore-findings onboarding tour `table` step. The
-          trigger lives here (not in the filters) so the tour force-starts only
-          once the table has rendered with data — never against the skeleton. */}
+      {/* Tour trigger placed here so onboarding starts only once the table has data. */}
       <div data-tour-id="explore-findings-table">
         <Suspense fallback={null}>
           <OnboardingTrigger flow={exploreFindingsFlow} />
@@ -250,7 +239,6 @@ export function FindingsGroupTable({
               selectedCheckIds.length > 0
                 ? resolveGroupMuteIds(selectedCheckIds)
                 : Promise.resolve([]),
-              // resourceSelection already contains real finding UUIDs
               Promise.resolve(hasResourceSelection ? resourceSelection : []),
             ]);
             return [...groupIds, ...resourceIds];

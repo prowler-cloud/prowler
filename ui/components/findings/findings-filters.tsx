@@ -95,7 +95,6 @@ export const FindingsFilterBatchControls = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const isAlertsEdit = variant === "alerts-edit";
 
-  // Custom filters for the expandable section.
   const customFilters = [
     ...filterFindings
       .filter((filter) => !isAlertsEdit || filter.key !== FilterType.STATUS)
@@ -182,8 +181,6 @@ export const FindingsFilterBatchControls = ({
   const showAppliedRow = appliedFilterChips.length > 0;
   const showPendingRow = hasChanges;
 
-  // Handler for removing a single chip: update the pending filter to remove that value.
-  // setPending handles both "filter[key]" and "key" formats internally.
   const handleChipRemove = (filterKey: string, value?: string) => {
     if (value === undefined) {
       setPending(filterKey, []);
@@ -195,7 +192,6 @@ export const FindingsFilterBatchControls = ({
     setPending(filterKey, nextValues);
   };
 
-  // For the date picker, read from pendingFilters
   const pendingDateValues = pendingFilters["filter[inserted_at]"];
   const pendingDateValue =
     pendingDateValues && pendingDateValues.length > 0

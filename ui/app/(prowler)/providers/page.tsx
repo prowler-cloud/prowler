@@ -22,11 +22,9 @@ export default async function Providers({
   const activeTab = getProviderTab(resolvedSearchParams.tab);
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
-  // Exclude `tab` and `onboarding` from the Suspense key. `tab` switching must
-  // not re-suspend; `onboarding` is an ephemeral param the tour strips via
-  // history.replaceState, and a later revalidatePath("/providers") would
-  // otherwise change the key, remount ProvidersAccountsView, and reset the
-  // wizard's open state mid-flow during onboarding.
+  // Exclude `tab` and `onboarding` from the key: tab switches must not re-suspend,
+  // and `onboarding` is ephemeral (stripped via history.replaceState) — keeping it
+  // would remount ProvidersAccountsView and reset the wizard mid-flow.
   const {
     tab: _tab,
     onboarding: _onboarding,
@@ -35,7 +33,11 @@ export default async function Providers({
   const searchParamsKey = JSON.stringify(stableParams);
 
   return (
-    <ContentLayout title="Providers" icon="lucide:cloud-cog">
+    <ContentLayout
+      title="Providers"
+      icon="lucide:cloud-cog"
+      onboardingAction={{ flowId: "add-provider" }}
+    >
       {isCloudEnvironment && <CliImportBanner className="mb-6" />}
       <FilterTransitionWrapper>
         <ProviderPageTabs
@@ -66,15 +68,10 @@ const ProvidersTableFallback = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-4">
-        {/* ProviderTypeSelector */}
         <Skeleton className="h-[52px] min-w-[200px] flex-1 rounded-lg md:max-w-[280px]" />
-        {/* Organizations filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Provider Groups filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Status filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Action buttons */}
         <div className="ml-auto flex flex-wrap gap-4">
           <Skeleton className="h-9 w-[160px] rounded-md" />
           <Skeleton className="h-9 w-[120px] rounded-md" />
