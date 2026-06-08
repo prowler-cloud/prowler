@@ -13,8 +13,7 @@
   "Risk": "Inactive Okta accounts retained indefinitely give an attacker who exploits one undetected access to downstream applications.\n\n- **Account takeover via dormant identities** that no one is monitoring\n- **Lateral movement** through SSO sessions of forgotten users\n- **Stale entitlements** that survive role and policy reorganisations",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.okta.com/oie/en-us/content/topics/automations/automations.htm",
-    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Automation/"
+    "https://help.okta.com/en-us/content/topics/automation-hooks/automations-main.htm"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,7 @@
   "Risk": "An Okta Smart Card IdP whose certificate chain is not issued by a DOD-approved CA can be used to authenticate non-vetted identities.\n\n- **Trust on an unverified CA** allows impersonation of CAC/PIV holders\n- **Bypass of the federal PKI** required for DOD-grade identity assurance\n- **Acceptance of certificates** from a private or unaccredited issuer",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.okta.com/oie/en-us/content/topics/identity-providers/smart-card/smart-card-idp-overview.htm",
+    "https://help.okta.com/en-us/content/topics/security/idp-enable-smart-card.htm",
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/IdentityProvider/"
   ],
   "Remediation": {

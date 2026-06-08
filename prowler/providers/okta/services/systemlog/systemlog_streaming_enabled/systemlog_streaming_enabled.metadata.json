@@ -13,7 +13,7 @@
   "Risk": "Audit records stored only inside the Okta tenant are exposed to accidental or incidental deletion or alteration.\n\n- **No central retention** of authentication events for incident investigations\n- **Single point of failure** for the audit trail\n- **No correlation** with other identity, network, and endpoint telemetry in the SIEM",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.okta.com/oie/en-us/content/topics/reports/log-streaming/log-streaming.htm",
+    "https://help.okta.com/en-us/content/topics/reports/log-streaming/about-log-streams.htm",
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/LogStream/"
   ],
   "Remediation": {
