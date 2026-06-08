@@ -137,3 +137,166 @@ class TestLoggingService:
             s for s in logging_svc.sinks if s.project_id.startswith("organizations/")
         ]
         assert org_sinks == []
+
+    def test_get_metrics_populates_bucket_name(self):
+        """_get_metrics() captures a metric's bucketName (for aggregated-sink crediting)."""
+        bucket = "projects/central-logging-project/locations/eu/buckets/central-bucket"
+        mock_client = MagicMock()
+        mock_client.sinks().list().execute.return_value = {"sinks": []}
+        mock_client.sinks().list_next.return_value = None
+        mock_client.projects().metrics().list().execute.return_value = {
+            "metrics": [
+                {
+                    "name": "central-metric",
+                    "metricDescriptor": {
+                        "type": "logging.googleapis.com/user/central-metric"
+                    },
+                    "filter": "severity>=ERROR",
+                    "bucketName": bucket,
+                }
+            ]
+        }
+        mock_client.projects().metrics().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                return_value=mock_client,
+            ),
+        ):
+            logging_svc = Logging(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
+
+        metrics = [m for m in logging_svc.metrics if m.name == "central-metric"]
+        assert len(metrics) == 1
+        assert metrics[0].bucket_name == bucket
+
+
+class TestGetProjectsCoveredByAggregatedMetric:
+    """Unit tests for the aggregated-sink crediting helper: one positive case and the
+    guards that must NOT credit a project (so the metric-filter checks never false-pass).
+    """
+
+    FILTER = 'protoPayload.methodName="SetIamPolicy"'
+    ORG = "111222333"
+    BUCKET = "projects/central-logging-project/locations/eu/buckets/central-bucket"
+
+    def _clients(
+        self,
+        *,
+        include_children=True,
+        bucket_name=None,
+        sink_destination=None,
+        sink_filter="all",
+        with_alert=True,
+        project_org_id=None,
+    ):
+        from prowler.providers.gcp.models import GCPOrganization, GCPProject
+        from prowler.providers.gcp.services.logging.logging_service import Metric, Sink
+        from prowler.providers.gcp.services.monitoring.monitoring_service import (
+            AlertPolicy,
+        )
+
+        bucket_name = self.BUCKET if bucket_name is None else bucket_name
+        sink_destination = (
+            f"logging.googleapis.com/{self.BUCKET}"
+            if sink_destination is None
+            else sink_destination
+        )
+        project_org_id = self.ORG if project_org_id is None else project_org_id
+
+        logging_client = MagicMock()
+        logging_client.project_ids = [GCP_PROJECT_ID]
+        logging_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="child",
+                labels={},
+                lifecycle_state="ACTIVE",
+                organization=GCPOrganization(
+                    id=project_org_id, name=f"organizations/{project_org_id}"
+                ),
+            )
+        }
+        logging_client.metrics = [
+            Metric(
+                name="central-metric",
+                type="logging.googleapis.com/user/central-metric",
+                filter=self.FILTER,
+                project_id="central-logging-project",
+                bucket_name=bucket_name,
+            )
+        ]
+        logging_client.sinks = [
+            Sink(
+                name="org-sink",
+                destination=sink_destination,
+                filter=sink_filter,
+                project_id=f"organizations/{self.ORG}",
+                include_children=include_children,
+            )
+        ]
+        monitoring_client = MagicMock()
+        monitoring_client.alert_policies = (
+            [
+                AlertPolicy(
+                    name="projects/central-logging-project/alertPolicies/ap",
+                    display_name="central-alert",
+                    enabled=True,
+                    filters=[
+                        'metric.type = "logging.googleapis.com/user/central-metric"'
+                    ],
+                    project_id="central-logging-project",
+                )
+            ]
+            if with_alert
+            else []
+        )
+        return logging_client, monitoring_client
+
+    def _run(self, logging_client, monitoring_client):
+        from prowler.providers.gcp.services.logging.logging_service import (
+            get_projects_covered_by_aggregated_metric,
+        )
+
+        return get_projects_covered_by_aggregated_metric(
+            logging_client, monitoring_client, self.FILTER
+        )
+
+    def test_covered_when_all_conditions_met(self):
+        logging_client, monitoring_client = self._clients()
+        assert self._run(logging_client, monitoring_client) == {
+            GCP_PROJECT_ID: "central-metric"
+        }
+
+    def test_not_covered_without_alert(self):
+        logging_client, monitoring_client = self._clients(with_alert=False)
+        assert self._run(logging_client, monitoring_client) == {}
+
+    def test_not_covered_when_metric_not_bucket_scoped(self):
+        logging_client, monitoring_client = self._clients(bucket_name="")
+        assert self._run(logging_client, monitoring_client) == {}
+
+    def test_not_covered_when_sink_not_include_children(self):
+        logging_client, monitoring_client = self._clients(include_children=False)
+        assert self._run(logging_client, monitoring_client) == {}
+
+    def test_not_covered_when_sink_filter_is_restrictive(self):
+        logging_client, monitoring_client = self._clients(
+            sink_filter='resource.type="gce_instance"'
+        )
+        assert self._run(logging_client, monitoring_client) == {}
+
+    def test_not_covered_when_sink_destination_bucket_differs(self):
+        logging_client, monitoring_client = self._clients(
+            sink_destination="logging.googleapis.com/projects/x/locations/eu/buckets/other"
+        )
+        assert self._run(logging_client, monitoring_client) == {}
+
+    def test_not_covered_when_project_org_differs(self):
+        logging_client, monitoring_client = self._clients(project_org_id="999999999")
+        assert self._run(logging_client, monitoring_client) == {}
