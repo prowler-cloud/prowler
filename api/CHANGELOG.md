@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.31.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
@@ -31,7 +29,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> 28b045302 (fix(api): create Neo4j driver lazily so an outage can't block API startup (#11491))
 ## [1.30.1] (Prowler v5.29.1)
 
 ### 🐞 Fixed
