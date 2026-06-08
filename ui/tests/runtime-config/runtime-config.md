@@ -23,7 +23,7 @@ island injected into `<head>` (Sentry, GTM, API base/docs URL, reserved keys).
 ### Expected Result
 
 - The island exists, is `type="application/json"` (inert), and lives in `<head>`.
-- The island appears before the first external bundle `<script src>`.
+- The island appears before the first ordered (non-`async`) bundle `<script src>` — Next.js's `async` chunk-preloads in `<head>` don't execute in order and are excluded.
 - It parses as JSON exposing exactly the allowlisted keys and a truthy `apiBaseUrl`.
 
 ### Key Verification Points

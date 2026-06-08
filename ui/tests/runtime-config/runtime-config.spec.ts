@@ -17,8 +17,8 @@ test.describe("Runtime public-config data island", () => {
     },
     async () => {
       // The island exists, is inert (application/json), lives in <head>, and
-      // precedes the first external bundle script (the ordering guarantee a
-      // jsdom unit test cannot prove).
+      // precedes the first ordered (non-async) bundle script (the ordering
+      // guarantee a jsdom unit test cannot prove).
       await expect(runtimeConfigPage.island).toBeAttached();
       await runtimeConfigPage.verifyIslandInHead();
       await runtimeConfigPage.verifyIslandPrecedesClientBundle();
