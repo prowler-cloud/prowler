@@ -1,8 +1,11 @@
 @import "tailwindcss";
+/* All @import rules must precede @config/@source — a late @import is invalid
+ * per the CSS spec and lightningcss (Tailwind v4) silently drops it, which
+ * would strip the driver.js tour popover theme and break dark mode. */
+@import "./tours.css";
+
 @config "../tailwind.config.js";
 @source "../node_modules/streamdown/dist/*.js";
-
-@import "./tours.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

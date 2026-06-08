@@ -1,20 +1,17 @@
-/*
- * Every color, border, and background MUST resolve to a Prowler design token
- * defined in globals.css. Raw hex or rgba() in this file is a spec violation
- * — extend the tokens instead. Exception: the box-shadow stack uses raw
- * rgb()/color-mix values to describe shadow geometry, not theme color.
- */
+/* All colors must use design tokens from globals.css; raw rgb() is allowed only
+ * in box-shadow geometry. driver.js injects plain DOM, so these styles mirror
+ * the shadcn Card/Button variants directly. */
 
 .driver-popover.prowler-theme {
   background-color: var(--bg-neutral-tertiary);
   color: var(--text-neutral-primary);
   border: 1px solid var(--border-neutral-tertiary);
-  border-radius: 0.625rem;
+  border-radius: 0.75rem;
   box-shadow:
     0 1px 0 0 rgb(255 255 255 / 0.04) inset,
     0 24px 48px -16px rgb(0 0 0 / 0.65),
     0 8px 16px -8px rgb(0 0 0 / 0.45);
-  padding: 1.125rem 1.25rem 1rem;
+  padding: 1rem;
   min-width: 300px;
   max-width: 360px;
   font-family: inherit;
@@ -62,11 +59,12 @@
 
 .driver-popover.prowler-theme .driver-popover-footer button {
   font-family: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  padding: 0.5rem 0.875rem;
-  border-radius: 0.4375rem;
-  line-height: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  line-height: 1.25rem;
   text-shadow: none;
   cursor: pointer;
   transition:
@@ -144,32 +142,10 @@
   outline: none;
 }
 
+/* No pointer arrow on tour popovers — the highlighted stage already anchors
+   the card to its target, so the arrow is visual noise. */
 .driver-popover.prowler-theme .driver-popover-arrow {
-  border-color: var(--bg-neutral-tertiary);
-}
-
-.driver-popover.prowler-theme .driver-popover-arrow-side-left {
-  border-right-color: transparent;
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-}
-
-.driver-popover.prowler-theme .driver-popover-arrow-side-right {
-  border-left-color: transparent;
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-}
-
-.driver-popover.prowler-theme .driver-popover-arrow-side-top {
-  border-right-color: transparent;
-  border-left-color: transparent;
-  border-bottom-color: transparent;
-}
-
-.driver-popover.prowler-theme .driver-popover-arrow-side-bottom {
-  border-right-color: transparent;
-  border-left-color: transparent;
-  border-top-color: transparent;
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
