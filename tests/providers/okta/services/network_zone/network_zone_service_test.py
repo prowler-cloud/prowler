@@ -9,7 +9,9 @@ from prowler.providers.okta.services.network.network_zone_service import (
     NetworkZone,
     OktaNetworkZone,
     _next_after_cursor,
+    _normalise_sdk_result,
     _raw_zone_to_model,
+    _value,
 )
 from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
 
@@ -53,6 +55,28 @@ class Test_network_zone_pagination:
             '<https://acme.okta.com/api/v1/zones?after=next-page>; rel="next"'
         )
         assert _next_after_cursor(_resp({"Link": link})) == "next-page"
+
+    def test_next_link_without_after_cursor_returns_none(self):
+        quote = chr(34)
+        link = (
+            f"<https://acme.okta.com/api/v1/zones?limit=20>; rel={quote}self{quote}, "
+            f"<https://acme.okta.com/api/v1/zones?limit=20>; rel={quote}next{quote}"
+        )
+        assert _next_after_cursor(_resp({"Link": link})) is None
+
+
+class Test_network_zone_sdk_result_normalization:
+    def test_normalises_non_tuple_sdk_result(self):
+        zone = _sdk_zone("nzo-1", "First")
+
+        items, response, error = _normalise_sdk_result([zone])
+
+        assert items == [zone]
+        assert response is None
+        assert error is None
+
+    def test_value_returns_empty_string_for_none(self):
+        assert _value(None) == ""
 
 
 class Test_NetworkZone_service:
@@ -224,7 +248,19 @@ class Test_NetworkZone_service_sdk_validation_fallback:
             return ve
         raise AssertionError("Expected pydantic ValidationError from Okta SDK model")
 
-    def _build_service_with_raw_payload(self, raw_zones_payload, response=None):
+    def _build_service_with_raw_payload(
+        self, raw_zones_payload, response=None, body_factory=None
+    ):
+        response_body = (
+            body_factory(raw_zones_payload)
+            if body_factory
+            else json.dumps(raw_zones_payload)
+        )
+        return self._build_service_with_raw_response(response_body, response=response)
+
+    def _build_service_with_raw_response(
+        self, response_body, response=None, execute_error=None
+    ):
         provider = set_mocked_okta_provider()
         ve = self._trigger_real_validation_error()
 
@@ -235,7 +271,7 @@ class Test_NetworkZone_service_sdk_validation_fallback:
             return ({"url": "/api/v1/zones"}, None)
 
         async def fake_raw_execute(_request):
-            return (response, json.dumps(raw_zones_payload), None)
+            return (response, response_body, execute_error)
 
         sdk_mock = mock.MagicMock()
         sdk_mock.list_network_zones = failing_list_network_zones
@@ -313,6 +349,61 @@ class Test_NetworkZone_service_sdk_validation_fallback:
 
         assert service.network_zones == {}
 
+    def test_raw_fallback_handles_execute_error(self):
+        service = self._build_service_with_raw_response(
+            None,
+            execute_error=Exception("timeout"),
+        )
+
+        assert service.network_zones == {}
+
+    def test_raw_fallback_decodes_bytes_response_body(self):
+        service = self._build_service_with_raw_payload(
+            [
+                {
+                    "id": "nzo-bytes",
+                    "name": "Bytes",
+                    "status": "ACTIVE",
+                    "type": "IP",
+                    "usage": "BLOCKLIST",
+                }
+            ],
+            body_factory=lambda payload: json.dumps(payload).encode("utf-8"),
+        )
+
+        assert set(service.network_zones.keys()) == {"nzo-bytes"}
+
+    def test_raw_fallback_handles_invalid_utf8_response_body(self):
+        service = self._build_service_with_raw_response(b"\xff")
+
+        assert service.network_zones == {}
+
+    def test_raw_fallback_handles_invalid_json_response_body(self):
+        service = self._build_service_with_raw_response("{")
+
+        assert service.network_zones == {}
+
+    def test_raw_fallback_handles_unexpected_payload_shape(self):
+        service = self._build_service_with_raw_payload({"id": "nzo-not-a-list"})
+
+        assert service.network_zones == {}
+
+    def test_raw_fallback_skips_non_dict_payload_items(self):
+        service = self._build_service_with_raw_payload(
+            [
+                "not-a-zone",
+                {
+                    "id": "nzo-valid",
+                    "name": "Valid",
+                    "status": "ACTIVE",
+                    "type": "IP",
+                    "usage": "BLOCKLIST",
+                },
+            ]
+        )
+
+        assert set(service.network_zones.keys()) == {"nzo-valid"}
+
     def test_raw_fallback_paginates_via_link_header(self):
         next_link = '<https://acme.okta.com/api/v1/zones?after=cursor-2>; rel="next"'
         page_1 = [
@@ -368,6 +459,31 @@ class Test_NetworkZone_service_sdk_validation_fallback:
         assert len(execute_calls) == 2
         assert "after=cursor-2" in execute_calls[1]["url"]
         assert set(service.network_zones.keys()) == {"nzo-1", "nzo-2"}
+
+    def test_pagination_returns_partial_items_when_second_page_errors(self):
+        page_1 = _sdk_zone("nzo-1", "First")
+        quote = chr(34)
+
+        async def fetch(after):
+            if after is None:
+                return (
+                    [page_1],
+                    _resp(
+                        {
+                            "link": (
+                                "<https://acme.okta.com/api/v1/zones?after=cursor-2>; "
+                                f"rel={quote}next{quote}"
+                            )
+                        }
+                    ),
+                    None,
+                )
+            return ([], _resp({}), Exception("page failed"))
+
+        items, error = NetworkZone._run(NetworkZone._paginate(fetch))
+
+        assert items == [page_1]
+        assert str(error) == "page failed"
 
 
 class Test_raw_zone_to_model:
@@ -425,6 +541,34 @@ class Test_raw_zone_to_model:
             }
         )
         assert zone.ip_service_categories == ["ALL_ANONYMIZERS"]
+
+    def test_extracts_scalar_ip_service_category_condition(self):
+        zone = _raw_zone_to_model(
+            {
+                "id": "nzo-enhanced",
+                "name": "Enhanced",
+                "type": "DYNAMIC_V2",
+                "ipServiceCategories": {
+                    "include": {"value": "VPN_ANONYMIZER"},
+                    "exclude": [],
+                },
+            }
+        )
+        assert zone.ip_service_categories == ["VPN_ANONYMIZER"]
+
+    def test_ignores_none_address_entries_and_empty_condition_values(self):
+        zone = _raw_zone_to_model(
+            {
+                "id": "nzo-ip",
+                "gateways": [None],
+                "ipServiceCategories": {
+                    "include": None,
+                    "exclude": [],
+                },
+            }
+        )
+        assert zone.gateways == []
+        assert zone.ip_service_categories == []
 
     def test_falls_back_name_to_id_when_missing(self):
         zone = _raw_zone_to_model({"id": "nzo-1"})
