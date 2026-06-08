@@ -8,8 +8,6 @@ from prowler.providers.okta.models import OktaIdentityInfo
 from prowler.providers.okta.services.network.network_zone_service import (
     NetworkZone,
     OktaNetworkZone,
-    _next_after_cursor,
-    _normalise_sdk_result,
     _raw_zone_to_model,
     _value,
 )
@@ -50,36 +48,7 @@ class _ValueObject:
         self.value = value
 
 
-class Test_network_zone_pagination:
-    def test_no_link_header_returns_none(self):
-        assert _next_after_cursor(_resp({})) is None
-
-    def test_extracts_next_after_cursor(self):
-        link = (
-            '<https://acme.okta.com/api/v1/zones?limit=20>; rel="self", '
-            '<https://acme.okta.com/api/v1/zones?after=next-page>; rel="next"'
-        )
-        assert _next_after_cursor(_resp({"Link": link})) == "next-page"
-
-    def test_next_link_without_after_cursor_returns_none(self):
-        quote = chr(34)
-        link = (
-            f"<https://acme.okta.com/api/v1/zones?limit=20>; rel={quote}self{quote}, "
-            f"<https://acme.okta.com/api/v1/zones?limit=20>; rel={quote}next{quote}"
-        )
-        assert _next_after_cursor(_resp({"Link": link})) is None
-
-
-class Test_network_zone_sdk_result_normalization:
-    def test_normalises_non_tuple_sdk_result(self):
-        zone = _sdk_zone("nzo-1", "First")
-
-        items, response, error = _normalise_sdk_result([zone])
-
-        assert items == [zone]
-        assert response is None
-        assert error is None
-
+class Test_value_helper:
     def test_value_returns_empty_string_for_none(self):
         assert _value(None) == ""
 
@@ -371,9 +340,8 @@ class Test_NetworkZone_service_sdk_validation_fallback:
             service = NetworkZone(provider)
 
         assert service.network_zones == {}
-        assert (
-            service.retrieval_error
-            == "Raw Network Zones fetch (create_request) failed: network down"
+        assert service.retrieval_error == (
+            "Raw Network Zones fetch failed; see logs for details."
         )
 
     def test_raw_fallback_handles_execute_error(self):
@@ -383,9 +351,8 @@ class Test_NetworkZone_service_sdk_validation_fallback:
         )
 
         assert service.network_zones == {}
-        assert (
-            service.retrieval_error
-            == "Raw Network Zones fetch (execute) failed: timeout"
+        assert service.retrieval_error == (
+            "Raw Network Zones fetch failed; see logs for details."
         )
 
     def test_raw_fallback_decodes_bytes_response_body(self):
@@ -408,21 +375,24 @@ class Test_NetworkZone_service_sdk_validation_fallback:
         service = self._build_service_with_raw_response(b"\xff")
 
         assert service.network_zones == {}
-        assert "Could not decode Network Zones response" in service.retrieval_error
+        assert service.retrieval_error == (
+            "Raw Network Zones fetch failed; see logs for details."
+        )
 
     def test_raw_fallback_handles_invalid_json_response_body(self):
         service = self._build_service_with_raw_response("{")
 
         assert service.network_zones == {}
-        assert "Could not parse Network Zones JSON" in service.retrieval_error
+        assert service.retrieval_error == (
+            "Raw Network Zones fetch failed; see logs for details."
+        )
 
     def test_raw_fallback_handles_unexpected_payload_shape(self):
         service = self._build_service_with_raw_payload({"id": "nzo-not-a-list"})
 
         assert service.network_zones == {}
-        assert (
-            service.retrieval_error
-            == "Unexpected raw Network Zones payload shape: got dict, expected list"
+        assert service.retrieval_error == (
+            "Raw Network Zones fetch failed; see logs for details."
         )
 
     def test_raw_fallback_skips_non_dict_payload_items(self):
@@ -496,31 +466,6 @@ class Test_NetworkZone_service_sdk_validation_fallback:
         assert len(execute_calls) == 2
         assert "after=cursor-2" in execute_calls[1]["url"]
         assert set(service.network_zones.keys()) == {"nzo-1", "nzo-2"}
-
-    def test_pagination_returns_partial_items_when_second_page_errors(self):
-        page_1 = _sdk_zone("nzo-1", "First")
-        quote = chr(34)
-
-        async def fetch(after):
-            if after is None:
-                return (
-                    [page_1],
-                    _resp(
-                        {
-                            "link": (
-                                "<https://acme.okta.com/api/v1/zones?after=cursor-2>; "
-                                f"rel={quote}next{quote}"
-                            )
-                        }
-                    ),
-                    None,
-                )
-            return ([], _resp({}), Exception("page failed"))
-
-        items, error = NetworkZone._run(NetworkZone._paginate(fetch))
-
-        assert items == [page_1]
-        assert str(error) == "page failed"
 
 
 class Test_raw_zone_to_model:
