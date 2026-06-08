@@ -17,11 +17,21 @@ class apitoken_not_super_admin(Check):
         if missing_api_token_scope:
             return [
                 missing_api_token_scope_finding(
-                    self.metadata(), org_domain, missing_api_token_scope
+                    self.metadata(),
+                    org_domain,
+                    missing_api_token_scope,
+                    additional_required=["okta.roles.read", "okta.groups.read"],
                 )
             ]
 
         missing_user_roles_scope = api_token_client.missing_scope.get("user_roles")
+        # `okta.groups.read` is needed to resolve admin roles inherited via
+        # group membership. Without it we fall back to direct-only role
+        # assignments, which Okta returns for `/api/v1/users/{id}/roles` —
+        # commonly empty for trial accounts where Super Admin is granted
+        # through the default admin group. The finding stays evaluable but
+        # is flagged as best-effort so operators know to grant the scope.
+        missing_user_groups_scope = api_token_client.missing_scope.get("user_groups")
         findings: list[CheckReportOkta] = []
         for token in api_token_client.api_tokens.values():
             report = CheckReportOkta(
@@ -44,10 +54,17 @@ class apitoken_not_super_admin(Check):
                     if token.owner_roles
                     else "no admin roles returned"
                 )
+                caveat = (
+                    " Group-inherited roles were not checked because the "
+                    f"`{missing_user_groups_scope}` scope is missing — grant "
+                    "it to detect Super Admin assigned via group membership."
+                    if missing_user_groups_scope
+                    else ""
+                )
                 report.status = "PASS"
                 report.status_extended = (
                     f"API token {token.name} owner {token.user_id} is not "
-                    f"assigned Super Admin ({roles})."
+                    f"assigned Super Admin ({roles}).{caveat}"
                 )
             findings.append(report)
         return findings

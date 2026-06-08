@@ -42,6 +42,7 @@ class Test_apitoken_restricted_to_network_zone:
         assert len(findings) == 1
         assert findings[0].status == "MANUAL"
         assert "okta.apiTokens.read" in findings[0].status_extended
+        assert "okta.networkZones.read" in findings[0].status_extended
 
     def test_missing_network_zone_scope_is_manual(self):
         token = api_token(network_connection="ZONE", network_includes=["nzo-corp"])

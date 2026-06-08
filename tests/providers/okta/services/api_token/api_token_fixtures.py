@@ -16,6 +16,7 @@ def build_api_token_client(
         "api_tokens": None,
         "network_zones": None,
         "user_roles": None,
+        "user_groups": None,
     }
     client.provider = set_mocked_okta_provider()
     return client

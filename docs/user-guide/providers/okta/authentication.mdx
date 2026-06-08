@@ -38,6 +38,7 @@ The bundled checks require the following read-only scopes:
 - `okta.networkZones.read`
 - `okta.apiTokens.read`
 - `okta.roles.read`
+- `okta.groups.read`
 
 Additional scopes will be needed as more services and checks are added. These are the current ones needed:
 
@@ -48,7 +49,8 @@ Additional scopes will be needed as more services and checks are added. These ar
 | `okta.apps.read` | First-party app settings (Okta Admin Console session), integrated app inventory, and the Authentication Policies bound to Okta applications |
 | `okta.networkZones.read` | Network Zone inventory, anonymized-proxy blocklist checks, and API token Network Zone validation |
 | `okta.apiTokens.read` | API token metadata and token network conditions |
-| `okta.roles.read` | Admin role assignments for API token owners |
+| `okta.roles.read` | Admin role assignments for API token owners (both direct and group-inherited) |
+| `okta.groups.read` | Group memberships of API token owners, used to resolve admin roles inherited via group assignment (e.g. Super Admin granted through the default admin group) |
 
 ### Required Admin Role
 
@@ -128,7 +130,7 @@ Okta displays the private key **only once**. If you close the modal without copy
 
 ### 5. Grant the required OAuth scopes
 
-On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled checks require `okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.networkZones.read`, `okta.apiTokens.read`, and `okta.roles.read`.
+On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled checks require `okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.networkZones.read`, `okta.apiTokens.read`, `okta.roles.read`, and `okta.groups.read`.
 
 ![Okta — grant OAuth scopes](/user-guide/providers/okta/images/grant-permissions.png)
 
@@ -164,8 +166,8 @@ export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
 # or
 export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 
-# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read"
-export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read"
+# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read,okta.groups.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read,okta.groups.read"
 
 uv run python prowler-cli.py okta
 ```
@@ -206,7 +208,7 @@ Prowler validates credentials at startup by listing one sign-on policy. This err
 
 Raised when the credential probe succeeds at the OAuth layer but the request is rejected because the service app lacks the required scope or admin role:
 
-- **`invalid_scope`** — one of the requested scopes (`okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.networkZones.read`, `okta.apiTokens.read`, and `okta.roles.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
+- **`invalid_scope`** — one of the requested scopes (`okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.networkZones.read`, `okta.apiTokens.read`, `okta.roles.read`, and `okta.groups.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
 - **`Forbidden` / `not authorized`** — no admin role is assigned to the service app. Assign **Read-Only Administrator** (or **Super Administrator** for the first-party application checks) from **Admin roles**.
 
 ### Application-service checks return MANUAL on first-party apps
