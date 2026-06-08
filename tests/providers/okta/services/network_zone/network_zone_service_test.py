@@ -131,6 +131,51 @@ class Test_NetworkZone_service:
 
         assert service.network_zones == {}
 
+    def test_build_zone_extracts_sdk_network_zone_address_values(self):
+        from okta.models.network_zone_address import NetworkZoneAddress
+
+        zone = _sdk_zone(
+            "nzo-ip",
+            "Blocked IPs",
+            gateways=[
+                NetworkZoneAddress(
+                    type="CIDR",
+                    value="203.0.113.10/32",
+                )
+            ],
+            proxies=[
+                NetworkZoneAddress(
+                    type="CIDR",
+                    value="198.51.100.10/32",
+                )
+            ],
+        )
+
+        built_zone = NetworkZone._build_zone(zone)
+
+        assert built_zone.gateways == ["203.0.113.10/32"]
+        assert built_zone.proxies == ["198.51.100.10/32"]
+
+    def test_build_zone_extracts_sdk_enhanced_dynamic_category_values(self):
+        from okta.models.enhanced_dynamic_network_zone_all_of_ip_service_categories import (
+            EnhancedDynamicNetworkZoneAllOfIpServiceCategories,
+        )
+
+        zone = _sdk_zone(
+            "nzo-enhanced",
+            "Enhanced Anonymizers",
+            zone_type="DYNAMIC_V2",
+            system=False,
+        )
+        zone.ip_service_categories = EnhancedDynamicNetworkZoneAllOfIpServiceCategories(
+            include=["ALL_ANONYMIZERS"],
+            exclude=[],
+        )
+
+        built_zone = NetworkZone._build_zone(zone)
+
+        assert built_zone.ip_service_categories == ["ALL_ANONYMIZERS"]
+
     def test_missing_network_zone_scope_skips_api_call(self):
         provider = set_mocked_okta_provider(
             identity=OktaIdentityInfo(
@@ -366,6 +411,20 @@ class Test_raw_zone_to_model:
         assert zone.asns == []
         assert zone.locations == []
         assert isinstance(zone, OktaNetworkZone)
+
+    def test_extracts_ip_service_categories_from_raw_include_condition(self):
+        zone = _raw_zone_to_model(
+            {
+                "id": "nzo-enhanced",
+                "name": "Enhanced",
+                "type": "DYNAMIC_V2",
+                "ipServiceCategories": {
+                    "include": ["ALL_ANONYMIZERS"],
+                    "exclude": [],
+                },
+            }
+        )
+        assert zone.ip_service_categories == ["ALL_ANONYMIZERS"]
 
     def test_falls_back_name_to_id_when_missing(self):
         zone = _raw_zone_to_model({"id": "nzo-1"})

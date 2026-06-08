@@ -202,14 +202,13 @@ class NetworkZone(OktaService):
             type=_value(getattr(zone, "type", None)),
             usage=_value(getattr(zone, "usage", None)),
             system=bool(getattr(zone, "system", False)),
-            gateways=list(getattr(zone, "gateways", None) or []),
-            proxies=list(getattr(zone, "proxies", None) or []),
-            asns=list(getattr(zone, "asns", None) or []),
-            locations=list(getattr(zone, "locations", None) or []),
-            ip_service_categories=[
-                _value(category)
-                for category in (getattr(zone, "ip_service_categories", None) or [])
-            ],
+            gateways=_address_values(getattr(zone, "gateways", None)),
+            proxies=_address_values(getattr(zone, "proxies", None)),
+            asns=_condition_values(getattr(zone, "asns", None)),
+            locations=_condition_values(getattr(zone, "locations", None)),
+            ip_service_categories=_condition_values(
+                getattr(zone, "ip_service_categories", None)
+            ),
         )
 
 
@@ -223,22 +222,12 @@ def _raw_zone_to_model(zone_dict: dict) -> "OktaNetworkZone":
     returns (e.g. Enhanced Dynamic Zones with `asns.include: []`).
     """
     zone_id = str(zone_dict.get("id") or "")
-    raw_categories = zone_dict.get("ipServiceCategories") or []
-    categories: list[str] = []
-    if isinstance(raw_categories, list):
-        for entry in raw_categories:
-            if isinstance(entry, dict):
-                value = entry.get("value")
-                if value is not None:
-                    categories.append(str(value))
-            elif entry is not None:
-                categories.append(str(entry))
+    categories = _condition_values(zone_dict.get("ipServiceCategories"))
     # IP-typed zones return `gateways`/`proxies` as `[{type, value}]`
-    # arrays; Enhanced Dynamic Zones return `asns`/`locations` as
-    # `{include, exclude}` objects, not lists. The STIG checks only need
-    # to know whether IP-zone gateway/proxy entries exist, so we keep
-    # the `list[str]` shape by extracting each entry's `value` and
-    # normalizing non-list payloads to `[]`.
+    # arrays; Enhanced Dynamic Zones return `asns`/`locations` and
+    # `ipServiceCategories` as `{include, exclude}` objects. Keep the
+    # `list[str]` shape by extracting address values and included
+    # condition values from both SDK models and raw JSON.
     return OktaNetworkZone(
         id=zone_id,
         name=str(zone_dict.get("name") or zone_id),
@@ -248,8 +237,8 @@ def _raw_zone_to_model(zone_dict: dict) -> "OktaNetworkZone":
         system=bool(zone_dict.get("system", False)),
         gateways=_address_values(zone_dict.get("gateways")),
         proxies=_address_values(zone_dict.get("proxies")),
-        asns=_address_values(zone_dict.get("asns")),
-        locations=_address_values(zone_dict.get("locations")),
+        asns=_condition_values(zone_dict.get("asns")),
+        locations=_condition_values(zone_dict.get("locations")),
         ip_service_categories=categories,
     )
 
@@ -268,11 +257,33 @@ def _address_values(raw) -> list[str]:
     for entry in raw:
         if isinstance(entry, dict):
             value = entry.get("value")
-            if value is not None:
-                out.append(str(value))
         elif entry is not None:
-            out.append(str(entry))
+            value = getattr(entry, "value", entry)
+        else:
+            value = None
+        if value is not None:
+            out.append(_value(value))
     return out
+
+
+def _condition_values(raw) -> list[str]:
+    """Return string values from Okta include/exclude-style conditions."""
+    if raw is None:
+        return []
+    values = (
+        raw.get("include") if isinstance(raw, dict) else getattr(raw, "include", raw)
+    )
+    if values is None:
+        return []
+    if not isinstance(values, list):
+        values = [values]
+    normalized = []
+    for value in values:
+        if isinstance(value, dict):
+            value = value.get("value")
+        if value is not None:
+            normalized.append(_value(value))
+    return normalized
 
 
 class OktaNetworkZone(BaseModel):
