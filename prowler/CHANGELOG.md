@@ -8,7 +8,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- Okta network zone check to detect whether anonymized proxy traffic is blocked [(#11463)](https://github.com/prowler-cloud/prowler/pull/11463)
 - Okta API token checks for super admin ownership and network zone restrictions [(#11464)](https://github.com/prowler-cloud/prowler/pull/11464)
+- `elbv2_alb_drop_invalid_header_fields_enabled` check for AWS provider, verifying Application Load Balancers have `routing.http.drop_invalid_header_fields.enabled` set to `true` to mitigate HTTP desync attacks (AWS FSBP ELB.4) [(#11471)](https://github.com/prowler-cloud/prowler/pull/11471)
 
 ---
 
@@ -17,6 +19,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - GCP `logging_sink_created` now recognizes organization-level aggregated sinks with `includeChildren=True`, avoiding false failures for covered projects [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
+- Jira integration no longer fails with `400 INVALID_INPUT` when a finding has empty fields [(#11474)](https://github.com/prowler-cloud/prowler/pull/11474)
+- GCP `iam_service_account_unused` now passes disabled service accounts instead of failing them, since a disabled account cannot authenticate or be used [(#11467)](https://github.com/prowler-cloud/prowler/pull/11467)
+- AWS AI Security Framework now renders in the dashboard instead of showing "No data found for this compliance", by adding the missing compliance view module [(#11470)](https://github.com/prowler-cloud/prowler/pull/11470)
 
 ---
 
