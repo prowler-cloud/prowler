@@ -36,8 +36,8 @@ class User(OktaService):
       entry projects the fields the 35-day inactivity check evaluates:
       identity (`id`, `name` — taken from the rule), `status`,
       `schedule_status` (inherited from the parent policy), the
-      `inactivity_days` condition, the `lifecycle_action`, and the
-      `applies_to_groups` derived from the rule's `people.groups.include`.
+      `inactivity_days` condition and `applies_to_groups` scope from the
+      parent policy, and the `lifecycle_action` from the rule.
     - `self.external_directory_idps` — keyed by IdP id. Used to short
       circuit the STIG to N/A when user sourcing is delegated to an
       external directory (Active Directory, LDAP).
