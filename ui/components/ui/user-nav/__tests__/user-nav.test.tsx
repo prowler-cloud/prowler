@@ -2,8 +2,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getOrderedFlows } from "@/lib/onboarding";
-
 import { UserNav } from "../user-nav";
 
 const pushMock = vi.fn();
@@ -26,22 +24,6 @@ vi.mock("@/actions/auth", () => ({
   logOut: () => logOutMock(),
 }));
 
-// Opens the avatar menu and expands the "Product tour" submenu. Radix renders
-// sub-content items only once the sub-trigger is opened, and in jsdom the
-// reliable open path is keyboard navigation (focus the trigger, ArrowRight),
-// which also exercises the accessible keyboard interaction.
-const openProductTourSubmenu = async (
-  user: ReturnType<typeof userEvent.setup>,
-) => {
-  await user.click(screen.getByRole("button", { name: /account menu/i }));
-  const productTour = await screen.findByRole("menuitem", {
-    name: /product tour/i,
-  });
-  productTour.focus();
-  await user.keyboard("{ArrowRight}");
-  return productTour;
-};
-
 describe("UserNav", () => {
   beforeEach(() => {
     pushMock.mockClear();
@@ -53,7 +35,7 @@ describe("UserNav", () => {
   });
 
   describe("when the avatar menu is opened", () => {
-    it("renders a product tour entry that is always present", async () => {
+    it("does not render the product tour entry because tours live in the header breadcrumb", async () => {
       // Given - an authenticated user
       const user = userEvent.setup();
       render(<UserNav />);
@@ -61,66 +43,11 @@ describe("UserNav", () => {
       // When - the user opens the avatar menu
       await user.click(screen.getByRole("button", { name: /account menu/i }));
 
-      // Then - the product tour entry is offered regardless of state
+      // Then - contextual onboarding is no longer duplicated in the avatar menu
       expect(
-        await screen.findByRole("menuitem", { name: /product tour/i }),
-      ).toBeInTheDocument();
-    });
-
-    it("lists every ordered onboarding flow inside the product tour submenu", async () => {
-      // Given - the registry exposes the ordered flows
-      const flows = getOrderedFlows();
-      const user = userEvent.setup();
-      render(<UserNav />);
-
-      // When - the user opens the product tour submenu
-      await openProductTourSubmenu(user);
-
-      // Then - one entry per ordered flow is offered, labelled by flow title
-      for (const flow of flows) {
-        expect(
-          await screen.findByRole("menuitem", { name: flow.title }),
-        ).toBeInTheDocument();
-      }
-    });
-
-    it("replays the selected single flow via the onboarding query param", async () => {
-      // Given - the product tour submenu is open
-      const flows = getOrderedFlows();
-      const targetIndex = 2; // a non-first flow proves the list is not hardcoded
-      const target = flows[targetIndex];
-      const user = userEvent.setup();
-      render(<UserNav />);
-      await openProductTourSubmenu(user);
-      await screen.findByRole("menuitem", { name: target.title });
-
-      // When - the user moves to that flow's entry and activates it
-      for (let step = 0; step < targetIndex; step += 1) {
-        await user.keyboard("{ArrowDown}");
-      }
-      await user.keyboard("{Enter}");
-
-      // Then - the app navigates to that single flow's replay URL only
-      expect(pushMock).toHaveBeenCalledWith(
-        `${target.route}?onboarding=${target.id}`,
-      );
-    });
-
-    it("navigates to the first flow's replay URL when its entry is selected", async () => {
-      // Given - the product tour submenu is open
-      const [firstFlow] = getOrderedFlows();
-      const user = userEvent.setup();
-      render(<UserNav />);
-      await openProductTourSubmenu(user);
-      await screen.findByRole("menuitem", { name: firstFlow.title });
-
-      // When - the user activates the first (focused) flow entry
-      await user.keyboard("{Enter}");
-
-      // Then - the first flow replays through the URL transport
-      expect(pushMock).toHaveBeenCalledWith(
-        `${firstFlow.route}?onboarding=${firstFlow.id}`,
-      );
+        screen.queryByRole("menuitem", { name: /product tour/i }),
+      ).not.toBeInTheDocument();
+      expect(pushMock).not.toHaveBeenCalled();
     });
 
     it("preserves the existing account settings and sign out entries", async () => {

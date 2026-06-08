@@ -32,4 +32,16 @@ describe("Button", () => {
       "text-xs",
     );
   });
+
+  it("supports extra-small icon buttons", () => {
+    render(
+      <Button size="icon-xs" aria-label="Open tour">
+        Open tour
+      </Button>,
+    );
+
+    expect(screen.getByRole("button", { name: "Open tour" })).toHaveClass(
+      "size-7",
+    );
+  });
 });
