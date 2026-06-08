@@ -21,6 +21,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - GCP `iam_service_account_unused` now passes disabled service accounts instead of failing them, since a disabled account cannot authenticate or be used [(#11467)](https://github.com/prowler-cloud/prowler/pull/11467)
 - AWS AI Security Framework now renders in the dashboard instead of showing "No data found for this compliance", by adding the missing compliance view module [(#11470)](https://github.com/prowler-cloud/prowler/pull/11470)
 
+### 🔐 Security
+
+- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) flagged by osv-scanner [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
+
 ---
 
 ## [5.29.1] (Prowler v5.29.1)
