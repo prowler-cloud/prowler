@@ -40,6 +40,8 @@ DEFAULT_SCOPES = [
     "okta.apiTokens.read",
     "okta.roles.read",
     "okta.groups.read",
+    "okta.logStreams.read",
+    "okta.idps.read",
 ]
 # Accept only Okta-managed domains. Custom (vanity) domains are rejected on
 # purpose — they're a recurring source of typos and silent misconfig and

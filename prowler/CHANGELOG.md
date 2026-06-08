@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Okta network zone check to detect whether anonymized proxy traffic is blocked [(#11463)](https://github.com/prowler-cloud/prowler/pull/11463)
 - Okta API token checks for super admin ownership and network zone restrictions [(#11464)](https://github.com/prowler-cloud/prowler/pull/11464)
 - `elbv2_alb_drop_invalid_header_fields_enabled` check for AWS provider, verifying Application Load Balancers have `routing.http.drop_invalid_header_fields.enabled` set to `true` to mitigate HTTP desync attacks (AWS FSBP ELB.4) [(#11471)](https://github.com/prowler-cloud/prowler/pull/11471)
+- `user`, `systemlog` and `idp` service for Okta provider with `user_inactivity_automation_35d_enabled`, `systemlog_streaming_enabled` and `idp_smart_card_dod_approved_ca` checks [(#11496)](https://github.com/prowler-cloud/prowler/pull/11496)
 
 ---
 

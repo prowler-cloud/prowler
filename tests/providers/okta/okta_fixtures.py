@@ -24,6 +24,8 @@ def set_mocked_okta_provider(
                 "okta.apiTokens.read",
                 "okta.roles.read",
                 "okta.groups.read",
+                "okta.logStreams.read",
+                "okta.idps.read",
             ],
             private_key=OKTA_PRIVATE_KEY,
         )
@@ -39,6 +41,8 @@ def set_mocked_okta_provider(
                 "okta.apiTokens.read",
                 "okta.roles.read",
                 "okta.groups.read",
+                "okta.logStreams.read",
+                "okta.idps.read",
             ],
         )
 
