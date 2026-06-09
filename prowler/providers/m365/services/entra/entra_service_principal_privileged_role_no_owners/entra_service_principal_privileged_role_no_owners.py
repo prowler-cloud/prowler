@@ -14,30 +14,38 @@ class entra_service_principal_privileged_role_no_owners(Check):
     directory role outside PIM approval flows and Conditional Access policies
     targeting user accounts.
 
-    - PASS: The privileged service principal has zero owners on both the
-      service principal and its parent app registration.
-    - FAIL: The privileged service principal has at least one owner on either
-      the service principal or its parent app registration.
+    - PASS: The service principal does not hold a permanent Tier 0 directory
+      role, or it does but has zero owners on both the service principal and
+      its parent app registration.
+    - FAIL: The service principal holds a permanent Tier 0 directory role and
+      has at least one owner on either the service principal or its parent
+      app registration.
     """
 
     def execute(self) -> List[CheckReportM365]:
         """Execute the privileged service principal owner check.
 
         Returns:
-            A list of reports, one per service principal holding a permanent
-            Tier 0 directory role assignment.
+            A list of reports, one per service principal owned by the audited
+            tenant.
         """
         findings = []
         for sp in entra_client.service_principals.values():
-            if not sp.directory_role_template_ids:
-                continue
-
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=sp,
                 resource_name=sp.name,
                 resource_id=sp.id,
             )
+
+            if not sp.directory_role_template_ids:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Service principal '{sp.name}' has no permanent Tier 0 "
+                    f"directory role assignments."
+                )
+                findings.append(report)
+                continue
 
             unique_owners = set(sp.sp_owner_ids) | set(sp.app_owner_ids)
             tier0_role_count = len(sp.directory_role_template_ids)

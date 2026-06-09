@@ -39,7 +39,7 @@ class Test_entra_service_principal_privileged_role_no_owners:
             assert len(result) == 0
 
     def test_service_principal_no_tier0_roles(self):
-        """Service principal with no Tier 0 roles: expected no findings."""
+        """Service principal without Tier 0 roles: expected PASS."""
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -74,7 +74,14 @@ class Test_entra_service_principal_privileged_role_no_owners:
             check = entra_service_principal_privileged_role_no_owners()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].resource_id == sp_id
+            assert result[0].resource_name == "NonPrivilegedApp"
+            assert (
+                "no permanent Tier 0 directory role assignments"
+                in result[0].status_extended
+            )
 
     def test_service_principal_tier0_no_owners(self):
         """Privileged SP with no owners on SP or app: expected PASS."""

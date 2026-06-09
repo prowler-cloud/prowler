@@ -9,8 +9,8 @@
   "Severity": "critical",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Service principals holding privileged Microsoft Entra directory roles (such as Global Administrator or Privileged Role Administrator) are evaluated for the presence of owners on either the service principal itself or its parent app registration.",
-  "Risk": "An owner of a service principal or its parent app registration can rotate credentials, add new secrets, and sign in as the service principal — inheriting its privileged directory role entirely outside PIM approval flows and Conditional Access policies targeting user accounts. Microsoft documents this as a known privilege escalation path.",
+  "Description": "Microsoft Entra **service principals** holding permanent **Control Plane (Tier 0)** directory roles (such as **Global Administrator** or **Privileged Role Administrator**) are evaluated for the presence of **owners** on either the service principal itself or its parent **app registration**.",
+  "Risk": "An **owner** of a service principal or its parent app registration can **rotate credentials** and sign in as the service principal, inheriting its **Tier 0** role outside **PIM** and **Conditional Access** controls. This is a documented privilege escalation path impacting **confidentiality**, **integrity**, and **availability** of the tenant's control plane.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/graph/api/serviceprincipal-list-owners?view=graph-rest-1.0",
