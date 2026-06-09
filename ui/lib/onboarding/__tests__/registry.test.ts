@@ -112,8 +112,7 @@ describe("onboardingFlows (production registry)", () => {
       "attack-paths",
     ];
     const standalone = ["add-provider", "view-first-scan"];
-    const expectedHint =
-      "This step needs a completed scan to show data. Launch a scan first, or continue anyway.";
+    const expectedHint = "Wait for the scan to finish and have findings.";
 
     for (const id of scanDependent) {
       const flow = getFlowById(id, onboardingFlows);

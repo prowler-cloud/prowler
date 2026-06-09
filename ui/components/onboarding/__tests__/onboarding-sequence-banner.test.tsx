@@ -87,7 +87,7 @@ describe("OnboardingSequenceBanner", () => {
     render(<OnboardingSequenceBanner />);
 
     expect(
-      screen.getByText(/needs a completed scan to show data/i),
+      screen.getByText(/this step needs scan results to show data/i),
     ).toBeInTheDocument();
   });
 

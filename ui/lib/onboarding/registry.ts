@@ -7,8 +7,7 @@ import { viewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import type { OnboardingFlow } from "./onboarding-types";
 
 // Shown in the sequence banner when the step needs a completed scan.
-const SCAN_DATA_HINT =
-  "This step needs a completed scan to show data. Launch a scan first, or continue anyway.";
+const SCAN_DATA_HINT = "Wait for the scan to finish and have findings.";
 
 // Add a flow: one entry here + a `*.tour.ts` file. No gate/modal/nav edits needed.
 export const onboardingFlows: readonly OnboardingFlow[] = [
