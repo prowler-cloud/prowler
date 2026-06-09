@@ -2,7 +2,7 @@
 
 import { BellRing, Info } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 
 import {
   Button,
@@ -87,38 +87,42 @@ export function NavbarClient({
           <div className="hidden lg:block">
             <SidebarToggle isOpen={isOpen} setIsOpen={toggleOpen} />
           </div>
-          <BreadcrumbNavigation
-            mode="auto"
-            title={title}
-            icon={icon}
-            titleAction={
-              // Hidden until the route's content has loaded, so the tour never starts
-              // before its anchors exist (and we avoid a disabled-then-enabled flash).
-              flow && pageReady ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label={`Start product tour: ${flow.title}`}
-                      onClick={replayFlow}
-                    >
-                      <Info
-                        className={cn(
-                          "text-bg-data-info size-4",
-                          !seen && "animate-pulse",
-                        )}
-                        aria-hidden="true"
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>See how it works</TooltipContent>
-                </Tooltip>
-              ) : null
-            }
-            paramToPreserve="scanId"
-          />
+          {/* Suspense contains the useSearchParams() CSR bailout in BreadcrumbNavigation
+              so statically prerendered pages don't fail the build. */}
+          <Suspense fallback={null}>
+            <BreadcrumbNavigation
+              mode="auto"
+              title={title}
+              icon={icon}
+              titleAction={
+                // Hidden until the route's content has loaded, so the tour never starts
+                // before its anchors exist (and we avoid a disabled-then-enabled flash).
+                flow && pageReady ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Start product tour: ${flow.title}`}
+                        onClick={replayFlow}
+                      >
+                        <Info
+                          className={cn(
+                            "text-bg-data-info size-4",
+                            !seen && "animate-pulse",
+                          )}
+                          aria-hidden="true"
+                        />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>See how it works</TooltipContent>
+                  </Tooltip>
+                ) : null
+              }
+              paramToPreserve="scanId"
+            />
+          </Suspense>
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
           <ThemeSwitch />

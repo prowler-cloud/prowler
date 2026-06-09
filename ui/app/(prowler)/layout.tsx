@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 
 import * as Sentry from "@sentry/nextjs";
 import { Metadata, Viewport } from "next";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
@@ -85,7 +85,11 @@ export default async function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <NavigationProgress />
+          {/* Suspense contains the useSearchParams() CSR bailout so statically
+              prerendered pages don't fail the build (matches the auth layout). */}
+          <Suspense>
+            <NavigationProgress />
+          </Suspense>
           {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
           <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
           {onboardingEnabled && (
