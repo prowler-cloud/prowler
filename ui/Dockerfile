@@ -38,15 +38,6 @@ ENV NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
 
 # GTM / API base+docs URLs are runtime container env (prod stage), not build ARGs.
 
-# Build-time only: Sentry source-map upload creds (withSentryConfig runs only
-# when all three are set). The runtime UI_SENTRY_DSN is separate.
-ARG SENTRY_AUTH_TOKEN
-ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
-ARG SENTRY_ORG
-ENV SENTRY_ORG=${SENTRY_ORG}
-ARG SENTRY_PROJECT
-ENV SENTRY_PROJECT=${SENTRY_PROJECT}
-
 RUN pnpm run build
 
 # Development stage
