@@ -11,7 +11,9 @@ test.describe("Sign Up Flow", () => {
       const password = process.env.E2E_NEW_USER_PASSWORD;
 
       if (!password) {
-        throw new Error("E2E_NEW_USER_PASSWORD environment variable is not set");
+        throw new Error(
+          "E2E_NEW_USER_PASSWORD environment variable is not set",
+        );
       }
 
       const signUpPage = new SignUpPage(page);

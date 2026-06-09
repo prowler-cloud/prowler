@@ -16,7 +16,7 @@
 
 ## ViewSet Hierarchy
 
-```
+```text
 BaseViewSet (minimal - no RLS/auth)
     │
     ├── BaseRLSViewSet (+ tenant filtering, RLS-protected models)
@@ -31,7 +31,7 @@ BaseViewSet (minimal - no RLS/auth)
 
 ## Serializer Hierarchy
 
-```
+```text
 BaseModelSerializerV1 (JSON:API defaults, read_only_fields)
     │
     ├── RLSSerializer (auto-injects tenant_id from request)
@@ -47,7 +47,7 @@ BaseModelSerializerV1 (JSON:API defaults, read_only_fields)
 
 ## Filter Hierarchy
 
-```
+```text
 FilterSet (django-filter)
     │
     ├── CommonFindingFilters (mixin for date ranges, delta, status)

@@ -1880,6 +1880,62 @@ class TestCreateComplianceRequirements:
 
             assert "requirements_created" in result
 
+    @pytest.mark.django_db(transaction=True)
+    def test_create_compliance_requirements_idempotent_on_rerun(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+        findings_fixture,
+    ):
+        """Re-running compliance materialization must not raise nor duplicate rows.
+
+        Uses transaction=True because the COPY path commits on its own connection,
+        so the test must use real commits (mirroring production) rather than the
+        default rollback wrapper.
+        """
+        from api.models import ComplianceRequirementOverview
+
+        with patch(
+            "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
+        ) as mock_compliance_template:
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
+
+            mock_compliance_template.__getitem__.return_value = {
+                "test_compliance": {
+                    "framework": "Test Framework",
+                    "version": "1.0",
+                    "requirements": {
+                        "req_1": {
+                            "description": "Test Requirement 1",
+                            "checks": {"test_check_id": None},
+                            "checks_status": {
+                                "pass": 2,
+                                "fail": 1,
+                                "manual": 0,
+                                "total": 3,
+                            },
+                            "status": "FAIL",
+                        },
+                    },
+                }
+            }
+
+            create_compliance_requirements(tenant_id, scan_id)
+            count_after_first = ComplianceRequirementOverview.objects.filter(
+                scan_id=scan_id
+            ).count()
+
+            # Second run must not raise and must not duplicate rows.
+            create_compliance_requirements(tenant_id, scan_id)
+            count_after_second = ComplianceRequirementOverview.objects.filter(
+                scan_id=scan_id
+            ).count()
+
+        assert count_after_first > 0
+        assert count_after_second == count_after_first
+
     def test_create_compliance_requirements_kubernetes_provider(
         self,
         tenants_fixture,

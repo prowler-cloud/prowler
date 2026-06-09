@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -24,6 +26,8 @@ class CloudSQL(GCPService):
                         for address in instance.get("ipAddresses", []):
                             if address["type"] == "PRIMARY":
                                 public_ip = True
+                        settings = instance.get("settings", {})
+                        ip_config = settings.get("ipConfiguration", {})
                         self.instances.append(
                             Instance(
                                 name=instance["name"],
@@ -31,19 +35,23 @@ class CloudSQL(GCPService):
                                 region=instance["region"],
                                 ip_addresses=instance.get("ipAddresses", []),
                                 public_ip=public_ip,
-                                require_ssl=instance["settings"]
-                                .get("ipConfiguration", {})
-                                .get("requireSsl", False),
-                                ssl_mode=instance["settings"]
-                                .get("ipConfiguration", {})
-                                .get("sslMode", "ALLOW_UNENCRYPTED_AND_ENCRYPTED"),
-                                automated_backups=instance["settings"]
-                                .get("backupConfiguration", {})
-                                .get("enabled", False),
-                                authorized_networks=instance["settings"]
-                                .get("ipConfiguration", {})
-                                .get("authorizedNetworks", []),
-                                flags=instance["settings"].get("databaseFlags", []),
+                                require_ssl=ip_config.get("requireSsl", False),
+                                ssl_mode=ip_config.get(
+                                    "sslMode", "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
+                                ),
+                                automated_backups=settings.get(
+                                    "backupConfiguration", {}
+                                ).get("enabled", False),
+                                authorized_networks=ip_config.get(
+                                    "authorizedNetworks", []
+                                ),
+                                flags=settings.get("databaseFlags", []),
+                                instance_type=instance.get(
+                                    "instanceType", "CLOUD_SQL_INSTANCE"
+                                ),
+                                cmek_key_name=instance.get(
+                                    "diskEncryptionConfiguration", {}
+                                ).get("kmsKeyName"),
                                 project_id=project_id,
                             )
                         )
@@ -68,4 +76,6 @@ class Instance(BaseModel):
     ssl_mode: str
     automated_backups: bool
     flags: list
+    instance_type: str = "CLOUD_SQL_INSTANCE"
+    cmek_key_name: Optional[str] = None
     project_id: str

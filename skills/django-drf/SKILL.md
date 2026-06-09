@@ -54,7 +54,7 @@ When implementing a new endpoint, review these patterns in order:
 ## Decision Trees
 
 ### Which Serializer?
-```
+```text
 GET list/retrieve → <Model>Serializer
 POST create       → <Model>CreateSerializer
 PATCH update      → <Model>UpdateSerializer
@@ -62,7 +62,7 @@ PATCH update      → <Model>UpdateSerializer
 ```
 
 ### Which Base Serializer?
-```
+```text
 Read-only serializer   → BaseModelSerializerV1
 Create with tenant_id  → RLSSerializer + BaseWriteSerializer (auto-injects tenant_id on create)
 Update with validation → BaseWriteSerializer (tenant_id already exists on object)
@@ -70,14 +70,14 @@ Non-model data         → BaseSerializerV1
 ```
 
 ### Which Filter Base?
-```
+```text
 Direct FK to Provider  → BaseProviderFilter
 FK via Scan           → BaseScanProviderFilter
 No provider relation  → FilterSet
 ```
 
 ### Which Base ViewSet?
-```
+```text
 RLS-protected model  → BaseRLSViewSet (most common)
 Tenant operations    → BaseTenantViewset
 User operations      → BaseUserViewset
@@ -85,7 +85,7 @@ No RLS required      → BaseViewSet (rare)
 ```
 
 ### Resource Name Format?
-```
+```text
 Single word model     → plural lowercase           (Provider → providers)
 Multi-word model      → plural lowercase kebab     (ProviderGroup → provider-groups)
 Through/join model    → parent-child pattern       (UserRoleRelationship → user-roles)
@@ -456,16 +456,16 @@ def get_object(self):
 
 ```bash
 # Development
-cd api && poetry run python src/backend/manage.py runserver
-cd api && poetry run python src/backend/manage.py shell
+cd api && uv run python src/backend/manage.py runserver
+cd api && uv run python src/backend/manage.py shell
 
 # Database
-cd api && poetry run python src/backend/manage.py makemigrations
-cd api && poetry run python src/backend/manage.py migrate
+cd api && uv run python src/backend/manage.py makemigrations
+cd api && uv run python src/backend/manage.py migrate
 
 # Testing
-cd api && poetry run pytest -x --tb=short
-cd api && poetry run make lint
+cd api && uv run pytest -x --tb=short
+cd api && uv run make lint
 ```
 
 ---
@@ -490,7 +490,7 @@ When implementing or debugging, query these libraries via `mcp_context7_query-do
 | **drf-spectacular** | `/tfranzel/drf-spectacular` | OpenAPI schema, `@extend_schema` |
 
 **Example queries:**
-```
+```text
 mcp_context7_query-docs(libraryId="/websites/django-rest-framework", query="ViewSet get_queryset best practices")
 mcp_context7_query-docs(libraryId="/tfranzel/drf-spectacular", query="extend_schema examples for custom actions")
 mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_2", query="model constraints and indexes")

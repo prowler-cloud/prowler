@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "groups_view_conversations_restricted",
+  "CheckTitle": "Default permission to view conversations is set to all group members",
+  "CheckType": [],
+  "ServiceName": "groups",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Google Groups for Business **conversation viewing** controls who can see group conversations by default. Restricting this to group members only ensures that conversations are visible only to participants, not all users in the organization or external parties.",
+  "Risk": "Allowing all organization users or anyone to view group conversations can lead to **information disclosure** of sensitive discussions, internal decisions, and confidential data shared within groups.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/groups/what-you-get-with-groups-for-business",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Groups for Business**\n3. Click **Sharing options**\n4. Set **Default for permission to view conversations** to **All group members**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the default **permission to view conversations** to **all group members** to ensure group discussions are only visible to their participants.",
+      "Url": "https://hub.prowler.com/check/groups_view_conversations_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "groups_external_access_restricted",
+    "groups_creation_restricted"
+  ],
+  "Notes": ""
+}

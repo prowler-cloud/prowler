@@ -41,7 +41,7 @@ def set_mocked_gcp_provider(
     return provider
 
 
-def mock_api_client(GCPService, service, api_version, _):
+def mock_api_client(_GCPService, service, _api_version, _):
     client = MagicMock()
 
     mock_api_projects_calls(client)
@@ -126,7 +126,11 @@ def mock_api_projects_calls(client: MagicMock):
         "etag": "BwWWja0YfJA=",
         "version": 3,
     }
-    # Used by compute client and cloudresourcemanager
+    # Used by compute client and cloudresourcemanager.
+    # `enable-oslogin` covers the documented uppercase form (TRUE);
+    # `enable-oslogin-2fa` covers the lowercase form (true) that GCP's
+    # `constraints/compute.requireOsLogin` org-policy controller writes
+    # in production. The service-layer parser must handle both casings.
     client.projects().get().execute.return_value = {
         "projectNumber": "123456789012",
         "commonInstanceMetadata": {
@@ -138,6 +142,10 @@ def mock_api_projects_calls(client: MagicMock):
                 {
                     "key": "enable-oslogin",
                     "value": "FALSE",
+                },
+                {
+                    "key": "enable-oslogin-2fa",
+                    "value": "true",
                 },
                 {
                     "key": "testing-key",
@@ -703,6 +711,9 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                     "databaseVersion": "MYSQL_5_7",
                     "region": "us-central1",
                     "ipAddresses": [{"type": "PRIMARY", "ipAddress": "66.66.66.66"}],
+                    "diskEncryptionConfiguration": {
+                        "kmsKeyName": "projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1"
+                    },
                     "settings": {
                         "ipConfiguration": {
                             "requireSsl": True,
@@ -1323,6 +1334,7 @@ def mock_api_images_calls(client: MagicMock):
     client.images().list_next.return_value = None
 
     def mock_get_image_iam_policy(project, resource):
+        del project
         return_value = MagicMock()
         if resource == "test-image-1":
             return_value.execute.return_value = {

@@ -45,13 +45,13 @@ export const SubmenuItem = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            className="pointer-events-none mt-1 w-[calc(100%-12px)] cursor-not-allowed justify-start py-1"
+            className="pointer-events-none mt-1 w-[calc(100%-12px)] cursor-not-allowed justify-start px-2 py-1"
             disabled
           >
             <span className="mr-2">
               <Icon size={16} />
             </span>
-            <p className="max-w-[170px] truncate">{label}</p>
+            <p className="min-w-0 truncate">{label}</p>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
@@ -75,7 +75,7 @@ export const SubmenuItem = ({
           >
             <Button
               variant="menu-inactive"
-              className="text-text-neutral-tertiary w-full cursor-not-allowed justify-start py-1"
+              className="text-text-neutral-tertiary w-full cursor-not-allowed justify-start px-2 py-1"
               aria-disabled="true"
               tabIndex={-1}
               type="button"
@@ -83,8 +83,8 @@ export const SubmenuItem = ({
               <span className="mr-2">
                 <Icon size={16} />
               </span>
-              <p className="flex max-w-[170px] items-center gap-2 truncate">
-                <span>{label}</span>
+              <p className="flex min-w-0 items-center gap-2">
+                <span className="truncate">{label}</span>
                 {highlight && (
                   <MenuFeatureBadge label="New" variant="new" size="sm" />
                 )}
@@ -100,7 +100,7 @@ export const SubmenuItem = ({
   return (
     <Button
       variant={isActive ? "menu-active" : "menu-inactive"}
-      className="mt-1 w-[calc(100%-12px)] justify-start py-1"
+      className="mt-1 w-[calc(100%-12px)] justify-start px-2 py-1"
       asChild={!disabled}
       disabled={disabled}
     >
@@ -113,8 +113,8 @@ export const SubmenuItem = ({
         <span className="mr-2">
           <Icon size={16} />
         </span>
-        <p className="flex max-w-[170px] items-center truncate">
-          <span>{label}</span>
+        <p className="flex min-w-0 items-center">
+          <span className="truncate">{label}</span>
           {highlight && (
             <MenuFeatureBadge
               label="New"

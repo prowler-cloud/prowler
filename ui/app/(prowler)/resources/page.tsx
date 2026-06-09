@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import {
   getLatestMetadataInfo,
   getLatestResources,
@@ -44,7 +44,7 @@ export default async function Resources({
         filters: outputFilters,
         sort: encodedSort,
       }),
-      getProviders({ pageSize: 50 }),
+      getAllProviders(),
       initialResourceId
         ? getResourceById(initialResourceId, { include: ["provider"] })
         : Promise.resolve(undefined),

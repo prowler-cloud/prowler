@@ -6,6 +6,7 @@ import { C5CustomDetails } from "@/components/compliance/compliance-custom-detai
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
+import { DORACustomDetails } from "@/components/compliance/compliance-custom-details/dora-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
@@ -47,6 +48,10 @@ import {
   mapComplianceData as mapCSAComplianceData,
   toAccordionItems as toCSAAccordionItems,
 } from "./csa";
+import {
+  mapComplianceData as mapDORAComplianceData,
+  toAccordionItems as toDORAAccordionItems,
+} from "./dora";
 import {
   mapComplianceData as mapENSComplianceData,
   toAccordionItems as toENSAccordionItems,
@@ -207,6 +212,19 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       createElement(CSACustomDetails, { requirement }),
+  },
+  // DORA (Regulation (EU) 2022/2554) — universal framework keyed by the
+  // `framework` field of `prowler/compliance/dora.json` ("DORA"). Groups by
+  // Pillar (5 enum values) and surfaces Pillar / Article / ArticleTitle in
+  // the requirement detail drawer.
+  DORA: {
+    mapComplianceData: mapDORAComplianceData,
+    toAccordionItems: toDORAAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(DORACustomDetails, { requirement }),
   },
 });
 

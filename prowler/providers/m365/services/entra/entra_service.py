@@ -90,6 +90,7 @@ class Entra(M365Service):
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
                 self._get_service_principals(),
+                self._get_app_registrations(),
             )
         )
 
@@ -106,6 +107,7 @@ class Entra(M365Service):
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
         self.service_principals: Dict[str, "ServicePrincipal"] = attributes[10]
+        self.app_registrations: Dict[str, "AppRegistration"] = attributes[11]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -828,6 +830,7 @@ class Entra(M365Service):
                         "userType",
                         "accountEnabled",
                         "onPremisesSyncEnabled",
+                        "employeeHireDate",
                     ],
                 )
             )
@@ -888,6 +891,7 @@ class Entra(M365Service):
                             "authentication_methods", []
                         ),
                         user_type=getattr(user, "user_type", None),
+                        employee_hire_date=getattr(user, "employee_hire_date", None),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -1195,6 +1199,10 @@ OAuthAppInfo
             service_principals_by_app_id = {
                 sp.app_id: sp for sp in service_principals.values() if sp.app_id
             }
+            # Remember each SP's parent application object ID so the owner
+            # lookup below can address it directly without re-walking
+            # /applications.
+            application_object_id_by_sp_id: Dict[str, str] = {}
             app_response = await self.client.applications.get()
             while app_response:
                 for app in getattr(app_response, "value", []) or []:
@@ -1204,6 +1212,10 @@ OAuthAppInfo
                     target_sp = service_principals_by_app_id.get(app_id)
                     if target_sp is None:
                         continue
+
+                    app_object_id = getattr(app, "id", None)
+                    if app_object_id:
+                        application_object_id_by_sp_id[target_sp.id] = app_object_id
 
                     for cred in getattr(app, "password_credentials", []) or []:
                         target_sp.password_credentials.append(
@@ -1255,11 +1267,107 @@ OAuthAppInfo
                     next_link
                 ).get()
 
+            # Resolve owners only for service principals that hold a permanent
+            # Tier 0 directory role. Owner ownership of the SP object or its
+            # parent app registration is a credential-rotation escalation path
+            # outside PIM and Conditional Access; fetching owners for every
+            # consented SP would multiply Graph traffic for no benefit.
+            for sp in service_principals.values():
+                if not sp.directory_role_template_ids:
+                    continue
+                try:
+                    sp_owners_response = (
+                        await self.client.service_principals.by_service_principal_id(
+                            sp.id
+                        ).owners.get()
+                    )
+                    sp.sp_owner_ids = [
+                        getattr(owner, "id", None)
+                        for owner in (getattr(sp_owners_response, "value", []) or [])
+                        if getattr(owner, "id", None)
+                    ]
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+                app_object_id = application_object_id_by_sp_id.get(sp.id)
+                if not app_object_id:
+                    continue
+                try:
+                    app_owners_response = (
+                        await self.client.applications.by_application_id(
+                            app_object_id
+                        ).owners.get()
+                    )
+                    sp.app_owner_ids = [
+                        getattr(owner, "id", None)
+                        for owner in (getattr(app_owners_response, "value", []) or [])
+                        if getattr(owner, "id", None)
+                    ]
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return service_principals
+
+    async def _get_app_registrations(self) -> Dict[str, "AppRegistration"]:
+        """Retrieve application registrations from Microsoft Entra.
+
+        Fetches every application object and its password credentials (client
+        secrets) across all pages. Customer-owned applications should
+        authenticate using certificates, federated identity credentials, or
+        managed identities, so any entry in ``passwordCredentials`` is reported
+        by the related check.
+
+        Returns:
+            Dict[str, AppRegistration]: Application registrations keyed by the
+                application object ID.
+        """
+        logger.info("Entra - Getting app registrations...")
+        app_registrations: Dict[str, AppRegistration] = {}
+        try:
+            app_response = await self.client.applications.get()
+            while app_response:
+                for app in getattr(app_response, "value", []) or []:
+                    app_id = getattr(app, "app_id", None)
+                    object_id = getattr(app, "id", None)
+                    if not app_id or not object_id:
+                        continue
+
+                    password_credentials = []
+                    for cred in getattr(app, "password_credentials", []) or []:
+                        password_credentials.append(
+                            PasswordCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                                start_date_time=getattr(cred, "start_date_time", None),
+                                end_date_time=getattr(cred, "end_date_time", None),
+                            )
+                        )
+
+                    app_registrations[object_id] = AppRegistration(
+                        id=object_id,
+                        app_id=app_id,
+                        name=getattr(app, "display_name", "") or "",
+                        password_credentials=password_credentials,
+                    )
+
+                next_link = getattr(app_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                app_response = await self.client.applications.with_url(next_link).get()
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return app_registrations
 
 
 class ConditionalAccessPolicyState(Enum):
@@ -1381,7 +1489,7 @@ class PlatformConditions(BaseModel):
 
     @validator("include_platforms", "exclude_platforms", pre=True)
     @classmethod
-    def normalize_platforms(cls, values):
+    def normalize_platforms(cls, values):  # noqa: vulture
         if not values:
             return []
 
@@ -1619,6 +1727,7 @@ class User(BaseModel):
         user_type: The user account type as reported by Microsoft Graph
             (typically 'Member' or 'Guest'). ``None`` when Microsoft Graph does not
             return the property; checks must not assume a default in that case.
+        employee_hire_date: The user's hire date as reported by Microsoft Graph.
     """
 
     id: str
@@ -1629,6 +1738,7 @@ class User(BaseModel):
     account_enabled: bool = True
     authentication_methods: List[str] = []
     user_type: Optional[str] = None
+    employee_hire_date: Optional[datetime] = None
 
 
 class InvitationsFrom(Enum):
@@ -1700,12 +1810,15 @@ class PasswordCredential(BaseModel):
     Attributes:
         key_id: The unique identifier of the credential.
         display_name: The optional display name of the credential.
+        start_date_time: The time at which the credential becomes valid.
+            ``None`` when the API does not report it.
         end_date_time: The expiration time of the credential. ``None`` indicates
             the secret has no recorded expiry and is treated as active.
     """
 
     key_id: str
     display_name: Optional[str] = None
+    start_date_time: Optional[datetime] = None
     end_date_time: Optional[datetime] = None
 
     def is_active(self, now: Optional[datetime] = None) -> bool:
@@ -1774,6 +1887,12 @@ class ServicePrincipal(BaseModel):
         key_credentials: List of key credentials (certificates).
         directory_role_template_ids: List of directory role template IDs permanently
             assigned to this service principal.
+        sp_owner_ids: Principal IDs that own the service principal object.
+            Populated only for service principals that hold a permanent Tier 0
+            directory role assignment, to keep Graph traffic bounded.
+        app_owner_ids: Principal IDs that own the parent app registration.
+            Populated only for service principals that hold a permanent Tier 0
+            directory role assignment.
     """
 
     id: str
@@ -1783,3 +1902,22 @@ class ServicePrincipal(BaseModel):
     password_credentials: List[PasswordCredential] = []
     key_credentials: List[KeyCredential] = []
     directory_role_template_ids: List[str] = []
+    sp_owner_ids: List[str] = []
+    app_owner_ids: List[str] = []
+
+
+class AppRegistration(BaseModel):
+    """Model representing a Microsoft Entra ID application registration.
+
+    Attributes:
+        id: The application object's unique identifier.
+        app_id: The application (client) ID.
+        name: The application's display name.
+        password_credentials: List of password credentials (client secrets)
+            registered on the application.
+    """
+
+    id: str
+    app_id: str = ""
+    name: str = ""
+    password_credentials: List[PasswordCredential] = []

@@ -50,7 +50,7 @@ export const Modal = ({
       <DialogContent
         onOpenAutoFocus={onOpenAutoFocus}
         className={cn(
-          "border-border-neutral-secondary bg-bg-neutral-secondary",
+          "border-text-neutral-tertiary bg-bg-neutral-secondary rounded-[24px] border shadow-[0_0_200px_0_rgba(15,44,46,0.50)]",
           SIZE_CLASSES[size],
           className,
         )}
