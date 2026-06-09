@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - External multi-provider compliance frameworks can be registered via the `prowler.compliance.universal` entry point group [(#11490)](https://github.com/prowler-cloud/prowler/pull/11490)
 - AWS AI Security Framework support in the CLI dashboard [(#11475)](https://github.com/prowler-cloud/prowler/pull/11475)
 - `entra_service_principal_privileged_role_no_owners` check for M365 provider, failing when a service principal with a permanent Tier 0 directory role has owners on the service principal or its parent app registration [(#11070)](https://github.com/prowler-cloud/prowler/issues/11070)
+- `exchange_mailbox_primary_smtp_uses_custom_domain` check for M365 provider [(#11215)](https://github.com/prowler-cloud/prowler/pull/11215)
 
 ### 🐞 Fixed
 

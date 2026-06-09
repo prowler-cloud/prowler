@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_mailbox_primary_smtp_uses_custom_domain",
+  "CheckTitle": "Mailbox primary SMTP address must use a custom domain",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Exchange Online mailboxes** should use a custom domain as their primary SMTP address, not the default **\\*.onmicrosoft.com** routing domain assigned by Microsoft on tenant creation. This check verifies that the **PrimarySmtpAddress** of every user-facing mailbox does not end with `.onmicrosoft.com`.",
+  "Risk": "Mailboxes still using **.onmicrosoft.com** as their primary SMTP address leak the internal **tenant identifier** in every From: header, helping attackers fingerprint the tenant for spear-phishing. They also bypass **DMARC/DKIM** hardening that organisations deploy on their custom domains and are frequently treated as low-trust by recipient anti-phishing engines.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/setup/add-domain",
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/setup/domains-faq",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/get-mailbox",
+    "https://learn.microsoft.com/en-us/exchange/recipients-in-exchange-online/manage-user-mailboxes/manage-user-mailboxes"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Get-Mailbox -ResultSize Unlimited | Where-Object { $_.PrimarySmtpAddress -like '*.onmicrosoft.com' } | ForEach-Object { Set-Mailbox -Identity $_.Identity -PrimarySmtpAddress '<user>@<customdomain.com>' }",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft 365 admin center (https://admin.microsoft.com/)\n2. Go to Users > Active users and select the affected user\n3. Under the Aliases section, add the custom domain email address\n4. Set the custom domain address as the primary SMTP address\n5. Save changes and repeat for all affected mailboxes",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update the primary SMTP address of all affected mailboxes to use a custom domain. Ensure your custom domain is verified in the Microsoft 365 admin center before making this change.",
+      "Url": "https://hub.prowler.com/check/exchange_mailbox_primary_smtp_uses_custom_domain"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

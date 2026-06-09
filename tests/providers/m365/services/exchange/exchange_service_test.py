@@ -495,6 +495,104 @@ class Test_Exchange_Service:
 
             exchange_client.powershell.close()
 
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailboxes",
+        return_value=[
+            {
+                "Identity": "user1@contoso.com",
+                "DisplayName": "User One",
+                "PrimarySmtpAddress": "user1@contoso.com",
+                "RecipientTypeDetails": "UserMailbox",
+            },
+            {
+                "Identity": "room@contoso.com",
+                "DisplayName": "Boardroom",
+                "PrimarySmtpAddress": "room@contoso.com",
+                "RecipientTypeDetails": "RoomMailbox",
+            },
+            {
+                "Identity": "DiscoverySearchMailbox{D919BA05}",
+                "DisplayName": "Discovery Search Mailbox",
+                "PrimarySmtpAddress": "DiscoverySearchMailbox@contoso.onmicrosoft.com",
+                "RecipientTypeDetails": "DiscoveryMailbox",
+            },
+            {
+                "Identity": "SystemMailbox{1f05a927}",
+                "DisplayName": "Microsoft Exchange",
+                "PrimarySmtpAddress": "SystemMailbox@contoso.onmicrosoft.com",
+                "RecipientTypeDetails": "SystemMailbox",
+            },
+        ],
+    )
+    def test_get_mailboxes_excludes_system_types(self, _mock_get_mailboxes):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailboxes = exchange_client.mailboxes
+            assert mailboxes is not None
+            assert len(mailboxes) == 2
+            identities = {m.identity for m in mailboxes}
+            assert identities == {"user1@contoso.com", "room@contoso.com"}
+            assert all(
+                m.recipient_type_details not in {"DiscoveryMailbox", "SystemMailbox"}
+                for m in mailboxes
+            )
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailboxes",
+        return_value={
+            "Identity": "user1@contoso.com",
+            "DisplayName": "User One",
+            "PrimarySmtpAddress": "user1@contoso.com",
+            "RecipientTypeDetails": "UserMailbox",
+        },
+    )
+    def test_get_mailboxes_single_dict(self, _mock_get_mailboxes):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailboxes = exchange_client.mailboxes
+            assert mailboxes is not None
+            assert len(mailboxes) == 1
+            assert mailboxes[0].identity == "user1@contoso.com"
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailboxes",
+        side_effect=Exception("Get-EXOMailbox failed"),
+    )
+    def test_get_mailboxes_returns_none_on_exception(self, _mock_get_mailboxes):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert exchange_client.mailboxes is None
+            exchange_client.powershell.close()
+
     def test_get_total_paid_licenses_none(self):
         with (
             mock.patch(
