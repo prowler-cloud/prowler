@@ -830,6 +830,7 @@ class Entra(M365Service):
                         "userType",
                         "accountEnabled",
                         "onPremisesSyncEnabled",
+                        "employeeHireDate",
                     ],
                 )
             )
@@ -890,6 +891,7 @@ class Entra(M365Service):
                             "authentication_methods", []
                         ),
                         user_type=getattr(user, "user_type", None),
+                        employee_hire_date=getattr(user, "employee_hire_date", None),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -1725,6 +1727,7 @@ class User(BaseModel):
         user_type: The user account type as reported by Microsoft Graph
             (typically 'Member' or 'Guest'). ``None`` when Microsoft Graph does not
             return the property; checks must not assume a default in that case.
+        employee_hire_date: The user's hire date as reported by Microsoft Graph.
     """
 
     id: str
@@ -1735,6 +1738,7 @@ class User(BaseModel):
     account_enabled: bool = True
     authentication_methods: List[str] = []
     user_type: Optional[str] = None
+    employee_hire_date: Optional[datetime] = None
 
 
 class InvitationsFrom(Enum):
