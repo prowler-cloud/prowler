@@ -3,6 +3,36 @@ aws:
   # AWS Global Configuration
   # aws.mute_non_default_regions --> Set to True to muted failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
   mute_non_default_regions: False
+  # AWS resource scan limits for expensive resource discovery. null and 0 mean unlimited.
+  # Precedence: resource type override > service default > provider default > unlimited.
+  # Explicit --resource-arn scans bypass these limits; --resource-tag scans do not.
+  resource_scan_limits:
+    default: null
+    services:
+      awslambda:
+        default: null
+        resource_types:
+          function: null
+      backup:
+        default: null
+        resource_types:
+          recovery_point: null
+      cloudwatch:
+        default: null
+        resource_types:
+          log_group: null
+      codeartifact:
+        default: null
+        resource_types:
+          package: null
+      ec2:
+        default: null
+        resource_types:
+          snapshot: null
+      ecs:
+        default: null
+        resource_types:
+          task_definition: null
   # aws.disallowed_regions --> List of AWS regions to exclude from the scan.
   # Also settable via the PROWLER_AWS_DISALLOWED_REGIONS environment variable or
   # the --excluded-region CLI flag. Precedence: CLI > env var > config file.

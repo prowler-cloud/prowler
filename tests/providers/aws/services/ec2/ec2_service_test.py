@@ -305,6 +305,38 @@ class Test_EC2_Service:
                 assert not snapshot.encrypted
                 assert not snapshot.public
 
+    @mock_aws
+    def test_describe_snapshots_honors_resource_scan_limit(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        volume_id = ec2_resource.create_volume(
+            AvailabilityZone="us-east-1a",
+            Size=80,
+            VolumeType="gp2",
+        ).id
+        ec2_client.create_snapshot(VolumeId=volume_id)
+        ec2_client.create_snapshot(VolumeId=volume_id)
+        available_snapshots = ec2_client.describe_snapshots(OwnerIds=["self"])[
+            "Snapshots"
+        ]
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1],
+            audit_config={
+                "resource_scan_limits": {
+                    "services": {
+                        "ec2": {
+                            "resource_types": {"snapshot": 1},
+                        }
+                    }
+                }
+            },
+        )
+
+        ec2 = EC2(aws_provider)
+
+        assert len(available_snapshots) > 1
+        assert len(ec2.snapshots) == 1
+
     # Test EC2 Get Snapshot Public
     @mock_aws
     def test__get_snapshot_public__(self):

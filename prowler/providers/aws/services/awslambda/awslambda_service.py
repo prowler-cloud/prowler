@@ -36,6 +36,8 @@ class Lambda(AWSService):
                             function["FunctionArn"], self.audit_resources
                         )
                     ):
+                        if not self.resource_scan_limiter.allow("function"):
+                            continue
                         lambda_name = function["FunctionName"]
                         lambda_arn = function["FunctionArn"]
                         vpc_config = function.get("VpcConfig", {})

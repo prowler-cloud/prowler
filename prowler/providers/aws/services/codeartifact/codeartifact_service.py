@@ -69,6 +69,8 @@ class CodeArtifact(AWSService):
                         **list_packages_parameters
                     ):
                         for package in page["packages"]:
+                            if not self.resource_scan_limiter.allow("package"):
+                                continue
                             # Package information
                             package_format = package["format"]
                             package_namespace = package.get("namespace")

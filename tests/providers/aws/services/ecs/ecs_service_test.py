@@ -107,6 +107,17 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def mock_make_api_call_two_task_definitions(self, operation_name, kwarg):
+    if operation_name == "ListTaskDefinitions":
+        return {
+            "taskDefinitionArns": [
+                "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1",
+                "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task_2:1",
+            ]
+        }
+    return mock_make_api_call(self, operation_name, kwarg)
+
+
 def mock_generate_regional_clients(provider, service):
     regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
@@ -152,6 +163,91 @@ class Test_ECS_Service:
         assert ecs.task_definitions[task_arn].arn == task_arn
         assert ecs.task_definitions[task_arn].revision == "1"
         assert ecs.task_definitions[task_arn].region == AWS_REGION_EU_WEST_1
+
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_two_task_definitions,
+    )
+    def test_list_task_definitions_honors_resource_scan_limit(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1],
+            audit_config={
+                "resource_scan_limits": {
+                    "services": {
+                        "ecs": {
+                            "resource_types": {"task_definition": 1},
+                        }
+                    }
+                }
+            },
+        )
+
+        ecs = ECS(aws_provider)
+
+        assert len(ecs.task_definitions) == 1
+        assert (
+            "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
+            in ecs.task_definitions
+        )
+        assert (
+            "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task_2:1"
+            not in ecs.task_definitions
+        )
+
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_two_task_definitions,
+    )
+    def test_generic_audit_resources_do_not_bypass_resource_scan_limit(self):
+        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
+        task_arn_2 = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task_2:1"
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1],
+            audit_config={
+                "resource_scan_limits": {
+                    "services": {
+                        "ecs": {
+                            "resource_types": {"task_definition": 1},
+                        }
+                    }
+                }
+            },
+        )
+        aws_provider._audit_resources = [task_arn, task_arn_2]
+
+        ecs = ECS(aws_provider)
+
+        assert len(ecs.task_definitions) == 1
+        assert task_arn in ecs.task_definitions
+        assert task_arn_2 not in ecs.task_definitions
+
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_two_task_definitions,
+    )
+    def test_explicit_resource_arn_origin_bypasses_resource_scan_limit(self):
+        task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
+        task_arn_2 = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task_2:1"
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1],
+            audit_config={
+                "resource_scan_limits": {
+                    "services": {
+                        "ecs": {
+                            "resource_types": {"task_definition": 1},
+                        }
+                    }
+                }
+            },
+        )
+        aws_provider._audit_resources = [task_arn, task_arn_2]
+        aws_provider._audit_resources_from_resource_arn = True
+
+        ecs = ECS(aws_provider)
+
+        assert len(ecs.task_definitions) == 2
+        assert task_arn in ecs.task_definitions
+        assert task_arn_2 in ecs.task_definitions
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test describe ECS task definitions

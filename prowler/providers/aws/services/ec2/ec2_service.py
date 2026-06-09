@@ -199,6 +199,8 @@ class EC2(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
+                        if not self.resource_scan_limiter.allow("snapshot"):
+                            continue
                         if snapshots_in_region is False:
                             snapshots_in_region = True
                         self.snapshots.append(

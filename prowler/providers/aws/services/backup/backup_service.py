@@ -195,6 +195,10 @@ class Backup(AWSService):
                         for recovery_point in page.get("RecoveryPoints", []):
                             arn = recovery_point.get("RecoveryPointArn")
                             if arn:
+                                if not self.resource_scan_limiter.allow(
+                                    "recovery_point"
+                                ):
+                                    continue
                                 self.recovery_points.append(
                                     RecoveryPoint(
                                         arn=arn,

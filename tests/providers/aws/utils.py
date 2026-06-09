@@ -156,6 +156,7 @@ def set_mocked_aws_provider(
     # TODO: we can create the organizations metadata here with moto
     provider._organizations_metadata = None
     provider._audit_resources = []
+    provider._audit_resources_from_resource_arn = False
     provider._audit_config = audit_config
     provider._fixer_config = fixer_config
     provider._mutelist = mutelist

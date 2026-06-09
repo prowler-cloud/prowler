@@ -80,6 +80,35 @@ old_config_aws = {
 }
 config_aws = {
     "mute_non_default_regions": False,
+    "resource_scan_limits": {
+        "default": None,
+        "services": {
+            "awslambda": {
+                "default": None,
+                "resource_types": {"function": None},
+            },
+            "backup": {
+                "default": None,
+                "resource_types": {"recovery_point": None},
+            },
+            "cloudwatch": {
+                "default": None,
+                "resource_types": {"log_group": None},
+            },
+            "codeartifact": {
+                "default": None,
+                "resource_types": {"package": None},
+            },
+            "ec2": {
+                "default": None,
+                "resource_types": {"snapshot": None},
+            },
+            "ecs": {
+                "default": None,
+                "resource_types": {"task_definition": None},
+            },
+        },
+    },
     "max_unused_access_keys_days": 45,
     "max_console_access_days": 45,
     "max_unused_sagemaker_access_days": 90,

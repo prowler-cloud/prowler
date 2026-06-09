@@ -33,6 +33,8 @@ class ECS(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(task_definition, self.audit_resources)
                     ):
+                        if not self.resource_scan_limiter.allow("task_definition"):
+                            continue
                         self.task_definitions[task_definition] = TaskDefinition(
                             # we want the family name without the revision
                             name=sub(":.*", "", task_definition.split("/")[-1]),

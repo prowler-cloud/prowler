@@ -160,6 +160,8 @@ class Logs(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(log_group["arn"], self.audit_resources)
                     ):
+                        if not self.resource_scan_limiter.allow("log_group"):
+                            continue
                         never_expire = False
                         kms = log_group.get("kmsKeyId")
                         retention_days = log_group.get("retentionInDays")

@@ -12,6 +12,40 @@ Additionally, you can input a custom configuration file using the `--config-file
 
 ## AWS
 
+### Resource Scan Limits
+
+AWS resource scan limits reduce expensive resource discovery and enrichment for selected services. They apply before findings are generated, so Prowler can avoid per-resource API calls when the configured limit is reached.
+
+<Warning>
+Resource scan limits can make compliance results incomplete because Prowler scans only part of the affected resource set. Explicit `--resource-arn` scans bypass resource scan limits. `--resource-tag` scans do not bypass these limits because tags are discovery filters.
+</Warning>
+
+Use `resource_scan_limits.default` to set a provider-wide default, `services.<service>.default` to override it for a service, and `services.<service>.resource_types.<resource_type>` to override it for one resource type. The precedence is resource type override, service default, provider default, and unlimited. Missing values, `null`, and `0` mean unlimited. Invalid values emit a runtime warning and are treated as unlimited.
+
+```yaml title="config.yaml"
+aws:
+  resource_scan_limits:
+    default: null
+    services:
+      ec2:
+        default: 100
+        resource_types:
+          snapshot: 25
+      ecs:
+        default: null
+        resource_types:
+          task_definition: 50
+```
+
+Initial AWS resource scan limit coverage includes:
+
+* **Lambda functions:** `awslambda.function`
+* **ECS task definitions:** `ecs.task_definition`
+* **EC2 EBS snapshots:** `ec2.snapshot`
+* **Backup recovery points:** `backup.recovery_point`
+* **CloudWatch log groups:** `cloudwatch.log_group`
+* **CodeArtifact packages:** `codeartifact.package`
+
 ### Configurable Checks
 The following list includes all the AWS checks with configurable variables that can be changed in the configuration yaml file:
 

@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.lib.resource_limit.resource_limit import ResourceScanLimiter
 
 # TODO: review the following code
 # from prowler.providers.aws.aws_provider import (
@@ -57,6 +58,14 @@ class AWSService:
         # We receive the service using __class__.__name__ or the service name in lowercase
         # e.g.: AccessAnalyzer --> we need a lowercase string, so service.lower()
         self.service = service.lower() if not service.islower() else service
+        resource_limit_service = (
+            "awslambda" if self.service == "lambda" else self.service
+        )
+        self.resource_scan_limiter = ResourceScanLimiter(
+            self.audit_config,
+            resource_limit_service,
+            bypass_limits=provider.audit_resources_from_resource_arn,
+        )
 
         # Generate Regional Clients
         if not global_service:

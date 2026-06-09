@@ -94,6 +94,7 @@ class AwsProvider(Provider):
     _session: AWSSession
     _organizations_metadata: AWSOrganizationsInfo
     _audit_resources: list = []
+    _audit_resources_from_resource_arn: bool = False
     _audit_config: dict
     _scan_unused_services: bool = False
     _enabled_regions: set | None = None
@@ -417,12 +418,14 @@ class AwsProvider(Provider):
 
         # Parse Scan Tags after region exclusions are applied so tag discovery
         # also skips disallowed regions.
+        self._audit_resources_from_resource_arn = False
         if resource_tags:
             self._audit_resources = self.get_tagged_resources(resource_tags)
 
         # Parse Input Resource ARNs
         if resource_arn:
             self._audit_resources = resource_arn
+            self._audit_resources_from_resource_arn = True
 
         # Set ignore unused services
         self._scan_unused_services = scan_unused_services
@@ -467,6 +470,10 @@ class AwsProvider(Provider):
     @property
     def audit_resources(self):
         return self._audit_resources
+
+    @property
+    def audit_resources_from_resource_arn(self):
+        return self._audit_resources_from_resource_arn
 
     @property
     def scan_unused_services(self):
