@@ -143,6 +143,52 @@ export const emptyScans = (): PageFixture => ({
   queryResult: null,
 });
 
+export const scanRunning = (): PageFixture => ({
+  scans: [
+    buildScan(TYPICAL_SCAN_ID, {
+      state: "scheduled",
+      progress: 0,
+      graph_data_ready: false,
+      completed_at: null,
+      duration: null,
+    }),
+  ],
+  scanId: TYPICAL_SCAN_ID,
+  queries: [],
+  queryId: DEFAULT_QUERY_ID,
+  queryResult: null,
+});
+
+export const graphBuilding = (): PageFixture => ({
+  scans: [
+    buildScan(TYPICAL_SCAN_ID, {
+      state: "executing",
+      progress: 45,
+      graph_data_ready: false,
+      completed_at: null,
+      duration: null,
+    }),
+  ],
+  scanId: TYPICAL_SCAN_ID,
+  queries: [],
+  queryId: DEFAULT_QUERY_ID,
+  queryResult: null,
+});
+
+export const noGraphData = (): PageFixture => ({
+  scans: [
+    buildScan(TYPICAL_SCAN_ID, {
+      state: "completed",
+      progress: 100,
+      graph_data_ready: false,
+    }),
+  ],
+  scanId: TYPICAL_SCAN_ID,
+  queries: [],
+  queryId: DEFAULT_QUERY_ID,
+  queryResult: null,
+});
+
 export const emptyGraph = (): PageFixture => ({
   scans: [buildScan(TYPICAL_SCAN_ID)],
   scanId: TYPICAL_SCAN_ID,
@@ -269,6 +315,9 @@ export const edgeCases = (): PageFixture => {
 export const fixtures = {
   typical,
   emptyScans,
+  scanRunning,
+  graphBuilding,
+  noGraphData,
   emptyGraph,
   singleNode,
   findingsOnly,
