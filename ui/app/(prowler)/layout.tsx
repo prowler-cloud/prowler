@@ -68,10 +68,9 @@ export default async function RootLayout({
             scan.attributes?.state === SCAN_STATES.COMPLETED,
         )
       : true;
-    hasProviders =
-      providersData?.data === undefined
-        ? undefined
-        : providersData.data.length > 0;
+    hasProviders = Array.isArray(providersData?.data)
+      ? providersData.data.length > 0
+      : undefined;
   }
 
   return (
