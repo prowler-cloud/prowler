@@ -1,3 +1,5 @@
+"use client";
+
 import type { PopoverDOM } from "driver.js";
 import { XIcon } from "lucide-react";
 import { flushSync } from "react-dom";
