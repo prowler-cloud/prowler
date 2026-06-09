@@ -1,7 +1,7 @@
 "use client";
 
 import { BellRing, Info } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
 
 import {
@@ -17,6 +17,7 @@ import { getFlowById } from "@/lib/onboarding";
 import { isCloud } from "@/lib/shared/env";
 import { useTourCompletion } from "@/lib/tours/use-tour-completion";
 import { cn } from "@/lib/utils";
+import { useOnboardingReplayStore } from "@/store/onboarding-replay";
 import { usePageReadyStore } from "@/store/page-ready";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
@@ -45,7 +46,9 @@ export function NavbarClient({
   const { isOpen, toggleOpen } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const requestReplay = useOnboardingReplayStore(
+    (state) => state.requestReplay,
+  );
   const targetFlowId =
     onboardingAction?.useFallback && onboardingAction.fallbackFlowId
       ? onboardingAction.fallbackFlowId
@@ -65,12 +68,15 @@ export function NavbarClient({
   const replayFlow = () => {
     if (!flow) return;
 
-    const params =
-      flow.route === pathname
-        ? new URLSearchParams(searchParams?.toString())
-        : new URLSearchParams();
-    params.set("onboarding", flow.id);
-    router.push(`${flow.route}?${params.toString()}`);
+    // Already on the flow's page: start the replay via an in-memory signal so the
+    // URL never changes and Next.js never refetches the (often heavy) page.
+    if (flow.route === pathname) {
+      requestReplay(flow.id);
+      return;
+    }
+    // Different page: a real navigation is needed; the `?onboarding=` param survives
+    // it and starts the tour on the destination route.
+    router.push(`${flow.route}?onboarding=${flow.id}`);
   };
 
   return (

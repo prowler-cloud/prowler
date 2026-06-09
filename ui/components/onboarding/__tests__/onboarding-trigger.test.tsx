@@ -10,6 +10,7 @@ const startMock = vi.fn();
 const pushMock = vi.fn();
 const advanceMock = vi.fn();
 const stopMock = vi.fn();
+const consumeMock = vi.fn();
 
 // Counts hook re-invocations; the regression test uses this to confirm the runner stays mounted.
 const useDriverTourMock = vi.fn();
@@ -24,6 +25,12 @@ let sliceState = {
   mode: null as OnboardingSequenceMode | null,
   advance: advanceMock,
   stop: stopMock,
+};
+
+let replayState = {
+  flowId: null as string | null,
+  token: 0,
+  consume: consumeMock,
 };
 
 vi.mock("next/navigation", () => ({
@@ -50,10 +57,21 @@ vi.mock("@/store/onboarding-sequence", () => {
   return { useOnboardingSequenceStore: hook };
 });
 
+vi.mock("@/store/onboarding-replay", () => {
+  const hook = (selector: (state: typeof replayState) => unknown) =>
+    selector(replayState);
+  hook.getState = () => replayState;
+  return { useOnboardingReplayStore: hook };
+});
+
 const addProviderFlow = getFlowById("add-provider")!;
 
 function setSlice(next: Partial<typeof sliceState>) {
   sliceState = { ...sliceState, ...next };
+}
+
+function setReplay(next: Partial<typeof replayState>) {
+  replayState = { ...replayState, ...next };
 }
 
 describe("OnboardingTrigger", () => {
@@ -62,6 +80,7 @@ describe("OnboardingTrigger", () => {
     pushMock.mockClear();
     advanceMock.mockClear();
     stopMock.mockClear();
+    consumeMock.mockClear();
     useDriverTourMock.mockClear();
     capturedOnClosed = undefined;
     // Trigger only resolves in cloud.
@@ -74,6 +93,7 @@ describe("OnboardingTrigger", () => {
       advance: advanceMock,
       stop: stopMock,
     };
+    replayState = { flowId: null, token: 0, consume: consumeMock };
   });
 
   afterEach(() => {
@@ -114,6 +134,22 @@ describe("OnboardingTrigger", () => {
           `${window.location.pathname}?scanId=scan-1&tab=completed`,
         ),
       );
+    });
+  });
+
+  describe("when the in-memory replay store names this flow", () => {
+    it("force-starts the tour, consumes the request, and never touches the URL", async () => {
+      // Same-route navbar replay: started via the store, no `?onboarding=` param.
+      setReplay({ flowId: "add-provider", token: 1 });
+      const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+
+      render(<OnboardingTrigger flow={addProviderFlow} />);
+
+      await waitFor(() => expect(startMock).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(consumeMock).toHaveBeenCalledTimes(1));
+      // No URL param to strip, and no router round-trip → no RSC refetch.
+      expect(replaceStateSpy).not.toHaveBeenCalled();
+      expect(pushMock).not.toHaveBeenCalled();
     });
   });
 

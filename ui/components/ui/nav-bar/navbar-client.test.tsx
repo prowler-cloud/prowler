@@ -15,11 +15,20 @@ const navigationMocks = vi.hoisted(() => ({
   searchParams: new URLSearchParams(),
 }));
 
+const requestReplayMock = vi.hoisted(() => vi.fn());
+
 vi.mock("next/navigation", () => ({
   usePathname: () => navigationMocks.pathname,
   useRouter: () => ({ push: navigationMocks.push }),
   useSearchParams: () => navigationMocks.searchParams,
 }));
+
+vi.mock("@/store/onboarding-replay", () => {
+  const state = { requestReplay: requestReplayMock };
+  const hook = (selector: (s: typeof state) => unknown) => selector(state);
+  hook.getState = () => state;
+  return { useOnboardingReplayStore: hook };
+});
 
 vi.mock("@/hooks/use-sidebar", () => ({
   useSidebar: () => ({ isOpen: true, toggleOpen: vi.fn() }),
@@ -60,6 +69,7 @@ describe("NavbarClient", () => {
   beforeEach(() => {
     navigationMocks.pathname = "/findings";
     navigationMocks.push.mockClear();
+    requestReplayMock.mockClear();
     navigationMocks.searchParams = new URLSearchParams();
     window.localStorage.clear();
     // Replay icon is Cloud-only.
@@ -136,8 +146,8 @@ describe("NavbarClient", () => {
     expect(button.querySelector("svg")).not.toHaveClass("animate-pulse");
   });
 
-  it("navigates to the current flow replay URL while preserving current-route params", async () => {
-    // Given
+  it("starts the replay in-memory (no navigation) when already on the flow's route", async () => {
+    // Given the user is already on the flow's page
     navigationMocks.pathname = "/compliance";
     navigationMocks.searchParams = new URLSearchParams("scanId=scan-1&foo=bar");
     usePageReadyStore.setState({ readyPath: "/compliance" });
@@ -156,10 +166,10 @@ describe("NavbarClient", () => {
       }),
     );
 
-    // Then
-    expect(navigationMocks.push).toHaveBeenCalledWith(
-      "/compliance?scanId=scan-1&foo=bar&onboarding=view-compliance",
-    );
+    // Then the replay is requested via the in-memory store — no router.push, so no
+    // `?onboarding=` URL param and no Next.js RSC refetch of the page.
+    expect(requestReplayMock).toHaveBeenCalledWith("view-compliance");
+    expect(navigationMocks.push).not.toHaveBeenCalled();
   });
 
   it("navigates to the fallback flow without leaking current-route params", async () => {

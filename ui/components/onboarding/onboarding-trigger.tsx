@@ -9,6 +9,7 @@ import { type OnboardingFlow } from "@/lib/onboarding";
 import { isCloud } from "@/lib/shared/env";
 import type { TourStepHandlers } from "@/lib/tours/tour-types";
 import { useDriverTour } from "@/lib/tours/use-driver-tour";
+import { useOnboardingReplayStore } from "@/store/onboarding-replay";
 import {
   type OnboardingSequenceMode,
   useOnboardingSequenceStore,
@@ -59,16 +60,25 @@ export function OnboardingTrigger<TTarget extends string = string>({
     (state) => state.currentFlowId,
   );
 
+  // In-memory replay request (same-route navbar click): starts the tour without a
+  // `?onboarding=` URL param, so Next.js never refetches the page. `token` bumps on
+  // every request so re-clicking the same flow yields a fresh signal.
+  const replayRequestFlowId = useOnboardingReplayStore((state) => state.flowId);
+  const replayToken = useOnboardingReplayStore((state) => state.token);
+
   // Cloud-only: in OSS the tour never resolves, so a manual `?onboarding=` URL can't start it.
   const resolved = isCloud()
     ? resolveTriggerRequest({
         param,
+        replayRequestFlowId,
         sliceActive,
         currentFlowId,
         flowId: flow.id,
       })
     : null;
-  const signal = resolved ? `${flow.id}:${resolved.mode}` : null;
+  // Token is part of the signal so a repeat same-route replay re-mints the key.
+  // For param/sequence starts the token is stable, so behaviour is unchanged.
+  const signal = resolved ? `${flow.id}:${resolved.mode}:${replayToken}` : null;
 
   // Latched via "adjust state while rendering" (no useEffect): mints a fresh key on each
   // new truthy signal; when signal drops to null (param stripped) the runner stays mounted.
@@ -136,7 +146,13 @@ function OnboardingTourRunner<TTarget extends string>({
 
       start();
       if (mode === "replay") {
-        stripOnboardingParamFromLocation(queryString);
+        // Only strip when the param actually started this replay; a same-route
+        // in-memory request leaves the URL untouched (no replaceState needed).
+        if (new URLSearchParams(queryString).has(ONBOARDING_PARAM)) {
+          stripOnboardingParamFromLocation(queryString);
+        }
+        // Clear any in-memory request so returning to this page won't auto-replay.
+        useOnboardingReplayStore.getState().consume();
       }
     });
 

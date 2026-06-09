@@ -4,6 +4,7 @@ import type { OnboardingSequenceMode } from "@/store/onboarding-sequence";
 // Flat, framework-free inputs for `resolveTriggerRequest` — unit-testable without React.
 export interface TriggerRequestInput {
   param: string | null; // `?onboarding=<id>` value, or null
+  replayRequestFlowId: string | null; // in-memory replay request (same-route navbar), or null
   sliceActive: boolean;
   currentFlowId: string | null; // flow the active sequence points at
   flowId: string; // flow this route owns
@@ -15,14 +16,20 @@ export interface TriggerRequest {
   mode: OnboardingSequenceMode;
 }
 
-// Replay param takes precedence over the sequence so manual replay is never hijacked.
+// Replay (param or in-memory request) takes precedence over the sequence so a
+// manual replay is never hijacked. The in-memory request is how the navbar starts
+// a same-route replay without a `?onboarding=` URL param (which would force an RSC refetch).
 export function resolveTriggerRequest({
   param,
+  replayRequestFlowId,
   sliceActive,
   currentFlowId,
   flowId,
 }: TriggerRequestInput): TriggerRequest | null {
   if (param === flowId) {
+    return { start: true, mode: "replay" };
+  }
+  if (replayRequestFlowId === flowId) {
     return { start: true, mode: "replay" };
   }
   if (sliceActive && currentFlowId === flowId) {
