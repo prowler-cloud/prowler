@@ -32,9 +32,11 @@ export function OnboardingCheckpointWatcher() {
     markCheckpointHandled(); // before navigation to prevent re-open on re-render
     useOnboardingCheckpointStore.getState().close();
 
-    const nextFlow = getOrderedFlows().find(
-      (flow) => flow.id !== FIRST_FLOW_ID,
-    );
+    // Start at the flow immediately after the gate, not just any non-gate flow:
+    // a future registry insertion before it must not be skipped past.
+    const ordered = getOrderedFlows();
+    const gateIndex = ordered.findIndex((flow) => flow.id === FIRST_FLOW_ID);
+    const nextFlow = gateIndex >= 0 ? ordered[gateIndex + 1] : undefined;
     if (!nextFlow) return;
 
     useOnboardingSequenceStore.getState().startSequence(nextFlow.id);

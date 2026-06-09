@@ -2,6 +2,7 @@ import { render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getFlowById } from "@/lib/onboarding";
+import type { OnboardingSequenceMode } from "@/store/onboarding-sequence";
 
 import { OnboardingTrigger } from "../onboarding-trigger";
 
@@ -20,7 +21,7 @@ let searchParamsValue = new URLSearchParams();
 let sliceState = {
   active: false,
   currentFlowId: null as string | null,
-  mode: null as "sequence" | "replay" | null,
+  mode: null as OnboardingSequenceMode | null,
   advance: advanceMock,
   stop: stopMock,
 };

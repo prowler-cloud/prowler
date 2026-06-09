@@ -3,7 +3,13 @@ import { create } from "zustand";
 import { getFlowById, getOrderedFlows } from "@/lib/onboarding";
 
 // "sequence" = slice-driven; "replay" = single-flow replay from ?onboarding= param.
-export type OnboardingSequenceMode = "sequence" | "replay";
+export const ONBOARDING_SEQUENCE_MODES = {
+  SEQUENCE: "sequence",
+  REPLAY: "replay",
+} as const;
+
+export type OnboardingSequenceMode =
+  (typeof ONBOARDING_SEQUENCE_MODES)[keyof typeof ONBOARDING_SEQUENCE_MODES];
 
 interface OnboardingSequenceState {
   active: boolean;
@@ -32,7 +38,11 @@ export const useOnboardingSequenceStore = create<OnboardingSequenceState>(
         ? (getFlowById(startFlowId) ?? ordered[0])
         : ordered[0];
       if (!start) return;
-      set({ active: true, currentFlowId: start.id, mode: "sequence" });
+      set({
+        active: true,
+        currentFlowId: start.id,
+        mode: ONBOARDING_SEQUENCE_MODES.SEQUENCE,
+      });
     },
 
     advance: () => {
@@ -49,7 +59,11 @@ export const useOnboardingSequenceStore = create<OnboardingSequenceState>(
 
     goToFlow: (flowId) => {
       if (!getFlowById(flowId)) return;
-      set({ active: true, currentFlowId: flowId, mode: "sequence" });
+      set({
+        active: true,
+        currentFlowId: flowId,
+        mode: ONBOARDING_SEQUENCE_MODES.SEQUENCE,
+      });
     },
 
     stop: () => set({ active: false, currentFlowId: null, mode: null }),

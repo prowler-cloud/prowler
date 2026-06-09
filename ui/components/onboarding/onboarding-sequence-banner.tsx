@@ -82,7 +82,7 @@ export function OnboardingSequenceBanner({
             Step {index + 1} of {total}: {flow.title}
           </p>
           {flow.dataRequirementHint ? (
-            <p className="text-text-warning text-xs">
+            <p className="text-text-warning-primary text-xs">
               {flow.dataRequirementHint}
             </p>
           ) : null}
