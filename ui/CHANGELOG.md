@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 
+### 🐞 Fixed
+
+- Attack Paths now shows distinct messages while a scan is running or its graph is being built, plus a separate "couldn't load scans" error, instead of always showing "No scans available" [(#PR_NUMBER)](https://github.com/prowler-cloud/prowler/pull/PR_NUMBER)
+
 ---
 
 ## [1.29.2] (Prowler v5.29.2)
