@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getFlowById } from "@/lib/onboarding";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
+import { usePageReadyStore } from "@/store/page-ready";
 
 import { NavbarClient } from "./navbar-client";
 
@@ -61,6 +62,8 @@ describe("NavbarClient", () => {
     navigationMocks.push.mockClear();
     navigationMocks.searchParams = new URLSearchParams();
     window.localStorage.clear();
+    // Default: the current route's content has loaded, so the icon is enabled.
+    usePageReadyStore.setState({ readyPath: "/findings" });
   });
 
   it("renders an accessible contextual onboarding button in the breadcrumb", async () => {
@@ -135,6 +138,7 @@ describe("NavbarClient", () => {
     // Given
     navigationMocks.pathname = "/compliance";
     navigationMocks.searchParams = new URLSearchParams("scanId=scan-1&foo=bar");
+    usePageReadyStore.setState({ readyPath: "/compliance" });
     const user = userEvent.setup();
     render(
       <NavbarClient
@@ -185,6 +189,26 @@ describe("NavbarClient", () => {
     expect(navigationMocks.push).toHaveBeenCalledWith(
       "/scans?onboarding=view-first-scan",
     );
+  });
+
+  it("hides the replay icon until the route's content has loaded", () => {
+    // Given the page has not signalled ready for the current route
+    usePageReadyStore.setState({ readyPath: null });
+
+    // When
+    render(
+      <NavbarClient
+        title="Findings"
+        onboardingAction={{ flowId: "explore-findings" }}
+      />,
+    );
+
+    // Then the icon is not rendered at all
+    expect(
+      screen.queryByRole("button", {
+        name: /start product tour: explore your findings/i,
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not render a contextual onboarding button for unknown flows", () => {

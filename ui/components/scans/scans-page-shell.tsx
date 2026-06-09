@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, Suspense, useState } from "react";
 
-import { OnboardingTrigger } from "@/components/onboarding";
+import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import {
   Button,
@@ -88,6 +88,8 @@ export function ScansPageShell({
       <Suspense fallback={null}>
         <OnboardingTrigger flow={viewFirstScanFlow} />
       </Suspense>
+      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
+      <PageReady />
       <div
         role="group"
         aria-label="Scan filters and actions"

@@ -14,6 +14,7 @@ import {
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { FindingDetailDrawer } from "@/components/findings/table";
+import { PageReady } from "@/components/onboarding";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
 import {
@@ -395,6 +396,9 @@ export default function AttackPathsPage() {
       {isAttackPathsReplay && !scansLoading && hasReadyScan && (
         <AttackPathsReplayTrigger onReplay={startAttackPathsReplay} />
       )}
+
+      {/* Enables the navbar replay icon once the initial scan load resolves. */}
+      {!scansLoading && <PageReady />}
 
       <div data-tour-id="attack-paths-intro">
         <p className="text-text-neutral-secondary text-sm">

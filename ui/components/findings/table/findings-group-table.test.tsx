@@ -9,6 +9,7 @@ vi.mock("next/navigation", () => ({
     refresh: vi.fn(),
   }),
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/findings",
 }));
 
 vi.mock("@/components/ui/table", () => ({

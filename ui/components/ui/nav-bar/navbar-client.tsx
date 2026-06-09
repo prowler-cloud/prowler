@@ -16,6 +16,7 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { getFlowById } from "@/lib/onboarding";
 import { useTourCompletion } from "@/lib/tours/use-tour-completion";
 import { cn } from "@/lib/utils";
+import { usePageReadyStore } from "@/store/page-ready";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
 import { SidebarToggle } from "../sidebar/sidebar-toggle";
@@ -53,6 +54,11 @@ export function NavbarClient({
   // calms it. The replay button itself stays.
   const seen = useTourCompletion(flow?.tour ?? null) !== null;
 
+  // Keep the replay icon disabled until this route's content has finished loading,
+  // so a tour never starts before its anchors are in the DOM.
+  const readyPath = usePageReadyStore((state) => state.readyPath);
+  const pageReady = readyPath === pathname;
+
   const replayFlow = () => {
     if (!flow) return;
 
@@ -77,7 +83,9 @@ export function NavbarClient({
             title={title}
             icon={icon}
             titleAction={
-              flow ? (
+              // Hidden until the route's content has loaded, so the tour never starts
+              // before its anchors exist (and we avoid a disabled-then-enabled flash).
+              flow && pageReady ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

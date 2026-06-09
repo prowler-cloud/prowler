@@ -6,7 +6,7 @@ import { Suspense, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
-import { OnboardingTrigger } from "@/components/onboarding";
+import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/ui/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import { getFlowById } from "@/lib/onboarding";
@@ -201,6 +201,8 @@ export function FindingsGroupTable({
         <Suspense fallback={null}>
           <OnboardingTrigger flow={exploreFindingsFlow} />
         </Suspense>
+        {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
+        <PageReady />
         <DataTable
           columns={columns}
           data={safeData}

@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
-import { OnboardingTrigger } from "@/components/onboarding";
+import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { AddProviderButton } from "@/components/providers/add-provider-button";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import { NoProvidersAdded } from "@/components/providers/no-providers-added";
@@ -100,6 +100,8 @@ export function ProvidersAccountsView({
           )}
         />
       </Suspense>
+      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
+      <PageReady />
       {hasNoProviders ? (
         <NoProvidersAdded
           action="button"
