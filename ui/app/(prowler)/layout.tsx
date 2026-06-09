@@ -52,7 +52,8 @@ export default async function RootLayout({
   // Onboarding is Cloud-only; skip its fetches and orchestrators in OSS.
   const onboardingEnabled = isCloud();
 
-  // Fail-open: unknown scan state is treated as "has data" so the banner never nags.
+  // Fail-open: unknown scan state is treated as "has data" so the banner never blocks
+  // progression on a fetch error.
   let hasCompletedScan = true;
   // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
   let hasProviders: boolean | undefined = false;

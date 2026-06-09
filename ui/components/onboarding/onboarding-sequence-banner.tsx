@@ -3,17 +3,14 @@
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/shadcn";
-import { getFlowById } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { useOnboardingSequenceStore } from "@/store/onboarding-sequence";
 
 import { getSequenceProgress } from "./onboarding-sequence-banner.logic";
 
-// Target for the "Run a scan" shortcut; the scans page trigger re-runs its tour on arrival.
-const SCAN_FLOW_ID = "view-first-scan";
-
 interface OnboardingSequenceBannerProps {
-  // Defaults to true (fail-open) when scan state is unknown.
+  // Defaults to true (fail-open) when scan state is unknown, so the banner never
+  // wrongly blocks progression.
   hasCompletedScan?: boolean;
 }
 
@@ -33,21 +30,18 @@ export function OnboardingSequenceBanner({
 
   const { index, total, flow, nextFlow } = progress;
 
-  // Shortcut only on a data-gated step that still lacks scan data, not on the scan step itself.
-  const scanFlow = getFlowById(SCAN_FLOW_ID);
-  const showScanShortcut =
-    Boolean(flow.dataRequirementHint) &&
-    hasCompletedScan === false &&
-    flow.id !== SCAN_FLOW_ID &&
-    scanFlow !== undefined;
-
-  const handleRunScan = () => {
-    if (!scanFlow) return;
-    useOnboardingSequenceStore.getState().goToFlow(scanFlow.id);
-    router.push(scanFlow.route);
-  };
+  // Block advancing into a scan-dependent step (e.g. findings, compliance) until a
+  // scan has finished — those steps have no data to show otherwise.
+  const continueDisabled =
+    hasCompletedScan === false && Boolean(nextFlow?.dataRequirementHint);
+  // Prefer the current step's own hint; otherwise surface the next step's hint to
+  // explain why Continue is disabled (e.g. on the scan step itself).
+  const hint =
+    flow.dataRequirementHint ??
+    (continueDisabled ? nextFlow?.dataRequirementHint : undefined);
 
   const handleContinue = () => {
+    if (continueDisabled) return;
     const sequence = useOnboardingSequenceStore.getState();
     if (!nextFlow) {
       sequence.stop(); // last step — end in place
@@ -71,8 +65,10 @@ export function OnboardingSequenceBanner({
         "px-4 py-3 shadow-lg",
       )}
     >
-      <div className="mx-auto flex max-w-5xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-1">
+      {/* Everything aligned to the right edge: step text first, then the two buttons.
+          No max-width/centering — that left a gap between the content and the screen. */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-6">
+        <div className="flex flex-col gap-1 sm:text-right">
           {/* Polite live region: screen readers announce step transitions. */}
           <p
             role="status"
@@ -81,22 +77,21 @@ export function OnboardingSequenceBanner({
           >
             Step {index + 1} of {total}: {flow.title}
           </p>
-          {flow.dataRequirementHint ? (
-            <p className="text-text-warning-primary text-xs">
-              {flow.dataRequirementHint}
-            </p>
+          {hint ? (
+            <p className="text-text-warning-primary text-xs">{hint}</p>
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {showScanShortcut ? (
-            <Button variant="outline" size="sm" onClick={handleRunScan}>
-              Run a scan
-            </Button>
-          ) : null}
-          <Button variant="ghost" size="sm" onClick={handleExit}>
+          {/* Secondary action: match the app's modal Cancel variant (outline). */}
+          <Button variant="outline" size="sm" onClick={handleExit}>
             Exit
           </Button>
-          <Button variant="default" size="sm" onClick={handleContinue}>
+          <Button
+            variant="default"
+            size="sm"
+            disabled={continueDisabled}
+            onClick={handleContinue}
+          >
             Continue
           </Button>
         </div>

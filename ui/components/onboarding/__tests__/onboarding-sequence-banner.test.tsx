@@ -9,7 +9,6 @@ import { OnboardingSequenceBanner } from "../onboarding-sequence-banner";
 const pushMock = vi.fn();
 const advanceMock = vi.fn();
 const stopMock = vi.fn();
-const goToFlowMock = vi.fn();
 
 // Mutable snapshot the mocked store hook returns; tests mutate via setSlice().
 let sliceState = {
@@ -17,7 +16,6 @@ let sliceState = {
   currentFlowId: null as string | null,
   advance: advanceMock,
   stop: stopMock,
-  goToFlow: goToFlowMock,
 };
 
 vi.mock("next/navigation", () => ({
@@ -40,13 +38,11 @@ describe("OnboardingSequenceBanner", () => {
     pushMock.mockClear();
     advanceMock.mockClear();
     stopMock.mockClear();
-    goToFlowMock.mockClear();
     sliceState = {
       active: false,
       currentFlowId: null,
       advance: advanceMock,
       stop: stopMock,
-      goToFlow: goToFlowMock,
     };
   });
 
@@ -87,7 +83,7 @@ describe("OnboardingSequenceBanner", () => {
     render(<OnboardingSequenceBanner />);
 
     expect(
-      screen.getByText(/this step needs scan results to show data/i),
+      screen.getByText(/wait for the scan to finish/i),
     ).toBeInTheDocument();
   });
 
@@ -97,7 +93,7 @@ describe("OnboardingSequenceBanner", () => {
     render(<OnboardingSequenceBanner />);
 
     expect(
-      screen.queryByText(/needs a completed scan to show data/i),
+      screen.queryByText(/wait for the scan to finish/i),
     ).not.toBeInTheDocument();
   });
 
@@ -125,75 +121,6 @@ describe("OnboardingSequenceBanner", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("offers a Run a scan shortcut when the flow needs scan data and none is completed", () => {
-    setSlice({ active: true, currentFlowId: "explore-findings" });
-
-    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
-
-    expect(
-      screen.getByRole("button", { name: /run a scan/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("hides the Run a scan shortcut once a scan has completed", () => {
-    setSlice({ active: true, currentFlowId: "explore-findings" });
-
-    render(<OnboardingSequenceBanner hasCompletedScan={true} />);
-
-    expect(
-      screen.queryByRole("button", { name: /run a scan/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("does not offer the Run a scan shortcut for a flow without a data hint", () => {
-    setSlice({ active: true, currentFlowId: "add-provider" });
-
-    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
-
-    expect(
-      screen.queryByRole("button", { name: /run a scan/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("does not offer the Run a scan shortcut on the scan flow itself", () => {
-    // No shortcut when the user is already on the flow the shortcut navigates to.
-    setSlice({ active: true, currentFlowId: "view-first-scan" });
-
-    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
-
-    expect(
-      screen.queryByRole("button", { name: /run a scan/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("jumps the banner to the scan step and navigates when Run a scan is clicked", async () => {
-    setSlice({ active: true, currentFlowId: "explore-findings" });
-    const scanFlow = getFlowById("view-first-scan")!;
-    const user = userEvent.setup();
-
-    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
-    await user.click(screen.getByRole("button", { name: /run a scan/i }));
-
-    expect(goToFlowMock).toHaveBeenCalledWith(scanFlow.id);
-    expect(pushMock).toHaveBeenCalledWith(scanFlow.route);
-    expect(advanceMock).not.toHaveBeenCalled();
-    expect(stopMock).not.toHaveBeenCalled();
-  });
-
-  it("still advances on Continue regardless of completed-scan state", async () => {
-    // Continue is non-blocking even when the scan shortcut is visible.
-    setSlice({ active: true, currentFlowId: "explore-findings" });
-    const nextFlow = getFlowById("view-compliance")!;
-    const user = userEvent.setup();
-
-    render(<OnboardingSequenceBanner hasCompletedScan={false} />);
-    await user.click(screen.getByRole("button", { name: /^continue$/i }));
-
-    expect(advanceMock).toHaveBeenCalledTimes(1);
-    expect(pushMock).toHaveBeenCalledWith(nextFlow.route);
-    expect(goToFlowMock).not.toHaveBeenCalled();
-  });
-
   it("stops the sequence when Exit is clicked", async () => {
     setSlice({ active: true, currentFlowId: "explore-findings" });
     const user = userEvent.setup();
@@ -204,5 +131,48 @@ describe("OnboardingSequenceBanner", () => {
     expect(stopMock).toHaveBeenCalledTimes(1);
     expect(advanceMock).not.toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  describe("scan-gated Continue", () => {
+    it("disables Continue when the next step needs scan data and none has finished", () => {
+      // On the scan step, advancing would land on explore-findings (scan-dependent).
+      setSlice({ active: true, currentFlowId: "view-first-scan" });
+
+      render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+
+      expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
+      // The next step's hint explains why progression is blocked.
+      expect(
+        screen.getByText(/wait for the scan to finish/i),
+      ).toBeInTheDocument();
+    });
+
+    it("does not advance even if a disabled Continue is force-clicked", async () => {
+      setSlice({ active: true, currentFlowId: "view-first-scan" });
+      const user = userEvent.setup();
+
+      render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+      await user.click(screen.getByRole("button", { name: /continue/i }));
+
+      expect(advanceMock).not.toHaveBeenCalled();
+      expect(pushMock).not.toHaveBeenCalled();
+    });
+
+    it("enables Continue once a scan has finished", () => {
+      setSlice({ active: true, currentFlowId: "view-first-scan" });
+
+      render(<OnboardingSequenceBanner hasCompletedScan={true} />);
+
+      expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
+    });
+
+    it("never gates Continue when the next step does not need scan data", () => {
+      // add-provider → view-first-scan: neither requires scan data.
+      setSlice({ active: true, currentFlowId: "add-provider" });
+
+      render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+
+      expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
+    });
   });
 });
