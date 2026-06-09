@@ -47,6 +47,46 @@ export function endActiveTour(): void {
   });
 }
 
+/**
+ * Advances the currently driving tour by one step. No-op when none is active or
+ * the tour is already on its last step. Used to drive `autoAdvance` steps — those
+ * have no Next button, so the covered UI moves the tour forward when the user takes
+ * the expected action (e.g. the provider wizard advances past the provider-type
+ * step once a type is picked).
+ */
+export function advanceActiveTour(): void {
+  const instance = activeTourInstance;
+  if (!instance?.isActive()) return;
+  // Same React-19 reason as endActiveTour: moveNext re-renders the popover via
+  // flushSync, which throws if called mid-render (this fires from a change handler).
+  // Idempotent: re-checking isActive/isLastStep inside the microtask means repeat
+  // calls after reaching the final step are no-ops, never overshooting.
+  queueMicrotask(() => {
+    if (instance.isActive() && !instance.isLastStep()) instance.moveNext();
+  });
+}
+
+/**
+ * Advances the active tour once `targetSelector` appears in the DOM. Used when the
+ * next step anchors to an element that mounts asynchronously after a user action —
+ * e.g. clicking "Add a Provider" opens the wizard, and the provider-type anchor only
+ * exists once the modal renders. No-op when no tour is active; silently gives up if
+ * the element never mounts (e.g. the modal was closed again).
+ */
+export function advanceActiveTourWhenReady(targetSelector: string): void {
+  const instance = activeTourInstance;
+  if (!instance?.isActive()) return;
+  waitForElement(targetSelector)
+    .then(() => {
+      // .then is already off the render path, so moveNext()'s flushSync is safe here
+      // (same pattern as the step onNext handlers below).
+      if (instance.isActive() && !instance.isLastStep()) instance.moveNext();
+    })
+    .catch(() => {
+      // Target never appeared (e.g. the wizard was dismissed); leave the tour as-is.
+    });
+}
+
 export interface UseDriverTourOptions<TTarget extends string = string> {
   /** Auto-open on mount when no completion record exists. Defaults to true. */
   autoOpen?: boolean;
@@ -74,6 +114,11 @@ function resolveTheme(resolvedTheme: string | undefined): TourTheme {
 
 function toSelector(target: string): string {
   return `[data-tour-id="${target}"]`;
+}
+
+/** Builds the `[data-tour-id="<tourId>-<target>"]` selector for a step's anchor. */
+export function getTourTargetSelector(tourId: string, target: string): string {
+  return toSelector(`${tourId}-${target}`);
 }
 
 function waitForElement(
@@ -111,7 +156,8 @@ function waitForElement(
   });
 }
 
-function adaptStep<TTarget extends string>(
+// Exported for unit testing the step → driver.js mapping (e.g. autoAdvance buttons).
+export function adaptStep<TTarget extends string>(
   tourId: string,
   step: TourStep<TTarget>,
 ): DriveStep {
@@ -142,6 +188,13 @@ function adaptStep<TTarget extends string>(
 
   if (step.disableActiveInteraction !== undefined) {
     driveStep.disableActiveInteraction = step.disableActiveInteraction;
+  }
+
+  if (step.autoAdvance) {
+    // No Next/Back — only Close. driver.js hides the other buttons (display:none),
+    // so the React popover's showNext/showPrevious resolve false. The flow advances
+    // via advanceActiveTour() called imperatively from the covered UI.
+    driveStep.popover = { ...driveStep.popover, showButtons: ["close"] };
   }
 
   return driveStep;

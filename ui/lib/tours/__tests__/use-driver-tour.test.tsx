@@ -3,7 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { addProviderTour } from "../add-provider.tour";
 import type { TourCompletionRecord } from "../tour-types";
-import { endActiveTour, useDriverTour } from "../use-driver-tour";
+import {
+  adaptStep,
+  advanceActiveTour,
+  endActiveTour,
+  useDriverTour,
+} from "../use-driver-tour";
 
 // Hook short-circuits driver.js in NODE_ENV=test; asserts public contract only.
 // Driver.js close behavior is covered by E2E (slice 9).
@@ -56,5 +61,36 @@ describe("endActiveTour", () => {
   it("is a no-op that does not throw when no tour is active", () => {
     expect(() => endActiveTour()).not.toThrow();
     expect(endActiveTour()).toBeUndefined();
+  });
+});
+
+describe("advanceActiveTour", () => {
+  // Sibling escape hatch to endActiveTour: the wizard calls it on provider-type
+  // selection to move past the autoAdvance step. Same NODE_ENV=test short-circuit.
+  it("is a no-op that does not throw when no tour is active", () => {
+    expect(() => advanceActiveTour()).not.toThrow();
+    expect(advanceActiveTour()).toBeUndefined();
+  });
+});
+
+describe("adaptStep autoAdvance", () => {
+  it("limits an autoAdvance step's popover to the close button only", () => {
+    const driveStep = adaptStep("add-provider", {
+      target: "provider-type",
+      autoAdvance: true,
+      title: "Pick a provider type",
+    });
+
+    // No Next/Back — the covered UI drives the flow via advanceActiveTour().
+    expect(driveStep.popover?.showButtons).toEqual(["close"]);
+  });
+
+  it("leaves showButtons unset on a normal step (driver.js defaults apply)", () => {
+    const driveStep = adaptStep("add-provider", {
+      target: "trigger",
+      title: "Open the wizard",
+    });
+
+    expect(driveStep.popover?.showButtons).toBeUndefined();
   });
 });

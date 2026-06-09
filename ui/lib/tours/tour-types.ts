@@ -50,6 +50,11 @@ export interface TourStep<TTarget extends string = string> {
   side?: TourStepSide;
   align?: TourStepAlignment;
   disableActiveInteraction?: boolean;
+  // Step with no Next/Back buttons (only Close); the flow advances via imperative
+  // `advanceActiveTour()` calls from the covered UI instead of popover clicks. Used
+  // when progress is driven by a user action (e.g. picking a provider type) rather
+  // than the tour's own button.
+  autoAdvance?: boolean;
 }
 
 // `coversFiles` is consumed by the `prowler-tour` skill to scope drift checks.
