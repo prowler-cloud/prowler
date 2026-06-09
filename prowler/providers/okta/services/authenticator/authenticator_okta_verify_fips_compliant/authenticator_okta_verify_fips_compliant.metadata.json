@@ -13,7 +13,7 @@
   "Risk": "Without FIPS-required enrollment, users can authenticate with devices whose cryptographic modules are not FIPS-validated.\n\n- **Regulatory exposure** under frameworks that mandate FIPS-validated cryptography\n- **Inconsistent assurance** across the user population\n- **Weak baseline** if the authenticator is active but the FIPS flag is `OPTIONAL` or unset",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Authenticator/",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/authenticator/",
     "https://help.okta.com/en-us/content/topics/mobile/ov-admin-config.htm",
     "https://support.okta.com/help/s/article/How-to-Enable-FIPS-Encryption-on-Okta-Verify?language=en_US"
   ],

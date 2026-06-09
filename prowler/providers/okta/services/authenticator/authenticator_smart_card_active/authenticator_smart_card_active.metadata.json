@@ -13,7 +13,7 @@
   "Risk": "Without an active Smart Card authenticator, users cannot satisfy mandated certificate-based authentication and may be forced onto weaker fallback paths.\n\n- **Mandated CAC/PIV use** cannot be enforced\n- **Compliance gaps** for environments that require X.509 certificate authentication\n- **Fallback to password-only** sign-in for affected groups",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Authenticator/",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/authenticator/",
     "https://help.okta.com/en-us/content/topics/security/authenticators-smartcard.htm"
   ],
   "Remediation": {
