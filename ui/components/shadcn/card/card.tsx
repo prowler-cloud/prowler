@@ -19,8 +19,6 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       base: "border-border-neutral-secondary bg-bg-neutral-secondary px-[18px] pt-3 pb-4",
       inner:
         "rounded-[12px] backdrop-blur-[46px] border-border-neutral-tertiary bg-bg-neutral-tertiary",
-      onboarding:
-        "rounded-[12px] backdrop-blur-[46px] border-border-neutral-tertiary bg-bg-neutral-tertiary gap-0 shadow-lg [&_[data-slot=card-content]]:mt-2 [&_[data-slot=card-description]]:mt-2 [&_[data-slot=card-description]]:text-xs [&_[data-slot=card-description]]:leading-relaxed [&_[data-slot=card-footer]]:mt-4 [&_[data-slot=card-footer]]:justify-end [&_[data-slot=card-footer]]:gap-2 [&_[data-slot=card-footer]]:px-0 [&_[data-slot=card-header]]:mb-4 [&_[data-slot=card-title]]:text-base [&_[data-slot=card-title]]:leading-snug",
       danger: "border-border-error bg-bg-fail-secondary gap-1 rounded-[12px]",
       success: "border-bg-pass bg-bg-pass-secondary gap-1 rounded-[12px]",
       warning: "border-bg-warning bg-bg-warning-secondary gap-1 rounded-[12px]",
@@ -38,11 +36,6 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       variant: "inner",
       padding: "default",
       className: "px-4 py-3", // md padding by default for inner
-    },
-    {
-      variant: "onboarding",
-      padding: "default",
-      className: "px-4 py-3",
     },
     {
       variant: "danger",

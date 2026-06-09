@@ -97,6 +97,23 @@ describe("renderTourPopover", () => {
     ).toBeInTheDocument();
   });
 
+  it("applies the onboarding popover styling on the card and its slots", async () => {
+    // Given
+    const popover = createPopover();
+
+    // When
+    await act(async () => renderTourPopover(popover));
+
+    // Then — styling lives at this callsite, not in a shared Card variant.
+    const card = popover.wrapper.querySelector('[data-slot="card"]')!;
+    expect(card).toHaveClass("gap-0");
+    expect(card).toHaveClass("shadow-lg");
+    const footer = popover.wrapper.querySelector('[data-slot="card-footer"]')!;
+    expect(footer).toHaveClass("justify-end");
+    expect(footer).toHaveClass("gap-2");
+    expect(footer).toHaveClass("px-0");
+  });
+
   it("delegates visible button clicks to driver.js native controls", async () => {
     // Given
     const user = userEvent.setup();

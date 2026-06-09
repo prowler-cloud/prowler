@@ -96,9 +96,9 @@ function TourPopover({
   onClose,
 }: TourPopoverProps) {
   return (
-    <Card variant="onboarding">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card variant="inner" className="gap-0 shadow-lg">
+      <CardHeader className="mb-4">
+        <CardTitle className="text-base leading-snug">{title}</CardTitle>
         {showClose ? (
           <CardAction>
             <Button
@@ -111,17 +111,23 @@ function TourPopover({
             </Button>
           </CardAction>
         ) : null}
-        {description ? <CardDescription>{description}</CardDescription> : null}
+        {description ? (
+          <CardDescription className="mt-2 text-xs leading-relaxed">
+            {description}
+          </CardDescription>
+        ) : null}
       </CardHeader>
-      <CardContent>
+      <CardContent className="mt-2">
         {progressText ? (
           <>
-            <CardDescription>{progressText}</CardDescription>
+            <CardDescription className="mt-2 text-xs leading-relaxed">
+              {progressText}
+            </CardDescription>
             <Progress value={progressValue} />
           </>
         ) : null}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="mt-4 justify-end gap-2 px-0">
         {showPrevious ? (
           <Button
             disabled={previousDisabled}
