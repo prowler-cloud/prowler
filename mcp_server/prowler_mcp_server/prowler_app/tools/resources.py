@@ -8,7 +8,6 @@ from typing import Any
 
 from prowler_mcp_server.prowler_app.models.resources import (
     DetailedResource,
-    ResourceEventsResponse,
     ResourcesListResponse,
     ResourcesMetadataResponse,
 )
@@ -371,12 +370,13 @@ class ResourcesTools(BaseTool):
         IMPORTANT: Currently only available for AWS resources. Uses CloudTrail to retrieve
         the modification history of a resource, showing who did what and when.
 
-        Each event includes:
-        - What happened: event_name (e.g., PutBucketPolicy), event_source (e.g., s3.amazonaws.com)
+        Returns a markdown report (via the API's `Accept: text/plain` representation)
+        with one section per event, each containing:
+        - What happened: event_name (e.g., PutBucketPolicy), event source
         - Who did it: actor, actor_type, actor_uid
         - From where: source_ip_address, user_agent
-        - What changed: request_data, response_data (full API payloads)
-        - Errors: error_code, error_message (if the action failed)
+        - What changed: request_data, response_data (the API call payloads)
+        - Errors: error code and message when the action failed
 
         Use cases:
         - Investigating security incidents (who modified this resource?)
@@ -396,9 +396,14 @@ class ResourcesTools(BaseTool):
 
         clean_params = self.api_client.build_filter_params(params)
 
-        api_response = await self.api_client.get(
-            f"/resources/{resource_id}/events", params=clean_params
+        token = await self.api_client.auth_manager.get_valid_token()
+        headers = self.api_client.auth_manager.get_headers(token)
+        headers["Accept"] = "text/plain"
+        response = await self.api_client.client.get(
+            f"{self.api_client.auth_manager.base_url}/resources/{resource_id}/events",
+            headers=headers,
+            params=clean_params,
         )
-        events_response = ResourceEventsResponse.from_api_response(api_response)
+        response.raise_for_status()
 
-        return events_response.model_dump()
+        return {"report": response.text}
