@@ -134,7 +134,8 @@ function TourPopover({
           <Button
             disabled={previousDisabled}
             size="sm"
-            variant="ghost"
+            // Match the app's modal secondary action (e.g. Launch Scan's Cancel).
+            variant="outline"
             onClick={onPrevious}
           >
             {previousLabel}
