@@ -34,6 +34,7 @@ class Exchange(M365Service):
         self.role_assignment_policies = []
         self.mailbox_audit_properties = []
         self.shared_mailboxes = []
+        self.application_access_policies = []
 
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -46,6 +47,9 @@ class Exchange(M365Service):
                 self.role_assignment_policies = self._get_role_assignment_policies()
                 self.mailbox_audit_properties = self._get_mailbox_audit_properties()
                 self.shared_mailboxes = self._get_shared_mailboxes()
+                self.application_access_policies = (
+    self._get_application_access_policies()
+)
             self.powershell.close()
 
         # Fetch license count via Graph API
@@ -354,6 +358,55 @@ class Exchange(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return shared_mailboxes
+    
+    def _get_application_access_policies(self):
+        """
+        Get Exchange Online Application Access Policies.
+
+        Returns:
+            list[ApplicationAccessPolicy]: List of application access policies.
+        """
+        logger.info(
+            "Microsoft365 - Getting application access policies..."
+        )
+
+        application_access_policies = []
+
+        try:
+            policies_data = (
+                self.powershell.get_application_access_policies()
+            )
+
+            if not policies_data:
+                return application_access_policies
+
+            if isinstance(policies_data, dict):
+                policies_data = [policies_data]
+
+            for policy in policies_data:
+                if policy:
+                    application_access_policies.append(
+                        ApplicationAccessPolicy(
+                            identity=policy.get("Identity", ""),
+                            app_id=policy.get("AppId", ""),
+                            access_right=policy.get(
+                                "AccessRight",
+                                "",
+                            ),
+                            description=policy.get(
+                                "Description",
+                                "",
+                            ),
+                        )
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}"
+                f"[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return application_access_policies
 
 
 class Organization(BaseModel):
@@ -497,3 +550,13 @@ class SharedMailbox(BaseModel):
     user_principal_name: str
     external_directory_object_id: str
     identity: str
+
+class ApplicationAccessPolicy(BaseModel):
+    """
+    Model for Exchange Online Application Access Policy.
+    """
+
+    identity: str
+    app_id: str
+    access_right: str
+    description: str

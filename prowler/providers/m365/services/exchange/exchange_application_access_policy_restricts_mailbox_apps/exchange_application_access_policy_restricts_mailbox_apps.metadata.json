@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_application_access_policy_restricts_mailbox_apps",
+  "CheckTitle": "Apps with Exchange mailbox permissions must be scoped via Application Access Policy",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online** applications with mailbox access permissions should be restricted using **Application Access Policies**.\n\nThis check evaluates whether applications granted Exchange-related Microsoft Graph application permissions are scoped using Exchange Online `ApplicationAccessPolicy` objects.",
+  "Risk": "Applications with unrestricted Exchange mailbox permissions may gain tenant-wide mailbox access. Without **Application Access Policies**, compromised or over-privileged applications can read or manipulate mail across all mailboxes, leading to unauthorized access, data exfiltration, phishing, and loss of confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/auth-limit-mailbox-access",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/new-applicationaccesspolicy",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/get-applicationaccesspolicy",
+    "https://learn.microsoft.com/en-us/graph/api/resources/serviceprincipal?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/serviceprincipal-list-approleassignments?view=graph-rest-1.0"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "New-ApplicationAccessPolicy -AppId <AppId> -PolicyScopeGroupId <Group> -AccessRight RestrictAccess -Description \"Restrict mailbox access\"",
+      "NativeIaC": "",
+      "Other": "1. Connect to Exchange Online PowerShell\n2. Run Get-ApplicationAccessPolicy to review existing policies\n3. Identify applications with Exchange-related Graph application permissions\n4. Create an Application Access Policy for each required application\n5. Scope mailbox access using a dedicated mail-enabled security group",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict applications with Exchange mailbox permissions using **Application Access Policies**. Apply least privilege by limiting mailbox scope to only required users or groups. Regularly review app permissions and remove unused or excessive mailbox access.",
+      "Url": "https://hub.prowler.com/check/exchange_application_access_policy_restricts_mailbox_apps"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
