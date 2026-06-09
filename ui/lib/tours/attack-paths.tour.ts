@@ -18,7 +18,7 @@ export const attackPathsTour = defineTour({
     {
       title: "Welcome to Attack Paths",
       description:
-        "Attack Paths visualizes how a compromise in one resource could spread through your cloud — on your real data.",
+        "Attack Paths visualizes how a compromise in one resource could spread through your cloud. It's currently available for AWS accounts only.",
     },
     {
       target: "intro",
@@ -26,7 +26,7 @@ export const attackPathsTour = defineTour({
       align: TOUR_STEP_ALIGNMENTS.START,
       title: "Start with a scan",
       description:
-        "Attack Paths analyses are generated from your existing scans. Each scan is a point-in-time snapshot of one provider.",
+        "Attack Paths analyses are generated from your existing AWS scans. Each scan is a point-in-time snapshot of one account.",
     },
     {
       target: "scan-list",
