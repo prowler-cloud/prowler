@@ -9,6 +9,7 @@ import { Button } from "@/components/shadcn/button/button";
 import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
+import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
@@ -139,7 +140,14 @@ export function ProviderWizardModal({
                 onNext={() => setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS)}
                 onSelectOrganizations={openOrganizationsFlow}
                 onFooterChange={setFooterConfig}
-                onProviderTypeChange={setProviderTypeHint}
+                onProviderTypeChange={(providerType) => {
+                  // Picking a type advances the connect form to the provider-detail
+                  // inputs, which sit outside the tour-highlighted selector. End the
+                  // add-provider tour now so driver.js's overlay stops freezing
+                  // pointer-events on those inputs. No-op off-onboarding.
+                  if (providerType) endActiveTour();
+                  setProviderTypeHint(providerType);
+                }}
               />
             )}
 

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { addProviderTour } from "../add-provider.tour";
 import type { TourCompletionRecord } from "../tour-types";
-import { useDriverTour } from "../use-driver-tour";
+import { endActiveTour, useDriverTour } from "../use-driver-tour";
 
 // Hook short-circuits driver.js in NODE_ENV=test; asserts public contract only.
 // Driver.js close behavior is covered by E2E (slice 9).
@@ -46,5 +46,15 @@ describe("useDriverTour onClosed option", () => {
     expect(typeof result?.start).toBe("function");
     expect(typeof result?.stop).toBe("function");
     expect(typeof result?.hasCompleted).toBe("boolean");
+  });
+});
+
+describe("endActiveTour", () => {
+  // The actual destroy path runs only outside NODE_ENV=test (driver.js is
+  // short-circuited here), so this asserts the imperative escape hatch the
+  // provider wizard relies on is exported and safe to call unconditionally.
+  it("is a no-op that does not throw when no tour is active", () => {
+    expect(() => endActiveTour()).not.toThrow();
+    expect(endActiveTour()).toBeUndefined();
   });
 });

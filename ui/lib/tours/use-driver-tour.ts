@@ -26,6 +26,27 @@ import {
 const AUTO_OPEN_DELAY_MS = 50;
 const DEFAULT_WAIT_TIMEOUT_MS = 8000;
 
+// Handle to the tour that is currently driving. driver.js permits a single active
+// tour at a time, so one module-level ref is enough. It lets imperative callers
+// outside the tour's React subtree end it — e.g. the provider wizard ends the
+// add-provider tour once the user advances past the anchored step, so driver.js's
+// overlay stops applying `pointer-events: none` to the rest of the wizard's inputs.
+let activeTourInstance: Driver | null = null;
+
+/** Ends whatever tour is currently driving. No-op when none is active. */
+export function endActiveTour(): void {
+  const instance = activeTourInstance;
+  activeTourInstance = null;
+  if (!instance?.isActive()) return;
+  // Defer out of React's render/commit cycle: destroy() synchronously unmounts the
+  // popover's React root (see tour-popover-render), and React 19 throws if that
+  // happens mid-render — e.g. when this is called from an effect reacting to a
+  // provider-type selection. The microtask runs before paint, so no visible flash.
+  queueMicrotask(() => {
+    if (instance.isActive()) instance.destroy();
+  });
+}
+
 export interface UseDriverTourOptions<TTarget extends string = string> {
   /** Auto-open on mount when no completion record exists. Defaults to true. */
   autoOpen?: boolean;
@@ -267,6 +288,9 @@ export function useDriverTour<TTarget extends string>(
       },
       onDestroyed: () => {
         unmountActiveTourPopover();
+        if (activeTourInstance === driverRef.current) {
+          activeTourInstance = null;
+        }
         // Involuntary teardown: close the tour without recording a resolution so it
         // can reappear later (e.g. the user just switched theme mid-tour).
         if (teardownRef.current) {
@@ -301,6 +325,7 @@ export function useDriverTour<TTarget extends string>(
 
     const timer = window.setTimeout(() => {
       if (!instance.isActive()) {
+        activeTourInstance = instance;
         instance.drive();
       }
     }, AUTO_OPEN_DELAY_MS);
@@ -311,7 +336,12 @@ export function useDriverTour<TTarget extends string>(
   }, [autoOpen, enabled, hasCompleted, tourId, tourVersion]);
 
   return {
-    start: () => driverRef.current?.drive(),
+    start: () => {
+      const instance = driverRef.current;
+      if (!instance) return;
+      activeTourInstance = instance;
+      instance.drive();
+    },
     stop: () => driverRef.current?.destroy(),
     hasCompleted,
   };
