@@ -2,25 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- Automatic recovery of allowlisted idempotent background tasks whose worker died during a deploy or crash: stuck scan and summary tasks are detected and re-run instead of staying pending forever, with a `reconcile_orphan_tasks` management command for on-demand recovery [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
-- Jira integration no longer creates duplicate issues on a retried send; findings already ticketed are skipped [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
-- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
-
-### 🔄 Changed
-
-- Allowlisted idempotent background tasks are no longer lost when a worker is stopped or crashes mid-task; tasks with external side effects are marked terminal instead of blindly re-running [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
-- A recovered scan rewrites its findings, summaries, attack surface, and compliance data instead of appending to the previous run, so recovery never leaves stale or duplicate materialized rows [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
-
-### 🐞 Fixed
-
-- Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
-
----
-
 ## [1.30.3] (Prowler v5.29.3)
 
 ### 🐞 Fixed
