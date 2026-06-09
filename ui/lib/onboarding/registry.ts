@@ -28,7 +28,8 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     title: "Run your first scan",
     description:
       "Launch a scan and watch Prowler assess your connected provider.",
-    route: "/scans",
+    // Land on the In Progress tab so a running scan is the first thing the tour shows.
+    route: "/scans?tab=active",
     tour: viewFirstScanTour,
   },
   {

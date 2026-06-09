@@ -63,11 +63,11 @@ describe("onboardingFlows (production registry)", () => {
     expect(addProvider?.isComplete?.({ hasProviders: false })).toBe(false);
   });
 
-  it("registers the view-first-scan flow at order 2 on the scans route", () => {
+  it("registers the view-first-scan flow at order 2 on the active scans tab", () => {
     const flow = getFlowById("view-first-scan", onboardingFlows);
     expect(flow).toBeDefined();
     expect(flow?.order).toBe(2);
-    expect(flow?.route).toBe("/scans");
+    expect(flow?.route).toBe("/scans?tab=active");
     expect(flow?.tour.id).toBe("view-first-scan");
   });
 

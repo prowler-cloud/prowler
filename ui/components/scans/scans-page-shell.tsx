@@ -17,6 +17,7 @@ import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
+import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
@@ -60,6 +61,9 @@ export function ScansPageShell({
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
+  // When a scan is already running, the tour highlights its row (anchored in
+  // ScanJobsTable); otherwise it falls back to the Launch Scan button + tabs.
+  const hasInProgressScan = activeScanCount > 0;
 
   const getTabLabel = (tab: ScanJobsTab) => {
     const label = SCAN_TAB_LABELS[tab];
@@ -90,7 +94,12 @@ export function ScansPageShell({
     <div className="flex flex-col gap-[18px]">
       {/* Suspense required: OnboardingTrigger reads useSearchParams */}
       <Suspense fallback={null}>
-        <OnboardingTrigger flow={viewFirstScanFlow} />
+        <OnboardingTrigger
+          flow={{
+            ...viewFirstScanFlow,
+            tour: buildViewFirstScanTour(hasInProgressScan),
+          }}
+        />
       </Suspense>
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
       <PageReady />
