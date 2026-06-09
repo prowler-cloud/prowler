@@ -33,6 +33,7 @@ import {
 } from "@/components/shadcn/dialog";
 import { useToast } from "@/components/ui";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { isCloud } from "@/lib/shared/env";
 import {
   attackPathsTour,
   type AttackPathsTourTarget,
@@ -71,7 +72,10 @@ export default function AttackPathsPage() {
   const pathname = usePathname();
   const router = useRouter();
   const scanId = searchParams.get("scanId");
-  const isAttackPathsReplay = searchParams.get("onboarding") === "attack-paths";
+  // Onboarding tours are Cloud-only.
+  const onboardingEnabled = isCloud();
+  const isAttackPathsReplay =
+    onboardingEnabled && searchParams.get("onboarding") === "attack-paths";
   const graphState = useGraphState();
   const finding = useFindingDetails();
   const { toast } = useToast();
@@ -99,13 +103,13 @@ export default function AttackPathsPage() {
   const hasNoScans = scans.length === 0;
 
   useDriverTour(attackPathsEmptyTour, {
-    enabled: !scansLoading && hasNoScans,
+    enabled: onboardingEnabled && !scansLoading && hasNoScans,
   });
 
   const { start: startAttackPathsTour } = useDriverTour<AttackPathsTourTarget>(
     attackPathsTour,
     {
-      enabled: !scansLoading && hasReadyScan,
+      enabled: onboardingEnabled && !scansLoading && hasReadyScan,
       autoOpen: !isAttackPathsReplay,
       // Page owns tour auto-open; OnboardingSequenceBanner is the sole Continue/Exit control.
       // pickDemoScan/pickDemoQuery policy lives in attack-paths.tour.ts.

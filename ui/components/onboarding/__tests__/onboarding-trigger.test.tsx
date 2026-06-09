@@ -64,6 +64,8 @@ describe("OnboardingTrigger", () => {
     stopMock.mockClear();
     useDriverTourMock.mockClear();
     capturedOnClosed = undefined;
+    // Trigger only resolves in cloud.
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
     searchParamsValue = new URLSearchParams();
     sliceState = {
       active: false,
@@ -152,6 +154,36 @@ describe("OnboardingTrigger", () => {
 
       render(<OnboardingTrigger flow={addProviderFlow} />);
 
+      await waitFor(() => expect(startMock).not.toHaveBeenCalled());
+    });
+  });
+
+  describe("in self-hosted (OSS) deployments", () => {
+    it("renders null and never starts the tour, even with a matching param", async () => {
+      vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+      searchParamsValue = new URLSearchParams("onboarding=add-provider");
+
+      const { container } = render(
+        <OnboardingTrigger flow={addProviderFlow} />,
+      );
+
+      expect(container).toBeEmptyDOMElement();
+      await waitFor(() => expect(startMock).not.toHaveBeenCalled());
+    });
+
+    it("ignores an active sequence slice in OSS", async () => {
+      vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+      setSlice({
+        active: true,
+        currentFlowId: "add-provider",
+        mode: "sequence",
+      });
+
+      const { container } = render(
+        <OnboardingTrigger flow={addProviderFlow} />,
+      );
+
+      expect(container).toBeEmptyDOMElement();
       await waitFor(() => expect(startMock).not.toHaveBeenCalled());
     });
   });

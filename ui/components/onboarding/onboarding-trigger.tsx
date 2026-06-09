@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { type OnboardingFlow } from "@/lib/onboarding";
+import { isCloud } from "@/lib/shared/env";
 import type { TourStepHandlers } from "@/lib/tours/tour-types";
 import { useDriverTour } from "@/lib/tours/use-driver-tour";
 import {
@@ -58,12 +59,15 @@ export function OnboardingTrigger<TTarget extends string = string>({
     (state) => state.currentFlowId,
   );
 
-  const resolved = resolveTriggerRequest({
-    param,
-    sliceActive,
-    currentFlowId,
-    flowId: flow.id,
-  });
+  // Cloud-only: in OSS the tour never resolves, so a manual `?onboarding=` URL can't start it.
+  const resolved = isCloud()
+    ? resolveTriggerRequest({
+        param,
+        sliceActive,
+        currentFlowId,
+        flowId: flow.id,
+      })
+    : null;
   const signal = resolved ? `${flow.id}:${resolved.mode}` : null;
 
   // Latched via "adjust state while rendering" (no useEffect): mints a fresh key on each

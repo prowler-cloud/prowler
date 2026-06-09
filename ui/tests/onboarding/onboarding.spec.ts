@@ -10,7 +10,14 @@ const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY ?? "";
 const secretKey = process.env.E2E_AWS_PROVIDER_SECRET_KEY ?? "";
 const hasAwsCredentials = Boolean(accountId && accessKey && secretKey);
 
+// Guided onboarding is a Prowler Cloud-only feature; it never mounts in OSS.
+const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
 test.describe("Onboarding", () => {
+  test.skip(
+    !isCloudEnv,
+    "Guided onboarding is a Prowler Cloud-only feature (NEXT_PUBLIC_IS_CLOUD_ENV != true)",
+  );
   test.use({ storageState: "playwright/.auth/admin_user.json" });
 
   test.describe("Mandatory new-user path", () => {

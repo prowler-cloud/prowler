@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
+import { isCloud } from "@/lib/shared/env";
 import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
@@ -193,10 +194,12 @@ export function useProviderWizardController({
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
 
-    // Only fires the checkpoint dialog if the store is armed (user started onboarding).
-    useOnboardingCheckpointStore.getState().requestOpenOnWizardClose({
-      providerConnected: connectedProviderId !== null,
-    });
+    // Cloud-only; only fires if the store is armed (user started onboarding).
+    if (isCloud()) {
+      useOnboardingCheckpointStore.getState().requestOpenOnWizardClose({
+        providerConnected: connectedProviderId !== null,
+      });
+    }
 
     if (refreshOnClose) {
       router.refresh();

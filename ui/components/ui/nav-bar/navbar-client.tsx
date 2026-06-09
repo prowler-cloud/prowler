@@ -14,6 +14,7 @@ import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { BreadcrumbNavigation } from "@/components/ui";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { getFlowById } from "@/lib/onboarding";
+import { isCloud } from "@/lib/shared/env";
 import { useTourCompletion } from "@/lib/tours/use-tour-completion";
 import { cn } from "@/lib/utils";
 import { usePageReadyStore } from "@/store/page-ready";
@@ -49,7 +50,9 @@ export function NavbarClient({
     onboardingAction?.useFallback && onboardingAction.fallbackFlowId
       ? onboardingAction.fallbackFlowId
       : onboardingAction?.flowId;
-  const flow = targetFlowId ? getFlowById(targetFlowId) : undefined;
+  // Cloud-only: no flow → no replay icon in OSS.
+  const flow =
+    isCloud() && targetFlowId ? getFlowById(targetFlowId) : undefined;
   // Pulse only until the tour is seen; any close (completed/skipped/dismissed)
   // calms it. The replay button itself stays.
   const seen = useTourCompletion(flow?.tour ?? null) !== null;

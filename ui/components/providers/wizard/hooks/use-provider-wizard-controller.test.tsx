@@ -45,6 +45,8 @@ describe("useProviderWizardController", () => {
     requestOpenOnWizardCloseMock.mockClear();
     sessionStorage.clear();
     localStorage.clear();
+    // Checkpoint is Cloud-only.
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
     useProviderWizardStore.getState().reset();
     useOrgSetupStore.getState().reset();
   });
@@ -112,6 +114,33 @@ describe("useProviderWizardController", () => {
     expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
       providerConnected: false,
     });
+  });
+
+  it("does not request the onboarding checkpoint in self-hosted (OSS) deployments", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+    act(() => {
+      useProviderWizardStore.getState().setProvider({
+        id: "provider-1",
+        type: "aws",
+        uid: "111111111111",
+        alias: "production",
+      });
+    });
+
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Checkpoint stays untouched, but the close still refreshes.
+    expect(requestOpenOnWizardCloseMock).not.toHaveBeenCalled();
+    expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 
   it("hydrates update mode when initial data is provided", async () => {

@@ -16,6 +16,7 @@ import { NavigationProgress } from "@/components/ui/navigation-progress";
 import { Toaster } from "@/components/ui/toast";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import { StoreInitializer } from "@/store/ui/store-initializer";
 import { SCAN_STATES } from "@/types/attack-paths";
@@ -48,22 +49,30 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  const [providersData, scansByState] = await Promise.all([
-    getProviders({ page: 1, pageSize: 1 }),
-    getScansByState(),
-  ]);
+  // Onboarding is Cloud-only; skip its fetches and orchestrators in OSS.
+  const onboardingEnabled = isCloud();
+
   // Fail-open: unknown scan state is treated as "has data" so the banner never nags.
-  const hasCompletedScan = Array.isArray(scansByState?.data)
-    ? scansByState.data.some(
-        (scan: { attributes?: { state?: string } }) =>
-          scan.attributes?.state === SCAN_STATES.COMPLETED,
-      )
-    : true;
+  let hasCompletedScan = true;
   // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
-  const hasProviders =
-    providersData?.data === undefined
-      ? undefined
-      : providersData.data.length > 0;
+  let hasProviders: boolean | undefined = false;
+
+  if (onboardingEnabled) {
+    const [providersData, scansByState] = await Promise.all([
+      getProviders({ page: 1, pageSize: 1 }),
+      getScansByState(),
+    ]);
+    hasCompletedScan = Array.isArray(scansByState?.data)
+      ? scansByState.data.some(
+          (scan: { attributes?: { state?: string } }) =>
+            scan.attributes?.state === SCAN_STATES.COMPLETED,
+        )
+      : true;
+    hasProviders =
+      providersData?.data === undefined
+        ? undefined
+        : providersData.data.length > 0;
+  }
 
   return (
     <html suppressHydrationWarning lang="en">
@@ -79,11 +88,15 @@ export default async function RootLayout({
           <NavigationProgress />
           {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
           <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
-          <OnboardingGate hasProviders={hasProviders} />
-          {/* Single mount point so the watcher survives post-connect navigation. */}
-          <OnboardingCheckpointWatcher />
-          {/* Persistent banner shown only while a guided sequence is active. */}
-          <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
+          {onboardingEnabled && (
+            <>
+              <OnboardingGate hasProviders={hasProviders} />
+              {/* Single mount point so the watcher survives post-connect navigation. */}
+              <OnboardingCheckpointWatcher />
+              {/* Persistent banner shown only while a guided sequence is active. */}
+              <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
+            </>
+          )}
           <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>

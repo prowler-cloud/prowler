@@ -62,6 +62,8 @@ describe("NavbarClient", () => {
     navigationMocks.push.mockClear();
     navigationMocks.searchParams = new URLSearchParams();
     window.localStorage.clear();
+    // Replay icon is Cloud-only.
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
     // Default: the current route's content has loaded, so the icon is enabled.
     usePageReadyStore.setState({ readyPath: "/findings" });
   });
@@ -208,6 +210,20 @@ describe("NavbarClient", () => {
       screen.queryByRole("button", {
         name: /start product tour: explore your findings/i,
       }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the replay icon entirely in self-hosted (OSS) deployments", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <NavbarClient
+        title="Findings"
+        onboardingAction={{ flowId: "explore-findings" }}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /start product tour/i }),
     ).not.toBeInTheDocument();
   });
 

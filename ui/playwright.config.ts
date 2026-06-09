@@ -154,6 +154,8 @@ export default defineConfig({
     env: {
       NEXT_PUBLIC_API_BASE_URL:
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1",
+      // Lets the onboarding suite opt into Cloud-only behavior; it skips otherwise.
+      NEXT_PUBLIC_IS_CLOUD_ENV: process.env.NEXT_PUBLIC_IS_CLOUD_ENV || "",
       AUTH_SECRET: process.env.AUTH_SECRET || "fallback-ci-secret-for-testing",
       AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "true",
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
