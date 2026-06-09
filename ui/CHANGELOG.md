@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 
+### 🔄 Changed
+
+- Renamed "Customer Support" to "Support Desk" in the side menu, showing it only in Prowler Cloud/Enterprise, while "Community Support" now shows only in Prowler OSS [(#11508)](https://github.com/prowler-cloud/prowler/pull/11508)
+
 ---
 
 ## [1.29.3] (Prowler v5.29.3)
