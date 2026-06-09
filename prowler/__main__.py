@@ -1317,31 +1317,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
-    else:
-        # Dynamic fallback: any external/custom provider
-        try:
-            global_provider.generate_compliance_output(
-                finding_outputs,
-                bulk_compliance_frameworks,
-                input_compliance_frameworks,
-                output_options,
-                generated_outputs,
-            )
-        except NotImplementedError:
-            # Last resort: generic compliance
-            for compliance_name in input_compliance_frameworks:
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                generic_compliance = GenericCompliance(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(generic_compliance)
-                generic_compliance.batch_write_data_to_file()
-
     elif provider == "okta":
         for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("okta_idaas_stig"):
@@ -1358,6 +1333,30 @@ def prowler():
                 generated_outputs["compliance"].append(okta_idaas_stig)
                 okta_idaas_stig.batch_write_data_to_file()
             else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+    else:
+        # Dynamic fallback: any external/custom provider
+        try:
+            global_provider.generate_compliance_output(
+                finding_outputs,
+                bulk_compliance_frameworks,
+                input_compliance_frameworks,
+                output_options,
+                generated_outputs,
+            )
+        except NotImplementedError:
+            # Last resort: generic compliance
+            for compliance_name in input_compliance_frameworks:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
