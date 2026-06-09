@@ -940,6 +940,32 @@ class M365PowerShell(PowerShellSession):
             "Get-TeamsProtectionPolicy | ConvertTo-Json -Depth 10", json_parse=True
         )
 
+    def get_mailboxes(self) -> dict:
+        """
+        Get Exchange Online Recipient-Facing Mailboxes.
+
+        Retrieves all recipient-facing mailboxes from Exchange Online with the
+        properties needed to evaluate primary SMTP domain policy.
+
+        Returns:
+            dict: Mailbox information in JSON format.
+
+        Example:
+            >>> get_mailboxes()
+            [
+                {
+                    "Identity": "user1@contoso.com",
+                    "DisplayName": "User One",
+                    "PrimarySmtpAddress": "user1@contoso.com",
+                    "RecipientTypeDetails": "UserMailbox"
+                }
+            ]
+        """
+        return self.execute(
+            "Get-EXOMailbox -ResultSize Unlimited | Select-Object Identity, DisplayName, PrimarySmtpAddress, RecipientTypeDetails | ConvertTo-Json -Depth 10",
+            json_parse=True,
+        )
+
     def get_shared_mailboxes(self) -> dict:
         """
         Get Exchange Online Shared Mailboxes.

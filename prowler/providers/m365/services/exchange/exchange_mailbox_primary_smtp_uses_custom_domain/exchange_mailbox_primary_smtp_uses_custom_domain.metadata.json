@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_mailbox_primary_smtp_uses_custom_domain",
-  "CheckTitle": "Mailbox primary SMTP address must use a verified custom domain",
+  "CheckTitle": "Mailbox primary SMTP address must use a custom domain",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "microsoft.exchange/mailboxes",
   "ResourceGroup": "collaboration",
-  "Description": "**Exchange Online mailboxes** should use a verified custom domain as their primary SMTP address, not the default **\\*.onmicrosoft.com** routing domain assigned by Microsoft on tenant creation. This check verifies that the **PrimarySmtpAddress** of every user-facing mailbox resolves to a custom domain.",
+  "Description": "**Exchange Online mailboxes** should use a custom domain as their primary SMTP address, not the default **\\*.onmicrosoft.com** routing domain assigned by Microsoft on tenant creation. This check verifies that the **PrimarySmtpAddress** of every user-facing mailbox does not end with `.onmicrosoft.com`.",
   "Risk": "Mailboxes still using **.onmicrosoft.com** as their primary SMTP address leak the internal **tenant identifier** in every From: header, helping attackers fingerprint the tenant for spear-phishing. They also bypass **DMARC/DKIM** hardening that organisations deploy on their custom domains and are frequently treated as low-trust by recipient anti-phishing engines.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -26,7 +26,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Update the primary SMTP address of all affected mailboxes to use a verified custom domain. Ensure your custom domain is verified in the Microsoft 365 admin center before making this change.",
+      "Text": "Update the primary SMTP address of all affected mailboxes to use a custom domain. Ensure your custom domain is verified in the Microsoft 365 admin center before making this change.",
       "Url": "https://hub.prowler.com/check/exchange_mailbox_primary_smtp_uses_custom_domain"
     }
   },

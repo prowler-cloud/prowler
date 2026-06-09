@@ -8,15 +8,15 @@ from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
 from prowler.providers.m365.m365_provider import M365Provider
 
-
 SYSTEM_MAILBOX_TYPES = {
     "DiscoveryMailbox",
-    "ArbitrationMailbox", 
+    "ArbitrationMailbox",
     "AuditLogMailbox",
     "MonitoringMailbox",
     "AuxAuditLogMailbox",
     "SystemMailbox",
 }
+
 
 class Exchange(M365Service):
     """
@@ -43,7 +43,7 @@ class Exchange(M365Service):
         self.role_assignment_policies = []
         self.mailbox_audit_properties = []
         self.shared_mailboxes = []
-        self.mailboxes = []
+        self.mailboxes = None
 
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -370,13 +370,15 @@ class Exchange(M365Service):
         """
         Get all recipient-facing mailboxes from Exchange Online.
 
-        Retrieves mailboxes of types UserMailbox, SharedMailbox, RoomMailbox 
-        and EquipmentMailbox. System-managed mailbox types are excluded 
-        as they are controlled by Microsoft and are not subject to domain policy. 
+        Retrieves mailboxes of types UserMailbox, SharedMailbox, RoomMailbox
+        and EquipmentMailbox. System-managed mailbox types are excluded as
+        they are controlled by Microsoft and are not subject to domain policy.
 
         Returns:
-            list[MailBox]: List of mailboxes with their primary SMTP address
-            and recipient type details.
+            list[Mailbox]: List of mailboxes with their primary SMTP address
+                and recipient type details. Returns ``None`` when the
+                underlying PowerShell cmdlet raises, so callers can
+                distinguish "PowerShell unavailable" from "empty tenant".
         """
         logger.info("Microsoft365 - Getting mailboxes...")
         mailboxes = []
@@ -384,30 +386,30 @@ class Exchange(M365Service):
             mailboxes_data = self.powershell.get_mailboxes()
             if not mailboxes_data:
                 return mailboxes
-            # PowerShell can sometimes return a single dict instead of a list if 
-            # there is only one result. So it is now normalized to a list. 
+            # PowerShell can return a single dict instead of a list when only
+            # one result is returned; normalize to a list for uniform handling.
             if isinstance(mailboxes_data, dict):
                 mailboxes_data = [mailboxes_data]
             for mailbox in mailboxes_data:
                 if mailbox:
                     recipient_type = mailbox.get("RecipientTypeDetails", "")
-                    # Skip system-managed mailboxes. They are controlled by Microsoft
-                    # And routinely use .onmicrosoft.com by design
                     if recipient_type in SYSTEM_MAILBOX_TYPES:
                         continue
                     mailboxes.append(
                         Mailbox(
-                            identity=mailbox.get("Identity", ""), 
-                            name=mailbox.get("DisplayName", ""), 
+                            identity=mailbox.get("Identity", ""),
+                            name=mailbox.get("DisplayName", ""),
                             primary_smtp_address=mailbox.get("PrimarySmtpAddress", ""),
-                            recipient_type_details=recipient_type, 
+                            recipient_type_details=recipient_type,
                         )
                     )
+            return mailboxes
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return mailboxes
+            return None
+
 
 class Organization(BaseModel):
     """
@@ -551,16 +553,17 @@ class SharedMailbox(BaseModel):
     external_directory_object_id: str
     identity: str
 
+
 class Mailbox(BaseModel):
     """
-    Model for an Exchange Online recipient-facing mailbox.    
+    Model for an Exchange Online recipient-facing mailbox.
 
     Attributes:
         identity: The unique identity of the mailbox in Exchange.
-        name: Display name of the mailbox
-        primary_smtp_address: The primary SMTP address used for outbound mail 
+        name: Display name of the mailbox.
+        primary_smtp_address: The primary SMTP address used for outbound mail
             and the From: header. This is the address the check evaluates.
-        recipient_type_details: The mailbox type (e.g., UserMailbox, 
+        recipient_type_details: The mailbox type (e.g., UserMailbox,
             SharedMailbox, RoomMailbox, EquipmentMailbox).
     """
 
@@ -568,4 +571,3 @@ class Mailbox(BaseModel):
     name: str
     primary_smtp_address: str
     recipient_type_details: str
-    
