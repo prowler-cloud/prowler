@@ -6,7 +6,7 @@
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Service principals holding privileged Microsoft Entra directory roles (such as Global Administrator or Privileged Role Administrator) are evaluated for the presence of owners on either the service principal itself or its parent app registration.",
@@ -36,5 +36,5 @@
   "RelatedTo": [
     "entra_service_principal_no_secrets_for_permanent_tier0_roles"
   ],
-  "Notes": "Only service principals with permanent Tier 0 directory role assignments are evaluated. Microsoft first-party service principals and disabled service principals are excluded."
+  "Notes": "Only service principals with permanent Tier 0 directory role assignments are evaluated. Microsoft first-party service principals and multi-tenant ISV apps consented from other publishers are excluded by the service layer."
 }
