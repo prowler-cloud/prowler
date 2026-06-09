@@ -1,4 +1,8 @@
-import { getOrderedFlows, type OnboardingFlow } from "@/lib/onboarding";
+import {
+  getOrderedFlows,
+  type OnboardingFlow,
+  onboardingFlows,
+} from "@/lib/onboarding";
 
 // Framework-free projection of the active sequence position — unit-testable without React.
 export interface SequenceProgress {
@@ -11,7 +15,7 @@ export interface SequenceProgress {
 // Returns null when `currentFlowId` is absent or not in the registry.
 export function getSequenceProgress(
   currentFlowId: string | null,
-  flows: readonly OnboardingFlow[] = getOrderedFlows(),
+  flows: readonly OnboardingFlow[] = onboardingFlows,
 ): SequenceProgress | null {
   if (!currentFlowId) return null;
 
