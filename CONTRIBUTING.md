@@ -1,4 +1,4 @@
-# Do you want to learn on how to...
+# Do you want to learn on how to
 
 - [Contribute with your code or fixes to Prowler](https://docs.prowler.com/developer-guide/introduction)
 - [Create a new provider](https://docs.prowler.com/developer-guide/provider)
@@ -32,5 +32,6 @@ Provider-specific developer notes:
 
 Want some swag as appreciation for your contribution?
 
-# Prowler Developer Guide
-https://goto.prowler.com/devguide
+## Prowler Developer Guide
+
+<https://goto.prowler.com/devguide>

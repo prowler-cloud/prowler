@@ -1256,3 +1256,43 @@ class TestReport:
                 f"\t{Fore.YELLOW}INFO{Style.RESET_ALL} There are no resources"
             )
             mocked_print.assert_called()  # Verifying that print was called
+
+    def test_report_with_stackit_provider_pass(self):
+        finding = MagicMock()
+        finding.status = "PASS"
+        finding.muted = False
+        finding.location = "eu01"
+        finding.check_metadata.Provider = "stackit"
+        finding.status_extended = "Security group has no unrestricted SSH access"
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "stackit"
+
+        with mock.patch("builtins.print") as mocked_print:
+            report([finding], provider, output_options)
+            mocked_print.assert_called()
+
+    def test_report_with_stackit_provider_fail(self):
+        finding = MagicMock()
+        finding.status = "FAIL"
+        finding.muted = False
+        finding.location = "eu01"
+        finding.check_metadata.Provider = "stackit"
+        finding.status_extended = "Security group allows unrestricted SSH access"
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "stackit"
+
+        with mock.patch("builtins.print") as mocked_print:
+            report([finding], provider, output_options)
+            mocked_print.assert_called()

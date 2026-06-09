@@ -11,6 +11,7 @@
 Use these skills for detailed patterns on-demand:
 
 ### Generic Skills (Any Project)
+
 | Skill | Description | URL |
 |-------|-------------|-----|
 | `typescript` | Const types, flat interfaces, utility types | [SKILL.md](skills/typescript/SKILL.md) |
@@ -28,6 +29,7 @@ Use these skills for detailed patterns on-demand:
 | `tdd` | Test-Driven Development workflow | [SKILL.md](skills/tdd/SKILL.md) |
 
 ### Prowler-Specific Skills
+
 | Skill | Description | URL |
 |-------|-------------|-----|
 | `prowler` | Project overview, component navigation | [SKILL.md](skills/prowler/SKILL.md) |

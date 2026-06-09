@@ -198,8 +198,15 @@ class UniversalComplianceOutput:
         findings: list["Finding"],
         framework: ComplianceFramework,
         compliance_name: str,
+        include_manual: bool = True,
     ) -> None:
-        """Transform findings into universal compliance CSV rows."""
+        """Transform findings into universal compliance CSV rows.
+
+        Manual requirements (no checks or empty for current provider) are
+        emitted only when ``include_manual=True``. When the writer is reused
+        across streaming batches, the caller should pass ``False`` after the
+        first batch so manual rows are not duplicated.
+        """
         # Build check -> requirements map (filtered by provider for dict checks)
         check_req_map = {}
         for req in framework.requirements:
@@ -227,6 +234,9 @@ class UniversalComplianceOutput:
                         self._data.append(self._row_model(**row))
                     except Exception as e:
                         logger.debug(f"Skipping row for {req.id}: {e}")
+
+        if not include_manual:
+            return
 
         # Manual requirements (no checks or empty dict)
         for req in framework.requirements:

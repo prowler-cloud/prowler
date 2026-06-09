@@ -30,25 +30,65 @@ If a different authentication method is needed (SSWS API token, OAuth with user 
 
 ### Required OAuth Scopes
 
-The bundled signon checks require the following read-only scopes:
+The bundled checks require the following read-only scopes:
 
 - `okta.policies.read`
 - `okta.brands.read`
+- `okta.apps.read`
+- `okta.authenticators.read`
+- `okta.networkZones.read`
+- `okta.apiTokens.read`
+- `okta.roles.read`
+- `okta.groups.read`
+- `okta.logStreams.read`
+- `okta.idps.read`
 
 Additional scopes will be needed as more services and checks are added. These are the current ones needed:
 
 | Scope | Used by |
 |---|---|
-| `okta.policies.read` | Sign-on / password / authentication policies |
+| `okta.policies.read` | Sign-on, password, authentication, and `USER_LIFECYCLE` (Workflow > Automations) policies |
 | `okta.brands.read` | Sign-in page customizations (DOD Notice and Consent Banner check) |
+| `okta.apps.read` | First-party app settings (Okta Admin Console session), integrated app inventory, and the Authentication Policies bound to Okta applications |
+| `okta.authenticators.read` | Okta authenticator configuration, including Okta Verify and Smart Card IdP |
+| `okta.networkZones.read` | Network Zone inventory, anonymized-proxy blocklist checks, and API token Network Zone validation |
+| `okta.apiTokens.read` | API token metadata and token network conditions |
+| `okta.roles.read` | Admin role assignments for API token owners (both direct and group-inherited) |
+| `okta.groups.read` | Group memberships of API token owners, used to resolve admin roles inherited via group assignment (e.g. Super Admin granted through the default admin group) |
+| `okta.logStreams.read` | Log Stream configuration (`/api/v1/logStreams`) |
+| `okta.idps.read` | Identity Providers, including Smart Card (X509) IdPs (`/api/v1/idps`) |
 
 ### Required Admin Role
 
-The service application must be assigned the built-in **Read-Only Administrator** role.
+The service application must be assigned **one** of the following Okta admin roles:
 
-Okta's Management API enforces a two-layer authorization model: an OAuth **scope** decides which API endpoints the token can call, and an **admin role** decides whether the call returns data. With only a scope granted, the token mint succeeds but every read returns `403 Forbidden`. The Read-Only Administrator role is the minimum that lets the granted `okta.*.read` scopes actually return configuration data to Prowler's checks — without it, the credential probe at provider startup fails and the scan never gets to evaluate any check.
+- **Read-Only Administrator** — covers every `signon` check and runs `application_authentication_policy_network_zone_enforced` against the apps it can see. **Visibility caveat:** under Read-Only Administrator the `/api/v1/apps` endpoint returns only the apps the service application is itself assigned to — typically just the service app's own row (for example, `Prowler Scanner`). The check still produces a finding for that app, but the rest of the org's app inventory is invisible at this role level.
+- **Super Administrator** — required additionally to evaluate five application-service checks that target Okta's first-party apps (Okta Admin Console, Okta Dashboard). With Super Administrator, `application_authentication_policy_network_zone_enforced` also evaluates the full org-wide app inventory instead of the service-app-only slice.
 
-Read-Only Administrator is intentionally the narrowest role that satisfies this requirement and aligns with the least-privilege guidance in DISA STIG.
+Okta's Management API enforces a two-layer authorization model: an OAuth **scope** decides which API endpoints the token can call, and an **admin role** decides whether the call returns data. With only a scope granted, the token mint succeeds but every read returns `403 Forbidden`. Read-Only Administrator is the minimum role that lets the granted `okta.*.read` scopes return configuration data to Prowler's checks; without it, the credential probe at provider startup fails and the scan never gets to evaluate any check.
+
+#### When Super Administrator is required
+
+Four checks need to resolve the Authentication Policy bound to Okta's first-party apps (Okta Admin Console, Okta Dashboard) and depend on `/api/v1/apps` returning those system apps — which Okta restricts to Super Administrator:
+
+| Check | STIG |
+|---|---|
+| `application_admin_console_mfa_required` | V-273193 |
+| `application_admin_console_phishing_resistant_authentication` | V-273191 |
+| `application_dashboard_mfa_required` | V-273194 |
+| `application_dashboard_phishing_resistant_authentication` | V-273190 |
+
+Okta filters the first-party apps (`saasure`, `okta_enduser`) out of `/api/v1/apps` for every role below Super Administrator, so `okta.apps.read` alone is not enough. The `okta.apps.manageFirstPartyApps` permission exists only in the paid Okta Identity Governance role `ACCESS_REQUESTS_ADMIN` and cannot be added to custom roles ([Okta Permissions Catalog](https://developer.okta.com/docs/api/openapi/okta-management/guides/permissions)).
+
+A fifth check — `application_admin_console_session_idle_timeout_15min` (STIG V-273187) — also requires Super Administrator: it calls `GET /api/v1/first-party-app-settings/admin-console`, which returns `403 E0000006` for every role below Super Administrator.
+
+`user_inactivity_automation_35d_enabled` (STIG V-273188) reads `USER_LIFECYCLE` policies (`list_policies(type='USER_LIFECYCLE')`) using the `okta.policies.read` scope. The Read-Only Administrator role is enough to list them; no Super Administrator requirement.
+
+When the service app runs with Read-Only Administrator, the checks listed in this section return **MANUAL** instead of PASS/FAIL — the rest of the scan keeps running.
+
+<Note>
+Read-Only Administrator stays the recommended default for the least-privilege framing that aligns with DISA STIG. Assign Super Administrator on a separate run when full coverage of the first-party app checks is needed.
+</Note>
 
 ## Step-by-Step Setup
 
@@ -98,18 +138,20 @@ Okta displays the private key **only once**. If you close the modal without copy
 
 ### 5. Grant the required OAuth scopes
 
-On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled signon checks require `okta.policies.read` and `okta.brands.read`.
+On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled checks require `okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.authenticators.read`, `okta.networkZones.read`, `okta.apiTokens.read`, `okta.roles.read`, `okta.groups.read`, `okta.logStreams.read`, and `okta.idps.read`.
 
 ![Okta — grant OAuth scopes](/user-guide/providers/okta/images/grant-permissions.png)
 
-### 6. Assign the Read-Only Administrator role
+### 6. Assign an admin role
 
 On the app, open the **Admin roles** tab and click **Edit assignments → Add assignment**:
 
-- **Role:** Read-Only Administrator
+- **Role:** Read-Only Administrator (default) — covers every `signon` check and runs the per-app network-zone check against the apps the service app can see (typically only the service app's own row).
 - **Resources:** All resources
 
 Save the changes.
+
+To additionally evaluate the first-party application checks (Okta Admin Console / Okta Dashboard idle timeout, MFA, and phishing-resistant authentication) and to widen the per-app network-zone check to the full org-wide app inventory, assign **Super Administrator** instead. Without Super Administrator, the five first-party checks return MANUAL and the network-zone check is limited to the service app's own visibility — the rest of the scan still runs. See [Required Admin Role](#required-admin-role) for the full breakdown.
 
 ![Okta — grant Read-Only role](/user-guide/providers/okta/images/grant-roles.png)
 
@@ -132,8 +174,8 @@ export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
 # or
 export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 
-# Optional — defaults to "okta.policies.read,okta.brands.read"
-export OKTA_SCOPES="okta.policies.read,okta.brands.read"
+# Optional — defaults to "okta.policies.read,okta.brands.read,okta.apps.read,okta.authenticators.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read,okta.groups.read,okta.logStreams.read,okta.idps.read"
+export OKTA_SCOPES="okta.policies.read,okta.brands.read,okta.apps.read,okta.authenticators.read,okta.networkZones.read,okta.apiTokens.read,okta.roles.read,okta.groups.read,okta.logStreams.read,okta.idps.read"
 
 uv run python prowler-cli.py okta
 ```
@@ -174,8 +216,12 @@ Prowler validates credentials at startup by listing one sign-on policy. This err
 
 Raised when the credential probe succeeds at the OAuth layer but the request is rejected because the service app lacks the required scope or admin role:
 
-- **`invalid_scope`** — one of the requested scopes (`okta.policies.read` or `okta.brands.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
-- **`Forbidden` / `not authorized`** — the **Read-Only Administrator** role is not assigned to the service app. Assign it from **Admin roles**.
+- **`invalid_scope`** — one of the requested scopes (`okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.authenticators.read`, `okta.networkZones.read`, `okta.apiTokens.read`, `okta.roles.read`, `okta.groups.read`, `okta.logStreams.read`, and `okta.idps.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
+- **`Forbidden` / `not authorized`** — no admin role is assigned to the service app. Assign **Read-Only Administrator** (or **Super Administrator** for the first-party application checks) from **Admin roles**.
+
+### Application-service checks return MANUAL on first-party apps
+
+When the service app runs with Read-Only Administrator, the five application-service checks targeting the Okta Admin Console and Okta Dashboard return MANUAL. This is by design — Okta restricts the underlying endpoints (`/api/v1/first-party-app-settings/{appName}` and `/api/v1/apps` for first-party app `name` values `saasure` / `okta_enduser`) to **Super Administrator**. Assign the Super Administrator role to the service app to evaluate those checks. See [Required Admin Role](#required-admin-role) for the full list.
 
 ### `invalid_dpop_proof`
 
