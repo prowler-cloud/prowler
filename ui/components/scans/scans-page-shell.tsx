@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode, Suspense, useState } from "react";
 
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
@@ -41,7 +41,6 @@ export function ScansPageShell({
   activeScanCount = 0,
   children,
 }: ScansPageShellProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [urlLaunchOpen, setUrlLaunchOpen] = useState(
@@ -73,13 +72,18 @@ export function ScansPageShell({
     setLaunchScanModalOpen(open);
     if (open) return;
     setUrlLaunchOpen(false);
+    // Remove ?launchScan via History API (not router.replace) to avoid an RSC
+    // refetch that reloads the page; revalidatePath in scanOnDemand already
+    // refreshes the scans list when a scan is launched.
     if (!searchParams.has(LAUNCH_SCAN_SEARCH_PARAM)) return;
     const params = new URLSearchParams(searchParams.toString());
     params.delete(LAUNCH_SCAN_SEARCH_PARAM);
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, {
-      scroll: false,
-    });
+    window.history.replaceState(
+      null,
+      "",
+      query ? `${pathname}?${query}` : pathname,
+    );
   };
 
   return (
