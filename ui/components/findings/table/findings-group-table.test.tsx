@@ -45,6 +45,11 @@ vi.mock("@/components/ui/table", () => ({
   ),
 }));
 
+vi.mock("@/components/onboarding", () => ({
+  OnboardingTrigger: () => <div data-testid="onboarding-trigger" />,
+  PageReady: () => <div data-testid="page-ready" />,
+}));
+
 vi.mock("@/components/filters/custom-checkbox-muted-findings", () => ({
   CustomCheckboxMutedFindings: () => (
     <label>
@@ -98,6 +103,45 @@ describe("FindingsGroupTable", () => {
         screen.getByRole("checkbox", { name: "Include muted findings" }),
       ).toBeInTheDocument();
       expect(toolbar).toHaveTextContent("Include muted findings");
+    });
+  });
+
+  describe("explore-findings tour gating", () => {
+    it("does not mount the tour trigger when there are no finding groups", () => {
+      // Given an empty table (e.g. a scan is still running)
+      render(
+        <FindingsGroupTable
+          data={[]}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+        />,
+      );
+
+      // Then the tour never starts — there is no first-row anchor for the
+      // "Open a finding group" step to resolve, which would otherwise throw.
+      expect(
+        screen.queryByTestId("onboarding-trigger"),
+      ).not.toBeInTheDocument();
+      // PageReady still signals the navbar that the route's data has loaded.
+      expect(screen.getByTestId("page-ready")).toBeInTheDocument();
+    });
+
+    it("mounts the tour trigger once at least one finding group exists", () => {
+      // Given a populated table
+      const data = [{ checkId: "check-a" }] as unknown as Parameters<
+        typeof FindingsGroupTable
+      >[0]["data"];
+
+      render(
+        <FindingsGroupTable
+          data={data}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+        />,
+      );
+
+      // Then the explore-findings tour is allowed to start.
+      expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
     });
   });
 

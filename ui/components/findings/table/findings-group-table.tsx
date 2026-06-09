@@ -210,15 +210,17 @@ export function FindingsGroupTable({
         resolveMuteIds,
       }}
     >
-      {/* Tour trigger placed here so onboarding starts only once the table has data. */}
+      {/* Gate the tour on having at least one finding group */}
       <div>
         <Suspense fallback={null}>
-          <OnboardingTrigger
-            flow={exploreFindingsFlow}
-            stepHandlers={createExploreFindingsTourStepHandlers(
-              openFirstFindingGroup,
-            )}
-          />
+          {safeData.length > 0 && (
+            <OnboardingTrigger
+              flow={exploreFindingsFlow}
+              stepHandlers={createExploreFindingsTourStepHandlers(
+                openFirstFindingGroup,
+              )}
+            />
+          )}
         </Suspense>
         {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
         <PageReady />
