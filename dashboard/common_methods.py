@@ -1619,7 +1619,9 @@ def get_section_containers_generic(data, section_col, id_col):
     data.sort_values(by=[section_col, id_col], inplace=True)
 
     counts_section = data.groupby([section_col, "STATUS"]).size().unstack(fill_value=0)
-    counts_id = data.groupby([id_col, "STATUS"]).size().unstack(fill_value=0)
+    counts_id = (
+        data.groupby([section_col, id_col, "STATUS"]).size().unstack(fill_value=0)
+    )
 
     def count(counts, key, emoji):
         return counts.loc[key, emoji] if emoji in counts.columns else 0
@@ -1656,8 +1658,8 @@ def get_section_containers_generic(data, section_col, id_col):
             )
             graph_div_req = html.Div(
                 _status_bar(
-                    count(counts_id, req_id, pass_emoji),
-                    count(counts_id, req_id, fail_emoji),
+                    count(counts_id, (section, req_id), pass_emoji),
+                    count(counts_id, (section, req_id), fail_emoji),
                     "info-bar-child",
                 ),
                 className="graph-section-req",

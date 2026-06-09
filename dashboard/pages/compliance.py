@@ -251,9 +251,12 @@ def _dispatch_compliance_renderer(data, analytics_input):
     surface as real exceptions rather than being swallowed.
     """
     current = analytics_input.replace(".", "_")
+    target = f"dashboard.compliance.{current}"
     try:
-        module = importlib.import_module(f"dashboard.compliance.{current}")
-    except ModuleNotFoundError:
+        module = importlib.import_module(target)
+    except ModuleNotFoundError as exc:
+        if exc.name != target:
+            raise
         from dashboard.compliance import generic as module
     dedup_columns = ["CHECKID", "STATUS", "RESOURCEID", "STATUSEXTENDED"]
     if "MUTED" in data.columns:
