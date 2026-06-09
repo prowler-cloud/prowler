@@ -54,14 +54,18 @@ test.describe("Scans", () => {
         // Select provider by UID (accountId)
         await scansPage.selectProviderByUID(accountId);
 
-        // Complete scan alias
-        await scansPage.fillScanAlias("E2E Test Scan - On Demand");
+        // Complete scan note
+        await scansPage.fillScanNote("E2E Test Scan - On Demand");
 
         // Press start now button
         await scansPage.clickStartNowButton();
 
+        // The new scan lands in the In Progress tab; /scans defaults to
+        // Completed, so follow the toast's "View scan" action to ?tab=active.
+        await scansPage.viewLaunchedScan();
+
         // Verify the scan was launched
-        await scansPage.verifyScanLaunched("E2E Test Scan - On Demand");
+        await scansPage.verifyScanLaunched(accountId);
       },
     );
   });

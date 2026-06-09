@@ -228,7 +228,7 @@ AWS_QUERIES: list[AttackPathsQueryDefinition] = [
 
 **FIRST**, read all files in the queries module to understand the structure, type definitions, registration, and existing style:
 
-```
+```text
 api/src/backend/api/attack_paths/queries/
 ├── __init__.py      # Module exports
 ├── types.py         # AttackPathsQueryDefinition, AttackPathsQueryParameterDefinition
@@ -250,7 +250,7 @@ grep cartography api/pyproject.toml
 
 Build the schema URL (ALWAYS use the specific tag, not master/main):
 
-```
+```text
 # Git dependency (prowler-cloud/cartography@0.126.1):
 https://raw.githubusercontent.com/prowler-cloud/cartography/refs/tags/0.126.1/docs/root/modules/{provider}/schema.md
 
@@ -283,7 +283,7 @@ Add the constant to the `{PROVIDER}_QUERIES` list.
 
 ### Query ID
 
-```
+```text
 {provider}-{category}-{description}
 ```
 
@@ -291,7 +291,7 @@ Examples: `aws-ec2-privesc-passrole-iam`, `aws-ec2-instances-internet-exposed`
 
 ### Query constant name
 
-```
+```text
 {PROVIDER}_{CATEGORY}_{DESCRIPTION}
 ```
 

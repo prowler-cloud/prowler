@@ -10,7 +10,6 @@ from prowler.lib.outputs.compliance.cis.cis import get_cis_table
 from prowler.lib.outputs.compliance.compliance_check import (  # noqa: F401 - re-export for backward compatibility
     get_check_compliance,
 )
-from prowler.lib.outputs.compliance.csa.csa import get_csa_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
 from prowler.lib.outputs.compliance.generic.generic_table import (
     get_generic_compliance_table,
@@ -33,24 +32,28 @@ def process_universal_compliance_frameworks(
     output_filename: str,
     provider: str,
     generated_outputs: dict,
+    from_cli: bool = True,
+    is_last: bool = True,
 ) -> set:
     """Process universal compliance frameworks, generating CSV and OCSF outputs.
 
     For each framework in *input_compliance_frameworks* that exists in
-    *universal_frameworks* and has an outputs.table_config, this function
-    creates both a CSV (UniversalComplianceOutput) and an OCSF JSON
-    (OCSFComplianceOutput) file.  OCSF is always generated regardless of
+    *universal_frameworks* and has an ``outputs.table_config``, this function
+    writes both a CSV (``UniversalComplianceOutput``) and an OCSF JSON
+    (``OCSFComplianceOutput``) file. OCSF is always generated regardless of
     the user's ``--output-formats`` flag.
 
-    The function is idempotent: it tracks already-created writers via
-    ``generated_outputs["compliance"]`` keyed by ``file_path``. If invoked
-    again for the same framework (e.g. once per streaming batch), it
-    reuses the existing writer instead of recreating it. This guarantees
-    one output writer per framework for the whole execution and keeps
-    the OCSF JSON array valid across multiple calls.
+    Streaming-aware: writers are tracked via ``generated_outputs["compliance"]``
+    keyed by ``file_path``. On the first call per framework a new writer is
+    created and emits both findings and manual requirements; subsequent calls
+    reuse the writer, transform only the new ``finding_outputs`` (manual
+    requirements are not re-emitted), and append to the open file. Set
+    ``from_cli=False`` and ``is_last=False`` for intermediate batches; pass
+    ``is_last=True`` on the final batch to close the file (OCSF is also
+    finalized as a valid JSON array).
 
-    Returns the set of framework names that were processed so the caller
-    can remove them before entering the legacy per-provider output loop.
+    Returns the set of framework names processed so the caller can subtract
+    them from the legacy per-provider output loop.
     """
     from prowler.lib.outputs.compliance.universal.ocsf_compliance import (
         OCSFComplianceOutput,
@@ -65,6 +68,13 @@ def process_universal_compliance_frameworks(
         if isinstance(out, (UniversalComplianceOutput, OCSFComplianceOutput))
     }
 
+    def _flush(writer, framework, label, is_new):
+        if not is_new:
+            writer._transform(finding_outputs, framework, label, include_manual=False)
+        writer.close_file = is_last
+        writer.batch_write_data_to_file()
+        writer._data.clear()
+
     processed = set()
     for compliance_name in input_compliance_frameworks:
         if not (
@@ -75,37 +85,46 @@ def process_universal_compliance_frameworks(
             continue
 
         fw = universal_frameworks[compliance_name]
+        compliance_label = (
+            fw.framework + "-" + fw.version if fw.version else fw.framework
+        )
 
         # CSV output
         csv_path = (
             f"{output_directory}/compliance/" f"{output_filename}_{compliance_name}.csv"
         )
-        if csv_path not in existing_writers:
-            output = UniversalComplianceOutput(
+        csv_writer = existing_writers.get(csv_path)
+        csv_is_new = csv_writer is None
+        if csv_is_new:
+            csv_writer = UniversalComplianceOutput(
                 findings=finding_outputs,
                 framework=fw,
                 file_path=csv_path,
+                from_cli=from_cli,
                 provider=provider,
             )
-            generated_outputs["compliance"].append(output)
-            existing_writers[csv_path] = output
-            output.batch_write_data_to_file()
+            generated_outputs["compliance"].append(csv_writer)
+            existing_writers[csv_path] = csv_writer
+        _flush(csv_writer, fw, compliance_label, csv_is_new)
 
         # OCSF output (always generated for universal frameworks)
         ocsf_path = (
             f"{output_directory}/compliance/"
             f"{output_filename}_{compliance_name}.ocsf.json"
         )
-        if ocsf_path not in existing_writers:
-            ocsf_output = OCSFComplianceOutput(
+        ocsf_writer = existing_writers.get(ocsf_path)
+        ocsf_is_new = ocsf_writer is None
+        if ocsf_is_new:
+            ocsf_writer = OCSFComplianceOutput(
                 findings=finding_outputs,
                 framework=fw,
                 file_path=ocsf_path,
+                from_cli=from_cli,
                 provider=provider,
             )
-            generated_outputs["compliance"].append(ocsf_output)
-            existing_writers[ocsf_path] = ocsf_output
-            ocsf_output.batch_write_data_to_file()
+            generated_outputs["compliance"].append(ocsf_writer)
+            existing_writers[ocsf_path] = ocsf_writer
+        _flush(ocsf_writer, fw, compliance_label, ocsf_is_new)
 
         processed.add(compliance_name)
 
@@ -206,15 +225,6 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
-        elif compliance_framework.startswith("csa_ccm_"):
-            get_csa_table(
-                findings,
-                bulk_checks_metadata,
-                compliance_framework,
-                output_filename,
-                output_directory,
-                compliance_overview,
-            )
         elif compliance_framework.startswith("c5_"):
             get_c5_table(
                 findings,
@@ -243,14 +253,32 @@ def display_compliance_table(
                 compliance_overview,
             )
         else:
-            get_generic_compliance_table(
-                findings,
-                bulk_checks_metadata,
-                compliance_framework,
-                output_filename,
-                output_directory,
-                compliance_overview,
-            )
+            # Try provider-specific table first, fall back to generic
+            from prowler.providers.common.provider import Provider
+
+            provider = Provider.get_global_provider()
+            handled = False
+            if provider is not None:
+                try:
+                    handled = provider.display_compliance_table(
+                        findings,
+                        bulk_checks_metadata,
+                        compliance_framework,
+                        output_filename,
+                        output_directory,
+                        compliance_overview,
+                    )
+                except NotImplementedError:
+                    handled = False
+            if not handled:
+                get_generic_compliance_table(
+                    findings,
+                    bulk_checks_metadata,
+                    compliance_framework,
+                    output_filename,
+                    output_directory,
+                    compliance_overview,
+                )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

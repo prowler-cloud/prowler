@@ -34,4 +34,13 @@ describe("providers page", () => {
     expect(source).toContain("size: 160");
     expect(source).toContain("size: 140");
   });
+
+  it("keeps the CLI import banner gated by the Cloud environment", () => {
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
+    const pagePath = path.join(currentDir, "page.tsx");
+    const source = readFileSync(pagePath, "utf8");
+
+    expect(source).toContain("NEXT_PUBLIC_IS_CLOUD_ENV");
+    expect(source).toContain("{isCloudEnvironment && <CliImportBanner");
+  });
 });

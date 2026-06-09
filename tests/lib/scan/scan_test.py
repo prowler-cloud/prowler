@@ -51,7 +51,7 @@ def mock_provider():
 def mock_execute():
     with mock.patch("prowler.lib.scan.scan.execute", autospec=True) as mock_exec:
         findings = [finding]
-        mock_exec.side_effect = lambda *args, **kwargs: findings
+        mock_exec.side_effect = lambda *_args, **_kwargs: findings
         yield mock_exec
 
 
@@ -264,10 +264,10 @@ class TestScan:
     @patch("prowler.lib.scan.scan.update_checks_metadata_with_compliance")
     @patch("prowler.lib.scan.scan.Compliance.get_bulk")
     @patch("prowler.lib.scan.scan.CheckMetadata.get_bulk")
-    @patch("prowler.lib.scan.scan.import_check")
+    @patch("prowler.lib.scan.scan._resolve_check_module")
     def test_scan(
         self,
-        mock_import_check,
+        mock_resolve_check_module,
         mock_get_bulk,
         mock_compliance_get_bulk,
         mock_update_checks_metadata,
@@ -285,7 +285,7 @@ class TestScan:
         mock_check_instance.CheckTitle = "Check if IAM Access Analyzer is enabled"
         mock_check_instance.Categories = []
 
-        mock_import_check.return_value = MagicMock(
+        mock_resolve_check_module.return_value = MagicMock(
             accessanalyzer_enabled=mock_check_class
         )
 

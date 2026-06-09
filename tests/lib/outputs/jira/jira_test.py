@@ -1004,6 +1004,89 @@ class TestJiraIntegration:
             for mark in node.get("marks", [])
         )
 
+    @staticmethod
+    def _find_empty_text_nodes(node) -> List[str]:
+        # ADF forbids empty text nodes; collect any to assert the document is valid.
+        empties: List[str] = []
+
+        def walk(current) -> None:
+            if isinstance(current, dict):
+                if current.get("type") == "text" and current.get("text", "") == "":
+                    empties.append(current.get("text", ""))
+                for value in current.values():
+                    walk(value)
+            elif isinstance(current, list):
+                for item in current:
+                    walk(item)
+
+        walk(node)
+        return empties
+
+    def test_get_adf_description_empty_resource_name_has_no_empty_text_nodes(self):
+        # A resource without a name (e.g. an AWS-managed IAM policy) used to emit an
+        # empty ADF text node, making Jira reject the issue with 400 INVALID_INPUT.
+        adf_description = self.jira_integration.get_adf_description(
+            check_id="CHECK-1",
+            check_title="Sample check",
+            severity="CRITICAL",
+            severity_color="#FF0000",
+            status="FAIL",
+            status_color="#FF0000",
+            status_extended="Some status",
+            provider="aws",
+            region="eu-west-1",
+            resource_uid="arn:aws:iam::aws:policy/AdministratorAccess",
+            resource_name="",
+            recommendation_text="",
+        )
+
+        assert self._find_empty_text_nodes(adf_description) == []
+
+        table = adf_description["content"][1]
+        resource_name_row = self._find_table_row(table["content"], "Resource Name")
+        value_cell = resource_name_row["content"][1]
+        assert self._collect_text_from_cell(value_cell) == "-"
+
+    @pytest.mark.parametrize(
+        "field, header",
+        [
+            ("check_id", "Check Id"),
+            ("check_title", "Check Title"),
+            ("status_extended", "Status Extended"),
+            ("provider", "Provider"),
+            ("region", "Region"),
+            ("resource_uid", "Resource UID"),
+            ("resource_name", "Resource Name"),
+        ],
+    )
+    def test_get_adf_description_empty_plain_text_fields_render_placeholder(
+        self, field, header
+    ):
+        base_kwargs = dict(
+            check_id="CHECK-1",
+            check_title="Sample check",
+            severity="HIGH",
+            severity_color="#FF0000",
+            status="FAIL",
+            status_color="#00FF00",
+            status_extended="Some status",
+            provider="aws",
+            region="us-east-1",
+            resource_uid="resource-1",
+            resource_name="resource-name",
+            recommendation_text="",
+        )
+        base_kwargs[field] = ""
+
+        adf_description = self.jira_integration.get_adf_description(**base_kwargs)
+
+        assert self._find_empty_text_nodes(adf_description) == []
+
+        table = adf_description["content"][1]
+        row = self._find_table_row(table["content"], header)
+        value_cell = row["content"][1]
+        assert self._collect_text_from_cell(value_cell) == "-"
+
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
         Jira, "get_available_issue_types", return_value=["Bug", "Task", "Story"]

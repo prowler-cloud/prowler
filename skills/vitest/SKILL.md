@@ -181,7 +181,7 @@ expect(screen.getByRole("button")).toBeDisabled();
 
 ## File Organization
 
-```
+```text
 components/
 ├── Button/
 │   ├── Button.tsx
