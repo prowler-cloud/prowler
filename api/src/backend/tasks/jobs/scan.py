@@ -118,19 +118,6 @@ ATTACK_SURFACE_PROVIDER_COMPATIBILITY = {
 _ATTACK_SURFACE_MAPPING_CACHE: dict[str, dict] = {}
 
 
-def _clear_scan_rerun_state(tenant_id: str, scan_id: str) -> None:
-    """Remove rows derived from a previous execution of this scan."""
-    with rls_transaction(tenant_id):
-        Finding.all_objects.filter(scan_id=scan_id).delete()
-        ResourceScanSummary.objects.filter(scan_id=scan_id).delete()
-        ScanCategorySummary.objects.filter(scan_id=scan_id).delete()
-        ScanGroupSummary.objects.filter(scan_id=scan_id).delete()
-        ScanSummary.objects.filter(scan_id=scan_id).delete()
-        AttackSurfaceOverview.objects.filter(scan_id=scan_id).delete()
-        ComplianceRequirementOverview.objects.filter(scan_id=scan_id).delete()
-        ComplianceOverviewSummary.objects.filter(scan_id=scan_id).delete()
-
-
 def aggregate_category_counts(
     categories: list[str],
     severity: str,
@@ -489,10 +476,9 @@ def _create_compliance_summaries(
             )
         )
 
-    # Idempotent re-run: clear this scan's prior summaries before re-inserting, so
-    # a recovered scan's summary always reflects its own (re-derived) requirement
-    # rows rather than keeping a stale row (bulk_create ignore_conflicts alone would
-    # keep the old one).
+    # Idempotent re-run: clear this scan's prior summaries before re-inserting, so a
+    # recovered scan-compliance-overviews run reflects its own re-derived rows instead
+    # of keeping a stale one (bulk_create ignore_conflicts alone would keep the old).
     with rls_transaction(tenant_id):
         ComplianceOverviewSummary.objects.filter(scan_id=scan_id).delete()
         if summary_objects:
@@ -1039,7 +1025,6 @@ def perform_prowler_scan(
         scan_instance.state = StateChoices.EXECUTING
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save(update_fields=["state", "started_at", "updated_at"])
-    _clear_scan_rerun_state(tenant_id, scan_id)
 
     # Find the mutelist processor if it exists
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
