@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { useOnboardingCheckpointStore } from "../onboarding-checkpoint";
-
-const CHECKPOINT_MARKER = "prowler.onboarding.checkpoint";
+import {
+  CHECKPOINT_MARKER,
+  useOnboardingCheckpointStore,
+} from "../onboarding-checkpoint";
 
 describe("useOnboardingCheckpointStore", () => {
   beforeEach(() => {
