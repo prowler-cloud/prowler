@@ -1,0 +1,42 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_directory_sync_object_takeover_blocked",
+  "CheckTitle": "Directory synchronization blocks cloud object takeover through soft and hard matching",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra hybrid tenants can block on-premises directory objects from taking over existing cloud objects through **soft matching** or **hard matching**. This check verifies that both `blockSoftMatchEnabled` and `blockCloudObjectTakeoverThroughHardMatchEnabled` are enabled.",
+  "Risk": "An attacker who can create or modify an on-premises Active Directory object may craft matching identity attributes or a source anchor that attaches the object to an existing privileged cloud identity. Successful object takeover can provide unauthorized access to the cloud account and its assigned roles.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/onpremisesdirectorysynchronization?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/resources/onpremisesdirectorysynchronizationfeature?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-syncservice-features"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Use Microsoft Graph to update the tenant's onPremisesDirectorySynchronization resource so that both `features.blockSoftMatchEnabled` and `features.blockCloudObjectTakeoverThroughHardMatchEnabled` are `true`. Confirm that the flags remain enabled after any time-boxed migration activity.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable both **soft-match blocking** and **hard-match cloud object takeover blocking** for hybrid identity synchronization. Monitor changes to these controls and permit temporary exceptions only through an approved, time-limited migration procedure.",
+      "Url": "https://hub.prowler.com/check/entra_directory_sync_object_takeover_blocked"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_password_hash_sync_enabled",
+    "entra_seamless_sso_disabled"
+  ],
+  "Notes": "This check applies only to hybrid Microsoft Entra tenants with on-premises directory synchronization enabled. It requires permission to read onPremisesDirectorySynchronization through Microsoft Graph."
+}
