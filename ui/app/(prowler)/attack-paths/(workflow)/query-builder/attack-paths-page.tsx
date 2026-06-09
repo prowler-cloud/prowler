@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowLeft, Info, Maximize2 } from "lucide-react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
@@ -52,10 +51,16 @@ import {
   QuerySelector,
   ScanListTable,
 } from "./_components";
+import { AttackPathsStatusPanel } from "./_components/attack-paths-status-panel";
 import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
 import { exportGraphAsPNG } from "./_lib";
+import {
+  ATTACK_PATHS_VIEW_STATES,
+  getAttackPathsViewState,
+  getGraphBuildingProgress,
+} from "./_lib/get-attack-paths-view-state";
 
 /**
  * Attack Paths
@@ -70,6 +75,7 @@ export default function AttackPathsPage() {
 
   const [scansLoading, setScansLoading] = useState(true);
   const [scans, setScans] = useState<AttackPathScan[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
@@ -97,25 +103,28 @@ export default function AttackPathsPage() {
     graphState.resetGraph();
   }, [scanId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset on scanId change only
 
-  // Load available scans on mount
-  useEffect(() => {
-    const loadScans = async () => {
-      setScansLoading(true);
-      try {
-        const scansData = await getAttackPathScans();
-        if (scansData?.data) {
-          setScans(scansData.data);
-        } else {
-          setScans([]);
-        }
-      } catch (error) {
-        console.error("Failed to load scans:", error);
+  // Load available scans; reused by the error-state Retry action.
+  const loadScans = async () => {
+    setScansLoading(true);
+    setLoadError(false);
+    try {
+      const scansData = await getAttackPathScans();
+      if (scansData?.data) {
+        setScans(scansData.data);
+      } else {
         setScans([]);
-      } finally {
-        setScansLoading(false);
+        setLoadError(true);
       }
-    };
+    } catch (error) {
+      console.error("Failed to load scans:", error);
+      setScans([]);
+      setLoadError(true);
+    } finally {
+      setScansLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadScans();
   }, []);
 
@@ -125,6 +134,8 @@ export default function AttackPathsPage() {
       scan.attributes.state === SCAN_STATES.EXECUTING ||
       scan.attributes.state === SCAN_STATES.SCHEDULED,
   );
+
+  const viewState = getAttackPathsViewState({ scansLoading, loadError, scans });
 
   // Detect if the selected scan is showing data from a previous cycle
   const selectedScan = scans.find((scan) => scan.id === scanId);
@@ -386,23 +397,16 @@ export default function AttackPathsPage() {
         </p>
       </div>
 
-      {scansLoading ? (
+      {viewState === ATTACK_PATHS_VIEW_STATES.LOADING ? (
         <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
           <p className="text-sm">Loading scans...</p>
         </div>
-      ) : scans.length === 0 ? (
-        <Alert variant="info">
-          <Info className="size-4" />
-          <AlertTitle>No scans available</AlertTitle>
-          <AlertDescription>
-            <span>
-              You need to run a scan before you can analyze attack paths.{" "}
-              <Link href="/scans" className="font-medium underline">
-                Go to Scan Jobs
-              </Link>
-            </span>
-          </AlertDescription>
-        </Alert>
+      ) : viewState !== ATTACK_PATHS_VIEW_STATES.READY ? (
+        <AttackPathsStatusPanel
+          state={viewState}
+          progress={getGraphBuildingProgress(scans)}
+          onRetry={loadScans}
+        />
       ) : (
         <>
           {/* Scans Table */}
