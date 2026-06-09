@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Tour alignment check (syntactic). Extracts `data-tour-id` values from every
-// `ui/lib/tours/*.tour.ts` and verifies a matching `data-tour-id="..."`
-// attribute exists under `ui/`. Two directions:
+// `ui/lib/tours/*.tour.ts` and verifies a matching attribute exists under `ui/`,
+// in either the JSX form (`data-tour-id="..."`) or the object-property form
+// (`"data-tour-id": "..."`) used for dynamically-spread anchors. Two directions:
 //   - Tour → DOM: fails on any tour `target` with no matching attribute.
 //   - DOM → tour: warns on any `data-tour-id` not referenced by any tour
 //     (does not fail — staged anchors during multi-PR rollouts are OK).
@@ -85,7 +86,10 @@ async function collectAttributeValues() {
     if (!ATTRIBUTE_EXTENSIONS.some((ext) => file.endsWith(ext))) continue;
     if (file.endsWith(TOUR_FILE_SUFFIX)) continue;
     const source = await readFile(file, "utf8");
-    const pattern = /data-tour-id\s*=\s*["']([a-z0-9-]+)["']/g;
+    // Match both the JSX attribute form (`data-tour-id="x"`) and the
+    // object-property form (`"data-tour-id": "x"`) used when an anchor is spread
+    // dynamically — e.g. a table's per-row getRowAttributes returning the id.
+    const pattern = /["']?data-tour-id["']?\s*[=:]\s*["']([a-z0-9-]+)["']/g;
     for (const match of source.matchAll(pattern)) {
       const value = match[1];
       const existing = values.get(value);
