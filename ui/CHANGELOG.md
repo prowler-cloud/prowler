@@ -2,7 +2,19 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+<<<<<<< HEAD
 ## [1.29.3] (Prowler UNRELEASED)
+=======
+## [1.30.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+
+---
+
+## [1.29.3] (Prowler v5.29.3)
+>>>>>>> 662e7e9e1 (chore(changelog): prepare for v5.29.3 (#11505))
 
 ### 🐞 Fixed
 
