@@ -1218,6 +1218,48 @@ class TestCompliance:
 
             assert "custom_1.0_ext" in frameworks
 
+    @patch("prowler.config.config.importlib.metadata.entry_points")
+    def test_get_available_compliance_includes_external_universal(self, mock_ep):
+        """External universal frameworks under prowler.compliance.universal are
+        listed, for a provider and for the provider=None case that feeds
+        --compliance choices."""
+        import json
+        import os
+        import tempfile
+
+        from prowler.config.config import get_available_compliance_frameworks
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            framework = {
+                "framework": "CustomUniversal",
+                "name": "Custom Universal",
+                "version": "1.0",
+                "description": "Multi-provider",
+                "requirements": [
+                    {
+                        "id": "1",
+                        "name": "r",
+                        "description": "d",
+                        "checks": {"aws": ["c"]},
+                    }
+                ],
+            }
+            with open(os.path.join(tmpdir, "customuniversal_1.0.json"), "w") as f:
+                json.dump(framework, f)
+
+            module = MagicMock()
+            module.__path__ = [tmpdir]
+            ep = _make_entry_point(
+                "anyname", "pkg.compliance", "prowler.compliance.universal"
+            )
+            ep.load.return_value = module
+            mock_ep.side_effect = lambda group: (
+                [ep] if group == "prowler.compliance.universal" else []
+            )
+
+            assert "customuniversal_1.0" in get_available_compliance_frameworks("aws")
+            assert "customuniversal_1.0" in get_available_compliance_frameworks(None)
+
     @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
     @patch("prowler.lib.check.compliance_models.list_compliance_modules")
     def test_compliance_get_bulk_loads_external(self, mock_list_modules, mock_ep):
@@ -1256,6 +1298,49 @@ class TestCompliance:
 
             assert "custom_1.0_fakeexternal" in bulk
             assert bulk["custom_1.0_fakeexternal"].Framework == "Custom"
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_compliance_get_bulk_skips_non_legacy_external_json(
+        self, mock_list_modules, mock_ep
+    ):
+        """A universal-schema JSON registered under prowler.compliance is skipped,
+        not aborting the run via sys.exit."""
+        import json
+        import os
+        import tempfile
+
+        from prowler.lib.check.compliance_models import Compliance
+
+        mock_list_modules.return_value = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_data = {
+                "framework": "Universal",
+                "name": "Universal Framework",
+                "version": "1.0",
+                "description": "Multi-provider",
+                "requirements": [
+                    {
+                        "id": "1",
+                        "name": "r",
+                        "description": "d",
+                        "checks": {"aws": ["c"]},
+                    }
+                ],
+            }
+            with open(os.path.join(tmpdir, "universal_1.0.json"), "w") as f:
+                json.dump(json_data, f)
+
+            mock_module = MagicMock()
+            mock_module.__path__ = [tmpdir]
+            ep = _make_entry_point("aws", "pkg.compliance", "prowler.compliance")
+            ep.load.return_value = mock_module
+            mock_ep.return_value = [ep]
+
+            bulk = Compliance.get_bulk("aws")
+
+        assert "universal_1.0" not in bulk
 
     @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
     @patch("prowler.lib.check.compliance_models.list_compliance_modules")
