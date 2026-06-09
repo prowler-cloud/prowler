@@ -19,8 +19,7 @@ export type ExploreFindingsTourTarget =
 
 export const exploreFindingsTour = defineTour<ExploreFindingsTourTarget>({
   id: "explore-findings",
-  // v2: added the "Review the affected resources" step that opens a group.
-  version: 2,
+  version: 1,
   coversFiles: ["ui/app/(prowler)/findings/**", "ui/components/findings/**"],
   steps: [
     {
