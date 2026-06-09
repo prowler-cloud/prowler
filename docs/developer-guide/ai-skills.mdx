@@ -20,18 +20,18 @@ To enable skills for the supported AI coding assistants, run the setup script fr
 
 The script creates symlinks so each tool finds the skills in its expected location:
 
-| Tool | Symlink Created |
-|------|-----------------|
-| Claude Code / OpenCode | `.claude/skills/` |
-| Codex (OpenAI) | `.codex/skills/` |
-| GitHub Copilot | `.github/skills/` |
-| Gemini CLI | `.gemini/skills/` |
+| Tool | Created by setup |
+|------|------------------|
+| Claude Code | `.claude/skills/` symlink and `CLAUDE.md` |
+| Gemini CLI | `.gemini/skills/` symlink and `GEMINI.md` |
+| Codex (OpenAI) | `.codex/skills/` symlink (uses `AGENTS.md` natively) |
+| GitHub Copilot | `.github/copilot-instructions.md` symlink to `AGENTS.md` |
 
 After running the setup, restart the AI coding assistant to load the skills.
 
 ## Using Skills
 
-AI agents discover skills automatically and load them when a request matches a skill trigger. To load a skill manually during a session, point the agent to its `SKILL.md` file:
+AI agents discover skills automatically and load them when a request matches a skill trigger. To load a skill manually during a session, point the agent to the skill's `SKILL.md` file:
 
 ```text
 Read skills/{skill-name}/SKILL.md
