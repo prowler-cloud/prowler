@@ -122,17 +122,21 @@ class Test_Vercel_Schema:
         assert _validate("vercel", {"max_owner_percentage": 20}) == {
             "max_owner_percentage": 20
         }
-        assert _validate("vercel", {"max_owner_percentage": 0}) == {
-            "max_owner_percentage": 0
+        assert _validate("vercel", {"max_owner_percentage": 1}) == {
+            "max_owner_percentage": 1
         }
-        assert _validate("vercel", {"max_owner_percentage": 100}) == {
-            "max_owner_percentage": 100
+        assert _validate("vercel", {"max_owner_percentage": 50}) == {
+            "max_owner_percentage": 50
         }
 
-    def test_owner_percentage_over_100_dropped(self):
+    def test_owner_percentage_over_max_dropped(self):
+        # Tightened to 1..50 — anything above (incl. previous 100) is dropped.
+        assert _validate("vercel", {"max_owner_percentage": 51}) == {}
         assert _validate("vercel", {"max_owner_percentage": 150}) == {}
 
-    def test_owner_percentage_negative_dropped(self):
+    def test_owner_percentage_zero_or_negative_dropped(self):
+        # 0 is no longer a valid configuration (defeats PoLP signal).
+        assert _validate("vercel", {"max_owner_percentage": 0}) == {}
         assert _validate("vercel", {"max_owner_percentage": -1}) == {}
 
     def test_full_default_config_round_trip(self):

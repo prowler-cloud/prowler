@@ -101,10 +101,14 @@ class Test_AWS_Trusted_Ips:
 
 class Test_AWS_Ports:
     def test_valid_ports_in_range(self):
-        ports = [25, 80, 443, 65535, 0]
+        ports = [25, 80, 443, 65535, 1]
         assert _validate({"ec2_high_risk_ports": ports}) == {
             "ec2_high_risk_ports": ports
         }
+
+    def test_port_zero_is_dropped(self):
+        # Port 0 is reserved and not a valid security signal.
+        assert _validate({"ec2_high_risk_ports": [0]}) == {}
 
     def test_out_of_range_port_is_dropped(self):
         assert _validate({"ec2_high_risk_ports": [70000]}) == {}
