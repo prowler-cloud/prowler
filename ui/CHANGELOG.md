@@ -11,6 +11,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [1.29.3] (Prowler v5.29.3)
+
+### 🐞 Fixed
+
+- Finding drawer tabs now keep the active tab text and underline styling when tooltip state changes [(#11493)](https://github.com/prowler-cloud/prowler/pull/11493)
+
+---
+
 ## [1.29.2] (Prowler v5.29.2)
 
 ### 🔄 Changed
