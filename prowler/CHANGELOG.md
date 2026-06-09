@@ -17,12 +17,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - External multi-provider compliance frameworks can be registered via the `prowler.compliance.universal` entry point group [(#11490)](https://github.com/prowler-cloud/prowler/pull/11490)
 - AWS AI Security Framework support in the CLI dashboard [(#11475)](https://github.com/prowler-cloud/prowler/pull/11475)
 - `entra_service_principal_privileged_role_no_owners` check for M365 provider, failing when a service principal with a permanent Tier 0 directory role has owners on the service principal or its parent app registration [(#11070)](https://github.com/prowler-cloud/prowler/issues/11070)
+- `kms_key_rotation_max_90_days` check for GCP provider, verifying KMS customer-managed keys are rotated every 90 days or less in line with the CIS Benchmark [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
 
 ### 🐞 Fixed
 
 - `load_and_validate_config_file` now unwraps namespaced config for every built-in and external provider, and no longer leaks the full file as the provider's config when the file is namespaced [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 - `entra_users_mfa_capable` no longer flags pre-provisioned users with future `employeeHireDate`; future-hire date comparisons now tolerate naive datetimes [(#11511)](https://github.com/prowler-cloud/prowler/pull/11511)
 - M365 Admin Center group enumeration now follows Microsoft Graph pagination so group-scoped checks include groups beyond the first page [(#11510)](https://github.com/prowler-cloud/prowler/pull/11510)
+- GCP `kms_key_rotation_enabled` check now only verifies that automatic key rotation is enabled (any interval) instead of enforcing a 90-day period, resolving the mismatch between the check and its documentation; the CIS, Prowler ThreatScore, and CCC requirements that mandate a 90-day maximum were remapped to the new `kms_key_rotation_max_90_days` check [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
 
 ---
 
