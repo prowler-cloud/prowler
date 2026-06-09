@@ -18,6 +18,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - AWS AI Security Framework support in the CLI dashboard [(#11475)](https://github.com/prowler-cloud/prowler/pull/11475)
 - `entra_service_principal_privileged_role_no_owners` check for M365 provider, failing when a service principal with a permanent Tier 0 directory role has owners on the service principal or its parent app registration [(#11070)](https://github.com/prowler-cloud/prowler/issues/11070)
 - `kms_key_rotation_max_90_days` check for GCP provider, verifying KMS customer-managed keys are rotated every 90 days or less in line with the CIS Benchmark [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
+- `exchange_mailbox_primary_smtp_uses_custom_domain` check for M365 provider [(#11215)](https://github.com/prowler-cloud/prowler/pull/11215)
 
 ### 🐞 Fixed
 
