@@ -13,15 +13,22 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 - `elbv2_alb_drop_invalid_header_fields_enabled` check for AWS provider, verifying Application Load Balancers have `routing.http.drop_invalid_header_fields.enabled` set to `true` to mitigate HTTP desync attacks (AWS FSBP ELB.4) [(#11471)](https://github.com/prowler-cloud/prowler/pull/11471)
 - `user`, `systemlog` and `idp` service for Okta provider with `user_inactivity_automation_35d_enabled`, `systemlog_streaming_enabled` and `idp_smart_card_dod_approved_ca` checks [(#11496)](https://github.com/prowler-cloud/prowler/pull/11496)
+- AWS AI Security Framework support in the CLI dashboard [(#11475)](https://github.com/prowler-cloud/prowler/pull/11475)
 
 ### 🐞 Fixed
 
 - `load_and_validate_config_file` now unwraps namespaced config for every built-in and external provider, and no longer leaks the full file as the provider's config when the file is namespaced [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
+
+---
+
+## [5.29.3] (Prowler v5.29.3)
+
+### 🐞 Fixed
+
 - GCP `logging_sink_created` now recognizes organization-level aggregated sinks with `includeChildren=True`, avoiding false failures for covered projects [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
 - GCP `logging_log_metric_filter_and_alert_*` checks now recognize organization-level aggregated sinks with `includeChildren=True`, no longer false-failing projects covered by a central bucket-scoped metric + alert [(#11488)](https://github.com/prowler-cloud/prowler/pull/11488)
 - Jira integration no longer fails with `400 INVALID_INPUT` when a finding has empty fields [(#11474)](https://github.com/prowler-cloud/prowler/pull/11474)
 - GCP `iam_service_account_unused` now passes disabled service accounts instead of failing them, since a disabled account cannot authenticate or be used [(#11467)](https://github.com/prowler-cloud/prowler/pull/11467)
-- AWS AI Security Framework now renders in the dashboard instead of showing "No data found for this compliance", by adding the missing compliance view module [(#11470)](https://github.com/prowler-cloud/prowler/pull/11470)
 
 ---
 
