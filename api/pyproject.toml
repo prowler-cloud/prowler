@@ -448,10 +448,12 @@ constraint-dependencies = [
 # dulwich 1.2.5 patches GHSA-897w-fcg9-f6xj (arbitrary file write) and pyjwt 2.13.0
 # patches PYSEC-2026-179 (HMAC/JWK key-confusion); a constraint cannot satisfy these
 # against the SDK's hard pins, so override them to the patched versions until the SDK
-# bump propagates to the pinned master rev.
+# bump propagates to the pinned master rev. pyjwt keeps the [crypto] extra because an
+# override replaces the whole requirement; bare pyjwt would drop it from the consumers
+# that request pyjwt[crypto] and leave cryptography (needed for RS256) only transitive.
 override-dependencies = [
   "okta==3.4.2",
   "microsoft-kiota-abstractions==1.9.9",
   "dulwich==1.2.5",
-  "pyjwt==2.13.0"
+  "pyjwt[crypto]==2.13.0"
 ]

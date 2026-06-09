@@ -377,7 +377,7 @@ overrides = [
     { name = "dulwich", specifier = "==1.2.5" },
     { name = "microsoft-kiota-abstractions", specifier = "==1.9.9" },
     { name = "okta", specifier = "==3.4.2" },
-    { name = "pyjwt", specifier = "==2.13.0" },
+    { name = "pyjwt", extras = ["crypto"], specifier = "==2.13.0" },
 ]
 
 [[package]]
@@ -395,7 +395,7 @@ version = "1.2.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dateutil" },
     { name = "requests" },
 ]
@@ -1076,7 +1076,7 @@ dependencies = [
     { name = "pkginfo" },
     { name = "psutil", marker = "sys_platform != 'cygwin'" },
     { name = "py-deviceid" },
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "pyopenssl" },
     { name = "requests", extra = ["socks"] },
 ]
@@ -1783,7 +1783,7 @@ dependencies = [
     { name = "packaging" },
     { name = "pagerduty" },
     { name = "policyuniverse" },
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dateutil" },
     { name = "python-digitalocean" },
     { name = "pyyaml" },
@@ -2306,7 +2306,7 @@ saml = [
 ]
 socialaccount = [
     { name = "oauthlib" },
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "requests" },
 ]
 
@@ -2459,7 +2459,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "djangorestframework" },
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a8/27/2874a325c11112066139769f7794afae238a07ce6adf96259f08fd37a9d7/djangorestframework_simplejwt-5.5.1.tar.gz", hash = "sha256:e72c5572f51d7803021288e2057afcbd03f17fe11d484096f40a460abc76e87f", size = 101265, upload-time = "2025-07-21T16:52:25.026Z" }
 wheels = [
@@ -3774,7 +3774,7 @@ version = "1.35.0b1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "requests" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0e/7a/6880016fab1720981b54db844c32af6f2e5e90aac21575ad6e54e1840313/msal-1.35.0b1.tar.gz", hash = "sha256:fe8143079183a5c952cd9f3ba66a148fe7bae9fb9952bd0e834272bfbeb34508", size = 157573, upload-time = "2026-01-06T23:51:56.958Z" }
@@ -4036,7 +4036,7 @@ dependencies = [
     { name = "pycryptodomex" },
     { name = "pydantic" },
     { name = "pydash" },
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dateutil" },
     { name = "pyyaml" },
     { name = "requests" },
@@ -4856,7 +4856,7 @@ name = "pygithub"
 version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "pynacl" },
     { name = "requests" },
     { name = "typing-extensions" },
@@ -4883,6 +4883,11 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/3b/81/58d0ac84e1ef3a3843791d6954d94c0b33d526c75eeb1efbce9d0a4c4077/pyjwt-2.13.0.tar.gz", hash = "sha256:41571c89ca91598c79e8ef18a2d07367d4810fbbd6f637794879baf1b7703423", size = 107515, upload-time = "2026-05-21T19:54:36.618Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/5e/ecf12fdb62546d64385c158514e9b2b671f7832108ef2ecd2020ce0af2d1/pyjwt-2.13.0-py3-none-any.whl", hash = "sha256:66adcc2aff09b3f1bbd95fc1e1577df8ac8723c978552fd43304c8a290ac5728", size = 31274, upload-time = "2026-05-21T19:54:35.362Z" },
+]
+
+[package.optional-dependencies]
+crypto = [
+    { name = "cryptography" },
 ]
 
 [[package]]
@@ -5785,7 +5790,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "httpx" },
-    { name = "pyjwt" },
+    { name = "pyjwt", extra = ["crypto"] },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3c/2f/99fb8718274116c5c146c745755620fd5c5943f78ca52ca9b17e94348286/workos-6.0.4.tar.gz", hash = "sha256:b0bfe8fd212b8567422c4ea3732eb33608794033eb3a69900c6b04db183c32d6", size = 172217, upload-time = "2026-04-16T03:09:28.583Z" }
 wheels = [
