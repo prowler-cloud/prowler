@@ -25,18 +25,23 @@
   animation: driver-fade-in 0.2s ease-in-out;
 }
 
+/* Theme layer over driver.css: keep its positioning/stage, strip the default popover
+ * chrome (background, border, padding, shadow) so the React tour card is the only
+ * visible surface. Do NOT set position/top/right here — driver.js places the popover. */
 .driver-popover.prowler-theme {
-  all: unset;
   box-sizing: border-box;
   margin: 0;
-  width: min(300px, calc(100vw - 32px));
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   min-width: min(250px, calc(100vw - 32px));
-  max-width: 300px;
+  max-width: min(320px, calc(100vw - 32px));
   font-family: inherit;
-  z-index: 1000000000;
-  position: fixed;
-  top: 0;
-  right: 0;
+  /* Reset driver.css's hard-coded #2d2d2d so the card text follows the app theme
+   * (the card title inherits this; descriptions set their own muted token). */
+  color: var(--color-text-neutral-primary);
 }
 
 .driver-popover.prowler-theme * {
@@ -44,23 +49,17 @@
   font-family: inherit;
 }
 
-.driver-popover.prowler-theme .driver-popover-title {
-  display: block;
-  position: relative;
-  margin: 0;
-}
-
-.driver-popover.prowler-theme .driver-popover-description {
-  margin-bottom: 0;
-}
-
-.driver-popover.prowler-theme .driver-popover-close-btn {
-  z-index: 1;
-}
-
-.driver-popover.prowler-theme .driver-popover-btn-disabled {
-  opacity: 0.5;
-  pointer-events: none;
+/* The visible popover is our React card (mounted at [data-tour-popover-root]).
+ * Keep driver.js's native chrome in the DOM (tour-popover-render reads its text and
+ * progress) but force it hidden — driver.css sets display:block/flex on these, which
+ * would otherwise override the `hidden` attribute and duplicate the card content. */
+.driver-popover.prowler-theme .driver-popover-title,
+.driver-popover.prowler-theme .driver-popover-description,
+.driver-popover.prowler-theme .driver-popover-footer,
+.driver-popover.prowler-theme .driver-popover-progress-text,
+.driver-popover.prowler-theme .driver-popover-close-btn,
+.driver-popover.prowler-theme .driver-popover-arrow {
+  display: none !important;
 }
 
 :not(body):has(> .driver-active-element) {
@@ -70,10 +69,6 @@
 .driver-no-interaction,
 .driver-no-interaction * {
   pointer-events: none !important;
-}
-
-.driver-popover.prowler-theme .driver-popover-arrow {
-  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

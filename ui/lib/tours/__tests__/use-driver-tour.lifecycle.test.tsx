@@ -39,8 +39,10 @@ vi.mock("driver.js", () => ({
   driver: driverHarness.driverMock,
 }));
 
+const themeHarness = vi.hoisted(() => ({ resolvedTheme: "dark" }));
+
 vi.mock("next-themes", () => ({
-  useTheme: () => ({ resolvedTheme: "dark" }),
+  useTheme: () => ({ resolvedTheme: themeHarness.resolvedTheme }),
 }));
 
 const tour = {
@@ -86,6 +88,7 @@ function HookProbe({
 describe("useDriverTour lifecycle", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
+    themeHarness.resolvedTheme = "dark";
     driverHarness.driverMock.mockClear();
     driverHarness.instances.length = 0;
   });
@@ -151,5 +154,45 @@ describe("useDriverTour lifecycle", () => {
     });
 
     expect(driverHarness.instances[0].drive).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not record a completion when an active tour is torn down by a theme change", () => {
+    const store = createStore();
+    let latestResult: UseDriverTourResult | undefined;
+
+    const { rerender } = render(
+      <HookProbe
+        autoOpen={false}
+        store={store}
+        onResult={(result) => {
+          latestResult = result;
+        }}
+      />,
+    );
+
+    act(() => {
+      latestResult?.start();
+    });
+
+    // Toggling theme re-runs the driver effect; its cleanup destroys the active
+    // instance, which (like real driver.js) fires onDestroyed directly.
+    act(() => {
+      themeHarness.resolvedTheme = "light";
+      rerender(
+        <HookProbe
+          autoOpen={false}
+          store={store}
+          onResult={(result) => {
+            latestResult = result;
+          }}
+        />,
+      );
+    });
+
+    // The first instance was destroyed and a fresh one created for the new theme...
+    expect(driverHarness.instances[0].destroy).toHaveBeenCalledTimes(1);
+    expect(driverHarness.instances).toHaveLength(2);
+    // ...but no completion record was persisted, so the tour can reappear later.
+    expect(store.get({ id: tour.id, version: tour.version })).toBeNull();
   });
 });

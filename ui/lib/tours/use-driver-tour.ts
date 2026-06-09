@@ -1,5 +1,10 @@
 "use client";
 
+// driver.js's own stylesheet provides the overlay/stage geometry and base popover
+// positioning. tours.css only themes on top of it (strips the popover chrome so our
+// React card shows). Without this import the spotlight and popover placement break.
+import "driver.js/dist/driver.css";
+
 import { type Config, type Driver, driver, type DriveStep } from "driver.js";
 import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
@@ -169,6 +174,12 @@ export function useDriverTour<TTarget extends string>(
   >(onClosed);
   onClosedRef.current = onClosed;
 
+  // True while an involuntary teardown is in flight (theme re-render / unmount).
+  // driver.js's destroy() bypasses onDestroyStarted but still fires onDestroyed, so
+  // without this flag onDestroyed would persist the default DISMISSED record and the
+  // tour would be marked resolved forever after a simple theme toggle.
+  const teardownRef = useRef(false);
+
   const tourId = tour.id;
   const tourVersion = tour.version;
   const existing = store.get({ id: tourId, version: tourVersion });
@@ -256,6 +267,12 @@ export function useDriverTour<TTarget extends string>(
       },
       onDestroyed: () => {
         unmountActiveTourPopover();
+        // Involuntary teardown: close the tour without recording a resolution so it
+        // can reappear later (e.g. the user just switched theme mid-tour).
+        if (teardownRef.current) {
+          teardownRef.current = false;
+          return;
+        }
         persist(finalStateRef.current);
         onClosedRef.current?.(finalStateRef.current);
       },
@@ -266,6 +283,7 @@ export function useDriverTour<TTarget extends string>(
     return () => {
       const instance = driverRef.current;
       if (instance?.isActive()) {
+        teardownRef.current = true;
         instance.destroy();
       }
       unmountActiveTourPopover();
