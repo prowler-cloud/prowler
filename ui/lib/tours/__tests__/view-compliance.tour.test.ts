@@ -25,9 +25,11 @@ describe("viewComplianceTour shape", () => {
     expect(viewComplianceTour.version).toBeGreaterThan(0);
   });
 
-  it("anchors exactly the frameworks and search steps, in that order", () => {
+  it("anchors exactly the search and frameworks steps, in that order", () => {
+    // Search sits above the cards in the DOM; the tour must follow top-to-bottom
+    // so the spotlight never jumps back up the page.
     const targets = definedTargets();
-    expect(targets).toEqual(["frameworks", "search"]);
+    expect(targets).toEqual(["search", "frameworks"]);
   });
 
   it("never targets an element outside the allowed anchor set", () => {

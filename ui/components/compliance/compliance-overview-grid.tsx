@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
-import { OnboardingTrigger } from "@/components/onboarding";
+import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/ui/table/data-table-search";
 import { getFlowById } from "@/lib/onboarding";
 import type { ComplianceOverviewData } from "@/types/compliance";
@@ -43,6 +43,8 @@ export const ComplianceOverviewGrid = ({
       <Suspense fallback={null}>
         <OnboardingTrigger flow={viewComplianceFlow} />
       </Suspense>
+      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
+      <PageReady />
       <div className="flex items-center justify-between gap-4">
         <div data-tour-id="view-compliance-search">
           <DataTableSearch
@@ -55,11 +57,8 @@ export const ComplianceOverviewGrid = ({
           {filteredFrameworks.length.toLocaleString()} Total Entries
         </span>
       </div>
-      <div
-        data-tour-id="view-compliance-frameworks"
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
-      >
-        {filteredFrameworks.map((compliance) => {
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        {filteredFrameworks.map((compliance, index) => {
           const { attributes, id } = compliance;
           const {
             framework,
@@ -68,9 +67,8 @@ export const ComplianceOverviewGrid = ({
             total_requirements,
           } = attributes;
 
-          return (
+          const card = (
             <ComplianceCard
-              key={id}
               title={framework}
               version={version}
               passingRequirements={requirements_passed}
@@ -83,6 +81,22 @@ export const ComplianceOverviewGrid = ({
               selectedScan={selectedScan}
               isLatestCisForProvider={latestCisIds?.has(id) ?? false}
             />
+          );
+
+          // Anchor the tour to a single card, not the whole grid: highlighting the
+          // grid lit up the entire viewport and scrolled the page to the bottom.
+          return index === 0 ? (
+            <div
+              key={id}
+              data-tour-id="view-compliance-frameworks"
+              className="h-full [&>*]:h-full"
+            >
+              {card}
+            </div>
+          ) : (
+            <div key={id} className="h-full [&>*]:h-full">
+              {card}
+            </div>
           );
         })}
       </div>

@@ -27,20 +27,20 @@ export const viewComplianceTour = defineTour<ViewComplianceTourTarget>({
         "Compliance maps your findings to frameworks like CIS so you can see where you stand against each standard.",
     },
     {
-      target: "frameworks",
-      side: TOUR_STEP_SIDES.TOP,
-      align: TOUR_STEP_ALIGNMENTS.START,
-      title: "Browse the frameworks",
-      description:
-        "Each card is a framework with your passed and total requirement counts. Open one to drill into its requirements.",
-    },
-    {
       target: "search",
       side: TOUR_STEP_SIDES.BOTTOM,
       align: TOUR_STEP_ALIGNMENTS.START,
       title: "Find a framework fast",
       description:
         "Search by name to jump straight to a specific framework instead of scrolling through every card.",
+    },
+    {
+      target: "frameworks",
+      side: TOUR_STEP_SIDES.BOTTOM,
+      align: TOUR_STEP_ALIGNMENTS.START,
+      title: "Browse the frameworks",
+      description:
+        "Each card is a framework with your passed and total requirement counts. Open one to drill into its requirements.",
     },
   ],
 });
