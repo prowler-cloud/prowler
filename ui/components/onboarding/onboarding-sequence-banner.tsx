@@ -34,11 +34,10 @@ export function OnboardingSequenceBanner({
   // scan has finished — those steps have no data to show otherwise.
   const continueDisabled =
     hasCompletedScan === false && Boolean(nextFlow?.dataRequirementHint);
-  // Prefer the current step's own hint; otherwise surface the next step's hint to
-  // explain why Continue is disabled (e.g. on the scan step itself).
-  const hint =
-    flow.dataRequirementHint ??
-    (continueDisabled ? nextFlow?.dataRequirementHint : undefined);
+  // Only surface a hint to explain why Continue is disabled. The gate already
+  // guarantees scan-dependent steps are reached with data, so showing a step's
+  // own "wait for findings" hint once we're there would be stale/misleading.
+  const hint = continueDisabled ? nextFlow?.dataRequirementHint : undefined;
 
   const handleContinue = () => {
     if (continueDisabled) return;
@@ -82,9 +81,9 @@ export function OnboardingSequenceBanner({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {/* Secondary action: match the app's modal Cancel variant (outline). */}
+          {/* Secondary action: skips the whole tour. Outline matches the app's modal Cancel variant. */}
           <Button variant="outline" size="sm" onClick={handleExit}>
-            Exit
+            Skip
           </Button>
           <Button
             variant="default"

@@ -77,14 +77,16 @@ describe("OnboardingSequenceBanner", () => {
     expect(status).toHaveAttribute("aria-live", "polite");
   });
 
-  it("shows the data requirement hint when the current flow has one", () => {
+  it("does not show the data requirement hint on a scan-dependent step once a scan has finished", () => {
+    // The Continue gate already guarantees we only reach this step with data,
+    // so the "wait for findings" hint would be stale/misleading here.
     setSlice({ active: true, currentFlowId: "explore-findings" });
 
-    render(<OnboardingSequenceBanner />);
+    render(<OnboardingSequenceBanner hasCompletedScan={true} />);
 
     expect(
-      screen.getByText(/wait for the scan to finish/i),
-    ).toBeInTheDocument();
+      screen.queryByText(/wait for the scan to finish/i),
+    ).not.toBeInTheDocument();
   });
 
   it("does not show a hint for a flow without one", () => {
@@ -121,12 +123,12 @@ describe("OnboardingSequenceBanner", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("stops the sequence when Exit is clicked", async () => {
+  it("stops the sequence when Skip is clicked", async () => {
     setSlice({ active: true, currentFlowId: "explore-findings" });
     const user = userEvent.setup();
 
     render(<OnboardingSequenceBanner />);
-    await user.click(screen.getByRole("button", { name: /exit/i }));
+    await user.click(screen.getByRole("button", { name: /skip/i }));
 
     expect(stopMock).toHaveBeenCalledTimes(1);
     expect(advanceMock).not.toHaveBeenCalled();
@@ -164,6 +166,19 @@ describe("OnboardingSequenceBanner", () => {
       render(<OnboardingSequenceBanner hasCompletedScan={true} />);
 
       expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
+    });
+
+    it("surfaces the hint on a scan-dependent step itself when no scan has finished", () => {
+      // Edge case: if we somehow sit on findings without a completed scan, the
+      // next step (compliance) is still gated, so the hint explains the block.
+      setSlice({ active: true, currentFlowId: "explore-findings" });
+
+      render(<OnboardingSequenceBanner hasCompletedScan={false} />);
+
+      expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
+      expect(
+        screen.getByText(/wait for the scan to finish/i),
+      ).toBeInTheDocument();
     });
 
     it("never gates Continue when the next step does not need scan data", () => {

@@ -111,7 +111,7 @@ export default function AttackPathsPage() {
     {
       enabled: onboardingEnabled && !scansLoading && hasReadyScan,
       autoOpen: !isAttackPathsReplay,
-      // Page owns tour auto-open; OnboardingSequenceBanner is the sole Continue/Exit control.
+      // Page owns tour auto-open; OnboardingSequenceBanner is the sole Continue/Skip control.
       // pickDemoScan/pickDemoQuery policy lives in attack-paths.tour.ts.
       stepHandlers: {
         "scan-list": {
