@@ -2,13 +2,17 @@ import {
   defineTour,
   TOUR_STEP_ALIGNMENTS,
   TOUR_STEP_SIDES,
-  type TourStepHandlers,
 } from "./tour-types";
 
 // Const map keeps the union narrow so `useDriverTour` can validate step keys.
 export const ADD_PROVIDER_TOUR_TARGETS = {
   TRIGGER: "trigger",
   PROVIDER_TYPE: "provider-type",
+  // Wraps the whole wizard modal so the final step's spotlight covers every input
+  // (UID, alias) and the footer — driver.js only keeps the highlighted element and
+  // its descendants interactive, so anchoring here stops the overlay from freezing
+  // those inputs.
+  WIZARD_BODY: "wizard-body",
 } as const;
 
 export type AddProviderTourTarget =
@@ -16,7 +20,9 @@ export type AddProviderTourTarget =
 
 export const addProviderTour = defineTour<AddProviderTourTarget>({
   id: "add-provider",
-  version: 1,
+  // v2: the tour now drives the user into the wizard body (provider-type + wizard-body
+  // steps) instead of ending at type selection.
+  version: 2,
   coversFiles: ["ui/components/providers/**"],
   steps: [
     {
@@ -28,32 +34,34 @@ export const addProviderTour = defineTour<AddProviderTourTarget>({
       target: "trigger",
       side: TOUR_STEP_SIDES.BOTTOM,
       align: TOUR_STEP_ALIGNMENTS.START,
+      // No Next button: clicking the highlighted "Add a Provider" button opens the
+      // wizard and advances the tour (see openProviderWizard).
+      autoAdvance: true,
       title: "Open the Add Provider wizard",
       description:
-        "Click Add Provider to launch the setup wizard. We'll point out the first thing to choose.",
+        "Click Add a Provider to open the setup wizard. We'll point out the first thing to choose.",
     },
     {
       target: "provider-type",
       side: TOUR_STEP_SIDES.RIGHT,
       align: TOUR_STEP_ALIGNMENTS.START,
+      // No Next button: the wizard advances the tour when a type is picked.
+      autoAdvance: true,
       title: "Pick a provider type",
       description:
-        "Choose the cloud you want to connect (AWS, Azure, GCP, and more). From here the wizard guides you through the rest — go at your own pace.",
+        "Choose the cloud you want to connect (AWS, Azure, GCP, and more). Selecting one takes you to the account details.",
+    },
+    {
+      target: "wizard-body",
+      // Pinned to the left of the form column, mirroring the provider-type step.
+      side: TOUR_STEP_SIDES.LEFT,
+      align: TOUR_STEP_ALIGNMENTS.START,
+      // Final step: stays until the user closes it or advances to credentials, which
+      // the wizard ends the tour from. No Next button.
+      autoAdvance: true,
+      title: "Add your account details",
+      description:
+        "Enter your account ID and an optional alias, then continue. From here you'll add credentials, test the connection, and launch your first scan — at your own pace.",
     },
   ],
 });
-
-// Step handlers are passed to `useDriverTour` at consumption time (not part of `TourDefinition`).
-// `trigger` opens the wizard and waits for `provider-type` to mount before advancing.
-export function createAddProviderTourStepHandlers(openWizard: () => void): {
-  [K in AddProviderTourTarget]?: TourStepHandlers<AddProviderTourTarget>;
-} {
-  return {
-    [ADD_PROVIDER_TOUR_TARGETS.TRIGGER]: {
-      onNext: async ({ waitForStep }) => {
-        openWizard();
-        await waitForStep(ADD_PROVIDER_TOUR_TARGETS.PROVIDER_TYPE);
-      },
-    },
-  };
-}

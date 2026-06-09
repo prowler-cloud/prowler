@@ -42,7 +42,7 @@ const renderCta = (props: NoProvidersAddedProps) => {
         className="w-full max-w-xs justify-center"
         size="lg"
       >
-        <Link href={props.href}>Get Started</Link>
+        <Link href={props.href}>Add a Provider</Link>
       </Button>
     );
   }
@@ -55,7 +55,7 @@ const renderCta = (props: NoProvidersAddedProps) => {
       size="lg"
       onClick={props.onOpenWizard}
     >
-      Get Started
+      Add a Provider
     </Button>
   );
 };

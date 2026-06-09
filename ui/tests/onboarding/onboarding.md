@@ -78,7 +78,7 @@ record.
 
 - Admin user authentication required (`admin.auth.setup`, reused `storageState`)
 - A `completed` record exists in localStorage for `add-provider`
-  (`prowler.tour.add-provider.v1`)
+  (`prowler.tour.add-provider.v2`)
 
 ### Flow Steps
 

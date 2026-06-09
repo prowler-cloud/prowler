@@ -5,8 +5,8 @@ import {
   type AddProviderTourTarget,
 } from "../add-provider.tour";
 
-// Only these two carry a `data-tour-id` in the UI; welcome step has no target.
-const ALLOWED_TARGETS = ["trigger", "provider-type"] as const;
+// These carry a `data-tour-id` in the UI; the welcome step has no target.
+const ALLOWED_TARGETS = ["trigger", "provider-type", "wizard-body"] as const;
 
 const definedTargets = (): AddProviderTourTarget[] =>
   addProviderTour.steps
@@ -23,10 +23,20 @@ describe("addProviderTour shape", () => {
     expect(addProviderTour.version).toBeGreaterThan(0);
   });
 
-  it("includes a trigger step and a provider-type step", () => {
+  it("includes the trigger, provider-type, and wizard-body steps in order", () => {
     const targets = definedTargets();
-    expect(targets).toContain("trigger");
-    expect(targets).toContain("provider-type");
+    expect(targets).toEqual(["trigger", "provider-type", "wizard-body"]);
+  });
+
+  it("marks every anchored step as autoAdvance (no Next button)", () => {
+    // All anchored steps advance imperatively from the UI (clicking the real
+    // "Add a Provider" button, picking a type, etc.), so none renders a Next button.
+    const byTarget = (target: AddProviderTourTarget) =>
+      addProviderTour.steps.find((step) => step.target === target);
+
+    expect(byTarget("trigger")?.autoAdvance).toBe(true);
+    expect(byTarget("provider-type")?.autoAdvance).toBe(true);
+    expect(byTarget("wizard-body")?.autoAdvance).toBe(true);
   });
 
   it("never targets an element outside the allowed anchor set", () => {

@@ -19,11 +19,31 @@ import {
   ADD_PROVIDER_SEARCH_PARAM,
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
-import { createAddProviderTourStepHandlers } from "@/lib/tours/add-provider.tour";
+import {
+  ADD_PROVIDER_TOUR_TARGETS,
+  addProviderTour,
+} from "@/lib/tours/add-provider.tour";
+import {
+  advanceActiveTourWhenReady,
+  getTourTargetSelector,
+} from "@/lib/tours/use-driver-tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
 
 const addProviderFlow = getFlowById("add-provider")!;
+
+// Softer overlay for this onboarding tour — a heavy dim over the wizard feels harsh
+// while the user fills the form. Module-level constant keeps the driver config stable
+// across renders (useDriverTour recreates the driver when configOverrides identity
+// changes).
+const ADD_PROVIDER_TOUR_CONFIG = { overlayOpacity: 0.45 } as const;
+
+// The tour's "trigger" step auto-advances when the wizard opens; this is the anchor
+// it waits for (the provider-type selector inside the wizard).
+const PROVIDER_TYPE_TOUR_SELECTOR = getTourTargetSelector(
+  addProviderTour.id,
+  ADD_PROVIDER_TOUR_TARGETS.PROVIDER_TYPE,
+);
 
 interface ProvidersAccountsViewProps {
   isCloud: boolean;
@@ -59,6 +79,9 @@ export function ProvidersAccountsView({
     setOrgWizardInitialData(undefined);
     setProviderWizardInitialData(initialData);
     setIsProviderWizardOpen(true);
+    // If the add-provider tour is on its "trigger" step, opening the wizard is the
+    // advance signal: move to the provider-type step once it mounts. No-op otherwise.
+    advanceActiveTourWhenReady(PROVIDER_TYPE_TOUR_SELECTOR);
   };
 
   const openOrganizationWizard = (initialData: OrgWizardInitialData) => {
@@ -95,9 +118,7 @@ export function ProvidersAccountsView({
       <Suspense fallback={null}>
         <OnboardingTrigger
           flow={addProviderFlow}
-          stepHandlers={createAddProviderTourStepHandlers(() =>
-            openProviderWizard(),
-          )}
+          configOverrides={ADD_PROVIDER_TOUR_CONFIG}
         />
       </Suspense>
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}

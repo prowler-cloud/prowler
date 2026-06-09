@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
 import { isCloud } from "@/lib/shared/env";
+import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
@@ -181,6 +182,10 @@ export function useProviderWizardController({
   const isOrgDirectEntry = Boolean(orgInitialData);
 
   const handleClose = () => {
+    // Closing the wizard at any point ends the add-provider tour; the checkpoint
+    // logic below still drives the handoff to scans. No-op off-onboarding.
+    endActiveTour();
+
     // Read providerId before reset clears it — non-null means a provider was connected.
     const connectedProviderId = useProviderWizardStore.getState().providerId;
 
@@ -225,6 +230,9 @@ export function useProviderWizardController({
   };
 
   const openOrganizationsFlow = () => {
+    // AWS Organizations diverges from the credentials path the tour guides toward; end
+    // it so it doesn't dangle on a step that no longer fits. No-op off-onboarding.
+    endActiveTour();
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);

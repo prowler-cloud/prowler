@@ -3,7 +3,9 @@ import { Locator, Page, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
 
 const TOUR_KEY_PREFIX = "prowler.tour";
-const ADD_PROVIDER_TOUR_KEY = `${TOUR_KEY_PREFIX}.add-provider.v1`;
+// Keep in sync with addProviderTour.version (lib/tours/add-provider.tour.ts).
+const ADD_PROVIDER_TOUR_VERSION = 2;
+const ADD_PROVIDER_TOUR_KEY = `${TOUR_KEY_PREFIX}.add-provider.v${ADD_PROVIDER_TOUR_VERSION}`;
 const CHECKPOINT_MARKER_KEY = "prowler.onboarding.checkpoint";
 
 // One popover per active driver.js tour; used to assert single-fire / no auto-fire.
@@ -122,17 +124,20 @@ export class OnboardingPage extends BasePage {
 
   // Seeds a completed record so the restart path can prove the tour re-fires anyway.
   async seedCompletedAddProviderRecord(): Promise<void> {
-    await this.page.evaluate((key) => {
-      window.localStorage.setItem(
-        key,
-        JSON.stringify({
-          tourId: "add-provider",
-          version: 1,
-          state: "completed",
-          completedAt: new Date().toISOString(),
-        }),
-      );
-    }, ADD_PROVIDER_TOUR_KEY);
+    await this.page.evaluate(
+      ({ key, version }) => {
+        window.localStorage.setItem(
+          key,
+          JSON.stringify({
+            tourId: "add-provider",
+            version,
+            state: "completed",
+            completedAt: new Date().toISOString(),
+          }),
+        );
+      },
+      { key: ADD_PROVIDER_TOUR_KEY, version: ADD_PROVIDER_TOUR_VERSION },
+    );
   }
 
   async openAccountMenu(): Promise<void> {
