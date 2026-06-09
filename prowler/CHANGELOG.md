@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - `load_and_validate_config_file` now unwraps namespaced config for every built-in and external provider, and no longer leaks the full file as the provider's config when the file is namespaced [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
+- `entra_users_mfa_capable` no longer flags pre-provisioned users with future `employeeHireDate`; future-hire date comparisons now tolerate naive datetimes [(#11511)](https://github.com/prowler-cloud/prowler/pull/11511)
 
 ---
 
