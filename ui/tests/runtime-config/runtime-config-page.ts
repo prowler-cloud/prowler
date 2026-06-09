@@ -1,9 +1,13 @@
 import { expect, Locator, Page, Request } from "@playwright/test";
 
+import {
+  RUNTIME_CONFIG_SCRIPT_ID,
+  type RuntimePublicConfig,
+} from "@/lib/runtime-config.shared";
+
 import { BasePage } from "../base-page";
 
-/** Must match RUNTIME_CONFIG_SCRIPT_ID in `lib/runtime-config.shared.ts`. */
-export const RUNTIME_CONFIG_SCRIPT_ID = "__PROWLER_RUNTIME_CONFIG__";
+export { RUNTIME_CONFIG_SCRIPT_ID };
 
 /** Keys the runtime data island is expected to expose (the allowlist). */
 export const RUNTIME_CONFIG_KEYS = [
@@ -15,7 +19,7 @@ export const RUNTIME_CONFIG_KEYS = [
   "posthogKey",
   "posthogHost",
   "reoDevClientId",
-] as const;
+] as const satisfies ReadonlyArray<keyof RuntimePublicConfig>;
 
 /**
  * Page object for the runtime public-config data island. The island is rendered

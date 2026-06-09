@@ -103,6 +103,24 @@ describe("unsubscribeAlertRecipient", () => {
     );
   });
 
+  it("returns the fallback message when the API base URL is missing", async () => {
+    // Given - neither the new name nor its legacy fallback is set
+    vi.stubEnv("UI_API_BASE_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
+
+    // When
+    const result = await unsubscribeAlertRecipient("token-1");
+
+    // Then
+    expect(result).toEqual({
+      ok: false,
+      state: "missing_api_base_url",
+      message:
+        "We could not process this unsubscribe link. Please try again later.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("falls back to the deprecated NEXT_PUBLIC_API_BASE_URL when UI_API_BASE_URL is unset", async () => {
     // Given - only the legacy name is configured
     vi.stubEnv("UI_API_BASE_URL", undefined);
