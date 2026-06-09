@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `elbv2_alb_drop_invalid_header_fields_enabled` check for AWS provider, verifying Application Load Balancers have `routing.http.drop_invalid_header_fields.enabled` set to `true` to mitigate HTTP desync attacks (AWS FSBP ELB.4) [(#11471)](https://github.com/prowler-cloud/prowler/pull/11471)
 - `user`, `systemlog` and `idp` service for Okta provider with `user_inactivity_automation_35d_enabled`, `systemlog_streaming_enabled` and `idp_smart_card_dod_approved_ca` checks [(#11496)](https://github.com/prowler-cloud/prowler/pull/11496)
 - AWS AI Security Framework support in the CLI dashboard [(#11475)](https://github.com/prowler-cloud/prowler/pull/11475)
+- `entra_service_principal_privileged_role_no_owners` check for M365 provider, failing when a service principal with a permanent Tier 0 directory role has owners on the service principal or its parent app registration [(#11070)](https://github.com/prowler-cloud/prowler/issues/11070)
 
 ### 🐞 Fixed
 
