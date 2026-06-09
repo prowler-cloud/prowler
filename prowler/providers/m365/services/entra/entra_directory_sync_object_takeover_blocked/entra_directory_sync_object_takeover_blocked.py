@@ -8,6 +8,17 @@ class entra_directory_sync_object_takeover_blocked(Check):
     """Check that hybrid Entra tenants block soft- and hard-match takeover."""
 
     def execute(self) -> List[CheckReportM365]:
+        """Verify directory sync object takeover protections.
+
+        Builds reports from the Entra client's directory sync settings. Hybrid
+        tenants pass when both soft- and hard-match protections are enabled,
+        fail when either protection is disabled, and require manual review when
+        settings cannot be read. Cloud-only tenants pass as not applicable.
+
+        Returns:
+            List[CheckReportM365]: Reports for each sync configuration or
+                organization.
+        """
         findings = []
 
         if entra_client.directory_sync_error:

@@ -123,6 +123,24 @@ class Test_entra_directory_sync_object_takeover_blocked:
         assert result[0].status == "PASS"
         assert "cloud-only" in result[0].status_extended
 
+    def test_permission_error_cloud_only_tenant_is_not_applicable(self, entra_client):
+        entra_client.directory_sync_error = (
+            "Insufficient privileges to read directory sync settings"
+        )
+        entra_client.organizations = [
+            Organization(
+                id="org-001",
+                name="Cloud Tenant",
+                on_premises_sync_enabled=False,
+            )
+        ]
+
+        result = self.run_check(entra_client)
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "cloud-only" in result[0].status_extended
+
     def test_missing_settings_is_manual_for_hybrid_tenant(self, entra_client):
         entra_client.organizations = [
             Organization(

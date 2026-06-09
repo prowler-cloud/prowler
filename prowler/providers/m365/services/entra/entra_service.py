@@ -793,14 +793,12 @@ class Entra(M365Service):
                         or False,
                         block_soft_match_enabled=getattr(
                             features, "block_soft_match_enabled", False
-                        )
-                        or False,
+                        ),
                         block_cloud_object_takeover_through_hard_match_enabled=getattr(
                             features,
                             "block_cloud_object_takeover_through_hard_match_enabled",
                             False,
-                        )
-                        or False,
+                        ),
                     )
                 )
         except ODataError as error:
