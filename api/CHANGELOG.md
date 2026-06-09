@@ -6,16 +6,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🚀 Added
 
-- Automatic recovery of allowlisted idempotent background tasks whose worker died during a deploy or crash: stuck scan and summary tasks are detected and re-run instead of staying pending forever, with a `reconcile_orphan_tasks` management command for on-demand recovery [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
-- Jira integration no longer creates duplicate issues on a retried send; findings already ticketed are skipped [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
-- DISA Okta IDaaS STIG V1R2 compliance framework export support for the Okta provider [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+- Opt-in automatic recovery of allowlisted idempotent background tasks whose worker died during a deploy or crash: when enabled via `DJANGO_TASK_RECOVERY_ENABLED` (off by default), stuck summary and deletion tasks are detected and re-run instead of staying pending forever (scan and Jira tasks are excluded), with a `reconcile_orphan_tasks` management command for on-demand recovery [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 - Label Postgres connections with `application_name="<component>:<alias>"` (component injected per process via `DJANGO_APP_COMPONENT`) so connections are attributable by component in `pg_stat_activity` [(#11494)](https://github.com/prowler-cloud/prowler/pull/11494)
+- DISA Okta IDaaS STIG V1R2 compliance framework export support for the Okta provider [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
 
 ### 🔄 Changed
 
 - Allowlisted idempotent background tasks are no longer lost when a worker is stopped or crashes mid-task; tasks with external side effects are marked terminal instead of blindly re-running [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
-- A recovered scan rewrites its findings, summaries, attack surface, and compliance data instead of appending to the previous run, so recovery never leaves stale or duplicate materialized rows [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 
 ### 🐞 Fixed
 
