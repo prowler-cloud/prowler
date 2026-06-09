@@ -366,7 +366,7 @@ class Exchange(M365Service):
             )
         return shared_mailboxes
 
-    def _get_mailboxes(self):
+    def _get_mailboxes(self) -> Optional[list["Mailbox"]]:
         """
         Get all recipient-facing mailboxes from Exchange Online.
 
