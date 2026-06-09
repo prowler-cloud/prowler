@@ -52,7 +52,9 @@
       "Id": "OKTA-APP-000090",
       "Name": "Okta must automatically disable accounts after a 35-day period of account inactivity.",
       "Description": "Attackers that are able to exploit an inactive account can potentially obtain and maintain undetected access to an application. Owners of inactive accounts will not notice if unauthorized access to their user account has been obtained. Applications must track periods of user inactivity and disable accounts after 35 days of inactivity. Such a process greatly reduces the risk that accounts will be hijacked, leading to a data compromise. To address access requirements, many application developers choose to integrate their applications with enterprise-level authentication/access mechanisms that meet or exceed access control policy requirements. Such integration allows the application developer to off-load those access control functions and focus on core application features and functionality. This policy does not apply to emergency accounts or infrequently used accounts. Infrequently used accounts are local login administrator accounts used by system administrators when network or normal login/access is not available. Emergency accounts are administrator accounts created in response to crisis situations. Satisfies: SRG-APP-000025, SRG-APP-000163, SRG-APP-000700",
-      "Checks": [],
+      "Checks": [
+        "user_inactivity_automation_35d_enabled"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -73,7 +75,9 @@
       "Id": "OKTA-APP-000170",
       "Name": "Okta must enforce the limit of three consecutive invalid login attempts by a user during a 15-minute time period.",
       "Description": "By limiting the number of failed login attempts, the risk of unauthorized system access via user password guessing, otherwise known as brute forcing, is reduced. Limits are imposed by locking the account. Satisfies: SRG-APP-000065, SRG-APP-000345",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_lockout_threshold_3"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -206,7 +210,9 @@
       "Id": "OKTA-APP-000650",
       "Name": "Okta must enforce a minimum 15-character password length.",
       "Description": "Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password length is one factor of several that helps to determine strength and how long it takes to crack a password. The shorter the password, the lower the number of possible combinations that need to be tested before the password is compromised. Use of more characters in a password helps to exponentially increase the time and/or resources required to compromise the password.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_minimum_length_15"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -225,7 +231,9 @@
       "Id": "OKTA-APP-000670",
       "Name": "Okta must enforce password complexity by requiring that at least one uppercase character be used.",
       "Description": "Use of a complex password helps to increase the time and resources required to compromise the password. Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password complexity is one factor of several that determine how long it takes to crack a password. The more complex the password is, the greater the number of possible combinations that need to be tested before the password is compromised.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_complexity_uppercase"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -244,7 +252,9 @@
       "Id": "OKTA-APP-000680",
       "Name": "Okta must enforce password complexity by requiring that at least one lowercase character be used.",
       "Description": "Use of a complex password helps to increase the time and resources required to compromise the password. Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password complexity is one factor of several that determine how long it takes to crack a password. The more complex the password, the greater the number of possible combinations that need to be tested before the password is compromised.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_complexity_lowercase"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -263,7 +273,9 @@
       "Id": "OKTA-APP-000690",
       "Name": "Okta must enforce password complexity by requiring that at least one numeric character be used.",
       "Description": "Use of a complex password helps to increase the time and resources required to compromise the password. Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password complexity is one factor of several that determine how long it takes to crack a password. The more complex the password, the greater the number of possible combinations that need to be tested before the password is compromised.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_complexity_number"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -282,7 +294,9 @@
       "Id": "OKTA-APP-000700",
       "Name": "Okta must enforce password complexity by requiring that at least one special character be used.",
       "Description": "Use of a complex password helps to increase the time and resources required to compromise the password. Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks. Password complexity is one factor in determining how long it takes to crack a password. The more complex the password, the greater the number of possible combinations that need to be tested before the password is compromised. Special characters are not alphanumeric. Examples include: ~ ! @ # $ % ^ *.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_complexity_symbol"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -301,7 +315,9 @@
       "Id": "OKTA-APP-000740",
       "Name": "Okta must enforce 24 hours/one day as the minimum password lifetime.",
       "Description": "Enforcing a minimum password lifetime helps prevent repeated password changes to defeat the password reuse or history enforcement requirement. Restricting this setting limits the user's ability to change their password. Passwords must be changed at specific policy-based intervals; however, if the application allows the user to immediately and continually change their password, it could be changed repeatedly in a short period of time to defeat the organization's policy regarding password reuse. Satisfies: SRG-APP-000173, SRG-APP-000870",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_minimum_age_24h"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -320,7 +336,9 @@
       "Id": "OKTA-APP-000745",
       "Name": "Okta must enforce a 60-day maximum password lifetime restriction.",
       "Description": "Any password, no matter how complex, can eventually be cracked. Therefore, passwords must be changed at specific intervals. One method of minimizing this risk is to use complex passwords and periodically change them. If the application does not limit the lifetime of passwords and force users to change their passwords, there is the risk that the system and/or application passwords could be compromised. This requirement does not include emergency administration accounts, which are meant for access to the application in case of failure. These accounts are not required to have maximum password lifetime restrictions.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_maximum_age_60d"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -339,7 +357,9 @@
       "Id": "OKTA-APP-001430",
       "Name": "Okta must off-load audit records onto a central log server.",
       "Description": "Information stored in one location is vulnerable to accidental or incidental deletion or alteration. Off-loading is a common process in information systems with limited audit storage capacity. Satisfies: SRG-APP-000358, SRG-APP-000080, SRG-APP-000125",
-      "Checks": [],
+      "Checks": [
+        "systemlog_streaming_enabled"
+      ],
       "Attributes": [
         {
           "Section": "CAT I (High)",
@@ -381,7 +401,9 @@
       "Id": "OKTA-APP-001670",
       "Name": "Okta must be configured to accept Personal Identity Verification (PIV) credentials.",
       "Description": "The use of PIV credentials facilitates standardization and reduces the risk of unauthorized access. DOD has mandated the use of the common access card (CAC) to support identity management and personal authentication for systems covered under HSPD 12, as well as a primary component of layered protection for national security systems. Satisfies: SRG-APP-000391, SRG-APP-000402, SRG-APP-000403",
-      "Checks": [],
+      "Checks": [
+        "authenticator_smart_card_active"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -402,7 +424,9 @@
       "Id": "OKTA-APP-001700",
       "Name": "The Okta Verify application must be configured to connect only to FIPS-compliant devices.",
       "Description": "Without device-to-device authentication, communications with malicious devices may be established. Bidirectional authentication provides stronger safeguards to validate the identity of other devices for connections that are of greater risk. Currently, DOD requires the use of AES for bidirectional authentication because it is the only FIPS-validated AES cipher block algorithm. For distributed architectures (e.g., service-oriented architectures), the decisions regarding the validation of authentication claims may be made by services separate from the services acting on those decisions. In such situations, it is necessary to provide authentication decisions (as opposed to the actual authenticators) to the services that need to act on those decisions. A local connection is any connection with a device communicating without the use of a network. A network connection is any connection with a device that communicates through a network (e.g., local area or wide area network; the internet). A remote connection is any connection with a device communicating through an external network (e.g., the internet). Because of the challenges of applying this requirement on a large scale, organizations are encouraged to apply the requirement only to those limited number (and type) of devices that truly need to support this capability.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_okta_verify_fips_compliant"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -443,7 +467,9 @@
       "Id": "OKTA-APP-001920",
       "Name": "Okta must be configured to use only DOD-approved certificate authorities.",
       "Description": "Untrusted Certificate Authorities (CA) can issue certificates, but they may be issued by organizations or individuals that seek to compromise DOD systems or by organizations with insufficient security controls. If the CA used for verifying the certificate is not DOD approved, trust of this CA has not been established. The DOD will accept only PKI certificates obtained from a DOD-approved internal or external CA. Reliance on CAs for the establishment of secure sessions includes, for example, the use of Transport Layer Security (TLS) certificates. This requirement focuses on communications protection for the application session rather than for the network packet. This requirement applies to applications that use communications sessions. This includes, but is not limited to, web-based applications and Service-Oriented Architectures (SOA). Satisfies: SRG-APP-000427, SRG-APP-000910",
-      "Checks": [],
+      "Checks": [
+        "idp_smart_card_dod_approved_ca"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -463,7 +489,9 @@
       "Id": "OKTA-APP-002980",
       "Name": "Okta must validate passwords against a list of commonly used, expected, or compromised passwords.",
       "Description": "Password-based authentication applies to passwords regardless of whether they are used in single-factor or multifactor authentication. Long passwords or passphrases are preferable over shorter passwords. Enforced composition rules provide marginal security benefits while decreasing usability. However, organizations may choose to establish certain rules for password generation (e.g., minimum character length for long passwords) under certain circumstances and can enforce this requirement in IA-5(1)(h). Account recovery can occur, for example, in situations when a password is forgotten. Cryptographically protected passwords include salted one-way cryptographic hashes of passwords. The list of commonly used, compromised, or expected passwords includes passwords obtained from previous breach corpuses, dictionary words, and repetitive or sequential characters. The list includes context-specific words, such as the name of the service, username, and derivatives thereof.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_common_password_check"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -482,7 +510,9 @@
       "Id": "OKTA-APP-003010",
       "Name": "Okta must prohibit password reuse for a minimum of five generations.",
       "Description": "Password-based authentication applies to passwords regardless of whether they are used in single-factor or multifactor authentication. Long passwords or passphrases are preferable over shorter passwords. Enforced composition rules provide marginal security benefits while decreasing usability. However, organizations may choose to establish certain rules for password generation (e.g., minimum character length for long passwords) under certain circumstances and can enforce this requirement in IA-5(1)(h). Account recovery can occur, for example, in situations when a password is forgotten. Cryptographically protected passwords include salted one-way cryptographic hashes of passwords. The list of commonly used, compromised, or expected passwords includes passwords obtained from previous breach corpuses, dictionary words, and repetitive or sequential characters. The list includes context-specific words, such as the name of the service, username, and derivatives thereof.",
-      "Checks": [],
+      "Checks": [
+        "authenticator_password_history_5"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -501,7 +531,9 @@
       "Id": "OKTA-APP-003240",
       "Name": "Okta API tokens must be configured with Network Zones to restrict authorization from known networks.",
       "Description": "An access token is a piece of data that represents the authorization granted to a user or NPE to access specific systems or information resources. Access tokens enable controlled access to services and resources. Properly managing the lifecycle of access tokens, including their issuance, validation, and revocation, is crucial to maintaining confidentiality of data and systems. Restricting token validity to a specific audience, e.g., an application or security domain, and restricting token validity lifetimes are important practices. Access tokens are revoked or invalidated if they are compromised, lost, or are no longer needed to mitigate the risks associated with stolen or misused tokens. API tokens have the potential to be replicated or stolen (just like a password). Because of this, it is important to only allow API tokens to authenticate from known IP ranges as this limits an adversary's ability to use a token to gain access.",
-      "Checks": [],
+      "Checks": [
+        "apitoken_restricted_to_network_zone"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -521,7 +553,9 @@
       "Id": "OKTA-APP-003241",
       "Name": "Okta API tokens must be created under new dedicated user accounts.",
       "Description": "An access token is a piece of data that represents the authorization granted to a user or NPE to access specific systems or information resources. Access tokens enable controlled access to services and resources. Properly managing the lifecycle of access tokens, including their issuance, validation, and revocation, is crucial to maintaining confidentiality of data and systems. Restricting token validity to a specific audience, e.g., an application or security domain, and restricting token validity lifetimes are important practices. Access tokens are revoked or invalidated if they are compromised, lost, or are no longer needed to mitigate the risks associated with stolen or misused tokens. When API tokens are created, they inherit the permissions of the user that created them. Therefore, API tokens should only be created from dedicated accounts and permissions must be constrained to least privilege for that dedicated user account and token. No API tokens should be created using a Super Admin account.",
-      "Checks": [],
+      "Checks": [
+        "apitoken_not_super_admin"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
@@ -562,7 +596,9 @@
       "Id": "OKTA-APP-003243",
       "Name": "Okta must be configured with Network Zones defined to block anonymized proxies according to organizationally defined policy.",
       "Description": "A mechanism to detect and prevent unauthorized communication flow must be configured or provided as part of the system design. If information flow is not enforced based on approved authorizations, the system may become compromised. Information flow control regulates where information is allowed to travel within a system and between interconnected systems. The flow of all application information must be monitored and controlled so it does not introduce any unacceptable risk to the systems or data. Application-specific examples of enforcement occurs in systems that employ rule sets or establish configuration settings that restrict information system services, or provide a message filtering capability based on message content (e.g., implementing key word searches or using document characteristics). Applications providing information flow control must be able to enforce approved authorizations for controlling the flow of information between interconnected systems in accordance with applicable policy. Working with the organizational CSSP, the ISSM should obtain a list of known anonymizer proxies that exist on the commercial internet. If this is not available from the CSSP, then the Okta-provided \"Enhanced dynamic zone blocklist\" should be activated.",
-      "Checks": [],
+      "Checks": [
+        "network_zone_block_anonymized_proxies"
+      ],
       "Attributes": [
         {
           "Section": "CAT II (Medium)",
