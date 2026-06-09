@@ -7,7 +7,8 @@ import {
   AttributesData,
   Control,
   Framework,
-  OktaIDaaSStigAttributesMetadata,
+  isOktaIDaaSStigAttributesMetadata,
+  OktaIDaaSStigRequirement,
   Requirement,
   REQUIREMENT_STATUS,
   RequirementsData,
@@ -38,10 +39,9 @@ export const mapComplianceData = (
 
   for (const attributeItem of attributes) {
     const id = attributeItem.id;
-    const metadataArray = attributeItem.attributes?.attributes
-      ?.metadata as unknown as OktaIDaaSStigAttributesMetadata[];
+    const metadataArray = attributeItem.attributes?.attributes?.metadata;
     const attrs = metadataArray?.[0];
-    if (!attrs) continue;
+    if (!isOktaIDaaSStigAttributesMetadata(attrs)) continue;
 
     const requirementData = requirementsMap.get(id);
     if (!requirementData) continue;
@@ -60,7 +60,7 @@ export const mapComplianceData = (
     const control = findOrCreateControl(category.controls, controlLabel);
 
     const finalStatus: RequirementStatus = status as RequirementStatus;
-    const requirement: Requirement = {
+    const requirement = {
       name: id,
       description,
       status: finalStatus,
@@ -72,7 +72,7 @@ export const mapComplianceData = (
       cci: attrs.CCI,
       check_text: attrs.CheckText,
       fix_text: attrs.FixText,
-    };
+    } satisfies OktaIDaaSStigRequirement;
 
     control.requirements.push(requirement);
   }
