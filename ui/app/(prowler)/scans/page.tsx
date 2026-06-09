@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
+import { PageReady } from "@/components/onboarding";
 import {
   getScanJobsTab,
   getScanJobsTabFilters,
@@ -101,7 +102,14 @@ export default async function Scans({
       onboardingAction={onboardingAction}
     >
       {missingScanPrerequisite ? (
-        <ScansProvidersEmptyState thereIsNoProviders={thereIsNoProviders} />
+        <>
+          {/* The populated branch mounts <PageReady/> inside ScansPageShell to
+              enable the navbar tour icon. The empty branch must mark the route
+              ready too, otherwise the icon (which falls back to the add-provider
+              flow here) stays hidden for users with no connected provider. */}
+          <PageReady />
+          <ScansProvidersEmptyState thereIsNoProviders={thereIsNoProviders} />
+        </>
       ) : (
         <ScansPageShell
           providers={providers}
