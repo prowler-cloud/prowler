@@ -43,7 +43,9 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
     // Arm checkpoint only on explicit accept — skip must never arm it.
     useOnboardingCheckpointStore.getState().arm();
     setResolvedThisSession(true);
-    router.push(`${activeFlow.route}?onboarding=${activeFlow.id}`);
+    // Routes may already carry a query string, so pick the right separator.
+    const separator = activeFlow.route.includes("?") ? "&" : "?";
+    router.push(`${activeFlow.route}${separator}onboarding=${activeFlow.id}`);
   };
 
   const handleDismiss = () => {

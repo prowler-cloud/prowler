@@ -74,9 +74,11 @@ export function NavbarClient({
       requestReplay(flow.id);
       return;
     }
-    // Different page: a real navigation is needed; the `?onboarding=` param survives
-    // it and starts the tour on the destination route.
-    router.push(`${flow.route}?onboarding=${flow.id}`);
+    // Different page: a real navigation is needed; the `onboarding=` param survives
+    // it and starts the tour on the destination route. Routes may already carry a
+    // query string (e.g. `/scans?tab=active`), so pick the right separator.
+    const separator = flow.route.includes("?") ? "&" : "?";
+    router.push(`${flow.route}${separator}onboarding=${flow.id}`);
   };
 
   return (

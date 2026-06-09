@@ -197,9 +197,10 @@ describe("NavbarClient", () => {
       }),
     );
 
-    // Then
+    // Then: the flow's own route (incl. its `?tab=active`) is preserved and the
+    // onboarding param is appended with `&` — the current /findings filter is dropped.
     expect(navigationMocks.push).toHaveBeenCalledWith(
-      "/scans?onboarding=view-first-scan",
+      "/scans?tab=active&onboarding=view-first-scan",
     );
   });
 
