@@ -13,10 +13,34 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/components/ui/table", () => ({
-  DataTable: ({ toolbarRightContent }: { toolbarRightContent?: ReactNode }) => (
+  DataTable: ({
+    data,
+    toolbarRightContent,
+    getRowAttributes,
+  }: {
+    data?: Array<{ checkId?: string }>;
+    toolbarRightContent?: ReactNode;
+    getRowAttributes?: (row: {
+      index: number;
+      original: { checkId?: string };
+    }) => Record<string, string | undefined>;
+  }) => (
     <div>
       <div data-testid="table-toolbar-right">{toolbarRightContent}</div>
       <span>10 Total Entries</span>
+      <table>
+        <tbody>
+          {(data ?? []).map((original, index) => (
+            <tr
+              key={original.checkId ?? index}
+              data-testid={`row-${index}`}
+              {...getRowAttributes?.({ index, original })}
+            >
+              <td>{original.checkId}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   ),
 }));
@@ -74,6 +98,31 @@ describe("FindingsGroupTable", () => {
         screen.getByRole("checkbox", { name: "Include muted findings" }),
       ).toBeInTheDocument();
       expect(toolbar).toHaveTextContent("Include muted findings");
+    });
+  });
+
+  describe("onboarding anchor", () => {
+    it("anchors the finding-group tour step to the first row only", () => {
+      // Given two finding groups (the tour must point at the first, even if there is one)
+      const data = [
+        { checkId: "check-a" },
+        { checkId: "check-b" },
+      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+
+      render(
+        <FindingsGroupTable
+          data={data}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+        />,
+      );
+
+      // Then driver.js resolves `[data-tour-id="explore-findings-group"]` to the first row.
+      expect(screen.getByTestId("row-0")).toHaveAttribute(
+        "data-tour-id",
+        "explore-findings-group",
+      );
+      expect(screen.getByTestId("row-1")).not.toHaveAttribute("data-tour-id");
     });
   });
 });

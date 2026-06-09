@@ -1,12 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
+  createExploreFindingsTourStepHandlers,
   exploreFindingsTour,
   type ExploreFindingsTourTarget,
 } from "../explore-findings.tour";
 
-// Only these two carry a `data-tour-id` in the UI; welcome step has no target.
-const ALLOWED_TARGETS = ["filters", "table"] as const;
+// Only these carry a `data-tour-id` in the UI; welcome step has no target.
+const ALLOWED_TARGETS = ["filters", "group", "resources"] as const;
 
 const definedTargets = (): ExploreFindingsTourTarget[] =>
   exploreFindingsTour.steps
@@ -25,10 +26,10 @@ describe("exploreFindingsTour shape", () => {
     expect(exploreFindingsTour.version).toBeGreaterThan(0);
   });
 
-  it("anchors filters before table, in that order", () => {
+  it("anchors filters, then the first group, then its resources, in that order", () => {
     const targets = definedTargets();
-    // filters mounts immediately; table appears after Suspense, so order matters
-    expect(targets).toEqual(["filters", "table"]);
+    // filters mounts immediately; group/resources appear after Suspense + drill-down, so order matters
+    expect(targets).toEqual(["filters", "group", "resources"]);
   });
 
   it("never targets an element outside the allowed anchor set", () => {
@@ -52,5 +53,37 @@ describe("exploreFindingsTour shape", () => {
     expect(exploreFindingsTour.coversFiles).toContain(
       "ui/components/findings/**",
     );
+  });
+});
+
+describe("createExploreFindingsTourStepHandlers", () => {
+  it("opens the first group and waits for the resources anchor before advancing", async () => {
+    const openFirstGroup = vi.fn(() => true);
+    const waitForStep = vi
+      .fn()
+      .mockResolvedValue(document.createElement("div"));
+    const handlers = createExploreFindingsTourStepHandlers(openFirstGroup);
+
+    await handlers.group?.onNext?.({ waitForStep });
+
+    expect(openFirstGroup).toHaveBeenCalledTimes(1);
+    expect(waitForStep).toHaveBeenCalledWith("resources");
+  });
+
+  it("does not wait for resources when no group can be opened", async () => {
+    const openFirstGroup = vi.fn(() => false);
+    const waitForStep = vi.fn();
+    const handlers = createExploreFindingsTourStepHandlers(openFirstGroup);
+
+    await handlers.group?.onNext?.({ waitForStep });
+
+    expect(openFirstGroup).toHaveBeenCalledTimes(1);
+    expect(waitForStep).not.toHaveBeenCalled();
+  });
+
+  it("registers a handler only for the group step", () => {
+    const handlers = createExploreFindingsTourStepHandlers(() => true);
+
+    expect(Object.keys(handlers)).toEqual(["group"]);
   });
 });

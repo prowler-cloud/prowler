@@ -26,7 +26,8 @@ export class OnboardingPage extends BasePage {
   readonly viewFirstScanLaunchAnchor: Locator;
   readonly viewFirstScanTabsAnchor: Locator;
   readonly exploreFindingsFiltersAnchor: Locator;
-  readonly exploreFindingsTableAnchor: Locator;
+  readonly exploreFindingsGroupAnchor: Locator;
+  readonly exploreFindingsResourcesAnchor: Locator;
   readonly viewComplianceFrameworksAnchor: Locator;
   readonly viewComplianceSearchAnchor: Locator;
   readonly attackPathsIntroAnchor: Locator;
@@ -74,8 +75,11 @@ export class OnboardingPage extends BasePage {
     this.exploreFindingsFiltersAnchor = page.locator(
       '[data-tour-id="explore-findings-filters"]',
     );
-    this.exploreFindingsTableAnchor = page.locator(
-      '[data-tour-id="explore-findings-table"]',
+    this.exploreFindingsGroupAnchor = page.locator(
+      '[data-tour-id="explore-findings-group"]',
+    );
+    this.exploreFindingsResourcesAnchor = page.locator(
+      '[data-tour-id="explore-findings-resources"]',
     );
     this.viewComplianceFrameworksAnchor = page.locator(
       '[data-tour-id="view-compliance-frameworks"]',

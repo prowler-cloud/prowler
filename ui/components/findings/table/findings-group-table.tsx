@@ -10,6 +10,7 @@ import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/ui/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import { getFlowById } from "@/lib/onboarding";
+import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
@@ -159,6 +160,19 @@ export function FindingsGroupTable({
     setResourceSelection([]);
   };
 
+  // Drives the onboarding "Open a finding group" step: opens the first row when
+  // drillable, otherwise the first drillable group. Returns false when none can
+  // open so the tour skips the resources step instead of hanging.
+  const openFirstFindingGroup = (): boolean => {
+    const target =
+      safeData[0] && canDrillDownFindingGroup(safeData[0])
+        ? safeData[0]
+        : safeData.find((group) => canDrillDownFindingGroup(group));
+    if (!target) return false;
+    handleDrillDown(target.checkId, target);
+    return true;
+  };
+
   const columns = getColumnFindingGroups({
     rowSelection,
     selectableRowCount,
@@ -197,9 +211,14 @@ export function FindingsGroupTable({
       }}
     >
       {/* Tour trigger placed here so onboarding starts only once the table has data. */}
-      <div data-tour-id="explore-findings-table">
+      <div>
         <Suspense fallback={null}>
-          <OnboardingTrigger flow={exploreFindingsFlow} />
+          <OnboardingTrigger
+            flow={exploreFindingsFlow}
+            stepHandlers={createExploreFindingsTourStepHandlers(
+              openFirstFindingGroup,
+            )}
+          />
         </Suspense>
         {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
         <PageReady />
@@ -225,6 +244,11 @@ export function FindingsGroupTable({
           }
           toolbarRightContent={<CustomCheckboxMutedFindings />}
           renderAfterRow={renderAfterRow}
+          // Anchor the "Open a finding group" tour step to the first group row
+          // (there may be only one); driver.js resolves to the first match.
+          getRowAttributes={(row) =>
+            row.index === 0 ? { "data-tour-id": "explore-findings-group" } : {}
+          }
         />
       </div>
 
