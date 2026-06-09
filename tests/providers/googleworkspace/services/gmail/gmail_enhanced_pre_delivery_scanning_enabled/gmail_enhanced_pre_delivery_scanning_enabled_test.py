@@ -3,7 +3,6 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.gmail.gmail_service import GmailPolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -37,7 +36,7 @@ class TestGmailEnhancedPreDeliveryScanningEnabled:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "enabled" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_name == "Gmail Policies"
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_fail_disabled(self):

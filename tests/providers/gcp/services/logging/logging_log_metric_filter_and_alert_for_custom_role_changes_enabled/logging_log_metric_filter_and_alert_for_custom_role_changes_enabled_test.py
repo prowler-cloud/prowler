@@ -259,3 +259,173 @@ class Test_logging_log_metric_filter_and_alert_for_custom_role_changes_enabled:
             assert result[0].resource_name == "metric_name"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
+
+    def test_project_centrally_covered_via_org_aggregated_sink(self):
+        """A child project with NO local metric, but whose org has an aggregated
+        sink (includeChildren=True) routing its logs to a central bucket that has
+        a bucket-scoped metric + alert, should PASS (covered centrally)."""
+        logging_client = MagicMock()
+        monitoring_client = MagicMock()
+        org_id = "111222333"
+        central_bucket = (
+            "projects/central-logging-project/locations/eu/buckets/central-bucket"
+        )
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
+        ):
+            from prowler.providers.gcp.models import GCPOrganization, GCPProject
+            from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled import (
+                logging_log_metric_filter_and_alert_for_custom_role_changes_enabled,
+            )
+            from prowler.providers.gcp.services.logging.logging_service import (
+                Metric,
+                Sink,
+            )
+            from prowler.providers.gcp.services.monitoring.monitoring_service import (
+                AlertPolicy,
+            )
+
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.project_ids = [GCP_PROJECT_ID, "central-logging-project"]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="child",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                    organization=GCPOrganization(
+                        id=org_id, name=f"organizations/{org_id}"
+                    ),
+                )
+            }
+            logging_client.metrics = [
+                Metric(
+                    name="central-metric",
+                    type="logging.googleapis.com/user/central-metric",
+                    filter='resource.type="iam_role" AND (protoPayload.methodName="google.iam.admin.v1.CreateRole" OR protoPayload.methodName="google.iam.admin.v1.DeleteRole" OR protoPayload.methodName="google.iam.admin.v1.UpdateRole")',
+                    project_id="central-logging-project",
+                    bucket_name=central_bucket,
+                )
+            ]
+            logging_client.sinks = [
+                Sink(
+                    name="org-aggregated-sink",
+                    destination=f"logging.googleapis.com/{central_bucket}",
+                    filter="all",
+                    project_id=f"organizations/{org_id}",
+                    include_children=True,
+                )
+            ]
+            monitoring_client.alert_policies = [
+                AlertPolicy(
+                    name="projects/central-logging-project/alertPolicies/ap",
+                    display_name="central-alert",
+                    enabled=True,
+                    filters=[
+                        'metric.type = "logging.googleapis.com/user/central-metric"'
+                    ],
+                    project_id="central-logging-project",
+                )
+            ]
+
+            check = (
+                logging_log_metric_filter_and_alert_for_custom_role_changes_enabled()
+            )
+            result = check.execute()
+
+            assert any(
+                r.project_id == GCP_PROJECT_ID
+                and r.status == "PASS"
+                and "aggregated sink" in r.status_extended
+                for r in result
+            ), [(r.project_id, r.status, r.status_extended) for r in result]
+
+    def test_aggregated_sink_metric_without_alert_still_fails(self):
+        """Guard: an org aggregated sink + a bucket-scoped metric matching the filter
+        but with NO alert must NOT credit the child project — it should still FAIL."""
+        logging_client = MagicMock()
+        monitoring_client = MagicMock()
+        org_id = "111222333"
+        central_bucket = (
+            "projects/central-logging-project/locations/eu/buckets/central-bucket"
+        )
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
+        ):
+            from prowler.providers.gcp.models import GCPOrganization, GCPProject
+            from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled.logging_log_metric_filter_and_alert_for_custom_role_changes_enabled import (
+                logging_log_metric_filter_and_alert_for_custom_role_changes_enabled,
+            )
+            from prowler.providers.gcp.services.logging.logging_service import (
+                Metric,
+                Sink,
+            )
+
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.project_ids = [GCP_PROJECT_ID, "central-logging-project"]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="child",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                    organization=GCPOrganization(
+                        id=org_id, name=f"organizations/{org_id}"
+                    ),
+                )
+            }
+            logging_client.metrics = [
+                Metric(
+                    name="central-metric",
+                    type="logging.googleapis.com/user/central-metric",
+                    filter='resource.type="iam_role" AND (protoPayload.methodName="google.iam.admin.v1.CreateRole" OR protoPayload.methodName="google.iam.admin.v1.DeleteRole" OR protoPayload.methodName="google.iam.admin.v1.UpdateRole")',
+                    project_id="central-logging-project",
+                    bucket_name=central_bucket,
+                )
+            ]
+            logging_client.sinks = [
+                Sink(
+                    name="org-aggregated-sink",
+                    destination=f"logging.googleapis.com/{central_bucket}",
+                    filter="all",
+                    project_id=f"organizations/{org_id}",
+                    include_children=True,
+                )
+            ]
+            monitoring_client.alert_policies = []  # no alert -> must NOT credit
+
+            check = (
+                logging_log_metric_filter_and_alert_for_custom_role_changes_enabled()
+            )
+            result = check.execute()
+
+            child = [r for r in result if r.project_id == GCP_PROJECT_ID]
+            assert child and all(r.status == "FAIL" for r in child), [
+                (r.project_id, r.status) for r in result
+            ]

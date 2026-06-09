@@ -104,8 +104,11 @@ class M365PowerShell(PowerShellSession):
                 authentication information.
 
         Note:
-            The credentials are sanitized to prevent command injection and
-            stored securely in the PowerShell session.
+            ``client_id`` and ``tenant_id`` are sanitized via ``sanitize()`` since
+            they are UUIDs. ``client_secret`` is assigned with a single-quoted
+            string (escaping any embedded single quote as ``''``) following
+            PowerShell best practices for literal values, so its content is taken
+            verbatim with no variable expansion or subexpression evaluation.
         """
         # Certificate Auth
         if credentials.certificate_content and credentials.client_id:
@@ -135,9 +138,16 @@ class M365PowerShell(PowerShellSession):
 
         else:
             # Application Auth
-            self.execute(f'$clientID = "{credentials.client_id}"')
-            self.execute(f'$clientSecret = "{credentials.client_secret}"')
-            self.execute(f'$tenantID = "{credentials.tenant_id}"')
+            sanitized_client_id = self.sanitize(credentials.client_id)
+            sanitized_tenant_id = self.sanitize(credentials.tenant_id)
+            self.execute(f"$clientID = '{sanitized_client_id}'")
+            # Single-quoted strings are the PowerShell convention for literals:
+            # the content is taken verbatim with no variable expansion. Escape any
+            # embedded single quote as '' and do not sanitize() so the value is
+            # preserved exactly.
+            sanitized_secret = (credentials.client_secret or "").replace("'", "''")
+            self.execute(f"$clientSecret = '{sanitized_secret}'")
+            self.execute(f"$tenantID = '{sanitized_tenant_id}'")
             self.execute(
                 '$graphtokenBody = @{ Grant_Type = "client_credentials"; Scope = "https://graph.microsoft.com/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
             )
@@ -196,7 +206,7 @@ class M365PowerShell(PowerShellSession):
         """Test Exchange Online API connection and raise exception if it fails."""
         try:
             self.execute(
-                '$SecureSecret = ConvertTo-SecureString "$clientSecret" -AsPlainText -Force'
+                "$SecureSecret = ConvertTo-SecureString $clientSecret -AsPlainText -Force"
             )
             self.execute(
                 '$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'

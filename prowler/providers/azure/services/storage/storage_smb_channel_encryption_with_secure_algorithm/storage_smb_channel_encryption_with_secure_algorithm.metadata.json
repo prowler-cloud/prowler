@@ -34,5 +34,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check passes if SMB channel encryption is set to a secure algorithm."
+  "Notes": "This check passes only if every SMB channel encryption algorithm allowed on the file shares is in the recommended list, which is configurable via azure.recommended_smb_channel_encryption_algorithms and defaults to AES-256-GCM only, as required by CIS."
 }

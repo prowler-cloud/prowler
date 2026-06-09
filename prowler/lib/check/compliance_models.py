@@ -1,3 +1,4 @@
+import importlib.metadata
 import json
 import os
 import sys
@@ -434,26 +435,63 @@ class Compliance(BaseModel):
         """Bulk load all compliance frameworks specification into a dict"""
         try:
             bulk_compliance_frameworks = {}
+            # Built-in compliance from prowler/compliance/{provider}/
             available_compliance_framework_modules = list_compliance_modules()
             for compliance_framework in available_compliance_framework_modules:
-                if provider in compliance_framework.name:
+                # Match the provider segment exactly, not as a substring, so
+                # e.g. `cloud` does not capture `cloudflare`.
+                if compliance_framework.name.split(".")[-1] == provider:
                     compliance_specification_dir_path = (
                         f"{compliance_framework.module_finder.path}/{provider}"
                     )
-                    # for compliance_framework in available_compliance_framework_modules:
                     for filename in os.listdir(compliance_specification_dir_path):
                         file_path = os.path.join(
                             compliance_specification_dir_path, filename
                         )
-                        # Check if it is a file and ti size is greater than 0
                         if os.path.isfile(file_path) and os.stat(file_path).st_size > 0:
-                            # Open Compliance file in JSON
-                            # cis_v1.4_aws.json --> cis_v1.4_aws
                             compliance_framework_name = filename.split(".json")[0]
-                            # Store the compliance info
                             bulk_compliance_frameworks[compliance_framework_name] = (
                                 load_compliance_framework(file_path)
                             )
+
+            # External compliance via entry points
+            for ep in importlib.metadata.entry_points(group="prowler.compliance"):
+                if ep.name == provider:
+                    try:
+                        module = ep.load()
+                        compliance_dir = (
+                            module.__path__[0]
+                            if hasattr(module, "__path__")
+                            else os.path.dirname(module.__file__)
+                        )
+                        for filename in os.listdir(compliance_dir):
+                            if filename.endswith(".json"):
+                                file_path = os.path.join(compliance_dir, filename)
+                                if (
+                                    os.path.isfile(file_path)
+                                    and os.stat(file_path).st_size > 0
+                                ):
+                                    compliance_framework_name = filename.split(".json")[
+                                        0
+                                    ]
+                                    if (
+                                        compliance_framework_name
+                                        not in bulk_compliance_frameworks
+                                    ):
+                                        # External JSON: tolerate non-legacy
+                                        # schemas (skip + warn) instead of aborting.
+                                        framework = load_compliance_framework(
+                                            file_path, fatal=False
+                                        )
+                                        if framework is not None:
+                                            bulk_compliance_frameworks[
+                                                compliance_framework_name
+                                            ] = framework
+                    except Exception as error:
+                        logger.warning(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
         except Exception as e:
             logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
 
@@ -462,18 +500,26 @@ class Compliance(BaseModel):
 
 # Testing Pending
 def load_compliance_framework(
-    compliance_specification_file: str,
-) -> Compliance:
-    """load_compliance_framework loads and parse a Compliance Framework Specification"""
+    compliance_specification_file: str, fatal: bool = True
+) -> Optional[Compliance]:
+    """load_compliance_framework loads and parse a Compliance Framework Specification.
+
+    With ``fatal=True`` (built-in JSONs) an invalid file aborts the run; with
+    ``fatal=False`` (external JSONs) it is skipped with a warning and ``None``
+    is returned.
+    """
     try:
-        compliance_framework = Compliance.parse_file(compliance_specification_file)
+        return Compliance.parse_file(compliance_specification_file)
     except ValidationError as error:
-        logger.critical(
-            f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
+        if fatal:
+            logger.critical(
+                f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
+            )
+            sys.exit(1)
+        logger.warning(
+            f"Skipping invalid compliance framework {compliance_specification_file}: {error}"
         )
-        sys.exit(1)
-    else:
-        return compliance_framework
+        return None
 
 
 # ─── Universal Compliance Schema Models (Phase 1-3) ─────────────────────────
@@ -949,6 +995,25 @@ def get_bulk_compliance_frameworks_universal(provider: str) -> dict:
         # Also scan top-level compliance/ for provider-agnostic JSONs.
         if compliance_root and os.path.isdir(compliance_root):
             _load_jsons_from_dir(compliance_root, provider, bulk)
+
+        # External multi-provider frameworks via the dedicated universal entry
+        # point group, kept separate from the per-provider `prowler.compliance`
+        # group so the legacy loader never parses a universal JSON. Built-ins
+        # (already in bulk) win on a name collision.
+        for ep in importlib.metadata.entry_points(group="prowler.compliance.universal"):
+            try:
+                module = ep.load()
+                ep_dir = (
+                    module.__path__[0]
+                    if hasattr(module, "__path__")
+                    else os.path.dirname(module.__file__)
+                )
+                if os.path.isdir(ep_dir):
+                    _load_jsons_from_dir(ep_dir, provider, bulk)
+            except Exception as error:
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     except Exception as e:
         logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")

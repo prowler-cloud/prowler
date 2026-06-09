@@ -1084,7 +1084,9 @@
     {
       "Id": "3.1.4.1.1",
       "Description": "Ensure external filesharing in Google Chat and Hangouts is disabled",
-      "Checks": [],
+      "Checks": [
+        "chat_external_file_sharing_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1105,7 +1107,9 @@
     {
       "Id": "3.1.4.1.2",
       "Description": "Ensure internal filesharing in Google Chat and Hangouts is disabled",
-      "Checks": [],
+      "Checks": [
+        "chat_internal_file_sharing_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1126,7 +1130,9 @@
     {
       "Id": "3.1.4.2.1",
       "Description": "Ensure Google Chat externally is restricted to allowed domains",
-      "Checks": [],
+      "Checks": [
+        "chat_external_messaging_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1147,7 +1153,9 @@
     {
       "Id": "3.1.4.3.1",
       "Description": "Ensure external spaces in Google Chat and Hangouts are restricted",
-      "Checks": [],
+      "Checks": [
+        "chat_external_spaces_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1168,7 +1176,9 @@
     {
       "Id": "3.1.4.4.1",
       "Description": "Ensure allow users to install Chat apps is disabled",
-      "Checks": [],
+      "Checks": [
+        "chat_apps_installation_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1189,7 +1199,9 @@
     {
       "Id": "3.1.4.4.2",
       "Description": "Ensure allow users to add and use incoming webhooks is disabled",
-      "Checks": [],
+      "Checks": [
+        "chat_incoming_webhooks_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1210,7 +1222,9 @@
     {
       "Id": "3.1.6.1",
       "Description": "Ensure accessing groups from outside this organization is set to private",
-      "Checks": [],
+      "Checks": [
+        "groups_external_access_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1231,7 +1245,9 @@
     {
       "Id": "3.1.6.2",
       "Description": "Ensure creating groups is restricted",
-      "Checks": [],
+      "Checks": [
+        "groups_creation_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1252,7 +1268,9 @@
     {
       "Id": "3.1.6.3",
       "Description": "Ensure default for permission to view conversations is restricted",
-      "Checks": [],
+      "Checks": [
+        "groups_view_conversations_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1273,7 +1291,9 @@
     {
       "Id": "3.1.7.1",
       "Description": "Ensure service status for Google Sites is set to off",
-      "Checks": [],
+      "Checks": [
+        "sites_service_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1294,7 +1314,9 @@
     {
       "Id": "3.1.8.1",
       "Description": "Ensure access to external Google Groups is OFF for Everyone",
-      "Checks": [],
+      "Checks": [
+        "additionalservices_external_groups_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1315,7 +1337,9 @@
     {
       "Id": "3.1.9.1.1",
       "Description": "Ensure users access to Google Workspace Marketplace apps is restricted",
-      "Checks": [],
+      "Checks": [
+        "marketplace_apps_access_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1336,7 +1360,9 @@
     {
       "Id": "4.1.1.1",
       "Description": "Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles",
-      "Checks": [],
+      "Checks": [
+        "security_2sv_enforced"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1357,7 +1383,9 @@
     {
       "Id": "4.1.1.2",
       "Description": "Ensure hardware security keys are used for all users in administrative roles and other high-value accounts",
-      "Checks": [],
+      "Checks": [
+        "security_2sv_hardware_keys_admins"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1378,7 +1406,9 @@
     {
       "Id": "4.1.1.3",
       "Description": "Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users",
-      "Checks": [],
+      "Checks": [
+        "security_2sv_enforced"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1399,7 +1429,9 @@
     {
       "Id": "4.1.2.1",
       "Description": "Ensure Super Admin account recovery is disabled",
-      "Checks": [],
+      "Checks": [
+        "security_super_admin_recovery_disabled"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1420,7 +1452,9 @@
     {
       "Id": "4.1.2.2",
       "Description": "Ensure User account recovery is enabled",
-      "Checks": [],
+      "Checks": [
+        "security_user_recovery_enabled"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1441,7 +1475,9 @@
     {
       "Id": "4.1.3.1",
       "Description": "Ensure Advanced Protection Program is configured",
-      "Checks": [],
+      "Checks": [
+        "security_advanced_protection_configured"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1462,7 +1498,9 @@
     {
       "Id": "4.1.4.1",
       "Description": "Ensure login challenges are enforced",
-      "Checks": [],
+      "Checks": [
+        "security_login_challenges_configured"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1483,7 +1521,9 @@
     {
       "Id": "4.1.5.1",
       "Description": "Ensure password policy is configured for enhanced security",
-      "Checks": [],
+      "Checks": [
+        "security_password_policy_strong"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1504,7 +1544,9 @@
     {
       "Id": "4.2.1.1",
       "Description": "Ensure application access to Google services is restricted",
-      "Checks": [],
+      "Checks": [
+        "security_app_access_restricted"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1546,7 +1588,9 @@
     {
       "Id": "4.2.1.3",
       "Description": "Ensure internal apps can access Google Workspace APIs",
-      "Checks": [],
+      "Checks": [
+        "security_internal_apps_trusted"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1609,7 +1653,9 @@
     {
       "Id": "4.2.3.1",
       "Description": "Ensure DLP policies for Google Drive are configured",
-      "Checks": [],
+      "Checks": [
+        "security_dlp_drive_rules_configured"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1630,7 +1676,9 @@
     {
       "Id": "4.2.4.1",
       "Description": "Ensure Google session control is configured",
-      "Checks": [],
+      "Checks": [
+        "security_session_duration_limited"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1672,7 +1720,9 @@
     {
       "Id": "4.2.6.1",
       "Description": "Ensure less secure app access is disabled",
-      "Checks": [],
+      "Checks": [
+        "security_less_secure_apps_disabled"
+      ],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1777,7 +1827,9 @@
     {
       "Id": "6.1",
       "Description": "Ensure User's password changed is configured",
-      "Checks": [],
+      "Checks": [
+        "rules_password_changed_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "6 Rules",
@@ -1798,7 +1850,9 @@
     {
       "Id": "6.2",
       "Description": "Ensure Government-backed attacks is configured",
-      "Checks": [],
+      "Checks": [
+        "rules_government_backed_attacks_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "6 Rules",
@@ -1819,7 +1873,9 @@
     {
       "Id": "6.3",
       "Description": "Ensure User suspended due to suspicious activity is configured",
-      "Checks": [],
+      "Checks": [
+        "rules_suspicious_activity_suspension_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "6 Rules",
@@ -1840,7 +1896,9 @@
     {
       "Id": "6.4",
       "Description": "Ensure User granted Admin privilege is configured",
-      "Checks": [],
+      "Checks": [
+        "rules_admin_privilege_granted_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "6 Rules",
@@ -1861,7 +1919,9 @@
     {
       "Id": "6.5",
       "Description": "Ensure Suspicious programmatic login is configured",
-      "Checks": [],
+      "Checks": [
+        "rules_suspicious_programmatic_login_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "6 Rules",
@@ -1882,7 +1942,9 @@
     {
       "Id": "6.6",
       "Description": "Ensure Suspicious login is configured",
-      "Checks": [],
+      "Checks": [
+        "rules_suspicious_login_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "6 Rules",
@@ -1903,7 +1965,9 @@
     {
       "Id": "6.7",
       "Description": "Ensure Leaked password is configured",
-      "Checks": [],
+      "Checks": [
+        "rules_leaked_password_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "6 Rules",
@@ -1924,7 +1988,9 @@
     {
       "Id": "6.8",
       "Description": "Ensure Gmail potential employee spoofing is configured",
-      "Checks": [],
+      "Checks": [
+        "rules_gmail_employee_spoofing_alert_configured"
+      ],
       "Attributes": [
         {
           "Section": "6 Rules",

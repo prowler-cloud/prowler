@@ -85,6 +85,15 @@ class entra_break_glass_account_fido2_security_key_registered(Check):
                 resource_id=user.id,
             )
 
+            if entra_client.user_registration_details_error:
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Cannot verify FIDO2 security key registration for break glass account {user.name}: "
+                    f"{entra_client.user_registration_details_error}."
+                )
+                findings.append(report)
+                continue
+
             auth_methods = set(user.authentication_methods)
             has_fido2 = "fido2SecurityKey" in auth_methods
             has_passkey_device_bound = "passKeyDeviceBound" in auth_methods

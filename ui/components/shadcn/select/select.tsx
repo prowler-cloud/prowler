@@ -2,9 +2,13 @@
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { ComponentProps } from "react";
+import { ComponentProps, type WheelEvent } from "react";
 
 import { cn } from "@/lib/utils";
+
+const stopWheelPropagation = (event: WheelEvent<HTMLElement>) => {
+  event.stopPropagation();
+};
 
 function Select({
   allowDeselect = false,
@@ -83,6 +87,7 @@ function SelectContent({
   position = "popper",
   align = "start",
   width = "default",
+  style,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Content> & {
   width?: "default" | "wide";
@@ -97,22 +102,34 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-border-input-primary bg-bg-input-primary relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border",
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-border-input-primary bg-bg-input-primary relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-hidden rounded-lg border",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           widthClasses,
           className,
         )}
+        style={{
+          maxHeight: "var(--radix-select-content-available-height)",
+          ...style,
+        }}
         position={position}
         align={align}
         {...props}
       >
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
+          data-slot="select-viewport"
+          onWheelCapture={stopWheelPropagation}
+          style={{
+            maxHeight:
+              "min(300px, var(--radix-select-content-available-height, 300px))",
+          }}
           className={cn(
-            "flex flex-col gap-1 p-3",
+            "minimal-scrollbar flex flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-contain p-3",
             position === "popper" &&
-              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
+              (width === "wide"
+                ? "w-full scroll-my-1"
+                : "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1"),
           )}
         >
           {children}

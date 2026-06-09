@@ -28,12 +28,12 @@ This Terraform configuration creates the necessary IAM role and policies to allo
 
 ### Usage Examples
 
-#### Basic deployment (without S3 integration):
+#### Basic deployment (without S3 integration)
 ```bash
 terraform apply -var="external_id=your-external-id-here"
 ```
 
-#### With S3 integration enabled:
+#### With S3 integration enabled
 ```bash
 terraform apply \
   -var="external_id=your-external-id-here" \
@@ -42,14 +42,14 @@ terraform apply \
   -var="s3_integration_bucket_account_id=123456789012"
 ```
 
-#### Using terraform.tfvars file (Recommended):
+#### Using terraform.tfvars file (Recommended)
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 # Edit the file with your values
 terraform apply
 ```
 
-#### Command line variables (Alternative):
+#### Command line variables (Alternative)
 ```bash
 terraform apply -var="external_id=your-external-id-here"
 ```

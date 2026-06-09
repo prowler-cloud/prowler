@@ -1,0 +1,140 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":enablePreCommit",
+    ":semanticCommits",
+    ":enableVulnerabilityAlertsWithLabel(security)",
+    "docker:enableMajor",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "helpers:disableTypesNodeMajor",
+    "security:openssf-scorecard",
+    "customManagers:githubActionsVersions",
+    "customManagers:dockerfileVersions"
+  ],
+  "timezone": "Europe/Madrid",
+  "baseBranchPatterns": [
+    "master"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "dependencyDashboardTitle": "Dependency Dashboard",
+  "prConcurrentLimit": 20,
+  "prHourlyLimit": 10,
+  "vulnerabilityAlerts": {
+    "prHourlyLimit": 0,
+    "prConcurrentLimit": 0
+  },
+  "configMigration": true,
+  "minimumReleaseAge": "7 days",
+  "rangeStrategy": "pin",
+  "packageRules": [
+    {
+      "description": "Patches: 1st of every month, Madrid overnight window (22:00-06:00)",
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "schedule": [
+        "* 22-23,0-5 1 * *"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Minors: 8th of every 3 months, Madrid overnight window (22:00-06:00)",
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "schedule": [
+        "* 22-23,0-5 8 */3 *"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Majors: 15th of every 3 months, Madrid overnight window",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "schedule": [
+        "* 22-23,0-5 15 */3 *"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "GitHub Actions - single grouped PR, no changelog, scope=ci",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions",
+      "semanticCommitScope": "ci",
+      "addLabels": [
+        "no-changelog"
+      ]
+    },
+    {
+      "description": "Docker images - single grouped PR, no changelog, scope=docker",
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "groupName": "docker",
+      "semanticCommitScope": "docker",
+      "addLabels": [
+        "no-changelog"
+      ]
+    },
+    {
+      "description": "Pre-commit hooks - single grouped PR, scope=pre-commit",
+      "matchManagers": [
+        "pre-commit"
+      ],
+      "groupName": "pre-commit hooks",
+      "semanticCommitScope": "pre-commit",
+      "addLabels": [
+        "no-changelog"
+      ]
+    },
+    {
+      "description": "UI - scope=ui",
+      "matchFileNames": [
+        "ui/**"
+      ],
+      "semanticCommitScope": "ui"
+    },
+    {
+      "description": "API - scope=api",
+      "matchFileNames": [
+        "api/**"
+      ],
+      "semanticCommitScope": "api"
+    },
+    {
+      "description": "MCP server - scope=mcp",
+      "matchFileNames": [
+        "mcp_server/**"
+      ],
+      "semanticCommitScope": "mcp"
+    },
+    {
+      "description": "Python SDK (root) - scope=sdk",
+      "matchFileNames": [
+        "pyproject.toml",
+        "poetry.lock",
+        "util/prowler-bulk-provisioning/**"
+      ],
+      "semanticCommitScope": "sdk"
+    },
+    {
+      "description": "UI devDependencies - no changelog",
+      "matchFileNames": [
+        "ui/**"
+      ],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "addLabels": [
+        "no-changelog"
+      ]
+    }
+  ]
+}

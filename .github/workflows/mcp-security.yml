@@ -1,0 +1,75 @@
+name: 'MCP: Security'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'mcp_server/pyproject.toml'
+      - 'mcp_server/uv.lock'
+      - '.github/workflows/mcp-security.yml'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'mcp_server/pyproject.toml'
+      - 'mcp_server/uv.lock'
+      - '.github/workflows/mcp-security.yml'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  mcp-security-scans:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write # osv-scanner action posts/updates a PR comment with findings
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            api.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            api.osv.dev:443
+            api.deps.dev:443
+            osv-vulnerabilities.storage.googleapis.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
+
+      - name: Check for MCP dependency changes
+        id: check-changes
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            mcp_server/pyproject.toml
+            mcp_server/uv.lock
+            .github/workflows/mcp-security.yml
+            .github/actions/osv-scanner/**
+            .github/scripts/osv-scan.sh
+
+      - name: Dependency vulnerability scan with osv-scanner
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: ./.github/actions/osv-scanner
+        with:
+          lockfile: mcp_server/uv.lock
