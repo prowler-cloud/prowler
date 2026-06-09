@@ -215,6 +215,32 @@ else:
     )
 
 
+def _ensure_scope_columns(data):
+    """Guarantee ACCOUNTID and REGION exist.
+
+    Scope columns always sit between DESCRIPTION and ASSESSMENTDATE, so derive
+    them positionally for any provider (e.g. Okta's ORGANIZATIONDOMAIN) and
+    fall back to "-" to avoid a KeyError.
+    """
+    cols = list(data.columns)
+    scope = []
+    if "DESCRIPTION" in cols and "ASSESSMENTDATE" in cols:
+        start, end = cols.index("DESCRIPTION") + 1, cols.index("ASSESSMENTDATE")
+        scope = [c for c in cols[start:end] if c not in ("ACCOUNTID", "REGION")]
+
+    if "ACCOUNTID" not in data.columns:
+        if scope:
+            data.rename(columns={scope.pop(0): "ACCOUNTID"}, inplace=True)
+        else:
+            data["ACCOUNTID"] = "-"
+    if "REGION" not in data.columns:
+        if scope:
+            data.rename(columns={scope.pop(0): "REGION"}, inplace=True)
+        else:
+            data["REGION"] = "-"
+    return data
+
+
 def _dispatch_compliance_renderer(data, analytics_input):
     """Resolve the compliance renderer module and return (table, deduped_data).
 
@@ -336,6 +362,9 @@ def display_data(
     ):
         data.rename(columns={"SUBSCRIPTION": "ACCOUNTID"}, inplace=True)
         data["REGION"] = "-"
+
+    # Normalize scope columns for any remaining (e.g. dynamic) provider.
+    data = _ensure_scope_columns(data)
 
     # Filter ACCOUNT
     if account_filter == ["All"]:

@@ -1,5 +1,5 @@
 import pandas as pd
-from dash import html
+from dash import dash_table, html
 
 from dashboard.compliance.generic import get_table
 
@@ -16,6 +16,18 @@ def _make_minimal_df(**extra_cols):
     }
     data.update(extra_cols)
     return pd.DataFrame(data)
+
+
+def _datatable_column_ids(component):
+    """Collect the column ids of every DataTable in a Dash component tree."""
+    if isinstance(component, dash_table.DataTable):
+        return [[c["id"] for c in component.columns]]
+    children = getattr(component, "children", None)
+    if children is None:
+        return []
+    if not isinstance(children, (list, tuple)):
+        children = [children]
+    return [cols for child in children for cols in _datatable_column_ids(child)]
 
 
 class TestGetTable:
@@ -169,3 +181,24 @@ class TestGetTable:
         )
         result = get_table(data)
         assert isinstance(result, html.Div)
+
+
+class TestNestedRendering:
+    def test_section_and_requirement_id_are_separate_levels(self):
+        """Section is the outer level; requirement id + description the inner."""
+        data = _make_minimal_df(
+            REQUIREMENTS_ATTRIBUTES_SECTION=["3 Compute Services"],
+            REQUIREMENTS_DESCRIPTION=["Ensure only MFA enabled identities"],
+        )
+        rendered = str(get_table(data))
+        assert "3 Compute Services" in rendered
+        assert "req1 - Ensure only MFA enabled identities" in rendered
+
+    def test_checks_table_is_nested_under_requirement(self):
+        """The checks table sits at the innermost level."""
+        data = _make_minimal_df(
+            REQUIREMENTS_ATTRIBUTES_SECTION=["Sec A"],
+            REQUIREMENTS_DESCRIPTION=["Some requirement"],
+        )
+        tables = _datatable_column_ids(get_table(data))
+        assert tables and all("CHECKID" in cols for cols in tables)
