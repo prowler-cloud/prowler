@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { CalendarClock } from "lucide-react";
 import type { ReactNode } from "react";
-import { Controller, type UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
 
 import {
   Checkbox,
@@ -110,11 +110,13 @@ export function ScanScheduleFields({
   canUseAdvancedSchedule = true,
   showCloudUpgradeBadge = false,
 }: ScanScheduleFieldsProps) {
-  const frequency = form.watch("frequency");
-  const hour = form.watch("hour");
-  const dayOfWeek = form.watch("dayOfWeek");
-  const dayOfMonth = form.watch("dayOfMonth");
-  const intervalHours = form.watch("intervalHours");
+  // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
+  const control = form.control;
+  const frequency = useWatch({ control, name: "frequency" });
+  const hour = useWatch({ control, name: "hour" });
+  const dayOfWeek = useWatch({ control, name: "dayOfWeek" });
+  const dayOfMonth = useWatch({ control, name: "dayOfMonth" });
+  const intervalHours = useWatch({ control, name: "intervalHours" });
   const timezone = getBrowserTimezone();
   const frequencyLabel = (option: (typeof FREQUENCY_OPTIONS)[number]) =>
     option.label ?? `Every ${intervalHours} hours`;

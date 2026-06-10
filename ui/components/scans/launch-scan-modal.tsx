@@ -5,7 +5,7 @@ import { CloudCog, Loader2, Rocket } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
@@ -111,7 +111,8 @@ function LaunchScanForm({
   const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
   const isScheduleMode = mode === LAUNCH_MODE.SCHEDULE;
 
-  const providerId = form.watch("providerId");
+  // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
+  const providerId = useWatch({ control: form.control, name: "providerId" });
   const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
   const shouldShowActiveTabAction = activeTab !== SCAN_JOBS_TAB.ACTIVE;
   const disconnectedProviderIds = providers
