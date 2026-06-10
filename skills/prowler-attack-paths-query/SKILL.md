@@ -228,10 +228,10 @@ For a list-typed parent property the sink stores:
 
 `aws.py` uses a per-query counter for each `HAS_*` traversal so chained matches stay unambiguous:
 
-| Edge              | First | Second | Third |
-| ----------------- | ----- | ------ | ----- |
-| `HAS_ACTION`      | `act` | `act2` | `act3` |
-| `HAS_RESOURCE`    | `res` | `res2` | `res3` |
+| Edge              | First  | Second  | Third   |
+| ----------------- | ------ | ------- | ------- |
+| `HAS_ACTION`      | `act`  | `act2`  | `act3`  |
+| `HAS_RESOURCE`    | `res`  | `res2`  | `res3`  |
 | `HAS_NOTACTION`   | `nact` | `nact2` | `nact3` |
 | `HAS_NOTRESOURCE` | `nres` | `nres2` | `nres3` |
 
@@ -391,17 +391,17 @@ parameters=[
 
 Queries must run on both Neo4j and Amazon Neptune. Avoid these constructs:
 
-| Feature                    | Use instead                                              |
-| -------------------------- | -------------------------------------------------------- |
-| APOC procedures (`apoc.*`) | Real nodes and relationships in the graph                |
-| Neptune extensions         | Standard openCypher                                      |
-| `reduce()`                 | `UNWIND` + `collect()`                                   |
-| `FOREACH`                  | `WITH` + `UNWIND` + `SET`                                |
-| Regex `=~`                 | `toLower()` + exact match, or `STARTS WITH` / `CONTAINS` |
-| `CALL () { UNION }`        | Multi-label `OR` in `WHERE` (see pattern above)          |
-| `any(x IN list ...)`       | `size([x IN list WHERE pred]) > 0`                       |
-| `all(x IN list ...)`       | `size([x IN list WHERE pred]) = size(list)`              |
-| `none(x IN list ...)`      | `size([x IN list WHERE pred]) = 0`                       |
+| Feature                                 | Use instead                                                                                                                                 |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| APOC procedures (`apoc.*`)              | Real nodes and relationships in the graph                                                                                                   |
+| Neptune extensions                      | Standard openCypher                                                                                                                         |
+| `reduce()`                              | `UNWIND` + `collect()`                                                                                                                      |
+| `FOREACH`                               | `WITH` + `UNWIND` + `SET`                                                                                                                   |
+| Regex `=~`                              | `toLower()` + exact match, or `STARTS WITH` / `CONTAINS`                                                                                    |
+| `CALL () { UNION }`                     | Multi-label `OR` in `WHERE` (see pattern above)                                                                                             |
+| `any(x IN list ...)`                    | `size([x IN list WHERE pred]) > 0`                                                                                                          |
+| `all(x IN list ...)`                    | `size([x IN list WHERE pred]) = size(list)`                                                                                                 |
+| `none(x IN list ...)`                   | `size([x IN list WHERE pred]) = 0`                                                                                                          |
 | `EXISTS { MATCH (pattern) WHERE pred }` | Standalone `MATCH (pattern)` + `WHERE pred`; precede the downstream `collect(path...)` with `WITH DISTINCT <path-vars>` to dedupe the joins |
 
 For list-typed properties in the catalog (action, resource, and so on), traverse the `HAS_*` edges to the child item nodes via the multi-`MATCH` shape shown in "List-typed properties as child nodes". The parent node does not carry the list as a single field, so `split(...)` and comma-string predicates do not apply.
@@ -430,7 +430,7 @@ For list-typed properties in the catalog (action, resource, and so on), traverse
 
 1. **Read the queries module first** to match the existing style:
 
-   ```
+   ```text
    api/src/backend/api/attack_paths/queries/
    ├── __init__.py
    ├── types.py         # dataclass definitions
@@ -446,7 +446,7 @@ For list-typed properties in the catalog (action, resource, and so on), traverse
 
    Then fetch the schema for that exact tag:
 
-   ```
+   ```text
    # Git pin (prowler-cloud/cartography@<TAG>):
    https://raw.githubusercontent.com/prowler-cloud/cartography/refs/tags/<TAG>/docs/root/modules/{provider}/schema.md
 
