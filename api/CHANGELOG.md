@@ -19,6 +19,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
+- `GET /api/v1/compliance-overviews/attributes` resolves the owning provider via a prebuilt `compliance_id → provider` index instead of scanning every provider on each request [(#11525)](https://github.com/prowler-cloud/prowler/pull/11525)
 
 ### 🔐 Security
 

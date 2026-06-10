@@ -116,6 +116,7 @@ from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
+    get_provider_for_compliance,
     get_prowler_provider_compliance,
 )
 from api.constants import SEVERITY_ORDER
@@ -5072,15 +5073,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 ]
             )
 
-        provider_type = None
-
-        # If we couldn't determine from database, try each provider type
-        if not provider_type:
-            for pt in Provider.ProviderChoices.values:
-                if compliance_id in get_compliance_frameworks(pt):
-                    provider_type = pt
-                    break
-
+        provider_type = get_provider_for_compliance(compliance_id)
         if not provider_type:
             raise NotFound(detail=f"Compliance framework '{compliance_id}' not found.")
 
