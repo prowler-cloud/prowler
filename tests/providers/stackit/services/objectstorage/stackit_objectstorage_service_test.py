@@ -184,6 +184,9 @@ class TestObjectStorageService:
         service.access_keys = []
 
         client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[SimpleNamespace(id="cg-001", display_name="main-group")]
+        )
         client.list_access_keys.return_value = SimpleNamespace(
             access_keys=[
                 SimpleNamespace(
@@ -196,11 +199,98 @@ class TestObjectStorageService:
 
         service._list_access_keys(client, "eu01")
 
+        client.list_credentials_groups.assert_called_once_with(
+            project_id=STACKIT_PROJECT_ID, region="eu01"
+        )
+        client.list_access_keys.assert_called_once_with(
+            project_id=STACKIT_PROJECT_ID, region="eu01", credentials_group="cg-001"
+        )
         assert len(service.access_keys) == 1
         assert service.access_keys[0].key_id == "key-001"
         assert service.access_keys[0].display_name == "my-key"
         assert service.access_keys[0].region == "eu01"
         assert service.access_keys[0].expires == "2027-01-01T00:00:00+00:00"
+        assert service.access_keys[0].credentials_group_id == "cg-001"
+        assert service.access_keys[0].credentials_group_name == "main-group"
+
+    def test_list_access_keys_with_credentials_group_id_object_data(self):
+        service = ObjectStorageService.__new__(ObjectStorageService)
+        service.provider = mock.MagicMock()
+        service.project_id = STACKIT_PROJECT_ID
+        service.access_keys = []
+
+        client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[
+                SimpleNamespace(
+                    credentials_group_id="cg-sdk",
+                    display_name="sdk-group",
+                )
+            ]
+        )
+        client.list_access_keys.return_value = SimpleNamespace(access_keys=[])
+
+        service._list_access_keys(client, "eu01")
+
+        client.list_access_keys.assert_called_once_with(
+            project_id=STACKIT_PROJECT_ID, region="eu01", credentials_group="cg-sdk"
+        )
+
+    def test_list_access_keys_collects_keys_from_multiple_credentials_groups(self):
+        service = ObjectStorageService.__new__(ObjectStorageService)
+        service.provider = mock.MagicMock()
+        service.project_id = STACKIT_PROJECT_ID
+        service.access_keys = []
+
+        client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[
+                SimpleNamespace(id="cg-001", display_name="group-one"),
+                SimpleNamespace(id="cg-002", display_name="group-two"),
+            ]
+        )
+        client.list_access_keys.side_effect = [
+            SimpleNamespace(
+                access_keys=[
+                    SimpleNamespace(
+                        key_id="key-001",
+                        display_name="key-one",
+                        expires="2027-01-01T00:00:00+00:00",
+                    )
+                ]
+            ),
+            SimpleNamespace(
+                access_keys=[
+                    SimpleNamespace(
+                        key_id="key-002",
+                        display_name="key-two",
+                        expires=None,
+                    )
+                ]
+            ),
+        ]
+
+        service._list_access_keys(client, "eu01")
+
+        assert client.list_access_keys.call_args_list == [
+            mock.call(
+                project_id=STACKIT_PROJECT_ID,
+                region="eu01",
+                credentials_group="cg-001",
+            ),
+            mock.call(
+                project_id=STACKIT_PROJECT_ID,
+                region="eu01",
+                credentials_group="cg-002",
+            ),
+        ]
+        assert [key.key_id for key in service.access_keys] == ["key-001", "key-002"]
+        assert service.access_keys[1].expires is None
+        assert service.access_keys[1].has_expiration() is False
+        assert [key.credentials_group_id for key in service.access_keys] == [
+            "cg-001",
+            "cg-002",
+        ]
 
     def test_list_access_keys_with_dict_api_response(self):
         service = ObjectStorageService.__new__(ObjectStorageService)
@@ -209,6 +299,9 @@ class TestObjectStorageService:
         service.access_keys = []
 
         client = mock.MagicMock()
+        client.list_credentials_groups.return_value = {
+            "credentialsGroups": [{"id": "cg-dict", "displayName": "dict-group"}]
+        }
         client.list_access_keys.return_value = {
             "accessKeys": [
                 {"keyId": "key-dict", "displayName": "dict-key", "expires": None}
@@ -220,6 +313,112 @@ class TestObjectStorageService:
         assert len(service.access_keys) == 1
         assert service.access_keys[0].key_id == "key-dict"
         assert service.access_keys[0].display_name == "dict-key"
+        assert service.access_keys[0].expires is None
+        assert service.access_keys[0].has_expiration() is False
+        assert service.access_keys[0].credentials_group_id == "cg-dict"
+        assert service.access_keys[0].credentials_group_name == "dict-group"
+
+    def test_list_access_keys_with_raw_json_response_and_null_expires(self):
+        service = ObjectStorageService.__new__(ObjectStorageService)
+        service.provider = mock.MagicMock()
+        service.project_id = STACKIT_PROJECT_ID
+        service.access_keys = []
+
+        class RawResponse:
+            status = 200
+
+            def json(self):
+                return {
+                    "accessKeys": [
+                        {
+                            "keyId": "key-raw",
+                            "displayName": "raw-key",
+                            "expires": None,
+                        }
+                    ]
+                }
+
+        class FakeClient:
+            def __init__(self):
+                self.list_credentials_groups = mock.MagicMock(
+                    return_value=SimpleNamespace(
+                        credentials_groups=[SimpleNamespace(id="cg-raw")]
+                    )
+                )
+                self.list_access_keys = mock.MagicMock()
+                self.raw_call = None
+
+            def list_access_keys_without_preload_content(self, **kwargs):
+                self.raw_call = kwargs
+                return RawResponse()
+
+        client = FakeClient()
+
+        service._list_access_keys(client, "eu01")
+
+        assert client.raw_call == {
+            "project_id": STACKIT_PROJECT_ID,
+            "region": "eu01",
+            "credentials_group": "cg-raw",
+        }
+        client.list_access_keys.assert_not_called()
+        assert len(service.access_keys) == 1
+        assert service.access_keys[0].key_id == "key-raw"
+        assert service.access_keys[0].expires is None
+        assert service.access_keys[0].has_expiration() is False
+
+    def test_list_access_keys_with_raw_data_response(self):
+        service = ObjectStorageService.__new__(ObjectStorageService)
+        service.provider = mock.MagicMock()
+        service.project_id = STACKIT_PROJECT_ID
+        service.access_keys = []
+
+        class RawResponse:
+            status = 200
+            data = b'{"accessKeys":[{"keyId":"key-data","displayName":"data-key"}]}'
+
+        class FakeClient:
+            def __init__(self):
+                self.list_credentials_groups = mock.MagicMock(
+                    return_value=SimpleNamespace(
+                        credentials_groups=[SimpleNamespace(id="cg-data")]
+                    )
+                )
+
+            def list_access_keys_without_preload_content(self, **kwargs):
+                return RawResponse()
+
+        service._list_access_keys(FakeClient(), "eu01")
+
+        assert len(service.access_keys) == 1
+        assert service.access_keys[0].key_id == "key-data"
+        assert service.access_keys[0].display_name == "data-key"
+
+    def test_list_access_keys_raw_response_propagates_non_success_status(self):
+        service = ObjectStorageService.__new__(ObjectStorageService)
+        service.provider = mock.MagicMock()
+        service.project_id = STACKIT_PROJECT_ID
+        service.access_keys = []
+
+        class RawResponse:
+            status = 503
+
+        class FakeClient:
+            def __init__(self):
+                self.list_credentials_groups = mock.MagicMock(
+                    return_value=SimpleNamespace(
+                        credentials_groups=[SimpleNamespace(id="cg-error")]
+                    )
+                )
+
+            def list_access_keys_without_preload_content(self, **kwargs):
+                return RawResponse()
+
+        with pytest.raises(Exception, match="status 503") as error:
+            service._list_access_keys(FakeClient(), "eu01")
+
+        assert error.value.status == 503
+        service.provider.handle_api_error.assert_called_once_with(error.value)
 
     def test_list_access_keys_with_dict_key_data(self):
         service = ObjectStorageService.__new__(ObjectStorageService)
@@ -228,6 +427,9 @@ class TestObjectStorageService:
         service.access_keys = []
 
         client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[{"id": "cg-456", "displayName": "group-456"}]
+        )
         client.list_access_keys.return_value = SimpleNamespace(
             access_keys=[
                 {
@@ -243,6 +445,7 @@ class TestObjectStorageService:
         assert len(service.access_keys) == 1
         assert service.access_keys[0].key_id == "key-456"
         assert service.access_keys[0].display_name == "my-dict-key"
+        assert service.access_keys[0].credentials_group_id == "cg-456"
 
     def test_list_access_keys_skips_unknown_type(self):
         service = ObjectStorageService.__new__(ObjectStorageService)
@@ -251,6 +454,9 @@ class TestObjectStorageService:
         service.access_keys = []
 
         client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[SimpleNamespace(id="cg-001")]
+        )
         client.list_access_keys.return_value = SimpleNamespace(access_keys=[42])
 
         service._list_access_keys(client, "eu01")
@@ -264,11 +470,56 @@ class TestObjectStorageService:
         service.access_keys = []
 
         client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[SimpleNamespace(id="cg-empty")]
+        )
         client.list_access_keys.return_value = SimpleNamespace(access_keys=[])
 
         service._list_access_keys(client, "eu01")
 
         assert len(service.access_keys) == 0
+
+    def test_list_access_keys_no_credentials_groups(self):
+        service = ObjectStorageService.__new__(ObjectStorageService)
+        service.provider = mock.MagicMock()
+        service.project_id = STACKIT_PROJECT_ID
+        service.access_keys = []
+
+        client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[]
+        )
+
+        service._list_access_keys(client, "eu01")
+
+        assert len(service.access_keys) == 0
+        client.list_access_keys.assert_not_called()
+
+    def test_list_access_keys_skips_malformed_credentials_groups(self):
+        service = ObjectStorageService.__new__(ObjectStorageService)
+        service.provider = mock.MagicMock()
+        service.project_id = STACKIT_PROJECT_ID
+        service.access_keys = []
+
+        client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[
+                42,
+                {},
+                SimpleNamespace(id="cg-valid", display_name="valid-group"),
+            ]
+        )
+        client.list_access_keys.return_value = SimpleNamespace(
+            access_keys=[SimpleNamespace(key_id="key-valid")]
+        )
+
+        service._list_access_keys(client, "eu01")
+
+        client.list_access_keys.assert_called_once_with(
+            project_id=STACKIT_PROJECT_ID, region="eu01", credentials_group="cg-valid"
+        )
+        assert len(service.access_keys) == 1
+        assert service.access_keys[0].key_id == "key-valid"
 
     def test_fetch_all_regions_calls_both_list_methods(self):
         service = ObjectStorageService.__new__(ObjectStorageService)
@@ -318,6 +569,9 @@ class TestObjectStorageService:
                 raise RuntimeError("broken key attribute")
 
         client = mock.MagicMock()
+        client.list_credentials_groups.return_value = SimpleNamespace(
+            credentials_groups=[SimpleNamespace(id="cg-001")]
+        )
         client.list_access_keys.return_value = SimpleNamespace(
             access_keys=[BrokenKey()]
         )
@@ -346,6 +600,8 @@ class TestAccessKeyModel:
             region="eu01",
             project_id=STACKIT_PROJECT_ID,
         )
+        assert key.expires is None
+        assert key.has_expiration() is False
         assert key.expires_within_days(90) is False
 
     def test_expires_within_days_when_expiring_soon(self):

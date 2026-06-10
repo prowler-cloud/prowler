@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -104,41 +105,162 @@ class ObjectStorageService:
             raise
 
     def _list_access_keys(self, client, region: str):
-        response = self._handle_api_call(
-            client.list_access_keys, project_id=self.project_id, region=region
+        credentials_groups_response = self._handle_api_call(
+            client.list_credentials_groups, project_id=self.project_id, region=region
         )
 
-        keys_list = getattr(response, "access_keys", None) or []
-        if isinstance(response, dict):
-            keys_list = response.get("accessKeys", [])
+        credentials_groups = (
+            getattr(credentials_groups_response, "credentials_groups", None) or []
+        )
+        if isinstance(credentials_groups_response, dict):
+            credentials_groups = credentials_groups_response.get(
+                "credentialsGroups",
+                credentials_groups_response.get("credentials_groups", []),
+            )
 
-        for key_data in keys_list:
+        total_keys = 0
+
+        for credentials_group_data in credentials_groups:
             try:
-                if hasattr(key_data, "key_id"):
-                    key_id = key_data.key_id
-                    display_name = getattr(key_data, "display_name", key_id)
-                    expires = getattr(key_data, "expires", None)
-                elif isinstance(key_data, dict):
-                    key_id = key_data.get("keyId", "")
-                    display_name = key_data.get("displayName", key_id)
-                    expires = key_data.get("expires")
-                else:
-                    continue
-
-                self.access_keys.append(
-                    AccessKey(
-                        key_id=key_id,
-                        display_name=display_name,
-                        expires=expires,
-                        region=region,
-                        project_id=self.project_id,
+                if isinstance(credentials_group_data, dict):
+                    credentials_group_id = credentials_group_data.get(
+                        "id",
+                        credentials_group_data.get(
+                            "groupId",
+                            credentials_group_data.get("credentialsGroupId", ""),
+                        ),
                     )
-                )
+                    credentials_group_name = credentials_group_data.get(
+                        "displayName",
+                        credentials_group_data.get("name", credentials_group_id),
+                    )
+                else:
+                    credentials_group_id = (
+                        getattr(credentials_group_data, "id", None)
+                        or getattr(credentials_group_data, "group_id", None)
+                        or getattr(credentials_group_data, "credentials_group_id", "")
+                    )
+                    credentials_group_name = getattr(
+                        credentials_group_data,
+                        "display_name",
+                        getattr(credentials_group_data, "name", credentials_group_id),
+                    )
             except Exception as e:
-                logger.error(f"Error processing access key: {e}")
+                logger.error(f"Error processing credentials group: {e}")
                 continue
 
-        logger.info(f"Listed {len(keys_list)} access keys in {region}")
+            if not credentials_group_id:
+                continue
+
+            response = self._list_access_keys_response(
+                client, region, credentials_group_id
+            )
+            keys_list = self._extract_access_keys(response)
+
+            for key_data in keys_list:
+                try:
+                    if hasattr(key_data, "key_id"):
+                        key_id = key_data.key_id
+                        display_name = getattr(key_data, "display_name", key_id)
+                        expires = getattr(key_data, "expires", None)
+                    elif isinstance(key_data, dict):
+                        key_id = key_data.get("keyId", key_data.get("key_id", ""))
+                        display_name = key_data.get(
+                            "displayName", key_data.get("display_name", key_id)
+                        )
+                        expires = key_data.get("expires")
+                    else:
+                        continue
+
+                    if not key_id:
+                        continue
+
+                    self.access_keys.append(
+                        AccessKey(
+                            key_id=key_id,
+                            display_name=display_name,
+                            expires=expires,
+                            region=region,
+                            project_id=self.project_id,
+                            credentials_group_id=credentials_group_id,
+                            credentials_group_name=credentials_group_name,
+                        )
+                    )
+                except Exception as e:
+                    logger.error(f"Error processing access key: {e}")
+                    continue
+
+            total_keys += len(keys_list)
+
+        logger.info(f"Listed {total_keys} access keys in {region}")
+
+    def _list_access_keys_response(
+        self, client, region: str, credentials_group_id: str
+    ):
+        raw_method = None
+        if callable(
+            getattr(type(client), "list_access_keys_without_preload_content", None)
+        ):
+            raw_method = client.list_access_keys_without_preload_content
+        elif callable(vars(client).get("list_access_keys_without_preload_content")):
+            raw_method = vars(client)["list_access_keys_without_preload_content"]
+
+        if raw_method:
+            response = self._handle_api_call(
+                raw_method,
+                project_id=self.project_id,
+                region=region,
+                credentials_group=credentials_group_id,
+            )
+            self._raise_for_raw_response_status(response)
+            return response
+
+        return self._handle_api_call(
+            client.list_access_keys,
+            project_id=self.project_id,
+            region=region,
+            credentials_group=credentials_group_id,
+        )
+
+    def _raise_for_raw_response_status(self, response):
+        status = getattr(response, "status", None)
+        if status is None:
+            status = getattr(response, "status_code", None)
+        if isinstance(status, int) and status >= 400:
+            error = Exception(
+                f"StackIT ObjectStorage list_access_keys failed with status {status}"
+            )
+            error.status = status
+            self.provider.handle_api_error(error)
+            raise error
+
+    @staticmethod
+    def _extract_access_keys(response) -> list:
+        payload = response
+        if not isinstance(payload, (dict, list)):
+            json_method = getattr(response, "json", None)
+            if callable(json_method):
+                payload = json_method()
+            elif hasattr(response, "data"):
+                payload = ObjectStorageService._parse_raw_json(response.data)
+            elif hasattr(response, "text"):
+                payload = ObjectStorageService._parse_raw_json(response.text)
+
+        if isinstance(payload, dict):
+            return payload.get("accessKeys", payload.get("access_keys", []))
+        if isinstance(payload, list):
+            return payload
+        return getattr(response, "access_keys", None) or []
+
+    @staticmethod
+    def _parse_raw_json(raw):
+        if raw in (None, b"", ""):
+            return {}
+        if isinstance(raw, (bytes, bytearray)):
+            raw = raw.decode("utf-8")
+        if isinstance(raw, str):
+            return json.loads(raw)
+        return raw
 
 
 class Bucket(BaseModel):
@@ -157,6 +279,8 @@ class AccessKey(BaseModel):
     expires: Optional[str] = None
     region: str
     project_id: str
+    credentials_group_id: Optional[str] = None
+    credentials_group_name: Optional[str] = None
 
     def has_expiration(self) -> bool:
         """Return True if the key has a real (non-sentinel) expiration date."""
