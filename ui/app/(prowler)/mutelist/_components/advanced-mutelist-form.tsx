@@ -172,7 +172,7 @@ export function AdvancedMutelistForm() {
         size="md"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-default-600 text-sm">
+          <p className="text-text-neutral-secondary text-sm">
             Are you sure you want to delete this configuration? This action
             cannot be undone.
           </p>
@@ -206,10 +206,10 @@ export function AdvancedMutelistForm() {
 
           <div className="flex flex-col gap-4">
             <div>
-              <h3 className="text-default-700 mb-2 text-lg font-semibold">
+              <h3 className="text-text-neutral-secondary mb-2 text-lg font-semibold">
                 Advanced Mutelist Configuration
               </h3>
-              <ul className="text-default-600 mb-4 list-disc pl-5 text-sm">
+              <ul className="text-text-neutral-secondary mb-4 list-disc pl-5 text-sm">
                 <li>
                   <strong>
                     This Mutelist configuration will take effect on the next
@@ -240,7 +240,7 @@ export function AdvancedMutelistForm() {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="configuration"
-                className="text-default-700 text-sm font-medium"
+                className="text-text-neutral-secondary text-sm font-medium"
               >
                 Mutelist Configuration (YAML)
               </label>
@@ -268,7 +268,7 @@ export function AdvancedMutelistForm() {
                 {yamlValidation.isValid &&
                   configText &&
                   hasUserStartedTyping && (
-                    <div className="text-tiny text-success my-1 flex items-center px-1">
+                    <div className="text-text-success-primary my-1 flex items-center px-1 text-xs">
                       <span>Valid YAML format</span>
                     </div>
                   )}

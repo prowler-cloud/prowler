@@ -33,7 +33,7 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
               onChange?.(value);
             }}
           >
-            <span className="text-default-500 text-sm">
+            <span className="text-text-neutral-tertiary text-sm">
               Personal Access Token
             </span>
             <WizardRadioCard
@@ -43,12 +43,16 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
               Personal Access Token
             </WizardRadioCard>
 
-            <span className="text-default-500 text-sm">OAuth App</span>
+            <span className="text-text-neutral-tertiary text-sm">
+              OAuth App
+            </span>
             <WizardRadioCard value="oauth_app" isInvalid={isInvalid}>
               OAuth App Token
             </WizardRadioCard>
 
-            <span className="text-default-500 text-sm">GitHub App</span>
+            <span className="text-text-neutral-tertiary text-sm">
+              GitHub App
+            </span>
             <WizardRadioCard value="github_app" isInvalid={isInvalid}>
               GitHub App
             </WizardRadioCard>

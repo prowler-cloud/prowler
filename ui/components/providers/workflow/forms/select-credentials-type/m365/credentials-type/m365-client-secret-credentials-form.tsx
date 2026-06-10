@@ -13,10 +13,10 @@ export const M365ClientSecretCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           App Client Secret Credentials
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Please provide your Microsoft 365 application credentials.
         </div>
       </div>

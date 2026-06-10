@@ -29,7 +29,9 @@ export const NavigationHeader = ({
           </Link>
         </Button>
         <Separator orientation="vertical" className="h-6" />
-        <h1 className="text-default-700 text-xl font-light">{title}</h1>
+        <h1 className="text-text-neutral-secondary text-xl font-light">
+          {title}
+        </h1>
       </header>
     </>
   );

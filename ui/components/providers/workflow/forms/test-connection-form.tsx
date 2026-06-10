@@ -155,7 +155,7 @@ export const TestConnectionForm = ({
       >
         <div className="text-left">
           <div className="mb-2 text-xl font-medium">Check connection</div>
-          <p className="text-small text-default-500 py-2">
+          <p className="text-text-neutral-tertiary py-2 text-sm">
             {!isUpdated
               ? "After a successful connection, continue to the launch step to configure and start your scan."
               : "A successful connection will redirect you to the providers page."}
@@ -178,12 +178,12 @@ export const TestConnectionForm = ({
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-small text-text-error-primary break-words">
+                <p className="text-text-error-primary text-sm break-words">
                   {connectionStatus.error || "Unknown error"}
                 </p>
               </div>
             </div>
-            <p className="text-small text-text-error-primary">
+            <p className="text-text-error-primary text-sm">
               It seems there was an issue with your credentials. Please review
               your credentials and try again.
             </p>
@@ -198,7 +198,7 @@ export const TestConnectionForm = ({
         />
 
         {isUpdated && !connectionStatus?.error && (
-          <p className="text-small text-default-500 py-2">
+          <p className="text-text-neutral-tertiary py-2 text-sm">
             Check the new credentials and test the connection.
           </p>
         )}

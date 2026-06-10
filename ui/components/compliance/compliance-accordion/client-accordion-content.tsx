@@ -162,7 +162,7 @@ export const ClientAccordionContent = ({
       key: "checks",
       title: (
         <div className="flex items-center gap-2">
-          <span className="text-primary">{checks.length}</span>
+          <span className="text-button-primary">{checks.length}</span>
           {checks.length > 1 ? <span>Checks</span> : <span>Check</span>}
         </div>
       ),

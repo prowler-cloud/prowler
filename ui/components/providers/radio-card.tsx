@@ -30,15 +30,15 @@ export function RadioCard({
         disabled
           ? "border-border-neutral-primary bg-bg-neutral-tertiary cursor-not-allowed"
           : selected
-            ? "border-primary bg-bg-neutral-tertiary cursor-pointer"
-            : "hover:border-primary border-border-neutral-primary bg-bg-neutral-tertiary cursor-pointer",
+            ? "border-button-primary bg-bg-neutral-tertiary cursor-pointer"
+            : "hover:border-button-primary border-border-neutral-primary bg-bg-neutral-tertiary cursor-pointer",
       )}
     >
       <div
         className={cn(
           "size-[18px] shrink-0 rounded-full border shadow-xs",
           selected
-            ? "border-primary bg-primary"
+            ? "border-button-primary bg-button-primary"
             : "border-border-neutral-primary bg-bg-input-primary",
         )}
       />
@@ -53,7 +53,9 @@ export function RadioCard({
         <span
           className={cn(
             "truncate text-sm leading-6",
-            disabled ? "text-text-neutral-tertiary" : "text-foreground",
+            disabled
+              ? "text-text-neutral-tertiary"
+              : "text-text-neutral-primary",
           )}
         >
           {title}

@@ -217,7 +217,7 @@ export const AddRoleForm = ({
                       <div className="flex w-fit items-center justify-center">
                         <InfoIcon
                           className={clsx(
-                            "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
+                            "text-text-neutral-tertiary group-data-[selected=true]:text-text-neutral-primary cursor-pointer",
                           )}
                           aria-hidden={"true"}
                           width={16}
@@ -239,7 +239,7 @@ export const AddRoleForm = ({
               Groups and Account Visibility
             </span>
 
-            <p className="text-small text-default-700 font-medium">
+            <p className="text-text-neutral-secondary text-sm font-medium">
               Select the groups this role will have access to. If no groups are
               selected and unlimited visibility is not enabled, the role will
               not have access to any accounts.

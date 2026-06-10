@@ -1,12 +1,9 @@
-const { heroui } = require("@heroui/theme");
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
   content: [
     "./components/**/*.{ts,jsx,tsx}",
     "./app/**/*.{ts,jsx,tsx}",
-    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
     "!./docs/**/*",
   ],
   prefix: "",
@@ -91,31 +88,5 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require("tailwindcss-animate"),
-    require("@tailwindcss/typography"),
-    heroui({
-      themes: {
-        dark: {
-          colors: {
-            primary: {
-              DEFAULT: "#6ee7b7",
-              foreground: "#000000",
-            },
-            focus: "#6ee7b7",
-            background: "#000000",
-            foreground: "#ffffff",
-          },
-        },
-        light: {
-          colors: {
-            primary: {
-              DEFAULT: "#6ee7b7",
-              foreground: "#000000",
-            },
-          },
-        },
-      },
-    }),
-  ],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 };

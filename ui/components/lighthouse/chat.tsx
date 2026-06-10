@@ -336,7 +336,7 @@ export const Chat = ({
     <div className="relative flex h-full min-w-0 flex-col overflow-hidden">
       {/* Header with New Chat button */}
       {messages.length > 0 && (
-        <div className="border-default-200 dark:border-default-100 border-b px-2 py-3 sm:px-4">
+        <div className="border-border-neutral-secondary border-b px-2 py-3 sm:px-4">
           <div className="flex items-center justify-end">
             <Button
               aria-label="Start new chat"
@@ -353,7 +353,7 @@ export const Chat = ({
       )}
 
       {!hasConfig && (
-        <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div className="bg-bg-neutral-primary/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
           <Card
             variant="base"
             padding="lg"
@@ -368,7 +368,7 @@ export const Chat = ({
             <CardContent>
               <CustomLink
                 href="/lighthouse/config"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
+                className="bg-button-primary hover:bg-button-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2 text-black"
                 target="_self"
                 size="sm"
               >

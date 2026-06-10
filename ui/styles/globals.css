@@ -415,7 +415,7 @@
 @layer base {
   /* Global base styles */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-bg-neutral-primary text-text-neutral-primary;
   }
 }
 

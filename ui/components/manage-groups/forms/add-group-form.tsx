@@ -158,7 +158,7 @@ export const AddGroupForm = ({
         )}
         <Separator orientation="horizontal" className="mb-2" />
 
-        <p className="text-small text-default-500">
+        <p className="text-text-neutral-tertiary text-sm">
           Roles can also be associated with the group. This step is optional and
           can be completed later if needed or from the Roles page.
         </p>

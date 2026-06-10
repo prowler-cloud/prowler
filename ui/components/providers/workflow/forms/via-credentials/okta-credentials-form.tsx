@@ -15,10 +15,10 @@ export const OktaCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect via OAuth 2.0 Private Key JWT
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Provide the Client ID and PEM-encoded private key of an Okta API
           Services app whose matching public key (JWK) is registered on the
           service app.
@@ -43,7 +43,7 @@ export const OktaCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <div className="text-default-400 text-xs">
+      <div className="text-text-neutral-tertiary text-xs">
         The private key is sent over TLS and stored as a secret in the backend.
         You can rotate or revoke the public key from the Okta admin console at
         any time.

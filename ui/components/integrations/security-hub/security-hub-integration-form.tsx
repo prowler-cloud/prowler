@@ -557,7 +557,7 @@ export const SecurityHubIntegrationForm = ({
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="text-default-500 flex items-center gap-2 text-sm">
+            <p className="text-text-neutral-tertiary flex items-center gap-2 text-sm">
               Need help configuring your AWS Security Hub integration?
             </p>
             <CustomLink

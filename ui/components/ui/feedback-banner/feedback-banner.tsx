@@ -20,7 +20,7 @@ const typeStyles: Record<
     text: "text-text-error",
   },
   warning: {
-    border: "border-warning",
+    border: "border-amber-500",
     bg: "bg-yellow-100 dark:bg-yellow-200",
     text: "text-yellow-800",
   },

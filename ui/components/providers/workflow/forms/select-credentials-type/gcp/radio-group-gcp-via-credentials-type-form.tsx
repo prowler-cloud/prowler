@@ -33,13 +33,13 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
               onChange?.(value);
             }}
           >
-            <span className="text-default-500 text-sm">
+            <span className="text-text-neutral-tertiary text-sm">
               Using Service Account
             </span>
             <WizardRadioCard value="service-account" isInvalid={isInvalid}>
               Connect via Service Account Key
             </WizardRadioCard>
-            <span className="text-default-500 text-sm">
+            <span className="text-text-neutral-tertiary text-sm">
               Using Application Default Credentials
             </span>
             <WizardRadioCard value="credentials" isInvalid={isInvalid}>

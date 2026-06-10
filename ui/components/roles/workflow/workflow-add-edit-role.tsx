@@ -35,14 +35,14 @@ export const WorkflowAddEditRole = () => {
       <h1 className="mb-2 text-xl font-medium" id="getting-started">
         Manage Role Permissions
       </h1>
-      <p className="text-small text-default-500 mb-5">
+      <p className="text-text-neutral-tertiary mb-5 text-sm">
         Define a new role with customized permissions or modify an existing one
         to meet your needs.
       </p>
       <div className="mb-5 flex flex-col gap-2 px-0.5">
         <div className="flex items-center justify-between">
-          <span className="text-small">Steps</span>
-          <span className="text-small text-default-400">
+          <span className="text-sm">Steps</span>
+          <span className="text-text-neutral-tertiary text-sm">
             {`${currentStep + 1} of ${steps.length}`}
           </span>
         </div>

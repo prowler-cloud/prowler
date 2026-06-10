@@ -116,7 +116,7 @@ export function FindingsGroupDrillDown({
     >
       <div
         className={cn(
-          "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary",
+          "minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary rounded-[14px] shadow-sm",
           "flex w-full flex-col overflow-auto border",
         )}
       >

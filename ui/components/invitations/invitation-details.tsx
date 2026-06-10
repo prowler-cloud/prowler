@@ -39,7 +39,7 @@ const InfoField = ({
       {label}
     </span>
     <div className="border-border-input-primary bg-bg-input-primary flex min-w-0 items-center overflow-hidden rounded-lg border p-3">
-      <span className="text-small text-text-neutral-primary min-w-0 truncate">
+      <span className="text-text-neutral-primary min-w-0 truncate text-sm">
         {children}
       </span>
     </div>

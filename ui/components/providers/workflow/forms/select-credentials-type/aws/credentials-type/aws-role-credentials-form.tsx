@@ -73,13 +73,13 @@ export const AWSRoleCredentialsForm = ({
     <>
       <div className="flex flex-col">
         {type === "providers" && (
-          <div className="text-md text-default-foreground leading-9 font-bold">
+          <div className="text-md text-text-neutral-primary leading-9 font-bold">
             Connect assuming IAM Role
           </div>
         )}
       </div>
 
-      <span className="text-default-500 text-xs font-bold">
+      <span className="text-text-neutral-tertiary text-xs font-bold">
         Specify which AWS credentials to use
       </span>
 
@@ -157,10 +157,12 @@ export const AWSRoleCredentialsForm = ({
       <Separator />
 
       {type === "providers" ? (
-        <span className="text-default-500 text-xs font-bold">Assume Role</span>
+        <span className="text-text-neutral-tertiary text-xs font-bold">
+          Assume Role
+        </span>
       ) : (
         <div className="flex items-center justify-between">
-          <span className="text-default-500 text-xs font-bold">
+          <span className="text-text-neutral-tertiary text-xs font-bold">
             {isCloudEnv && credentialsType === "aws-sdk-default"
               ? "Adding a role is required"
               : "Optionally add a role"}
@@ -207,7 +209,9 @@ export const AWSRoleCredentialsForm = ({
             isRequired
           />
 
-          <span className="text-default-500 text-xs">Optional fields</span>
+          <span className="text-text-neutral-tertiary text-xs">
+            Optional fields
+          </span>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <WizardInputField
               control={control}

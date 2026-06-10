@@ -127,7 +127,7 @@ export const CustomInput = <T extends FieldValues>({
                 }
               >
                 <Icon
-                  className="text-default-400 pointer-events-none text-2xl"
+                  className="text-text-neutral-tertiary pointer-events-none text-2xl"
                   icon={
                     (password && isPasswordVisible) ||
                     (confirmPassword && isConfirmPasswordVisible)

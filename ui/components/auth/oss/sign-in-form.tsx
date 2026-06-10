@@ -194,7 +194,7 @@ export const SignInForm = ({
         >
           {!isSamlMode && (
             <Icon
-              className="text-default-500"
+              className="text-text-neutral-tertiary"
               icon="mdi:shield-key"
               width={24}
             />

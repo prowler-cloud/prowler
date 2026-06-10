@@ -169,22 +169,22 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                       onClick={() => field.onChange(provider.value)}
                       className={cn(
                         "flex min-h-[72px] w-full items-center gap-4 rounded-lg border px-3 py-2.5 text-left transition-colors",
-                        "focus-visible:border-primary focus-visible:outline-none",
+                        "focus-visible:border-button-primary focus-visible:outline-none",
                         isSelected
-                          ? "border-primary bg-bg-neutral-tertiary"
-                          : "border-border-neutral-primary bg-bg-neutral-tertiary hover:border-primary",
+                          ? "border-button-primary bg-bg-neutral-tertiary"
+                          : "border-border-neutral-primary bg-bg-neutral-tertiary hover:border-button-primary",
                         isInvalid && "border-bg-fail",
                       )}
                     >
                       <div className="border-border-neutral-primary bg-bg-input-primary flex size-[18px] shrink-0 items-center justify-center rounded-full border shadow-xs">
                         {isSelected && (
-                          <div className="bg-primary size-2.5 rounded-full" />
+                          <div className="bg-button-primary size-2.5 rounded-full" />
                         )}
                       </div>
 
                       <div className="flex min-w-0 flex-1 items-center gap-1.5">
                         <BadgeComponent size={26} />
-                        <span className="text-foreground text-sm leading-6">
+                        <span className="text-text-neutral-primary text-sm leading-6">
                           {provider.label}
                         </span>
                       </div>
