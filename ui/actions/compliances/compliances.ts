@@ -84,6 +84,13 @@ export const getComplianceAttributes = async (complianceId: string) => {
       headers,
     });
 
+    // The compliance catalog is still warming after a deploy/restart. Signal
+    // the page to render the "still loading" state instead of letting this
+    // become a thrown 5xx (which would be captured as a server error).
+    if (response.status === 503) {
+      return { warming: true as const, status: 503 };
+    }
+
     return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching compliance attributes:", error);
