@@ -286,7 +286,7 @@ const pollTaskUntilComplete = async (
   taskId: string,
 ): Promise<PollConnectionResult> => {
   const settled = await pollTaskUntilSettled<ConnectionTaskResult>(taskId, {
-    maxAttempts: 10,
+    maxAttempts: 20,
     delayMs: 3000,
   });
 
