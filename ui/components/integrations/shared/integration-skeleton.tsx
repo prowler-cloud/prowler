@@ -1,8 +1,8 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Skeleton } from "@heroui/skeleton";
 import { ReactNode } from "react";
+
+import { Card, CardContent, CardHeader, Skeleton } from "@/components/shadcn";
 
 interface IntegrationSkeletonProps {
   variant?: "main" | "manager";
@@ -21,8 +21,8 @@ export const IntegrationSkeleton = ({
 }: IntegrationSkeletonProps) => {
   if (variant === "main") {
     return (
-      <Card className="dark:bg-prowler-blue-400">
-        <CardHeader className="gap-2">
+      <Card className="dark:bg-prowler-blue-400 gap-0">
+        <CardHeader className="mb-0 flex items-center gap-2 p-3">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
               {icon}
@@ -39,12 +39,12 @@ export const IntegrationSkeleton = ({
             </div>
           </div>
         </CardHeader>
-        <CardBody>
+        <CardContent className="p-3">
           <div className="flex flex-col gap-4">
             <Skeleton className="h-4 w-full rounded" />
             <Skeleton className="h-4 w-3/4 rounded" />
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -53,8 +53,8 @@ export const IntegrationSkeleton = ({
   return (
     <div className="grid gap-4">
       {Array.from({ length: count }).map((_, index) => (
-        <Card key={index} className="dark:bg-prowler-blue-400">
-          <CardHeader className="pb-2">
+        <Card key={index} className="dark:bg-prowler-blue-400 gap-0">
+          <CardHeader className="mb-0 flex items-center p-3 pb-2">
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 {icon}
@@ -70,7 +70,7 @@ export const IntegrationSkeleton = ({
               </div>
             </div>
           </CardHeader>
-          <CardBody className="pt-0">
+          <CardContent className="p-3 pt-0">
             <div className="flex flex-col gap-3">
               {/* Region chips skeleton */}
               <div className="flex flex-wrap gap-1">
@@ -89,7 +89,7 @@ export const IntegrationSkeleton = ({
                 </div>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ))}
     </div>
