@@ -85,7 +85,7 @@ export const ASDEssentialEightCustomDetails = ({
           <ComplianceBadge
             label="Maturity Level"
             value={maturityLevel}
-            color="purple"
+            variant="secondary"
           />
         )}
 
@@ -93,7 +93,7 @@ export const ASDEssentialEightCustomDetails = ({
           <ComplianceBadge
             label="Assessment"
             value={assessmentStatus}
-            color="blue"
+            variant="info"
           />
         )}
 
@@ -101,7 +101,7 @@ export const ASDEssentialEightCustomDetails = ({
           <ComplianceBadge
             label="Cloud Applicability"
             value={cloudApplicability}
-            color="orange"
+            variant="secondary"
           />
         )}
       </ComplianceBadgeContainer>
