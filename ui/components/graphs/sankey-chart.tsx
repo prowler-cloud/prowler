@@ -11,6 +11,7 @@ import { initializeChartColors } from "@/lib/charts/colors";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
+import { getSankeyLayoutConfig } from "./sankey-chart.layout";
 import { ChartTooltip } from "./shared/chart-tooltip";
 
 // Reverse mapping from display name to provider type for URL filters
@@ -531,11 +532,17 @@ export function SankeyChart({
   // Check if there's actual data to display (links with values > 0)
   const hasData = data.links.some((link) => link.value > 0);
 
+  const layoutConfig = getSankeyLayoutConfig({
+    baseHeight: height,
+    nodes: data.nodes,
+    links: data.links,
+  });
+
   if (!hasData) {
     return (
       <div
         className="flex items-center justify-center"
-        style={{ height: `${height}px` }}
+        style={{ height: `${layoutConfig.height}px` }}
       >
         <div className="flex flex-col items-center gap-2 text-center">
           <Info size={48} className="text-text-neutral-tertiary" />
@@ -549,12 +556,12 @@ export function SankeyChart({
 
   return (
     <div className="relative">
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={layoutConfig.height}>
         <Sankey
           data={data}
           node={wrappedCustomNode}
           link={wrappedCustomLink}
-          nodePadding={50}
+          nodePadding={layoutConfig.nodePadding}
           margin={{ top: 20, right: 160, bottom: 20, left: 160 }}
           sort={false}
         >
