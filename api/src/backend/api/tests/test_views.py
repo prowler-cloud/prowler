@@ -12625,7 +12625,7 @@ class TestTenantFinishACSView:
                 "firstName": ["John"],
                 "lastName": ["Doe"],
                 "organization": ["testing_company"],
-                "userType": ["no_permissions"],
+                "userType": ["platform_team"],
             },
         )
 
@@ -12680,12 +12680,19 @@ class TestTenantFinishACSView:
         assert user.name == "John Doe"
         assert user.company_name == "testing_company"
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="no_permissions")
+        role = Role.objects.using(MainRouter.admin_db).get(name="platform_team")
         assert role.tenant == tenants_fixture[0]
+        assert role.manage_users
+        assert role.manage_account
+        assert role.manage_billing
+        assert role.manage_providers
+        assert role.manage_integrations
+        assert role.manage_scans
+        assert role.unlimited_visibility
 
         assert (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(user=user, tenant_id=tenants_fixture[0].id)
+            .filter(user=user, role=role, tenant_id=tenants_fixture[0].id)
             .exists()
         )
 
@@ -12738,7 +12745,7 @@ class TestTenantFinishACSView:
             assert response.status_code == 302
             assert "sso_saml_failed=true" in response.url
 
-    def test_dispatch_skips_role_mapping_when_single_manage_account_user(
+    def test_dispatch_keeps_existing_roles_when_usertype_missing(
         self,
         create_test_user,
         tenants_fixture,
@@ -12747,7 +12754,7 @@ class TestTenantFinishACSView:
         settings,
         monkeypatch,
     ):
-        """Test that role mapping is skipped when tenant has only one user with MANAGE_ACCOUNT role"""
+        """Test that roles are left untouched when the IdP does not send userType"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
@@ -12756,6 +12763,7 @@ class TestTenantFinishACSView:
         UserRoleRelationship.objects.using(MainRouter.admin_db).create(
             user=user, role=admin_role, tenant_id=tenant.id
         )
+        roles_before = Role.objects.using(MainRouter.admin_db).count()
 
         social_account = SocialAccount(
             user=user,
@@ -12764,7 +12772,6 @@ class TestTenantFinishACSView:
                 "firstName": ["John"],
                 "lastName": ["Doe"],
                 "organization": ["testing_company"],
-                "userType": ["no_permissions"],  # This should be ignored
             },
         )
 
@@ -12802,24 +12809,86 @@ class TestTenantFinishACSView:
 
         assert response.status_code == 302
 
-        # Verify the admin role is still assigned (not changed to no_permissions)
+        # Verify the existing role assignment was not modified
         assert (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(user=user, role=admin_role, tenant_id=tenant.id)
             .exists()
         )
 
-        # Verify no_permissions role was NOT created in the database
-        assert (
-            not Role.objects.using(MainRouter.admin_db)
-            .filter(name="no_permissions", tenant=tenant)
+        # Verify no new role was created
+        assert Role.objects.using(MainRouter.admin_db).count() == roles_before
+
+    def test_dispatch_assigns_no_role_to_new_user_when_usertype_missing(
+        self,
+        create_test_user,
+        tenants_fixture,
+        saml_setup,
+        settings,
+        monkeypatch,
+    ):
+        """Test that a user without roles gets none assigned when userType is missing"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+        roles_before = Role.objects.using(MainRouter.admin_db).count()
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml", client_id="testtenant", name="Test App", settings={}
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = MagicMock()
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code == 302
+
+        # Verify no role was created or assigned
+        assert Role.objects.using(MainRouter.admin_db).count() == roles_before
+        assert not (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, tenant_id=tenant.id)
             .exists()
         )
 
-        # Verify no_permissions role was NOT assigned to the user
-        assert not (
-            UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(user=user, role__name="no_permissions", tenant_id=tenant.id)
+        # Membership is still created so the user belongs to the tenant
+        assert (
+            Membership.objects.using(MainRouter.admin_db)
+            .filter(user=user, tenant=tenant)
             .exists()
         )
 
