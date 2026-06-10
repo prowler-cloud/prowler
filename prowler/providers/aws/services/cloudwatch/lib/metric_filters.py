@@ -35,6 +35,8 @@ def build_metric_filter_pattern(
     for name in event_names or []:
         parts.append(rf"(?=.*\$\.eventName\s*=\s*.?{re.escape(name)}\b)")
     for field, operator, value in extra_clauses or []:
+        if operator not in ("=", "!="):
+            raise ValueError(f"unsupported operator {operator!r}; expected '=' or '!='")
         op = r"\s*!=\s*" if operator == "!=" else r"\s*=\s*"
         parts.append(rf"(?=.*\$\.{re.escape(field)}{op}.?{re.escape(value)})")
     return "".join(parts)
