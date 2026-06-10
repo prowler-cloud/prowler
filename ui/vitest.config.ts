@@ -106,16 +106,6 @@ export default defineConfig(() => {
         "next-themes",
 
         // App component lib
-        "@heroui/react",
-        "@heroui/accordion",
-        "@heroui/breadcrumbs",
-        "@heroui/card",
-        "@heroui/chip",
-        "@heroui/divider",
-        "@heroui/input",
-        "@heroui/theme",
-        "@heroui/tooltip",
-        "@heroui/use-clipboard",
         "@iconify/react",
 
         // Radix
