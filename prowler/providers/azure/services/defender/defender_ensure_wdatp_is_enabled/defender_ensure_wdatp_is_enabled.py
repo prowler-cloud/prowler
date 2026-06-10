@@ -6,17 +6,6 @@ class defender_ensure_wdatp_is_enabled(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        if defender_client.resource_groups:
-            for subscription in defender_client.subscriptions:
-                report = Check_Report_Azure(metadata=self.metadata(), resource={})
-                report.subscription = subscription
-                report.resource_name = "Not Applicable"
-                report.resource_id = "Not Applicable"
-                report.status = "MANUAL"
-                report.status_extended = f"Subscription '{subscription}': this check is subscription-scoped and cannot be evaluated when --azure-resource-group is active. Re-run without --azure-resource-group to get full results."
-                findings.append(report)
-            return findings
-
         for (
             subscription_id,
             settings,

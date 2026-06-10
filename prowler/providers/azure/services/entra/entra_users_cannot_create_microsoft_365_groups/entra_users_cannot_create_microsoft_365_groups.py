@@ -6,17 +6,6 @@ class entra_users_cannot_create_microsoft_365_groups(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        if entra_client.resource_groups:
-            for tenant in entra_client.clients:
-                report = Check_Report_Azure(metadata=self.metadata(), resource={})
-                report.subscription = tenant
-                report.resource_name = "Not Applicable"
-                report.resource_id = "Not Applicable"
-                report.status = "MANUAL"
-                report.status_extended = f"Tenant '{tenant}': this check is tenant-scoped and cannot be evaluated when --azure-resource-group is active. Re-run without --azure-resource-group to get full results."
-                findings.append(report)
-            return findings
-
         tenant_id = entra_client.tenant_ids[0]
 
         for tenant_domain, group_settings in entra_client.group_settings.items():

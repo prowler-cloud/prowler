@@ -68,12 +68,7 @@ class Network(AzureService):
         network_watchers = {}
         for subscription, client in self.clients.items():
             try:
-                network_watchers_list = self.list_with_rg_scope(
-                    subscription,
-                    client.network_watchers.list_all,
-                    client.network_watchers.list,
-                )
-
+                network_watchers_list = client.network_watchers.list_all()
                 network_watchers.update({subscription: []})
                 for network_watcher in network_watchers_list:
                     flow_logs = self._get_flow_logs(

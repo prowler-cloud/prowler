@@ -32,16 +32,10 @@ class Defender(AzureService):
         pricings = {}
         for subscription_id, client in self.clients.items():
             try:
-                if self.resource_groups:
-                    logger.warning(
-                        f"Subscription ID: {subscription_id} -- Pricings are subscription-scoped and cannot be filtered by resource group. Skipping."
-                    )
-                    pricings.update({subscription_id: {}})
-                    continue
-                pricings.update({subscription_id: {}})
                 pricings_list = client.pricings.list(
                     scope_id=f"subscriptions/{subscription_id}"
                 )
+                pricings.update({subscription_id: {}})
                 for pricing in pricings_list.value:
                     pricings[subscription_id].update(
                         {
@@ -79,14 +73,8 @@ class Defender(AzureService):
         auto_provisioning = {}
         for subscription_id, client in self.clients.items():
             try:
-                if self.resource_groups:
-                    logger.warning(
-                        f"Subscription ID: {subscription_id} -- Auto provisioning settings are subscription-scoped and cannot be filtered by resource group. Skipping."
-                    )
-                    auto_provisioning.update({subscription_id: {}})
-                    continue
-                auto_provisioning.update({subscription_id: {}})
                 auto_provisioning_settings = client.auto_provisioning_settings.list()
+                auto_provisioning.update({subscription_id: {}})
                 for ap in auto_provisioning_settings:
                     auto_provisioning[subscription_id].update(
                         {
@@ -114,16 +102,10 @@ class Defender(AzureService):
         assessments = {}
         for subscription_id, client in self.clients.items():
             try:
-                if self.resource_groups:
-                    logger.warning(
-                        f"Subscription ID: {subscription_id} -- Assessments are subscription-scoped and cannot be filtered by resource group. Skipping."
-                    )
-                    assessments.update({subscription_id: {}})
-                    continue
-                assessments.update({subscription_id: {}})
                 assessments_list = client.assessments.list(
                     f"subscriptions/{subscription_id}"
                 )
+                assessments.update({subscription_id: {}})
                 for assessment in assessments_list:
                     assessments[subscription_id].update(
                         {
@@ -147,14 +129,8 @@ class Defender(AzureService):
         settings = {}
         for subscription_id, client in self.clients.items():
             try:
-                if self.resource_groups:
-                    logger.warning(
-                        f"Subscription ID: {subscription_id} -- Defender settings are subscription-scoped and cannot be filtered by resource group. Skipping."
-                    )
-                    settings.update({subscription_id: {}})
-                    continue
-                settings.update({subscription_id: {}})
                 settings_list = client.settings.list()
+                settings.update({subscription_id: {}})
                 for setting in settings_list:
                     settings[subscription_id].update(
                         {
@@ -192,12 +168,6 @@ class Defender(AzureService):
         security_contacts = {}
         for subscription_id, display_name in self.subscriptions.items():
             try:
-                if self.resource_groups:
-                    logger.warning(
-                        f"Subscription ID: {subscription_id} -- Security contacts are subscription-scoped and cannot be filtered by resource group. Skipping."
-                    )
-                    security_contacts[subscription_id] = {}
-                    continue
                 url = f"https://management.azure.com/subscriptions/{subscription_id}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
                 headers = {
                     "Authorization": f"Bearer {token}",

@@ -306,7 +306,7 @@ class Test_Network_get_network_watchers:
     def test_get_network_watchers_with_resource_group(self):
         mock_client = MagicMock()
         mock_client.network_watchers = MagicMock()
-        mock_client.network_watchers.list.return_value = []
+        mock_client.network_watchers.list_all.return_value = []
 
         with (
             patch(
@@ -333,15 +333,14 @@ class Test_Network_get_network_watchers:
 
         result = network._get_network_watchers()
 
-        mock_client.network_watchers.list.assert_called_once_with(
-            resource_group_name=RESOURCE_GROUP
-        )
-        mock_client.network_watchers.list_all.assert_not_called()
+        mock_client.network_watchers.list_all.assert_called_once()
+        mock_client.network_watchers.list.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_network_watchers_empty_resource_group_for_subscription(self):
         mock_client = MagicMock()
         mock_client.network_watchers = MagicMock()
+        mock_client.network_watchers.list_all.return_value = []
 
         with (
             patch(
@@ -368,9 +367,9 @@ class Test_Network_get_network_watchers:
 
         result = network._get_network_watchers()
 
+        mock_client.network_watchers.list_all.assert_called_once()
         mock_client.network_watchers.list.assert_not_called()
-        mock_client.network_watchers.list_all.assert_not_called()
-        assert result[AZURE_SUBSCRIPTION_ID] == []
+        assert AZURE_SUBSCRIPTION_ID in result
 
 
 class Test_Network_get_bastion_hosts:
@@ -654,7 +653,7 @@ class Test_Network_get_network_watchers_extra:
     def test_get_network_watchers_with_multiple_resource_groups(self):
         mock_client = MagicMock()
         mock_client.network_watchers = MagicMock()
-        mock_client.network_watchers.list.return_value = []
+        mock_client.network_watchers.list_all.return_value = []
 
         with (
             patch(
@@ -681,13 +680,14 @@ class Test_Network_get_network_watchers_extra:
 
         result = network._get_network_watchers()
 
-        assert mock_client.network_watchers.list.call_count == 2
+        mock_client.network_watchers.list_all.assert_called_once()
+        mock_client.network_watchers.list.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_network_watchers_with_mixed_case_resource_group(self):
         mock_client = MagicMock()
         mock_client.network_watchers = MagicMock()
-        mock_client.network_watchers.list.return_value = []
+        mock_client.network_watchers.list_all.return_value = []
 
         with (
             patch(
@@ -714,9 +714,8 @@ class Test_Network_get_network_watchers_extra:
 
         network._get_network_watchers()
 
-        mock_client.network_watchers.list.assert_called_once_with(
-            resource_group_name="RG"
-        )
+        mock_client.network_watchers.list_all.assert_called_once()
+        mock_client.network_watchers.list.assert_not_called()
 
 
 class Test_Network_get_bastion_hosts_extra:

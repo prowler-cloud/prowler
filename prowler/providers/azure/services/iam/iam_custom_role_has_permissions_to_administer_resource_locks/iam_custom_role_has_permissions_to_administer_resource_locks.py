@@ -7,16 +7,6 @@ from prowler.providers.azure.services.iam.iam_client import iam_client
 class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
-        if iam_client.resource_groups:
-            for subscription in iam_client.subscriptions:
-                report = Check_Report_Azure(metadata=self.metadata(), resource={})
-                report.subscription = subscription
-                report.resource_name = "Not Applicable"
-                report.resource_id = "Not Applicable"
-                report.status = "MANUAL"
-                report.status_extended = f"Subscription '{subscription}': this check is subscription-scoped and cannot be evaluated when --azure-resource-group is active. Re-run without --azure-resource-group to get full results."
-                findings.append(report)
-            return findings
         for subscription, roles in iam_client.custom_roles.items():
             subscription_name = iam_client.subscriptions.get(subscription, subscription)
             exits_role_with_permission_over_locks = False

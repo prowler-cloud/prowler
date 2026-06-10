@@ -10,15 +10,6 @@ class iam_role_user_access_admin_restricted(Check):
             subscription_name = iam_client.subscriptions.get(
                 subscription_id, subscription_id
             )
-            if iam_client.resource_groups:
-                report = Check_Report_Azure(metadata=self.metadata(), resource={})
-                report.subscription = subscription_id
-                report.resource_name = subscription_id
-                report.resource_id = f"/subscriptions/{subscription_id}"
-                report.status = "MANUAL"
-                report.status_extended = f"Subscription '{subscription_name}' ({subscription_id}): this check is subscription-scoped and cannot be evaluated when --azure-resource-group is active. Re-run without --azure-resource-group to get full results."
-                findings.append(report)
-                continue
             for assignment in assignments.values():
                 role_assignment_name = getattr(
                     iam_client.roles[subscription_id].get(

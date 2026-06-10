@@ -36,6 +36,7 @@ class Test_IAM_get_roles:
 
     def test_get_roles_with_resource_group(self):
         mock_client = MagicMock()
+        mock_client.role_definitions.list.return_value = []
 
         with (
             patch(
@@ -54,12 +55,13 @@ class Test_IAM_get_roles:
 
         builtin, custom = iam._get_roles()
 
-        mock_client.role_definitions.list.assert_not_called()
+        mock_client.role_definitions.list.assert_called_once()
         assert AZURE_SUBSCRIPTION_ID in builtin
         assert AZURE_SUBSCRIPTION_ID in custom
 
     def test_get_roles_empty_resource_group_for_subscription(self):
         mock_client = MagicMock()
+        mock_client.role_definitions.list.return_value = []
 
         with (
             patch(
@@ -78,9 +80,9 @@ class Test_IAM_get_roles:
 
         builtin, custom = iam._get_roles()
 
-        mock_client.role_definitions.list.assert_not_called()
-        assert builtin[AZURE_SUBSCRIPTION_ID] == {}
-        assert custom[AZURE_SUBSCRIPTION_ID] == {}
+        mock_client.role_definitions.list.assert_called_once()
+        assert AZURE_SUBSCRIPTION_ID in builtin
+        assert AZURE_SUBSCRIPTION_ID in custom
 
 
 class Test_IAM_get_role_assignments:
@@ -112,6 +114,7 @@ class Test_IAM_get_role_assignments:
     def test_get_role_assignments_with_resource_group(self):
         mock_client = MagicMock()
         mock_client.role_assignments = MagicMock()
+        mock_client.role_assignments.list_for_subscription.return_value = []
 
         with (
             patch(
@@ -130,13 +133,13 @@ class Test_IAM_get_role_assignments:
 
         result = iam._get_role_assignments()
 
-        mock_client.role_assignments.list_for_subscription.assert_not_called()
-        # When resource_groups is set, the loop uses `continue` so no key is added
-        assert AZURE_SUBSCRIPTION_ID not in result
+        mock_client.role_assignments.list_for_subscription.assert_called_once()
+        assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_role_assignments_empty_resource_group_for_subscription(self):
         mock_client = MagicMock()
         mock_client.role_assignments = MagicMock()
+        mock_client.role_assignments.list_for_subscription.return_value = []
 
         with (
             patch(
@@ -155,5 +158,5 @@ class Test_IAM_get_role_assignments:
 
         result = iam._get_role_assignments()
 
-        mock_client.role_assignments.list_for_subscription.assert_not_called()
-        assert AZURE_SUBSCRIPTION_ID not in result
+        mock_client.role_assignments.list_for_subscription.assert_called_once()
+        assert AZURE_SUBSCRIPTION_ID in result

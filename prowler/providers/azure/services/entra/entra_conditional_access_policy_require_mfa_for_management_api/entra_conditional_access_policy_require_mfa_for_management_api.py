@@ -7,17 +7,6 @@ class entra_conditional_access_policy_require_mfa_for_management_api(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        if entra_client.resource_groups:
-            for tenant in entra_client.clients:
-                report = Check_Report_Azure(metadata=self.metadata(), resource={})
-                report.subscription = tenant
-                report.resource_name = "Not Applicable"
-                report.resource_id = "Not Applicable"
-                report.status = "MANUAL"
-                report.status_extended = f"Tenant '{tenant}': this check is tenant-scoped and cannot be evaluated when --azure-resource-group is active. Re-run without --azure-resource-group to get full results."
-                findings.append(report)
-            return findings
-
         for (
             tenant_name,
             conditional_access_policies,
