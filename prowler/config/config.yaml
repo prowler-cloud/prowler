@@ -8,10 +8,10 @@ aws:
   # Limits the number of resources scanned per service for services that can
   # accumulate huge numbers of resources (EBS snapshots, backup recovery
   # points, CloudWatch log groups, Lambda functions, ECS task definitions,
-  # CodeArtifact packages). FAIL findings are always prioritized over PASS, so
-  # non-compliant resources are never hidden before compliant ones up to the
-  # limit. Where the AWS API supports server-side ordering the latest resources
-  # are scanned first; otherwise it is best-effort API order.
+  # CodeArtifact packages). Limits apply to resources analyzed, not findings:
+  # a selected resource can produce zero, one, or many findings. Where the AWS
+  # API supports server-side ordering the latest resources are scanned first;
+  # otherwise it is best-effort API order.
   # Set to 0 (or a negative value) to disable the limit (scan every resource).
   # aws.max_scanned_resources_per_service --> global default for all services below
   max_scanned_resources_per_service: 100

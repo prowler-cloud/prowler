@@ -5,6 +5,7 @@ from typing import Optional, Union
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -29,6 +30,9 @@ class EC2(AWSService):
         # Snapshot IDs whose public status has already been hydrated by the
         # lazy iter_snapshots() generator (memoization, sequential checks)
         self._public_snapshots_determined = set()
+        self.snapshot_limit = get_resource_scan_limit(
+            self.audit_config, "max_ebs_snapshots"
+        )
         self.__threading_call__(self._describe_snapshots)
         self.network_interfaces = {}
         self.__threading_call__(self._describe_network_interfaces)
@@ -252,14 +256,17 @@ class EC2(AWSService):
         ``self.snapshots`` is already listed eagerly (it also feeds
         ``volumes_with_snapshots``/``regions_with_snapshots`` used by other
         checks). The expensive ``describe_snapshot_attribute`` call used to
-        determine public access is deferred here and only issued for the
-        snapshots the consumer actually pulls, memoized per snapshot id so it
-        is shared across checks (checks run sequentially, so no locking).
+        determine public access is deferred here and only issued for selected
+        snapshots, memoized per snapshot id so it is shared across checks
+        (checks run sequentially, so no locking).
         """
-        for snapshot in sorted(
-            self.snapshots,
-            key=lambda s: (s.start_time.timestamp() if s.start_time else 0.0),
-            reverse=True,
+        for snapshot in limit_resources(
+            sorted(
+                self.snapshots,
+                key=lambda s: (s.start_time.timestamp() if s.start_time else 0.0),
+                reverse=True,
+            ),
+            self.snapshot_limit,
         ):
             if determine_public and snapshot.id not in (
                 self._public_snapshots_determined

@@ -1,5 +1,4 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.codeartifact.codeartifact_client import (
     codeartifact_client,
 )
@@ -34,10 +33,9 @@ class codeartifact_packages_external_public_publishing_disabled(Check):
                 report.status_extended = f"Internal package {package.name} is not vulnerable to dependency confusion in repository {repository.domain_name}."
             return report
 
-        return limited_findings(
-            codeartifact_client.iter_packages(),
-            evaluate,
-            get_resource_scan_limit(
-                codeartifact_client.audit_config, "max_codeartifact_packages"
-            ),
-        )
+        reports = []
+        for resource in codeartifact_client.iter_packages():
+            report = evaluate(resource)
+            if report is not None:
+                reports.append(report)
+        return reports

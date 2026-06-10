@@ -3,6 +3,7 @@ from moto import mock_aws
 
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     CloudWatch,
+    LogGroup,
     Logs,
 )
 from tests.providers.aws.utils import (
@@ -190,6 +191,8 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[arn].kms_id == "test_kms_id"
         assert not logs.log_groups[arn].never_expire
         assert logs.log_groups[arn].region == AWS_REGION_US_EAST_1
+        assert logs.log_groups[arn].tags == []
+        list(logs.iter_log_groups())
         assert logs.log_groups[arn].tags == [{}]
 
     @mock_aws
@@ -215,4 +218,44 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[arn].retention_days == 9999
         assert logs.log_groups[arn].kms_id == "test_kms_id"
         assert logs.log_groups[arn].region == AWS_REGION_US_EAST_1
-        assert logs.log_groups[arn].tags == [{}]
+        assert logs.log_groups[arn].tags == []
+
+    def test_iter_log_groups_limits_enriched_resources(self):
+        class FakeLogsClient:
+            def __init__(self):
+                self.filter_calls = []
+
+            def filter_log_events(self, **kwargs):
+                self.filter_calls.append(kwargs["logGroupName"])
+                return {"events": []}
+
+        regional_client = FakeLogsClient()
+        logs = Logs.__new__(Logs)
+        logs.log_group_limit = 1
+        logs._log_groups_hydrated = set()
+        logs.regional_clients = {AWS_REGION_US_EAST_1: regional_client}
+        logs.events_per_log_group_threshold = 1000
+        logs.log_groups = {
+            f"arn:{i}": LogGroup(
+                arn=f"arn:{i}",
+                name=f"log-{i}",
+                retention_days=30,
+                never_expire=False,
+                kms_id=None,
+                creation_time=i,
+                region=AWS_REGION_US_EAST_1,
+            )
+            for i in range(3)
+        }
+        tagged = []
+
+        def list_tags(log_group):
+            tagged.append(log_group.arn)
+
+        logs._list_tags_for_resource = list_tags
+
+        log_groups = list(logs.iter_log_groups(with_events=True))
+
+        assert [log_group.arn for log_group in log_groups] == ["arn:2"]
+        assert tagged == ["arn:2"]
+        assert regional_client.filter_calls == ["log-2"]

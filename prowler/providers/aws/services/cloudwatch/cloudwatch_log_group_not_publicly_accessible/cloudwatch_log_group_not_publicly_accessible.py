@@ -1,5 +1,4 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 
@@ -38,10 +37,9 @@ class cloudwatch_log_group_not_publicly_accessible(Check):
                 )
             return report
 
-        return limited_findings(
-            logs_client.iter_log_groups(),
-            evaluate,
-            get_resource_scan_limit(
-                logs_client.audit_config, "max_cloudwatch_log_groups"
-            ),
-        )
+        reports = []
+        for resource in logs_client.iter_log_groups():
+            report = evaluate(resource)
+            if report is not None:
+                reports.append(report)
+        return reports

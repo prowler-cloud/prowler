@@ -1,5 +1,4 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
@@ -22,10 +21,9 @@ class ecs_task_definitions_no_privileged_containers(Check):
                 report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has privileged containers: {', '.join(failed_containers)}"
             return report
 
-        return limited_findings(
-            ecs_client.iter_task_definitions(),
-            evaluate,
-            get_resource_scan_limit(
-                ecs_client.audit_config, "max_ecs_task_definitions"
-            ),
-        )
+        reports = []
+        for resource in ecs_client.iter_task_definitions():
+            report = evaluate(resource)
+            if report is not None:
+                reports.append(report)
+        return reports

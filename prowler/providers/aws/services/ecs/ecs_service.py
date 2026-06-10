@@ -4,6 +4,7 @@ from typing import Iterator, Optional
 
 from pydantic.v1 import BaseModel
 
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -14,11 +15,13 @@ class ECS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         # task_definitions is the memoization cache for the lazy
-        # iter_task_definitions() generator; it is populated on demand instead
-        # of eagerly so that scans of accounts with thousands of task
-        # definition revisions stop early once the FAIL quota is met.
+        # iter_task_definitions() generator; it is populated on demand so only
+        # the selected task definitions are described and analyzed.
         self.task_definitions = {}
         self._task_definition_arns = None
+        self.task_definition_limit = get_resource_scan_limit(
+            self.audit_config, "max_ecs_task_definitions"
+        )
         self.services = {}
         self.clusters = {}
         self.task_sets = {}
@@ -57,12 +60,13 @@ class ECS(AWSService):
     def iter_task_definitions(self) -> Iterator["TaskDefinition"]:
         """Yield task definitions lazily, describing each one on demand.
 
-        Resources already fetched are memoized in ``self.task_definitions``
-        and reused across checks (checks run sequentially, so no locking is
-        needed). The consumer can stop pulling this generator once it has
-        enough findings, which bounds the ``describe_task_definition`` calls.
+        Resources already fetched are memoized in ``self.task_definitions`` and
+        reused across checks (checks run sequentially, so no locking is needed).
+        The configured resource limit bounds ``describe_task_definition`` calls.
         """
-        for arn, region in self._list_task_definition_arns():
+        for arn, region in limit_resources(
+            self._list_task_definition_arns(), self.task_definition_limit
+        ):
             task_definition = self.task_definitions.get(arn)
             if task_definition is None:
                 task_definition = TaskDefinition(

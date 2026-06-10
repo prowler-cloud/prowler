@@ -9,6 +9,7 @@ import requests
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -20,13 +21,14 @@ class Lambda(AWSService):
         super().__init__(__class__.__name__, provider)
         # functions is the memoization cache for the lazy iter_functions()
         # generator. Functions are listed eagerly (a single paginated
-        # list_functions call per region, no per-function cost), but the
-        # expensive per-function detail (policy, URL config, tags, event
-        # source mappings) is hydrated on demand so scans of accounts with
-        # huge numbers of functions stop early once the FAIL quota is met.
+        # list_functions call per region, no per-function cost), but expensive
+        # per-function detail is hydrated on demand for selected functions.
         self.functions = {}
         self._functions_hydrated = set()
-        self._event_source_mappings_listed_regions = set()
+        self._event_source_mappings_listed_functions = set()
+        self.function_limit = get_resource_scan_limit(
+            self.audit_config, "max_lambda_functions"
+        )
         self.__threading_call__(self._list_functions)
 
     def _list_functions(self, regional_client):
@@ -84,18 +86,19 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def _list_event_source_mappings(self, regional_client):
+    def _list_event_source_mappings(self, function):
         logger.info("Lambda - Listing Event Source Mappings...")
         try:
+            regional_client = self.regional_clients[function.region]
             paginator = regional_client.get_paginator("list_event_source_mappings")
-            for page in paginator.paginate():
+            for page in paginator.paginate(FunctionName=function.name):
                 for mapping in page.get("EventSourceMappings", []):
                     function_arn = mapping.get("FunctionArn", "")
                     # Normalise to unqualified ARN (strip :qualifier suffix if present)
                     base_arn = ":".join(function_arn.split(":")[:7])
-                    if base_arn not in self.functions:
+                    if base_arn != function.arn:
                         continue
-                    self.functions[base_arn].event_source_mappings.append(
+                    function.event_source_mappings.append(
                         EventSourceMapping(
                             uuid=mapping["UUID"],
                             event_source_arn=mapping.get("EventSourceArn", ""),
@@ -118,7 +121,7 @@ class Lambda(AWSService):
             self.thread_pool.submit(
                 self._fetch_function_code, function.name, function.region
             ): function
-            for function in self.functions.values()
+            for function in self.selected_functions()
         }
 
         for fetched_lambda_code in as_completed(lambda_functions_to_fetch):
@@ -210,6 +213,16 @@ class Lambda(AWSService):
                 f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def selected_functions(self):
+        return limit_resources(
+            sorted(
+                self.functions.values(),
+                key=lambda f: f.last_modified or "",
+                reverse=True,
+            ),
+            self.function_limit,
+        )
+
     def iter_functions(self):
         """Yield functions lazily, hydrating expensive per-function detail on demand.
 
@@ -219,16 +232,11 @@ class Lambda(AWSService):
         actually pulls, memoized per function ARN and shared across checks
         (checks run sequentially, so no locking needed).
         """
-        for function in sorted(
-            self.functions.values(),
-            key=lambda f: f.last_modified or "",
-            reverse=True,
-        ):
+        for function in self.selected_functions():
             if function.arn not in self._functions_hydrated:
-                region = function.region
-                if region not in self._event_source_mappings_listed_regions:
-                    self._list_event_source_mappings(self.regional_clients[region])
-                    self._event_source_mappings_listed_regions.add(region)
+                if function.arn not in self._event_source_mappings_listed_functions:
+                    self._list_event_source_mappings(function)
+                    self._event_source_mappings_listed_functions.add(function.arn)
                 self._get_policy(function)
                 self._get_function_url_config(function)
                 self._list_tags_for_resource(function)

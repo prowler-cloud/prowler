@@ -4,6 +4,7 @@ from typing import Iterator, Optional, Tuple
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
+from prowler.lib.check.resource_limit import get_resource_scan_limit
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -18,6 +19,9 @@ class CodeArtifact(AWSService):
         # repository ARNs whose packages have been fully listed and memoized
         # into repository.packages by the lazy iter_packages() generator
         self._packages_listed = set()
+        self.package_limit = get_resource_scan_limit(
+            self.audit_config, "max_codeartifact_packages"
+        )
         self.__threading_call__(self._list_repositories)
         self._list_tags_for_resource()
 
@@ -57,8 +61,8 @@ class CodeArtifact(AWSService):
         """Yield packages for a single repository, hydrating each one lazily.
 
         Each package requires an extra ``list_package_versions`` call to
-        resolve its latest version, so producing them lazily lets the consumer
-        stop early once it has enough findings.
+        resolve its latest version, so producing them lazily lets the resource
+        limit stop before extra package version calls.
         """
         regional_client = self.regional_clients[repository.region]
         try:
@@ -157,16 +161,24 @@ class CodeArtifact(AWSService):
         reused on subsequent passes (checks run sequentially, so no locking is
         needed).
         """
+        yielded = 0
         for repository in list(self.repositories.values()):
             if repository.arn in self._packages_listed:
                 for package in repository.packages:
                     yield repository, package
+                    yielded += 1
+                    if self.package_limit and yielded >= self.package_limit:
+                        return
                 continue
             collected = []
             for package in self._iter_repository_packages(repository):
                 collected.append(package)
                 repository.packages = collected
                 yield repository, package
+                yielded += 1
+                if self.package_limit and yielded >= self.package_limit:
+                    self._packages_listed.add(repository.arn)
+                    return
             self._packages_listed.add(repository.arn)
 
     def _list_tags_for_resource(self):

@@ -1,5 +1,4 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -16,8 +15,9 @@ class ec2_ebs_public_snapshot(Check):
                 )
             return report
 
-        return limited_findings(
-            ec2_client.iter_snapshots(determine_public=True),
-            evaluate,
-            get_resource_scan_limit(ec2_client.audit_config, "max_ebs_snapshots"),
-        )
+        reports = []
+        for resource in ec2_client.iter_snapshots(determine_public=True):
+            report = evaluate(resource)
+            if report is not None:
+                reports.append(report)
+        return reports

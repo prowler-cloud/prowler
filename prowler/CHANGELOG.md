@@ -12,7 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🔄 Changed
 
-- AWS resource scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages are now fetched lazily with a configurable per-service resource limit (default latest 100 via `aws.max_scanned_resources_per_service`), prioritizing `FAIL` findings so non-compliant resources are never hidden before compliant ones up to the limit [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
+- AWS scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages now support configurable resource analysis limits (default latest 100 via `aws.max_scanned_resources_per_service`) to reduce scan time, throttling, cost, and finding volume in large accounts [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
 
 ### 🐞 Fixed
 

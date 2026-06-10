@@ -4,6 +4,7 @@ from typing import Optional
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -28,11 +29,13 @@ class Backup(AWSService):
         self.protected_resources = []
         self.__threading_call__(self._list_backup_selections)
         # recovery_points is the memoization cache for the lazy
-        # iter_recovery_points() generator; populated on demand so that
-        # accounts with huge numbers of recovery points stop early once the
-        # FAIL quota is met.
+        # iter_recovery_points() generator; populated on demand so only the
+        # selected recovery points are tagged and analyzed.
         self.recovery_points = []
         self._recovery_points_listed = False
+        self.recovery_point_limit = get_resource_scan_limit(
+            self.audit_config, "max_backup_recovery_points"
+        )
 
     def _list_backup_vaults(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")
@@ -190,14 +193,15 @@ class Backup(AWSService):
         """Yield recovery points lazily, memoized.
 
         ``list_recovery_points_by_backup_vault`` has no server-side ordering,
-        so this is best-effort API order. Tags are fetched per recovery point
-        on demand, and the consumer can stop pulling this generator once it
-        has enough findings (checks run sequentially, so no locking needed).
+        so candidates are enumerated and selected newest-first by
+        ``CreationDate``. Tags are fetched only for selected recovery points
+        (checks run sequentially, so no locking needed).
         """
         if self._recovery_points_listed:
-            yield from self.recovery_points
+            yield from limit_resources(self.recovery_points, self.recovery_point_limit)
             return
         try:
+            candidates = []
             for backup_vault in self.backup_vaults or []:
                 regional_client = self.regional_clients[backup_vault.region]
                 paginator = regional_client.get_paginator(
@@ -208,19 +212,33 @@ class Backup(AWSService):
                         arn = recovery_point.get("RecoveryPointArn")
                         if not arn:
                             continue
-                        rp = RecoveryPoint(
-                            arn=arn,
-                            id=arn.split(":")[-1],
-                            backup_vault_name=backup_vault.name,
-                            encrypted=recovery_point.get("IsEncrypted", False),
-                            creation_date=recovery_point.get("CreationDate"),
-                            backup_vault_region=backup_vault.region,
-                            region=backup_vault.region,
-                            tags=[],
-                        )
-                        self._list_tags(rp)
-                        self.recovery_points.append(rp)
-                        yield rp
+                        candidates.append((backup_vault, recovery_point))
+            for backup_vault, recovery_point in limit_resources(
+                sorted(
+                    candidates,
+                    key=lambda candidate: (
+                        candidate[1]["CreationDate"].timestamp()
+                        if candidate[1].get("CreationDate")
+                        else 0.0
+                    ),
+                    reverse=True,
+                ),
+                self.recovery_point_limit,
+            ):
+                arn = recovery_point.get("RecoveryPointArn")
+                rp = RecoveryPoint(
+                    arn=arn,
+                    id=arn.split(":")[-1],
+                    backup_vault_name=backup_vault.name,
+                    encrypted=recovery_point.get("IsEncrypted", False),
+                    creation_date=recovery_point.get("CreationDate"),
+                    backup_vault_region=backup_vault.region,
+                    region=backup_vault.region,
+                    tags=[],
+                )
+                self._list_tags(rp)
+                self.recovery_points.append(rp)
+                yield rp
             self._recovery_points_listed = True
         except ClientError as error:
             logger.error(

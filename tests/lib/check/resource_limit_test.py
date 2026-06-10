@@ -1,81 +1,39 @@
-from types import SimpleNamespace
-
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
 
 
-def _report(status):
-    return SimpleNamespace(status=status)
-
-
-def _evaluate(resource):
-    # resource is the (status, _id) tuple; emulates a check's per-resource logic
-    status, _ = resource
-    return _report(status)
-
-
-class Test_limited_findings:
+class Test_limit_resources:
     def test_no_limit_returns_all_in_order(self):
-        resources = [("PASS", 1), ("FAIL", 2), ("PASS", 3)]
+        resources = ["PASS", "FAIL", "PASS"]
 
-        result = limited_findings(iter(resources), _evaluate, None)
+        result = list(limit_resources(iter(resources), None))
 
-        assert [r.status for r in result] == ["PASS", "FAIL", "PASS"]
+        assert result == ["PASS", "FAIL", "PASS"]
 
     def test_limit_zero_or_negative_is_unlimited(self):
-        resources = [("FAIL", i) for i in range(5)]
+        resources = list(range(5))
 
-        assert len(limited_findings(iter(resources), _evaluate, 0)) == 5
-        assert len(limited_findings(iter(resources), _evaluate, -3)) == 5
+        assert list(limit_resources(iter(resources), 0)) == resources
+        assert list(limit_resources(iter(resources), -3)) == resources
 
-    def test_fail_quota_full_returns_only_fails_and_stops_early(self):
+    def test_positive_limit_stops_after_selected_resources(self):
         pulled = []
 
         def gen():
             for i in range(1000):
                 pulled.append(i)
-                yield ("FAIL", i)
+                yield i
 
-        result = limited_findings(gen(), _evaluate, 100)
+        result = list(limit_resources(gen(), 100))
 
-        assert len(result) == 100
-        assert all(r.status == "FAIL" for r in result)
-        # Lazy: generator must stop being pulled once the FAIL quota is met
+        assert result == list(range(100))
         assert len(pulled) == 100
 
-    def test_mixed_under_limit_sums_fails_first(self):
-        resources = [("PASS", 1), ("FAIL", 2), ("PASS", 3), ("FAIL", 4)]
+    def test_does_not_reorder_or_inspect_resource_status(self):
+        resources = ["PASS", "FAIL", "PASS", "FAIL"]
 
-        result = limited_findings(iter(resources), _evaluate, 100)
+        result = list(limit_resources(iter(resources), 3))
 
-        assert [r.status for r in result] == ["FAIL", "FAIL", "PASS", "PASS"]
-
-    def test_passes_truncated_to_remaining_quota_after_fails(self):
-        resources = [("FAIL", 1), ("FAIL", 2)] + [("PASS", i) for i in range(50)]
-
-        result = limited_findings(iter(resources), _evaluate, 10)
-
-        assert len(result) == 10
-        assert [r.status for r in result[:2]] == ["FAIL", "FAIL"]
-        assert all(r.status == "PASS" for r in result[2:])
-
-    def test_no_fails_returns_passes_capped(self):
-        resources = [("PASS", i) for i in range(500)]
-
-        result = limited_findings(iter(resources), _evaluate, 100)
-
-        assert len(result) == 100
-        assert all(r.status == "PASS" for r in result)
-
-    def test_evaluate_returning_none_is_skipped(self):
-        resources = [("FAIL", 1), ("SKIP", 2), ("PASS", 3)]
-
-        def evaluate(resource):
-            status, _ = resource
-            return None if status == "SKIP" else _report(status)
-
-        result = limited_findings(iter(resources), evaluate, 100)
-
-        assert [r.status for r in result] == ["FAIL", "PASS"]
+        assert result == ["PASS", "FAIL", "PASS"]
 
 
 class Test_get_resource_scan_limit:

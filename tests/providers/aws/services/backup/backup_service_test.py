@@ -1,11 +1,12 @@
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import botocore
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.backup.backup_service import Backup
+from prowler.providers.aws.services.backup.backup_service import Backup, BackupVault
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -300,3 +301,95 @@ class TestBackupService:
         assert backup.recovery_points[0].backup_vault_region == "eu-west-1"
         assert backup.recovery_points[0].tags == []
         assert backup.recovery_points[0].encrypted is True
+
+    def test_recovery_point_limit_bounds_tag_calls_to_selected_points(self):
+        class FakePaginator:
+            def paginate(self, **kwargs):
+                return [
+                    {
+                        "RecoveryPoints": [
+                            {
+                                "RecoveryPointArn": "arn:aws:backup:eu-west-1:123456789012:recovery-point:new",
+                                "IsEncrypted": True,
+                                "CreationDate": datetime(2024, 1, 2),
+                            },
+                            {
+                                "RecoveryPointArn": "arn:aws:backup:eu-west-1:123456789012:recovery-point:old",
+                                "IsEncrypted": True,
+                                "CreationDate": datetime(2024, 1, 1),
+                            },
+                        ]
+                    }
+                ]
+
+        class FakeBackupClient:
+            def __init__(self):
+                self.tag_calls = []
+
+            def get_paginator(self, name):
+                assert name == "list_recovery_points_by_backup_vault"
+                return FakePaginator()
+
+            def list_tags(self, **kwargs):
+                self.tag_calls.append(kwargs["ResourceArn"])
+                return {"Tags": {}}
+
+        regional_client = FakeBackupClient()
+        backup = Backup.__new__(Backup)
+        backup.backup_vaults = [
+            BackupVault(
+                arn="arn:aws:backup:eu-west-1:123456789012:backup-vault:vault",
+                name="vault",
+                region=AWS_REGION_EU_WEST_1,
+                encryption="",
+                recovery_points=2,
+                locked=False,
+            )
+        ]
+        backup.recovery_points = []
+        backup._recovery_points_listed = False
+        backup.recovery_point_limit = 1
+        backup.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
+
+        recovery_points = list(backup.iter_recovery_points())
+
+        assert [rp.id for rp in recovery_points] == ["new"]
+        assert regional_client.tag_calls == [
+            "arn:aws:backup:eu-west-1:123456789012:recovery-point:new"
+        ]
+
+    def test_iter_recovery_points_limits_tagged_resources(self):
+        backup = Backup.__new__(Backup)
+        backup.recovery_point_limit = 2
+        backup.recovery_points = []
+        backup._recovery_points_listed = False
+        backup.backup_vaults = [SimpleNamespace(name="vault", region="eu-west-1")]
+
+        class Paginator:
+            def paginate(self, **_kwargs):
+                return [
+                    {
+                        "RecoveryPoints": [
+                            {
+                                "RecoveryPointArn": f"arn:aws:backup:eu-west-1:123456789012:recovery-point:{i}",
+                                "IsEncrypted": True,
+                            }
+                            for i in range(3)
+                        ]
+                    }
+                ]
+
+        backup.regional_clients = {
+            "eu-west-1": SimpleNamespace(get_paginator=lambda _: Paginator())
+        }
+        tagged = []
+
+        def list_tags(recovery_point):
+            tagged.append(recovery_point.arn)
+
+        backup._list_tags = list_tags
+
+        recovery_points = list(backup.iter_recovery_points())
+
+        assert len(recovery_points) == 2
+        assert len(tagged) == 2

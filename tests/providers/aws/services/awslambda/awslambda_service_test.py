@@ -9,7 +9,11 @@ import mock
 from boto3 import client, resource
 from moto import mock_aws
 
-from prowler.providers.aws.services.awslambda.awslambda_service import AuthType, Lambda
+from prowler.providers.aws.services.awslambda.awslambda_service import (
+    AuthType,
+    Function,
+    Lambda,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -84,6 +88,58 @@ class Test_Lambda_Service:
     def test__get_service__(self):
         awslambda = Lambda(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert awslambda.service == "lambda"
+
+    def test_function_limit_bounds_per_function_hydration_to_latest_selected(self):
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.functions = {
+            "old": Function(
+                name="old",
+                arn="old",
+                security_groups=[],
+                last_modified="2024-01-01T00:00:00.000+0000",
+                region=AWS_REGION_EU_WEST_1,
+            ),
+            "new": Function(
+                name="new",
+                arn="new",
+                security_groups=[],
+                last_modified="2024-01-02T00:00:00.000+0000",
+                region=AWS_REGION_EU_WEST_1,
+            ),
+        }
+        awslambda.function_limit = 1
+        awslambda._functions_hydrated = set()
+        awslambda._event_source_mappings_listed_functions = set()
+        awslambda.regional_clients = {AWS_REGION_EU_WEST_1: object()}
+        event_source_calls = []
+        policy_calls = []
+        url_calls = []
+        tag_calls = []
+
+        def list_event_source_mappings(function):
+            event_source_calls.append(function.name)
+
+        def get_policy(function):
+            policy_calls.append(function.name)
+
+        def get_function_url_config(function):
+            url_calls.append(function.name)
+
+        def list_tags_for_resource(function):
+            tag_calls.append(function.name)
+
+        awslambda._list_event_source_mappings = list_event_source_mappings
+        awslambda._get_policy = get_policy
+        awslambda._get_function_url_config = get_function_url_config
+        awslambda._list_tags_for_resource = list_tags_for_resource
+
+        functions = list(awslambda.iter_functions())
+
+        assert [function.name for function in functions] == ["new"]
+        assert event_source_calls == ["new"]
+        assert policy_calls == ["new"]
+        assert url_calls == ["new"]
+        assert tag_calls == ["new"]
 
     @mock_aws
     def test_list_functions(self):
@@ -256,3 +312,66 @@ class Test_Lambda_Service:
                             f"{tmp_dir_name}/{files_in_zip[0]}", "r"
                         ) as lambda_code_file:
                             assert lambda_code_file.read() == LAMBDA_FUNCTION_CODE
+
+    @mock_aws
+    def test_iter_functions_limits_enriched_functions(self):
+        lambda_client = client("lambda", region_name=AWS_REGION_US_EAST_1)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        iam_role = iam_client.create_role(
+            RoleName="test-role",
+            AssumeRolePolicyDocument="{}",
+        )["Role"]["Arn"]
+        for name in ("function-1", "function-2"):
+            lambda_client.create_function(
+                FunctionName=name,
+                Runtime="python3.7",
+                Role=iam_role,
+                Handler="lambda_function.lambda_handler",
+                Code={"ZipFile": create_zip_file().read()},
+                PackageType="ZIP",
+            )
+        awslambda = Lambda(
+            set_mocked_aws_provider(
+                audited_regions=[AWS_REGION_US_EAST_1],
+                audit_config={"max_lambda_functions": 1},
+            )
+        )
+
+        functions = list(awslambda.iter_functions())
+
+        assert len(functions) == 1
+        assert len(awslambda._functions_hydrated) == 1
+
+    @mock_aws
+    def test_get_function_code_fetches_only_selected_functions(self):
+        lambda_client = client("lambda", region_name=AWS_REGION_US_EAST_1)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        iam_role = iam_client.create_role(
+            RoleName="test-role",
+            AssumeRolePolicyDocument="{}",
+        )["Role"]["Arn"]
+        for name in ("function-1", "function-2"):
+            lambda_client.create_function(
+                FunctionName=name,
+                Runtime="python3.7",
+                Role=iam_role,
+                Handler="lambda_function.lambda_handler",
+                Code={"ZipFile": create_zip_file().read()},
+                PackageType="ZIP",
+            )
+        awslambda = Lambda(
+            set_mocked_aws_provider(
+                audited_regions=[AWS_REGION_US_EAST_1],
+                audit_config={"max_lambda_functions": 1},
+            )
+        )
+        fetched = []
+
+        def fetch_function_code(function_name, _function_region):
+            fetched.append(function_name)
+            return mock.MagicMock()
+
+        awslambda._fetch_function_code = fetch_function_code
+
+        assert len(list(awslambda._get_function_code())) == 1
+        assert len(fetched) == 1

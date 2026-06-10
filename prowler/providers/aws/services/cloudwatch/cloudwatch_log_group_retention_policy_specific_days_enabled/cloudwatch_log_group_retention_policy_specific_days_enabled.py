@@ -1,5 +1,4 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
@@ -26,10 +25,9 @@ class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
                     report.status_extended = f"Log Group {log_group.name} comply with {specific_retention_days} days retention period since it has {log_group.retention_days} days."
             return report
 
-        return limited_findings(
-            logs_client.iter_log_groups(),
-            evaluate,
-            get_resource_scan_limit(
-                logs_client.audit_config, "max_cloudwatch_log_groups"
-            ),
-        )
+        reports = []
+        for resource in logs_client.iter_log_groups():
+            report = evaluate(resource)
+            if report is not None:
+                reports.append(report)
+        return reports

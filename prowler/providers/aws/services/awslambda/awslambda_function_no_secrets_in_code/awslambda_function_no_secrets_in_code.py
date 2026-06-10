@@ -2,7 +2,6 @@ import os
 import tempfile
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
@@ -65,10 +64,9 @@ class awslambda_function_no_secrets_in_code(Check):
 
             return report
 
-        return limited_findings(
-            awslambda_client._get_function_code(),
-            evaluate,
-            get_resource_scan_limit(
-                awslambda_client.audit_config, "max_lambda_functions"
-            ),
-        )
+        reports = []
+        for resource in awslambda_client._get_function_code():
+            report = evaluate(resource)
+            if report is not None:
+                reports.append(report)
+        return reports

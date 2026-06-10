@@ -1,7 +1,6 @@
 from json import dumps, loads
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     convert_to_cloudwatch_timestamp_format,
@@ -97,13 +96,12 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                 report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}."
             return report
 
-        return limited_findings(
-            logs_client.iter_log_groups(with_events=True),
-            evaluate,
-            get_resource_scan_limit(
-                logs_client.audit_config, "max_cloudwatch_log_groups"
-            ),
-        )
+        reports = []
+        for resource in logs_client.iter_log_groups(with_events=True):
+            report = evaluate(resource)
+            if report is not None:
+                reports.append(report)
+        return reports
 
 
 class SecretsDict(dict):

@@ -5,6 +5,7 @@ from typing import Optional
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -85,10 +86,13 @@ class Logs(AWSService):
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
         # log_groups is listed eagerly (it also feeds metric filters), but the
         # expensive per-log-group hydration (tags, and log events for the
-        # no-secrets check) is deferred to the lazy iter_log_groups()
-        # generator so scans stop early once the FAIL quota is met.
+        # no-secrets check) is deferred to iter_log_groups() so only selected
+        # log groups are enriched and analyzed.
         self.log_groups = {}
         self._log_groups_hydrated = set()
+        self.log_group_limit = get_resource_scan_limit(
+            self.audit_config, "max_cloudwatch_log_groups"
+        )
         # The threshold for number of events to return per log group.
         self.events_per_log_group_threshold = 1000
         self.__threading_call__(self._describe_log_groups)
@@ -96,13 +100,6 @@ class Logs(AWSService):
         self.__threading_call__(self._describe_resource_policies)
         self.metric_filters = []
         self.__threading_call__(self._describe_metric_filters)
-        # Tags are light and broadly consumed (e.g. by metric-filter checks),
-        # so they stay eager; only the heavy per-log-group log events used by
-        # the no-secrets check are deferred to iter_log_groups(with_events).
-        if self.log_groups:
-            self.__threading_call__(
-                self._list_tags_for_resource, self.log_groups.values()
-            )
 
     def _describe_metric_filters(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
@@ -225,14 +222,21 @@ class Logs(AWSService):
         """
         if not self.log_groups:
             return
-        for log_group in sorted(
-            self.log_groups.values(),
-            key=lambda lg: lg.creation_time or 0,
-            reverse=True,
+        for log_group in limit_resources(
+            sorted(
+                self.log_groups.values(),
+                key=lambda lg: lg.creation_time or 0,
+                reverse=True,
+            ),
+            self.log_group_limit,
         ):
-            if with_events and log_group.arn not in self._log_groups_hydrated:
-                self._get_log_events(log_group)
+            if log_group.arn not in self._log_groups_hydrated:
+                self._list_tags_for_resource(log_group)
+                if with_events:
+                    self._get_log_events(log_group)
                 self._log_groups_hydrated.add(log_group.arn)
+            elif with_events and not log_group.log_streams:
+                self._get_log_events(log_group)
             yield log_group
 
     def _describe_resource_policies(self, regional_client):
