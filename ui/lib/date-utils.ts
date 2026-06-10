@@ -22,6 +22,20 @@ export function toLocalDateString(
   }
 }
 
+/** Local date in the app's table format (e.g. "Jun 15, 2026"), as shown by DateWithTime. */
+export function formatLocalDate(
+  value: string | null | undefined,
+): string | undefined {
+  if (!value) return undefined;
+  try {
+    const date = parseISO(value);
+    if (isNaN(date.getTime())) return undefined;
+    return format(date, "MMM dd, yyyy");
+  } catch {
+    return undefined;
+  }
+}
+
 /** Local time with the browser's short zone label (e.g. "12:00AM MAD"), as shown by DateWithTime. */
 export function formatLocalTimeWithZone(
   value: string | null | undefined,
