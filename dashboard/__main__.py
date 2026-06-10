@@ -10,6 +10,11 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 
 from dashboard.config import folder_path_overview
+from dashboard.lib.cloud_promo import (
+    cloud_promo_card,
+    cloud_tour_modal,
+    register_cloud_promo_callbacks,
+)
 from prowler.config.config import orange_color
 from prowler.lib.banner import print_banner
 
@@ -20,7 +25,7 @@ print_banner()
 print(
     f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
 )
-cli.show_server_banner = lambda *x: click.echo(
+cli.show_server_banner = lambda *_: click.echo(
     f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are using {Fore.GREEN}{Style.BRIGHT}Prowler Cloud{Style.RESET_ALL} with the S3 integration or that integration \nfrom {Fore.CYAN}{Style.BRIGHT}Prowler CLI{Style.RESET_ALL} and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
 )
 
@@ -136,6 +141,8 @@ dashboard.layout = html.Div(
             ],
             className="grid custom-grid 2xl:custom-grid-large h-screen",
         ),
+        # Prowler Cloud product tour (image-only experience).
+        cloud_tour_modal(),
     ],
     className="h-screen mx-auto",
 )
@@ -157,20 +164,7 @@ def update_nav_bar(pathname):
             ),
             html.Nav(
                 [
-                    html.A(
-                        [
-                            html.Span(
-                                [
-                                    html.Img(src="assets/favicon.ico", className="w-5"),
-                                    "Subscribe to Prowler Cloud",
-                                ],
-                                className="flex items-center gap-x-3 text-white",
-                            ),
-                        ],
-                        href="https://prowler.com/",
-                        target="_blank",
-                        className="block p-3 uppercase text-xs hover:bg-prowler-stone-950 hover:border-r-4 hover:border-solid hover:border-prowler-lime",
-                    ),
+                    cloud_promo_card(),
                     html.Ul(generate_help_menu(), className=""),
                 ],
                 className="flex flex-col gap-y-6 mt-auto",
@@ -178,3 +172,7 @@ def update_nav_bar(pathname):
         ],
         className="flex flex-col bg-prowler-stone-900 py-7 h-full",
     )
+
+
+# Wire the Prowler Cloud product tour open/close/navigation callbacks.
+register_cloud_promo_callbacks(dashboard)

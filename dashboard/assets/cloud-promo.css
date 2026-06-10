@@ -1,0 +1,269 @@
+/* Prowler Cloud promo: sidebar hero + product tour modal.
+   Styled to match the new Prowler Cloud app (cool-dark surface + mint accent),
+   intentionally distinct from the warm stone sidebar so it stands out. */
+
+:root {
+  --cloud-bg: #0a0e16;
+  --cloud-bg-2: #111a2b;
+  --cloud-mint: #6ee7b7;
+  --cloud-mint-2: #2dd4bf;
+  --cloud-ink: #e6f0ef;
+  --cloud-muted: #9fb1c4;
+}
+
+/* ---------- Sidebar hero card ---------- */
+.cloud-promo-card-wrap {
+  padding: 0 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.cloud-promo-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.95rem 0.95rem 0.85rem;
+  border-radius: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  color: var(--cloud-ink);
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(45, 212, 191, 0.18) 0%, transparent 55%),
+    linear-gradient(160deg, var(--cloud-bg-2) 0%, var(--cloud-bg) 100%);
+  border: 1px solid rgba(110, 231, 183, 0.28);
+  box-shadow: 0 10px 24px -14px rgba(45, 212, 191, 0.55);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.cloud-promo-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(110, 231, 183, 0.6);
+  box-shadow: 0 16px 30px -12px rgba(45, 212, 191, 0.7);
+}
+
+/* Soft sheen sweep on hover. */
+.cloud-promo-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.08) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+}
+.cloud-promo-card:hover::after {
+  transform: translateX(120%);
+}
+
+.cloud-promo-eyebrow {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cloud-mint);
+}
+
+.cloud-promo-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #ffffff;
+}
+
+.cloud-promo-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--cloud-mint);
+}
+
+.cloud-promo-arrow {
+  transition: transform 0.18s ease;
+}
+.cloud-promo-card:hover .cloud-promo-arrow {
+  transform: translateX(3px);
+}
+
+/* ---------- Tour modal ---------- */
+.cloud-tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.cloud-tour-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 7, 12, 0.74);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+}
+
+.cloud-tour-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(960px, 100%);
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--cloud-bg-2) 0%, var(--cloud-bg) 100%);
+  border: 1px solid rgba(110, 231, 183, 0.22);
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.85);
+  animation: cloud-tour-pop 0.22s ease;
+}
+
+@keyframes cloud-tour-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cloud-tour-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--cloud-ink);
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.15s ease;
+}
+.cloud-tour-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.cloud-tour-stage {
+  padding: 1.4rem 1.4rem 0;
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(45, 212, 191, 0.12) 0%, transparent 60%);
+}
+
+.cloud-tour-image {
+  display: block;
+  margin: 0 auto;
+  /* Fixed 2:1 frame keeps the stage height identical across slides, while the
+     viewport cap guarantees the caption + nav controls always stay visible
+     (never clipped by the dialog's max-height). Tour images are pre-composited
+     to 2000x1000 (2:1), so the ratio is honored with no cropping. */
+  aspect-ratio: 2 / 1;
+  max-width: 100%;
+  max-height: 48vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.9);
+}
+
+.cloud-tour-caption {
+  padding: 1.1rem 1.6rem 0.4rem;
+}
+
+.cloud-tour-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cloud-mint);
+}
+
+.cloud-tour-title {
+  margin: 0.35rem 0 0.4rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.cloud-tour-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--cloud-muted);
+  max-width: 60ch;
+  /* Reserve ~3 lines so captions of different lengths don't shift height. */
+  min-height: 4.3rem;
+}
+
+a.cloud-tour-cta {
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: #04231d;
+  background: linear-gradient(135deg, var(--cloud-mint) 0%, var(--cloud-mint-2) 100%);
+  box-shadow: 0 12px 24px -12px rgba(45, 212, 191, 0.8);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+a.cloud-tour-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px -12px rgba(45, 212, 191, 0.95);
+}
+
+.cloud-tour-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.6rem 1.4rem;
+}
+
+.cloud-tour-nav {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--cloud-ink);
+  background: rgba(255, 255, 255, 0.05);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cloud-tour-nav:hover {
+  background: rgba(110, 231, 183, 0.14);
+  border-color: rgba(110, 231, 183, 0.5);
+}
+
+.cloud-tour-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.cloud-tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.cloud-tour-dot--active {
+  background: linear-gradient(135deg, var(--cloud-mint) 0%, var(--cloud-mint-2) 100%);
+  transform: scale(1.25);
+}
+
+@media (max-width: 640px) {
+  .cloud-tour-title { font-size: 1.15rem; }
+  .cloud-tour-stage { padding: 1rem 1rem 0; }
+  .cloud-tour-caption { padding: 0.9rem 1rem 0.3rem; }
+  .cloud-tour-controls { padding: 0.8rem 1rem 1.1rem; }
+}
