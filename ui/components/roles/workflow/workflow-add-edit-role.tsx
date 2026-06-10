@@ -1,7 +1,6 @@
 "use client";
 
 import { Progress } from "@heroui/progress";
-import { Spacer } from "@heroui/spacer";
 import { usePathname } from "next/navigation";
 import React from "react";
 
@@ -59,7 +58,7 @@ export const WorkflowAddEditRole = () => {
         stepClassName="border border-border-neutral-primary aria-[current]:border-button-primary aria-[current]:text-text-neutral-primary cursor-default"
         steps={steps}
       />
-      <Spacer y={4} />
+      <div className="h-4" />
     </section>
   );
 };
