@@ -121,7 +121,7 @@ export function BreadcrumbNavigation({
         </div>
       ) : null}
       <h1
-        className={`text-text-neutral-primary max-w-[200px] truncate text-sm font-bold sm:max-w-none ${isLink ? "hover:text-primary transition-colors" : ""}`}
+        className={`text-text-neutral-primary max-w-[200px] truncate text-sm font-bold sm:max-w-none ${isLink ? "hover:text-button-primary transition-colors" : ""}`}
       >
         {titleText}
       </h1>
@@ -175,7 +175,7 @@ export function BreadcrumbNavigation({
                       {breadcrumb.icon}
                     </div>
                   ) : null}
-                  <span className="text-text-neutral-primary hover:text-primary max-w-[150px] truncate text-sm font-bold transition-colors sm:max-w-none">
+                  <span className="text-text-neutral-primary hover:text-button-primary max-w-[150px] truncate text-sm font-bold transition-colors sm:max-w-none">
                     {breadcrumb.name}
                   </span>
                 </Link>
@@ -206,7 +206,7 @@ export function BreadcrumbNavigation({
                   {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                     <Icon
                       aria-hidden="true"
-                      className="text-default-500"
+                      className="text-text-neutral-tertiary"
                       height={24}
                       icon={breadcrumb.icon}
                       width={24}

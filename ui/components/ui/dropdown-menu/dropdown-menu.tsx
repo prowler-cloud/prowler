@@ -31,7 +31,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "hover:text-accent-foreground focus:bg-accent data-[state=open]:bg-accent text-default-600 hover:bg-default-100 flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:font-bold",
+      "hover:text-accent-foreground focus:bg-accent data-[state=open]:bg-accent text-text-neutral-secondary hover:bg-bg-neutral-tertiary flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:font-bold",
       inset && "pl-8",
       className,
     )}
@@ -88,7 +88,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "focus:bg-accent focus:text-accent-foreground text-default-600 hover:bg-default-100 relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm subpixel-antialiased transition-colors outline-none select-none hover:[font-variation-settings:'wght'_600] data-disabled:pointer-events-none data-disabled:opacity-50",
+      "focus:bg-accent focus:text-accent-foreground text-text-neutral-secondary hover:bg-bg-neutral-tertiary relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm subpixel-antialiased transition-colors outline-none select-none hover:[font-variation-settings:'wght'_600] data-disabled:pointer-events-none data-disabled:opacity-50",
       inset && "pl-8",
       className,
     )}
@@ -104,7 +104,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "focus:bg-accent focus:text-accent-foreground text-default-600 hover:bg-default-100 relative flex cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm transition-colors outline-none select-none hover:font-bold data-disabled:pointer-events-none data-disabled:opacity-50",
+      "focus:bg-accent focus:text-accent-foreground text-text-neutral-secondary hover:bg-bg-neutral-tertiary relative flex cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm transition-colors outline-none select-none hover:font-bold data-disabled:pointer-events-none data-disabled:opacity-50",
       className,
     )}
     checked={checked}
@@ -167,10 +167,7 @@ const DropdownMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={cn(
-      "bg-default-200 dark:bg-default-700 -mx-1 my-1 h-px",
-      className,
-    )}
+    className={cn("-mx-1 my-1 h-px bg-zinc-200", className)}
     {...props}
   />
 ));

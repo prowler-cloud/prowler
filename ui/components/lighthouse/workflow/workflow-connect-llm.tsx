@@ -54,15 +54,15 @@ export const WorkflowConnectLLM = () => {
       <h1 className="mb-2 text-xl font-medium" id="getting-started">
         {isEditMode ? `Configure ${providerName}` : `Connect ${providerName}`}
       </h1>
-      <p className="text-small text-default-500 mb-5">
+      <p className="text-text-neutral-tertiary mb-5 text-sm">
         {isEditMode
           ? "Update your LLM provider configuration and settings."
           : "Follow these steps to configure your LLM provider and enable AI-powered features."}
       </p>
       <div className="mb-5 flex flex-col gap-2 px-0.5">
         <div className="flex items-center justify-between">
-          <span className="text-small">Steps</span>
-          <span className="text-small text-button-primary">
+          <span className="text-sm">Steps</span>
+          <span className="text-button-primary text-sm">
             {`${currentStep + 1} of ${steps.length}`}
           </span>
         </div>
@@ -81,7 +81,7 @@ export const WorkflowConnectLLM = () => {
             return (
               <li
                 key={step.title}
-                className="border-border-neutral-primary rounded-large border px-3 py-2.5"
+                className="border-border-neutral-primary rounded-[14px] border px-3 py-2.5"
               >
                 <div className="flex items-center gap-4">
                   <div
@@ -93,7 +93,7 @@ export const WorkflowConnectLLM = () => {
                         "border-button-primary text-button-primary bg-transparent",
                       !isActive &&
                         !isComplete &&
-                        "text-default-500 border-border-neutral-primary bg-transparent",
+                        "text-text-neutral-tertiary border-border-neutral-primary bg-transparent",
                     )}
                   >
                     {index + 1}
@@ -101,20 +101,20 @@ export const WorkflowConnectLLM = () => {
                   <div className="flex-1 text-left">
                     <div
                       className={cn(
-                        "text-medium font-medium",
+                        "text-base font-medium",
                         isActive || isComplete
-                          ? "text-default-foreground"
-                          : "text-default-500",
+                          ? "text-text-neutral-primary"
+                          : "text-text-neutral-tertiary",
                       )}
                     >
                       {step.title}
                     </div>
                     <div
                       className={cn(
-                        "text-small",
+                        "text-sm",
                         isActive || isComplete
-                          ? "text-default-600"
-                          : "text-default-500",
+                          ? "text-text-neutral-secondary"
+                          : "text-text-neutral-tertiary",
                       )}
                     >
                       {step.description}

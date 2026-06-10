@@ -50,7 +50,7 @@ export default async function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "bg-background min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
         )}
       >

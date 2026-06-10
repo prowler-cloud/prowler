@@ -91,7 +91,7 @@ const TableHead = forwardRef<
       "h-11 px-1.5 text-left align-middle text-xs font-medium whitespace-nowrap outline-none",
       "first:rounded-l-full first:border-l first:pl-3",
       "last:rounded-r-full last:border-r last:pr-3",
-      "data-[hover=true]:text-foreground-400 data-[focus-visible=true]:outline-focus",
+      "data-[hover=true]:text-text-neutral-tertiary data-[focus-visible=true]:outline-button-primary",
       "data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-offset-2",
       "rtl:text-right rtl:first:rounded-l-[unset] rtl:first:rounded-r-full rtl:last:rounded-l-full rtl:last:rounded-r-[unset]",
       "[&:has([role=checkbox])]:pr-0",

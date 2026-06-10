@@ -92,7 +92,7 @@ export const CredentialsRoleHelper = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-default-500 block text-xs font-medium">
+          <span className="text-text-neutral-tertiary block text-xs font-medium">
             External ID:
           </span>
           <CodeSnippet value={externalId} icon={<IdIcon size={16} />} />

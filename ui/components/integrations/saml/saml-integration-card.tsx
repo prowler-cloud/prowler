@@ -72,7 +72,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
         size="md"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-default-600 text-sm">
+          <p className="text-text-neutral-secondary text-sm">
             Are you sure you want to remove the SAML SSO configuration? Users
             will no longer be able to sign in using SAML.
           </p>

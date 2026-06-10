@@ -33,7 +33,7 @@ export const RadioGroupM365ViaCredentialsTypeForm = ({
               onChange?.(value);
             }}
           >
-            <span className="text-default-500 text-sm">
+            <span className="text-text-neutral-tertiary text-sm">
               Select Authentication Method
             </span>
             <WizardRadioCard value="app_client_secret" isInvalid={isInvalid}>

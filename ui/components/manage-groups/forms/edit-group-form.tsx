@@ -209,7 +209,7 @@ export const EditGroupForm = ({
         )}
 
         <Separator orientation="horizontal" className="mb-2" />
-        <p className="text-small text-default-500">
+        <p className="text-text-neutral-tertiary text-sm">
           The roles associated with the group can be edited directly here or
           from the Roles page.
         </p>

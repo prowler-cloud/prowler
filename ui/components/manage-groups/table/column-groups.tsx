@@ -22,7 +22,7 @@ export const ColumnGroups: ColumnDef<ProviderGroup>[] = [
       const {
         attributes: { name },
       } = getProviderData(row);
-      return <p className="text-small font-medium">{name}</p>;
+      return <p className="text-sm font-medium">{name}</p>;
     },
   },
 

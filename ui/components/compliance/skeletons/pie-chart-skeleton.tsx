@@ -14,7 +14,7 @@ export const PieChartSkeleton = () => {
         <Skeleton className="absolute h-[200px] w-[200px] rounded-full" />
 
         {/* Inner circle (donut hole) */}
-        <div className="bg-background absolute h-[140px] w-[140px] rounded-full"></div>
+        <div className="bg-bg-neutral-primary absolute h-[140px] w-[140px] rounded-full"></div>
 
         {/* Center text skeleton */}
         <div className="absolute flex flex-col items-center">

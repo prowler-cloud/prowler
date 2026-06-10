@@ -53,7 +53,7 @@ export const SkeletonTableNewFindings = () => {
   const rows = 10;
 
   return (
-    <div className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden border p-4">
+    <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden rounded-[14px] border p-4 shadow-sm">
       {/* Header: title + description on the left, link on the right */}
       <div className="flex w-full items-center justify-between gap-4">
         <div className="flex flex-col gap-1">

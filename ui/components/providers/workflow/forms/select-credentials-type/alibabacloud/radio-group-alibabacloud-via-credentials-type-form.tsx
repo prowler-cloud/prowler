@@ -38,11 +38,13 @@ export const RadioGroupAlibabaCloudViaCredentialsTypeForm = <
                 onChange?.(value);
               }}
             >
-              <span className="text-default-500 text-sm">Using RAM Role</span>
+              <span className="text-text-neutral-tertiary text-sm">
+                Using RAM Role
+              </span>
               <WizardRadioCard value="role" isInvalid={isInvalid}>
                 Connect assuming RAM Role
               </WizardRadioCard>
-              <span className="text-default-500 text-sm">
+              <span className="text-text-neutral-tertiary text-sm">
                 Using Credentials
               </span>
               <WizardRadioCard value="credentials" isInvalid={isInvalid}>

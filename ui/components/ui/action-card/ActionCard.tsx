@@ -12,24 +12,26 @@ const COLOR_STYLES = {
     icon: "text-system-success",
   },
   secondary: {
-    card: "border-secondary-100",
-    iconWrapper: "bg-secondary-50 border-secondary-100",
-    icon: "text-secondary",
+    card: "border-violet-200 dark:border-violet-950",
+    iconWrapper:
+      "bg-violet-50 dark:bg-violet-950 border-violet-200 dark:border-violet-900",
+    icon: "text-violet-600 dark:text-violet-400",
   },
   warning: {
-    card: "border-warning-500",
-    iconWrapper: "bg-warning-50 border-warning-100",
-    icon: "text-warning-600",
+    card: "border-amber-500 dark:border-amber-400",
+    iconWrapper:
+      "bg-bg-warning-secondary border-amber-100 dark:border-amber-900",
+    icon: "text-text-warning-primary",
   },
   fail: {
-    card: "border-danger-300",
-    iconWrapper: "bg-danger-50 border-danger-100",
+    card: "border-rose-400 dark:border-rose-700",
+    iconWrapper: "bg-bg-fail-secondary border-rose-200 dark:border-rose-900",
     icon: "text-text-error",
   },
   default: {
-    card: "border-default-200",
-    iconWrapper: "bg-default-50 border-default-100",
-    icon: "text-default-500",
+    card: "border-border-neutral-secondary",
+    iconWrapper: "bg-bg-neutral-tertiary border-border-neutral-secondary",
+    icon: "text-text-neutral-tertiary",
   },
 } as const;
 
@@ -57,7 +59,7 @@ export const ActionCard = ({
       tabIndex={0}
       className={cn(
         "bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary cursor-pointer gap-0 shadow-sm transition-colors",
-        "border-small",
+        "border",
         colors.card,
         className,
       )}
@@ -66,7 +68,7 @@ export const ActionCard = ({
       <CardContent className="flex h-full flex-row items-center gap-2 p-2">
         <div
           className={cn(
-            "item-center rounded-medium flex border p-1",
+            "item-center flex rounded-xl border p-1",
             colors.iconWrapper,
           )}
         >
@@ -74,7 +76,9 @@ export const ActionCard = ({
         </div>
         <div className="flex flex-col">
           <p className="text-md">{title}</p>
-          <p className="text-default-400 text-sm">{description || children}</p>
+          <p className="text-text-neutral-tertiary text-sm">
+            {description || children}
+          </p>
         </div>
       </CardContent>
     </Card>

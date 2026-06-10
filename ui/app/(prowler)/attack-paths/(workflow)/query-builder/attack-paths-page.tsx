@@ -387,7 +387,7 @@ export default function AttackPathsPage() {
       </div>
 
       {scansLoading ? (
-        <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+        <div className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto rounded-[14px] border p-4 shadow-sm">
           <p className="text-sm">Loading scans...</p>
         </div>
       ) : scans.length === 0 ? (
@@ -427,7 +427,7 @@ export default function AttackPathsPage() {
 
           {/* Query Builder Section - shown only after selecting a scan */}
           {scanId && (
-            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+            <div className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto rounded-[14px] border p-4 shadow-sm">
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
@@ -481,7 +481,7 @@ export default function AttackPathsPage() {
             (graphState.data &&
               graphState.data.nodes &&
               graphState.data.nodes.length > 0)) && (
-            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+            <div className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto rounded-[14px] border p-4 shadow-sm">
               {graphState.loading ? (
                 <GraphLoading />
               ) : graphState.data &&

@@ -237,7 +237,7 @@ export function DataTable<TData, TValue>({
   return (
     <div
       className={cn(
-        "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4 transition-opacity duration-200",
+        "minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-[14px] border p-4 shadow-sm transition-opacity duration-200",
         isPending && "pointer-events-none opacity-60",
       )}
     >

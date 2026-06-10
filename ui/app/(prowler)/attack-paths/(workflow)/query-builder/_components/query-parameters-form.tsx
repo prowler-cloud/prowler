@@ -63,7 +63,7 @@ export const QueryParametersForm = ({
                           }
                           onChange={(e) => field.onChange(e.target.checked)}
                           aria-label={param.label}
-                          className="border-border-neutral-secondary bg-bg-neutral-primary text-text-primary focus:ring-primary dark:border-border-neutral-secondary dark:bg-bg-neutral-primary dark:text-text-primary h-4 w-4 rounded border focus:ring-2"
+                          className="border-border-neutral-secondary bg-bg-neutral-primary text-text-primary focus:ring-button-primary dark:border-border-neutral-secondary dark:bg-bg-neutral-primary dark:text-text-primary h-4 w-4 rounded border focus:ring-2"
                         />
                       </FormControl>
                       <div className="flex flex-col gap-1">

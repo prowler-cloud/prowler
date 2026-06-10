@@ -12,7 +12,7 @@ export const AuthFooterLink = ({
   href,
 }: AuthFooterLinkProps) => {
   return (
-    <p className="text-small text-center">
+    <p className="text-center text-sm">
       {text}&nbsp;
       <CustomLink size="md" href={href} target="_self">
         {linkText}

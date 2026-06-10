@@ -36,13 +36,13 @@ export const WorkflowSendInvite = () => {
       <h1 className="mb-2 text-lg font-medium sm:text-xl" id="getting-started">
         Send invitation
       </h1>
-      <p className="sm:text-small text-default-500 mb-3 text-xs sm:mb-5">
+      <p className="text-text-neutral-tertiary mb-3 text-xs sm:mb-5 sm:text-sm">
         Follow the steps to send an invitation to the users.
       </p>
       <div className="mb-3 flex flex-col gap-2 px-0.5 sm:mb-5">
         <div className="flex items-center justify-between">
-          <span className="sm:text-small text-xs">Steps</span>
-          <span className="sm:text-small text-default-400 text-xs">
+          <span className="text-xs sm:text-sm">Steps</span>
+          <span className="text-text-neutral-tertiary text-xs sm:text-sm">
             {`${currentStep + 1} of ${steps.length}`}
           </span>
         </div>
@@ -70,7 +70,7 @@ export const WorkflowSendInvite = () => {
           <div className="font-medium">
             Current: {steps[currentStep]?.title}
           </div>
-          <div className="text-default-300 mt-1 text-xs">
+          <div className="text-text-neutral-tertiary mt-1 text-xs">
             {steps[currentStep]?.description}
           </div>
         </div>

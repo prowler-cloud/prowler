@@ -56,7 +56,7 @@ export const ComplianceAccordionTitle = ({
                   <TooltipContent side="top">
                     <div className="px-1 py-0.5">
                       <div className="text-xs font-medium">Pass</div>
-                      <div className="text-tiny text-default-400">
+                      <div className="text-text-neutral-tertiary text-xs">
                         {pass} ({passPercentage.toFixed(1)}%)
                       </div>
                     </div>
@@ -77,7 +77,7 @@ export const ComplianceAccordionTitle = ({
                   <TooltipContent side="top">
                     <div className="px-1 py-0.5">
                       <div className="text-xs font-medium">Fail</div>
-                      <div className="text-tiny text-default-400">
+                      <div className="text-text-neutral-tertiary text-xs">
                         {fail} ({failPercentage.toFixed(1)}%)
                       </div>
                     </div>
@@ -95,7 +95,7 @@ export const ComplianceAccordionTitle = ({
                   <TooltipContent side="top">
                     <div className="px-1 py-0.5">
                       <div className="text-xs font-medium">Manual</div>
-                      <div className="text-tiny text-default-400">
+                      <div className="text-text-neutral-tertiary text-xs">
                         {manual} ({manualPercentage.toFixed(1)}%)
                       </div>
                     </div>
@@ -110,14 +110,14 @@ export const ComplianceAccordionTitle = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="text-default-600 min-w-[32px] text-center text-xs font-medium">
+            <span className="text-text-neutral-secondary min-w-[32px] text-center text-xs font-medium">
               {total > 0 ? total : "—"}
             </span>
           </TooltipTrigger>
           <TooltipContent side="top">
             <div className="px-1 py-0.5">
               <div className="text-xs font-medium">Total requirements</div>
-              <div className="text-tiny text-default-400">{total}</div>
+              <div className="text-text-neutral-tertiary text-xs">{total}</div>
             </div>
           </TooltipContent>
         </Tooltip>
