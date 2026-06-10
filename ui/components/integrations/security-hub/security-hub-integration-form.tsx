@@ -1,7 +1,5 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
-import { Radio, RadioGroup } from "@heroui/radio";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -14,7 +12,11 @@ import {
   ProviderTypeIcon,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
-import { Separator } from "@/components/shadcn";
+import { Checkbox, Separator } from "@/components/shadcn";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/shadcn/radio-group/radio-group";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
@@ -289,8 +291,8 @@ export const SecurityHubIntegrationForm = ({
       return (
         <div className="flex flex-col gap-4">
           <RadioGroup
-            size="sm"
             aria-label="Credential type"
+            className="gap-2"
             value={useCustomCredentials ? "custom" : "provider"}
             onValueChange={(value) => {
               form.setValue("use_custom_credentials", value === "custom", {
@@ -299,12 +301,24 @@ export const SecurityHubIntegrationForm = ({
               });
             }}
           >
-            <Radio value="provider">
-              <span className="text-sm">Use provider credentials</span>
-            </Radio>
-            <Radio value="custom">
-              <span className="text-sm">Use custom credentials</span>
-            </Radio>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="provider" id="credentials-provider" />
+              <label
+                htmlFor="credentials-provider"
+                className="cursor-pointer text-sm"
+              >
+                Use provider credentials
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="custom" id="credentials-custom" />
+              <label
+                htmlFor="credentials-custom"
+                className="cursor-pointer text-sm"
+              >
+                Use custom credentials
+              </label>
+            </div>
           </RadioGroup>
 
           {useCustomCredentials && (
@@ -392,16 +406,20 @@ export const SecurityHubIntegrationForm = ({
               name="send_only_fails"
               render={({ field }) => (
                 <FormControl>
-                  <Checkbox
-                    isSelected={Boolean(field.value)}
-                    onValueChange={field.onChange}
-                    size="sm"
-                    color="default"
-                  >
-                    <span className="text-sm">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="send_only_fails"
+                      size="sm"
+                      checked={Boolean(field.value)}
+                      onCheckedChange={field.onChange}
+                    />
+                    <label
+                      htmlFor="send_only_fails"
+                      className="cursor-pointer text-sm"
+                    >
                       Send only findings with status FAIL
-                    </span>
-                  </Checkbox>
+                    </label>
+                  </div>
                 </FormControl>
               )}
             />
@@ -411,14 +429,20 @@ export const SecurityHubIntegrationForm = ({
               name="archive_previous_findings"
               render={({ field }) => (
                 <FormControl>
-                  <Checkbox
-                    isSelected={Boolean(field.value)}
-                    onValueChange={field.onChange}
-                    size="sm"
-                    color="default"
-                  >
-                    <span className="text-sm">Archive previous findings</span>
-                  </Checkbox>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="archive_previous_findings"
+                      size="sm"
+                      checked={Boolean(field.value)}
+                      onCheckedChange={field.onChange}
+                    />
+                    <label
+                      htmlFor="archive_previous_findings"
+                      className="cursor-pointer text-sm"
+                    >
+                      Archive previous findings
+                    </label>
+                  </div>
                 </FormControl>
               )}
             />
@@ -429,17 +453,21 @@ export const SecurityHubIntegrationForm = ({
                 name="use_custom_credentials"
                 render={({ field }) => (
                   <FormControl>
-                    <Checkbox
-                      isSelected={field.value}
-                      onValueChange={field.onChange}
-                      size="sm"
-                      color="default"
-                    >
-                      <span className="text-sm">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="use_custom_credentials"
+                        size="sm"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <label
+                        htmlFor="use_custom_credentials"
+                        className="cursor-pointer text-sm"
+                      >
                         Use custom credentials (By default, AWS account ones
                         will be used)
-                      </span>
-                    </Checkbox>
+                      </label>
+                    </div>
                   </FormControl>
                 )}
               />

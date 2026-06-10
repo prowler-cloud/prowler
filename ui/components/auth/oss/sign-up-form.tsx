@@ -1,6 +1,5 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
@@ -16,7 +15,7 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { Button } from "@/components/shadcn";
+import { Button, Checkbox } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
@@ -206,14 +205,18 @@ export const SignUpForm = ({
               name="termsAndConditions"
               render={({ field }) => (
                 <>
-                  <FormControl>
-                    <Checkbox
-                      isRequired
-                      className="py-4"
-                      size="sm"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      color="default"
+                  <div className="flex items-center gap-2 py-4">
+                    <FormControl>
+                      <Checkbox
+                        id="termsAndConditions"
+                        size="sm"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <label
+                      htmlFor="termsAndConditions"
+                      className="cursor-pointer text-sm"
                     >
                       I agree with the&nbsp;
                       <CustomLink
@@ -223,8 +226,8 @@ export const SignUpForm = ({
                         Terms of Service
                       </CustomLink>
                       &nbsp;of Prowler
-                    </Checkbox>
-                  </FormControl>
+                    </label>
+                  </div>
                   <FormMessage className="text-text-error" />
                 </>
               )}
