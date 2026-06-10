@@ -22,6 +22,27 @@ export function toLocalDateString(
   }
 }
 
+/** Local time with the browser's short zone label (e.g. "12:00AM MAD"), as shown by DateWithTime. */
+export function formatLocalTimeWithZone(
+  value: string | null | undefined,
+): string | undefined {
+  if (!value) return undefined;
+  try {
+    const date = parseISO(value);
+    if (isNaN(date.getTime())) return undefined;
+    const zone =
+      Intl.DateTimeFormat()
+        .resolvedOptions()
+        .timeZone.split("/")
+        .pop()
+        ?.substring(0, 3)
+        .toUpperCase() || "";
+    return `${format(date, "h:mma")} ${zone}`.trim();
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Formats a duration in seconds to a human-readable string like "2h 5m 30s".
  */

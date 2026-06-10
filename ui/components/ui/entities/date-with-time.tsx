@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { formatLocalTimeWithZone } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 interface DateWithTimeProps {
@@ -29,18 +30,12 @@ export const DateWithTime = ({
     }
 
     const formattedDate = format(date, "MMM dd, yyyy");
-    const formattedTime = format(date, "h:mma");
-    const timezone =
-      Intl.DateTimeFormat()
-        .resolvedOptions()
-        .timeZone.split("/")
-        .pop()
-        ?.substring(0, 3)
-        .toUpperCase() || "";
+    const timeWithZone = formatLocalTimeWithZone(dateTime);
 
-    const fullText = showTime
-      ? `${formattedDate} ${formattedTime} ${timezone}`
-      : formattedDate;
+    const fullText =
+      showTime && timeWithZone
+        ? `${formattedDate} ${timeWithZone}`
+        : formattedDate;
 
     const content = (
       <div
@@ -59,14 +54,14 @@ export const DateWithTime = ({
         >
           {formattedDate}
         </span>
-        {showTime && (
+        {showTime && timeWithZone && (
           <span
             className={cn(
               "text-text-neutral-tertiary text-xs font-medium whitespace-nowrap",
               inline && "truncate",
             )}
           >
-            {formattedTime} {timezone}
+            {timeWithZone}
           </span>
         )}
       </div>
