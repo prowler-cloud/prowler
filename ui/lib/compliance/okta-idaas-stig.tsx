@@ -52,6 +52,10 @@ export const mapComplianceData = (
     // Level 2: each requirement is its own control, labelled by its STIG ID
     const controlLabel = id;
     const description = attributeItem.attributes.description;
+    // Human-readable STIG title (e.g. "Okta must log out a session after a
+    // 15-minute period of inactivity."). Surface it next to the STIG ID and
+    // fall back to the bare ID when missing, mirroring DORA/CSA.
+    const requirementName = attributeItem.attributes.name || "";
     const status = requirementData.attributes.status || "";
     const checks = attributeItem.attributes.attributes.check_ids || [];
 
@@ -61,7 +65,7 @@ export const mapComplianceData = (
 
     const finalStatus: RequirementStatus = status as RequirementStatus;
     const requirement = {
-      name: id,
+      name: requirementName ? `${id} - ${requirementName}` : id,
       description,
       status: finalStatus,
       check_ids: checks,
@@ -92,7 +96,7 @@ const createRequirementItem = (
   key: `${frameworkName}-${categoryName}-control-${controlIndex}`,
   title: (
     <ComplianceAccordionRequirementTitle
-      type={requirement.severity as string}
+      type=""
       name={requirement.name}
       status={requirement.status as FindingStatus}
     />
