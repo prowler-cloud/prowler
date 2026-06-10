@@ -269,6 +269,7 @@ def _store_resources(
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
+                "name": finding.resource_name,
                 "region": finding.region,
                 "service": finding.service_name,
                 "type": finding.resource_type,
@@ -276,6 +277,7 @@ def _store_resources(
         )
 
         if not created:
+            resource_instance.name = finding.resource_name
             resource_instance.region = finding.region
             resource_instance.service = finding.service_name
             resource_instance.type = finding.resource_type
@@ -704,6 +706,12 @@ def _process_finding_micro_batch(
                     if finding.region and resource_instance.region != finding.region:
                         resource_instance.region = finding.region
                         updated = True
+                    if (
+                        finding.resource_name
+                        and resource_instance.name != finding.resource_name
+                    ):
+                        resource_instance.name = finding.resource_name
+                        updated = True
                     if resource_instance.service != finding.service_name:
                         resource_instance.service = finding.service_name
                         updated = True
@@ -945,6 +953,7 @@ def _process_finding_micro_batch(
                         Resource.objects.bulk_update(
                             resources_to_bulk_update,
                             [
+                                "name",
                                 "metadata",
                                 "details",
                                 "partition",
