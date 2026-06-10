@@ -13,8 +13,8 @@
   "Risk": "Enabled external file sharing allows users to send files containing **confidential information** to external parties through Chat. This creates a **data leakage** channel that bypasses DLP controls, particularly dangerous for organizations handling **regulated data** such as PII, PHI, or financial records.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9540647",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/chat/set-up-chat-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

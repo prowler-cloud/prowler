@@ -1,6 +1,7 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
+import { ComplianceBadgeVariant } from "@/components/compliance/compliance-custom-details/shared-components";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
@@ -24,15 +25,14 @@ import {
 export interface CSAMappingSection {
   title: string;
   key: keyof Requirement;
-  colorClasses: string;
+  variant: ComplianceBadgeVariant;
 }
 
 export const CSA_MAPPING_SECTIONS: CSAMappingSection[] = [
   {
     title: "Scope Applicability",
     key: "scope_applicability",
-    colorClasses:
-      "bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20",
+    variant: "info",
   },
 ];
 

@@ -133,6 +133,13 @@ repos:
         pass_filenames: false
         priority: 50
 
+  ## MARKDOWN
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        priority: 30
+
   ## CONTAINERS
   - repo: https://github.com/hadolint/hadolint
     rev: v2.14.0

@@ -18,9 +18,9 @@ const TRIGGER_STYLES = {
   border: "border-r border-[#E9E9F0] last:border-r-0 dark:border-[#171D30]",
   text: "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
   active:
-    "data-[state=active]:text-slate-900 dark:data-[state=active]:text-white",
+    "data-[state=active]:text-slate-900 aria-selected:text-slate-900 dark:data-[state=active]:text-white dark:aria-selected:text-white",
   underline:
-    "after:absolute after:bottom-0 after:left-0 after:right-4 after:h-0.5 after:scale-x-0 after:bg-emerald-400 after:transition-transform data-[state=active]:after:scale-x-100 [&:not(:first-child)]:after:left-4 [&:last-child]:after:right-0",
+    "after:absolute after:bottom-0 after:left-0 after:right-4 after:h-0.5 after:scale-x-0 after:bg-emerald-400 after:transition-transform data-[state=active]:after:scale-x-100 aria-selected:after:scale-x-100 [&:not(:first-child)]:after:left-4 [&:last-child]:after:right-0",
   focus:
     "focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-offset-slate-950",
   icon: "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",

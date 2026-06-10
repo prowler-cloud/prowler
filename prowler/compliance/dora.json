@@ -1,0 +1,597 @@
+{
+  "framework": "DORA",
+  "name": "Digital Operational Resilience Act (Regulation (EU) 2022/2554)",
+  "version": "2022/2554",
+  "description": "The Digital Operational Resilience Act (DORA) is a European Union regulation (Regulation (EU) 2022/2554) that sets a uniform framework for the digital operational resilience of the EU financial sector. Mandatory since 17 January 2025, it applies to financial entities (banks, insurers, investment firms, payment institutions, etc.) and to ICT third-party service providers. DORA is structured around five pillars: ICT risk management, ICT-related incident reporting, digital operational resilience testing, ICT third-party risk management, and information sharing. This Prowler mapping covers the technical controls auditable from cloud configuration; the organisational, contractual and supervisory obligations defined in DORA must be addressed outside of Prowler.",
+  "icon": "dora",
+  "attributes_metadata": [
+    {
+      "key": "Pillar",
+      "label": "Pillar",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "ICT Risk Management",
+        "ICT-Related Incident Reporting",
+        "Digital Operational Resilience Testing",
+        "ICT Third-Party Risk Management",
+        "Information Sharing"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Article",
+      "label": "Article",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "ArticleTitle",
+      "label": "Article Title",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Pillar"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#003399",
+      "secondary_color": "#0055A5",
+      "bg_color": "#F0F4FA",
+      "group_by_field": "Pillar",
+      "sections": [
+        "ICT Risk Management",
+        "ICT-Related Incident Reporting",
+        "Digital Operational Resilience Testing",
+        "ICT Third-Party Risk Management",
+        "Information Sharing"
+      ],
+      "section_short_names": {
+        "ICT Risk Management": "ICT Risk Mgmt",
+        "ICT-Related Incident Reporting": "Incident Reporting",
+        "Digital Operational Resilience Testing": "Resilience Testing",
+        "ICT Third-Party Risk Management": "Third-Party Risk",
+        "Information Sharing": "Info Sharing"
+      },
+      "charts": [
+        {
+          "id": "pillar_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Pillar",
+          "title": "Compliance Score by DORA Pillar",
+          "y_label": "Pillar",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "DORA-Art5",
+      "name": "Governance and organisation",
+      "description": "Financial entities shall have a sound, comprehensive and well-documented ICT internal governance and control framework. Senior management is accountable for ICT risk and shall enforce strong identity, authentication and least-privilege policies for privileged identities, including the root account.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 5",
+        "ArticleTitle": "Governance and organisation"
+      },
+      "checks": {
+        "aws": [
+          "iam_avoid_root_usage",
+          "iam_no_root_access_key",
+          "iam_root_mfa_enabled",
+          "iam_root_hardware_mfa_enabled",
+          "iam_root_credentials_management_enabled",
+          "iam_password_policy_minimum_length_14",
+          "iam_password_policy_lowercase",
+          "iam_password_policy_uppercase",
+          "iam_password_policy_number",
+          "iam_password_policy_symbol",
+          "iam_password_policy_reuse_24",
+          "iam_password_policy_expires_passwords_within_90_days_or_less",
+          "iam_securityaudit_role_created",
+          "iam_support_role_created",
+          "organizations_account_part_of_organizations",
+          "iam_user_mfa_enabled_console_access",
+          "iam_user_hardware_mfa_enabled"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art6",
+      "name": "ICT risk management framework",
+      "description": "Financial entities shall have an ICT risk management framework that is sound, comprehensive and well-documented, enabling them to address ICT risk quickly, efficiently and comprehensively and to ensure a high level of digital operational resilience. This includes continuous configuration recording, security findings aggregation and an enterprise-wide visibility plane.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 6",
+        "ArticleTitle": "ICT risk management framework"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled",
+          "config_recorder_using_aws_service_role",
+          "securityhub_enabled",
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "organizations_delegated_administrators",
+          "guardduty_centrally_managed",
+          "guardduty_delegated_admin_enabled_all_regions"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art7",
+      "name": "ICT systems, protocols and tools",
+      "description": "Financial entities shall use and maintain updated ICT systems, protocols and tools that are appropriate to the magnitude of operations supporting ICT functions, technologically resilient, and adequately equipped to securely process data. Cryptographic primitives, certificate hygiene and network segmentation are core to this requirement.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 7",
+        "ArticleTitle": "ICT systems, protocols and tools"
+      },
+      "checks": {
+        "aws": [
+          "acm_certificates_with_secure_key_algorithms",
+          "acm_certificates_transparency_logs_enabled",
+          "acm_certificates_expiration_check",
+          "ec2_ebs_default_encryption",
+          "kms_cmk_rotation_enabled",
+          "s3_bucket_secure_transport_policy",
+          "s3_bucket_default_encryption",
+          "s3_bucket_kms_encryption",
+          "vpc_subnet_separate_private_public",
+          "vpc_subnet_no_public_ip_by_default",
+          "elb_insecure_ssl_ciphers",
+          "elbv2_insecure_ssl_ciphers",
+          "elb_ssl_listeners",
+          "elbv2_ssl_listeners",
+          "cloudfront_distributions_using_deprecated_ssl_protocols",
+          "cloudfront_distributions_https_enabled",
+          "rds_instance_transport_encrypted"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art8",
+      "name": "Identification",
+      "description": "Financial entities shall identify, classify and adequately document all ICT supported business functions, roles and responsibilities, the information assets and ICT assets supporting them, and their interdependencies. They shall on a continuous basis identify all sources of ICT risk, in particular the risk exposure to and from other financial entities.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 8",
+        "ArticleTitle": "Identification"
+      },
+      "checks": {
+        "aws": [
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "macie_is_enabled",
+          "macie_automated_sensitive_data_discovery_enabled",
+          "ec2_securitygroup_not_used",
+          "ec2_elastic_ip_unassigned",
+          "ec2_networkacl_unused",
+          "secretsmanager_secret_unused"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art9",
+      "name": "Protection and prevention",
+      "description": "Financial entities shall continuously monitor and control the security and functioning of ICT systems and tools and minimise the impact of ICT risk by deploying appropriate ICT security tools, policies and procedures. Encryption at rest and in transit, blocking of public exposure, network access controls, secret management and instance hardening are central to this article.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 9",
+        "ArticleTitle": "Protection and prevention"
+      },
+      "checks": {
+        "aws": [
+          "kms_key_not_publicly_accessible",
+          "ec2_ebs_volume_encryption",
+          "ec2_ebs_snapshots_encrypted",
+          "ec2_ebs_public_snapshot",
+          "ec2_ebs_snapshot_account_block_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_level_public_access_block",
+          "s3_bucket_public_access",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_write_acl",
+          "s3_bucket_public_list_acl",
+          "s3_bucket_acl_prohibited",
+          "s3_access_point_public_access_block",
+          "ec2_securitygroup_default_restrict_traffic",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+          "rds_instance_storage_encrypted",
+          "rds_cluster_storage_encrypted",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "secretsmanager_not_publicly_accessible",
+          "secretsmanager_has_restrictive_resource_policy",
+          "secretsmanager_automatic_rotation_enabled",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "sns_topics_kms_encryption_at_rest_enabled",
+          "sns_topics_not_publicly_accessible",
+          "ec2_instance_imdsv2_enabled",
+          "ec2_instance_account_imdsv2_enabled",
+          "efs_encryption_at_rest_enabled",
+          "awslambda_function_not_publicly_accessible"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art10",
+      "name": "Detection",
+      "description": "Financial entities shall have in place mechanisms to promptly detect anomalous activities, including ICT network performance issues and ICT-related incidents, and to identify potential single points of failure. Threat detection across compute, identity, storage and the API control plane is required for timely detection.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 10",
+        "ArticleTitle": "Detection"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "guardduty_ec2_malware_protection_enabled",
+          "guardduty_lambda_protection_enabled",
+          "guardduty_rds_protection_enabled",
+          "guardduty_s3_protection_enabled",
+          "guardduty_eks_audit_log_enabled",
+          "guardduty_eks_runtime_monitoring_enabled",
+          "securityhub_enabled",
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation",
+          "cloudtrail_insights_exist",
+          "inspector2_is_enabled",
+          "inspector2_active_findings_exist",
+          "ec2_elastic_ip_shodan"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art11",
+      "name": "Response and recovery",
+      "description": "Financial entities shall put in place a comprehensive ICT business continuity policy, including ICT response and recovery plans, that ensures the continuity of ICT-supported critical or important functions. Operational alarming, automated event routing and tested recovery actions are essential.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 11",
+        "ArticleTitle": "Response and recovery"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_alarm_actions_enabled",
+          "cloudwatch_alarm_actions_alarm_state_configured",
+          "eventbridge_global_endpoint_event_replication_enabled",
+          "sns_subscription_not_using_http_endpoints",
+          "backup_plans_exist",
+          "backup_vaults_exist",
+          "rds_instance_critical_event_subscription",
+          "rds_cluster_critical_event_subscription"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art12",
+      "name": "Backup policies and procedures, restoration and recovery procedures and methods",
+      "description": "Financial entities shall develop and document backup policies and procedures specifying the scope of data subject to backup and the minimum frequency of the backup, as well as restoration and recovery procedures and methods. Backups must be encrypted, retained, and resources must be designed for recoverability across availability zones and regions.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 12",
+        "ArticleTitle": "Backup policies and procedures, restoration and recovery procedures and methods"
+      },
+      "checks": {
+        "aws": [
+          "backup_plans_exist",
+          "backup_vaults_exist",
+          "backup_vaults_encrypted",
+          "backup_recovery_point_encrypted",
+          "backup_reportplans_exist",
+          "rds_instance_backup_enabled",
+          "rds_cluster_protected_by_backup_plan",
+          "rds_instance_protected_by_backup_plan",
+          "rds_instance_multi_az",
+          "rds_cluster_multi_az",
+          "rds_cluster_backtrack_enabled",
+          "rds_instance_deletion_protection",
+          "rds_cluster_deletion_protection",
+          "rds_snapshots_encrypted",
+          "s3_bucket_object_versioning",
+          "s3_bucket_object_lock",
+          "s3_bucket_cross_region_replication",
+          "s3_bucket_no_mfa_delete",
+          "dynamodb_tables_pitr_enabled",
+          "dynamodb_table_deletion_protection_enabled",
+          "ec2_ebs_volume_protected_by_backup_plan",
+          "ec2_ebs_volume_snapshots_exists",
+          "autoscaling_group_multiple_az",
+          "elb_is_in_multiple_az",
+          "elbv2_is_in_multiple_az",
+          "cloudfront_distributions_multiple_origin_failover_configured",
+          "dynamodb_table_protected_by_backup_plan"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art13",
+      "name": "Learning and evolving",
+      "description": "Financial entities shall have in place capabilities and staff to gather information on vulnerabilities and cyber threats, perform post ICT-related incident reviews, and continuously feed lessons learnt back into the ICT risk assessment process. Findings aggregation and continuous insights drive this cycle.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 13",
+        "ArticleTitle": "Learning and evolving"
+      },
+      "checks": {
+        "aws": [
+          "securityhub_enabled",
+          "guardduty_no_high_severity_findings",
+          "inspector2_active_findings_exist",
+          "accessanalyzer_enabled_without_findings",
+          "cloudtrail_insights_exist"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art14",
+      "name": "Communication",
+      "description": "As part of the ICT risk management framework, financial entities shall have in place crisis communication plans enabling a responsible disclosure of ICT-related incidents or major vulnerabilities to clients, counterparts and the public. Reliable, encrypted and access-controlled notification channels are required.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 14",
+        "ArticleTitle": "Communication"
+      },
+      "checks": {
+        "aws": [
+          "sns_topics_kms_encryption_at_rest_enabled",
+          "sns_topics_not_publicly_accessible",
+          "sns_subscription_not_using_http_endpoints",
+          "eventbridge_bus_exposed",
+          "eventbridge_bus_cross_account_access",
+          "eventbridge_schema_registry_cross_account_access",
+          "cloudwatch_alarm_actions_enabled",
+          "cloudwatch_alarm_actions_alarm_state_configured"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art17",
+      "name": "ICT-related incident management process",
+      "description": "Financial entities shall define, establish and implement an ICT-related incident management process to detect, manage and notify ICT-related incidents. Comprehensive trail logging, log integrity protection, retention and centralisation of ICT events are foundational requirements.",
+      "attributes": {
+        "Pillar": "ICT-Related Incident Reporting",
+        "Article": "Article 17",
+        "ArticleTitle": "ICT-related incident management process"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_multi_region_enabled_logging_management_events",
+          "cloudtrail_kms_encryption_enabled",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_logs_s3_bucket_access_logging_enabled",
+          "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "cloudtrail_bucket_requires_mfa_delete",
+          "cloudtrail_bedrock_logging_enabled",
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "cloudwatch_log_group_no_secrets_in_logs",
+          "cloudwatch_log_group_not_publicly_accessible",
+          "vpc_flow_logs_enabled",
+          "ec2_client_vpn_endpoint_connection_logging_enabled",
+          "route53_public_hosted_zones_cloudwatch_logging_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "cloudfront_distributions_logging_enabled",
+          "s3_bucket_server_access_logging_enabled"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art18",
+      "name": "Classification of ICT-related incidents and cyber threats",
+      "description": "Financial entities shall classify ICT-related incidents and shall determine their impact based on criteria such as the number of clients affected, duration, geographical spread, data losses, and criticality of the services affected. Severity-aware threat detection across the estate underpins this classification.",
+      "attributes": {
+        "Pillar": "ICT-Related Incident Reporting",
+        "Article": "Article 18",
+        "ArticleTitle": "Classification of ICT-related incidents and cyber threats"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_no_high_severity_findings",
+          "guardduty_centrally_managed",
+          "guardduty_delegated_admin_enabled_all_regions",
+          "securityhub_enabled",
+          "inspector2_active_findings_exist",
+          "accessanalyzer_enabled_without_findings",
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art19",
+      "name": "Reporting of major ICT-related incidents and voluntary notification of significant cyber threats",
+      "description": "Financial entities shall report major ICT-related incidents to the relevant competent authority and may, on a voluntary basis, notify significant cyber threats. Detective metric filters, change-tracking alarms and reliable notification topics are needed to surface and route reportable events.",
+      "attributes": {
+        "Pillar": "ICT-Related Incident Reporting",
+        "Article": "Article 19",
+        "ArticleTitle": "Reporting of major ICT-related incidents and voluntary notification of significant cyber threats"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_log_metric_filter_authentication_failures",
+          "cloudwatch_log_metric_filter_unauthorized_api_calls",
+          "cloudwatch_log_metric_filter_root_usage",
+          "cloudwatch_log_metric_filter_sign_in_without_mfa",
+          "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+          "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+          "cloudwatch_log_metric_filter_policy_changes",
+          "cloudwatch_log_metric_filter_security_group_changes",
+          "cloudwatch_log_metric_filter_aws_organizations_changes",
+          "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "sns_subscription_not_using_http_endpoints"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art24",
+      "name": "General requirements for the performance of digital operational resilience testing",
+      "description": "Financial entities shall establish, maintain and review a sound and comprehensive digital operational resilience testing programme, as an integral part of the ICT risk management framework. Continuous vulnerability discovery, configuration assessment and instance manageability are foundational.",
+      "attributes": {
+        "Pillar": "Digital Operational Resilience Testing",
+        "Article": "Article 24",
+        "ArticleTitle": "General requirements for the performance of digital operational resilience testing"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_is_enabled",
+          "inspector2_active_findings_exist",
+          "securityhub_enabled",
+          "ec2_instance_managed_by_ssm",
+          "ec2_instance_with_outdated_ami",
+          "ssm_managed_compliant_patching"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art25",
+      "name": "Testing of ICT tools and systems",
+      "description": "Financial entities shall ensure that tests are undertaken on ICT tools and systems, on critical ICT systems supporting all critical or important functions, at least yearly. Vulnerability assessments, deprecated component detection and certificate hygiene must be tracked.",
+      "attributes": {
+        "Pillar": "Digital Operational Resilience Testing",
+        "Article": "Article 25",
+        "ArticleTitle": "Testing of ICT tools and systems"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_is_enabled",
+          "inspector2_active_findings_exist",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "config_recorder_all_regions_enabled",
+          "ec2_instance_with_outdated_ami",
+          "ec2_instance_managed_by_ssm",
+          "ec2_instance_paravirtual_type",
+          "rds_instance_deprecated_engine_version",
+          "acm_certificates_expiration_check",
+          "rds_instance_certificate_expiration",
+          "iam_no_expired_server_certificates_stored",
+          "ssm_managed_compliant_patching"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art28",
+      "name": "General principles (ICT third-party risk)",
+      "description": "Financial entities shall manage ICT third-party risk as an integral component of ICT risk within their ICT risk management framework. Cross-account access, trust boundaries, organization-level controls and dependency visibility are critical to monitor third-party exposure on AWS.",
+      "attributes": {
+        "Pillar": "ICT Third-Party Risk Management",
+        "Article": "Article 28",
+        "ArticleTitle": "General principles (ICT third-party risk)"
+      },
+      "checks": {
+        "aws": [
+          "iam_role_cross_service_confused_deputy_prevention",
+          "iam_role_cross_account_readonlyaccess_policy",
+          "iam_no_custom_policy_permissive_role_assumption",
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "s3_bucket_cross_account_access",
+          "dynamodb_table_cross_account_access",
+          "eventbridge_bus_cross_account_access",
+          "eventbridge_schema_registry_cross_account_access",
+          "cloudwatch_cross_account_sharing_disabled",
+          "organizations_delegated_administrators",
+          "organizations_account_part_of_organizations",
+          "organizations_scp_check_deny_regions",
+          "vpc_endpoint_connections_trust_boundaries",
+          "vpc_endpoint_services_allowed_principals_trust_boundaries",
+          "vpc_peering_routing_tables_with_least_privilege",
+          "awslambda_function_using_cross_account_layers"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art30",
+      "name": "Key contractual provisions",
+      "description": "Contractual arrangements with ICT third-party service providers shall be set out in writing and include, at minimum, agreed service levels and clear allocation of rights and obligations. Privilege boundaries, least-privilege policies and absence of administrative wildcards are the technical guardrails that enforce these contractual constraints inside AWS.",
+      "attributes": {
+        "Pillar": "ICT Third-Party Risk Management",
+        "Article": "Article 30",
+        "ArticleTitle": "Key contractual provisions"
+      },
+      "checks": {
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_customer_unattached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_inline_policy_allows_privilege_escalation",
+          "iam_policy_allows_privilege_escalation",
+          "iam_inline_policy_no_full_access_to_cloudtrail",
+          "iam_inline_policy_no_full_access_to_kms",
+          "iam_policy_no_full_access_to_cloudtrail",
+          "iam_policy_no_full_access_to_kms",
+          "iam_role_administratoraccess_policy",
+          "iam_user_administrator_access_policy",
+          "iam_group_administrator_access_policy",
+          "iam_administrator_access_with_mfa",
+          "iam_policy_attached_only_to_group_or_roles",
+          "accessanalyzer_enabled"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art45",
+      "name": "Information-sharing arrangements on cyber threat information and intelligence",
+      "description": "Financial entities may exchange amongst themselves cyber threat information and intelligence, including indicators of compromise, tactics, techniques and procedures, cyber security alerts and configuration tools. Centralised threat detection, sensitive data discovery and trail-based intelligence enable participation in such information-sharing arrangements.",
+      "attributes": {
+        "Pillar": "Information Sharing",
+        "Article": "Article 45",
+        "ArticleTitle": "Information-sharing arrangements on cyber threat information and intelligence"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_centrally_managed",
+          "securityhub_enabled",
+          "macie_is_enabled",
+          "macie_automated_sensitive_data_discovery_enabled",
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation",
+          "accessanalyzer_enabled_without_findings"
+        ]
+      }
+    }
+  ]
+}

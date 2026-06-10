@@ -36,7 +36,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## File Structure
 
-```
+```text
 tests/
 ├── base-page.ts              # Parent class for ALL pages
 ├── helpers.ts                # Shared utilities
@@ -182,14 +182,14 @@ export class SignUpPage extends BasePage {
 
 ## Refactoring Guidelines
 
-### Move to `BasePage` when:
+### Move to `BasePage` when
 - ✅ Navigation helpers used by multiple pages (`waitForPageLoad()`, `getCurrentUrl()`)
 - ✅ Common UI interactions (notifications, modals, theme toggles)
 - ✅ Verification patterns repeated across pages (`isVisible()`, `waitForVisible()`)
 - ✅ Error handling that applies to all pages
 - ✅ Screenshot utilities for debugging
 
-### Move to `helpers.ts` when:
+### Move to `helpers.ts` when
 - ✅ Test data generation (`generateUniqueEmail()`, `generateTestUser()`)
 - ✅ Setup/teardown utilities (`createTestUser()`, `cleanupTestData()`)
 - ✅ Custom assertions (`expectNotificationToContain()`)

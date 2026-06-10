@@ -22,7 +22,7 @@ inputs:
     required: false
     default: json-ocsf
   push-to-cloud:
-    description: Push scan findings to Prowler Cloud. Requires the PROWLER_CLOUD_API_KEY environment variable. See https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings#using-the-cli
+    description: Push scan findings to Prowler Cloud. Requires the PROWLER_CLOUD_API_KEY environment variable. See https://docs.prowler.com/user-guide/tutorials/prowler-import-findings#using-the-cli
     required: false
     default: "false"
   flags:
@@ -299,7 +299,7 @@ runs:
             echo ""
             echo "**Get started in 3 steps:**"
             echo "1. Create an account at [cloud.prowler.com](https://cloud.prowler.com)"
-            echo "2. Generate a Prowler Cloud API key ([docs](https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings#using-the-cli))"
+            echo "2. Generate a Prowler Cloud API key ([docs](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings#using-the-cli))"
             echo "3. Add \`PROWLER_CLOUD_API_KEY\` to your GitHub secrets and set \`push-to-cloud: true\` on this action"
             echo ""
             echo "See [prowler.com/pricing](https://prowler.com/pricing) for plan details."

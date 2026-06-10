@@ -63,6 +63,10 @@ vi.mock(
   () => ({ MITRECustomDetails: stubFactory("MITREStub") }),
 );
 vi.mock(
+  "@/components/compliance/compliance-custom-details/okta-idaas-stig-details",
+  () => ({ OktaIDaaSStigCustomDetails: stubFactory("OktaIDaaSStigStub") }),
+);
+vi.mock(
   "@/components/compliance/compliance-custom-details/threat-details",
   () => ({ ThreatCustomDetails: stubFactory("ThreatStub") }),
 );
@@ -144,6 +148,7 @@ describe("getComplianceMapper", () => {
       { framework: "ProwlerThreatScore", expected: "ThreatStub" },
       { framework: "CCC", expected: "CCCStub" },
       { framework: "CSA-CCM", expected: "CSAStub" },
+      { framework: "Okta-IDaaS-STIG", expected: "OktaIDaaSStigStub" },
     ];
 
     for (const { framework, expected } of wiring) {
@@ -188,6 +193,7 @@ describe("getComplianceMapper", () => {
       "ProwlerThreatScore",
       "CCC",
       "CSA-CCM",
+      "Okta-IDaaS-STIG",
     ]) {
       const mapper = getComplianceMapper(framework);
       expect(Object.keys(mapper).sort(), framework).toEqual(expectedKeys);

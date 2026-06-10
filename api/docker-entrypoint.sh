@@ -22,12 +22,12 @@ apply_fixtures() {
 
 start_dev_server() {
   echo "Starting the development server..."
-  uv run python manage.py runserver 0.0.0.0:"${DJANGO_PORT:-8080}"
+  exec uv run python manage.py runserver 0.0.0.0:"${DJANGO_PORT:-8080}"
 }
 
 start_prod_server() {
   echo "Starting the Gunicorn server..."
-  uv run gunicorn -c config/guniconf.py config.wsgi:application
+  exec uv run gunicorn -c config/guniconf.py config.wsgi:application
 }
 
 resolve_worker_hostname() {
@@ -47,7 +47,7 @@ resolve_worker_hostname() {
 
 start_worker() {
   echo "Starting the worker..."
-  uv run python -m celery -A config.celery worker \
+  exec uv run python -m celery -A config.celery worker \
     -n "$(resolve_worker_hostname)" \
     -l "${DJANGO_LOGGING_LEVEL:-info}" \
     -Q celery,scans,scan-reports,deletion,backfill,overview,integrations,compliance,attack-paths-scans \
@@ -56,7 +56,7 @@ start_worker() {
 
 start_worker_beat() {
   echo "Starting the worker-beat..."
-  uv run python -m celery -A config.celery beat -l "${DJANGO_LOGGING_LEVEL:-info}" --scheduler django_celery_beat.schedulers:DatabaseScheduler
+  exec uv run python -m celery -A config.celery beat -l "${DJANGO_LOGGING_LEVEL:-info}" --scheduler django_celery_beat.schedulers:DatabaseScheduler
 }
 
 manage_db_partitions() {
@@ -67,6 +67,15 @@ manage_db_partitions() {
     uv run python manage.py pgpartition --using admin --skip-delete --yes
   fi
 }
+
+# Identify this process to Postgres (application_name=<component>:<alias>) so
+# connections are attributable by component in pg_stat_activity. Web tiers
+# report "api"; everything else uses the launch subcommand.
+case "$1" in
+  prod|dev) DJANGO_APP_COMPONENT="api" ;;
+  *)        DJANGO_APP_COMPONENT="$1" ;;
+esac
+export DJANGO_APP_COMPONENT
 
 case "$1" in
   dev)

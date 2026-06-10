@@ -1,5 +1,6 @@
 import {
   getComplianceCsv,
+  getComplianceOcsf,
   getCompliancePdfReport,
   type ScanBinaryResult,
 } from "@/actions/scans";
@@ -101,6 +102,19 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
   return url.toString();
 };
 
+const REPORT_PREPARATION_ERROR =
+  "Unable to prepare the scan report. Please try again in a few minutes.";
+
+const getPreflightErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+
+  if (contentType.includes("text/html")) {
+    return REPORT_PREPARATION_ERROR;
+  }
+
+  return (await response.text()) || "An unknown error occurred.";
+};
+
 export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
@@ -121,11 +135,10 @@ export const downloadScanZip = async (
     }
 
     if (!preflightResponse.ok) {
-      const errorMessage = await preflightResponse.text();
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: errorMessage || "An unknown error occurred.",
+        description: await getPreflightErrorMessage(preflightResponse),
       });
       return;
     }
@@ -231,6 +244,32 @@ export const downloadComplianceCsv = async (
     result,
     "text/csv",
     "The compliance report has been downloaded successfully.",
+    toast,
+  );
+};
+
+/**
+ * Download the per-framework OCSF JSON export.
+ *
+ * Only universal frameworks declaring an ``outputs`` block produce this
+ * artifact (currently DORA and CSA CCM 4.0); callers must gate the call
+ * via ``isOcsfSupported`` to avoid surfacing a broken download on
+ * frameworks the API will 404 on.
+ */
+export const downloadComplianceOcsf = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the OCSF report. This may take a moment.",
+  });
+  const result = await getComplianceOcsf(scanId, complianceId);
+  await downloadFile(
+    result,
+    "application/json",
+    "The compliance OCSF report has been downloaded successfully.",
     toast,
   );
 };

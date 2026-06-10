@@ -6,11 +6,13 @@ import { C5CustomDetails } from "@/components/compliance/compliance-custom-detai
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
+import { DORACustomDetails } from "@/components/compliance/compliance-custom-details/dora-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
 import { KISACustomDetails } from "@/components/compliance/compliance-custom-details/kisa-details";
 import { MITRECustomDetails } from "@/components/compliance/compliance-custom-details/mitre-details";
+import { OktaIDaaSStigCustomDetails } from "@/components/compliance/compliance-custom-details/okta-idaas-stig-details";
 import { ThreatCustomDetails } from "@/components/compliance/compliance-custom-details/threat-details";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
@@ -48,6 +50,10 @@ import {
   toAccordionItems as toCSAAccordionItems,
 } from "./csa";
 import {
+  mapComplianceData as mapDORAComplianceData,
+  toAccordionItems as toDORAAccordionItems,
+} from "./dora";
+import {
   mapComplianceData as mapENSComplianceData,
   toAccordionItems as toENSAccordionItems,
 } from "./ens";
@@ -69,6 +75,10 @@ import {
   mapComplianceData as mapMITREComplianceData,
   toAccordionItems as toMITREAccordionItems,
 } from "./mitre";
+import {
+  mapComplianceData as mapOktaIDaaSStigComplianceData,
+  toAccordionItems as toOktaIDaaSStigAccordionItems,
+} from "./okta-idaas-stig";
 import {
   getTopFailedSections as getThreatScoreTopFailedSections,
   mapComplianceData as mapThetaComplianceData,
@@ -207,6 +217,28 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       createElement(CSACustomDetails, { requirement }),
+  },
+  "Okta-IDaaS-STIG": {
+    mapComplianceData: mapOktaIDaaSStigComplianceData,
+    toAccordionItems: toOktaIDaaSStigAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(OktaIDaaSStigCustomDetails, { requirement }),
+  },
+  // DORA (Regulation (EU) 2022/2554) — universal framework keyed by the
+  // `framework` field of `prowler/compliance/dora.json` ("DORA"). Groups by
+  // Pillar (5 enum values) and surfaces Pillar / Article / ArticleTitle in
+  // the requirement detail drawer.
+  DORA: {
+    mapComplianceData: mapDORAComplianceData,
+    toAccordionItems: toDORAAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(DORACustomDetails, { requirement }),
   },
 });
 

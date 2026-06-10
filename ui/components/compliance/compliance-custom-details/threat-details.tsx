@@ -34,7 +34,7 @@ export const ThreatCustomDetails = ({
           <ComplianceBadge
             label="Risk Level"
             value={requirement.levelOfRisk}
-            color="red"
+            variant="error"
           />
         )}
 
@@ -42,7 +42,7 @@ export const ThreatCustomDetails = ({
           <ComplianceBadge
             label="Weight"
             value={requirement.weight}
-            color="green"
+            variant="success"
           />
         )}
 
@@ -50,7 +50,7 @@ export const ThreatCustomDetails = ({
           <ComplianceBadge
             label="Score"
             value={requirement.score}
-            color="green"
+            variant="success"
             conditional={true}
           />
         )}
@@ -61,13 +61,13 @@ export const ThreatCustomDetails = ({
               <ComplianceBadge
                 label="Findings"
                 value={`${requirement.passedFindings}/${requirement.totalFindings}`}
-                color="blue"
+                variant="info"
               />
               {requirement.totalFindings > 0 && (
                 <ComplianceBadge
                   label="Pass Rate"
                   value={`${Math.round((requirement.passedFindings / requirement.totalFindings) * 100)}%`}
-                  color="green"
+                  variant="success"
                   conditional={true}
                 />
               )}
