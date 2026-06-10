@@ -9,6 +9,12 @@ import {
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
+// TODO: remove debug logging (and ui/lib/debug-api-log.ts) before merging.
+import {
+  logApiError,
+  logApiRequest,
+  logApiResponse,
+} from "@/lib/debug-api-log";
 import {
   appendSanitizedProviderTypeFilters,
   sanitizeProviderTypesCsv,
@@ -132,11 +138,13 @@ export const scanOnDemand = async (formData: FormData) => {
       },
     };
 
+    logApiRequest("POST", url.toString(), requestBody);
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: headers,
       body: JSON.stringify(requestBody),
     });
+    await logApiResponse("POST", url.toString(), response);
 
     const result = await handleApiResponse(response, "/scans");
     if (result?.data?.id) {
@@ -145,6 +153,7 @@ export const scanOnDemand = async (formData: FormData) => {
     }
     return result;
   } catch (error) {
+    logApiError("POST", url.toString(), error);
     addScanOperation("create");
     return handleApiError(error);
   }
@@ -157,22 +166,27 @@ export const scheduleDaily = async (formData: FormData) => {
 
   const url = new URL(`${apiBaseUrl}/schedules/daily`);
 
+  const body = {
+    data: {
+      type: "daily-schedules",
+      attributes: {
+        provider_id: providerId,
+      },
+    },
+  };
+
   try {
+    logApiRequest("POST", url.toString(), body);
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        data: {
-          type: "daily-schedules",
-          attributes: {
-            provider_id: providerId,
-          },
-        },
-      }),
+      body: JSON.stringify(body),
     });
+    await logApiResponse("POST", url.toString(), response);
 
     return handleApiResponse(response, "/scans");
   } catch (error) {
+    logApiError("POST", url.toString(), error);
     return handleApiError(error);
   }
 };
