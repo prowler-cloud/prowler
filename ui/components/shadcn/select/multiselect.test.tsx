@@ -214,7 +214,7 @@ describe("MultiSelect", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("uses a normalized dropdown width instead of growing with the longest item", async () => {
+  it("sizes the dropdown to its content with a capped width", async () => {
     const user = userEvent.setup();
 
     render(
@@ -233,10 +233,8 @@ describe("MultiSelect", () => {
 
     await user.click(screen.getByRole("combobox"));
 
-    expect(screen.getByRole("dialog")).toHaveClass(
-      "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))]",
-    );
-    expect(screen.getByRole("dialog")).toHaveClass("max-w-[24rem]");
+    expect(screen.getByRole("dialog")).toHaveClass("sm:w-max");
+    expect(screen.getByRole("dialog")).toHaveClass("sm:max-w-[22rem]");
   });
 
   it("keeps long option lists scrollable inside the dropdown", async () => {
