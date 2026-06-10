@@ -1,10 +1,10 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { InfoIcon, ProwlerShort } from "@/components/icons";
+import { Separator } from "@/components/shadcn";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
@@ -151,7 +151,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
             <span>{process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}</span>
             {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
               <>
-                <Divider orientation="vertical" />
+                <Separator orientation="vertical" />
                 <Link
                   href="https://status.prowler.com"
                   target="_blank"

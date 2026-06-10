@@ -1,7 +1,6 @@
 "use client";
 
 import { Checkbox } from "@heroui/checkbox";
-import { Divider } from "@heroui/divider";
 import { Radio, RadioGroup } from "@heroui/radio";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
@@ -15,6 +14,7 @@ import {
   ProviderTypeIcon,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
+import { Separator } from "@/components/shadcn";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
@@ -309,7 +309,7 @@ export const SecurityHubIntegrationForm = ({
 
           {useCustomCredentials && (
             <>
-              <Divider />
+              <Separator />
               <AWSRoleCredentialsForm
                 control={form.control as unknown as Control<AWSCredentialsRole>}
                 setValue={form.setValue as any}
@@ -382,7 +382,7 @@ export const SecurityHubIntegrationForm = ({
                   )}
                 />
               </div>
-              <Divider />
+              <Separator />
             </>
           )}
 

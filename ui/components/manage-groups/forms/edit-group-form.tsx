@@ -1,6 +1,5 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -8,7 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateProviderGroup } from "@/actions/manage-groups/manage-groups";
-import { Button } from "@/components/shadcn";
+import { Button, Separator } from "@/components/shadcn";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
@@ -209,7 +208,7 @@ export const EditGroupForm = ({
           </p>
         )}
 
-        <Divider orientation="horizontal" className="mb-2" />
+        <Separator orientation="horizontal" className="mb-2" />
         <p className="text-small text-default-500">
           The roles associated with the group can be edited directly here or
           from the Roles page.
