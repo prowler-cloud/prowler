@@ -1,8 +1,9 @@
 "use client";
 
-import { Progress } from "@heroui/progress";
 import { usePathname } from "next/navigation";
 import React from "react";
+
+import { Progress } from "@/components/shadcn/progress";
 
 import { VerticalSteps } from "./vertical-steps";
 
@@ -38,20 +39,18 @@ export const WorkflowAddEditRole = () => {
         Define a new role with customized permissions or modify an existing one
         to meet your needs.
       </p>
-      <Progress
-        classNames={{
-          base: "px-0.5 mb-5",
-          label: "text-small",
-          value: "text-small text-default-400",
-        }}
-        label="Steps"
-        maxValue={steps.length - 1}
-        minValue={0}
-        showValueLabel={true}
-        size="md"
-        value={currentStep}
-        valueLabel={`${currentStep + 1} of ${steps.length}`}
-      />
+      <div className="mb-5 flex flex-col gap-2 px-0.5">
+        <div className="flex items-center justify-between">
+          <span className="text-small">Steps</span>
+          <span className="text-small text-default-400">
+            {`${currentStep + 1} of ${steps.length}`}
+          </span>
+        </div>
+        <Progress
+          aria-label="Steps"
+          value={(currentStep / (steps.length - 1)) * 100}
+        />
+      </div>
       <VerticalSteps
         hideProgressBars
         currentStep={currentStep}

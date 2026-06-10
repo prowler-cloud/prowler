@@ -1,12 +1,12 @@
 "use client";
 
-import { Progress } from "@heroui/progress";
-
 import type { SectionScores } from "@/actions/overview/threat-score";
 import { RadialChart } from "@/components/graphs/radial-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import { Progress } from "@/components/shadcn/progress";
 import {
   getScoreColor,
+  getScoreIndicatorClass,
   getScoreLabel,
   getScoreLevel,
   getScoreTextClass,
@@ -94,8 +94,9 @@ export function ThreatScoreBreakdownCard({
                 <Progress
                   aria-label={`${name} score`}
                   value={hasData ? score : 0}
-                  color={getScoreColor(score)}
-                  size="md"
+                  indicatorClassName={getScoreIndicatorClass(
+                    getScoreColor(score),
+                  )}
                   className="w-full"
                 />
               </div>
