@@ -1,7 +1,9 @@
 "use client";
 
-import { Input } from "@heroui/input";
-import React from "react";
+import type { ChangeEvent } from "react";
+
+import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
 
 interface CustomServerInputProps {
   name: string;
@@ -14,7 +16,7 @@ interface CustomServerInputProps {
   isInvalid?: boolean;
   errorMessage?: string;
   value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -33,26 +35,37 @@ export const CustomServerInput = ({
   value,
   onChange,
 }: CustomServerInputProps) => {
+  void variant;
+
   return (
-    <div className="flex flex-col">
+    <Field>
+      {label && (
+        <FieldLabel
+          htmlFor={name}
+          className={cn(
+            labelPlacement === "inside" && "font-light tracking-tight",
+          )}
+        >
+          {label}
+          {isRequired && <span className="text-text-error-primary">*</span>}
+        </FieldLabel>
+      )}
       <Input
         id={name}
         name={name}
         type={type}
-        label={label}
-        labelPlacement={labelPlacement}
         placeholder={placeholder}
-        variant={variant}
-        isRequired={isRequired}
-        isInvalid={isInvalid}
-        errorMessage={errorMessage}
+        required={isRequired}
+        aria-invalid={isInvalid || undefined}
+        className={cn(
+          "text-text-neutral-secondary",
+          isInvalid &&
+            "border-border-error focus:border-border-error focus:ring-border-error",
+        )}
         value={value}
         onChange={onChange}
-        classNames={{
-          label: "tracking-tight font-light !text-default-500 text-xs z-0!",
-          input: "text-default-500 text-small",
-        }}
       />
-    </div>
+      {isInvalid && errorMessage && <FieldError>{errorMessage}</FieldError>}
+    </Field>
   );
 };
