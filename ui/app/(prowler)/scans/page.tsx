@@ -17,6 +17,7 @@ import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/ui";
 import {
   describeScheduleCadence,
+  getNextScheduledRunInTimezone,
   getScheduleCadenceParts,
   isScheduleConfigured,
 } from "@/lib/schedules";
@@ -230,12 +231,19 @@ const SSRDataTableScans = async ({
     const schedule = providerId ? schedulesByProviderId[providerId] : undefined;
     if (!schedule || !isScheduleConfigured(schedule)) return scan;
 
+    // Absent field (older API) -> client estimate; explicit null (paused) -> no time.
+    const nextScanAt =
+      schedule.next_scan_at === undefined && schedule.scan_enabled
+        ? (getNextScheduledRunInTimezone(schedule, new Date())?.toISOString() ??
+          null)
+        : (schedule.next_scan_at ?? null);
+
     return {
       ...scan,
       providerSchedule: {
         summary: describeScheduleCadence(schedule),
         cadence: getScheduleCadenceParts(schedule).cadence,
-        nextScanAt: schedule.next_scan_at ?? null,
+        nextScanAt,
         lastScanAt: schedule.last_scan_at ?? null,
       },
     };
