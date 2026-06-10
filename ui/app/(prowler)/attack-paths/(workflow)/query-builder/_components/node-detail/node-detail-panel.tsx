@@ -112,7 +112,7 @@ export const NodeDetailPanel = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
-      <SheetContent className="dark:bg-prowler-theme-midnight my-4 max-h-[calc(100vh-2rem)] max-w-[95vw] overflow-y-auto rounded-l-xl pt-10 md:my-8 md:max-h-[calc(100vh-4rem)] md:max-w-[55vw]">
+      <SheetContent className="my-4 max-h-[calc(100vh-2rem)] max-w-[95vw] overflow-y-auto rounded-l-xl pt-10 md:my-8 md:max-h-[calc(100vh-4rem)] md:max-w-[55vw]">
         <SheetHeader>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
