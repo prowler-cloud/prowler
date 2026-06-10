@@ -1,6 +1,5 @@
 "use client";
 
-import { BreadcrumbItem, Breadcrumbs } from "@heroui/breadcrumbs";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -146,78 +145,94 @@ export function BreadcrumbNavigation({
 
   return (
     <div className={cn(className, "w-fit md:w-full")}>
-      <Breadcrumbs separator="/">
-        {breadcrumbItems.map((breadcrumb, index) => (
-          <BreadcrumbItem key={breadcrumb.path || index}>
-            {breadcrumb.isLast && showTitle && title ? (
-              renderTitleWithIcon(title)
-            ) : breadcrumb.isClickable && breadcrumb.path ? (
-              <Link
-                href={buildNavigationUrl(breadcrumb.path)}
-                className="flex cursor-pointer items-center gap-2"
-              >
-                {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
-                  <Icon
-                    aria-hidden="true"
-                    className="text-text-neutral-primary"
-                    height={24}
-                    icon={breadcrumb.icon}
-                    width={24}
-                  />
-                ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
-                    {breadcrumb.icon}
-                  </div>
-                ) : null}
-                <span className="text-text-neutral-primary hover:text-primary max-w-[150px] truncate text-sm font-bold transition-colors sm:max-w-none">
-                  {breadcrumb.name}
+      <nav aria-label="Breadcrumb">
+        <ol className="flex flex-wrap items-center">
+          {breadcrumbItems.map((breadcrumb, index) => (
+            <li
+              key={breadcrumb.path || index}
+              className="flex items-center"
+              aria-current={
+                index === breadcrumbItems.length - 1 ? "page" : undefined
+              }
+            >
+              {breadcrumb.isLast && showTitle && title ? (
+                renderTitleWithIcon(title)
+              ) : breadcrumb.isClickable && breadcrumb.path ? (
+                <Link
+                  href={buildNavigationUrl(breadcrumb.path)}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
+                    <Icon
+                      aria-hidden="true"
+                      className="text-text-neutral-primary"
+                      height={24}
+                      icon={breadcrumb.icon}
+                      width={24}
+                    />
+                  ) : breadcrumb.icon ? (
+                    <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
+                      {breadcrumb.icon}
+                    </div>
+                  ) : null}
+                  <span className="text-text-neutral-primary hover:text-primary max-w-[150px] truncate text-sm font-bold transition-colors sm:max-w-none">
+                    {breadcrumb.name}
+                  </span>
+                </Link>
+              ) : breadcrumb.isClickable && breadcrumb.onClick ? (
+                <button
+                  onClick={breadcrumb.onClick}
+                  className="text-text-neutral-primary hover:text-text-neutral-primary-hover flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors"
+                >
+                  {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
+                    <Icon
+                      aria-hidden="true"
+                      className="text-text-neutral-primary"
+                      height={24}
+                      icon={breadcrumb.icon}
+                      width={24}
+                    />
+                  ) : breadcrumb.icon ? (
+                    <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
+                      {breadcrumb.icon}
+                    </div>
+                  ) : null}
+                  <span className="max-w-[150px] truncate sm:max-w-none">
+                    {breadcrumb.name}
+                  </span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
+                    <Icon
+                      aria-hidden="true"
+                      className="text-default-500"
+                      height={24}
+                      icon={breadcrumb.icon}
+                      width={24}
+                    />
+                  ) : breadcrumb.icon ? (
+                    <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
+                      {breadcrumb.icon}
+                    </div>
+                  ) : null}
+                  <span className="max-w-[150px] truncate text-sm font-medium text-gray-900 sm:max-w-none dark:text-gray-100">
+                    {breadcrumb.name}
+                  </span>
+                </div>
+              )}
+              {index < breadcrumbItems.length - 1 && (
+                <span
+                  aria-hidden="true"
+                  className="text-text-neutral-tertiary px-1 text-sm"
+                >
+                  /
                 </span>
-              </Link>
-            ) : breadcrumb.isClickable && breadcrumb.onClick ? (
-              <button
-                onClick={breadcrumb.onClick}
-                className="text-text-neutral-primary hover:text-text-neutral-primary-hover flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors"
-              >
-                {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
-                  <Icon
-                    aria-hidden="true"
-                    className="text-text-neutral-primary"
-                    height={24}
-                    icon={breadcrumb.icon}
-                    width={24}
-                  />
-                ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
-                    {breadcrumb.icon}
-                  </div>
-                ) : null}
-                <span className="max-w-[150px] truncate sm:max-w-none">
-                  {breadcrumb.name}
-                </span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
-                  <Icon
-                    aria-hidden="true"
-                    className="text-default-500"
-                    height={24}
-                    icon={breadcrumb.icon}
-                    width={24}
-                  />
-                ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
-                    {breadcrumb.icon}
-                  </div>
-                ) : null}
-                <span className="max-w-[150px] truncate text-sm font-medium text-gray-900 sm:max-w-none dark:text-gray-100">
-                  {breadcrumb.name}
-                </span>
-              </div>
-            )}
-          </BreadcrumbItem>
-        ))}
-      </Breadcrumbs>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
     </div>
   );
 }
