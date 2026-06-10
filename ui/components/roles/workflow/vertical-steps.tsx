@@ -1,10 +1,11 @@
 "use client";
 
-import { cn } from "@heroui/theme";
 import { useControlledState } from "@react-stately/utils";
 import { domAnimation, LazyMotion, m } from "framer-motion";
 import type { ComponentProps } from "react";
 import React from "react";
+
+import { cn } from "@/lib/utils";
 
 export type VerticalStepProps = {
   className?: string;
@@ -197,12 +198,10 @@ export const VerticalSteps = React.forwardRef<
                         <div className="relative">
                           <m.div
                             animate={status}
-                            className={cn(
-                              "border-medium text-large text-default-foreground relative flex h-[34px] w-[34px] items-center justify-center rounded-full font-semibold",
-                              {
-                                "shadow-lg": status === "complete",
-                              },
-                            )}
+                            // No cn(): twMerge drops HeroUI font-size tokens (text-large) as conflicting text colors
+                            className={`border-medium text-large text-default-foreground relative flex h-[34px] w-[34px] items-center justify-center rounded-full font-semibold ${
+                              status === "complete" ? "shadow-lg" : ""
+                            }`}
                             data-status={status}
                             initial={false}
                             transition={{ duration: 0.25 }}
@@ -238,22 +237,22 @@ export const VerticalSteps = React.forwardRef<
                     <div className="flex-1 text-left">
                       <div>
                         <div
-                          className={cn(
-                            "text-medium text-default-foreground font-medium transition-[color,opacity] duration-300 group-active:opacity-70",
-                            {
-                              "text-default-500": status === "inactive",
-                            },
-                          )}
+                          // No cn(): twMerge drops HeroUI font-size tokens (text-medium) as conflicting text colors
+                          className={`text-medium font-medium transition-[color,opacity] duration-300 group-active:opacity-70 ${
+                            status === "inactive"
+                              ? "text-default-500"
+                              : "text-default-foreground"
+                          }`}
                         >
                           {step.title}
                         </div>
                         <div
-                          className={cn(
-                            "text-tiny text-default-600 lg:text-small transition-[color,opacity] duration-300 group-active:opacity-70",
-                            {
-                              "text-default-500": status === "inactive",
-                            },
-                          )}
+                          // No cn(): twMerge drops HeroUI font-size tokens (text-tiny) as conflicting text colors
+                          className={`text-tiny lg:text-small transition-[color,opacity] duration-300 group-active:opacity-70 ${
+                            status === "inactive"
+                              ? "text-default-500"
+                              : "text-default-600"
+                          }`}
                         >
                           {step.description}
                         </div>
