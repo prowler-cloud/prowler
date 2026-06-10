@@ -10,6 +10,17 @@ export const SCHEDULE_FREQUENCY = {
 export type ScheduleFrequency =
   (typeof SCHEDULE_FREQUENCY)[keyof typeof SCHEDULE_FREQUENCY];
 
+/** Weekday names indexed by cron convention (0=Sunday). */
+export const SCHEDULE_WEEKDAY_LABELS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
 /**
  * Scan-schedule capability modes. In Prowler OSS this is resolved purely from
  * the runtime environment (Cloud vs non-Cloud); the prowler-cloud overlay

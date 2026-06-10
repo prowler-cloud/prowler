@@ -54,9 +54,23 @@ const scheduledScanScheduleColumn: ColumnDef<ScanProps> = {
   header: ({ column }) => (
     <DataTableColumnHeader column={column} title="Schedule" />
   ),
-  cell: ({ row }) => (
-    <DateWithTime dateTime={row.original.attributes.scheduled_at} showTime />
-  ),
+  cell: ({ row }) => {
+    const summary =
+      row.original.pendingSchedule?.summary ??
+      row.original.providerSchedule?.summary;
+
+    return (
+      <div className="flex flex-col gap-1">
+        {summary && (
+          <span className="text-text-neutral-primary text-sm">{summary}</span>
+        )}
+        <DateWithTime
+          dateTime={row.original.attributes.scheduled_at}
+          showTime
+        />
+      </div>
+    );
+  },
   enableSorting: false,
 };
 

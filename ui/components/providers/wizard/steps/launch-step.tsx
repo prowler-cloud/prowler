@@ -189,8 +189,6 @@ export function LaunchStep({
   };
 
   useEffect(() => {
-    // In MANUAL_ONLY the action launches a scan instead of saving a schedule,
-    // so the footer label must say so (mirrors the cloud overlay's wording).
     const actionLabel = isManualOnly
       ? isLaunching
         ? "Launching scan..."

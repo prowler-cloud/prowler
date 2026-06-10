@@ -83,12 +83,21 @@ export interface ScanProviderInfo {
   connected: boolean;
 }
 
+/** Cadence summary computed from `/schedules`, e.g. "Weekly on Monday @ 9:00am". */
+export interface ScanScheduleSummary {
+  summary: string;
+}
+
 export interface ScanProps {
   type: "scans";
   id: string;
   attributes: ScanAttributes;
   relationships: ScanRelationships;
   providerInfo?: ScanResultProviderInfo;
+  /** Only on synthetic Scheduled-tab rows for schedules that have not fired yet. */
+  pendingSchedule?: ScanScheduleSummary;
+  /** Current schedule cadence of the scan's provider, when configured. */
+  providerSchedule?: ScanScheduleSummary;
 }
 
 export interface ScanEntityProviderInfo {

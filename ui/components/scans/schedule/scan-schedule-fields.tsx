@@ -21,11 +21,13 @@ import {
   getBrowserTimezone,
   getNextScheduledRun,
 } from "@/lib/schedules";
-import { SCHEDULE_FREQUENCY, type ScheduleFormValues } from "@/types/schedules";
+import {
+  SCHEDULE_FREQUENCY,
+  SCHEDULE_WEEKDAY_LABELS,
+  type ScheduleFormValues,
+} from "@/types/schedules";
 
-// The INTERVAL label is resolved at render time from the form's intervalHours,
-// so a schedule created with a custom interval (e.g. via the bulk API) is not
-// mislabeled as 48 hours.
+// The INTERVAL label is resolved at render time from the form's intervalHours.
 const FREQUENCY_OPTIONS = [
   { value: SCHEDULE_FREQUENCY.DAILY, label: "Daily" },
   { value: SCHEDULE_FREQUENCY.INTERVAL, label: null },
@@ -33,15 +35,10 @@ const FREQUENCY_OPTIONS = [
   { value: SCHEDULE_FREQUENCY.MONTHLY, label: "Monthly" },
 ] as const;
 
-const WEEKDAY_OPTIONS = [
-  { value: 0, label: "Sunday" },
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-  { value: 6, label: "Saturday" },
-] as const;
+const WEEKDAY_OPTIONS = SCHEDULE_WEEKDAY_LABELS.map((label, value) => ({
+  value,
+  label,
+}));
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => ({
   value: hour,

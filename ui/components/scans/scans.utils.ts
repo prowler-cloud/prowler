@@ -1,5 +1,11 @@
 import {
+  describeScheduleCadence,
+  getNextScheduledRunInTimezone,
+  isScheduleConfigured,
+} from "@/lib/schedules";
+import {
   DEFAULT_SCAN_JOBS_TAB,
+  type ProviderProps,
   SCAN_JOBS_TAB,
   SCAN_STATE,
   SCAN_TRIGGER,
@@ -9,6 +15,7 @@ import {
   type ScanProps,
   type ScanState,
   type ScanTrigger,
+  type ScheduleAttributes,
   type SearchParamsProps,
 } from "@/types";
 
@@ -177,6 +184,67 @@ export function getScanStatusFilterOptions(
       label: getScanStatusLabel(state),
     })),
   ];
+}
+
+export interface BuildPendingScheduleRowsParams {
+  providers: ProviderProps[];
+  schedulesByProviderId: Record<string, ScheduleAttributes>;
+  /** Providers that already have a real `state=scheduled` Scan row. */
+  coveredProviderIds: Set<string>;
+  now: Date;
+}
+
+/**
+ * Synthesizes Scheduled-tab rows for configured schedules without a Scan row
+ * yet (the backend only creates one after each run).
+ */
+export function buildPendingScheduleRows({
+  providers,
+  schedulesByProviderId,
+  coveredProviderIds,
+  now,
+}: BuildPendingScheduleRowsParams): ScanProps[] {
+  return providers.flatMap((provider) => {
+    if (coveredProviderIds.has(provider.id)) return [];
+
+    const schedule = schedulesByProviderId[provider.id];
+    if (!schedule || !isScheduleConfigured(schedule) || !schedule.scan_enabled)
+      return [];
+
+    const nextRun = getNextScheduledRunInTimezone(schedule, now);
+
+    return [
+      {
+        type: "scans" as const,
+        id: `pending-schedule-${provider.id}`,
+        attributes: {
+          name: "",
+          trigger: SCAN_TRIGGER.SCHEDULED,
+          state: SCAN_STATE.SCHEDULED,
+          unique_resource_count: 0,
+          progress: 0,
+          scanner_args: null,
+          duration: null,
+          started_at: null,
+          inserted_at: now.toISOString(),
+          completed_at: null,
+          scheduled_at: nextRun ? nextRun.toISOString() : null,
+          next_scan_at: null,
+        },
+        relationships: {
+          provider: { data: { type: "providers", id: provider.id } },
+          // No Celery task behind synthetic rows.
+          task: { data: { type: "tasks", id: "" } },
+        },
+        providerInfo: {
+          provider: provider.attributes.provider,
+          uid: provider.attributes.uid,
+          alias: provider.attributes.alias,
+        },
+        pendingSchedule: { summary: describeScheduleCadence(schedule) },
+      },
+    ];
+  });
 }
 
 function getNumericValue(

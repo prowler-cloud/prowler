@@ -4,6 +4,7 @@ import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
   SCHEDULE_FREQUENCY,
+  SCHEDULE_WEEKDAY_LABELS,
   type ScheduleAttributes,
   type ScheduleFormValues,
   type ScheduleUpdatePayload,
@@ -134,10 +135,8 @@ export function isScheduleConfigured(
  * so no timezone-conversion library is needed. This is an estimate for display;
  * the backend is the source of truth for the actual fire time.
  *
- * INTERVAL intentionally shares the DAILY computation: the backend anchors an
- * INTERVAL schedule's first run at the next occurrence of `scan_hour` in
- * `scan_timezone` (today or tomorrow) and only then repeats every
- * `scan_interval_hours`, so the next run after saving is the anchor itself.
+ * INTERVAL shares the DAILY computation: the backend anchors its first run at
+ * the next occurrence of `scan_hour`.
  */
 export function getNextScheduledRun(
   values: ScheduleFormValues,
@@ -166,4 +165,54 @@ export function getNextScheduledRun(
       return next;
     }
   }
+}
+
+/** Human-readable cadence, e.g. "Weekly on Monday @ 9:00am (Europe/Madrid)". */
+export function describeScheduleCadence(
+  attributes: ScheduleAttributes,
+): string {
+  const time = `@ ${formatScheduleHour(attributes.scan_hour ?? 0)} (${attributes.scan_timezone})`;
+
+  switch (attributes.scan_frequency) {
+    case SCHEDULE_FREQUENCY.WEEKLY: {
+      const weekday =
+        SCHEDULE_WEEKDAY_LABELS[attributes.scan_day_of_week ?? 0] ??
+        SCHEDULE_WEEKDAY_LABELS[0];
+      return `Weekly on ${weekday} ${time}`;
+    }
+    case SCHEDULE_FREQUENCY.MONTHLY:
+      return `Monthly on day ${attributes.scan_day_of_month ?? 1} ${time}`;
+    case SCHEDULE_FREQUENCY.INTERVAL:
+      return `Every ${attributes.scan_interval_hours ?? 0} hours ${time}`;
+    default:
+      return `Daily ${time}`;
+  }
+}
+
+/**
+ * Next-run estimate honoring the schedule's own timezone: `toLocaleString`
+ * converts `now` to that timezone's wall-clock and the offset is applied back.
+ */
+export function getNextScheduledRunInTimezone(
+  attributes: ScheduleAttributes,
+  now: Date,
+): Date | null {
+  if (attributes.scan_hour === null) return null;
+
+  let timezoneNow: Date;
+  try {
+    timezoneNow = new Date(
+      now.toLocaleString("en-US", { timeZone: attributes.scan_timezone }),
+    );
+  } catch {
+    timezoneNow = new Date(now);
+  }
+  if (Number.isNaN(timezoneNow.getTime())) timezoneNow = new Date(now);
+
+  const target = getNextScheduledRun(
+    getScheduleFormValues(attributes),
+    timezoneNow,
+  );
+
+  return new Date(now.getTime() + (target.getTime() - timezoneNow.getTime()));
 }

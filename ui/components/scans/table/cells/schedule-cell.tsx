@@ -10,6 +10,11 @@ export function ScheduleCell({ scan }: { scan: ScanProps }) {
       <span className="text-text-neutral-primary text-sm">
         {getScanScheduleLabel(scan.attributes.trigger)}
       </span>
+      {scan.providerSchedule && (
+        <span className="text-text-neutral-secondary text-xs">
+          {scan.providerSchedule.summary}
+        </span>
+      )}
       {scan.attributes.scheduled_at && (
         <DateWithTime dateTime={scan.attributes.scheduled_at} showTime />
       )}

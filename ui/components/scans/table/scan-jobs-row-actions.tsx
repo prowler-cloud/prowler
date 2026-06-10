@@ -177,11 +177,14 @@ export function ScanJobsRowActions({
             onSelect={() => void openScheduleEditor()}
           />
         )}
-        <ActionDropdownItem
-          icon={<Pencil />}
-          label="Edit Scan Alias"
-          onSelect={() => setEditOpen(true)}
-        />
+        {/* Synthetic pending rows have no Scan to alias. */}
+        {!scan.pendingSchedule && (
+          <ActionDropdownItem
+            icon={<Pencil />}
+            label="Edit Scan Alias"
+            onSelect={() => setEditOpen(true)}
+          />
+        )}
         {isCompleted && (
           <>
             <ActionDropdownItem

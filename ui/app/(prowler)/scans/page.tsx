@@ -2,8 +2,10 @@ import { Suspense } from "react";
 
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
+import { getSchedules } from "@/actions/schedules";
 import { auth } from "@/auth.config";
 import {
+  buildPendingScheduleRows,
   getScanJobsTab,
   getScanJobsTabFilters,
   getScanJobsUserFilters,
@@ -13,10 +15,14 @@ import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-emp
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/ui";
+import { describeScheduleCadence, isScheduleConfigured } from "@/lib/schedules";
 import {
   ProviderProps,
   SCAN_JOBS_TAB,
+  SCAN_TRIGGER,
   ScanProps,
+  ScheduleAttributes,
+  ScheduleProps,
   SearchParamsProps,
 } from "@/types";
 
@@ -29,6 +35,37 @@ const getFilterSearchQuery = (
   if (Array.isArray(value)) return value[0] ?? "";
 
   return value ?? "";
+};
+
+const parseCsvParam = (value?: string | string[]): string[] => {
+  const rawValue = Array.isArray(value) ? value.join(",") : value;
+  if (!rawValue) return [];
+
+  return rawValue
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+/** Applies the table's provider filters to synthetic pending-schedule rows. */
+const filterProvidersForPendingRows = (
+  providers: ProviderProps[],
+  searchParams: SearchParamsProps,
+): ProviderProps[] => {
+  const uids = parseCsvParam(
+    searchParams["filter[provider_uid__in]"] ??
+      searchParams["filter[provider_uid]"],
+  );
+  const types = parseCsvParam(
+    searchParams["filter[provider_type__in]"] ??
+      searchParams["filter[provider_type]"],
+  );
+
+  return providers.filter(
+    (provider) =>
+      (uids.length === 0 || uids.includes(provider.attributes.uid)) &&
+      (types.length === 0 || types.includes(provider.attributes.provider)),
+  );
 };
 
 const getActiveScanCount = async (
@@ -95,7 +132,10 @@ export default async function Scans({
               />
             }
           >
-            <SSRDataTableScans searchParams={resolvedSearchParams} />
+            <SSRDataTableScans
+              searchParams={resolvedSearchParams}
+              providers={providers}
+            />
           </Suspense>
         </ScansPageShell>
       )}
@@ -105,8 +145,10 @@ export default async function Scans({
 
 const SSRDataTableScans = async ({
   searchParams,
+  providers,
 }: {
   searchParams: SearchParamsProps;
+  providers: ProviderProps[];
 }) => {
   const tab = getScanJobsTab(searchParams.tab);
 
@@ -142,7 +184,7 @@ const SSRDataTableScans = async ({
   const included = scansData?.included;
   const meta = scansData && "meta" in scansData ? scansData.meta : undefined;
 
-  const expandedScansData =
+  const expandedScansData: ScanProps[] =
     scans?.map((scan: ScanProps) => {
       const providerId = scan.relationships?.provider?.data?.id;
 
@@ -163,9 +205,59 @@ const SSRDataTableScans = async ({
       };
     }) || [];
 
+  const needsSchedules =
+    tab === SCAN_JOBS_TAB.SCHEDULED ||
+    expandedScansData.some(
+      (scan) => scan.attributes.trigger === SCAN_TRIGGER.SCHEDULED,
+    );
+  const schedulesResult = needsSchedules ? await getSchedules() : null;
+
+  const schedulesByProviderId: Record<string, ScheduleAttributes> = {};
+  if (schedulesResult && !schedulesResult.error) {
+    for (const schedule of (schedulesResult.data ?? []) as ScheduleProps[]) {
+      schedulesByProviderId[schedule.id] = schedule.attributes;
+    }
+  }
+
+  const scansWithSchedule = expandedScansData.map((scan) => {
+    if (scan.attributes.trigger !== SCAN_TRIGGER.SCHEDULED) return scan;
+
+    const providerId = scan.relationships?.provider?.data?.id;
+    const schedule = providerId ? schedulesByProviderId[providerId] : undefined;
+    if (!schedule || !isScheduleConfigured(schedule)) return scan;
+
+    return {
+      ...scan,
+      providerSchedule: { summary: describeScheduleCadence(schedule) },
+    };
+  });
+
+  let tableData = scansWithSchedule;
+  if (tab === SCAN_JOBS_TAB.SCHEDULED) {
+    // Append pending rows only after the last page of real rows.
+    const totalPages = meta?.pagination?.pages ?? 0;
+    if (page >= totalPages) {
+      const coveredProviderIds = new Set(
+        scansWithSchedule
+          .map((scan) => scan.relationships?.provider?.data?.id)
+          .filter((id): id is string => Boolean(id)),
+      );
+
+      tableData = [
+        ...scansWithSchedule,
+        ...buildPendingScheduleRows({
+          providers: filterProvidersForPendingRows(providers, searchParams),
+          schedulesByProviderId,
+          coveredProviderIds,
+          now: new Date(),
+        }),
+      ];
+    }
+  }
+
   return (
     <ScanJobsTable
-      data={expandedScansData}
+      data={tableData}
       meta={meta}
       tab={tab}
       hasFilters={hasUserFilters}
