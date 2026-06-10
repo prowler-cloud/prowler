@@ -74,6 +74,7 @@ interface NodeTooltipState {
 
 const TOOLTIP_OFFSET_PX = 10;
 const MIN_LINK_WIDTH = 4;
+const NODE_LABEL_LINE_SPACING = 13;
 
 interface TooltipPayload {
   payload: {
@@ -89,7 +90,7 @@ interface TooltipProps {
   payload?: TooltipPayload[];
 }
 
-interface CustomNodeProps {
+export interface CustomNodeProps {
   x: number;
   y: number;
   width: number;
@@ -149,7 +150,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
   return null;
 };
 
-const CustomNode = ({
+export const CustomNode = ({
   x,
   y,
   width,
@@ -216,6 +217,10 @@ const CustomNode = ({
   const iconSize = 24;
   const iconGap = 8;
 
+  const nodeCenterY = y + height / 2;
+  const nodeNameY = nodeCenterY - NODE_LABEL_LINE_SPACING / 2;
+  const nodeValueY = nodeCenterY + NODE_LABEL_LINE_SPACING / 2;
+
   // Calculate text position accounting for icon
   const textOffsetX = isOut ? x - 6 : x + width + 6;
   const iconOffsetX = isOut
@@ -261,8 +266,9 @@ const CustomNode = ({
                   : textOffsetX + iconSize + iconGap * 2
                 : textOffsetX
             }
-            y={y + height / 2}
+            y={nodeNameY}
             fontSize="14"
+            dominantBaseline="middle"
             fill="var(--color-text-neutral-primary)"
           >
             {nodeName}
@@ -276,8 +282,9 @@ const CustomNode = ({
                   : textOffsetX + iconSize + iconGap * 2
                 : textOffsetX
             }
-            y={y + height / 2 + 13}
+            y={nodeValueY}
             fontSize="12"
+            dominantBaseline="middle"
             fill="var(--color-text-neutral-secondary)"
           >
             {payload.value}
