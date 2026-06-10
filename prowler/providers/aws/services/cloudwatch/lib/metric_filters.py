@@ -33,7 +33,7 @@ def build_metric_filter_pattern(
     if event_source is not None:
         parts.append(rf"(?=.*\$\.eventSource\s*=\s*.?{re.escape(event_source)})")
     for name in event_names or []:
-        parts.append(rf"(?=.*\$\.eventName\s*=\s*.?{re.escape(name)}(?![A-Za-z]))")
+        parts.append(rf"(?=.*\$\.eventName\s*=\s*.?{re.escape(name)}\b)")
     for field, operator, value in extra_clauses or []:
         op = r"\s*!=\s*" if operator == "!=" else r"\s*=\s*"
         parts.append(rf"(?=.*\$\.{re.escape(field)}{op}.?{re.escape(value)})")
