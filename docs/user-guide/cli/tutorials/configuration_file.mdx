@@ -79,15 +79,15 @@ The following list includes all the AWS checks with configurable variables that 
 
 ### Resource Scan Limit
 
-Some AWS services accumulate large numbers of resources (EBS snapshots, backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages). Scanning every resource increases scan time, cost, API throttling, and finding volume. Prowler limits how many resources are analyzed for these high-volume AWS resource paths, defaulting to the latest 100 where AWS API ordering or resource timestamps support it. Otherwise, Prowler uses best-effort API order.
+Some AWS services accumulate large numbers of resources (EBS snapshots, backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages). Scanning every resource increases scan time, cost, API throttling, and finding volume. By default, Prowler scans every resource. Configure a positive resource scan limit to cap how many resources Prowler analyzes for these high-volume AWS resource paths, using the latest resources where AWS API ordering or resource timestamps support it. Otherwise, Prowler uses best-effort API order.
 
-The global default applies to the supported resources below and is overridable per resource. Set a value to `0` (or a negative number) to disable the limit and scan every resource. The limit applies to resources selected for analysis, not to findings; a selected resource may produce zero, one, or many findings.
+The global default applies to the supported resources below and is overridable per resource. The default value is `0`, which disables the limit and scans every resource. `0`, negative values, and `null` are unlimited; positive values enable limits. The limit applies to resources selected for analysis, not to findings; a selected resource may produce zero, one, or many findings.
 
 Exact list API call reduction depends on each AWS API's ordering and pagination capabilities. When Prowler must enumerate candidates locally to select the latest resources, list calls may still read candidates, but expensive per-resource enrichment calls are bounded to the selected resources for the supported paths below.
 
 | Value                              | Scope                                                   | Type    |
 |------------------------------------|---------------------------------------------------------|---------|
-| `max_scanned_resources_per_service`| Global default for supported high-volume AWS resources (default 100) | Integer |
+| `max_scanned_resources_per_service`| Global default for supported high-volume AWS resources (default `0`, disabled/unlimited) | Integer |
 | `max_ebs_snapshots`                | EBS snapshots (`ec2_ebs_*` checks)                      | Integer |
 | `max_backup_recovery_points`       | Backup recovery points (`backup_recovery_point_*`)      | Integer |
 | `max_cloudwatch_log_groups`        | CloudWatch log groups (`cloudwatch_log_group_*`)        | Integer |
@@ -202,10 +202,10 @@ aws:
   mute_non_default_regions: False
 
   # AWS Resource Scan Limit Configuration
-  # Limits the number of selected high-volume AWS resources analyzed.
+  # Disabled by default: scan every resource unless a positive limit is configured.
   # Findings are not capped. Set to 0 (or a negative value) to disable the limit.
   # aws.max_scanned_resources_per_service --> global default for all services below
-  max_scanned_resources_per_service: 100
+  max_scanned_resources_per_service: 0
   # Per-service overrides. Leave as null to fall back to the global default.
   max_ebs_snapshots: null
   max_backup_recovery_points: null

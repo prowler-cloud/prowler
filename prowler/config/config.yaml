@@ -12,9 +12,10 @@ aws:
   # a selected resource can produce zero, one, or many findings. Where the AWS
   # API supports server-side ordering the latest resources are scanned first;
   # otherwise it is best-effort API order.
+  # Disabled by default: scan every resource unless a positive limit is configured.
   # Set to 0 (or a negative value) to disable the limit (scan every resource).
   # aws.max_scanned_resources_per_service --> global default for all services below
-  max_scanned_resources_per_service: 100
+  max_scanned_resources_per_service: 0
   # Per-service overrides. Leave as null to fall back to the global default.
   # aws.max_ebs_snapshots --> ec2_ebs_* checks (EBS snapshots)
   max_ebs_snapshots: null

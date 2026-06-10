@@ -15,7 +15,6 @@ from itertools import islice
 from typing import Optional, TypeVar
 
 GLOBAL_LIMIT_KEY = "max_scanned_resources_per_service"
-DEFAULT_RESOURCE_SCAN_LIMIT = 100
 T = TypeVar("T")
 
 
@@ -23,7 +22,7 @@ def get_resource_scan_limit(audit_config: dict, service_key: str) -> Optional[in
     """Resolve the resource scan limit for a service.
 
     Precedence: per-service key (``service_key``) > global
-    ``max_scanned_resources_per_service`` > default (100).
+    ``max_scanned_resources_per_service`` > unlimited.
 
     A non-positive resolved value means **unlimited** (``None``), preserving
     the legacy behavior as an explicit opt-out.
@@ -37,7 +36,7 @@ def get_resource_scan_limit(audit_config: dict, service_key: str) -> Optional[in
     """
     value = audit_config.get(service_key)
     if value is None:
-        value = audit_config.get(GLOBAL_LIMIT_KEY, DEFAULT_RESOURCE_SCAN_LIMIT)
+        value = audit_config.get(GLOBAL_LIMIT_KEY)
     if value is None or value <= 0:
         return None
     return int(value)
