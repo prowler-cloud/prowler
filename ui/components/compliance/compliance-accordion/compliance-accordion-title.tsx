@@ -1,4 +1,4 @@
-import { Tooltip } from "@heroui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/shadcn";
 
 interface ComplianceAccordionTitleProps {
   label: string;
@@ -43,72 +43,63 @@ export const ComplianceAccordionTitle = ({
           {total > 0 ? (
             <div className="flex w-full">
               {pass > 0 && (
-                <Tooltip
-                  content={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="inline-block h-full bg-[#3CEC6D] transition-all duration-200 hover:brightness-110"
+                      style={{
+                        width: `${passPercentage}%`,
+                        marginRight: pass > 0 ? "2px" : "0",
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
                     <div className="px-1 py-0.5">
                       <div className="text-xs font-medium">Pass</div>
                       <div className="text-tiny text-default-400">
                         {pass} ({passPercentage.toFixed(1)}%)
                       </div>
                     </div>
-                  }
-                  size="sm"
-                  placement="top"
-                  delay={0}
-                  closeDelay={0}
-                >
-                  <span
-                    className="inline-block h-full bg-[#3CEC6D] transition-all duration-200 hover:brightness-110"
-                    style={{
-                      width: `${passPercentage}%`,
-                      marginRight: pass > 0 ? "2px" : "0",
-                    }}
-                  />
+                  </TooltipContent>
                 </Tooltip>
               )}
               {fail > 0 && (
-                <Tooltip
-                  content={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="inline-block h-full bg-[#FB718F] transition-all duration-200 hover:brightness-110"
+                      style={{
+                        width: `${failPercentage}%`,
+                        marginRight: manual > 0 ? "2px" : "0",
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
                     <div className="px-1 py-0.5">
                       <div className="text-xs font-medium">Fail</div>
                       <div className="text-tiny text-default-400">
                         {fail} ({failPercentage.toFixed(1)}%)
                       </div>
                     </div>
-                  }
-                  size="sm"
-                  placement="top"
-                  delay={0}
-                  closeDelay={0}
-                >
-                  <span
-                    className="inline-block h-full bg-[#FB718F] transition-all duration-200 hover:brightness-110"
-                    style={{
-                      width: `${failPercentage}%`,
-                      marginRight: manual > 0 ? "2px" : "0",
-                    }}
-                  />
+                  </TooltipContent>
                 </Tooltip>
               )}
               {manual > 0 && (
-                <Tooltip
-                  content={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="inline-block h-full bg-[#868994] transition-all duration-200 hover:brightness-110"
+                      style={{ width: `${manualPercentage}%` }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
                     <div className="px-1 py-0.5">
                       <div className="text-xs font-medium">Manual</div>
                       <div className="text-tiny text-default-400">
                         {manual} ({manualPercentage.toFixed(1)}%)
                       </div>
                     </div>
-                  }
-                  size="sm"
-                  placement="top"
-                  delay={0}
-                  closeDelay={0}
-                >
-                  <span
-                    className="inline-block h-full bg-[#868994] transition-all duration-200 hover:brightness-110"
-                    style={{ width: `${manualPercentage}%` }}
-                  />
+                  </TooltipContent>
                 </Tooltip>
               )}
             </div>
@@ -117,19 +108,18 @@ export const ComplianceAccordionTitle = ({
           )}
         </div>
 
-        <Tooltip
-          content={
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-default-600 min-w-[32px] text-center text-xs font-medium">
+              {total > 0 ? total : "—"}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
             <div className="px-1 py-0.5">
               <div className="text-xs font-medium">Total requirements</div>
               <div className="text-tiny text-default-400">{total}</div>
             </div>
-          }
-          size="sm"
-          placement="top"
-        >
-          <span className="text-default-600 min-w-[32px] text-center text-xs font-medium">
-            {total > 0 ? total : "—"}
-          </span>
+          </TooltipContent>
         </Tooltip>
       </div>
     </div>

@@ -1,6 +1,9 @@
-import { Tooltip } from "@heroui/tooltip";
-
-import { Separator } from "@/components/shadcn";
+import {
+  Separator,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { ProviderType } from "@/types";
 
@@ -31,14 +34,15 @@ export const ComplianceScanInfo = ({ scan }: ComplianceScanInfoProps) => {
       </div>
       <Separator orientation="vertical" className="h-8 shrink-0" />
       <div className="flex min-w-0 basis-1/2 flex-col items-start overflow-hidden">
-        <Tooltip
-          content={scan.attributes.name || "- -"}
-          placement="top"
-          size="sm"
-        >
-          <p className="text-default-500 truncate text-xs">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="text-default-500 truncate text-xs">
+              {scan.attributes.name || "- -"}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent side="top">
             {scan.attributes.name || "- -"}
-          </p>
+          </TooltipContent>
         </Tooltip>
         <DateWithTime inline dateTime={scan.attributes.completed_at} />
       </div>
