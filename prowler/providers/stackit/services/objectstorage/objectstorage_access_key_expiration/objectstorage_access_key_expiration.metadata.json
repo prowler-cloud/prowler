@@ -9,12 +9,12 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Access keys without an expiration date remain valid indefinitely. Long-lived credentials increase the blast radius of a credential compromise because they cannot expire on their own. Setting an expiration date forces periodic rotation and limits the window of exposure if a key is leaked.",
-  "Risk": "Non-expiring access keys that are leaked, stolen, or forgotten remain usable indefinitely. An attacker who obtains a never-expiring key retains persistent access to the object storage resources until the key is manually revoked.",
+  "Description": "**ObjectStorage access keys** should have an explicit expiration date. Long-lived credentials increase the blast radius of a credential compromise because they cannot expire on their own. Setting an expiration date enforces periodic rotation and limits the exposure window if a key is leaked.",
+  "Risk": "If an **ObjectStorage access key** is leaked, stolen, or forgotten without an expiration date, it remains usable indefinitely. An attacker can retain persistent access to object storage resources until the key is manually revoked.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.stackit.cloud/products/storage/object-storage/",
-    "https://docs.stackit.cloud/products/storage/object-storage/how-tos/access-keys/"
+    "https://docs.stackit.cloud/products/storage/object-storage/how-tos/create-and-delete-object-storage-credentials/"
   ],
   "Remediation": {
     "Code": {
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Create access keys with an explicit expiration date and establish a rotation process. Delete non-expiring keys and replace them with time-limited credentials. A rotation period of 90 days or less is recommended.",
+      "Text": "Create **ObjectStorage access keys** with an explicit expiration date and establish a rotation process. Delete non-expiring keys and replace them with time-limited credentials. A rotation period of **90 days or less** is recommended.",
       "Url": "https://hub.prowler.com/check/objectstorage_access_key_expiration"
     }
   },
