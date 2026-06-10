@@ -103,6 +103,9 @@ class IAM(AWSService):
         self._get_user_temporary_credentials_usage()
         self.organization_features = []
         self._list_organizations_features()
+        # ListRoles does not echo PermissionsBoundary; backfill via GetRole.
+        if self.roles:
+            self.__threading_call__(self._get_role_permissions_boundary, self.roles)
         # List missing tags
         self.__threading_call__(self._list_tags, self.users)
         self.__threading_call__(self._list_tags, self.roles)
@@ -456,6 +459,26 @@ class IAM(AWSService):
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_role_permissions_boundary(self, role):
+        try:
+            response = self.client.get_role(RoleName=role.name)
+            role.permissions_boundary = response.get("Role", {}).get(
+                "PermissionsBoundary"
+            )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchEntity":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

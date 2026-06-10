@@ -33,9 +33,7 @@ ASSUME_ROLE_POLICY_DOCUMENT = {
 
 BOUNDARY_POLICY_DOCUMENT = {
     "Version": "2012-10-17",
-    "Statement": [
-        {"Effect": "Allow", "Action": "bedrock:*", "Resource": "*"}
-    ],
+    "Statement": [{"Effect": "Allow", "Action": "bedrock:*", "Resource": "*"}],
 }
 
 NARROW_INLINE_POLICY = {
@@ -51,9 +49,7 @@ NARROW_INLINE_POLICY = {
 
 BROAD_INLINE_POLICY = {
     "Version": "2012-10-17",
-    "Statement": [
-        {"Effect": "Allow", "Action": "s3:*", "Resource": "*"}
-    ],
+    "Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"}],
 }
 
 
@@ -89,19 +85,6 @@ def _mock_bedrock_agent_factory(role_arn):
             return {"tags": {}}
         if operation_name == "ListPrompts":
             return {"promptSummaries": []}
-        if operation_name == "ListRoles":
-            # moto's ListRoles does not echo PermissionsBoundary even when set,
-            # but real AWS does. Enrich the response with what GetRole returns.
-            result = make_api_call(self, operation_name, kwarg)
-            for role in result.get("Roles", []):
-                try:
-                    detail = make_api_call(self, "GetRole", {"RoleName": role["RoleName"]})
-                    boundary = detail.get("Role", {}).get("PermissionsBoundary")
-                    if boundary:
-                        role["PermissionsBoundary"] = boundary
-                except Exception:
-                    pass
-            return result
         return make_api_call(self, operation_name, kwarg)
 
     return _mock_make_api_call
@@ -235,8 +218,26 @@ class Test_bedrock_agent_role_least_privilege:
         assert "grants full access" in result[0].status_extended
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_agent_role_administrator_access_attached(self):
+        """AdministratorAccess attached (no FullAccess suffix) -> FAIL via doc-based admin check."""
+        role_arn = _setup_role(
+            attached_policy_arns=("arn:aws:iam::aws:policy/AdministratorAccess",),
+            inline_policies={"NarrowAccess": NARROW_INLINE_POLICY},
+            permissions_boundary=BOUNDARY_ARN,
+        )
+
+        result = _run_check(role_arn_for_get_agent=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            "managed policy AdministratorAccess grants administrative access"
+            in result[0].status_extended
+        )
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_agent_role_resource_star_broad_action(self):
-        """Inline statement with Action:s3:* on Resource:* -> FAIL."""
+        """Inline statement with Action:* on Resource:* -> FAIL."""
         role_arn = _setup_role(
             inline_policies={"BroadAccess": BROAD_INLINE_POLICY},
             permissions_boundary=BOUNDARY_ARN,
@@ -246,7 +247,7 @@ class Test_bedrock_agent_role_least_privilege:
 
         assert len(result) == 1
         assert result[0].status == "FAIL"
-        assert "grants broad actions on Resource:*" in result[0].status_extended
+        assert "grants administrative access" in result[0].status_extended
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_agent_role_no_permissions_boundary(self):
