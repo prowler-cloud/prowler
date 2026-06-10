@@ -52,6 +52,8 @@ interface ScanScheduleFieldsProps {
   disabled?: boolean;
   showLaunchInitialScan?: boolean;
   showNextScheduledCopy?: boolean;
+  /** Rendered at the right of the "Scan Schedule" header row. */
+  headerAction?: ReactNode;
   /**
    * When false, the frequency is locked to `Daily` and the advanced cadences
    * (interval/weekly/monthly) are disabled. Used for non-Cloud (OSS) accounts.
@@ -107,6 +109,7 @@ export function ScanScheduleFields({
   disabled = false,
   showLaunchInitialScan = false,
   showNextScheduledCopy = false,
+  headerAction,
   canUseAdvancedSchedule = true,
   showCloudUpgradeBadge = false,
 }: ScanScheduleFieldsProps) {
@@ -129,11 +132,14 @@ export function ScanScheduleFields({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2">
-        <CalendarClock className="text-text-neutral-primary size-5" />
-        <h3 className="text-text-neutral-primary text-sm font-medium">
-          Scan Schedule
-        </h3>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <CalendarClock className="text-text-neutral-primary size-5" />
+          <h3 className="text-text-neutral-primary text-sm font-medium">
+            Scan Schedule
+          </h3>
+        </div>
+        {headerAction}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

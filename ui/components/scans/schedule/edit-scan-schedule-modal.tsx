@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleX, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { removeSchedule, updateSchedule } from "@/actions/schedules";
@@ -62,6 +63,8 @@ function EditScanScheduleForm({
   onClose,
 }: EditScanScheduleFormProps) {
   const router = useRouter();
+  const [isConfirmRemoveOpen, setIsConfirmRemoveOpen] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: getScheduleFormValues(schedule?.attributes),
@@ -90,7 +93,10 @@ function EditScanScheduleForm({
   });
 
   const handleRemove = async () => {
+    setIsRemoving(true);
     const result = await removeSchedule(provider.providerId);
+    setIsRemoving(false);
+    setIsConfirmRemoveOpen(false);
 
     if (result?.error) {
       form.setError("root", { message: String(result.error) });
@@ -116,24 +122,24 @@ function EditScanScheduleForm({
         entityId={provider.providerUid}
       />
 
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <span className="sr-only">Schedule actions</span>
-          {hasSchedule && (
+      <ScanScheduleFields
+        form={form}
+        disabled={isSubmitting || isRemoving}
+        headerAction={
+          hasSchedule ? (
             <Button
               type="button"
               variant="ghost"
-              onClick={() => void handleRemove()}
-              disabled={isSubmitting}
-              className="text-text-error-primary ml-auto"
+              onClick={() => setIsConfirmRemoveOpen(true)}
+              disabled={isSubmitting || isRemoving}
+              className="text-text-error-primary"
             >
               <CircleX className="size-4" />
               Remove Scan Schedule
             </Button>
-          )}
-        </div>
-        <ScanScheduleFields form={form} disabled={isSubmitting} />
-      </div>
+          ) : undefined
+        }
+      />
 
       {rootError && <FieldError>{rootError}</FieldError>}
 
@@ -141,8 +147,37 @@ function EditScanScheduleForm({
         onCancel={onClose}
         submitText={isSubmitting ? "Saving..." : "Save"}
         loadingText="Saving..."
-        isDisabled={isSubmitting}
+        isDisabled={isSubmitting || isRemoving}
       />
+
+      <Modal
+        open={isConfirmRemoveOpen}
+        onOpenChange={setIsConfirmRemoveOpen}
+        title="Are you absolutely sure?"
+        description="This action cannot be undone. The scan schedule for this provider will be removed and scans will no longer run automatically."
+      >
+        <div className="flex w-full justify-end gap-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            onClick={() => setIsConfirmRemoveOpen(false)}
+            disabled={isRemoving}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="lg"
+            onClick={() => void handleRemove()}
+            disabled={isRemoving}
+          >
+            <CircleX className="size-4" />
+            {isRemoving ? "Removing..." : "Remove"}
+          </Button>
+        </div>
+      </Modal>
     </form>
   );
 }
