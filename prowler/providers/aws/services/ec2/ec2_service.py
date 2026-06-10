@@ -5,6 +5,7 @@ from typing import Optional, Union
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -26,7 +27,12 @@ class EC2(AWSService):
         self.snapshots = []
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
+        # Snapshots are listed first, then limited before public status is hydrated.
+        self.snapshot_limit = get_resource_scan_limit(
+            self.audit_config, "max_ebs_snapshots"
+        )
         self.__threading_call__(self._describe_snapshots)
+        self._select_snapshots_for_analysis()
         self.__threading_call__(self._determine_public_snapshots, self.snapshots)
         self.network_interfaces = {}
         self.__threading_call__(self._describe_network_interfaces)
@@ -207,6 +213,7 @@ class EC2(AWSService):
                                 arn=arn,
                                 region=regional_client.region,
                                 encrypted=snapshot.get("Encrypted", False),
+                                start_time=snapshot.get("StartTime"),
                                 tags=snapshot.get("Tags"),
                                 volume=snapshot["VolumeId"],
                             )
@@ -242,6 +249,18 @@ class EC2(AWSService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _select_snapshots_for_analysis(self):
+        self.snapshots = list(
+            limit_resources(
+                sorted(
+                    self.snapshots,
+                    key=lambda s: (s.start_time.timestamp() if s.start_time else 0.0),
+                    reverse=True,
+                ),
+                self.snapshot_limit,
+            )
+        )
 
     def _describe_network_interfaces(self, regional_client):
         try:
@@ -686,6 +705,7 @@ class Snapshot(BaseModel):
     region: str
     encrypted: bool
     public: bool = False
+    start_time: Optional[datetime] = None
     tags: Optional[list] = []
     volume: Optional[str]
 

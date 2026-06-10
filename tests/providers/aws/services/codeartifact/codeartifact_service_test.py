@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import botocore
@@ -6,6 +7,7 @@ from prowler.providers.aws.services.codeartifact.codeartifact_service import (
     CodeArtifact,
     LatestPackageVersionStatus,
     OriginInformationValues,
+    Repository,
     RestrictionValues,
 )
 from tests.providers.aws.utils import (
@@ -207,6 +209,102 @@ class Test_CodeArtifact_Service:
             .latest_version.origin.origin_type
             == OriginInformationValues.INTERNAL
         )
+
+    def test_package_limit_bounds_package_version_lookups_to_selected_packages(self):
+        class FakePaginator:
+            def paginate(self, **kwargs):
+                return [
+                    {
+                        "packages": [
+                            {
+                                "format": "pypi",
+                                "package": "first-package",
+                                "originConfiguration": {
+                                    "restrictions": {
+                                        "publish": "ALLOW",
+                                        "upstream": "ALLOW",
+                                    }
+                                },
+                            },
+                            {
+                                "format": "pypi",
+                                "package": "second-package",
+                                "originConfiguration": {
+                                    "restrictions": {
+                                        "publish": "ALLOW",
+                                        "upstream": "ALLOW",
+                                    }
+                                },
+                            },
+                        ]
+                    }
+                ]
+
+        class FakeCodeArtifactClient:
+            def __init__(self):
+                self.version_calls = []
+
+            def get_paginator(self, name):
+                assert name == "list_packages"
+                return FakePaginator()
+
+            def list_package_versions(self, **kwargs):
+                self.version_calls.append(kwargs["package"])
+                return {
+                    "versions": [
+                        {
+                            "version": "1.0.0",
+                            "status": "Published",
+                            "origin": {"originType": "INTERNAL"},
+                        }
+                    ]
+                }
+
+        regional_client = FakeCodeArtifactClient()
+        codeartifact = CodeArtifact.__new__(CodeArtifact)
+        codeartifact.repositories = {
+            TEST_REPOSITORY_ARN: Repository(
+                name="test-repository",
+                arn=TEST_REPOSITORY_ARN,
+                domain_name="test-domain",
+                domain_owner=AWS_ACCOUNT_NUMBER,
+                region=AWS_REGION_EU_WEST_1,
+            )
+        }
+        codeartifact._packages_listed = set()
+        codeartifact.package_limit = 1
+        codeartifact.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
+
+        pairs = list(codeartifact._load_packages_for_analysis())
+
+        assert [package.name for _, package in pairs] == ["first-package"]
+        assert regional_client.version_calls == ["first-package"]
+
+    def test_package_limit_exposes_only_selected_packages(self):
+        codeartifact = CodeArtifact.__new__(CodeArtifact)
+        codeartifact.package_limit = 2
+        codeartifact._packages_listed = set()
+        repository = Repository(
+            name="repository",
+            arn="repo",
+            domain_name="domain",
+            domain_owner=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION_EU_WEST_1,
+        )
+        codeartifact.repositories = {repository.arn: repository}
+        enriched = []
+
+        def iter_repository_packages(repository):
+            for index in range(3):
+                enriched.append(index)
+                yield SimpleNamespace(name=f"package-{index}")
+
+        codeartifact._iter_repository_packages = iter_repository_packages
+
+        packages = list(codeartifact._load_packages_for_analysis())
+
+        assert [package.name for _, package in packages] == ["package-0", "package-1"]
+        assert enriched == [0, 1]
 
 
 def mock_make_api_call_no_namespace(self, operation_name, kwarg):

@@ -139,7 +139,6 @@ class Test_ECS_Service:
         ecs = ECS(aws_provider)
         assert ecs.session.__class__.__name__ == "Session"
 
-    # Test list ECS task definitions
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_list_task_definitions(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -200,6 +199,115 @@ class Test_ECS_Service:
             .container_definitions[0]
             .readonly_rootfilesystem
         )
+
+    def test_task_definitions_are_loaded_once_for_analysis(self):
+        describe_calls = []
+        list_calls = []
+
+        def counting_make_api_call(self, operation_name, kwarg):
+            if operation_name == "ListTaskDefinitions":
+                list_calls.append(kwarg)
+                return {
+                    "taskDefinitionArns": [
+                        f"arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:{i}"
+                        for i in (3, 2, 1)
+                    ]
+                }
+            if operation_name == "DescribeTaskDefinition":
+                describe_calls.append(kwarg["taskDefinition"])
+                return {
+                    "taskDefinition": {
+                        "containerDefinitions": [],
+                        "networkMode": "bridge",
+                        "pidMode": "",
+                        "tags": [],
+                    }
+                }
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=counting_make_api_call
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            ecs = ECS(aws_provider)
+
+            assert [td.revision for td in ecs.task_definitions.values()] == [
+                "3",
+                "2",
+                "1",
+            ]
+            assert list_calls == [{"sort": "DESC"}]
+            assert len(describe_calls) == 3
+
+    def test_task_definition_limit_exposes_only_selected_resources(self):
+        describe_calls = []
+
+        def counting_make_api_call(self, operation_name, kwarg):
+            if operation_name == "ListTaskDefinitions":
+                return {
+                    "taskDefinitionArns": [
+                        f"arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:{i}"
+                        for i in (3, 2, 1)
+                    ]
+                }
+            if operation_name == "DescribeTaskDefinition":
+                describe_calls.append(kwarg["taskDefinition"])
+                return {
+                    "taskDefinition": {
+                        "containerDefinitions": [],
+                        "networkMode": "bridge",
+                        "pidMode": "",
+                        "tags": [],
+                    }
+                }
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=counting_make_api_call
+        ):
+            aws_provider = set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1], audit_config={"max_ecs_task_definitions": 2}
+            )
+            ecs = ECS(aws_provider)
+
+            assert [td.revision for td in ecs.task_definitions.values()] == ["3", "2"]
+            assert len(describe_calls) == 2
+
+    def test_task_definition_limit_bounds_describe_calls(self):
+        describe_calls = []
+
+        def counting_make_api_call(self, operation_name, kwarg):
+            if operation_name == "ListTaskDefinitions":
+                return {
+                    "taskDefinitionArns": [
+                        f"arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:{i}"
+                        for i in (3, 2, 1)
+                    ]
+                }
+            if operation_name == "DescribeTaskDefinition":
+                describe_calls.append(kwarg["taskDefinition"])
+                return {
+                    "taskDefinition": {
+                        "containerDefinitions": [],
+                        "networkMode": "bridge",
+                        "pidMode": "",
+                        "tags": [],
+                    }
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=counting_make_api_call
+        ):
+            aws_provider = set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1], audit_config={"max_ecs_task_definitions": 1}
+            )
+            ecs = ECS(aws_provider)
+
+            assert [td.revision for td in ecs.task_definitions.values()] == ["3"]
+            assert describe_calls == [
+                "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:3"
+            ]
 
     # Test list ECS clusters
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

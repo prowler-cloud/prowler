@@ -69,6 +69,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `s3_bucket_default_encryption` check for AWS provider since SSE-S3 is automatically applied to all S3 buckets by AWS as of January 5, 2023 and can no longer be disabled [(#11230)](https://github.com/prowler-cloud/prowler/pull/11230)
 
+### 🔄 Changed
+
+- AWS scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages now support configurable resource analysis limits via `aws.max_scanned_resources_per_service`; limits are disabled by default and only positive values cap analyzed resources [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
+
 ### 🐞 Fixed
 
 - Broken documentation URLs in Google Workspace check metadata [(#11405)](https://github.com/prowler-cloud/prowler/pull/11405)

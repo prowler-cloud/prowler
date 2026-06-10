@@ -11,7 +11,7 @@ from freezegun import freeze_time
 from moto import mock_aws
 
 from prowler.config.config import encoding_format_utf_8
-from prowler.providers.aws.services.ec2.ec2_service import EC2
+from prowler.providers.aws.services.ec2.ec2_service import EC2, Snapshot
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -102,6 +102,45 @@ class Test_EC2_Service:
         )
         ec2 = EC2(aws_provider)
         assert ec2.audited_account == AWS_ACCOUNT_NUMBER
+
+    def test_snapshot_limit_bounds_public_attribute_calls_to_latest_selected(self):
+        class FakeEC2Client:
+            def __init__(self):
+                self.calls = []
+
+            def describe_snapshot_attribute(self, **kwargs):
+                self.calls.append(kwargs["SnapshotId"])
+                return {"CreateVolumePermissions": []}
+
+        regional_client = FakeEC2Client()
+        ec2 = EC2.__new__(EC2)
+        ec2.snapshots = [
+            Snapshot(
+                id="snap-old",
+                arn="arn:aws:ec2:eu-west-1:123456789012:snapshot/snap-old",
+                region=AWS_REGION_EU_WEST_1,
+                encrypted=True,
+                start_time=datetime(2024, 1, 1),
+                volume="vol-old",
+            ),
+            Snapshot(
+                id="snap-new",
+                arn="arn:aws:ec2:eu-west-1:123456789012:snapshot/snap-new",
+                region=AWS_REGION_EU_WEST_1,
+                encrypted=True,
+                start_time=datetime(2024, 1, 2),
+                volume="vol-new",
+            ),
+        ]
+        ec2.snapshot_limit = 1
+        ec2.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
+
+        ec2._select_snapshots_for_analysis()
+        for snapshot in ec2.snapshots:
+            ec2._determine_public_snapshots(snapshot)
+
+        assert [snapshot.id for snapshot in ec2.snapshots] == ["snap-new"]
+        assert regional_client.calls == ["snap-new"]
 
     # Test EC2 Describe Instances
     @mock_aws
@@ -345,6 +384,24 @@ class Test_EC2_Service:
                 assert snapshot.region == AWS_REGION_US_EAST_1
                 assert not snapshot.encrypted
                 assert snapshot.public
+
+    @mock_aws
+    def test_snapshot_limit_exposes_only_selected_snapshots(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        volume_id = ec2_resource.create_volume(
+            AvailabilityZone="us-east-1a",
+            Size=80,
+            VolumeType="gp2",
+        ).id
+        for _ in range(3):
+            ec2_client.create_snapshot(VolumeId=volume_id)
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], audit_config={"max_ebs_snapshots": 1}
+        )
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.snapshots) == 1
 
     # Test EC2 Instance User Data
     @mock_aws

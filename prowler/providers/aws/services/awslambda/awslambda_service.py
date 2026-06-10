@@ -9,6 +9,7 @@ import requests
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -18,8 +19,14 @@ class Lambda(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
+        # Functions are listed first, then trimmed to the subset selected for
+        # analysis before expensive per-function detail is hydrated.
         self.functions = {}
+        self.function_limit = get_resource_scan_limit(
+            self.audit_config, "max_lambda_functions"
+        )
         self.__threading_call__(self._list_functions)
+        self._select_functions_for_analysis()
         self._list_tags_for_resource()
         self.__threading_call__(self._get_policy)
         self.__threading_call__(self._get_function_url_config)
@@ -48,6 +55,10 @@ class Lambda(AWSService):
                             subnet_ids=set(vpc_config.get("SubnetIds", [])),
                             region=regional_client.region,
                         )
+                        if "LastModified" in function:
+                            self.functions[lambda_arn].last_modified = function[
+                                "LastModified"
+                            ]
                         if "Runtime" in function:
                             self.functions[lambda_arn].runtime = function["Runtime"]
                         if "Environment" in function:
@@ -75,6 +86,19 @@ class Lambda(AWSService):
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
             )
+
+    def _select_functions_for_analysis(self):
+        self.functions = {
+            function.arn: function
+            for function in limit_resources(
+                sorted(
+                    self.functions.values(),
+                    key=lambda f: f.last_modified or "",
+                    reverse=True,
+                ),
+                self.function_limit,
+            )
+        }
 
     def _list_event_source_mappings(self, regional_client):
         logger.info("Lambda - Listing Event Source Mappings...")
@@ -158,10 +182,9 @@ class Lambda(AWSService):
                     except ClientError as e:
                         if e.response["Error"]["Code"] == "ResourceNotFoundException":
                             self.functions[function.arn].policy = {}
-
         except Exception as error:
             logger.error(
-                f"{regional_client.region} --"
+                f"{function.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
             )
@@ -187,10 +210,9 @@ class Lambda(AWSService):
                     except ClientError as e:
                         if e.response["Error"]["Code"] == "ResourceNotFoundException":
                             self.functions[function.arn].url_config = None
-
         except Exception as error:
             logger.error(
-                f"{regional_client.region} --"
+                f"{function.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
             )
@@ -206,10 +228,9 @@ class Lambda(AWSService):
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "ResourceNotFoundException":
                         function.tags = []
-
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -259,6 +280,7 @@ class Function(BaseModel):
     name: str
     arn: str
     security_groups: list
+    last_modified: Optional[str] = None
     runtime: Optional[str] = None
     environment: Optional[dict] = None
     region: str
