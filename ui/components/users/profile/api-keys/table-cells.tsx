@@ -1,8 +1,15 @@
-import { Chip } from "@heroui/chip";
+import { Badge } from "@/components/shadcn";
 
 import { FALLBACK_VALUES } from "./constants";
 import { EnrichedApiKey, getApiKeyStatus } from "./types";
 import { formatRelativeTime, getStatusColor, getStatusLabel } from "./utils";
+
+// Maps HeroUI status colors to shadcn Badge variants
+const STATUS_BADGE_VARIANT = {
+  success: "success",
+  danger: "error",
+  warning: "warning",
+} as const;
 
 export const NameCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
   <p className="text-sm font-medium">
@@ -27,9 +34,9 @@ export const LastUsedCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
 export const StatusCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => {
   const status = getApiKeyStatus(apiKey);
   return (
-    <Chip color={getStatusColor(status)} size="sm" variant="flat">
+    <Badge variant={STATUS_BADGE_VARIANT[getStatusColor(status)]}>
       {getStatusLabel(status)}
-    </Chip>
+    </Badge>
   );
 };
 

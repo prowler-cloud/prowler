@@ -1,6 +1,4 @@
-import { Chip } from "@heroui/chip";
-
-import { Card, CardContent } from "@/components/shadcn";
+import { Badge, Card, CardContent } from "@/components/shadcn";
 
 import { getAWSIcon, NotificationIcon, SuccessIcon } from "../icons";
 
@@ -31,22 +29,17 @@ export const ServiceCard: React.FC<CardServiceProps> = ({
           </div>
         </div>
 
-        <Chip
-          className="h-10"
-          variant="flat"
-          startContent={
-            fidingsFailed > 0 ? (
-              <NotificationIcon size={18} />
-            ) : (
-              <SuccessIcon size={18} />
-            )
-          }
-          color={fidingsFailed > 0 ? "danger" : "success"}
-          radius="full"
-          size="md"
+        <Badge
+          className="h-10 [&>svg]:size-[18px]"
+          variant={fidingsFailed > 0 ? "error" : "success"}
         >
+          {fidingsFailed > 0 ? (
+            <NotificationIcon size={18} />
+          ) : (
+            <SuccessIcon size={18} />
+          )}
           {fidingsFailed > 0 ? fidingsFailed : ""}
-        </Chip>
+        </Badge>
       </CardContent>
     </Card>
   );

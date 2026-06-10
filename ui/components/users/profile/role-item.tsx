@@ -1,10 +1,9 @@
 "use client";
 
-import { Chip } from "@heroui/chip";
 import { Ban, Check } from "lucide-react";
 import { useState } from "react";
 
-import { Button, Card } from "@/components/shadcn";
+import { Badge, Button, Card } from "@/components/shadcn";
 import { getRolePermissions } from "@/lib/permissions";
 import { RoleData, RoleDetail } from "@/types/users";
 
@@ -39,9 +38,9 @@ export const RoleItem = ({
 
   if (!roleDetail) {
     return (
-      <Chip key={role.id} size="sm" variant="flat" color="primary">
+      <Badge key={role.id} variant="info">
         {role.id}
-      </Chip>
+      </Badge>
     );
   }
 
@@ -56,9 +55,7 @@ export const RoleItem = ({
     <Card variant="inner">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Chip size="sm" variant="flat" color="primary">
-            {roleName}
-          </Chip>
+          <Badge variant="info">{roleName}</Badge>
           <span className="text-xs text-gray-500 capitalize">
             {permissionState}
           </span>
