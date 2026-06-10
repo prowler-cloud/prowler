@@ -24,7 +24,8 @@ class cloudwatch_log_group_not_publicly_accessible(Check):
                                     if log_group.arn in resource or resource == "*":
                                         public_log_groups.append(log_group.arn)
 
-        def evaluate(log_group):
+        reports = []
+        for log_group in logs_client.iter_log_groups():
             report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
             report.status = "PASS"
             report.status_extended = (
@@ -35,11 +36,5 @@ class cloudwatch_log_group_not_publicly_accessible(Check):
                 report.status_extended = (
                     f"Log Group {log_group.name} is publicly accessible."
                 )
-            return report
-
-        reports = []
-        for resource in logs_client.iter_log_groups():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

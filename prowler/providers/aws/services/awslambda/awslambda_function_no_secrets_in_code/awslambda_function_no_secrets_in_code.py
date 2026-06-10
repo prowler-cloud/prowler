@@ -15,10 +15,10 @@ class awslambda_function_no_secrets_in_code(Check):
             "secrets_ignore_patterns", []
         )
 
-        def evaluate(function_with_code):
-            function, function_code = function_with_code
+        reports = []
+        for function, function_code in awslambda_client._get_function_code():
             if not function_code:
-                return None
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
@@ -62,11 +62,5 @@ class awslambda_function_no_secrets_in_code(Check):
                     report.status = "FAIL"
                     report.status_extended = f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} found in Lambda function {function.name} code -> {final_output_string}."
 
-            return report
-
-        reports = []
-        for resource in awslambda_client._get_function_code():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

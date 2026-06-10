@@ -122,6 +122,10 @@ class Logs(AWSService):
                                 log_group = lg
                                 break
 
+                        if log_group and log_group.arn not in self._log_groups_hydrated:
+                            self._list_tags_for_resource(log_group)
+                            self._log_groups_hydrated.add(log_group.arn)
+
                         self.metric_filters.append(
                             MetricFilter(
                                 arn=arn,

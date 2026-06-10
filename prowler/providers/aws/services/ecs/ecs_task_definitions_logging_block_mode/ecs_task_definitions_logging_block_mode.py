@@ -4,7 +4,8 @@ from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 class ecs_task_definitions_logging_block_mode(Check):
     def execute(self):
-        def evaluate(task_definition):
+        reports = []
+        for task_definition in ecs_client.iter_task_definitions():
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -24,11 +25,6 @@ class ecs_task_definitions_logging_block_mode(Check):
                 report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} running with logging set to blocking mode on containers: {', '.join(failed_containers)}"
 
             # Only task definitions with logging-enabled containers are reported
-            return report if containers > 0 else None
-
-        reports = []
-        for resource in ecs_client.iter_task_definitions():
-            report = evaluate(resource)
-            if report is not None:
+            if containers > 0:
                 reports.append(report)
         return reports

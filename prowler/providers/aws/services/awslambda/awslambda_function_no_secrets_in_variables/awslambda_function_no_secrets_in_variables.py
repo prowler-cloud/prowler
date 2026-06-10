@@ -11,7 +11,8 @@ class awslambda_function_no_secrets_in_variables(Check):
             "secrets_ignore_patterns", []
         )
 
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
@@ -40,11 +41,5 @@ class awslambda_function_no_secrets_in_variables(Check):
                     report.status = "FAIL"
                     report.status_extended = f"Potential secret found in Lambda function {function.name} variables -> {secrets_string}."
 
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

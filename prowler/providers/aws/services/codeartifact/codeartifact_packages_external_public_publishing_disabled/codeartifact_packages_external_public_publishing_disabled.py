@@ -10,13 +10,13 @@ from prowler.providers.aws.services.codeartifact.codeartifact_service import (
 
 class codeartifact_packages_external_public_publishing_disabled(Check):
     def execute(self):
-        def evaluate(repository_package):
-            repository, package = repository_package
+        reports = []
+        for repository, package in codeartifact_client.iter_packages():
             if package.latest_version.origin.origin_type not in (
                 OriginInformationValues.INTERNAL,
                 OriginInformationValues.UNKNOWN,
             ):
-                return None
+                continue
 
             report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
             report.resource_id = f"{repository.domain_name}/{package.name}"
@@ -31,11 +31,5 @@ class codeartifact_packages_external_public_publishing_disabled(Check):
             else:
                 report.status = "PASS"
                 report.status_extended = f"Internal package {package.name} is not vulnerable to dependency confusion in repository {repository.domain_name}."
-            return report
-
-        reports = []
-        for resource in codeartifact_client.iter_packages():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

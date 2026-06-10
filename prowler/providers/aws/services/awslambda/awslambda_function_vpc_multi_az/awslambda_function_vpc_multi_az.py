@@ -10,13 +10,14 @@ class awslambda_function_vpc_multi_az(Check):
     def execute(self) -> list[Check_Report_AWS]:
         LAMBDA_MIN_AZS = awslambda_client.audit_config.get("lambda_min_azs", 2)
 
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             # only proceed if check "awslambda_function_inside_vpc" did not run or did not FAIL to avoid to report that the function is not inside a VPC twice
             if awslambda_client.is_failed_check(
                 awslambda_function_inside_vpc.__name__,
                 function.arn,
             ):
-                return None
+                continue
 
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
@@ -42,11 +43,5 @@ class awslambda_function_vpc_multi_az(Check):
                 else:
                     report.status_extended = f"Lambda function {function.name} is inside of VPC {function.vpc_id} that spans only in {len(function_availability_zones)} AZs: {', '.join(function_availability_zones)}. Must span in at least {LAMBDA_MIN_AZS} AZs."
 
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

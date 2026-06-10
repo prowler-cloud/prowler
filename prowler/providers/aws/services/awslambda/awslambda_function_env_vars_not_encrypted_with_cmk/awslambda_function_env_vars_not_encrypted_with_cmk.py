@@ -4,7 +4,8 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 
 class awslambda_function_env_vars_not_encrypted_with_cmk(Check):
     def execute(self):
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
             if not function.environment:
                 report.status = "PASS"
@@ -23,11 +24,5 @@ class awslambda_function_env_vars_not_encrypted_with_cmk(Check):
                     f"Lambda function {function.name} has environment variables "
                     f"but they are not encrypted with a customer-managed KMS key."
                 )
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

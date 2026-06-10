@@ -11,7 +11,8 @@ class ecs_task_definitions_no_environment_secrets(Check):
             "secrets_ignore_patterns", []
         )
 
-        def evaluate(task_definition):
+        reports = []
+        for task_definition in ecs_client.iter_task_definitions():
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -58,11 +59,5 @@ class ecs_task_definitions_no_environment_secrets(Check):
                 )
             else:
                 report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}."
-            return report
-
-        reports = []
-        for resource in ecs_client.iter_task_definitions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

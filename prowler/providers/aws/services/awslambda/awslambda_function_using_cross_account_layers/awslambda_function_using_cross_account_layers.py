@@ -4,7 +4,8 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 
 class awslambda_function_using_cross_account_layers(Check):
     def execute(self):
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
             cross_account_layers = [
                 layer
@@ -29,11 +30,5 @@ class awslambda_function_using_cross_account_layers(Check):
                     f"Lambda function {function.name} only uses layers "
                     f"from the same account ({awslambda_client.audited_account})."
                 )
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

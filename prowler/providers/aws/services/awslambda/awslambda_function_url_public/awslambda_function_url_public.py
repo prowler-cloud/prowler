@@ -5,9 +5,10 @@ from prowler.providers.aws.services.awslambda.awslambda_service import AuthType
 
 class awslambda_function_url_public(Check):
     def execute(self):
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             if not function.url_config:
-                return None
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             if function.url_config.auth_type == AuthType.AWS_IAM:
@@ -17,11 +18,5 @@ class awslambda_function_url_public(Check):
                 report.status = "FAIL"
                 report.status_extended = f"Lambda function {function.name} has a publicly accessible function URL."
 
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

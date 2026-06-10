@@ -7,7 +7,8 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 
 class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check):
     def execute(self):
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "FAIL"
@@ -48,11 +49,5 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
                         report.status = "PASS"
                         report.status_extended = f"Lambda function {function.name} is recorded by CloudTrail trail {trail.name}."
                         break
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

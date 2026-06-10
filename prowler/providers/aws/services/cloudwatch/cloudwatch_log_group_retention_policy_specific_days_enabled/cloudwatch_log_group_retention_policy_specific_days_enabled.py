@@ -9,7 +9,8 @@ class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
             "log_group_retention_days", 365
         )
 
-        def evaluate(log_group):
+        reports = []
+        for log_group in logs_client.iter_log_groups():
             report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
             if (
                 log_group.never_expire is False
@@ -23,11 +24,5 @@ class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
                     report.status_extended = f"Log Group {log_group.name} comply with {specific_retention_days} days retention period since it never expires."
                 else:
                     report.status_extended = f"Log Group {log_group.name} comply with {specific_retention_days} days retention period since it has {log_group.retention_days} days."
-            return report
-
-        reports = []
-        for resource in logs_client.iter_log_groups():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

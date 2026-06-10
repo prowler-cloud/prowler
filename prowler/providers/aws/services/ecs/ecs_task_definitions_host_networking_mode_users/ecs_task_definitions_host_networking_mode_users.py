@@ -4,7 +4,8 @@ from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 class ecs_task_definitions_host_networking_mode_users(Check):
     def execute(self):
-        def evaluate(task_definition):
+        reports = []
+        for task_definition in ecs_client.iter_task_definitions():
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -24,11 +25,5 @@ class ecs_task_definitions_host_networking_mode_users(Check):
                     report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has containers with host network mode and non-privileged containers running as root or with no user specified: {', '.join(failed_containers)}"
                 else:
                     report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has host network mode but no containers running as root or with no user specified."
-            return report
-
-        reports = []
-        for resource in ecs_client.iter_task_definitions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

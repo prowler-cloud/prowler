@@ -5,9 +5,10 @@ from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 
 class awslambda_function_not_publicly_accessible(Check):
     def execute(self):
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             if function.policy is None:
-                return None
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
@@ -20,11 +21,5 @@ class awslambda_function_not_publicly_accessible(Check):
                 report.status = "FAIL"
                 report.status_extended = f"Lambda function {function.name} has a resource-based policy with public access."
 
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

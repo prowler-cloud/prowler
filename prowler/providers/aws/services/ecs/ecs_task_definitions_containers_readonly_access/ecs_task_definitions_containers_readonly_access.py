@@ -4,7 +4,8 @@ from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 class ecs_task_definitions_containers_readonly_access(Check):
     def execute(self):
-        def evaluate(task_definition):
+        reports = []
+        for task_definition in ecs_client.iter_task_definitions():
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -20,11 +21,5 @@ class ecs_task_definitions_containers_readonly_access(Check):
 
             if failed_containers:
                 report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has containers with write access to the root filesystem: {', '.join(failed_containers)}"
-            return report
-
-        reports = []
-        for resource in ecs_client.iter_task_definitions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

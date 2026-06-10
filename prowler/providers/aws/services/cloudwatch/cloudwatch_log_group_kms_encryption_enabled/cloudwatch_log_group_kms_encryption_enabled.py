@@ -4,7 +4,8 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_group_kms_encryption_enabled(Check):
     def execute(self):
-        def evaluate(log_group):
+        reports = []
+        for log_group in logs_client.iter_log_groups():
             report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
             if log_group.kms_id:
                 report.status = "PASS"
@@ -14,11 +15,5 @@ class cloudwatch_log_group_kms_encryption_enabled(Check):
                 report.status_extended = (
                     f"Log Group {log_group.name} does not have AWS KMS keys associated."
                 )
-            return report
-
-        reports = []
-        for resource in logs_client.iter_log_groups():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

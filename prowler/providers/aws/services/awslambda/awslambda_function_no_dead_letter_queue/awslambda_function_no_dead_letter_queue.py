@@ -4,7 +4,8 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 
 class awslambda_function_no_dead_letter_queue(Check):
     def execute(self):
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
             if function.dead_letter_config:
                 report.status = "PASS"
@@ -12,11 +13,5 @@ class awslambda_function_no_dead_letter_queue(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = f"Lambda function {function.name} does not have a Dead Letter Queue configured."
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports

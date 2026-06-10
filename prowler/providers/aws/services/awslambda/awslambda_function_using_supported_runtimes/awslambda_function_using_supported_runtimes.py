@@ -32,9 +32,10 @@ default_obsolete_lambda_runtimes = [
 
 class awslambda_function_using_supported_runtimes(Check):
     def execute(self):
-        def evaluate(function):
+        reports = []
+        for function in awslambda_client.iter_functions():
             if not function.runtime:
-                return None
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             if function.runtime in awslambda_client.audit_config.get(
@@ -46,11 +47,5 @@ class awslambda_function_using_supported_runtimes(Check):
                 report.status = "PASS"
                 report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is supported."
 
-            return report
-
-        reports = []
-        for resource in awslambda_client.iter_functions():
-            report = evaluate(resource)
-            if report is not None:
-                reports.append(report)
+            reports.append(report)
         return reports
