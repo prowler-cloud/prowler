@@ -184,9 +184,7 @@ class BedrockAgent(AWSService):
         """
         logger.info("Bedrock Agent - Getting Agent...")
         try:
-            agent_info = self.regional_clients[agent.region].get_agent(
-                agentId=agent.id
-            )
+            agent_info = self.regional_clients[agent.region].get_agent(agentId=agent.id)
             agent.role_arn = agent_info.get("agent", {}).get("agentResourceRoleArn")
         except Exception as error:
             logger.error(
