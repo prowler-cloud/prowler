@@ -28,6 +28,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_users_mfa_capable` no longer flags pre-provisioned users with future `employeeHireDate`; future-hire date comparisons now tolerate naive datetimes [(#11511)](https://github.com/prowler-cloud/prowler/pull/11511)
 - M365 Admin Center group enumeration now follows Microsoft Graph pagination so group-scoped checks include groups beyond the first page [(#11510)](https://github.com/prowler-cloud/prowler/pull/11510)
 - GCP `kms_key_rotation_enabled` check now only verifies that automatic key rotation is enabled (any interval) instead of enforcing a 90-day period, resolving the mismatch between the check and its documentation; the CIS, Prowler ThreatScore, and CCC requirements that mandate a 90-day maximum were remapped to the new `kms_key_rotation_max_90_days` check [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
+- AWS CloudWatch log metric filter checks now validate `filterPattern` clauses regardless of order [(#11345)](https://github.com/prowler-cloud/prowler/pull/11345)
 
 ---
 
@@ -109,7 +110,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - OCI Audit service configuration lookup when the configured region differs from the tenancy home region [(#10347)](https://github.com/prowler-cloud/prowler/pull/10347)
-- AWS CloudWatch log metric filter checks validate combined `filterPattern` strings regardless of `{ (A) || (B) }` clause order by using per-requirement lookahead substrings instead of sequence-dependent chaining
 - Container image now uses an absolute `ENTRYPOINT` (`/home/prowler/.venv/bin/prowler`) so it works under any runtime `--workdir`. The relative entrypoint was breaking the official GitHub Action (`prowler-cloud/prowler@v5.27.0`) and any `docker run` with a custom `-w` [(#11313)](https://github.com/prowler-cloud/prowler/pull/11313)
 
 ---
