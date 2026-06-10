@@ -13,6 +13,7 @@ import {
   INTERNET_NODE_DIMENSIONS,
   RESOURCE_NODE_DIMENSIONS,
 } from "./node-dimensions";
+import { isProwlerFindingNode } from "./node-types";
 
 // Container relationships that get reversed for proper hierarchy
 const CONTAINER_RELATIONS = new Set([
@@ -34,8 +35,7 @@ const NODE_TYPE = {
 
 type NodeType = (typeof NODE_TYPE)[keyof typeof NODE_TYPE];
 
-export const isFindingNode = (labels: string[]): boolean =>
-  labels.some((l) => l.toLowerCase().includes("finding"));
+const isFindingNode = isProwlerFindingNode;
 
 const getNodeType = (labels: string[]): NodeType => {
   if (isFindingNode(labels)) return NODE_TYPE.FINDING;

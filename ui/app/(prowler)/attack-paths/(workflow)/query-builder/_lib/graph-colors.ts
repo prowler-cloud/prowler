@@ -1,3 +1,5 @@
+import { isProwlerFindingNode } from "./node-types";
+
 /**
  * Color constants for attack path graph visualization
  * Colors chosen to work well in both light and dark themes
@@ -67,7 +69,7 @@ export const getNodeColor = (
   labels: string[],
   properties?: Record<string, unknown>,
 ): string => {
-  const isFinding = labels.some((l) => l.toLowerCase().includes("finding"));
+  const isFinding = isProwlerFindingNode(labels);
   if (isFinding && properties?.severity) {
     const severity = String(properties.severity).toLowerCase();
     if (severity === "critical") return GRAPH_NODE_COLORS.critical;
@@ -100,7 +102,7 @@ export const getNodeBorderColor = (
   labels: string[],
   properties?: Record<string, unknown>,
 ): string => {
-  const isFinding = labels.some((l) => l.toLowerCase().includes("finding"));
+  const isFinding = isProwlerFindingNode(labels);
   if (isFinding && properties?.severity) {
     const severity = String(properties.severity).toLowerCase();
     if (severity === "critical") return GRAPH_NODE_BORDER_COLORS.critical;
