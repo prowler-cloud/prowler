@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 import { SignInForm } from "@/components/auth/oss/sign-in-form";
 import { SignUpForm } from "@/components/auth/oss/sign-up-form";
 
@@ -8,6 +10,7 @@ export const AuthForm = ({
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  releaseHighlights,
 }: {
   type: string;
   invitationToken?: string | null;
@@ -15,6 +18,7 @@ export const AuthForm = ({
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  releaseHighlights?: ReactNode;
 }) => {
   if (type === "sign-in") {
     return (
@@ -23,6 +27,7 @@ export const AuthForm = ({
         githubAuthUrl={githubAuthUrl}
         isGoogleOAuthEnabled={isGoogleOAuthEnabled}
         isGithubOAuthEnabled={isGithubOAuthEnabled}
+        releaseHighlights={releaseHighlights}
       />
     );
   }
@@ -34,6 +39,7 @@ export const AuthForm = ({
       githubAuthUrl={githubAuthUrl}
       isGoogleOAuthEnabled={isGoogleOAuthEnabled}
       isGithubOAuthEnabled={isGithubOAuthEnabled}
+      releaseHighlights={releaseHighlights}
     />
   );
 };
