@@ -160,13 +160,6 @@ class Test_CodeArtifact_Service:
             == AWS_REGION_EU_WEST_1
         )
 
-        # Packages are fetched lazily via iter_packages()
-        assert codeartifact.repositories[TEST_REPOSITORY_ARN].packages == []
-
-        pairs = list(codeartifact.iter_packages())
-        assert len(pairs) == 1
-        assert pairs[0][0].arn == TEST_REPOSITORY_ARN
-
         assert codeartifact.repositories[
             f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:repository/test-repository"
         ].packages
@@ -282,16 +275,22 @@ class Test_CodeArtifact_Service:
         codeartifact.package_limit = 1
         codeartifact.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
 
-        pairs = list(codeartifact.iter_packages())
+        pairs = list(codeartifact._load_packages_for_analysis())
 
         assert [package.name for _, package in pairs] == ["first-package"]
         assert regional_client.version_calls == ["first-package"]
 
-    def test_iter_packages_limits_version_enrichment(self):
+    def test_package_limit_exposes_only_selected_packages(self):
         codeartifact = CodeArtifact.__new__(CodeArtifact)
         codeartifact.package_limit = 2
         codeartifact._packages_listed = set()
-        repository = SimpleNamespace(arn="repo", packages=[])
+        repository = Repository(
+            name="repository",
+            arn="repo",
+            domain_name="domain",
+            domain_owner=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION_EU_WEST_1,
+        )
         codeartifact.repositories = {repository.arn: repository}
         enriched = []
 
@@ -302,7 +301,7 @@ class Test_CodeArtifact_Service:
 
         codeartifact._iter_repository_packages = iter_repository_packages
 
-        packages = list(codeartifact.iter_packages())
+        packages = list(codeartifact._load_packages_for_analysis())
 
         assert [package.name for _, package in packages] == ["package-0", "package-1"]
         assert enriched == [0, 1]
@@ -386,8 +385,6 @@ class Test_CodeArtifact_Service_No_Namespace:
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
 
-        assert codeartifact.repositories[TEST_REPOSITORY_ARN].packages == []
-        assert len(list(codeartifact.iter_packages())) == 1
         assert len(codeartifact.repositories[TEST_REPOSITORY_ARN].packages) == 1
 
         package = codeartifact.repositories[TEST_REPOSITORY_ARN].packages[0]

@@ -16,10 +16,6 @@ from tests.providers.aws.utils import (
 class Test_awslambda_function_url_public:
     def test_no_functions(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         lambda_client.functions = {}
 
         with (
@@ -44,10 +40,6 @@ class Test_awslambda_function_url_public:
 
     def test_function_public_url(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
@@ -97,10 +89,6 @@ class Test_awslambda_function_url_public:
 
     def test_function_private_url(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         function_name = "test-lambda"
         function_runtime = "python3.9"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"

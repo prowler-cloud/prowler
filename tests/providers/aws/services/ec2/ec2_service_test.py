@@ -133,12 +133,13 @@ class Test_EC2_Service:
             ),
         ]
         ec2.snapshot_limit = 1
-        ec2._public_snapshots_determined = set()
         ec2.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
 
-        snapshots = list(ec2.iter_snapshots(determine_public=True))
+        ec2._select_snapshots_for_analysis()
+        for snapshot in ec2.snapshots:
+            ec2._determine_public_snapshots(snapshot)
 
-        assert [snapshot.id for snapshot in snapshots] == ["snap-new"]
+        assert [snapshot.id for snapshot in ec2.snapshots] == ["snap-new"]
         assert regional_client.calls == ["snap-new"]
 
     # Test EC2 Describe Instances
@@ -371,12 +372,9 @@ class Test_EC2_Service:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         ec2 = EC2(aws_provider)
-        ec2.snapshot_limit = None
 
-        # Public status is hydrated lazily via iter_snapshots(determine_public=True)
-        snapshots = list(ec2.iter_snapshots(determine_public=True))
-        assert snapshot_id in str(snapshots)
-        for snapshot in snapshots:
+        assert snapshot_id in str(ec2.snapshots)
+        for snapshot in ec2.snapshots:
             if snapshot.id == snapshot_id:
                 assert re.match(r"snap-[0-9a-z]{8}", snapshot.id)
                 assert (
@@ -388,7 +386,7 @@ class Test_EC2_Service:
                 assert snapshot.public
 
     @mock_aws
-    def test_iter_snapshots_limits_public_status_hydration(self):
+    def test_snapshot_limit_exposes_only_selected_snapshots(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         volume_id = ec2_resource.create_volume(
@@ -403,10 +401,7 @@ class Test_EC2_Service:
         )
         ec2 = EC2(aws_provider)
 
-        snapshots = list(ec2.iter_snapshots(determine_public=True))
-
-        assert len(snapshots) == 1
-        assert len(ec2._public_snapshots_determined) == 1
+        assert len(ec2.snapshots) == 1
 
     # Test EC2 Instance User Data
     @mock_aws

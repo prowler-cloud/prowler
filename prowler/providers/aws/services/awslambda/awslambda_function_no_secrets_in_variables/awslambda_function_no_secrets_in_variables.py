@@ -7,12 +7,11 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 
 class awslambda_function_no_secrets_in_variables(Check):
     def execute(self):
+        findings = []
         secrets_ignore_patterns = awslambda_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-
-        reports = []
-        for function in awslambda_client.iter_functions():
+        for function in awslambda_client.functions.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
@@ -41,5 +40,6 @@ class awslambda_function_no_secrets_in_variables(Check):
                     report.status = "FAIL"
                     report.status_extended = f"Potential secret found in Lambda function {function.name} variables -> {secrets_string}."
 
-            reports.append(report)
-        return reports
+            findings.append(report)
+
+        return findings

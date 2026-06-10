@@ -284,14 +284,6 @@ class TestBackupService:
     def test_list_recovery_points(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         backup = Backup(aws_provider)
-        # Recovery points are fetched lazily via iter_recovery_points()
-        assert backup.recovery_points == []
-
-        recovery_points = list(backup.iter_recovery_points())
-        assert len(recovery_points) == 1
-        # Memoized: a second pass reuses the cache
-        assert list(backup.iter_recovery_points()) == recovery_points
-
         assert len(backup.recovery_points) == 1
         assert (
             backup.recovery_points[0].arn
@@ -347,23 +339,32 @@ class TestBackupService:
             )
         ]
         backup.recovery_points = []
-        backup._recovery_points_listed = False
         backup.recovery_point_limit = 1
         backup.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
 
-        recovery_points = list(backup.iter_recovery_points())
+        backup._list_recovery_points()
+        for recovery_point in backup.recovery_points:
+            backup._list_tags(recovery_point)
 
-        assert [rp.id for rp in recovery_points] == ["new"]
+        assert [rp.id for rp in backup.recovery_points] == ["new"]
         assert regional_client.tag_calls == [
             "arn:aws:backup:eu-west-1:123456789012:recovery-point:new"
         ]
 
-    def test_iter_recovery_points_limits_tagged_resources(self):
+    def test_recovery_point_limit_exposes_only_selected_resources(self):
         backup = Backup.__new__(Backup)
         backup.recovery_point_limit = 2
         backup.recovery_points = []
-        backup._recovery_points_listed = False
-        backup.backup_vaults = [SimpleNamespace(name="vault", region="eu-west-1")]
+        backup.backup_vaults = [
+            BackupVault(
+                arn="arn",
+                name="vault",
+                region="eu-west-1",
+                encryption="",
+                recovery_points=3,
+                locked=False,
+            )
+        ]
 
         class Paginator:
             def paginate(self, **_kwargs):
@@ -389,7 +390,9 @@ class TestBackupService:
 
         backup._list_tags = list_tags
 
-        recovery_points = list(backup.iter_recovery_points())
+        backup._list_recovery_points()
+        for recovery_point in backup.recovery_points:
+            backup._list_tags(recovery_point)
 
-        assert len(recovery_points) == 2
+        assert len(backup.recovery_points) == 2
         assert len(tagged) == 2

@@ -191,8 +191,6 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[arn].kms_id == "test_kms_id"
         assert not logs.log_groups[arn].never_expire
         assert logs.log_groups[arn].region == AWS_REGION_US_EAST_1
-        assert logs.log_groups[arn].tags == []
-        list(logs.iter_log_groups())
         assert logs.log_groups[arn].tags == [{}]
 
     @mock_aws
@@ -218,9 +216,9 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[arn].retention_days == 9999
         assert logs.log_groups[arn].kms_id == "test_kms_id"
         assert logs.log_groups[arn].region == AWS_REGION_US_EAST_1
-        assert logs.log_groups[arn].tags == []
+        assert logs.log_groups[arn].tags == [{}]
 
-    def test_iter_log_groups_limits_enriched_resources(self):
+    def test_log_group_limit_exposes_only_selected_resources(self):
         class FakeLogsClient:
             def __init__(self):
                 self.filter_calls = []
@@ -254,8 +252,11 @@ class Test_CloudWatch_Service:
 
         logs._list_tags_for_resource = list_tags
 
-        log_groups = list(logs.iter_log_groups(with_events=True))
+        logs._select_log_groups_for_analysis()
+        for log_group in logs.log_groups.values():
+            logs._list_tags_for_resource(log_group)
+            logs._get_log_events(log_group)
 
-        assert [log_group.arn for log_group in log_groups] == ["arn:2"]
+        assert list(logs.log_groups) == ["arn:2"]
         assert tagged == ["arn:2"]
         assert regional_client.filter_calls == ["log-2"]

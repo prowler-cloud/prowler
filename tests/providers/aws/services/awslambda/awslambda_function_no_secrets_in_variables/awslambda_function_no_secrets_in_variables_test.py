@@ -11,10 +11,6 @@ from tests.providers.aws.utils import (
 class Test_awslambda_function_no_secrets_in_variables:
     def test_no_functions(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         lambda_client.functions = {}
         lambda_client.audit_config = {"secrets_ignore_patterns": []}
 
@@ -40,10 +36,6 @@ class Test_awslambda_function_no_secrets_in_variables:
 
     def test_function_no_variables(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
@@ -92,10 +84,6 @@ class Test_awslambda_function_no_secrets_in_variables:
 
     def test_function_secrets_in_keyword(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
@@ -144,10 +132,6 @@ class Test_awslambda_function_no_secrets_in_variables:
 
     def test_function_secrets_in_keyword_and_variable(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
@@ -196,10 +180,6 @@ class Test_awslambda_function_no_secrets_in_variables:
 
     def test_function_secrets_in_variables_telegram_token(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
@@ -246,10 +226,6 @@ class Test_awslambda_function_no_secrets_in_variables:
 
     def test_function_no_secrets_in_variables(self):
         lambda_client = mock.MagicMock
-        lambda_client.audit_config = {}
-        lambda_client.iter_functions = lambda: iter(
-            list(lambda_client.functions.values())
-        )
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
         function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"

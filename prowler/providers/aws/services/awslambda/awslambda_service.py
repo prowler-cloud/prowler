@@ -19,17 +19,18 @@ class Lambda(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        # functions is the memoization cache for the lazy iter_functions()
-        # generator. Functions are listed eagerly (a single paginated
-        # list_functions call per region, no per-function cost), but expensive
-        # per-function detail is hydrated on demand for selected functions.
+        # Functions are listed first, then trimmed to the subset selected for
+        # analysis before expensive per-function detail is hydrated.
         self.functions = {}
-        self._functions_hydrated = set()
-        self._event_source_mappings_listed_functions = set()
         self.function_limit = get_resource_scan_limit(
             self.audit_config, "max_lambda_functions"
         )
         self.__threading_call__(self._list_functions)
+        self._select_functions_for_analysis()
+        self._list_tags_for_resource()
+        self.__threading_call__(self._get_policy)
+        self.__threading_call__(self._get_function_url_config)
+        self.__threading_call__(self._list_event_source_mappings)
 
     def _list_functions(self, regional_client):
         logger.info("Lambda - Listing Functions...")
@@ -86,19 +87,31 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def _list_event_source_mappings(self, function):
+    def _select_functions_for_analysis(self):
+        self.functions = {
+            function.arn: function
+            for function in limit_resources(
+                sorted(
+                    self.functions.values(),
+                    key=lambda f: f.last_modified or "",
+                    reverse=True,
+                ),
+                self.function_limit,
+            )
+        }
+
+    def _list_event_source_mappings(self, regional_client):
         logger.info("Lambda - Listing Event Source Mappings...")
         try:
-            regional_client = self.regional_clients[function.region]
             paginator = regional_client.get_paginator("list_event_source_mappings")
-            for page in paginator.paginate(FunctionName=function.name):
+            for page in paginator.paginate():
                 for mapping in page.get("EventSourceMappings", []):
                     function_arn = mapping.get("FunctionArn", "")
                     # Normalise to unqualified ARN (strip :qualifier suffix if present)
                     base_arn = ":".join(function_arn.split(":")[:7])
-                    if base_arn != function.arn:
+                    if base_arn not in self.functions:
                         continue
-                    function.event_source_mappings.append(
+                    self.functions[base_arn].event_source_mappings.append(
                         EventSourceMapping(
                             uuid=mapping["UUID"],
                             event_source_arn=mapping.get("EventSourceArn", ""),
@@ -121,7 +134,7 @@ class Lambda(AWSService):
             self.thread_pool.submit(
                 self._fetch_function_code, function.name, function.region
             ): function
-            for function in self.selected_functions()
+            for function in self.functions.values()
         }
 
         for fetched_lambda_code in as_completed(lambda_functions_to_fetch):
@@ -154,16 +167,21 @@ class Lambda(AWSService):
             )
             raise
 
-    def _get_policy(self, function):
+    def _get_policy(self, regional_client):
         logger.info("Lambda - Getting Policy...")
         try:
-            regional_client = self.regional_clients[function.region]
-            try:
-                function_policy = regional_client.get_policy(FunctionName=function.name)
-                function.policy = json.loads(function_policy["Policy"])
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "ResourceNotFoundException":
-                    function.policy = {}
+            for function in self.functions.values():
+                if function.region == regional_client.region:
+                    try:
+                        function_policy = regional_client.get_policy(
+                            FunctionName=function.name
+                        )
+                        self.functions[function.arn].policy = json.loads(
+                            function_policy["Policy"]
+                        )
+                    except ClientError as e:
+                        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                            self.functions[function.arn].policy = {}
         except Exception as error:
             logger.error(
                 f"{function.region} --"
@@ -171,26 +189,27 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def _get_function_url_config(self, function):
+    def _get_function_url_config(self, regional_client):
         logger.info("Lambda - Getting Function URL Config...")
         try:
-            regional_client = self.regional_clients[function.region]
-            try:
-                function_url_config = regional_client.get_function_url_config(
-                    FunctionName=function.name
-                )
-                if "Cors" in function_url_config:
-                    allow_origins = function_url_config["Cors"]["AllowOrigins"]
-                else:
-                    allow_origins = []
-                function.url_config = URLConfig(
-                    auth_type=function_url_config["AuthType"],
-                    url=function_url_config["FunctionUrl"],
-                    cors_config=URLConfigCORS(allow_origins=allow_origins),
-                )
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "ResourceNotFoundException":
-                    function.url_config = None
+            for function in self.functions.values():
+                if function.region == regional_client.region:
+                    try:
+                        function_url_config = regional_client.get_function_url_config(
+                            FunctionName=function.name
+                        )
+                        if "Cors" in function_url_config:
+                            allow_origins = function_url_config["Cors"]["AllowOrigins"]
+                        else:
+                            allow_origins = []
+                        self.functions[function.arn].url_config = URLConfig(
+                            auth_type=function_url_config["AuthType"],
+                            url=function_url_config["FunctionUrl"],
+                            cors_config=URLConfigCORS(allow_origins=allow_origins),
+                        )
+                    except ClientError as e:
+                        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                            self.functions[function.arn].url_config = None
         except Exception as error:
             logger.error(
                 f"{function.region} --"
@@ -198,50 +217,21 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def _list_tags_for_resource(self, function):
+    def _list_tags_for_resource(self):
         logger.info("Lambda - List Tags...")
         try:
-            regional_client = self.regional_clients[function.region]
-            try:
-                response = regional_client.list_tags(Resource=function.arn)["Tags"]
-                function.tags = [response]
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "ResourceNotFoundException":
-                    function.tags = []
+            for function in self.functions.values():
+                try:
+                    regional_client = self.regional_clients[function.region]
+                    response = regional_client.list_tags(Resource=function.arn)["Tags"]
+                    function.tags = [response]
+                except ClientError as e:
+                    if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                        function.tags = []
         except Exception as error:
             logger.error(
                 f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
-    def selected_functions(self):
-        return limit_resources(
-            sorted(
-                self.functions.values(),
-                key=lambda f: f.last_modified or "",
-                reverse=True,
-            ),
-            self.function_limit,
-        )
-
-    def iter_functions(self):
-        """Yield functions lazily, hydrating expensive per-function detail on demand.
-
-        ``list_functions`` has no server-side ordering, so newest-first is
-        best-effort by ``LastModified``. Policy, URL config, tags and event
-        source mappings are fetched only for the functions the consumer
-        actually pulls, memoized per function ARN and shared across checks
-        (checks run sequentially, so no locking needed).
-        """
-        for function in self.selected_functions():
-            if function.arn not in self._functions_hydrated:
-                if function.arn not in self._event_source_mappings_listed_functions:
-                    self._list_event_source_mappings(function)
-                    self._event_source_mappings_listed_functions.add(function.arn)
-                self._get_policy(function)
-                self._get_function_url_config(function)
-                self._list_tags_for_resource(function)
-                self._functions_hydrated.add(function.arn)
-            yield function
 
 
 class LambdaCode(BaseModel):

@@ -7,12 +7,11 @@ from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 class ecs_task_definitions_no_environment_secrets(Check):
     def execute(self):
+        findings = []
         secrets_ignore_patterns = ecs_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-
-        reports = []
-        for task_definition in ecs_client.iter_task_definitions():
+        for task_definition in ecs_client.task_definitions.values():
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -59,5 +58,6 @@ class ecs_task_definitions_no_environment_secrets(Check):
                 )
             else:
                 report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}."
-            reports.append(report)
-        return reports
+            findings.append(report)
+
+        return findings

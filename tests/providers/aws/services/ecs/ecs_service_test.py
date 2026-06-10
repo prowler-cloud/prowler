@@ -139,7 +139,6 @@ class Test_ECS_Service:
         ecs = ECS(aws_provider)
         assert ecs.session.__class__.__name__ == "Session"
 
-    # Task definitions are now fetched lazily via iter_task_definitions()
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_list_task_definitions(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -147,12 +146,6 @@ class Test_ECS_Service:
 
         task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
 
-        # Nothing fetched until the generator is consumed
-        assert ecs.task_definitions == {}
-
-        task_definitions = list(ecs.iter_task_definitions())
-
-        assert len(task_definitions) == 1
         assert len(ecs.task_definitions) == 1
         assert ecs.task_definitions[task_arn].name == "test_ecs_task"
         assert ecs.task_definitions[task_arn].arn == task_arn
@@ -166,8 +159,6 @@ class Test_ECS_Service:
         ecs = ECS(aws_provider)
 
         task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
-
-        list(ecs.iter_task_definitions())
 
         assert len(ecs.task_definitions) == 1
         assert ecs.task_definitions[task_arn].name == "test_ecs_task"
@@ -209,7 +200,7 @@ class Test_ECS_Service:
             .readonly_rootfilesystem
         )
 
-    def test_iter_task_definitions_is_lazy_and_memoized(self):
+    def test_task_definitions_are_loaded_once_for_analysis(self):
         describe_calls = []
         list_calls = []
 
@@ -240,24 +231,15 @@ class Test_ECS_Service:
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
             ecs = ECS(aws_provider)
 
-            gen = ecs.iter_task_definitions()
-            first = next(gen)
-
-            # Lazy: only the first task definition has been described so far
-            assert first.revision == "3"
+            assert [td.revision for td in ecs.task_definitions.values()] == [
+                "3",
+                "2",
+                "1",
+            ]
             assert list_calls == [{"sort": "DESC"}]
-            assert len(describe_calls) == 1
-
-            # Drain the rest
-            rest = list(gen)
-            assert [td.revision for td in rest] == ["2", "1"]
             assert len(describe_calls) == 3
 
-            # Memoized: a second full pass does not describe anything again
-            assert len(list(ecs.iter_task_definitions())) == 3
-            assert len(describe_calls) == 3
-
-    def test_iter_task_definitions_limits_described_resources(self):
+    def test_task_definition_limit_exposes_only_selected_resources(self):
         describe_calls = []
 
         def counting_make_api_call(self, operation_name, kwarg):
@@ -288,9 +270,7 @@ class Test_ECS_Service:
             )
             ecs = ECS(aws_provider)
 
-            task_definitions = list(ecs.iter_task_definitions())
-
-            assert [td.revision for td in task_definitions] == ["3", "2"]
+            assert [td.revision for td in ecs.task_definitions.values()] == ["3", "2"]
             assert len(describe_calls) == 2
 
     def test_task_definition_limit_bounds_describe_calls(self):
@@ -319,13 +299,12 @@ class Test_ECS_Service:
         with patch(
             "botocore.client.BaseClient._make_api_call", new=counting_make_api_call
         ):
-            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            aws_provider = set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1], audit_config={"max_ecs_task_definitions": 1}
+            )
             ecs = ECS(aws_provider)
-            ecs.task_definition_limit = 1
 
-            task_definitions = list(ecs.iter_task_definitions())
-
-            assert [td.revision for td in task_definitions] == ["3"]
+            assert [td.revision for td in ecs.task_definitions.values()] == ["3"]
             assert describe_calls == [
                 "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:3"
             ]

@@ -28,14 +28,14 @@ class Backup(AWSService):
         self.__threading_call__(self._list_backup_report_plans)
         self.protected_resources = []
         self.__threading_call__(self._list_backup_selections)
-        # recovery_points is the memoization cache for the lazy
-        # iter_recovery_points() generator; populated on demand so only the
-        # selected recovery points are tagged and analyzed.
+        # Recovery points are listed first, then only the selected subset is
+        # tagged and exposed for checks.
         self.recovery_points = []
-        self._recovery_points_listed = False
         self.recovery_point_limit = get_resource_scan_limit(
             self.audit_config, "max_backup_recovery_points"
         )
+        self._list_recovery_points()
+        self.__threading_call__(self._list_tags, self.recovery_points)
 
     def _list_backup_vaults(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")
@@ -189,17 +189,8 @@ class Backup(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def iter_recovery_points(self):
-        """Yield recovery points lazily, memoized.
-
-        ``list_recovery_points_by_backup_vault`` has no server-side ordering,
-        so candidates are enumerated and selected newest-first by
-        ``CreationDate``. Tags are fetched only for selected recovery points
-        (checks run sequentially, so no locking needed).
-        """
-        if self._recovery_points_listed:
-            yield from limit_resources(self.recovery_points, self.recovery_point_limit)
-            return
+    def _list_recovery_points(self):
+        logger.info("Backup - Listing Recovery Points...")
         try:
             candidates = []
             for backup_vault in self.backup_vaults or []:
@@ -236,10 +227,7 @@ class Backup(AWSService):
                     region=backup_vault.region,
                     tags=[],
                 )
-                self._list_tags(rp)
                 self.recovery_points.append(rp)
-                yield rp
-            self._recovery_points_listed = True
         except ClientError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -6,8 +6,8 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 
 class awslambda_function_inside_vpc(Check):
     def execute(self) -> List[Check_Report_AWS]:
-        reports = []
-        for function in awslambda_client.iter_functions():
+        findings = []
+        for function_arn, function in awslambda_client.functions.items():
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
@@ -18,12 +18,13 @@ class awslambda_function_inside_vpc(Check):
             if not function.vpc_id:
                 awslambda_client.set_failed_check(
                     self.__class__.__name__,
-                    function.arn,
+                    function_arn,
                 )
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Lambda function {function.name} is not inside a VPC"
                 )
 
-            reports.append(report)
-        return reports
+            findings.append(report)
+
+        return findings

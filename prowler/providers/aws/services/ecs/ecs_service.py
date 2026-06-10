@@ -1,6 +1,6 @@
 from datetime import datetime
 from re import sub
-from typing import Iterator, Optional
+from typing import Optional
 
 from pydantic.v1 import BaseModel
 
@@ -14,9 +14,8 @@ class ECS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        # task_definitions is the memoization cache for the lazy
-        # iter_task_definitions() generator; it is populated on demand so only
-        # the selected task definitions are described and analyzed.
+        # Task definition ARNs are listed first, then only the selected subset
+        # is described and exposed for checks.
         self.task_definitions = {}
         self._task_definition_arns = None
         self.task_definition_limit = get_resource_scan_limit(
@@ -25,6 +24,8 @@ class ECS(AWSService):
         self.services = {}
         self.clusters = {}
         self.task_sets = {}
+        for _ in self._load_task_definitions_for_analysis():
+            pass
         self.__threading_call__(self._list_clusters)
         self.__threading_call__(self._describe_clusters, self.clusters.values())
         self.__threading_call__(self._describe_services, self.clusters.values())
@@ -57,7 +58,7 @@ class ECS(AWSService):
         self._task_definition_arns = arns
         return arns
 
-    def iter_task_definitions(self) -> Iterator["TaskDefinition"]:
+    def _load_task_definitions_for_analysis(self):
         """Yield task definitions lazily, describing each one on demand.
 
         Resources already fetched are memoized in ``self.task_definitions`` and

@@ -89,7 +89,7 @@ class Test_Lambda_Service:
         awslambda = Lambda(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert awslambda.service == "lambda"
 
-    def test_function_limit_bounds_per_function_hydration_to_latest_selected(self):
+    def test_function_limit_selects_latest_functions_for_analysis(self):
         awslambda = Lambda.__new__(Lambda)
         awslambda.functions = {
             "old": Function(
@@ -108,38 +108,10 @@ class Test_Lambda_Service:
             ),
         }
         awslambda.function_limit = 1
-        awslambda._functions_hydrated = set()
-        awslambda._event_source_mappings_listed_functions = set()
-        awslambda.regional_clients = {AWS_REGION_EU_WEST_1: object()}
-        event_source_calls = []
-        policy_calls = []
-        url_calls = []
-        tag_calls = []
 
-        def list_event_source_mappings(function):
-            event_source_calls.append(function.name)
+        awslambda._select_functions_for_analysis()
 
-        def get_policy(function):
-            policy_calls.append(function.name)
-
-        def get_function_url_config(function):
-            url_calls.append(function.name)
-
-        def list_tags_for_resource(function):
-            tag_calls.append(function.name)
-
-        awslambda._list_event_source_mappings = list_event_source_mappings
-        awslambda._get_policy = get_policy
-        awslambda._get_function_url_config = get_function_url_config
-        awslambda._list_tags_for_resource = list_tags_for_resource
-
-        functions = list(awslambda.iter_functions())
-
-        assert [function.name for function in functions] == ["new"]
-        assert event_source_calls == ["new"]
-        assert policy_calls == ["new"]
-        assert url_calls == ["new"]
-        assert tag_calls == ["new"]
+        assert list(awslambda.functions) == ["new"]
 
     @mock_aws
     def test_list_functions(self):
@@ -252,9 +224,6 @@ class Test_Lambda_Service:
             )
             assert awslambda.functions
             assert len(awslambda.functions) == 2
-            # Policy, URL config and tags are hydrated lazily on iteration
-            assert awslambda.functions[lambda_arn_1].policy == {}
-            list(awslambda.iter_functions())
             # Lambda 1
             assert awslambda.functions[lambda_arn_1].name == lambda_name_1
             assert awslambda.functions[lambda_arn_1].arn == lambda_arn_1
@@ -314,7 +283,7 @@ class Test_Lambda_Service:
                             assert lambda_code_file.read() == LAMBDA_FUNCTION_CODE
 
     @mock_aws
-    def test_iter_functions_limits_enriched_functions(self):
+    def test_function_limit_exposes_only_selected_functions(self):
         lambda_client = client("lambda", region_name=AWS_REGION_US_EAST_1)
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         iam_role = iam_client.create_role(
@@ -337,10 +306,7 @@ class Test_Lambda_Service:
             )
         )
 
-        functions = list(awslambda.iter_functions())
-
-        assert len(functions) == 1
-        assert len(awslambda._functions_hydrated) == 1
+        assert len(awslambda.functions) == 1
 
     @mock_aws
     def test_get_function_code_fetches_only_selected_functions(self):

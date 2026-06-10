@@ -4,8 +4,8 @@ from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 class ecs_task_definitions_logging_enabled(Check):
     def execute(self):
-        reports = []
-        for task_definition in ecs_client.iter_task_definitions():
+        findings = []
+        for task_definition in ecs_client.task_definitions.values():
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -21,5 +21,5 @@ class ecs_task_definitions_logging_enabled(Check):
             if failed_containers:
                 report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has containers running with no logging configuration: {', '.join(failed_containers)}"
 
-            reports.append(report)
-        return reports
+            findings.append(report)
+        return findings

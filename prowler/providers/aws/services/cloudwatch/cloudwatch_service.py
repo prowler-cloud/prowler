@@ -84,10 +84,8 @@ class Logs(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
-        # log_groups is listed eagerly (it also feeds metric filters), but the
-        # expensive per-log-group hydration (tags, and log events for the
-        # no-secrets check) is deferred to iter_log_groups() so only selected
-        # log groups are enriched and analyzed.
+        # Log groups are listed first, then only the selected subset is enriched
+        # and exposed for checks.
         self.log_groups = {}
         self._log_groups_hydrated = set()
         self.log_group_limit = get_resource_scan_limit(
@@ -96,10 +94,35 @@ class Logs(AWSService):
         # The threshold for number of events to return per log group.
         self.events_per_log_group_threshold = 1000
         self.__threading_call__(self._describe_log_groups)
+        self._select_log_groups_for_analysis()
         self.resource_policies = {}
         self.__threading_call__(self._describe_resource_policies)
         self.metric_filters = []
         self.__threading_call__(self._describe_metric_filters)
+        if self.log_groups:
+            if (
+                "cloudwatch_log_group_no_secrets_in_logs"
+                in provider.audit_metadata.expected_checks
+            ):
+                self.__threading_call__(self._get_log_events, self.log_groups.values())
+            self.__threading_call__(
+                self._list_tags_for_resource, self.log_groups.values()
+            )
+
+    def _select_log_groups_for_analysis(self):
+        if not self.log_groups:
+            return
+        self.log_groups = {
+            log_group.arn: log_group
+            for log_group in limit_resources(
+                sorted(
+                    self.log_groups.values(),
+                    key=lambda lg: lg.creation_time or 0,
+                    reverse=True,
+                ),
+                self.log_group_limit,
+            )
+        }
 
     def _describe_metric_filters(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
@@ -124,7 +147,6 @@ class Logs(AWSService):
 
                         if log_group and log_group.arn not in self._log_groups_hydrated:
                             self._list_tags_for_resource(log_group)
-                            self._log_groups_hydrated.add(log_group.arn)
 
                         self.metric_filters.append(
                             MetricFilter(
@@ -215,34 +237,6 @@ class Logs(AWSService):
                 f"{log_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def iter_log_groups(self, with_events: bool = False):
-        """Yield log groups lazily, hydrating tags (and events) on demand.
-
-        ``describe_log_groups`` has no server-side ordering, so newest-first
-        is best-effort by ``creationTime``. Tags, and log events for the
-        no-secrets check, are fetched only for the log groups the consumer
-        actually pulls, memoized per ARN and shared across checks (checks run
-        sequentially, so no locking needed).
-        """
-        if not self.log_groups:
-            return
-        for log_group in limit_resources(
-            sorted(
-                self.log_groups.values(),
-                key=lambda lg: lg.creation_time or 0,
-                reverse=True,
-            ),
-            self.log_group_limit,
-        ):
-            if log_group.arn not in self._log_groups_hydrated:
-                self._list_tags_for_resource(log_group)
-                if with_events:
-                    self._get_log_events(log_group)
-                self._log_groups_hydrated.add(log_group.arn)
-            elif with_events and not log_group.log_streams:
-                self._get_log_events(log_group)
-            yield log_group
-
     def _describe_resource_policies(self, regional_client):
         logger.info("CloudWatch Logs - Describing resource policies...")
         try:
@@ -276,6 +270,8 @@ class Logs(AWSService):
             )
 
     def _list_tags_for_resource(self, log_group):
+        if log_group.arn in self._log_groups_hydrated:
+            return
         logger.info(f"CloudWatch Logs - List Tags for Log Group {log_group.name}...")
         try:
             regional_client = self.regional_clients[log_group.region]
@@ -283,6 +279,7 @@ class Logs(AWSService):
                 resourceArn=log_group.arn
             )["tags"]
             log_group.tags = [response]
+            self._log_groups_hydrated.add(log_group.arn)
         except ClientError as error:
             if error.response["Error"]["Code"] == "ResourceNotFoundException":
                 logger.warning(

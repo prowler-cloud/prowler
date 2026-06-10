@@ -4,18 +4,18 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 
 class awslambda_function_url_cors_policy(Check):
     def execute(self):
-        reports = []
-        for function in awslambda_client.iter_functions():
-            if not function.url_config:
-                continue
+        findings = []
+        for function in awslambda_client.functions.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
-            if "*" in function.url_config.cors_config.allow_origins:
-                report.status = "FAIL"
-                report.status_extended = f"Lambda function {function.name} URL has a wide CORS configuration."
-            else:
-                report.status = "PASS"
-                report.status_extended = f"Lambda function {function.name} does not have a wide CORS configuration."
+            if function.url_config:
+                if "*" in function.url_config.cors_config.allow_origins:
+                    report.status = "FAIL"
+                    report.status_extended = f"Lambda function {function.name} URL has a wide CORS configuration."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Lambda function {function.name} does not have a wide CORS configuration."
 
-            reports.append(report)
-        return reports
+                findings.append(report)
+
+        return findings

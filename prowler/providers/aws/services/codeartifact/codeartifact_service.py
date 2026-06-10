@@ -16,13 +16,15 @@ class CodeArtifact(AWSService):
         super().__init__(__class__.__name__, provider)
         # repositories is a dictionary containing all the codeartifact service information
         self.repositories = {}
-        # repository ARNs whose packages have been fully listed and memoized
-        # into repository.packages by the lazy iter_packages() generator
+        # repository ARNs whose selected packages have been listed and memoized
+        # into repository.packages.
         self._packages_listed = set()
         self.package_limit = get_resource_scan_limit(
             self.audit_config, "max_codeartifact_packages"
         )
         self.__threading_call__(self._list_repositories)
+        for _ in self._load_packages_for_analysis():
+            pass
         self._list_tags_for_resource()
 
     def _list_repositories(self, regional_client):
@@ -154,12 +156,11 @@ class CodeArtifact(AWSService):
                 f" {error}"
             )
 
-    def iter_packages(self) -> Iterator[Tuple["Repository", "Package"]]:
-        """Yield ``(repository, package)`` pairs lazily, memoized per repository.
+    def _load_packages_for_analysis(self) -> Iterator[Tuple["Repository", "Package"]]:
+        """Yield the ``(repository, package)`` pairs selected for analysis.
 
-        Packages already fetched are cached in ``repository.packages`` and
-        reused on subsequent passes (checks run sequentially, so no locking is
-        needed).
+        Package listing stays in the service layer so checks receive only the
+        selected packages and remain unaware of resource-analysis limits.
         """
         yielded = 0
         for repository in list(self.repositories.values()):
