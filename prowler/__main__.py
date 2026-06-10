@@ -19,7 +19,7 @@ from prowler.config.config import (
     orange_color,
     sarif_file_suffix,
 )
-from prowler.lib.banner import print_banner
+from prowler.lib.banner import print_banner, print_prowler_cloud_banner
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
@@ -202,7 +202,7 @@ def prowler():
 
     if not args.no_banner:
         legend = args.verbose or getattr(args, "fixer", None)
-        print_banner(legend)
+        print_banner(legend, provider)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
@@ -1475,6 +1475,10 @@ def prowler():
                 print(
                     f"\nDetailed compliance results are in {Fore.YELLOW}{output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
+
+    # Promote Prowler Cloud as the last thing the user sees after the results
+    if not args.no_banner and not args.only_logs:
+        print_prowler_cloud_banner(provider)
 
     # If custom checks were passed, remove the modules
     if checks_folder:
