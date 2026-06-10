@@ -13,6 +13,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Allowlisted idempotent background tasks are no longer lost when a worker is stopped or crashes mid-task; tasks with external side effects are marked terminal instead of blindly re-running [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+- SAML logins no longer wipe a user's roles when the IdP does not send the `userType` attribute; existing roles are kept, and when `userType` names a role that does not exist it is now created with all permissions enabled instead of none [(#11520)](https://github.com/prowler-cloud/prowler/pull/11520)
 
 ### 🐞 Fixed
 
