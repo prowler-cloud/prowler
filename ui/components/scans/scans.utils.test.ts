@@ -110,9 +110,9 @@ describe("scans.utils", () => {
   it("formats scan labels and durations for table display", () => {
     expect(getScanAlias(makeScan(""))).toBe("-");
     expect(getScanAlias(makeScan("Daily scheduled scan", "scheduled"))).toBe(
-      "scheduled scan",
+      "Scheduled Scan",
     );
-    expect(getScanAlias(makeScan("", "scheduled"))).toBe("scheduled scan");
+    expect(getScanAlias(makeScan("", "scheduled"))).toBe("Scheduled Scan");
     expect(getScanAlias(makeScan("Production scan"))).toBe("Production scan");
     expect(formatScanDuration(73)).toBe("1 min 13 sec");
     expect(formatScanDuration(null)).toBe("-");

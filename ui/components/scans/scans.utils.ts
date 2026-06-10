@@ -143,7 +143,7 @@ export function getScanJobsTabFilters(
 
 export function getScanAlias(scan: ScanProps): string {
   if (scan.attributes.trigger === SCAN_TRIGGER.SCHEDULED)
-    return "scheduled scan";
+    return "Scheduled Scan";
   return scan.attributes.name?.trim() || "-";
 }
 
