@@ -12680,7 +12680,9 @@ class TestTenantFinishACSView:
         assert user.name == "John Doe"
         assert user.company_name == "testing_company"
 
-        role = Role.objects.using(MainRouter.admin_db).get(name="platform_team")
+        role = Role.objects.using(MainRouter.admin_db).get(
+            name="platform_team", tenant=tenants_fixture[0]
+        )
         assert role.tenant == tenants_fixture[0]
         assert role.manage_users
         assert role.manage_account

@@ -803,54 +803,55 @@ class TenantFinishACSView(FinishACSView):
             extra.get("userType", [""])[0].strip() if extra.get("userType") else ""
         )
         if role_name:
-            role = (
-                Role.objects.using(MainRouter.admin_db)
-                .filter(name=role_name, tenant=tenant)
-                .first()
-            )
-            if role is None:
-                role = Role.objects.using(MainRouter.admin_db).create(
+            with transaction.atomic(using=MainRouter.admin_db):
+                role, _ = Role.objects.using(MainRouter.admin_db).get_or_create(
                     name=role_name,
                     tenant=tenant,
-                    manage_users=True,
-                    manage_account=True,
-                    manage_billing=True,
-                    manage_providers=True,
-                    manage_integrations=True,
-                    manage_scans=True,
-                    unlimited_visibility=True,
+                    defaults={
+                        "manage_users": True,
+                        "manage_account": True,
+                        "manage_billing": True,
+                        "manage_providers": True,
+                        "manage_integrations": True,
+                        "manage_scans": True,
+                        "unlimited_visibility": True,
+                    },
                 )
 
-            # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
-            remaining_manage_account_users = (
-                UserRoleRelationship.objects.using(MainRouter.admin_db)
-                .filter(role__manage_account=True, tenant_id=tenant.id)
-                .exclude(user_id=user_id)
-                .values("user")
-                .distinct()
-                .count()
-            )
-            user_has_manage_account = (
-                UserRoleRelationship.objects.using(MainRouter.admin_db)
-                .filter(role__manage_account=True, tenant_id=tenant.id, user_id=user_id)
-                .exists()
-            )
-            would_remove_last_manage_account = (
-                user_has_manage_account
-                and remaining_manage_account_users == 0
-                and not role.manage_account
-            )
-
-            if not would_remove_last_manage_account:
-                UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-                    user=user,
-                    tenant_id=tenant.id,
-                ).delete()
-                UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                    user=user,
-                    role=role,
-                    tenant_id=tenant.id,
+                # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
+                remaining_manage_account_users = (
+                    UserRoleRelationship.objects.using(MainRouter.admin_db)
+                    .filter(role__manage_account=True, tenant_id=tenant.id)
+                    .exclude(user_id=user_id)
+                    .values("user")
+                    .distinct()
+                    .count()
                 )
+                user_has_manage_account = (
+                    UserRoleRelationship.objects.using(MainRouter.admin_db)
+                    .filter(
+                        role__manage_account=True,
+                        tenant_id=tenant.id,
+                        user_id=user_id,
+                    )
+                    .exists()
+                )
+                would_remove_last_manage_account = (
+                    user_has_manage_account
+                    and remaining_manage_account_users == 0
+                    and not role.manage_account
+                )
+
+                if not would_remove_last_manage_account:
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                        user=user,
+                        tenant_id=tenant.id,
+                    ).delete()
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                        user=user,
+                        role=role,
+                        tenant_id=tenant.id,
+                    )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,
