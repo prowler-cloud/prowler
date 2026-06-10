@@ -13,6 +13,7 @@ import {
   ClientAccordionWrapper,
   ComplianceDownloadContainer,
   ComplianceHeader,
+  ComplianceWarming,
   RequirementsStatusCard,
   RequirementsStatusCardSkeleton,
   // SectionsFailureRateCard,
@@ -91,6 +92,16 @@ export default async function ComplianceDetail({
         ? getScan(selectedScanId, { include: "provider" })
         : Promise.resolve(null),
     ]);
+
+  // The compliance catalog is still warming after a deploy/restart. Show the
+  // "still loading" state with a Try Again instead of rendering an empty page.
+  if (attributesData?.warming) {
+    return (
+      <ContentLayout title={pageTitle}>
+        <ComplianceWarming />
+      </ContentLayout>
+    );
+  }
 
   if (selectedScanResponse?.data) {
     const scan = selectedScanResponse.data;

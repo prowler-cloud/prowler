@@ -114,6 +114,8 @@ from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
+    COMPLIANCE_WARMED,
+    COMPLIANCE_WARMING_STARTED,
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
     get_prowler_provider_compliance,
@@ -122,6 +124,7 @@ from api.constants import SEVERITY_ORDER
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import (
+    ComplianceWarmingError,
     TaskFailedException,
     UpstreamAccessDeniedError,
     UpstreamAuthenticationError,
@@ -5059,6 +5062,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
     @action(detail=False, methods=["get"], url_name="attributes")
     def attributes(self, request):
+        # While the background warm-up is in progress, refuse immediately
+        # instead of falling through to the slow cold load on the request
+        # thread (which would trip the Gunicorn worker timeout). `is_set()` is
+        # a non-blocking flag read, so this never touches the loader.
+        if COMPLIANCE_WARMING_STARTED.is_set() and not COMPLIANCE_WARMED.is_set():
+            raise ComplianceWarmingError()
+
         compliance_id = request.query_params.get("filter[compliance_id]")
         if not compliance_id:
             raise ValidationError(
