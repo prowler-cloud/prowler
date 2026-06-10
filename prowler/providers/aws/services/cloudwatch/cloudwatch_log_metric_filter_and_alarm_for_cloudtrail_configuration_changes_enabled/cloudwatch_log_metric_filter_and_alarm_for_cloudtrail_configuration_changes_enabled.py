@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -15,12 +16,14 @@ class cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_change
     Check
 ):
     def execute(self):
-        pattern = (
-            r"(?=.*\$\.eventName\s*=\s*.?CreateTrail)"
-            r"(?=.*\$\.eventName\s*=\s*.?UpdateTrail)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeleteTrail)"
-            r"(?=.*\$\.eventName\s*=\s*.?StartLogging)"
-            r"(?=.*\$\.eventName\s*=\s*.?StopLogging)"
+        pattern = build_metric_filter_pattern(
+            event_names=[
+                "CreateTrail",
+                "UpdateTrail",
+                "DeleteTrail",
+                "StartLogging",
+                "StopLogging",
+            ],
         )
         findings = []
 

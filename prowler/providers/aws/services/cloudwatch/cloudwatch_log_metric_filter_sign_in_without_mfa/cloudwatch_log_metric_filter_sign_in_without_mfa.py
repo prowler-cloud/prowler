@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,9 +14,9 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_sign_in_without_mfa(Check):
     def execute(self):
-        pattern = (
-            r"(?=.*\$\.eventName\s*=\s*.?ConsoleLogin)"
-            r"(?=.*\$\.additionalEventData\.MFAUsed\s*!=\s*.?Yes)"
+        pattern = build_metric_filter_pattern(
+            event_names=["ConsoleLogin"],
+            extra_clauses=[("additionalEventData.MFAUsed", "!=", "Yes")],
         )
         findings = []
 

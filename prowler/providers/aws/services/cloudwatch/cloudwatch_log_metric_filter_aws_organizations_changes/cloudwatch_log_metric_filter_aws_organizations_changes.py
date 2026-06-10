@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,29 +14,31 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_aws_organizations_changes(Check):
     def execute(self):
-        pattern = (
-            r"(?=.*\$\.eventSource\s*=\s*.?organizations\.amazonaws\.com)"
-            r"(?=.*\$\.eventName\s*=\s*.?AcceptHandshake)"
-            r"(?=.*\$\.eventName\s*=\s*.?AttachPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?CancelHandshake)"
-            r"(?=.*\$\.eventName\s*=\s*.?CreateAccount)"
-            r"(?=.*\$\.eventName\s*=\s*.?CreateOrganization)"
-            r"(?=.*\$\.eventName\s*=\s*.?CreateOrganizationalUnit)"
-            r"(?=.*\$\.eventName\s*=\s*.?CreatePolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeclineHandshake)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeleteOrganization)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeleteOrganizationalUnit)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeletePolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?EnableAllFeatures)"
-            r"(?=.*\$\.eventName\s*=\s*.?EnablePolicyType)"
-            r"(?=.*\$\.eventName\s*=\s*.?InviteAccountToOrganization)"
-            r"(?=.*\$\.eventName\s*=\s*.?LeaveOrganization)"
-            r"(?=.*\$\.eventName\s*=\s*.?DetachPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?DisablePolicyType)"
-            r"(?=.*\$\.eventName\s*=\s*.?MoveAccount)"
-            r"(?=.*\$\.eventName\s*=\s*.?RemoveAccountFromOrganization)"
-            r"(?=.*\$\.eventName\s*=\s*.?UpdateOrganizationalUnit)"
-            r"(?=.*\$\.eventName\s*=\s*.?UpdatePolicy)"
+        pattern = build_metric_filter_pattern(
+            event_source="organizations.amazonaws.com",
+            event_names=[
+                "AcceptHandshake",
+                "AttachPolicy",
+                "CancelHandshake",
+                "CreateAccount",
+                "CreateOrganization",
+                "CreateOrganizationalUnit",
+                "CreatePolicy",
+                "DeclineHandshake",
+                "DeleteOrganization",
+                "DeleteOrganizationalUnit",
+                "DeletePolicy",
+                "EnableAllFeatures",
+                "EnablePolicyType",
+                "InviteAccountToOrganization",
+                "LeaveOrganization",
+                "DetachPolicy",
+                "DisablePolicyType",
+                "MoveAccount",
+                "RemoveAccountFromOrganization",
+                "UpdateOrganizationalUnit",
+                "UpdatePolicy",
+            ],
         )
         findings = []
 

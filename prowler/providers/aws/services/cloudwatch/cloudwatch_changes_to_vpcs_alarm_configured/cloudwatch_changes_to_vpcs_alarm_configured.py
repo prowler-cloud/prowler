@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,18 +14,20 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_changes_to_vpcs_alarm_configured(Check):
     def execute(self):
-        pattern = (
-            r"(?=.*\$\.eventName\s*=\s*.?CreateVpc)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeleteVpc)"
-            r"(?=.*\$\.eventName\s*=\s*.?ModifyVpcAttribute)"
-            r"(?=.*\$\.eventName\s*=\s*.?AcceptVpcPeeringConnection)"
-            r"(?=.*\$\.eventName\s*=\s*.?CreateVpcPeeringConnection)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeleteVpcPeeringConnection)"
-            r"(?=.*\$\.eventName\s*=\s*.?RejectVpcPeeringConnection)"
-            r"(?=.*\$\.eventName\s*=\s*.?AttachClassicLinkVpc)"
-            r"(?=.*\$\.eventName\s*=\s*.?DetachClassicLinkVpc)"
-            r"(?=.*\$\.eventName\s*=\s*.?DisableVpcClassicLink)"
-            r"(?=.*\$\.eventName\s*=\s*.?EnableVpcClassicLink)"
+        pattern = build_metric_filter_pattern(
+            event_names=[
+                "CreateVpc",
+                "DeleteVpc",
+                "ModifyVpcAttribute",
+                "AcceptVpcPeeringConnection",
+                "CreateVpcPeeringConnection",
+                "DeleteVpcPeeringConnection",
+                "RejectVpcPeeringConnection",
+                "AttachClassicLinkVpc",
+                "DetachClassicLinkVpc",
+                "DisableVpcClassicLink",
+                "EnableVpcClassicLink",
+            ],
         )
         findings = []
 

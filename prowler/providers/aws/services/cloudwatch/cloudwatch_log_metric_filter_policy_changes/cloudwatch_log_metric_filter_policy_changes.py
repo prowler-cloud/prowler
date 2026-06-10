@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,23 +14,25 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_policy_changes(Check):
     def execute(self):
-        pattern = (
-            r"(?=.*\$\.eventName\s*=\s*.?DeleteGroupPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeleteRolePolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeleteUserPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?PutGroupPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?PutRolePolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?PutUserPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?CreatePolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeletePolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?CreatePolicyVersion)"
-            r"(?=.*\$\.eventName\s*=\s*.?DeletePolicyVersion)"
-            r"(?=.*\$\.eventName\s*=\s*.?AttachRolePolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?DetachRolePolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?AttachUserPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?DetachUserPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?AttachGroupPolicy)"
-            r"(?=.*\$\.eventName\s*=\s*.?DetachGroupPolicy)"
+        pattern = build_metric_filter_pattern(
+            event_names=[
+                "DeleteGroupPolicy",
+                "DeleteRolePolicy",
+                "DeleteUserPolicy",
+                "PutGroupPolicy",
+                "PutRolePolicy",
+                "PutUserPolicy",
+                "CreatePolicy",
+                "DeletePolicy",
+                "CreatePolicyVersion",
+                "DeletePolicyVersion",
+                "AttachRolePolicy",
+                "DetachRolePolicy",
+                "AttachUserPolicy",
+                "DetachUserPolicy",
+                "AttachGroupPolicy",
+                "DetachGroupPolicy",
+            ],
         )
         findings = []
 
