@@ -93,7 +93,7 @@ jobs:
           fi
 
       - name: Add community label
-        if: steps.check_membership.outputs.is_member == 'false'
+        if: steps.check_membership.outputs.is_member == 'false' && github.event.pull_request.user.type != 'Bot'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
