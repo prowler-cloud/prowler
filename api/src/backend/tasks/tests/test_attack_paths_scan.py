@@ -1273,6 +1273,20 @@ class TestAttackPathsFindingsHelpers:
             [call(mock_session, stmt) for stmt in FINDINGS_INDEX_STATEMENTS]
         )
 
+    def test_create_findings_indexes_runs_even_when_sink_is_neptune(self, settings):
+        # The index helpers run against the temp ingest DB, which is always
+        # Neo4j regardless of the configured sink. A Neptune sink must not
+        # suppress index creation on that DB (regression for the dropped
+        # in-helper sink gate).
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        mock_session = MagicMock()
+        with patch("tasks.jobs.attack_paths.indexes.run_write_query") as mock_run_write:
+            indexes_module.create_findings_indexes(mock_session)
+
+        from tasks.jobs.attack_paths.indexes import FINDINGS_INDEX_STATEMENTS
+
+        assert mock_run_write.call_count == len(FINDINGS_INDEX_STATEMENTS)
+
     def test_load_findings_batches_requests(self, providers_fixture):
         provider = providers_fixture[0]
         provider.provider = Provider.ProviderChoices.AWS

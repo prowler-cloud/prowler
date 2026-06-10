@@ -420,7 +420,9 @@ class _NeptuneAuthToken(neo4j.Auth):
         credentials = credentials.get_frozen_credentials()
 
         request = AWSRequest(method="GET", url=url + "/opencypher")
-        request.headers.add_header("Host", urlsplit(url).hostname)
+        # SigV4 canonical Host must carry the real `host:port`
+        # Neptune runs on a non-default port (8182), so `.hostname` would drop it and break signing
+        request.headers.add_header("Host", urlsplit(url).netloc)
         SigV4Auth(credentials, "neptune-db", region).add_auth(request)
 
         auth_obj = {

@@ -86,7 +86,7 @@ class Neo4jSink(SinkDatabase):
                     max_connection_pool_size=MAX_CONNECTION_POOL_SIZE,
                 )
                 # Eager connectivity check is best-effort:
-                # A Neo4 that is down at boot must not crash the process, same degradation model as Postgres
+                # A Neo4j that is down at boot must not crash the process, same degradation model as Postgres
                 # The driver reconnects lazily on first use
                 # /health/ready surfaces the outage until it recovers
                 try:
@@ -255,7 +255,7 @@ class Neo4jSink(SinkDatabase):
             with self.get_session(database) as session:
                 session.run("CALL db.clearQueryCaches()")
         except GraphDatabaseQueryException as exc:
-            logging.warning(
+            logger.warning(
                 f"Failed to clear query cache for database `{database}`: {exc}"
             )
 

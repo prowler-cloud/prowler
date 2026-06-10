@@ -267,12 +267,18 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"Ensuring tenant database {tenant_database_name}, and its indexes, exists for tenant {prowler_api_provider.tenant_id}"
         )
         graph_database.create_database(tenant_database_name)
-        with graph_database.get_session(tenant_database_name) as tenant_neo4j_session:
-            indexes.create_cartography_indexes(
-                tenant_neo4j_session, tenant_cartography_config
-            )
-            indexes.create_findings_indexes(tenant_neo4j_session)
-            indexes.create_sync_indexes(tenant_neo4j_session)
+        # Sink-side index creation: Neptune auto-manages indexes and rejects
+        # `CREATE INDEX`, so only run it when the sink is Neo4j
+        # The temp ingest DB is always Neo4j and is always indexed above
+        if settings.ATTACK_PATHS_SINK_DATABASE != "neptune":
+            with graph_database.get_session(
+                tenant_database_name
+            ) as tenant_neo4j_session:
+                indexes.create_cartography_indexes(
+                    tenant_neo4j_session, tenant_cartography_config
+                )
+                indexes.create_findings_indexes(tenant_neo4j_session)
+                indexes.create_sync_indexes(tenant_neo4j_session)
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
         db_utils.set_provider_graph_data_ready(attack_paths_scan, False)

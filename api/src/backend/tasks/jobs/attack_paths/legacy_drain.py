@@ -48,14 +48,15 @@ def drain_legacy_neo4j_for_provider(
     body is wrapped in try/except so a failed drain never fails a scan whose
     Neptune write already succeeded.
     """
+    sink = None
     try:
         from api.attack_paths.sink.neo4j import Neo4jSink
 
         tenant_db = get_database_name(tenant_id, temporary=False)
         sink = Neo4jSink()
 
-        # No early return on missing/empty DB: `has_provider_data` and
-        # `drop_subgraph` are both safe (they swallow DatabaseNotFound and are
+        # No early return on missing / empty DB: `has_provider_data` and
+        # `drop_subgraph` are both safe (they swallow `DatabaseNotFound` and are
         # no-ops when the subgraph is empty), and the bottom check is the only
         # one that distinguishes a missing DB from an empty existing DB
         # An early return here would leave empty existing tenant DBs orphaned
@@ -70,14 +71,16 @@ def drain_legacy_neo4j_for_provider(
             logger.info(f"Legacy Neo4j tenant DB {tenant_db} is now empty; dropping")
             sink.drop_database(tenant_db)
 
-        _close_silently(sink)
-
     except Exception as exc:  # pragma: no cover - defensive
         logger.warning(
             f"Legacy Neo4j drain failed for provider {provider_id} in tenant "
             f"{tenant_id} (Neptune write already succeeded): {exc}",
             exc_info=True,
         )
+
+    finally:
+        if sink is not None:
+            _close_silently(sink)
 
 
 def _exists_and_empty(sink, database: str) -> bool:

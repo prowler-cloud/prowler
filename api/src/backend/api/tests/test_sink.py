@@ -5,6 +5,8 @@ Neo4j is the default and preserves today's behavior; Neptune is opt-in and
 builds dual writer/reader Bolt drivers.
 """
 
+import json
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -572,3 +574,23 @@ class TestNeptuneAdminNoOps:
         with patch.object(sink, "get_session") as get_session:
             assert getattr(sink, method)("ignored") is None
             get_session.assert_not_called()
+
+
+class TestNeptuneAuthToken:
+    """SigV4 signing for the Neptune Bolt endpoint."""
+
+    @patch("api.attack_paths.sink.neptune.SigV4Auth")
+    @patch("api.attack_paths.sink.neptune.BotoSession")
+    def test_host_header_includes_non_default_port(self, mock_boto, mock_sigv4):
+        # Neptune runs on 8182; the SigV4 canonical Host must keep the port or
+        # the signature is rejected.
+        from api.attack_paths.sink.neptune import _NeptuneAuthToken
+
+        credentials = MagicMock()
+        credentials.get_frozen_credentials.return_value = MagicMock()
+        mock_boto.return_value.get_credentials.return_value = credentials
+
+        token = _NeptuneAuthToken("eu-west-1", "https://writer.example:8182")
+
+        auth_obj = json.loads(token.credentials)
+        assert auth_obj["Host"] == "writer.example:8182"
