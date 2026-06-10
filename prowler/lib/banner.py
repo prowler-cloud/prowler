@@ -54,7 +54,6 @@ def print_prowler_cloud_banner(provider: str = None):
     Returns:
     - None
     """
-    provider_label = f"{provider.upper()} " if provider else ""
     check = f"{Fore.GREEN}✓{Style.RESET_ALL}"
     bar = f"{banner_color}│{Style.RESET_ALL}"
     print(
@@ -63,7 +62,7 @@ def print_prowler_cloud_banner(provider: str = None):
 {bar}
 {bar} {check} {Style.BRIGHT}Attack Path Visualization{Style.RESET_ALL} - see how attackers chain risks to reach your crown jewels
 {bar} {check} {Style.BRIGHT}Lighthouse AI + MCP{Style.RESET_ALL} - autonomous triage, prioritization and remediation
-{bar} {check} {Style.BRIGHT}Organizations{Style.RESET_ALL} - all your {provider_label}accounts under one organization
+{bar} {check} {Style.BRIGHT}Organizations{Style.RESET_ALL} - all your AWS accounts under one organization
 {bar} {check} {Style.BRIGHT}Continuous scanning{Style.RESET_ALL} - scheduled scans with history, trends and alerts
 {bar} {check} {Style.BRIGHT}Integrations{Style.RESET_ALL} - Jira, Slack, AWS Security Hub, Amazon S3, SSO and RBAC
 {bar} {check} {Style.BRIGHT}Reports{Style.RESET_ALL} - download ready-to-share PDF reports
