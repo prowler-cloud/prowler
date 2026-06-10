@@ -7,6 +7,7 @@ from prowler.lib.check.compliance_models import (
 from prowler.lib.check.models import CheckMetadata
 
 AVAILABLE_COMPLIANCE_FRAMEWORKS = {}
+COMPLIANCE_FRAMEWORK_PROVIDER = {}
 
 
 class LazyComplianceTemplate(Mapping):
@@ -115,6 +116,29 @@ def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[s
         )
 
     return AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type]
+
+
+def get_provider_for_compliance(compliance_id: str) -> str | None:
+    """Resolve which provider owns `compliance_id`.
+
+    Built once, lazily, from the per-provider framework lists in
+    ProviderChoices order so the first provider that supports a universal
+    framework (e.g. ``dora``, ``csa_ccm_4.0``) wins, matching the previous
+    per-request linear scan.
+
+    Args:
+        compliance_id (str): Framework identifier (e.g., "cis_1.4_aws", "dora").
+
+    Returns:
+        str | None: The owning provider type, or None if no framework matches.
+    """
+    global COMPLIANCE_FRAMEWORK_PROVIDER
+    if not COMPLIANCE_FRAMEWORK_PROVIDER:
+        for provider_type in Provider.ProviderChoices.values:
+            for framework_id in get_compliance_frameworks(provider_type):
+                COMPLIANCE_FRAMEWORK_PROVIDER.setdefault(framework_id, provider_type)
+
+    return COMPLIANCE_FRAMEWORK_PROVIDER.get(compliance_id)
 
 
 def get_prowler_provider_checks(provider_type: Provider.ProviderChoices):

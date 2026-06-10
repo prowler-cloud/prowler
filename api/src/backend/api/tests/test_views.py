@@ -9570,6 +9570,32 @@ class TestComplianceOverviewViewSet:
             assert "Category" in first_attr
             assert "AWSService" in first_attr
 
+    def test_compliance_overview_attributes_universal_framework(
+        self, authenticated_client
+    ):
+        # Universal frameworks (no per-provider file) must still resolve through
+        # the reverse index, which maps them to the first supporting provider.
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "dora"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        for item in data:
+            assert "id" in item
+            assert "metadata" in item["attributes"]["attributes"]
+            assert "check_ids" in item["attributes"]["attributes"]
+
+    def test_compliance_overview_attributes_unknown_compliance_id(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "does_not_exist"},
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client
     ):
