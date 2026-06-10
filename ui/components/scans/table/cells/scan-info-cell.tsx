@@ -9,7 +9,8 @@ export function ScanInfoCell({ scan }: { scan: ScanProps }) {
     <div className="max-w-[240px] min-w-0">
       <EntityInfo
         entityAlias={getScanAlias(scan)}
-        entityId={scan.id}
+        // Synthetic pending rows have a fabricated id; show none until the scan exists.
+        entityId={scan.pendingSchedule ? undefined : scan.id}
         idLabel="ID"
       />
     </div>
