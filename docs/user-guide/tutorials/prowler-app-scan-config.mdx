@@ -1,0 +1,244 @@
+---
+title: "Scan Config"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx";
+
+<VersionBadge version="5.30.0" />
+
+Prowler Cloud provides **Scan Config**, a way to override the default check thresholds and behavior on a per-provider basis without having to ship a custom `config.yaml` file with the CLI. A Scan Config is a YAML document that is stored in the tenant, attached to one or more Providers, and applied automatically when those Providers are scanned.
+
+<Note>
+Scan Config is **exclusive to Prowler Cloud**. It is not available in the self-hosted Prowler App or the open-source CLI. If you run scans with the CLI, use a custom [`--config-file`](/user-guide/cli/tutorials/configuration_file) instead.
+</Note>
+
+## What Is a Scan Config?
+
+A Scan Config is the Prowler Cloud equivalent of the CLI's [`--config-file`](/user-guide/cli/tutorials/configuration_file). It lets you:
+
+- **Override configurable check thresholds** (for example, `max_unused_access_keys_days`, `ec2_high_risk_ports`, `trusted_account_ids`).
+- **Group settings by provider type** (`aws`, `azure`, `gcp`, `kubernetes`, `m365`, `github`, `mongodbatlas`, `cloudflare`, `vercel`, `okta`) in a single document.
+- **Reuse the same configuration across multiple Providers** by attaching the same Scan Config to several of them.
+- **Validate the configuration live** against a JSON Schema before saving, so typos and out-of-range values are caught before the next scan runs.
+
+<Note>
+Scan Config and Mutelist are **independent and complementary**. Mutelist controls *which findings are suppressed*; Scan Config controls *how individual checks evaluate resources*. Attaching one does not affect the other. See [Advanced Mutelist](/user-guide/tutorials/prowler-app-mute-findings) for muting.
+</Note>
+
+<Note>
+Each Provider can be attached to **at most one** Scan Config. A single Scan Config, however, can be attached to **any number** of Providers — useful for rolling out the same baseline across an entire account fleet.
+</Note>
+
+## Accessing the Scan Config Page
+
+To access the Scan Config page:
+
+1. Click "Scan Config" in the left navigation menu.
+
+The page lists every Scan Config defined in the tenant, the number of Providers attached to each, and a filter by name. From here you can create new configs, edit existing ones, or delete them.
+
+## Creating a Scan Config
+
+1. Click "New Scan Config" on the top right of the page.
+2. Enter a **Name** (3–100 characters, unique within the tenant).
+3. Write the **Configuration** YAML in the editor. The editor validates the document live against the JSON Schema described in [Configuration Reference](#configuration-reference); errors are surfaced inline.
+4. Select the **Providers** you want to attach this config to. Providers already attached to a different Scan Config are disabled in the selector — detach them from the other config first if you need to move them.
+5. Click "Save" to create the Scan Config.
+
+### Example: AWS Threshold Overrides
+
+```yaml
+aws:
+  max_unused_access_keys_days: 60
+  max_console_access_days: 60
+  ec2_high_risk_ports:
+    - 22
+    - 3389
+    - 5432
+  trusted_account_ids:
+    - "111122223333"
+    - "444455556677"
+  ecr_repository_vulnerability_minimum_severity: HIGH
+```
+
+### Example: Multi-Provider Document
+
+```yaml
+aws:
+  max_unused_access_keys_days: 90
+azure:
+  vm_backup_min_daily_retention_days: 14
+gcp:
+  shodan_api_key: null
+```
+
+Only the sections matching the type of each attached Provider are applied. An AWS Provider attached to the example above only sees the `aws:` block; the `azure:` and `gcp:` keys are ignored for it.
+
+## Editing a Scan Config
+
+1. Navigate to the Scan Config page.
+2. Locate the Scan Config row and click "Edit".
+3. Update the **Name**, **Configuration** YAML, or **Providers** selection.
+4. Click "Save".
+
+<Warning>
+The Providers selector behaves as a **full replacement**, not a delta: the list you submit is the final state. Providers that were previously attached but are no longer in the list will be **detached** from this Scan Config (and revert to the default configuration on their next scan). Providers added to the list are attached on save.
+</Warning>
+
+## Deleting a Scan Config
+
+1. Navigate to the Scan Config page.
+2. Locate the Scan Config row and click "Delete".
+3. Confirm the deletion.
+
+When a Scan Config is deleted, every Provider currently attached to it is automatically detached and falls back to the default `config.yaml` values on the next scan. No previous scan results are altered.
+
+## How Scan Config Is Applied to Scans
+
+When a scan is launched for a Provider:
+
+1. The scan job resolves the Provider's `scan_config` foreign key.
+2. If a Scan Config is attached, the section matching the Provider's type (for example `aws` for an AWS Provider) is extracted from the document.
+3. That section is handed to the SDK as the runtime `config_content` for the scan, overriding the defaults from `prowler/config/config.yaml`.
+4. Checks read their thresholds from the merged configuration during execution.
+
+If no Scan Config is attached, the scan runs with the default `config.yaml` values shipped with Prowler.
+
+## Configuration Reference
+
+The Scan Config document is a mapping where each top-level key is a provider type and each value is an object of configurable thresholds for that provider. The full JSON Schema is served by the API at `GET /api/v1/scan-configs/schema/` and powers the live validation in the UI editor.
+
+### AWS
+
+The `aws:` section supports every key documented in [Configuration File — AWS](/user-guide/cli/tutorials/configuration_file#aws). The most common keys and their validation rules:
+
+| Key                                                   | Type            | Constraint                                                                                  |
+| ----------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------- |
+| `mute_non_default_regions`                            | Boolean         | —                                                                                           |
+| `disallowed_regions`                                  | List of Strings | Unique items                                                                                |
+| `max_unused_access_keys_days`                         | Integer         | 30 – 365                                                                                    |
+| `max_console_access_days`                             | Integer         | 30 – 365                                                                                    |
+| `max_unused_sagemaker_access_days`                    | Integer         | 1 – 365                                                                                     |
+| `shodan_api_key`                                      | String or null  | —                                                                                           |
+| `max_security_group_rules`                            | Integer         | 1 – 1000                                                                                    |
+| `max_ec2_instance_age_in_days`                        | Integer         | 1 – 3650                                                                                    |
+| `ec2_allowed_interface_types`                         | List of Strings | Unique items                                                                                |
+| `ec2_allowed_instance_owners`                         | List of Strings | Unique items                                                                                |
+| `ec2_high_risk_ports`                                 | List of Integer | Each in 1 – 65535, unique                                                                   |
+| `trusted_account_ids`                                 | List of Strings | Each must match `^\d{12}$`, unique                                                          |
+| `trusted_ips`                                         | List of Strings | Unique items                                                                                |
+| `log_group_retention_days`                            | Integer         | One of 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653            |
+| `recommended_cdk_bootstrap_version`                   | Integer         | 1 – 1000                                                                                    |
+| `max_idle_disconnect_timeout_in_seconds`              | Integer         | 60 – 3600                                                                                   |
+| `max_disconnect_timeout_in_seconds`                   | Integer         | 60 – 3600                                                                                   |
+| `max_session_duration_seconds`                        | Integer         | 600 – 360000                                                                                |
+| `obsolete_lambda_runtimes`                            | List of Strings | Unique items                                                                                |
+| `lambda_min_azs`                                      | Integer         | 1 – 6                                                                                       |
+| `organizations_enabled_regions`                       | List of Strings | Unique items                                                                                |
+| `organizations_trusted_delegated_administrators`      | List of Strings | Each must match `^\d{12}$`, unique                                                          |
+| `ecr_repository_vulnerability_minimum_severity`       | String          | One of `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFORMATIONAL`                                 |
+| `verify_premium_support_plans`                        | Boolean         | —                                                                                           |
+| `threat_detection_privilege_escalation_threshold`     | Number          | 0 – 1                                                                                       |
+| `threat_detection_privilege_escalation_minutes`       | Integer         | 1 – 43200                                                                                   |
+| `threat_detection_enumeration_threshold`              | Number          | 0 – 1                                                                                       |
+| `threat_detection_enumeration_minutes`                | Integer         | 1 – 43200                                                                                   |
+| `threat_detection_llm_jacking_threshold`              | Number          | 0 – 1                                                                                       |
+| `threat_detection_llm_jacking_minutes`                | Integer         | 1 – 43200                                                                                   |
+| `check_rds_instance_replicas`                         | Boolean         | —                                                                                           |
+| `days_to_expire_threshold`                            | Integer         | 1 – 365                                                                                     |
+| `eks_required_log_types`                              | List of Strings | Each one of `api`, `audit`, `authenticator`, `controllerManager`, `scheduler`               |
+| `eks_cluster_oldest_version_supported`                | String          | Matches `^\d+\.\d+$` (for example `1.30`)                                                   |
+| `elb_min_azs`, `elbv2_min_azs`                        | Integer         | 1 – 6                                                                                       |
+| `minimum_snapshot_retention_period`                   | Integer         | 1 – 35                                                                                      |
+| `secrets_ignore_patterns`                             | List of Strings | Unique items                                                                                |
+| `max_days_secret_unused`, `max_days_secret_unrotated` | Integer         | 1 – 365                                                                                     |
+| `min_kinesis_stream_retention_hours`                  | Integer         | 24 – 8760                                                                                   |
+| `fargate_linux_latest_version`, `fargate_windows_latest_version` | String | Matches `^\d+\.\d+\.\d+$`                                                          |
+
+Keys not listed above are accepted (the schema is permissive) but bypass schema validation. Refer to the canonical [`prowler/config/config.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml) for the full list of supported keys per check.
+
+### Azure, GCP, Kubernetes, M365, GitHub, MongoDB Atlas, Cloudflare, Vercel, Okta
+
+These provider sections accept any key the corresponding `config.yaml` recognises. Validation is structural (each section must be a mapping) but does not currently enforce per-key ranges. See [Configuration File](/user-guide/cli/tutorials/configuration_file) for the available keys per provider.
+
+## REST API Reference
+
+The Scan Config feature is exposed via the Prowler API under `/api/v1/scan-configs/`. All endpoints require the `MANAGE_ACCOUNT` permission.
+
+| Method | Endpoint                          | Description                                                              |
+| ------ | --------------------------------- | ------------------------------------------------------------------------ |
+| GET    | `/api/v1/scan-configs/`           | List Scan Configs in the tenant. Supports `?filter[name]` substring search and ordering. |
+| POST   | `/api/v1/scan-configs/`           | Create a Scan Config and attach it to a list of Providers.               |
+| GET    | `/api/v1/scan-configs/{id}/`      | Retrieve a single Scan Config by id.                                     |
+| PATCH  | `/api/v1/scan-configs/{id}/`      | Update name, configuration, or the attached Providers list.              |
+| DELETE | `/api/v1/scan-configs/{id}/`      | Delete a Scan Config and detach any attached Providers.                  |
+| GET    | `/api/v1/scan-configs/schema/`    | Return the JSON Schema used to validate the `configuration` field.       |
+
+### Create Request Example
+
+```json
+{
+  "data": {
+    "type": "scan-configs",
+    "attributes": {
+      "name": "baseline-aws",
+      "configuration": {
+        "aws": {
+          "max_unused_access_keys_days": 60,
+          "ec2_high_risk_ports": [22, 3389]
+        }
+      },
+      "provider_ids": [
+        "9b0f7f6e-3b1c-4f9c-8b7a-7d6a2e5c1d0a",
+        "1c8b5d2a-9e0f-4b3a-bc4d-2f3e1a7b9c8d"
+      ]
+    }
+  }
+}
+```
+
+The `provider_ids` list is **write-only** and represents the *final* set of Providers attached to the Scan Config after the operation. On PATCH, any Provider currently attached but not present in the list will be detached.
+
+### Validation Errors
+
+When a configuration fails schema validation, the API responds with `400 Bad Request` and a JSON:API error array whose `detail` fields contain a `<keypath>: <message>` string, for example:
+
+```
+aws.max_unused_access_keys_days: 20 is less than the minimum of 30
+aws.ec2_high_risk_ports[2]: 70000 is greater than the maximum of 65535
+```
+
+The UI editor surfaces the same paths so you can jump to the exact offending field.
+
+## Scan Config vs. CLI Configuration File
+
+| Aspect                  | Scan Config (Prowler Cloud)                            | CLI `--config-file`                              |
+| ----------------------- | ------------------------------------------------------ | ------------------------------------------------ |
+| Storage                 | Stored per tenant in the database                      | Local YAML file shipped with the scan invocation |
+| Editing                 | Web editor with live JSON Schema validation            | Manual file editing                              |
+| Scope                   | Attached to one or more Providers                      | Applied to the single scan run                   |
+| Multiple providers      | Single document with per-provider sections             | Single document with per-provider sections       |
+| Validation              | Server-side + UI live validation against JSON Schema   | No upfront validation — typos are silent         |
+| Update propagation      | Automatic on the next scan of the attached Providers   | Requires editing the file before each run        |
+
+## Troubleshooting
+
+### "Provider already attached to another Scan Config"
+
+A Provider can only be attached to one Scan Config at a time. To move a Provider:
+
+1. Open the Scan Config that currently owns the Provider.
+2. Remove the Provider from the selection and save.
+3. Open the target Scan Config, add the Provider, and save.
+
+### "Validation failed: <key>: must be >= <n>"
+
+The configuration YAML contains a value outside the schema's allowed range. Open the Scan Config in the editor — the offending key is highlighted with the same message. Update the value and save.
+
+### Threshold Changes Did Not Take Effect
+
+Scan Config values are read at the start of each scan. If a scan was already in progress when the Scan Config was created or updated, that scan uses the previous configuration. Launch a new scan to pick up the changes.
+
+### A Provider's Scan Disappeared After Deleting a Scan Config
+
+Deleting a Scan Config detaches its Providers but does not affect previous scans or their findings. Subsequent scans run with default `config.yaml` values. To restore a custom configuration, create a new Scan Config and attach the Provider to it.
