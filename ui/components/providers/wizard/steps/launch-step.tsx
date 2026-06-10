@@ -189,18 +189,28 @@ export function LaunchStep({
   };
 
   useEffect(() => {
+    // In MANUAL_ONLY the action launches a scan instead of saving a schedule,
+    // so the footer label must say so (mirrors the cloud overlay's wording).
+    const actionLabel = isManualOnly
+      ? isLaunching
+        ? "Launching scan..."
+        : "Launch scan"
+      : isLaunching
+        ? "Saving..."
+        : "Save";
+
     onFooterChange({
       showBack: true,
       backLabel: "Back",
       backDisabled: isLaunching,
       onBack,
       showAction: true,
-      actionLabel: isLaunching ? "Saving..." : "Save",
+      actionLabel,
       actionDisabled: isActionBlocked,
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
       onAction: () => actionRef.current(),
     });
-  }, [isActionBlocked, isLaunching, onBack, onFooterChange]);
+  }, [isActionBlocked, isLaunching, isManualOnly, onBack, onFooterChange]);
 
   if (isLaunching) {
     return (

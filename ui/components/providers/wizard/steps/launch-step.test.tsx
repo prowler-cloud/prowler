@@ -302,6 +302,8 @@ describe("LaunchStep", () => {
       ).not.toBeInTheDocument();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
       expect(lastFooterConfig(onFooterChange)?.actionDisabled).toBe(false);
+      // The action launches a scan here, so it must not be labeled "Save".
+      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Launch scan");
 
       // When
       await act(async () => {

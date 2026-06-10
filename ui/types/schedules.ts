@@ -77,5 +77,6 @@ export interface ScheduleFormValues {
   hour: number;
   dayOfWeek: number;
   dayOfMonth: number;
+  intervalHours: number;
   launchInitialScan: boolean;
 }

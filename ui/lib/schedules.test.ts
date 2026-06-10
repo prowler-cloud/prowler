@@ -29,6 +29,7 @@ describe("schedule payload mapping", () => {
       hour: 8,
       dayOfWeek: 2,
       dayOfMonth: 12,
+      intervalHours: 48,
       launchInitialScan: false,
     };
 
@@ -54,6 +55,7 @@ describe("schedule payload mapping", () => {
       hour: 23,
       dayOfWeek: 0,
       dayOfMonth: 1,
+      intervalHours: 48,
       launchInitialScan: false,
     };
 
@@ -72,6 +74,24 @@ describe("schedule payload mapping", () => {
     });
   });
 
+  it("preserves a custom interval instead of rewriting it to 48 hours", () => {
+    // Given a schedule whose interval was set outside the UI (e.g. bulk API)
+    const values = {
+      frequency: SCHEDULE_FREQUENCY.INTERVAL,
+      hour: 5,
+      dayOfWeek: 0,
+      dayOfMonth: 1,
+      intervalHours: 72,
+      launchInitialScan: false,
+    };
+
+    // When
+    const payload = buildScheduleUpdatePayload(values);
+
+    // Then
+    expect(payload.scan_interval_hours).toBe(72);
+  });
+
   it("maps weekly schedules with 0 as Sunday and clears interval/month", () => {
     // Given
     const values = {
@@ -79,6 +99,7 @@ describe("schedule payload mapping", () => {
       hour: 6,
       dayOfWeek: 0,
       dayOfMonth: 28,
+      intervalHours: 48,
       launchInitialScan: false,
     };
 
@@ -104,6 +125,7 @@ describe("schedule payload mapping", () => {
       hour: 0,
       dayOfWeek: 5,
       dayOfMonth: 28,
+      intervalHours: 48,
       launchInitialScan: false,
     };
 
@@ -170,6 +192,7 @@ describe("getScheduleFormValues", () => {
       hour: 0,
       dayOfWeek: 1,
       dayOfMonth: 1,
+      intervalHours: 48,
       launchInitialScan: false,
     });
   });
@@ -181,6 +204,7 @@ describe("getScheduleFormValues", () => {
         hour: 0,
         dayOfWeek: 1,
         dayOfMonth: 1,
+        intervalHours: 48,
         launchInitialScan: false,
       },
     );
@@ -192,8 +216,22 @@ describe("getScheduleFormValues", () => {
       hour: 9,
       dayOfWeek: 4,
       dayOfMonth: 20,
+      intervalHours: 48,
       launchInitialScan: false,
     });
+  });
+
+  it("keeps a custom interval from the stored schedule", () => {
+    const values = getScheduleFormValues(
+      buildAttributes({
+        scan_frequency: SCHEDULE_FREQUENCY.INTERVAL,
+        scan_interval_hours: 72,
+        scan_day_of_week: null,
+        scan_day_of_month: null,
+      }),
+    );
+    expect(values.frequency).toBe(SCHEDULE_FREQUENCY.INTERVAL);
+    expect(values.intervalHours).toBe(72);
   });
 
   it("falls back to default day fields when the schedule leaves them null", () => {
@@ -211,6 +249,7 @@ describe("getNextScheduledRun", () => {
     hour: 14,
     dayOfWeek: 5,
     dayOfMonth: 15,
+    intervalHours: 48,
     launchInitialScan: false,
   };
   // Wednesday 2026-06-10 10:30 local.
@@ -240,12 +279,26 @@ describe("getNextScheduledRun", () => {
     );
   });
 
-  it("INTERVAL: now + 48h", () => {
-    const next = getNextScheduledRun(
-      { ...baseValues, frequency: SCHEDULE_FREQUENCY.INTERVAL },
-      now,
-    );
-    expect(next.getTime()).toBe(now.getTime() + 48 * 60 * 60 * 1000);
+  it("INTERVAL: anchors at the next occurrence of the hour, like DAILY", () => {
+    // The backend derives the INTERVAL anchor as today/tomorrow at scan_hour
+    // and fires the first run there; repeats only start after that.
+    expect(
+      parts(
+        getNextScheduledRun(
+          { ...baseValues, frequency: SCHEDULE_FREQUENCY.INTERVAL, hour: 14 },
+          now,
+        ),
+      ),
+    ).toEqual({ year: 2026, month: 5, day: 10, hour: 14 });
+
+    expect(
+      parts(
+        getNextScheduledRun(
+          { ...baseValues, frequency: SCHEDULE_FREQUENCY.INTERVAL, hour: 8 },
+          now,
+        ),
+      ),
+    ).toEqual({ year: 2026, month: 5, day: 11, hour: 8 });
   });
 
   it("WEEKLY: advances to the target weekday this week", () => {

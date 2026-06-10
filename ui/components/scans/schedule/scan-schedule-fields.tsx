@@ -23,9 +23,12 @@ import {
 } from "@/lib/schedules";
 import { SCHEDULE_FREQUENCY, type ScheduleFormValues } from "@/types/schedules";
 
+// The INTERVAL label is resolved at render time from the form's intervalHours,
+// so a schedule created with a custom interval (e.g. via the bulk API) is not
+// mislabeled as 48 hours.
 const FREQUENCY_OPTIONS = [
   { value: SCHEDULE_FREQUENCY.DAILY, label: "Daily" },
-  { value: SCHEDULE_FREQUENCY.INTERVAL, label: "Every 48 hours" },
+  { value: SCHEDULE_FREQUENCY.INTERVAL, label: null },
   { value: SCHEDULE_FREQUENCY.WEEKLY, label: "Weekly" },
   { value: SCHEDULE_FREQUENCY.MONTHLY, label: "Monthly" },
 ] as const;
@@ -114,7 +117,10 @@ export function ScanScheduleFields({
   const hour = form.watch("hour");
   const dayOfWeek = form.watch("dayOfWeek");
   const dayOfMonth = form.watch("dayOfMonth");
+  const intervalHours = form.watch("intervalHours");
   const timezone = getBrowserTimezone();
+  const frequencyLabel = (option: (typeof FREQUENCY_OPTIONS)[number]) =>
+    option.label ?? `Every ${intervalHours} hours`;
   // In OSS (non-Cloud) the advanced cadence and time are locked: `/schedules/daily`
   // ignores them, so they are display-only with a Cloud upsell.
   const advancedDisabled = disabled || !canUseAdvancedSchedule;
@@ -171,7 +177,7 @@ export function ScanScheduleFields({
                 <SelectContent>
                   {FREQUENCY_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      {frequencyLabel(option)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -227,6 +233,7 @@ export function ScanScheduleFields({
                   hour,
                   dayOfWeek,
                   dayOfMonth,
+                  intervalHours,
                   launchInitialScan: false,
                 },
                 new Date(),

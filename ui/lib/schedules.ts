@@ -14,13 +14,15 @@ const DEFAULT_DAY_OF_WEEK = 1;
 const DEFAULT_DAY_OF_MONTH = 1;
 // The backend (prowler-cloud) enforces SCAN_INTERVAL_HOURS_MIN = 24. 48 is well
 // above that floor.
-const INTERVAL_HOURS = 48;
+const SCAN_INTERVAL_HOURS_MIN = 24;
+const DEFAULT_INTERVAL_HOURS = 48;
 
 export const scheduleFormSchema = z.object({
   frequency: z.enum(SCHEDULE_FREQUENCY),
   hour: z.number().int().min(0).max(23),
   dayOfWeek: z.number().int().min(0).max(6),
   dayOfMonth: z.number().int().min(1).max(28),
+  intervalHours: z.number().int().min(SCAN_INTERVAL_HOURS_MIN),
   launchInitialScan: z.boolean(),
 });
 
@@ -64,6 +66,7 @@ export function getScheduleFormDefaults(): ScheduleFormValues {
     hour: DEFAULT_SCHEDULE_HOUR,
     dayOfWeek: DEFAULT_DAY_OF_WEEK,
     dayOfMonth: DEFAULT_DAY_OF_MONTH,
+    intervalHours: DEFAULT_INTERVAL_HOURS,
     launchInitialScan: false,
   };
 }
@@ -82,6 +85,7 @@ export function getScheduleFormValues(
     hour: schedule.scan_hour,
     dayOfWeek: schedule.scan_day_of_week ?? defaults.dayOfWeek,
     dayOfMonth: schedule.scan_day_of_month ?? defaults.dayOfMonth,
+    intervalHours: schedule.scan_interval_hours ?? defaults.intervalHours,
     launchInitialScan: false,
   };
 }
@@ -95,7 +99,9 @@ export function buildScheduleUpdatePayload(
     scan_hour: values.hour,
     scan_timezone: getBrowserTimezone(),
     scan_interval_hours:
-      values.frequency === SCHEDULE_FREQUENCY.INTERVAL ? INTERVAL_HOURS : null,
+      values.frequency === SCHEDULE_FREQUENCY.INTERVAL
+        ? values.intervalHours
+        : null,
     scan_day_of_week:
       values.frequency === SCHEDULE_FREQUENCY.WEEKLY ? values.dayOfWeek : null,
     scan_day_of_month:
@@ -127,15 +133,16 @@ export function isScheduleConfigured(
  * local time, which matches the timezone shown next to it (`getBrowserTimezone`),
  * so no timezone-conversion library is needed. This is an estimate for display;
  * the backend is the source of truth for the actual fire time.
+ *
+ * INTERVAL intentionally shares the DAILY computation: the backend anchors an
+ * INTERVAL schedule's first run at the next occurrence of `scan_hour` in
+ * `scan_timezone` (today or tomorrow) and only then repeats every
+ * `scan_interval_hours`, so the next run after saving is the anchor itself.
  */
 export function getNextScheduledRun(
   values: ScheduleFormValues,
   now: Date,
 ): Date {
-  if (values.frequency === SCHEDULE_FREQUENCY.INTERVAL) {
-    return new Date(now.getTime() + INTERVAL_HOURS * 60 * 60 * 1000);
-  }
-
   const next = new Date(now);
   next.setHours(values.hour, 0, 0, 0);
 
@@ -154,7 +161,7 @@ export function getNextScheduledRun(
       return next;
     }
     default: {
-      // DAILY
+      // DAILY and INTERVAL (the interval anchor is the next occurrence of the hour)
       if (next <= now) next.setDate(next.getDate() + 1);
       return next;
     }
