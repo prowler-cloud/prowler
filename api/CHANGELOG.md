@@ -17,6 +17,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🐞 Fixed
 
 - Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+- Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
 
 ### 🔐 Security
 

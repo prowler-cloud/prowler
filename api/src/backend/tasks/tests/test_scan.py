@@ -315,6 +315,7 @@ class TestPerformScan:
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
+                "name": finding.resource_name,
                 "region": finding.region,
                 "service": finding.service_name,
                 "type": finding.resource_type,
@@ -348,6 +349,7 @@ class TestPerformScan:
 
         resource_instance = MagicMock()
         resource_instance.uid = finding.resource_uid
+        resource_instance.name = "old_name"
         resource_instance.region = "us-west-1"
         resource_instance.service = "old_service"
         resource_instance.type = "old_type"
@@ -366,6 +368,7 @@ class TestPerformScan:
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
+                "name": finding.resource_name,
                 "region": finding.region,
                 "service": finding.service_name,
                 "type": finding.resource_type,
@@ -373,6 +376,7 @@ class TestPerformScan:
         )
 
         # Check that resource fields were updated
+        assert resource_instance.name == finding.resource_name
         assert resource_instance.region == finding.region
         assert resource_instance.service == finding.service_name
         assert resource_instance.type == finding.resource_type
@@ -1564,6 +1568,75 @@ class TestProcessFindingMicroBatch:
         assert resource_cache[finding.resource_uid].region == finding.region
         assert resource_cache[finding.resource_uid].service == finding.service_name
         assert tag_cache.keys() == {("team", "devsec")}
+
+    def test_process_finding_micro_batch_refreshes_empty_resource_name(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+
+        # Old resource stored before names were persisted: empty name.
+        existing_resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid="arn:aws:s3:::my-bucket",
+            name="",
+            region="us-east-1",
+            service="s3",
+            type="bucket",
+        )
+
+        finding = FakeFinding(
+            uid="finding-empty-name",
+            status=StatusChoices.PASS,
+            status_extended="passing",
+            severity=Severity.low,
+            check_id="s3_bucket_public_access",
+            resource_uid=existing_resource.uid,
+            resource_name="my-bucket",
+            region="us-east-1",
+            service_name="s3",
+            resource_type="bucket",
+            partition="aws",
+            raw={"status": "PASS"},
+            metadata={"source": "prowler"},
+        )
+
+        resource_cache = {existing_resource.uid: existing_resource}
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {existing_resource.uid: 0}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
+            )
+
+        existing_resource.refresh_from_db()
+        assert existing_resource.name == finding.resource_name
 
     def test_process_finding_micro_batch_skips_long_uid(
         self, tenants_fixture, scans_fixture
