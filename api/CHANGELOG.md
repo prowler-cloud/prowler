@@ -6,7 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
-- Attack Paths: AWS Neptune is now supported as a persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`). Cartography's per-scan staging database stays on Neo4j.
+- Attack Paths: AWS Neptune is now supported as a persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`), Cartography's per-scan staging database stays on Neo4j [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
 
 ---
 

@@ -4,7 +4,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0093_okta_provider"),
+        ("api", "0095_reconcile_orphan_tasks_periodic_task"),
     ]
 
     operations = [
