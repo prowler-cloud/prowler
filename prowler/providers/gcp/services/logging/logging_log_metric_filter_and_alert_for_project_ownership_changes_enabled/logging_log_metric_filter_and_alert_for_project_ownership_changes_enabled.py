@@ -1,5 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.logging.logging_client import logging_client
+from prowler.providers.gcp.services.logging.logging_service import (
+    get_projects_covered_by_aggregated_metric,
+)
 from prowler.providers.gcp.services.monitoring.monitoring_client import (
     monitoring_client,
 )
@@ -8,12 +11,10 @@ from prowler.providers.gcp.services.monitoring.monitoring_client import (
 class logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
+        metric_filter = '(protoPayload.serviceName="cloudresourcemanager.googleapis.com") AND (ProjectOwnership OR projectOwnerInvitee) OR (protoPayload.serviceData.policyDelta.bindingDeltas.action="REMOVE" AND protoPayload.serviceData.policyDelta.bindingDeltas.role="roles/owner") OR (protoPayload.serviceData.policyDelta.bindingDeltas.action="ADD" AND protoPayload.serviceData.policyDelta.bindingDeltas.role="roles/owner")'
         projects_with_metric = set()
         for metric in logging_client.metrics:
-            if (
-                '(protoPayload.serviceName="cloudresourcemanager.googleapis.com") AND (ProjectOwnership OR projectOwnerInvitee) OR (protoPayload.serviceData.policyDelta.bindingDeltas.action="REMOVE" AND protoPayload.serviceData.policyDelta.bindingDeltas.role="roles/owner") OR (protoPayload.serviceData.policyDelta.bindingDeltas.action="ADD" AND protoPayload.serviceData.policyDelta.bindingDeltas.role="roles/owner")'
-                in metric.filter
-            ):
+            if metric_filter in metric.filter:
                 metric_name = getattr(metric, "name", None) or "unknown"
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
@@ -36,6 +37,9 @@ class logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled(
                             break
                 findings.append(report)
 
+        centrally_covered = get_projects_covered_by_aggregated_metric(
+            logging_client, monitoring_client, metric_filter
+        )
         for project in logging_client.project_ids:
             if project not in projects_with_metric:
                 project_obj = logging_client.projects.get(project)
@@ -47,8 +51,12 @@ class logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled(
                     location=logging_client.region,
                     resource_name=(getattr(project_obj, "name", None) or "GCP Project"),
                 )
-                report.status = "FAIL"
-                report.status_extended = f"There are no log metric filters or alerts associated in project {project}."
+                if project in centrally_covered:
+                    report.status = "PASS"
+                    report.status_extended = f"Log metric filter {centrally_covered[project]} found with an alert, covering project {project} via an organization-level aggregated sink."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"There are no log metric filters or alerts associated in project {project}."
                 findings.append(report)
 
         return findings

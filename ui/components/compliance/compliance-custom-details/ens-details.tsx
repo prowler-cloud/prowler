@@ -28,7 +28,7 @@ export const ENSCustomDetails = ({
           <ComplianceBadge
             label="Type"
             value={translateType(requirement.type as string)}
-            color="orange"
+            variant="secondary"
           />
         )}
 
@@ -36,7 +36,7 @@ export const ENSCustomDetails = ({
           <ComplianceBadge
             label="Level"
             value={requirement.nivel as string}
-            color="red"
+            variant="error"
           />
         )}
       </ComplianceBadgeContainer>

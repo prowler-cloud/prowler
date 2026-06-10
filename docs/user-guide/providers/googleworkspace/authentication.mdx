@@ -18,7 +18,7 @@ Prowler requests the following read-only OAuth 2.0 scopes:
 | `https://www.googleapis.com/auth/admin.directory.domain.readonly` | Read access to domain information |
 | `https://www.googleapis.com/auth/admin.directory.customer.readonly` | Read access to customer information (Customer ID) |
 | `https://www.googleapis.com/auth/admin.directory.orgunit.readonly` | Read access to organizational unit hierarchy (identifies the root OU for policy filtering) |
-| `https://www.googleapis.com/auth/cloud-identity.policies.readonly` | Read access to domain-level application policies (required for Calendar, Gmail, Chat, and Drive service checks) |
+| `https://www.googleapis.com/auth/cloud-identity.policies.readonly` | Read access to domain-level application policies (required for Calendar, Chat, Drive, Gmail, Groups, Marketplace, Security, and Sites service checks) |
 | `https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly` | Read access to admin roles and role assignments |
 
 <Warning>
@@ -40,7 +40,7 @@ In the [Google Cloud Console](https://console.cloud.google.com), select the targ
 | API | Required For |
 |-----|--------------|
 | **Admin SDK API** | Directory service checks (users, roles, domains) |
-| **Cloud Identity API** | Calendar, Gmail, Chat, and Drive service checks (domain-level application policies) |
+| **Cloud Identity API** | All service checks except Directory (domain-level application policies) |
 
 For each API:
 
@@ -49,7 +49,7 @@ For each API:
 3. Click **Enable**
 
 <Note>
-Both APIs must be enabled in the same GCP project that hosts the Service Account. Calendar, Gmail, Chat, and Drive checks will return no findings if the Cloud Identity API is not enabled.
+Both APIs must be enabled in the same GCP project that hosts the Service Account. All service checks except Directory will return no findings if the Cloud Identity API is not enabled.
 </Note>
 
 ### Step 3: Create a Service Account
@@ -178,7 +178,7 @@ If Prowler connects but returns empty results or permission errors for specific 
 
 ### Policy API Checks Return No Findings
 
-If the Directory checks run successfully but the Calendar, Gmail, Chat, or Drive checks return no findings, the Cloud Identity Policy API is not reachable for this Service Account. Verify:
+If the Directory checks run successfully but other service checks (Calendar, Chat, Drive, Gmail, Groups, Marketplace, Security, Sites) return no findings, the Cloud Identity Policy API is not reachable for this Service Account. Verify:
 
 - The **Cloud Identity API** is enabled in the GCP project hosting the Service Account (Step 2)
 - The scope `https://www.googleapis.com/auth/cloud-identity.policies.readonly` is included in the Domain-Wide Delegation OAuth scopes list in the Admin Console (Step 5)

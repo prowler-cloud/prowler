@@ -311,3 +311,32 @@ ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
 # temporary database is always Neo4j; only the sink is configurable.
 # Valid values: "neo4j" (default, OSS and local dev), "neptune" (hosted).
 ATTACK_PATHS_SINK_DATABASE = env.str("ATTACK_PATHS_SINK_DATABASE", default="neo4j")
+
+# Orphan task recovery feature flags. The master switch is OFF by default, so task
+# recovery is opt-in; enable it with DJANGO_TASK_RECOVERY_ENABLED=true. The per-group
+# toggles default to enabled, so once the master is on every group recovers unless a
+# group is explicitly turned off.
+TASK_RECOVERY_ENABLED = env.bool("DJANGO_TASK_RECOVERY_ENABLED", False)
+TASK_RECOVERY_SUMMARIES_ENABLED = env.bool(
+    "DJANGO_TASK_RECOVERY_SUMMARIES_ENABLED", True
+)
+TASK_RECOVERY_DELETIONS_ENABLED = env.bool(
+    "DJANGO_TASK_RECOVERY_DELETIONS_ENABLED", True
+)
+
+
+def label_postgres_connections(databases):
+    """Tag each Postgres connection with ``application_name="<component>:<alias>"``
+    so connections are attributable by component in ``pg_stat_activity`` (and any
+    tooling that surfaces ``application_name``). The component (api / worker /
+    scan / ...) is injected per process by the container entrypoint via
+    ``DJANGO_APP_COMPONENT``; the alias distinguishes which pool inside the
+    process owns the connection. The neo4j entry is skipped (not a Postgres
+    backend). Postgres truncates ``application_name`` at 63 bytes.
+    """
+    component = env.str("DJANGO_APP_COMPONENT", default="api")
+    for alias, config in databases.items():
+        engine = config.get("ENGINE", "")
+        if engine.startswith("psqlextra") or "postgresql" in engine:
+            name = f"{component}:{alias}"[:63]
+            config.setdefault("OPTIONS", {})["application_name"] = name

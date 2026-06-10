@@ -33,6 +33,9 @@ READ_QUERY_TIMEOUT_SECONDS = env.int(
     "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
 )
 CONN_ACQUISITION_TIMEOUT = env.int("NEO4J_CONN_ACQUISITION_TIMEOUT", default=15)
+# TCP connect timeout, ordered below the acquisition timeout so an unreachable
+# host can't pin a request or the readiness probe longer than this.
+CONNECTION_TIMEOUT = env.int("NEO4J_CONNECTION_TIMEOUT", default=5)
 MAX_CONNECTION_LIFETIME = env.int("NEO4J_MAX_CONNECTION_LIFETIME", default=7200)
 MAX_CONNECTION_POOL_SIZE = env.int("NEO4J_MAX_CONNECTION_POOL_SIZE", default=50)
 
@@ -78,6 +81,7 @@ class Neo4jSink(SinkDatabase):
                     auth=(cfg["USER"], cfg["PASSWORD"]),
                     keep_alive=True,
                     max_connection_lifetime=MAX_CONNECTION_LIFETIME,
+                    connection_timeout=CONNECTION_TIMEOUT,
                     connection_acquisition_timeout=CONN_ACQUISITION_TIMEOUT,
                     max_connection_pool_size=MAX_CONNECTION_POOL_SIZE,
                 )

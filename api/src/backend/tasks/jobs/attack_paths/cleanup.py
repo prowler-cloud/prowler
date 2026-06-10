@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from celery import current_app, states
+from celery import states
 from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
@@ -12,6 +12,8 @@ from tasks.jobs.attack_paths.db_utils import (
     mark_scan_finished,
     recover_graph_data_ready,
 )
+from tasks.jobs.orphan_recovery import is_worker_alive as _is_worker_alive
+from tasks.jobs.orphan_recovery import revoke_task as _revoke_task
 
 logger = get_task_logger(__name__)
 
@@ -148,32 +150,6 @@ def _cleanup_stale_scheduled_scans(cutoff: datetime) -> list[str]:
             cleaned_up.append(str(scan.id))
 
     return cleaned_up
-
-
-def _is_worker_alive(worker: str) -> bool:
-    """Ping a specific Celery worker. Returns `True` if it responds or on error."""
-    try:
-        response = current_app.control.inspect(destination=[worker], timeout=1.0).ping()
-        return response is not None and worker in response
-    except Exception:
-        logger.exception(f"Failed to ping worker {worker}, treating as alive")
-        return True
-
-
-def _revoke_task(task_result, terminate: bool = True) -> None:
-    """Revoke a Celery task. Non-fatal on failure.
-
-    `terminate=True` SIGTERMs the worker if the task is mid-execution; use
-    for EXECUTING cleanup. `terminate=False` only marks the task id revoked
-    across workers, so any worker pulling the queued message discards it;
-    use for SCHEDULED cleanup where the task hasn't run yet.
-    """
-    try:
-        kwargs = {"terminate": True, "signal": "SIGTERM"} if terminate else {}
-        current_app.control.revoke(task_result.task_id, **kwargs)
-        logger.info(f"Revoked task {task_result.task_id}")
-    except Exception:
-        logger.exception(f"Failed to revoke task {task_result.task_id}")
 
 
 def _cleanup_scan(scan, task_result, reason: str) -> bool:

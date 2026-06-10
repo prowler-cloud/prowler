@@ -19,7 +19,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## Prowler UI Test Structure
 
-```
+```text
 ui/tests/
 ├── base-page.ts              # Prowler-specific base page
 ├── helpers.ts                # Prowler test utilities
@@ -35,13 +35,13 @@ ui/tests/
 
 **⚠️ ALWAYS verify BEFORE completing any E2E task:**
 
-### When CREATING new tests:
+### When CREATING new tests
 - [ ] `{page-name}-page.ts` - Page Object created/updated
 - [ ] `{page-name}.spec.ts` - Tests added with correct tags (@TEST-ID)
 - [ ] `{page-name}.md` - Documentation created with ALL test cases
 - [ ] Test IDs in `.md` match tags in `.spec.ts`
 
-### When MODIFYING existing tests:
+### When MODIFYING existing tests
 - [ ] `{page-name}.md` MUST be updated if:
   - Test cases were added/removed
   - Test flow changed (steps)
@@ -49,7 +49,7 @@ ui/tests/
   - Tags or priorities changed
 - [ ] Test IDs synchronized between `.md` and `.spec.ts`
 
-### Quick validation:
+### Quick validation
 ```bash
 # Verify .md exists for each test folder
 ls ui/tests/{feature}/{feature}.md
@@ -59,7 +59,8 @@ grep -o "@[A-Z]*-E2E-[0-9]*" ui/tests/{feature}/{feature}.spec.ts | sort -u
 grep -o "\`[A-Z]*-E2E-[0-9]*\`" ui/tests/{feature}/{feature}.md | sort -u
 ```
 
-**❌ An E2E change is NOT considered complete without updating the corresponding .md file**
+> [!IMPORTANT]
+> ❌ An E2E change is NOT considered complete without updating the corresponding `.md` file.
 
 ---
 

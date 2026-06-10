@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
+import { CliImportBanner } from "@/components/scans";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
@@ -19,6 +20,7 @@ export default async function Providers({
 }) {
   const resolvedSearchParams = await searchParams;
   const activeTab = getProviderTab(resolvedSearchParams.tab);
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   // Exclude `tab` from the Suspense key so switching tabs doesn't re-suspend
   const { tab: _, ...paramsWithoutTab } = resolvedSearchParams || {};
@@ -26,6 +28,7 @@ export default async function Providers({
 
   return (
     <ContentLayout title="Providers" icon="lucide:cloud-cog">
+      {isCloudEnvironment && <CliImportBanner className="mb-6" />}
       <FilterTransitionWrapper>
         <ProviderPageTabs
           activeTab={activeTab}

@@ -2,7 +2,7 @@
 
 > **Skills Reference**: See [`prowler-mcp`](../skills/prowler-mcp/SKILL.md)
 
-### Auto-invoke Skills
+## Auto-invoke Skills
 
 When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
@@ -68,7 +68,7 @@ Python 3.12+ | FastMCP 2.13.1 | httpx (async) | Pydantic | uv
 
 ## PROJECT STRUCTURE
 
-```
+```text
 mcp_server/prowler_mcp_server/
 ├── server.py                    # Main orchestration
 ├── prowler_hub/server.py        # Hub tools (no auth)

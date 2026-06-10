@@ -29,6 +29,9 @@ SERVICE_UNAVAILABLE_MAX_RETRIES = env.int(
     "ATTACK_PATHS_SERVICE_UNAVAILABLE_MAX_RETRIES", default=3
 )
 CONN_ACQUISITION_TIMEOUT = env.int("NEO4J_CONN_ACQUISITION_TIMEOUT", default=15)
+# TCP connect timeout, ordered below the acquisition timeout so an unreachable
+# host can't pin a worker on a temp-DB op longer than this.
+CONNECTION_TIMEOUT = env.int("NEO4J_CONNECTION_TIMEOUT", default=5)
 MAX_CONNECTION_LIFETIME = env.int("NEO4J_MAX_CONNECTION_LIFETIME", default=7200)
 MAX_CONNECTION_POOL_SIZE = env.int("NEO4J_MAX_CONNECTION_POOL_SIZE", default=50)
 
@@ -67,10 +70,22 @@ def init_driver() -> neo4j.Driver:
                 auth=(config["USER"], config["PASSWORD"]),
                 keep_alive=True,
                 max_connection_lifetime=MAX_CONNECTION_LIFETIME,
+                connection_timeout=CONNECTION_TIMEOUT,
                 connection_acquisition_timeout=CONN_ACQUISITION_TIMEOUT,
                 max_connection_pool_size=MAX_CONNECTION_POOL_SIZE,
             )
-            _driver.verify_connectivity()
+            # Best-effort connectivity check: a Neo4j that is down at boot must
+            # not crash the worker. The driver reconnects lazily on first use.
+            try:
+                _driver.verify_connectivity()
+
+            except Exception:
+                logging.warning(
+                    "Neo4j temp-database unreachable at init; continuing with a "
+                    "lazily-reconnecting driver",
+                    exc_info=True,
+                )
+
             atexit.register(close_driver)
 
     return _driver

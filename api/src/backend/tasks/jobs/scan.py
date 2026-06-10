@@ -269,6 +269,7 @@ def _store_resources(
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
+                "name": finding.resource_name,
                 "region": finding.region,
                 "service": finding.service_name,
                 "type": finding.resource_type,
@@ -276,6 +277,7 @@ def _store_resources(
         )
 
         if not created:
+            resource_instance.name = finding.resource_name
             resource_instance.region = finding.region
             resource_instance.service = finding.service_name
             resource_instance.type = finding.resource_type
@@ -476,9 +478,12 @@ def _create_compliance_summaries(
             )
         )
 
-    # Bulk insert summaries
-    if summary_objects:
-        with rls_transaction(tenant_id):
+    # Idempotent re-run: clear this scan's prior summaries before re-inserting, so a
+    # recovered scan-compliance-overviews run reflects its own re-derived rows instead
+    # of keeping a stale one (bulk_create ignore_conflicts alone would keep the old).
+    with rls_transaction(tenant_id):
+        ComplianceOverviewSummary.objects.filter(scan_id=scan_id).delete()
+        if summary_objects:
             ComplianceOverviewSummary.objects.bulk_create(
                 summary_objects, batch_size=500, ignore_conflicts=True
             )
@@ -700,6 +705,12 @@ def _process_finding_micro_batch(
                     updated = False
                     if finding.region and resource_instance.region != finding.region:
                         resource_instance.region = finding.region
+                        updated = True
+                    if (
+                        finding.resource_name
+                        and resource_instance.name != finding.resource_name
+                    ):
+                        resource_instance.name = finding.resource_name
                         updated = True
                     if resource_instance.service != finding.service_name:
                         resource_instance.service = finding.service_name
@@ -942,6 +953,7 @@ def _process_finding_micro_batch(
                         Resource.objects.bulk_update(
                             resources_to_bulk_update,
                             [
+                                "name",
                                 "metadata",
                                 "details",
                                 "partition",
@@ -1650,6 +1662,10 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             requirement_statuses[key]["fail_count"] += 1
                         elif requirement_status == "PASS":
                             requirement_statuses[key]["pass_count"] += 1
+
+            # Idempotent re-run: COPY can't ON CONFLICT, so clear this scan's rows first.
+            with rls_transaction(tenant_id):
+                ComplianceRequirementOverview.objects.filter(scan_id=scan_id).delete()
 
             # Bulk create requirement records using PostgreSQL COPY
             _persist_compliance_requirement_rows(tenant_id, compliance_requirement_rows)

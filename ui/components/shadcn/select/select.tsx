@@ -127,7 +127,9 @@ function SelectContent({
           className={cn(
             "minimal-scrollbar flex flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-contain p-3",
             position === "popper" &&
-              "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
+              (width === "wide"
+                ? "w-full scroll-my-1"
+                : "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1"),
           )}
         >
           {children}

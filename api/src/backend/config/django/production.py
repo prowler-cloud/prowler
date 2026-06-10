@@ -65,3 +65,5 @@ DATABASES = {
 }
 
 DATABASES["default"] = DATABASES["prowler_user"]
+
+label_postgres_connections(DATABASES)  # noqa: F405
