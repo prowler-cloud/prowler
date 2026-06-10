@@ -1,6 +1,5 @@
 "use client";
 
-import { Textarea } from "@heroui/input";
 import { Trash2 } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 
@@ -10,11 +9,18 @@ import {
   getMutedFindingsConfig,
   updateMutedFindingsConfig,
 } from "@/actions/processors";
-import { Button, Card, Skeleton } from "@/components/shadcn";
+import {
+  Button,
+  Card,
+  FieldError,
+  Skeleton,
+  Textarea,
+} from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { fontMono } from "@/config/fonts";
+import { cn } from "@/lib/utils";
 import {
   convertToYaml,
   defaultMutedFindingsConfig,
@@ -132,6 +138,13 @@ export function AdvancedMutelistForm() {
     }
   };
 
+  const isConfigInvalid =
+    (!hasUserStartedTyping && !!state?.errors?.configuration) ||
+    !yamlValidation.isValid;
+  const configErrorMessage =
+    (!hasUserStartedTyping && state?.errors?.configuration) ||
+    (!yamlValidation.isValid ? yamlValidation.error : "");
+
   if (isLoading) {
     return (
       <Card variant="base" className="p-6">
@@ -236,25 +249,22 @@ export function AdvancedMutelistForm() {
                   id="configuration"
                   name="configuration"
                   placeholder={defaultMutedFindingsConfig}
-                  variant="bordered"
                   value={configText}
                   onChange={(e) => handleConfigChange(e.target.value)}
-                  minRows={20}
-                  maxRows={20}
-                  isInvalid={
-                    (!hasUserStartedTyping && !!state?.errors?.configuration) ||
-                    !yamlValidation.isValid
-                  }
-                  errorMessage={
-                    (!hasUserStartedTyping && state?.errors?.configuration) ||
-                    (!yamlValidation.isValid ? yamlValidation.error : "")
-                  }
-                  classNames={{
-                    input: fontMono.className + " text-sm",
-                    base: "min-h-[400px]",
-                    errorMessage: "whitespace-pre-wrap",
-                  }}
+                  rows={20}
+                  aria-invalid={isConfigInvalid}
+                  className={cn(
+                    fontMono.className,
+                    "min-h-[400px] text-sm",
+                    isConfigInvalid &&
+                      "border-border-error focus:border-border-error focus:ring-border-error",
+                  )}
                 />
+                {isConfigInvalid && configErrorMessage && (
+                  <FieldError className="my-1 px-1 whitespace-pre-wrap">
+                    {configErrorMessage}
+                  </FieldError>
+                )}
                 {yamlValidation.isValid &&
                   configText &&
                   hasUserStartedTyping && (

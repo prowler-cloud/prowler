@@ -1,10 +1,10 @@
 "use client";
 
-import { Switch } from "@heroui/switch";
 import { useState } from "react";
 
 import { toggleMuteRule } from "@/actions/mute-rules";
 import { MuteRuleData } from "@/actions/mute-rules/types";
+import { Switch } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 
 interface MuteRuleEnabledToggleProps {
@@ -44,10 +44,9 @@ export function MuteRuleEnabledToggle({
 
   return (
     <Switch
-      isSelected={isEnabled}
-      onValueChange={handleToggle}
-      isDisabled={isLoading}
-      size="sm"
+      checked={isEnabled}
+      onCheckedChange={handleToggle}
+      disabled={isLoading}
       aria-label={`Toggle mute rule ${muteRule.attributes.name}`}
     />
   );

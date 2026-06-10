@@ -1,6 +1,5 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
 import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clsx } from "clsx";
@@ -11,7 +10,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
-import { Separator } from "@/components/shadcn";
+import { Checkbox, Separator } from "@/components/shadcn";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
@@ -184,19 +183,22 @@ export const EditRoleForm = ({
           <span className="text-lg font-semibold">Admin Permissions</span>
 
           {/* Select All Checkbox */}
-          <Checkbox
-            isSelected={visiblePermissionFormFields.every((perm) =>
-              form.watch(perm.field as keyof FormValues),
-            )}
-            onChange={(e) => onSelectAllChange(e.target.checked)}
-            classNames={{
-              label: "text-small",
-              wrapper: "checkbox-update",
-            }}
-            color="default"
-          >
-            Grant all admin permissions
-          </Checkbox>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="select-all-permissions"
+              size="sm"
+              checked={visiblePermissionFormFields.every((perm) =>
+                form.watch(perm.field as keyof FormValues),
+              )}
+              onCheckedChange={(checked) => onSelectAllChange(checked === true)}
+            />
+            <label
+              htmlFor="select-all-permissions"
+              className="cursor-pointer text-sm"
+            >
+              Grant all admin permissions
+            </label>
+          </div>
 
           {/* Permissions Grid */}
           <div className="grid grid-cols-2 gap-4">
@@ -204,16 +206,27 @@ export const EditRoleForm = ({
               ({ field, label, description }) => (
                 <div key={field} className="flex items-center gap-2">
                   <Checkbox
-                    {...form.register(field as keyof FormValues)}
-                    isSelected={!!form.watch(field as keyof FormValues)}
-                    classNames={{
-                      label: "text-small",
-                      wrapper: "checkbox-update",
-                    }}
-                    color="default"
+                    id={`permission-${field}`}
+                    size="sm"
+                    checked={!!form.watch(field as keyof FormValues)}
+                    onCheckedChange={(checked) =>
+                      form.setValue(
+                        field as keyof FormValues,
+                        checked === true,
+                        {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        },
+                      )
+                    }
+                  />
+                  <label
+                    htmlFor={`permission-${field}`}
+                    className="cursor-pointer text-sm"
                   >
                     {label}
-                  </Checkbox>
+                  </label>
                   <Tooltip content={description} placement="right">
                     <div className="flex w-fit items-center justify-center">
                       <InfoIcon

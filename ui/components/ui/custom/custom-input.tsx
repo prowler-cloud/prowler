@@ -1,11 +1,14 @@
 "use client";
 
-import { Input } from "@heroui/input";
 import { Icon } from "@iconify/react";
 import { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
+import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { FormControl, FormField } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
+
+const SIZE_MAP = { sm: "sm", md: "default", lg: "lg" } as const;
 
 interface CustomInputProps<T extends FieldValues> {
   control: Control<T>;
@@ -43,6 +46,8 @@ export const CustomInput = <T extends FieldValues>({
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
+  void variant;
+  void defaultValue;
 
   const inputLabel = confirmPassword
     ? "Confirm Password"
@@ -56,13 +61,13 @@ export const CustomInput = <T extends FieldValues>({
       ? "Password"
       : placeholder;
 
-  const inputType =
-    password || confirmPassword
-      ? isPasswordVisible || isConfirmPasswordVisible
-        ? "text"
-        : "password"
-      : type;
-  const inputIsRequired = password || confirmPassword ? true : isRequired;
+  const isMaskedInput = password || confirmPassword;
+  const inputType = isMaskedInput
+    ? isPasswordVisible || isConfirmPasswordVisible
+      ? "text"
+      : "password"
+    : type;
+  const inputIsRequired = isMaskedInput ? true : isRequired;
 
   const toggleVisibility = () => {
     if (password) {
@@ -72,52 +77,71 @@ export const CustomInput = <T extends FieldValues>({
     }
   };
 
-  const endContent = (password || confirmPassword) && (
-    <button type="button" onClick={toggleVisibility}>
-      <Icon
-        className="text-default-400 pointer-events-none text-2xl"
-        icon={
-          (password && isPasswordVisible) ||
-          (confirmPassword && isConfirmPasswordVisible)
-            ? "solar:eye-closed-linear"
-            : "solar:eye-bold"
-        }
-      />
-    </button>
-  );
-
   return (
     <FormField
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <>
-          <FormControl>
-            <Input
-              id={name}
-              classNames={{
-                label:
-                  "tracking-tight font-light !text-text-neutral-secondary text-xs z-0!",
-                input: "text-text-neutral-secondary text-small",
-              }}
-              isRequired={inputIsRequired}
-              label={inputLabel}
-              labelPlacement={labelPlacement}
-              placeholder={inputPlaceholder}
-              type={inputType}
-              variant={variant}
-              size={size}
-              defaultValue={defaultValue}
-              endContent={endContent}
-              isDisabled={isDisabled}
-              isReadOnly={isReadOnly}
-              isInvalid={!!fieldState.error}
-              errorMessage={fieldState.error?.message}
-              {...field}
-              value={field.value ?? ""}
-            />
-          </FormControl>
-        </>
+        <Field>
+          {inputLabel && (
+            <FieldLabel
+              htmlFor={name}
+              className={cn(
+                labelPlacement === "inside" && "font-light tracking-tight",
+              )}
+            >
+              {inputLabel}
+              {inputIsRequired && (
+                <span className="text-text-error-primary">*</span>
+              )}
+            </FieldLabel>
+          )}
+          <div className="relative">
+            <FormControl>
+              <Input
+                id={name}
+                type={inputType}
+                inputSize={SIZE_MAP[size]}
+                placeholder={inputPlaceholder}
+                required={inputIsRequired}
+                disabled={isDisabled}
+                readOnly={isReadOnly}
+                aria-invalid={!!fieldState.error}
+                className={cn(
+                  "text-text-neutral-secondary",
+                  isMaskedInput && "pr-10",
+                  fieldState.error &&
+                    "border-border-error focus:border-border-error focus:ring-border-error",
+                )}
+                {...field}
+                value={field.value ?? ""}
+              />
+            </FormControl>
+            {isMaskedInput && (
+              <button
+                type="button"
+                onClick={toggleVisibility}
+                className="absolute top-1/2 right-3 -translate-y-1/2"
+                aria-label={
+                  inputType === "password" ? "Show password" : "Hide password"
+                }
+              >
+                <Icon
+                  className="text-default-400 pointer-events-none text-2xl"
+                  icon={
+                    (password && isPasswordVisible) ||
+                    (confirmPassword && isConfirmPasswordVisible)
+                      ? "solar:eye-closed-linear"
+                      : "solar:eye-bold"
+                  }
+                />
+              </button>
+            )}
+          </div>
+          {fieldState.error?.message && (
+            <FieldError>{fieldState.error.message}</FieldError>
+          )}
+        </Field>
       )}
     />
   );

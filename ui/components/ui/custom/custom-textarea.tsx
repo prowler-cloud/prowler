@@ -1,10 +1,13 @@
 "use client";
 
-import { Textarea } from "@heroui/input";
-import React from "react";
+import type { ReactNode } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
-import { FormControl, FormField, FormMessage } from "@/components/ui/form";
+import { Field, FieldError, FieldLabel, Textarea } from "@/components/shadcn";
+import { FormControl, FormField } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
+
+const SIZE_MAP = { sm: "sm", md: "default", lg: "lg" } as const;
 
 interface CustomTextareaProps<T extends FieldValues> {
   control: Control<T>;
@@ -20,7 +23,7 @@ interface CustomTextareaProps<T extends FieldValues> {
   maxRows?: number;
   fullWidth?: boolean;
   disableAutosize?: boolean;
-  description?: React.ReactNode;
+  description?: ReactNode;
 }
 
 export const CustomTextarea = <T extends FieldValues>({
@@ -39,32 +42,52 @@ export const CustomTextarea = <T extends FieldValues>({
   disableAutosize = false,
   description,
 }: CustomTextareaProps<T>) => {
+  void variant;
+  void defaultValue;
+  void maxRows;
+  void fullWidth;
+  void disableAutosize;
+
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field }) => (
-        <>
+      render={({ field, fieldState }) => (
+        <Field>
+          {label && (
+            <FieldLabel
+              htmlFor={name}
+              className={cn(
+                labelPlacement === "inside" && "font-light tracking-tight",
+              )}
+            >
+              {label}
+              {isRequired && <span className="text-text-error-primary">*</span>}
+            </FieldLabel>
+          )}
           <FormControl>
             <Textarea
               id={name}
-              label={label}
-              labelPlacement={labelPlacement}
+              textareaSize={SIZE_MAP[size]}
               placeholder={placeholder}
-              variant={variant}
-              size={size}
-              isRequired={isRequired}
-              defaultValue={defaultValue}
-              minRows={minRows}
-              maxRows={maxRows}
-              fullWidth={fullWidth}
-              disableAutosize={disableAutosize}
-              description={description}
+              required={isRequired}
+              rows={minRows}
+              aria-invalid={!!fieldState.error}
+              className={cn(
+                fieldState.error &&
+                  "border-border-error focus:border-border-error focus:ring-border-error",
+              )}
               {...field}
+              value={field.value ?? ""}
             />
           </FormControl>
-          <FormMessage className="text-text-error max-w-full text-xs" />
-        </>
+          {description && (
+            <p className="text-text-neutral-tertiary text-xs">{description}</p>
+          )}
+          {fieldState.error?.message && (
+            <FieldError>{fieldState.error.message}</FieldError>
+          )}
+        </Field>
       )}
     />
   );
