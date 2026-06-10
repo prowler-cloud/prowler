@@ -37,7 +37,7 @@ export const MITRECustomDetails = ({
           <ComplianceBadge
             label="Technique ID"
             value={requirement.technique_id as string}
-            color="indigo"
+            variant="tag"
           />
         )}
       </ComplianceBadgeContainer>
@@ -81,17 +81,17 @@ export const MITRECustomDetails = ({
                   <ComplianceBadge
                     label="Service"
                     value={service.service}
-                    color="blue"
+                    variant="info"
                   />
                   <ComplianceBadge
                     label="Category"
                     value={service.category}
-                    color="indigo"
+                    variant="tag"
                   />
                   <ComplianceBadge
                     label="Coverage"
                     value={service.value}
-                    color="orange"
+                    variant="secondary"
                   />
                 </div>
                 {service.comment && (

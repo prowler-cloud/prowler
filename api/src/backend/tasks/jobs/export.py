@@ -58,6 +58,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig_okta import (
+    OktaIDaaSSTIG,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_alibaba import (
     ProwlerThreatScoreAlibaba,
 )
@@ -151,6 +154,9 @@ COMPLIANCE_CLASS_MAP = {
             lambda name: name == "prowler_threatscore_alibabacloud",
             ProwlerThreatScoreAlibaba,
         ),
+    ],
+    "okta": [
+        (lambda name: name.startswith("okta_idaas_stig"), OktaIDaaSSTIG),
     ],
 }
 

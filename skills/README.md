@@ -23,12 +23,12 @@ Run the setup script to configure skills for all supported AI coding assistants:
 
 This creates symlinks so each tool finds skills in its expected location:
 
-| Tool | Symlink Created |
-|------|-----------------|
-| Claude Code / OpenCode | `.claude/skills/` |
-| Codex (OpenAI) | `.codex/skills/` |
-| GitHub Copilot | `.github/skills/` |
-| Gemini CLI | `.gemini/skills/` |
+| Tool | Created by setup |
+|------|------------------|
+| Claude Code | `.claude/skills/` symlink and `CLAUDE.md` |
+| Gemini CLI | `.gemini/skills/` symlink and `GEMINI.md` |
+| Codex (OpenAI) | `.codex/skills/` symlink (uses `AGENTS.md` natively) |
+| GitHub Copilot | `.github/copilot-instructions.md` symlink to `AGENTS.md` |
 
 After running setup, restart your AI coding assistant to load the skills.
 

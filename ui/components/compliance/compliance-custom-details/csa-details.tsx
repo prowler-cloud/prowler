@@ -1,4 +1,4 @@
-import { cn } from "@/lib";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { CSA_MAPPING_SECTIONS } from "@/lib/compliance/csa";
 import { Requirement } from "@/types/compliance";
 
@@ -36,28 +36,28 @@ export const CSACustomDetails = ({ requirement }: CSADetailsProps) => {
           <ComplianceBadge
             label="CCM Lite"
             value={requirement.ccm_lite as string}
-            color={requirement.ccm_lite === "Yes" ? "green" : "gray"}
+            variant={requirement.ccm_lite === "Yes" ? "success" : "secondary"}
           />
         )}
         {requirement.iaas && (
           <ComplianceBadge
             label="IaaS"
             value={requirement.iaas as string}
-            color="blue"
+            variant="info"
           />
         )}
         {requirement.paas && (
           <ComplianceBadge
             label="PaaS"
             value={requirement.paas as string}
-            color="blue"
+            variant="info"
           />
         )}
         {requirement.saas && (
           <ComplianceBadge
             label="SaaS"
             value={requirement.saas as string}
-            color="blue"
+            variant="info"
           />
         )}
       </ComplianceBadgeContainer>
@@ -72,15 +72,9 @@ export const CSACustomDetails = ({ requirement }: CSADetailsProps) => {
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {mapping.Identifiers.map((identifier, idx) => (
-                    <span
-                      key={idx}
-                      className={cn(
-                        "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
-                        section.colorClasses,
-                      )}
-                    >
+                    <Badge key={idx} variant={section.variant}>
                       {identifier}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               </div>

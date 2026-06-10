@@ -26,21 +26,21 @@ export const DORACustomDetails = ({ requirement }: DORADetailsProps) => {
           <ComplianceBadge
             label="Pillar"
             value={requirement.pillar as string}
-            color="blue"
+            variant="tag"
           />
         )}
         {requirement.article && (
           <ComplianceBadge
             label="Article"
             value={requirement.article as string}
-            color="indigo"
+            variant="tag"
           />
         )}
         {requirement.article_title && (
           <ComplianceBadge
             label="Article Title"
             value={requirement.article_title as string}
-            color="gray"
+            variant="tag"
           />
         )}
       </ComplianceBadgeContainer>
