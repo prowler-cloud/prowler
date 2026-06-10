@@ -17,6 +17,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Compliance page now loads the most recent scan when opened from the sidebar instead of showing the "no compliance data available" alert [(#11374)](https://github.com/prowler-cloud/prowler/pull/11374)
 - Invitation links now show specific expired, no-longer-valid, and invalid-token messages based on API error responses [(#11376)](https://github.com/prowler-cloud/prowler/pull/11376)
+- Jira integration no longer shows a false timeout for dispatch tasks running longer than 20 seconds; the poll window now extends to 60 seconds [(#11519)](https://github.com/prowler-cloud/prowler/pull/11519)
 
 ### 🔐 Security
 
