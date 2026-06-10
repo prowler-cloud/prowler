@@ -499,9 +499,15 @@ class Compliance(BaseModel):
                                         compliance_framework_name
                                         not in bulk_compliance_frameworks
                                     ):
-                                        bulk_compliance_frameworks[
-                                            compliance_framework_name
-                                        ] = load_compliance_framework(file_path)
+                                        # External JSON: tolerate non-legacy
+                                        # schemas (skip + warn) instead of aborting.
+                                        framework = load_compliance_framework(
+                                            file_path, fatal=False
+                                        )
+                                        if framework is not None:
+                                            bulk_compliance_frameworks[
+                                                compliance_framework_name
+                                            ] = framework
                     except Exception as error:
                         logger.warning(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -515,18 +521,26 @@ class Compliance(BaseModel):
 
 # Testing Pending
 def load_compliance_framework(
-    compliance_specification_file: str,
-) -> Compliance:
-    """load_compliance_framework loads and parse a Compliance Framework Specification"""
+    compliance_specification_file: str, fatal: bool = True
+) -> Optional[Compliance]:
+    """load_compliance_framework loads and parse a Compliance Framework Specification.
+
+    With ``fatal=True`` (built-in JSONs) an invalid file aborts the run; with
+    ``fatal=False`` (external JSONs) it is skipped with a warning and ``None``
+    is returned.
+    """
     try:
-        compliance_framework = Compliance.parse_file(compliance_specification_file)
+        return Compliance.parse_file(compliance_specification_file)
     except ValidationError as error:
-        logger.critical(
-            f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
+        if fatal:
+            logger.critical(
+                f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
+            )
+            sys.exit(1)
+        logger.warning(
+            f"Skipping invalid compliance framework {compliance_specification_file}: {error}"
         )
-        sys.exit(1)
-    else:
-        return compliance_framework
+        return None
 
 
 # ─── Universal Compliance Schema Models (Phase 1-3) ─────────────────────────
@@ -1002,6 +1016,25 @@ def get_bulk_compliance_frameworks_universal(provider: str) -> dict:
         # Also scan top-level compliance/ for provider-agnostic JSONs.
         if compliance_root and os.path.isdir(compliance_root):
             _load_jsons_from_dir(compliance_root, provider, bulk)
+
+        # External multi-provider frameworks via the dedicated universal entry
+        # point group, kept separate from the per-provider `prowler.compliance`
+        # group so the legacy loader never parses a universal JSON. Built-ins
+        # (already in bulk) win on a name collision.
+        for ep in importlib.metadata.entry_points(group="prowler.compliance.universal"):
+            try:
+                module = ep.load()
+                ep_dir = (
+                    module.__path__[0]
+                    if hasattr(module, "__path__")
+                    else os.path.dirname(module.__file__)
+                )
+                if os.path.isdir(ep_dir):
+                    _load_jsons_from_dir(ep_dir, provider, bulk)
+            except Exception as error:
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     except Exception as e:
         logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
