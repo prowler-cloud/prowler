@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { scanOnDemand, scheduleDaily } from "@/actions/scans";
-import { updateSchedule } from "@/actions/schedules";
+import { scanOnDemand } from "@/actions/scans";
+import {
+  SAVE_SCHEDULE_STATUS,
+  saveScheduleWithInitialScan,
+} from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
@@ -14,7 +17,6 @@ import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { ToastAction, useToast } from "@/components/ui";
 import { EntityInfo } from "@/components/ui/entities";
 import {
-  buildScheduleUpdatePayload,
   getScanScheduleCapability,
   getScheduleFormDefaults,
   scheduleFormSchema,
@@ -115,65 +117,49 @@ export function LaunchStep({
 
     setIsLaunching(true);
 
-    let scheduleResult: { error?: unknown } | null;
-    if (isAdvanced) {
-      scheduleResult = await updateSchedule(
-        providerId,
-        buildScheduleUpdatePayload(values),
-      );
-    } else {
-      // DAILY_LEGACY (Prowler OSS / non-Cloud): legacy daily schedule endpoint.
-      const formData = new FormData();
-      formData.set("providerId", providerId);
-      scheduleResult = await scheduleDaily(formData);
-    }
+    const result = await saveScheduleWithInitialScan({
+      providerId,
+      values,
+      useLegacyDaily: !isAdvanced,
+    });
 
-    if (scheduleResult?.error) {
-      setIsLaunching(false);
+    setIsLaunching(false);
+
+    if (result.status === SAVE_SCHEDULE_STATUS.ERROR) {
       toast({
         variant: "destructive",
         title: "Unable to save scan schedule",
-        description: String(scheduleResult.error),
+        description: result.message,
       });
       return;
     }
 
-    if (values.launchInitialScan) {
-      const scanResult = await launchOnDemandScan();
+    onClose();
 
-      if (scanResult?.error) {
-        // Partial success: the schedule persisted but the initial scan did not launch.
-        setIsLaunching(false);
-        onClose();
-        toast({
-          title: "Scan schedule saved",
-          description: `The schedule was saved, but the initial scan could not be launched: ${String(scanResult.error)}`,
-          action: (
-            <ToastAction altText="Go to scans" asChild>
-              <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>
-                Go to scans
-              </Link>
-            </ToastAction>
-          ),
-        });
-        return;
-      }
+    const goToScans = (
+      <ToastAction altText="Go to scans" asChild>
+        <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>Go to scans</Link>
+      </ToastAction>
+    );
+
+    if (result.status === SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED) {
+      toast({
+        title: "Scan schedule saved",
+        description: `The schedule was saved, but the initial scan could not be launched: ${result.message}`,
+        action: goToScans,
+      });
+      return;
     }
 
-    setIsLaunching(false);
-    onClose();
+    const launched = result.status === SAVE_SCHEDULE_STATUS.SAVED_AND_LAUNCHED;
     toast({
-      title: values.launchInitialScan
+      title: launched
         ? "Scan schedule saved and initial scan launched"
         : "Scan schedule saved",
-      description: values.launchInitialScan
+      description: launched
         ? "The schedule was saved and the initial scan was launched."
         : "The scan schedule was saved successfully.",
-      action: (
-        <ToastAction altText="Go to scans" asChild>
-          <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>Go to scans</Link>
-        </ToastAction>
-      ),
+      action: goToScans,
     });
   });
 

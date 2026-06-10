@@ -3,13 +3,35 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { refreshMock, scanOnDemandMock, searchParamsValue, toastMock } =
-  vi.hoisted(() => ({
-    refreshMock: vi.fn(),
-    scanOnDemandMock: vi.fn(),
-    searchParamsValue: { current: "" },
-    toastMock: vi.fn(),
-  }));
+const {
+  getScheduleMock,
+  refreshMock,
+  scanOnDemandMock,
+  scheduleDailyMock,
+  searchParamsValue,
+  toastMock,
+  updateScheduleMock,
+} = vi.hoisted(() => ({
+  getScheduleMock: vi.fn(),
+  refreshMock: vi.fn(),
+  scanOnDemandMock: vi.fn(),
+  scheduleDailyMock: vi.fn(),
+  searchParamsValue: { current: "" },
+  toastMock: vi.fn(),
+  updateScheduleMock: vi.fn(),
+}));
+
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(globalThis, "ResizeObserver", {
+  writable: true,
+  configurable: true,
+  value: ResizeObserverMock,
+});
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -20,6 +42,12 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/actions/scans", () => ({
   scanOnDemand: scanOnDemandMock,
+  scheduleDaily: scheduleDailyMock,
+}));
+
+vi.mock("@/actions/schedules", () => ({
+  getSchedule: getScheduleMock,
+  updateSchedule: updateScheduleMock,
 }));
 
 vi.mock("@/components/ui/toast", () => ({
@@ -94,6 +122,8 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
     </div>
   ),
 }));
+
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { LaunchScanModal } from "./launch-scan-modal";
 
@@ -302,5 +332,122 @@ describe("LaunchScanModal", () => {
     expect(toastMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  describe("schedule mode", () => {
+    const weeklyScheduleResponse = {
+      data: {
+        type: "schedules",
+        id: provider.id,
+        attributes: {
+          scan_enabled: true,
+          scan_frequency: "WEEKLY",
+          scan_hour: 9,
+          scan_timezone: "Europe/Madrid",
+          scan_interval_hours: null,
+          scan_day_of_week: 1,
+          scan_day_of_month: null,
+        },
+      },
+    };
+
+    beforeEach(() => {
+      getScheduleMock.mockResolvedValue(weeklyScheduleResponse);
+      updateScheduleMock.mockResolvedValue({ data: { id: provider.id } });
+    });
+
+    const renderAdvanced = () =>
+      render(
+        <LaunchScanModal
+          open
+          onOpenChange={vi.fn()}
+          providers={[provider]}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+        />,
+      );
+
+    it("prefills the provider schedule and saves it through the new API", async () => {
+      const user = userEvent.setup();
+      renderAdvanced();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+
+      await waitFor(() =>
+        expect(getScheduleMock).toHaveBeenCalledWith(provider.id),
+      );
+
+      await user.click(
+        await screen.findByRole("button", { name: /save schedule/i }),
+      );
+
+      // The payload carries the fetched WEEKLY schedule, proving the prefill.
+      await waitFor(() =>
+        expect(updateScheduleMock).toHaveBeenCalledWith(
+          provider.id,
+          expect.objectContaining({
+            scan_enabled: true,
+            scan_frequency: "WEEKLY",
+            scan_hour: 9,
+            scan_day_of_week: 1,
+          }),
+        ),
+      );
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Scan schedule saved" }),
+      );
+    });
+
+    it("launches the initial scan when the checkbox is checked", async () => {
+      const user = userEvent.setup();
+      renderAdvanced();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+      await user.click(
+        await screen.findByLabelText(
+          "Launch an initial scan now for immediate findings",
+        ),
+      );
+      await user.click(screen.getByRole("button", { name: /save schedule/i }));
+
+      await waitFor(() => expect(updateScheduleMock).toHaveBeenCalled());
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Scan schedule saved and initial scan launched",
+        }),
+      );
+    });
+
+    it("locks schedule mode outside ADVANCED (OSS default)", () => {
+      render(
+        <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+      );
+
+      expect(
+        screen.getByRole("radio", { name: "On a schedule" }),
+      ).toBeDisabled();
+      expect(getScheduleMock).not.toHaveBeenCalled();
+    });
+
+    it("hides the mode selector and blocks over-limit accounts in MANUAL_ONLY", () => {
+      render(
+        <LaunchScanModal
+          open
+          onOpenChange={vi.fn()}
+          providers={[provider]}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+          isScanLimitReached
+        />,
+      );
+
+      expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /launch scan/i }),
+      ).toBeDisabled();
+    });
   });
 });

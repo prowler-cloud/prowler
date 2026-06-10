@@ -1,23 +1,48 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CloudCog, Rocket } from "lucide-react";
+import { CloudCog, Loader2, Rocket } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
+import { getSchedule } from "@/actions/schedules";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/shadcn/radio-group/radio-group";
+import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import { FormButtons } from "@/components/ui/form";
 import { toast, ToastAction } from "@/components/ui/toast";
+import {
+  getScanScheduleCapability,
+  getScheduleFormDefaults,
+  getScheduleFormValues,
+  scheduleFormSchema,
+} from "@/lib/schedules";
+import { isCloud } from "@/lib/shared/env";
 import { SCAN_JOBS_TAB } from "@/types";
 import type { ProviderProps } from "@/types/providers";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+  type ScheduleApiResponse,
+  type ScheduleFormValues,
+} from "@/types/schedules";
 
 import { scanAliasSchema } from "./scan-alias-validation";
 import { getScanJobsTab } from "./scans.utils";
+import {
+  SAVE_SCHEDULE_STATUS,
+  saveScheduleWithInitialScan,
+} from "./schedule/save-schedule";
+import { ScanScheduleFields } from "./schedule/scan-schedule-fields";
 
 const launchScanSchema = z.object({
   providerId: z.string().min(1, "Select a provider to launch a scan."),
@@ -26,24 +51,65 @@ const launchScanSchema = z.object({
 
 type LaunchScanFormValues = z.infer<typeof launchScanSchema>;
 
+const LAUNCH_MODE = {
+  NOW: "now",
+  SCHEDULE: "schedule",
+} as const;
+
+type LaunchMode = (typeof LAUNCH_MODE)[keyof typeof LAUNCH_MODE];
+
+const SCHEDULE_LOAD_STATE = {
+  IDLE: "idle",
+  LOADING: "loading",
+  LOADED: "loaded",
+  ERROR: "error",
+} as const;
+
+type ScheduleLoadState =
+  (typeof SCHEDULE_LOAD_STATE)[keyof typeof SCHEDULE_LOAD_STATE];
+
 interface LaunchScanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   providers: ProviderProps[];
+  /** Cloud overlay seam; defaults to the environment-resolved capability. */
+  capability?: ScanScheduleCapability;
+  isScanLimitReached?: boolean;
 }
 
 interface LaunchScanFormProps {
   providers: ProviderProps[];
   onClose: () => void;
+  capability: ScanScheduleCapability;
+  isScanLimitReached: boolean;
 }
 
-function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
+function LaunchScanForm({
+  providers,
+  onClose,
+  capability,
+  isScanLimitReached,
+}: LaunchScanFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const form = useForm<LaunchScanFormValues>({
     resolver: zodResolver(launchScanSchema),
     defaultValues: { providerId: "", scanAlias: "" },
   });
+  const scheduleForm = useForm<ScheduleFormValues>({
+    resolver: zodResolver(scheduleFormSchema),
+    defaultValues: getScheduleFormDefaults(),
+  });
+  const [mode, setMode] = useState<LaunchMode>(LAUNCH_MODE.NOW);
+  const [scheduleLoad, setScheduleLoad] = useState<ScheduleLoadState>(
+    SCHEDULE_LOAD_STATE.IDLE,
+  );
+  // Guards against out-of-order responses when switching providers quickly.
+  const requestedProviderRef = useRef<string>("");
+
+  const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+  const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
+  const isScheduleMode = mode === LAUNCH_MODE.SCHEDULE;
 
   const providerId = form.watch("providerId");
   const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
@@ -52,7 +118,44 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
     .filter((provider) => provider.attributes.connection.connected !== true)
     .map((provider) => provider.id);
 
-  const onSubmit = form.handleSubmit(async ({ providerId, scanAlias }) => {
+  const loadSchedule = async (id: string) => {
+    requestedProviderRef.current = id;
+    if (!id) {
+      setScheduleLoad(SCHEDULE_LOAD_STATE.IDLE);
+      return;
+    }
+
+    setScheduleLoad(SCHEDULE_LOAD_STATE.LOADING);
+    const response = (await getSchedule(id)) as
+      | ScheduleApiResponse
+      | { error?: string };
+
+    if (requestedProviderRef.current !== id) return;
+
+    if (!response || ("error" in response && response.error)) {
+      setScheduleLoad(SCHEDULE_LOAD_STATE.ERROR);
+      return;
+    }
+
+    scheduleForm.reset(
+      getScheduleFormValues(
+        "data" in response ? response.data?.attributes : null,
+      ),
+    );
+    setScheduleLoad(SCHEDULE_LOAD_STATE.LOADED);
+  };
+
+  const handleProviderChange = (id: string) => {
+    form.setValue("providerId", id, { shouldValidate: true });
+    if (isScheduleMode) void loadSchedule(id);
+  };
+
+  const handleModeChange = (nextMode: string) => {
+    setMode(nextMode as LaunchMode);
+    if (nextMode === LAUNCH_MODE.SCHEDULE) void loadSchedule(providerId);
+  };
+
+  const launchNow = form.handleSubmit(async ({ providerId, scanAlias }) => {
     const formData = new FormData();
     formData.set("providerId", providerId);
     const trimmedAlias = scanAlias?.trim();
@@ -87,10 +190,62 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
     router.refresh();
   });
 
+  const saveSchedule = async () => {
+    const providerValid = await form.trigger("providerId");
+    if (!providerValid) return;
+
+    await scheduleForm.handleSubmit(async (values) => {
+      const result = await saveScheduleWithInitialScan({
+        providerId: form.getValues("providerId"),
+        values,
+      });
+
+      if (result.status === SAVE_SCHEDULE_STATUS.ERROR) {
+        form.setError("root", { message: result.message });
+        return;
+      }
+
+      const launched =
+        result.status === SAVE_SCHEDULE_STATUS.SAVED_AND_LAUNCHED;
+      toast({
+        title: launched
+          ? "Scan schedule saved and initial scan launched"
+          : "Scan schedule saved",
+        description:
+          result.status === SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED
+            ? `The schedule was saved, but the initial scan could not be launched: ${result.message}`
+            : launched
+              ? "The schedule was saved and the initial scan was launched."
+              : "The scan schedule was saved successfully.",
+        action: (
+          <ToastAction altText="View scheduled scans" asChild>
+            <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>
+              View schedule
+            </Link>
+          </ToastAction>
+        ),
+      });
+      onClose();
+      router.refresh();
+    })();
+  };
+
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isScheduleMode) {
+      void saveSchedule();
+      return;
+    }
+    void launchNow();
+  };
+
   const providerError = form.formState.errors.providerId?.message;
   const aliasError = form.formState.errors.scanAlias?.message;
   const rootError = form.formState.errors.root?.message;
-  const isSubmitting = form.formState.isSubmitting;
+  const isSubmitting =
+    form.formState.isSubmitting || scheduleForm.formState.isSubmitting;
+  const isScheduleLoading = scheduleLoad === SCHEDULE_LOAD_STATE.LOADING;
+  const isLimitBlocked = isManualOnly && isScanLimitReached;
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-8">
@@ -108,9 +263,7 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
           providers={providers}
           disabledValues={disconnectedProviderIds}
           onBatchChange={(_, values) =>
-            form.setValue("providerId", values.at(-1) ?? "", {
-              shouldValidate: true,
-            })
+            handleProviderChange(values.at(-1) ?? "")
           }
           selectedValues={providerId ? [providerId] : []}
           closeOnSelect
@@ -118,23 +271,93 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
         {providerError && <FieldError>{providerError}</FieldError>}
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor="launch-scan-alias">Alias (optional)</FieldLabel>
-        <Input
-          id="launch-scan-alias"
-          aria-label="Alias"
-          {...form.register("scanAlias")}
+      {!isManualOnly && (
+        <Field>
+          <FieldLabel>Mode</FieldLabel>
+          <RadioGroup
+            value={mode}
+            onValueChange={handleModeChange}
+            className="flex flex-row flex-wrap gap-6"
+            aria-label="Scan mode"
+          >
+            <label className="flex items-center gap-2 text-sm">
+              <RadioGroupItem value={LAUNCH_MODE.NOW} aria-label="Run now" />
+              Run now
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <RadioGroupItem
+                value={LAUNCH_MODE.SCHEDULE}
+                aria-label="On a schedule"
+                disabled={!isAdvanced}
+              />
+              On a schedule
+              {!isAdvanced && <CloudFeatureBadgeLink size="sm" />}
+            </label>
+          </RadioGroup>
+        </Field>
+      )}
+
+      {isLimitBlocked && (
+        <p className="text-text-error-primary text-sm">
+          You have reached your scan limit, so additional scans are not
+          available right now.
+        </p>
+      )}
+
+      {!isScheduleMode && (
+        <Field>
+          <FieldLabel htmlFor="launch-scan-alias">Alias (optional)</FieldLabel>
+          <Input
+            id="launch-scan-alias"
+            aria-label="Alias"
+            {...form.register("scanAlias")}
+          />
+          {aliasError && <FieldError>{aliasError}</FieldError>}
+        </Field>
+      )}
+
+      {isScheduleMode && isScheduleLoading && (
+        <div className="flex items-center gap-3 py-2">
+          <Loader2 className="size-5 animate-spin" />
+          <span className="text-sm">Loading scan schedule...</span>
+        </div>
+      )}
+
+      {isScheduleMode && scheduleLoad === SCHEDULE_LOAD_STATE.ERROR && (
+        <FieldError>
+          Failed to load the current scan schedule. Saving will overwrite it.
+        </FieldError>
+      )}
+
+      {isScheduleMode && !isScheduleLoading && (
+        <ScanScheduleFields
+          form={scheduleForm}
+          disabled={isSubmitting || !providerId}
+          showLaunchInitialScan
+          showNextScheduledCopy
         />
-        {aliasError && <FieldError>{aliasError}</FieldError>}
-      </Field>
+      )}
 
       {rootError && <FieldError>{rootError}</FieldError>}
 
       <FormButtons
         onCancel={onClose}
-        submitText={isSubmitting ? "Launching..." : "Launch Scan"}
-        loadingText="Launching..."
-        isDisabled={isSubmitting || !providers.length}
+        submitText={
+          isSubmitting
+            ? isScheduleMode
+              ? "Saving..."
+              : "Launching..."
+            : isScheduleMode
+              ? "Save Schedule"
+              : "Launch Scan"
+        }
+        loadingText={isScheduleMode ? "Saving..." : "Launching..."}
+        isDisabled={
+          isSubmitting ||
+          !providers.length ||
+          isScheduleLoading ||
+          isLimitBlocked
+        }
         rightIcon={<Rocket className="size-4" />}
       />
     </form>
@@ -145,7 +368,11 @@ export function LaunchScanModal({
   open,
   onOpenChange,
   providers,
+  capability,
+  isScanLimitReached = false,
 }: LaunchScanModalProps) {
+  const resolvedCapability = capability ?? getScanScheduleCapability(isCloud());
+
   return (
     <Modal
       open={open}
@@ -157,6 +384,8 @@ export function LaunchScanModal({
       <LaunchScanForm
         providers={providers}
         onClose={() => onOpenChange(false)}
+        capability={resolvedCapability}
+        isScanLimitReached={isScanLimitReached}
       />
     </Modal>
   );

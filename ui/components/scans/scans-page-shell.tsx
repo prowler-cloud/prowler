@@ -18,6 +18,7 @@ import {
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
+import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { CliImportBanner } from "./cli-import-banner";
 import { LaunchScanModal } from "./launch-scan-modal";
@@ -29,6 +30,9 @@ interface ScansPageShellProps {
   hasManageScansPermission: boolean;
   activeScanCount?: number;
   children: ReactNode;
+  /** Cloud overlay seam for the launch-scan modal. */
+  scanScheduleCapability?: ScanScheduleCapability;
+  isScanLimitReached?: boolean;
 }
 
 export function ScansPageShell({
@@ -36,6 +40,8 @@ export function ScansPageShell({
   hasManageScansPermission,
   activeScanCount = 0,
   children,
+  scanScheduleCapability,
+  isScanLimitReached,
 }: ScansPageShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -138,6 +144,8 @@ export function ScansPageShell({
         open={launchOpen}
         onOpenChange={handleLaunchOpenChange}
         providers={providers}
+        capability={scanScheduleCapability}
+        isScanLimitReached={isScanLimitReached}
       />
     </div>
   );
