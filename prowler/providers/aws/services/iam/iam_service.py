@@ -465,6 +465,14 @@ class IAM(AWSService):
             )
 
     def _get_role_permissions_boundary(self, role):
+        """Backfill ``role.permissions_boundary`` via ``GetRole``.
+
+        ``ListRoles`` does not return ``PermissionsBoundary`` in practice, so
+        the value is fetched per role and stored on the ``Role`` model.
+
+        Args:
+            role: The ``Role`` instance to enrich.
+        """
         try:
             response = self.client.get_role(RoleName=role.name)
             role.permissions_boundary = response.get("Role", {}).get(

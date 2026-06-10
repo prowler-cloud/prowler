@@ -10,7 +10,23 @@ from prowler.providers.aws.services.iam.lib.privilege_escalation import (
 
 
 class bedrock_agent_role_least_privilege(Check):
+    """Ensure Bedrock Agent execution roles follow least privilege.
+
+    A Bedrock Agent's execution role is evaluated against three criteria:
+    - No AWS-managed ``*FullAccess`` policy attached.
+    - No attached or inline policy granting administrative access or known
+      privilege escalation combinations.
+    - A permissions boundary is configured on the role.
+    """
+
     def execute(self) -> list[Check_Report_AWS]:
+        """Run the least-privilege evaluation across all Bedrock Agents.
+
+        Returns:
+            A list of ``Check_Report_AWS`` with one entry per agent. The
+            status is ``FAIL`` when any of the criteria above is violated,
+            or when the execution role cannot be resolved in IAM.
+        """
         findings = []
         roles_by_arn = {role.arn: role for role in (iam_client.roles or [])}
 
@@ -35,7 +51,7 @@ class bedrock_agent_role_least_privilege(Check):
 
             for policy in role.attached_policies:
                 policy_arn = policy.get("PolicyArn", "")
-                policy_name = policy.get("PolicyName")
+                policy_name = policy.get("PolicyName") or policy_arn
                 if policy_arn.startswith(
                     "arn:aws:iam::aws:policy/"
                 ) and policy_arn.endswith("FullAccess"):
