@@ -50,6 +50,10 @@ export interface ScheduleAttributes {
   scan_interval_hours: number | null;
   scan_day_of_week: number | null;
   scan_day_of_month: number | null;
+  /** Read-only, server-computed next fire time; null when paused/unconfigured. */
+  next_scan_at?: string | null;
+  /** Read-only, completed_at of the provider's last completed scan. */
+  last_scan_at?: string | null;
 }
 
 export interface ScheduleRelationships {

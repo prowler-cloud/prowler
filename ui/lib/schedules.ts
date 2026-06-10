@@ -167,26 +167,46 @@ export function getNextScheduledRun(
   }
 }
 
-/** Human-readable cadence, e.g. "Weekly on Monday @ 9:00am (Europe/Madrid)". */
-export function describeScheduleCadence(
+export interface ScheduleCadenceParts {
+  /** e.g. "Weekly on Monday" */
+  cadence: string;
+  /** e.g. "9:00am (Europe/Madrid)" */
+  time: string;
+}
+
+export function getScheduleCadenceParts(
   attributes: ScheduleAttributes,
-): string {
-  const time = `@ ${formatScheduleHour(attributes.scan_hour ?? 0)} (${attributes.scan_timezone})`;
+): ScheduleCadenceParts {
+  const time = `${formatScheduleHour(attributes.scan_hour ?? 0)} (${attributes.scan_timezone})`;
 
   switch (attributes.scan_frequency) {
     case SCHEDULE_FREQUENCY.WEEKLY: {
       const weekday =
         SCHEDULE_WEEKDAY_LABELS[attributes.scan_day_of_week ?? 0] ??
         SCHEDULE_WEEKDAY_LABELS[0];
-      return `Weekly on ${weekday} ${time}`;
+      return { cadence: `Weekly on ${weekday}`, time };
     }
     case SCHEDULE_FREQUENCY.MONTHLY:
-      return `Monthly on day ${attributes.scan_day_of_month ?? 1} ${time}`;
+      return {
+        cadence: `Monthly on day ${attributes.scan_day_of_month ?? 1}`,
+        time,
+      };
     case SCHEDULE_FREQUENCY.INTERVAL:
-      return `Every ${attributes.scan_interval_hours ?? 0} hours ${time}`;
+      return {
+        cadence: `Every ${attributes.scan_interval_hours ?? 0} hours`,
+        time,
+      };
     default:
-      return `Daily ${time}`;
+      return { cadence: "Daily", time };
   }
+}
+
+/** Human-readable cadence, e.g. "Weekly on Monday @ 9:00am (Europe/Madrid)". */
+export function describeScheduleCadence(
+  attributes: ScheduleAttributes,
+): string {
+  const { cadence, time } = getScheduleCadenceParts(attributes);
+  return `${cadence} @ ${time}`;
 }
 
 /**

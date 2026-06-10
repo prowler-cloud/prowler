@@ -1,6 +1,7 @@
 import {
   describeScheduleCadence,
   getNextScheduledRunInTimezone,
+  getScheduleCadenceParts,
   isScheduleConfigured,
 } from "@/lib/schedules";
 import {
@@ -211,7 +212,11 @@ export function buildPendingScheduleRows({
     if (!schedule || !isScheduleConfigured(schedule) || !schedule.scan_enabled)
       return [];
 
-    const nextRun = getNextScheduledRunInTimezone(schedule, now);
+    // Prefer the server-computed next fire time; fall back to a client estimate.
+    const nextScanAt =
+      schedule.next_scan_at ??
+      getNextScheduledRunInTimezone(schedule, now)?.toISOString() ??
+      null;
 
     return [
       {
@@ -228,7 +233,7 @@ export function buildPendingScheduleRows({
           started_at: null,
           inserted_at: now.toISOString(),
           completed_at: null,
-          scheduled_at: nextRun ? nextRun.toISOString() : null,
+          scheduled_at: nextScanAt,
           next_scan_at: null,
         },
         relationships: {
@@ -241,7 +246,12 @@ export function buildPendingScheduleRows({
           uid: provider.attributes.uid,
           alias: provider.attributes.alias,
         },
-        pendingSchedule: { summary: describeScheduleCadence(schedule) },
+        pendingSchedule: {
+          summary: describeScheduleCadence(schedule),
+          cadence: getScheduleCadenceParts(schedule).cadence,
+          nextScanAt,
+          lastScanAt: schedule.last_scan_at ?? null,
+        },
       },
     ];
   });

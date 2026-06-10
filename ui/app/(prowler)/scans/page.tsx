@@ -15,7 +15,11 @@ import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-emp
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/ui";
-import { describeScheduleCadence, isScheduleConfigured } from "@/lib/schedules";
+import {
+  describeScheduleCadence,
+  getScheduleCadenceParts,
+  isScheduleConfigured,
+} from "@/lib/schedules";
 import {
   ProviderProps,
   SCAN_JOBS_TAB,
@@ -228,7 +232,12 @@ const SSRDataTableScans = async ({
 
     return {
       ...scan,
-      providerSchedule: { summary: describeScheduleCadence(schedule) },
+      providerSchedule: {
+        summary: describeScheduleCadence(schedule),
+        cadence: getScheduleCadenceParts(schedule).cadence,
+        nextScanAt: schedule.next_scan_at ?? null,
+        lastScanAt: schedule.last_scan_at ?? null,
+      },
     };
   });
 

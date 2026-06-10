@@ -148,6 +148,8 @@ describe("getScanJobsColumns", () => {
       "account",
       "scanInfo",
       "scanSchedule",
+      "nextScan",
+      "lastScan",
       "actions",
     ]);
   });

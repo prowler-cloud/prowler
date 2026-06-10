@@ -203,7 +203,39 @@ describe("buildPendingScheduleRows", () => {
     expect(rows[0].pendingSchedule?.summary).toBe(
       "Weekly on Monday @ 9:00am (Europe/Madrid)",
     );
+    expect(rows[0].pendingSchedule?.cadence).toBe("Weekly on Monday");
     expect(rows[0].providerInfo?.uid).toBe("uid-p1");
+  });
+
+  it("prefers the server-computed next_scan_at and carries last_scan_at", () => {
+    const rows = buildPendingScheduleRows({
+      providers: [makeProvider("p1")],
+      schedulesByProviderId: {
+        p1: {
+          ...weeklySchedule,
+          next_scan_at: "2026-06-15T00:00:00Z",
+          last_scan_at: "2026-06-01T10:00:00Z",
+        },
+      },
+      coveredProviderIds: new Set(),
+      now,
+    });
+
+    expect(rows[0].attributes.scheduled_at).toBe("2026-06-15T00:00:00Z");
+    expect(rows[0].pendingSchedule?.nextScanAt).toBe("2026-06-15T00:00:00Z");
+    expect(rows[0].pendingSchedule?.lastScanAt).toBe("2026-06-01T10:00:00Z");
+  });
+
+  it("falls back to a client estimate when next_scan_at is absent", () => {
+    const rows = buildPendingScheduleRows({
+      providers: [makeProvider("p1")],
+      schedulesByProviderId: { p1: weeklySchedule },
+      coveredProviderIds: new Set(),
+      now,
+    });
+
+    expect(rows[0].attributes.scheduled_at).not.toBeNull();
+    expect(rows[0].pendingSchedule?.lastScanAt).toBeNull();
   });
 
   it("skips providers already covered by a real scheduled scan row", () => {

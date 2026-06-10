@@ -86,6 +86,10 @@ export interface ScanProviderInfo {
 /** Cadence summary computed from `/schedules`, e.g. "Weekly on Monday @ 9:00am". */
 export interface ScanScheduleSummary {
   summary: string;
+  /** e.g. "Weekly on Monday" */
+  cadence?: string;
+  nextScanAt?: string | null;
+  lastScanAt?: string | null;
 }
 
 export interface ScanProps {
