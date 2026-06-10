@@ -1,8 +1,10 @@
+import importlib
 import json
 import os
 from datetime import datetime, timezone
+from functools import lru_cache
 from random import getrandbits
-from typing import List
+from typing import Dict, List, Optional
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
 from py_ocsf_models.events.findings.detection_finding import (
@@ -11,9 +13,11 @@ from py_ocsf_models.events.findings.detection_finding import (
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
+from py_ocsf_models.objects.analytic import Analytic
 from py_ocsf_models.objects.cloud import Cloud
 from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
+from py_ocsf_models.objects.mitre_attack import MITREAttack, Tactic, Technique
 from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
@@ -83,6 +87,8 @@ class OCSF(Output):
                     activity_id=finding_activity.value,
                     activity_name=finding_activity.name,
                     finding_info=FindingInformation(
+                        analytic=_build_analytic(finding),
+                        attacks=_build_mitre_attacks(finding),
                         created_time_dt=finding.timestamp,
                         created_time=(
                             int(finding.timestamp.timestamp())
@@ -321,6 +327,67 @@ class OCSF(Output):
         if muted:
             status_id = StatusID.Suppressed
         return status_id
+
+
+def _build_analytic(finding: Finding) -> Analytic:
+    """Build an OCSF Analytic object describing the Prowler check that generated the finding."""
+    return Analytic(
+        name=finding.metadata.CheckTitle,
+        uid=finding.metadata.CheckID,
+        type_id=1,
+        type="Rule",
+        category=finding.metadata.ServiceName,
+    )
+
+
+@lru_cache(maxsize=None)
+def _load_mitre_technique_map(provider: str) -> Dict[str, dict]:
+    """Load and cache MITRE ATT&CK technique data for a given provider.
+
+    Returns a dict mapping technique ID (e.g. "T1078") to its requirement record.
+    Only AWS, Azure, and GCP have bundled MITRE compliance files.
+    """
+    try:
+        compliance_root = importlib.import_module("prowler.compliance").__path__[0]
+        mitre_file = os.path.join(
+            compliance_root, provider, f"mitre_attack_{provider}.json"
+        )
+        with open(mitre_file) as fh:
+            data = json.load(fh)
+        return {req["Id"]: req for req in data.get("Requirements", [])}
+    except Exception:
+        return {}
+
+
+def _build_mitre_attacks(finding: Finding) -> Optional[List[MITREAttack]]:
+    """Build a list of MITREAttack objects from a finding's MITRE-ATTACK compliance entries."""
+    technique_ids = finding.compliance.get("MITRE-ATTACK", [])
+    if not technique_ids:
+        return None
+
+    technique_map = _load_mitre_technique_map(finding.provider)
+    if not technique_map:
+        return None
+
+    attacks = []
+    for technique_id in technique_ids:
+        req = technique_map.get(technique_id)
+        if not req:
+            continue
+        technique = Technique(
+            uid=technique_id,
+            name=req["Name"],
+            src_url=req.get("TechniqueURL"),
+        )
+        for tactic_name in req.get("Tactics", []):
+            attacks.append(
+                MITREAttack(
+                    technique=technique,
+                    tactic=Tactic(name=tactic_name),
+                )
+            )
+
+    return attacks if attacks else None
 
 
 # NOTE: Copied from api/src/backend/api/uuid_utils.py (datetime_to_uuid7)

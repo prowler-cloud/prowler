@@ -16,9 +16,11 @@ from py_ocsf_models.events.findings.detection_finding import (
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
+from py_ocsf_models.objects.analytic import Analytic
 from py_ocsf_models.objects.cloud import Cloud
 from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
+from py_ocsf_models.objects.mitre_attack import MITREAttack
 from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
@@ -106,6 +108,18 @@ class TestOCSF:
             output_data.type_name
             == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
         )
+        # analytic field describes the Prowler check (rule) that generated the finding
+        assert isinstance(output_data.finding_info.analytic, Analytic)
+        assert output_data.finding_info.analytic.name == findings[0].metadata.CheckTitle
+        assert output_data.finding_info.analytic.uid == findings[0].metadata.CheckID
+        assert output_data.finding_info.analytic.type_id == 1
+        assert output_data.finding_info.analytic.type == "Rule"
+        assert (
+            output_data.finding_info.analytic.category
+            == findings[0].metadata.ServiceName
+        )
+        # no MITRE data in default fixture compliance
+        assert output_data.finding_info.attacks is None
         unmapped = output_data.unmapped
         scan_id = unmapped.pop("scan_id")
         assert UUID(scan_id)  # Valid UUID
@@ -128,6 +142,51 @@ class TestOCSF:
         assert output_data.time_dt == datetime.fromtimestamp(
             1619600000, tz=timezone.utc
         )
+
+    def test_transform_mitre_attacks_populated(self):
+        finding = generate_finding_output(
+            provider="aws",
+            compliance={"MITRE-ATTACK": ["T1078"]},
+            check_id="iam_user_mfa_enabled_console_access",
+            check_title="IAM users with console access have MFA enabled",
+            service_name="iam",
+        )
+
+        ocsf = OCSF([finding])
+        output_data = ocsf.data[0]
+
+        assert output_data.finding_info.attacks is not None
+        assert len(output_data.finding_info.attacks) > 0
+        attack = output_data.finding_info.attacks[0]
+        assert isinstance(attack, MITREAttack)
+        assert attack.technique.uid == "T1078"
+        assert attack.technique.name == "Valid Accounts"
+        assert attack.tactic is not None
+        assert attack.tactic.name in [
+            "Defense Evasion",
+            "Persistence",
+            "Privilege Escalation",
+            "Initial Access",
+        ]
+
+    def test_transform_mitre_attacks_unknown_technique(self):
+        finding = generate_finding_output(
+            provider="aws",
+            compliance={"MITRE-ATTACK": ["T9999"]},
+        )
+
+        ocsf = OCSF([finding])
+        assert ocsf.data[0].finding_info.attacks is None
+
+    def test_transform_mitre_attacks_unsupported_provider(self):
+        finding = generate_finding_output(
+            provider="kubernetes",
+            compliance={"MITRE-ATTACK": ["T1078"]},
+            check_type=[],
+        )
+
+        ocsf = OCSF([finding])
+        assert ocsf.data[0].finding_info.attacks is None
 
     def test_scan_id_is_unique_per_provider_and_account(self):
         findings = [
@@ -231,6 +290,13 @@ class TestOCSF:
                 "activity_name": "Create",
                 "activity_id": 1,
                 "finding_info": {
+                    "analytic": {
+                        "name": "service_test_check_id",
+                        "uid": "service_test_check_id",
+                        "type_id": 1,
+                        "type": "Rule",
+                        "category": "service",
+                    },
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
