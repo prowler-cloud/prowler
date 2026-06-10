@@ -1,7 +1,6 @@
 "use client";
 
 import { Progress } from "@heroui/progress";
-import { Spacer } from "@heroui/spacer";
 import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 
@@ -129,7 +128,7 @@ export const WorkflowConnectLLM = () => {
           })}
         </ol>
       </nav>
-      <Spacer y={4} />
+      <div className="h-4" />
     </section>
   );
 };

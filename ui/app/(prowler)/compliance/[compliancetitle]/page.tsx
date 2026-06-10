@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import {
@@ -350,7 +349,7 @@ const SSRComplianceContent = async ({
         {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
       </div>
 
-      <Spacer className="bg-border-neutral-primary h-1 w-full rounded-full" />
+      <div className="bg-border-neutral-primary h-1 w-full rounded-full" />
       <ClientAccordionWrapper
         hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}

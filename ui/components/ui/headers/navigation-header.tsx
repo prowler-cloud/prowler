@@ -1,8 +1,7 @@
-import { Divider } from "@heroui/divider";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 
-import { Button } from "@/components/shadcn";
+import { Button, Separator } from "@/components/shadcn";
 
 interface NavigationHeaderProps {
   title: string;
@@ -29,7 +28,7 @@ export const NavigationHeader = ({
             <Icon icon={icon} className="text-gray-600 dark:text-gray-400" />
           </Link>
         </Button>
-        <Divider orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-6" />
         <h1 className="text-default-700 text-xl font-light">{title}</h1>
       </header>
     </>

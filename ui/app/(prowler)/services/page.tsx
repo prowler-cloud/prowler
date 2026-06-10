@@ -1,5 +1,3 @@
-import { Spacer } from "@heroui/spacer";
-
 import { FilterControls } from "@/components/filters";
 import { ContentLayout } from "@/components/ui";
 
@@ -10,9 +8,9 @@ export default async function Services() {
       title="Services"
       icon="material-symbols:linked-services-outline"
     >
-      <Spacer y={4} />
+      <div className="h-4" />
       <FilterControls />
-      <Spacer y={4} />
+      <div className="h-4" />
       {/* <Suspense key={searchParamsKey} fallback={<ServiceSkeletonGrid />}>
         <SSRServiceGrid />
       </Suspense> */}

@@ -1,6 +1,5 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -13,6 +12,7 @@ import {
   ProviderTypeIcon,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
+import { Separator } from "@/components/shadcn";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
@@ -321,7 +321,7 @@ export const S3IntegrationForm = ({
             />
           </div>
 
-          <Divider />
+          <Separator />
 
           {/* S3 Configuration */}
           <div className="flex flex-col gap-4">

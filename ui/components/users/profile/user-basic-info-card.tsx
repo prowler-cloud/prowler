@@ -1,9 +1,7 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
-
 import { ProwlerShort } from "@/components/icons";
-import { Card, CardContent } from "@/components/shadcn";
+import { Card, CardContent, Separator } from "@/components/shadcn";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { DateWithTime } from "@/components/ui/entities";
@@ -41,7 +39,7 @@ export const UserBasicInfoCard = ({
             </span>
           </div>
         </div>
-        <Divider className="my-4" />
+        <Separator className="my-4" />
         <div className="flex flex-row gap-4 md:items-start md:justify-start md:gap-8">
           <div className="flex gap-2 whitespace-nowrap md:flex-col md:items-start md:justify-start">
             <div className="flex items-center gap-2">

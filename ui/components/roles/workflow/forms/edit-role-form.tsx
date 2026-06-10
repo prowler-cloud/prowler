@@ -1,7 +1,6 @@
 "use client";
 
 import { Checkbox } from "@heroui/checkbox";
-import { Divider } from "@heroui/divider";
 import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clsx } from "clsx";
@@ -12,6 +11,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
+import { Separator } from "@/components/shadcn";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
@@ -230,7 +230,7 @@ export const EditRoleForm = ({
             )}
           </div>
         </div>
-        <Divider className="my-4" />
+        <Separator className="my-4" />
 
         {!unlimitedVisibility && (
           <div className="flex flex-col gap-4">

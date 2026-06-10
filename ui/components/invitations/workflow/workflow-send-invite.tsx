@@ -1,7 +1,6 @@
 "use client";
 
 import { Progress } from "@heroui/progress";
-import { Spacer } from "@heroui/spacer";
 import { usePathname } from "next/navigation";
 import React from "react";
 
@@ -77,7 +76,7 @@ export const WorkflowSendInvite = () => {
         </div>
       </div>
 
-      <Spacer y={2} />
+      <div className="h-2" />
     </section>
   );
 };

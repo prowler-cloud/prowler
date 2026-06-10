@@ -2,7 +2,6 @@
 
 import "@/styles/globals.css";
 
-import { Spacer } from "@heroui/spacer";
 import { Icon } from "@iconify/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -80,7 +79,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
         icon="icon-park-outline:close-small"
         href="/lighthouse/config"
       />
-      <Spacer y={8} />
+      <div className="h-8" />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="order-1 my-auto hidden h-full lg:col-span-4 lg:col-start-2 lg:block">
           <WorkflowConnectLLM />
@@ -113,7 +112,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
                   Delete Provider
                 </Button>
               </div>
-              <Spacer y={4} />
+              <div className="h-4" />
             </>
           )}
           {children}

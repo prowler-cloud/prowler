@@ -1,5 +1,6 @@
-import { Card, CardBody } from "@heroui/card";
 import { Chip } from "@heroui/chip";
+
+import { Card, CardContent } from "@/components/shadcn";
 
 import { getAWSIcon, NotificationIcon, SuccessIcon } from "../icons";
 
@@ -12,8 +13,12 @@ export const ServiceCard: React.FC<CardServiceProps> = ({
   serviceAlias,
 }) => {
   return (
-    <Card fullWidth isPressable isHoverable shadow="sm">
-      <CardBody className="flex flex-row items-center justify-between gap-4">
+    <Card
+      role="button"
+      tabIndex={0}
+      className="bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary w-full cursor-pointer gap-0 shadow-sm transition-colors"
+    >
+      <CardContent className="flex flex-row items-center justify-between gap-4 p-3">
         <div className="flex items-center gap-4">
           {getAWSIcon(serviceAlias)}
           <div className="flex flex-col">
@@ -42,7 +47,7 @@ export const ServiceCard: React.FC<CardServiceProps> = ({
         >
           {fidingsFailed > 0 ? fidingsFailed : ""}
         </Chip>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };
