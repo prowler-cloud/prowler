@@ -1,10 +1,9 @@
 "use client";
 
-import { useClipboard } from "@heroui/use-clipboard";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -90,12 +89,29 @@ export function OrgSetupForm({
   const stackSetExternalId = session?.tenantId ?? "";
   const { organizationId } = useOrgSetupStore();
   const { toast } = useToast();
-  const { copied: isExternalIdCopied, copy: copyExternalId } = useClipboard({
-    timeout: 1500,
-  });
-  const { copied: isTemplateUrlCopied, copy: copyTemplateUrl } = useClipboard({
-    timeout: 1500,
-  });
+  const COPY_RESET_TIMEOUT = 1500;
+  const [isExternalIdCopied, setIsExternalIdCopied] = useState(false);
+  const [isTemplateUrlCopied, setIsTemplateUrlCopied] = useState(false);
+  const externalIdCopyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const templateUrlCopyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Copies text and flips the copied flag back after the timeout, without effects
+  const copyWithFeedback = (
+    text: string,
+    setCopied: (copied: boolean) => void,
+    timerRef: { current: ReturnType<typeof setTimeout> | undefined },
+  ) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), COPY_RESET_TIMEOUT);
+    });
+  };
+
+  const copyExternalId = (text: string) =>
+    copyWithFeedback(text, setIsExternalIdCopied, externalIdCopyTimer);
+  const copyTemplateUrl = (text: string) =>
+    copyWithFeedback(text, setIsTemplateUrlCopied, templateUrlCopyTimer);
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";

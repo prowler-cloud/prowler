@@ -1,6 +1,5 @@
 "use client";
 
-import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { InfoIcon } from "lucide-react";
@@ -10,7 +9,13 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { addRole } from "@/actions/roles/roles";
-import { Checkbox, Separator } from "@/components/shadcn";
+import {
+  Checkbox,
+  Separator,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
@@ -207,16 +212,19 @@ export const AddRoleForm = ({
                   >
                     {label}
                   </label>
-                  <Tooltip content={description} placement="right">
-                    <div className="flex w-fit items-center justify-center">
-                      <InfoIcon
-                        className={clsx(
-                          "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
-                        )}
-                        aria-hidden={"true"}
-                        width={16}
-                      />
-                    </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex w-fit items-center justify-center">
+                        <InfoIcon
+                          className={clsx(
+                            "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
+                          )}
+                          aria-hidden={"true"}
+                          width={16}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{description}</TooltipContent>
                   </Tooltip>
                 </div>
               ),

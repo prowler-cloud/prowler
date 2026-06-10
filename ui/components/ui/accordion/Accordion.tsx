@@ -1,10 +1,13 @@
 "use client";
 
-import { Accordion as NextUIAccordion, AccordionItem } from "@heroui/accordion";
-import type { Selection } from "@react-types/shared";
 import { ChevronDown } from "lucide-react";
-import React, { ReactNode, useCallback, useMemo, useState } from "react";
+import { Children, ReactNode, useState } from "react";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/shadcn/collapsible";
 import { cn } from "@/lib/utils";
 
 export interface AccordionItemProps {
@@ -42,7 +45,7 @@ const AccordionContent = ({
 }) => {
   // Normalize possible array content to automatically assign stable keys
   const normalizedContent = Array.isArray(content)
-    ? React.Children.toArray(content)
+    ? Children.toArray(content)
     : content;
 
   return (
@@ -79,88 +82,94 @@ export const Accordion = ({
   // Determine if component is in controlled or uncontrolled mode
   const isControlled = selectedKeys !== undefined;
 
-  const [internalExpandedKeys, setInternalExpandedKeys] = useState<Selection>(
-    new Set(defaultExpandedKeys),
-  );
+  const [internalExpandedKeys, setInternalExpandedKeys] =
+    useState<string[]>(defaultExpandedKeys);
 
   // Use selectedKeys if controlled, otherwise use internal state
-  const expandedKeys = useMemo(
-    () => (isControlled ? new Set(selectedKeys) : internalExpandedKeys),
-    [isControlled, selectedKeys, internalExpandedKeys],
-  );
+  const expandedKeys = isControlled ? selectedKeys : internalExpandedKeys;
 
-  const handleSelectionChange = useCallback(
-    (keys: Selection) => {
-      const keysArray = Array.from(keys as Set<string>);
+  const handleToggle = (key: string, open: boolean) => {
+    let nextKeys: string[];
 
-      // If controlled mode, call parent callback
-      if (isControlled && onSelectionChange) {
-        onSelectionChange(keysArray);
-      } else {
-        // If uncontrolled, update internal state
-        setInternalExpandedKeys(keys);
-      }
+    if (open) {
+      // Single mode collapses siblings; multiple mode keeps the whole set so
+      // nested accordions sharing the same controlled state don't wipe parents
+      nextKeys = selectionMode === "multiple" ? [...expandedKeys, key] : [key];
+      onItemExpand?.(key);
+    } else {
+      nextKeys = expandedKeys.filter((expandedKey) => expandedKey !== key);
+    }
 
-      // Handle onItemExpand for backward compatibility
-      if (onItemExpand && keys !== expandedKeys) {
-        const currentKeys = Array.from(expandedKeys as Set<string>);
-        const newKeys = keysArray;
-
-        const newlyExpandedKeys = newKeys.filter(
-          (key) => !currentKeys.includes(key),
-        );
-
-        newlyExpandedKeys.forEach((key) => {
-          onItemExpand(key);
-        });
-      }
-    },
-    [expandedKeys, onItemExpand, isControlled, onSelectionChange],
-  );
+    if (isControlled) {
+      onSelectionChange?.(nextKeys);
+    } else {
+      setInternalExpandedKeys(nextKeys);
+    }
+  };
 
   return (
-    <NextUIAccordion
+    <div
+      data-variant={variant}
       className={cn(
         "bg-bg-neutral-primary border-border-neutral-secondary w-full rounded-lg border",
         className,
       )}
-      variant={variant}
-      selectionMode={selectionMode}
-      selectedKeys={expandedKeys}
-      onSelectionChange={handleSelectionChange}
-      isCompact={isCompact}
-      showDivider={showDivider}
     >
-      {items.map((item, index) => (
-        <AccordionItem
-          key={item.key}
-          data-accordion-key={item.key}
-          aria-label={
-            typeof item.title === "string" ? item.title : `Item ${item.key}`
-          }
-          title={item.title}
-          subtitle={item.subtitle}
-          isDisabled={item.isDisabled}
-          indicator={<ChevronDown className="text-gray-500" />}
-          classNames={{
-            base: index === 0 || index === 1 ? "my-2" : "my-2",
-            title: "text-sm",
-            subtitle: "text-xs text-gray-500",
-            trigger:
-              "py-2 px-2 rounded-lg data-[hover=true]:bg-bg-neutral-tertiary data-[open=true]:bg-bg-neutral-tertiary w-full flex items-center transition-colors",
-            content: "px-0 py-1",
-          }}
-        >
-          <AccordionContent
-            key={`${item.key}-content`}
-            content={item.content}
-            items={item.items}
-            selectedKeys={selectedKeys}
-            onSelectionChange={onSelectionChange}
-          />
-        </AccordionItem>
-      ))}
-    </NextUIAccordion>
+      {items.map((item, index) => {
+        const isExpanded = expandedKeys.includes(item.key);
+
+        return (
+          <div key={item.key}>
+            <Collapsible
+              data-accordion-key={item.key}
+              open={isExpanded}
+              onOpenChange={(open) => handleToggle(item.key, open)}
+              disabled={item.isDisabled}
+              className="my-2"
+            >
+              <CollapsibleTrigger
+                aria-label={
+                  typeof item.title === "string"
+                    ? item.title
+                    : `Item ${item.key}`
+                }
+                className={cn(
+                  "hover:bg-bg-neutral-tertiary data-[state=open]:bg-bg-neutral-tertiary flex w-full items-center rounded-lg px-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                  isCompact ? "py-1" : "py-2",
+                )}
+              >
+                <div className="flex-1 text-left">
+                  <div className="text-sm">{item.title}</div>
+                  {item.subtitle && (
+                    <div className="text-xs text-gray-500">{item.subtitle}</div>
+                  )}
+                </div>
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "shrink-0 text-gray-500 transition-transform duration-200",
+                    isExpanded && "rotate-180",
+                  )}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+                <div className="px-0 py-1">
+                  <AccordionContent
+                    content={item.content}
+                    items={item.items}
+                    selectedKeys={selectedKeys}
+                    onSelectionChange={onSelectionChange}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+            {showDivider && index < items.length - 1 && (
+              <div className="bg-border-neutral-secondary h-px w-full" />
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 };
 

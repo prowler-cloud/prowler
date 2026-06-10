@@ -1,6 +1,5 @@
 "use client";
 
-import { useDisclosure } from "@heroui/use-disclosure";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -37,27 +36,27 @@ export function MuteRulesTableClient({
   const { isPending: isDeleting, runAction: runDeleteAction } =
     useMuteRuleAction();
 
-  const editModal = useDisclosure();
-  const deleteModal = useDisclosure();
-  const targetsModal = useDisclosure();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isTargetsModalOpen, setIsTargetsModalOpen] = useState(false);
 
   const handleEditClick = (muteRule: MuteRuleData) => {
     setSelectedMuteRule(muteRule);
-    editModal.onOpen();
+    setIsEditModalOpen(true);
   };
 
   const handleDeleteClick = (muteRule: MuteRuleData) => {
     setSelectedMuteRule(muteRule);
-    deleteModal.onOpen();
+    setIsDeleteModalOpen(true);
   };
 
   const handleViewTargets = (muteRule: MuteRuleTableData) => {
     setSelectedTargetsRule(muteRule);
-    targetsModal.onOpen();
+    setIsTargetsModalOpen(true);
   };
 
   const handleEditSuccess = () => {
-    editModal.onClose();
+    setIsEditModalOpen(false);
     router.refresh();
   };
 
@@ -68,7 +67,7 @@ export function MuteRulesTableClient({
 
     runDeleteAction(() => deleteMuteRule(null, formData), {
       onSuccess: () => {
-        deleteModal.onClose();
+        setIsDeleteModalOpen(false);
         router.refresh();
       },
     });
@@ -102,15 +101,15 @@ export function MuteRulesTableClient({
 
       <MuteRuleTargetsModal
         muteRule={selectedTargetsRule}
-        open={targetsModal.isOpen}
-        onOpenChange={targetsModal.onOpenChange}
+        open={isTargetsModalOpen}
+        onOpenChange={setIsTargetsModalOpen}
       />
 
       {/* Edit Modal */}
       {selectedMuteRule && (
         <Modal
-          open={editModal.isOpen}
-          onOpenChange={editModal.onOpenChange}
+          open={isEditModalOpen}
+          onOpenChange={setIsEditModalOpen}
           title="Edit Mute Rule"
           description="Update the rule metadata without changing the muted findings linked to it."
           size="lg"
@@ -119,7 +118,7 @@ export function MuteRulesTableClient({
             key={selectedMuteRule.id}
             muteRule={selectedMuteRule}
             onSuccess={handleEditSuccess}
-            onCancel={editModal.onClose}
+            onCancel={() => setIsEditModalOpen(false)}
           />
         </Modal>
       )}
@@ -127,8 +126,8 @@ export function MuteRulesTableClient({
       {/* Delete Confirmation Modal */}
       {selectedMuteRule && (
         <Modal
-          open={deleteModal.isOpen}
-          onOpenChange={deleteModal.onOpenChange}
+          open={isDeleteModalOpen}
+          onOpenChange={setIsDeleteModalOpen}
           title="Delete Mute Rule"
           description="Remove this rule from Mutelist. Existing muted findings will remain muted."
           size="md"
@@ -153,7 +152,7 @@ export function MuteRulesTableClient({
             </div>
 
             <FormButtons
-              onCancel={deleteModal.onClose}
+              onCancel={() => setIsDeleteModalOpen(false)}
               submitText={isDeleting ? "Deleting..." : "Delete"}
               isDisabled={isDeleting}
               submitColor="danger"

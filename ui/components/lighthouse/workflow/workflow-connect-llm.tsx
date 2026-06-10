@@ -1,9 +1,9 @@
 "use client";
 
-import { Progress } from "@heroui/progress";
 import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 
+import { Progress } from "@/components/shadcn/progress";
 import { cn } from "@/lib/utils";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
@@ -59,21 +59,19 @@ export const WorkflowConnectLLM = () => {
           ? "Update your LLM provider configuration and settings."
           : "Follow these steps to configure your LLM provider and enable AI-powered features."}
       </p>
-      <Progress
-        classNames={{
-          base: "px-0.5 mb-5",
-          label: "text-small",
-          value: "text-small text-button-primary",
-          indicator: "bg-button-primary",
-        }}
-        label="Steps"
-        maxValue={steps.length}
-        minValue={0}
-        showValueLabel={true}
-        size="md"
-        value={currentStep + 1}
-        valueLabel={`${currentStep + 1} of ${steps.length}`}
-      />
+      <div className="mb-5 flex flex-col gap-2 px-0.5">
+        <div className="flex items-center justify-between">
+          <span className="text-small">Steps</span>
+          <span className="text-small text-button-primary">
+            {`${currentStep + 1} of ${steps.length}`}
+          </span>
+        </div>
+        <Progress
+          aria-label="Steps"
+          value={((currentStep + 1) / steps.length) * 100}
+          indicatorClassName="bg-button-primary"
+        />
+      </div>
       <nav aria-label="Progress">
         <ol className="flex flex-col gap-y-3">
           {steps.map((step, index) => {
