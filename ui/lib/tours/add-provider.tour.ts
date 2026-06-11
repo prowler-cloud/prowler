@@ -28,7 +28,7 @@ export const addProviderTour = defineTour<AddProviderTourTarget>({
     {
       title: "Connect your first provider",
       description:
-        "Prowler scans the cloud accounts you connect. Let's walk through adding your first provider so scans have something to assess.",
+        "Prowler scans the providers you connect. Let's walk through adding your first provider so scans have something to assess.",
     },
     {
       target: "trigger",

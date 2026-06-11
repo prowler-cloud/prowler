@@ -16,7 +16,7 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     order: 1,
     title: "Add your first provider",
     description:
-      "Connect a cloud account so Prowler has something to scan and assess.",
+      "Connect a provider so Prowler has something to scan and assess.",
     route: "/providers",
     tour: addProviderTour,
     // Server-derived: existing providers bypass this flow regardless of local record.

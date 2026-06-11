@@ -53,7 +53,7 @@ export function buildViewFirstScanTour(
           align: TOUR_STEP_ALIGNMENTS.START,
           title: "Your scan is running",
           description:
-            "Prowler is assessing your provider right now. Use the In Progress, Completed, and Scheduled tabs to follow this and other jobs as they progress.",
+            "Prowler is assessing your provider right now. Use the In Progress, Completed, and Scheduled tabs to follow this and other scan jobs as they progress.",
         },
         {
           target: "launch",
@@ -61,7 +61,7 @@ export function buildViewFirstScanTour(
           align: TOUR_STEP_ALIGNMENTS.END,
           title: "Launch another scan",
           description:
-            "Click Launch Scan whenever you want to assess another connected provider. You can pick which provider and what to scan.",
+            "Click Launch Scan whenever you want to assess another connected provider. You can pick which provider and when to scan.",
         },
       ],
     });
@@ -79,7 +79,7 @@ export function buildViewFirstScanTour(
         align: TOUR_STEP_ALIGNMENTS.END,
         title: "Launch a scan",
         description:
-          "Click Launch Scan to start assessing a connected provider. You can pick which provider and what to scan.",
+          "Click Launch Scan to start assessing a connected provider. You can pick which provider and when to scan.",
       },
       {
         target: "tabs",
@@ -87,7 +87,7 @@ export function buildViewFirstScanTour(
         align: TOUR_STEP_ALIGNMENTS.START,
         title: "Track your scan jobs",
         description:
-          "Switch between these tabs to follow running, scheduled, and completed jobs as they progress.",
+          "Switch between these tabs to follow running, scheduled, and completed scan jobs as they progress.",
       },
     ],
   });
