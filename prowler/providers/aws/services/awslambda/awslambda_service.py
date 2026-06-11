@@ -105,27 +105,38 @@ class Lambda(AWSService):
         logger.info("Lambda - Listing Event Source Mappings...")
         try:
             paginator = regional_client.get_paginator("list_event_source_mappings")
-            for page in paginator.paginate():
-                for mapping in page.get("EventSourceMappings", []):
-                    function_arn = mapping.get("FunctionArn", "")
-                    # Normalise to unqualified ARN (strip :qualifier suffix if present)
-                    base_arn = ":".join(function_arn.split(":")[:7])
-                    if base_arn not in self.functions:
-                        continue
-                    self.functions[base_arn].event_source_mappings.append(
-                        EventSourceMapping(
-                            uuid=mapping["UUID"],
-                            event_source_arn=mapping.get("EventSourceArn", ""),
-                            state=mapping.get("State", ""),
-                            batch_size=mapping.get("BatchSize"),
-                            starting_position=mapping.get("StartingPosition"),
-                        )
-                    )
+            if not self.function_limit:
+                for page in paginator.paginate():
+                    self._add_event_source_mappings(page.get("EventSourceMappings", []))
+                return
+
+            for function in self.functions.values():
+                if function.region != regional_client.region:
+                    continue
+                for page in paginator.paginate(FunctionName=function.name):
+                    self._add_event_source_mappings(page.get("EventSourceMappings", []))
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
+            )
+
+    def _add_event_source_mappings(self, event_source_mappings):
+        for mapping in event_source_mappings:
+            function_arn = mapping.get("FunctionArn", "")
+            # Normalise to unqualified ARN (strip :qualifier suffix if present)
+            base_arn = ":".join(function_arn.split(":")[:7])
+            if base_arn not in self.functions:
+                continue
+            self.functions[base_arn].event_source_mappings.append(
+                EventSourceMapping(
+                    uuid=mapping["UUID"],
+                    event_source_arn=mapping.get("EventSourceArn", ""),
+                    state=mapping.get("State", ""),
+                    batch_size=mapping.get("BatchSize"),
+                    starting_position=mapping.get("StartingPosition"),
+                )
             )
 
     def _get_function_code(self):

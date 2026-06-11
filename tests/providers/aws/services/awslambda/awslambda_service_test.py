@@ -162,6 +162,130 @@ class Test_Lambda_Service:
 
         assert [function.name for function in awslambda.functions.values()] == ["new"]
 
+    def test_list_event_source_mappings_uses_selected_functions_as_api_scope(self):
+        class FakePaginator:
+            def __init__(self):
+                self.paginate_calls = []
+
+            def paginate(self, **kwargs):
+                self.paginate_calls.append(kwargs)
+                function_name = kwargs["FunctionName"]
+                return [
+                    {
+                        "EventSourceMappings": [
+                            {
+                                "UUID": f"{function_name}-mapping",
+                                "FunctionArn": (
+                                    f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                                    f"{AWS_ACCOUNT_NUMBER}:function:{function_name}:1"
+                                ),
+                                "EventSourceArn": "arn:aws:sqs:queue",
+                                "State": "Enabled",
+                                "BatchSize": 10,
+                            }
+                        ]
+                    }
+                ]
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def __init__(self):
+                self.paginator = FakePaginator()
+
+            def get_paginator(self, name):
+                assert name == "list_event_source_mappings"
+                return self.paginator
+
+        selected_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:selected"
+        )
+        other_region_arn = (
+            f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:other-region"
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.function_limit = 1
+        awslambda.functions = {
+            selected_arn: Function(
+                name="selected",
+                arn=selected_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            ),
+            other_region_arn: Function(
+                name="other-region",
+                arn=other_region_arn,
+                security_groups=[],
+                region=AWS_REGION_EU_WEST_1,
+            ),
+        }
+        regional_client = FakeLambdaClient()
+
+        awslambda._list_event_source_mappings(regional_client)
+
+        assert regional_client.paginator.paginate_calls == [
+            {"FunctionName": "selected"}
+        ]
+        assert len(awslambda.functions[selected_arn].event_source_mappings) == 1
+        assert (
+            awslambda.functions[selected_arn].event_source_mappings[0].uuid
+            == "selected-mapping"
+        )
+        assert not awslambda.functions[other_region_arn].event_source_mappings
+
+    def test_list_event_source_mappings_keeps_unlimited_regional_api_scope(self):
+        class FakePaginator:
+            def __init__(self):
+                self.paginate_calls = []
+
+            def paginate(self, **kwargs):
+                self.paginate_calls.append(kwargs)
+                return [
+                    {
+                        "EventSourceMappings": [
+                            {
+                                "UUID": "selected-mapping",
+                                "FunctionArn": selected_arn,
+                                "EventSourceArn": "arn:aws:sqs:queue",
+                                "State": "Enabled",
+                            }
+                        ]
+                    }
+                ]
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def __init__(self):
+                self.paginator = FakePaginator()
+
+            def get_paginator(self, name):
+                assert name == "list_event_source_mappings"
+                return self.paginator
+
+        selected_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:selected"
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.function_limit = None
+        awslambda.functions = {
+            selected_arn: Function(
+                name="selected",
+                arn=selected_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            )
+        }
+        regional_client = FakeLambdaClient()
+
+        awslambda._list_event_source_mappings(regional_client)
+
+        assert regional_client.paginator.paginate_calls == [{}]
+        assert len(awslambda.functions[selected_arn].event_source_mappings) == 1
+
     @mock_aws
     def test_list_functions(self):
         # Create IAM Lambda Role

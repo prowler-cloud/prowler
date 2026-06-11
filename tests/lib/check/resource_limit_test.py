@@ -125,6 +125,14 @@ class Test_get_resource_scan_limit:
         config = {"max_scanned_resources_per_service": 50}
         assert get_resource_scan_limit(config, "max_ecs_task_definitions") == 50
 
+    def test_null_per_service_override_falls_back_to_global_default(self):
+        config = {
+            "max_scanned_resources_per_service": 50,
+            "max_ecs_task_definitions": None,
+        }
+
+        assert get_resource_scan_limit(config, "max_ecs_task_definitions") == 50
+
     def test_default_is_unlimited_when_unset(self):
         assert get_resource_scan_limit({}, "max_ecs_task_definitions") is None
 
