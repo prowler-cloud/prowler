@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.30.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Threat Map now shows data for Okta and Google Workspace accounts; their `global` regions were dropped for lacking map coordinates, and the region selector now auto-selects the only available region [(#11542)](https://github.com/prowler-cloud/prowler/pull/11542)
+
+---
+
 ## [1.30.0] (Prowler v5.30.0)
 
 ### 🚀 Added
