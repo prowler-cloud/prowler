@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.30.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Findings Severity Over Time chart Y-axis labels no longer overflow for large findings counts [(#PR)](https://github.com/prowler-cloud/prowler/pull/PR)
+
+---
+
 ## [1.30.0] (Prowler v5.30.0)
 
 ### 🚀 Added
