@@ -143,7 +143,9 @@ def mock_make_api_call_admin_lookup_unexpected(self, operation_name, api_params)
     return orig(self, operation_name, api_params)
 
 
-def mock_make_api_call_describe_org_config_other_client_error(self, operation_name, api_params):
+def mock_make_api_call_describe_org_config_other_client_error(
+    self, operation_name, api_params
+):
     """DescribeOrganizationConfiguration raises a non-access ClientError — else branch."""
     hub_resp = _active_hub_responses(operation_name)
     if hub_resp is not None:
