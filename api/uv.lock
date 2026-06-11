@@ -4499,7 +4499,7 @@ dependencies = [
 
 [[package]]
 name = "prowler-api"
-version = "1.31.0"
+version = "1.32.0"
 source = { virtual = "." }
 dependencies = [
     { name = "cartography" },
