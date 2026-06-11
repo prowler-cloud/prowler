@@ -1,10 +1,9 @@
 {
   "Provider": "aws",
   "CheckID": "sagemaker_clarify_exists",
-  "CheckTitle": "SageMaker Clarify processing jobs exist in the audited region",
+  "CheckTitle": "Amazon SageMaker Clarify processing jobs exist in the region",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices",
-    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "sagemaker",
   "SubServiceName": "",
@@ -36,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check validates Clarify processing job existence per successfully scanned region by checking that at least one processing job uses the AWS-managed Clarify container image."
+  "Notes": "Results are generated per scanned region. Regions where `ListProcessingJobs` cannot be queried are omitted from the findings."
 }
