@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "config_delegated_admin_and_org_aggregator_all_regions",
+  "CheckTitle": "AWS Config has a delegated administrator and an organization aggregator covering all AWS regions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "config",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsConfigConfigurationAggregator",
+  "ResourceGroup": "governance",
+  "Description": "**AWS Config** has a delegated administrator registered via AWS Organizations and at least one Configuration Aggregator with an OrganizationAggregationSource that covers all AWS regions, ensuring centralized org-wide configuration visibility.",
+  "Risk": "Without an org-wide **AWS Config** aggregator and a delegated administrator, configuration data is fragmented across accounts and regions, **compliance reporting** is incomplete, and **drift detection** is delayed. Adversaries or misconfigurations can persist in unmonitored accounts, eroding **audit readiness** and **regulatory posture**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/config/latest/developerguide/aggregate-data.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/set-up-aggregator-cli.html",
+    "https://docs.aws.amazon.com/organizations/latest/userguide/services-that-can-integrate-config.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws organizations register-delegated-administrator --account-id <ADMIN_ACCOUNT_ID> --service-principal config.amazonaws.com && aws configservice put-configuration-aggregator --configuration-aggregator-name org-aggregator --organization-aggregation-source RoleArn=<ROLE_ARN>,AllAwsRegions=true",
+      "NativeIaC": "",
+      "Other": "1. From the AWS Organizations management account, register the delegated administrator for config.amazonaws.com\n2. In the delegated admin account, open AWS Config\n3. Create a Configuration Aggregator and select Add my organization as the source\n4. Enable Include all AWS Regions\n5. Confirm an IAM role with AWSConfigRoleForOrganizations is attached\n6. Verify the aggregator status reaches SUCCEEDED for all member accounts",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Register a **delegated administrator** for AWS Config via AWS Organizations and create at least one **Configuration Aggregator** with an OrganizationAggregationSource that covers **all AWS regions**. This centralizes configuration data across the organization for unified compliance and audit reporting.",
+      "Url": "https://hub.prowler.com/check/config_delegated_admin_and_org_aggregator_all_regions"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "config_recorder_all_regions_enabled",
+    "guardduty_delegated_admin_enabled_all_regions"
+  ],
+  "Notes": "This check requires execution from the organization management account or delegated administrator account to access organization-level APIs."
+}
