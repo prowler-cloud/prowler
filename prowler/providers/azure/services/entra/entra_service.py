@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import gather
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -49,6 +50,8 @@ class Entra(AzureService):
                 self._get_named_locations(),
                 self._get_directory_roles(),
                 self._get_conditional_access_policy(),
+                self._get_app_registrations(),
+                self._get_authentication_methods_policy(),
             )
         )
 
@@ -58,6 +61,8 @@ class Entra(AzureService):
         self.named_locations = attributes[3]
         self.directory_roles = attributes[4]
         self.conditional_access_policy = attributes[5]
+        self.app_registrations = attributes[6]
+        self.authentication_methods_policy = attributes[7]
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -69,7 +74,12 @@ class Entra(AzureService):
         try:
             request_configuration = RequestConfiguration(
                 query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
-                    select=["id", "displayName", "accountEnabled"]
+                    select=[
+                        "id",
+                        "displayName",
+                        "accountEnabled",
+                        "signInActivity",
+                    ]
                 )
             )
             for tenant, client in self.clients.items():
@@ -82,6 +92,18 @@ class Entra(AzureService):
                 try:
                     while users_response:
                         for user in getattr(users_response, "value", []) or []:
+                            sign_in_activity = getattr(
+                                user, "sign_in_activity", None
+                            )
+                            last_sign_in = (
+                                getattr(
+                                    sign_in_activity,
+                                    "last_sign_in_date_time",
+                                    None,
+                                )
+                                if sign_in_activity
+                                else None
+                            )
                             users[tenant].update(
                                 {
                                     user.id: User(
@@ -93,6 +115,7 @@ class Entra(AzureService):
                                         account_enabled=getattr(
                                             user, "account_enabled", True
                                         ),
+                                        last_sign_in=last_sign_in,
                                     )
                                 }
                             )
@@ -416,12 +439,149 @@ class Entra(AzureService):
 
         return conditional_access_policy
 
+    async def _get_app_registrations(self):
+        logger.info("Entra - Getting app registrations...")
+        app_registrations = {}
+        try:
+            for tenant, client in self.clients.items():
+                app_registrations[tenant] = {}
+                apps_response = await client.applications.get()
+
+                try:
+                    while apps_response:
+                        for app in getattr(apps_response, "value", []) or []:
+                            credentials = []
+                            for cred in getattr(
+                                app, "password_credentials", []
+                            ) or []:
+                                credentials.append(
+                                    AppCredential(
+                                        display_name=getattr(
+                                            cred, "display_name", ""
+                                        )
+                                        or "",
+                                        credential_type="password",
+                                        end_date_time=getattr(
+                                            cred, "end_date_time", None
+                                        ),
+                                    )
+                                )
+                            for cred in getattr(
+                                app, "key_credentials", []
+                            ) or []:
+                                credentials.append(
+                                    AppCredential(
+                                        display_name=getattr(
+                                            cred, "display_name", ""
+                                        )
+                                        or "",
+                                        credential_type="certificate",
+                                        end_date_time=getattr(
+                                            cred, "end_date_time", None
+                                        ),
+                                    )
+                                )
+                            app_registrations[tenant][app.id] = AppRegistration(
+                                id=app.id,
+                                name=getattr(app, "display_name", "") or "",
+                                credentials=credentials,
+                            )
+
+                        next_link = getattr(apps_response, "odata_next_link", None)
+                        if not next_link:
+                            break
+                        apps_response = await client.applications.with_url(
+                            next_link
+                        ).get()
+
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return app_registrations
+
+    async def _get_authentication_methods_policy(self):
+        logger.info("Entra - Getting authentication methods policy...")
+        auth_methods_policy = {}
+        try:
+            for tenant, client in self.clients.items():
+                policy_response = await client.policies.authentication_methods_policy.get()
+
+                if not policy_response:
+                    auth_methods_policy[tenant] = None
+                    continue
+
+                # Parse registration enforcement
+                reg_enforcement = getattr(
+                    policy_response, "registration_enforcement", None
+                )
+                reg_campaign = (
+                    getattr(
+                        reg_enforcement,
+                        "authentication_methods_registration_campaign",
+                        None,
+                    )
+                    if reg_enforcement
+                    else None
+                )
+                registration_enforcement_state = (
+                    getattr(reg_campaign, "state", None)
+                    if reg_campaign
+                    else None
+                )
+
+                # Parse authentication method configurations
+                method_configs = []
+                for config in (
+                    getattr(
+                        policy_response,
+                        "authentication_method_configurations",
+                        [],
+                    )
+                    or []
+                ):
+                    odata_type = getattr(config, "odata_type", "") or ""
+                    # Extract method name from odata_type
+                    # e.g. "#microsoft.graph.microsoftAuthenticatorAuthenticationMethodConfiguration"
+                    method_name = (
+                        odata_type.split(".")[-1]
+                        .replace("AuthenticationMethodConfiguration", "")
+                        if odata_type
+                        else getattr(config, "id", "unknown")
+                    )
+                    method_configs.append(
+                        AuthMethodConfig(
+                            id=getattr(config, "id", "") or "",
+                            method_name=method_name,
+                            state=getattr(config, "state", "disabled") or "disabled",
+                        )
+                    )
+
+                auth_methods_policy[tenant] = AuthMethodsPolicy(
+                    id=getattr(policy_response, "id", "") or "",
+                    registration_enforcement_state=registration_enforcement_state,
+                    method_configurations=method_configs,
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return auth_methods_policy
+
 
 class User(BaseModel):
     id: str
     name: str
     is_mfa_capable: bool = False
     account_enabled: bool = True
+    last_sign_in: Optional[datetime] = None
 
 
 class DefaultUserRolePermissions(BaseModel):
@@ -481,3 +641,27 @@ class ConditionalAccessPolicy(BaseModel):
     users: dict[str, List[str]]
     target_resources: dict[str, List[str]]
     access_controls: dict[str, List[str]]
+
+
+class AppCredential(BaseModel):
+    display_name: str = ""
+    credential_type: str  # "password" or "certificate"
+    end_date_time: Optional[datetime] = None
+
+
+class AppRegistration(BaseModel):
+    id: str
+    name: str
+    credentials: List[AppCredential] = []
+
+
+class AuthMethodConfig(BaseModel):
+    id: str = ""
+    method_name: str
+    state: str = "disabled"  # "enabled" or "disabled"
+
+
+class AuthMethodsPolicy(BaseModel):
+    id: str = ""
+    registration_enforcement_state: Optional[str] = None  # "enabled" or "disabled"
+    method_configurations: List[AuthMethodConfig] = []
