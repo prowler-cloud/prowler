@@ -1,6 +1,3 @@
-# pnpm 11+ workspace config. .npmrc is auth/registry only; everything else lives here.
-# Reference: https://pnpm.io/supply-chain-security
-
 packages: []
 
 # Refuse to install on Node/pnpm outside the `engines` block in package.json.
@@ -34,7 +31,7 @@ overrides:
   "minimatch@>=10": "10.2.3"
   "ajv@<7": "6.14.0"
   "ajv@>=8": "8.18.0"
-  "qs": "6.14.2"
+  "qs": "6.15.2"
   # 8.2.2 dropped provenance attestation; 8.3.1+ restored it. Pinned to skip 8.2.2
   # under `trustPolicy: no-downgrade`.
   "express-rate-limit": "8.5.1"
@@ -87,3 +84,6 @@ trustPolicyExclude:
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true
+minimumReleaseAgeExclude:
+  # Renovate security update: qs@6.15.2
+  - qs@6.15.2
