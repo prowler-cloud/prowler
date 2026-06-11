@@ -167,7 +167,7 @@ runs:
 
     - name: Upload SARIF to GitHub Code Scanning
       if: always() && inputs.upload-sarif == 'true' && steps.find-sarif.outputs.sarif_path != ''
-      uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
+      uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
       with:
         sarif_file: ${{ steps.find-sarif.outputs.sarif_path }}
         category: ${{ inputs.sarif-category }}
