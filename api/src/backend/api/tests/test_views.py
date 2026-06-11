@@ -9749,8 +9749,7 @@ class TestComplianceOverviewViewSet:
         # The scan outside the user's provider group is invisible, so it fails
         # closed with 404 instead of leaking the other provider's check IDs.
         assert (
-            request_attributes(denied_scan.id).status_code
-            == status.HTTP_404_NOT_FOUND
+            request_attributes(denied_scan.id).status_code == status.HTTP_404_NOT_FOUND
         )
 
     def test_compliance_overview_attributes_missing_compliance_id(
