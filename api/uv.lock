@@ -146,6 +146,7 @@ constraints = [
     { name = "django-celery-results", specifier = "==2.6.0" },
     { name = "django-cors-headers", specifier = "==4.4.0" },
     { name = "django-environ", specifier = "==0.11.2" },
+    { name = "django-eventstream", specifier = "==5.3.3" },
     { name = "django-filter", specifier = "==24.3" },
     { name = "django-guid", specifier = "==3.5.0" },
     { name = "django-postgres-extra", specifier = "==2.0.9" },
@@ -190,7 +191,7 @@ constraints = [
     { name = "grpc-google-iam-v1", specifier = "==0.14.3" },
     { name = "grpcio", specifier = "==1.76.0" },
     { name = "grpcio-status", specifier = "==1.76.0" },
-    { name = "gunicorn", specifier = "==23.0.0" },
+    { name = "gunicorn", specifier = "==26.0.0" },
     { name = "h11", specifier = "==0.16.0" },
     { name = "h2", specifier = "==4.3.0" },
     { name = "hpack", specifier = "==4.1.0" },
@@ -2363,6 +2364,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-eventstream"
+version = "5.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "django-grip" },
+    { name = "gripcontrol" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f2/49/ec6cbc24f3f30465370df7096cfea9722bad2b0c1f35a7ff5d45fb96cff6/django_eventstream-5.3.3.tar.gz", hash = "sha256:6880b03298eebf18c1b736b972fb862eaf631dfbb79f8b27496418a3495d08dc", size = 47622, upload-time = "2025-10-23T00:22:40.291Z" }
+
+[[package]]
 name = "django-filter"
 version = "24.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2373,6 +2387,19 @@ sdist = { url = "https://files.pythonhosted.org/packages/50/bc/dc19ae39c23533292
 wheels = [
     { url = "https://files.pythonhosted.org/packages/09/b1/92f1c30b47c1ebf510c35a2ccad9448f73437e5891bbd2b4febe357cc3de/django_filter-24.3-py3-none-any.whl", hash = "sha256:c4852822928ce17fb699bcfccd644b3574f1a2d80aeb2b4ff4f16b02dd49dc64", size = 95011, upload-time = "2024-08-02T13:27:55.616Z" },
 ]
+
+[[package]]
+name = "django-grip"
+version = "3.5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "gripcontrol" },
+    { name = "pubcontrol" },
+    { name = "six" },
+    { name = "werkzeug" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cb/d0/2c7b04fa864073cd8cb324f8674672162282d97540d56732cbd3a9ae5bca/django-grip-3.5.2.tar.gz", hash = "sha256:1ee1601492cd110256bd03e4a68797a9fbefa27c15f5a838bf245df97db0450c", size = 7626, upload-time = "2025-03-24T18:53:58.677Z" }
 
 [[package]]
 name = "django-guid"
@@ -2986,6 +3013,17 @@ wheels = [
 ]
 
 [[package]]
+name = "gripcontrol"
+version = "4.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pubcontrol" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4f/51/1cbf88384fbe97a1454fb0adddcdca8cb90ceb99c3250274c334db844f4f/gripcontrol-4.4.0.tar.gz", hash = "sha256:44ee6fe244a02870aa4e5bc810138ccaf5070dce5eb149b8ee9e27b960a95c2d", size = 12526, upload-time = "2026-05-14T21:19:28.49Z" }
+
+[[package]]
 name = "grpc-google-iam-v1"
 version = "0.14.3"
 source = { registry = "https://pypi.org/simple" }
@@ -3046,14 +3084,14 @@ wheels = [
 
 [[package]]
 name = "gunicorn"
-version = "23.0.0"
+version = "26.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/72/9614c465dc206155d93eff0ca20d42e1e35afc533971379482de953521a4/gunicorn-23.0.0.tar.gz", hash = "sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec", size = 375031, upload-time = "2024-08-10T20:25:27.378Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/b7/a4a3f632f823e432ce6bc65f62961b7980c898c77f075a2f7118cb3846fe/gunicorn-26.0.0.tar.gz", hash = "sha256:ca9346f85e3a4aeeb64d491045c16b9a35647abd37ea15efe53080eb8b090baf", size = 727286, upload-time = "2026-05-05T06:38:25.529Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/7d/6dac2a6e1eba33ee43f318edbed4ff29151a49b5d37f080aad1e6469bca4/gunicorn-23.0.0-py3-none-any.whl", hash = "sha256:ec400d38950de4dfd418cff8328b2c8faed0edb0d517d3394e457c317908ca4d", size = 85029, upload-time = "2024-08-10T20:25:24.996Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/40/9c2384fc2be4ad25dd4a49decd5ad9ea5a3639814c11bd40ab77cb9f0a14/gunicorn-26.0.0-py3-none-any.whl", hash = "sha256:40233d26a5f0d1872916188c276e21641155111c2853f0c2cd55260aec0d24fc", size = 212009, upload-time = "2026-05-05T06:38:23.007Z" },
 ]
 
 [[package]]
@@ -4415,8 +4453,8 @@ wheels = [
 
 [[package]]
 name = "prowler"
-version = "5.27.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#0abbb7fc590eaf7de6ed354dd5a217bca261d2b0" }
+version = "5.30.0"
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#f1d741214a60df17158c3fdc97804fd1fde64f3a" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
@@ -4489,9 +4527,14 @@ dependencies = [
     { name = "pygithub" },
     { name = "python-dateutil" },
     { name = "pytz" },
+    { name = "scaleway" },
     { name = "schema" },
     { name = "shodan" },
     { name = "slack-sdk" },
+    { name = "stackit-core" },
+    { name = "stackit-iaas" },
+    { name = "stackit-objectstorage" },
+    { name = "stackit-resourcemanager" },
     { name = "tabulate" },
     { name = "tzlocal" },
     { name = "uuid6" },
@@ -4512,6 +4555,7 @@ dependencies = [
     { name = "django-celery-results" },
     { name = "django-cors-headers" },
     { name = "django-environ" },
+    { name = "django-eventstream" },
     { name = "django-filter" },
     { name = "django-guid" },
     { name = "django-postgres-extra" },
@@ -4576,6 +4620,7 @@ requires-dist = [
     { name = "django-celery-results", specifier = "==2.6.0" },
     { name = "django-cors-headers", specifier = "==4.4.0" },
     { name = "django-environ", specifier = "==0.11.2" },
+    { name = "django-eventstream", specifier = "==5.3.3" },
     { name = "django-filter", specifier = "==24.3" },
     { name = "django-guid", specifier = "==3.5.0" },
     { name = "django-postgres-extra", specifier = "==2.0.9" },
@@ -4588,7 +4633,7 @@ requires-dist = [
     { name = "drf-spectacular-jsonapi", specifier = "==0.5.1" },
     { name = "fonttools", specifier = "==4.62.1" },
     { name = "gevent", specifier = "==25.9.1" },
-    { name = "gunicorn", specifier = "==23.0.0" },
+    { name = "gunicorn", specifier = "==26.0.0" },
     { name = "h2", specifier = "==4.3.0" },
     { name = "lxml", specifier = "==6.1.0" },
     { name = "markdown", specifier = "==3.10.2" },
@@ -4675,6 +4720,16 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/ee/3ba07c6dc7c3294e717e94720da1597aedc82a10b1b180203ce183d4631a/psycopg2_binary-2.9.9-cp312-cp312-win32.whl", hash = "sha256:64cf30263844fa208851ebb13b0732ce674d8ec6a0c86a4e160495d299ba3c93", size = 1024709, upload-time = "2023-10-28T09:37:24.991Z" },
     { url = "https://files.pythonhosted.org/packages/7b/08/9c66c269b0d417a0af9fb969535f0371b8c538633535a7a6a5ca3f9231e2/psycopg2_binary-2.9.9-cp312-cp312-win_amd64.whl", hash = "sha256:81ff62668af011f9a48787564ab7eded4e9fb17a4a6a74af5ffa6a457400d2ab", size = 1163864, upload-time = "2023-10-28T09:37:28.155Z" },
 ]
+
+[[package]]
+name = "pubcontrol"
+version = "3.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/25/6a/02202a247214a6ffd5148ab1b16aca1c334b40dca211bca0442c8b7c7447/pubcontrol-3.5.0.tar.gz", hash = "sha256:a5ec6b3f53edfd005675518e5e4cc23b34122776835ae7c6dbd1db173d1ff0cb", size = 18199, upload-time = "2023-07-05T19:11:40.477Z" }
 
 [[package]]
 name = "py-deviceid"
@@ -5529,6 +5584,67 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/90/76/437d71068094df0726366574cf3432a4ed754217b436eb7429415cf2d480/sqlparse-0.5.5.tar.gz", hash = "sha256:e20d4a9b0b8585fdf63b10d30066c7c94c5d7a7ec47c889a2d83a3caa93ff28e", size = 120815, upload-time = "2025-12-19T07:17:45.073Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/4b/359f28a903c13438ef59ebeee215fb25da53066db67b305c125f1c6d2a25/sqlparse-0.5.5-py3-none-any.whl", hash = "sha256:12a08b3bf3eec877c519589833aed092e2444e68240a3577e8e26148acc7b1ba", size = 46138, upload-time = "2025-12-19T07:17:46.573Z" },
+]
+
+[[package]]
+name = "stackit-core"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "pydantic" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "requests" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/24/90/20f9ec7387eec4067cfd3d29055d0e2b5e1e0322c601a7f48125fd8ea35f/stackit_core-0.2.0.tar.gz", hash = "sha256:b8af91877cdb060d6969a303d8cf20bc0b33b345afd91f679c44a987381e2d47", size = 8987, upload-time = "2025-06-12T08:24:45.251Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/b4/7b53187ce68956870d864ccb9ccfb68066c9df9de1c9568fd2feb03c4504/stackit_core-0.2.0-py3-none-any.whl", hash = "sha256:04632fc6742790d08ddfcb7f2313e04d1254827397a80250f838a2f81b92645b", size = 10240, upload-time = "2025-06-12T08:24:44.214Z" },
+]
+
+[[package]]
+name = "stackit-iaas"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+    { name = "stackit-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/52/07/24e65278300d5c3cb19cb1660bff924c80812cf8aad3e715f826bae5aa80/stackit_iaas-1.4.0.tar.gz", hash = "sha256:93523b23442350c7ebefd9129485c4c2a539f694a9c36a0f8edfaba9862057ea", size = 116236, upload-time = "2026-05-13T09:43:15.996Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/08/51/2201164d7bfacf47539888c735f10f6320c188252384957aa1b23121a210/stackit_iaas-1.4.0-py3-none-any.whl", hash = "sha256:3f4a32321b57ac238f73e5d660c6428186b92cc0425c1f0783ba801e377149d9", size = 316588, upload-time = "2026-05-13T09:43:14.943Z" },
+]
+
+[[package]]
+name = "stackit-objectstorage"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+    { name = "stackit-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/90/80/b790756af40a5c6d979dd688b2557394ac54b594eb4c08edc33157ba890f/stackit_objectstorage-1.4.0.tar.gz", hash = "sha256:4a3812b4de102b199f061706a802909f9e53ae9b0858769d5bd720f814c8bdbe", size = 31814, upload-time = "2026-05-13T09:43:05.027Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/68/f1/ffa8d5e2ec9f818c72a6f045691364eb4e927ee86641993a70882d00205a/stackit_objectstorage-1.4.0-py3-none-any.whl", hash = "sha256:1a3285c6840d95cff591d84fd21803575cb0d010c398e6575ed92987b9c39866", size = 65061, upload-time = "2026-05-13T09:43:04.13Z" },
+]
+
+[[package]]
+name = "stackit-resourcemanager"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+    { name = "stackit-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/23/2d/f458f18e48ed2b1c83df52cff7dbdfd5dd904fb2980ffd9385876e47bbd9/stackit_resourcemanager-0.8.0.tar.gz", hash = "sha256:f44542beab4130857f5a7f465cf02defeef657bdf63c1beeb3102f0ba3c003fe", size = 33943, upload-time = "2026-05-13T09:43:08.667Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/9c/38a74d0f7a89b4320f6d2366fb660638bda8860daa08748b12c713d84381/stackit_resourcemanager-0.8.0-py3-none-any.whl", hash = "sha256:dd04bb8353d041a137c4dcba190beabded7acfaff1bc98b218fce20a99389ebc", size = 81288, upload-time = "2026-05-13T09:43:07.81Z" },
 ]
 
 [[package]]
