@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
+  createViewComplianceTourStepHandlers,
   viewComplianceTour,
   type ViewComplianceTourTarget,
 } from "../view-compliance.tour";
@@ -53,5 +54,52 @@ describe("viewComplianceTour shape", () => {
     expect(viewComplianceTour.coversFiles).toContain(
       "ui/components/compliance/**",
     );
+  });
+});
+
+describe("createViewComplianceTourStepHandlers", () => {
+  const makeHandlers = (overrides?: {
+    resetSearch?: () => boolean;
+    openFirstFramework?: () => void;
+  }) =>
+    createViewComplianceTourStepHandlers({
+      resetSearch: overrides?.resetSearch ?? vi.fn(() => true),
+      openFirstFramework: overrides?.openFirstFramework ?? vi.fn(),
+    });
+
+  it("resets the search and waits for the frameworks anchor before advancing", async () => {
+    // An empty search result unmounts every card (anchor included); resetting first
+    // guarantees the next step has an element to highlight.
+    const resetSearch = vi.fn(() => true);
+    const waitForStep = vi
+      .fn()
+      .mockResolvedValue(document.createElement("div"));
+    const handlers = makeHandlers({ resetSearch });
+
+    await handlers.search?.onNext?.({ waitForStep });
+
+    expect(resetSearch).toHaveBeenCalledTimes(1);
+    expect(waitForStep).toHaveBeenCalledWith("frameworks");
+  });
+
+  it("does not wait for frameworks when no card can render", async () => {
+    const resetSearch = vi.fn(() => false);
+    const waitForStep = vi.fn();
+    const handlers = makeHandlers({ resetSearch });
+
+    await handlers.search?.onNext?.({ waitForStep });
+
+    expect(waitForStep).not.toHaveBeenCalled();
+  });
+
+  it("opens the first framework when leaving the last step", async () => {
+    const openFirstFramework = vi.fn();
+    const waitForStep = vi.fn();
+    const handlers = makeHandlers({ openFirstFramework });
+
+    await handlers.frameworks?.onNext?.({ waitForStep });
+
+    expect(openFirstFramework).toHaveBeenCalledTimes(1);
+    expect(waitForStep).not.toHaveBeenCalled();
   });
 });

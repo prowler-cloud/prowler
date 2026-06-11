@@ -1,15 +1,25 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/ui/table/data-table-search";
+import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
 import { getFlowById } from "@/lib/onboarding";
+import { createViewComplianceTourStepHandlers } from "@/lib/tours/view-compliance.tour";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { ScanEntity } from "@/types/scans";
 
 const viewComplianceFlow = getFlowById("view-compliance")!;
+
+// Module-level so the identity is stable: `configOverrides` is an effect dependency in
+// `useDriverTour`, and a fresh object per keystroke would tear the tour down mid-typing.
+const VIEW_COMPLIANCE_TOUR_CONFIG = {
+  // Last step opens the first card (see createViewComplianceTourStepHandlers).
+  doneBtnText: "Open the first framework",
+};
 
 interface ComplianceOverviewGridProps {
   frameworks: ComplianceOverviewData[];
@@ -29,6 +39,8 @@ export const ComplianceOverviewGrid = ({
   selectedScan,
   latestCisIds,
 }: ComplianceOverviewGridProps) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredFrameworks = frameworks.filter((compliance) =>
@@ -37,11 +49,37 @@ export const ComplianceOverviewGrid = ({
       .includes(searchTerm.toLowerCase()),
   );
 
+  const resetSearch = () => {
+    setSearchTerm("");
+    return frameworks.length > 0;
+  };
+
+  const openFirstFramework = () => {
+    const first = frameworks[0];
+    if (!first) return;
+    router.push(
+      buildComplianceDetailPath({
+        title: first.attributes.framework,
+        complianceId: first.id,
+        version: first.attributes.version,
+        scanId,
+        regionFilter: searchParams.get("filter[region__in]"),
+      }),
+    );
+  };
+
   return (
     <>
       {/* Suspense required: OnboardingTrigger reads useSearchParams */}
       <Suspense fallback={null}>
-        <OnboardingTrigger flow={viewComplianceFlow} />
+        <OnboardingTrigger
+          flow={viewComplianceFlow}
+          stepHandlers={createViewComplianceTourStepHandlers({
+            resetSearch,
+            openFirstFramework,
+          })}
+          configOverrides={VIEW_COMPLIANCE_TOUR_CONFIG}
+        />
       </Suspense>
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
       <PageReady />
