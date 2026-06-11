@@ -1,0 +1,40 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudfunction_function_not_publicly_accessible",
+  "CheckTitle": "Cloud Functions are not publicly invocable",
+  "CheckType": [],
+  "ServiceName": "cloudfunction",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "cloudfunctions.googleapis.com/Function",
+  "Description": "Ensures that no Cloud Function has IAM bindings granting invocation rights to 'allUsers' or 'allAuthenticatedUsers'. Functions should only be callable by explicitly authorized identities or services.",
+  "Risk": "Publicly accessible Cloud Functions can be invoked by any internet user or any authenticated Google account. This exposes business logic, enables abuse (e.g., denial-of-wallet via high invocation costs), and can lead to unauthorized data access or code execution if the function processes sensitive operations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/functions/docs/securing/authenticating",
+    "https://cloud.google.com/iam/docs/overview"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud functions remove-iam-policy-binding <FUNCTION_NAME> \\\n  --region=<REGION> \\\n  --member='allUsers' \\\n  --role='roles/cloudfunctions.invoker'\n\ngcloud functions remove-iam-policy-binding <FUNCTION_NAME> \\\n  --region=<REGION> \\\n  --member='allAuthenticatedUsers' \\\n  --role='roles/cloudfunctions.invoker'",
+      "NativeIaC": "",
+      "Other": "1. Go to Google Cloud Console > Cloud Functions.\n2. Select the function.\n3. Open the Permissions tab.\n4. Remove any binding with 'allUsers' or 'allAuthenticatedUsers'.\n5. Grant invocation rights only to specific service accounts or user groups.",
+      "Terraform": "```hcl\n# Do NOT include allUsers or allAuthenticatedUsers as members\nresource \"google_cloudfunctions2_function_iam_binding\" \"invoker\" {\n  project        = \"<project_id>\"\n  location       = \"<region>\"\n  cloud_function = google_cloudfunctions2_function.example.name\n  role           = \"roles/cloudfunctions.invoker\"\n  members        = [\"serviceAccount:<sa>@<project>.iam.gserviceaccount.com\"]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Remove all IAM bindings that grant 'allUsers' or 'allAuthenticatedUsers' invocation access to Cloud Functions. Use service-account-based authentication for internal callers, and Cloud Endpoints or API Gateway with authentication for externally exposed functions.",
+      "Url": "https://hub.prowler.com/check/cloudfunction_function_not_publicly_accessible"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "cloudfunction_function_inside_vpc",
+    "secretmanager_secret_not_publicly_accessible",
+    "cloudstorage_bucket_public_access"
+  ],
+  "Notes": "This check evaluates function-level IAM policies. Organization policy constraints/iam.allowedPolicyMemberDomains can prevent public bindings at the org level."
+}
