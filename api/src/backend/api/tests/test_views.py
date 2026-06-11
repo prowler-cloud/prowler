@@ -12684,12 +12684,12 @@ class TestTenantFinishACSView:
             name="platform_team", tenant=tenants_fixture[0]
         )
         assert role.tenant == tenants_fixture[0]
-        assert role.manage_users
-        assert role.manage_account
-        assert role.manage_billing
-        assert role.manage_providers
-        assert role.manage_integrations
-        assert role.manage_scans
+        assert not role.manage_users
+        assert not role.manage_account
+        assert not role.manage_billing
+        assert not role.manage_providers
+        assert not role.manage_integrations
+        assert not role.manage_scans
         assert role.unlimited_visibility
 
         assert (
@@ -12891,6 +12891,82 @@ class TestTenantFinishACSView:
         assert (
             Membership.objects.using(MainRouter.admin_db)
             .filter(user=user, tenant=tenant)
+            .exists()
+        )
+
+    def test_dispatch_skips_role_mapping_when_last_manage_account_user_maps_to_new_role(
+        self,
+        create_test_user,
+        tenants_fixture,
+        admin_role_fixture,
+        saml_setup,
+        settings,
+        monkeypatch,
+    ):
+        """Test that a new read-only role is neither created nor assigned if it would remove the last MANAGE_ACCOUNT user"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+
+        admin_role = admin_role_fixture
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=user, role=admin_role, tenant_id=tenant.id
+        )
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+                "userType": ["brand_new_role"],
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml", client_id="testtenant", name="Test App", settings={}
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = MagicMock()
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code == 302
+
+        # The admin role is still assigned and the new role was not created
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=admin_role, tenant_id=tenant.id)
+            .exists()
+        )
+        assert (
+            not Role.objects.using(MainRouter.admin_db)
+            .filter(name="brand_new_role", tenant=tenant)
             .exists()
         )
 

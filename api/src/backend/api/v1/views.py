@@ -804,18 +804,10 @@ class TenantFinishACSView(FinishACSView):
         )
         if role_name:
             with transaction.atomic(using=MainRouter.admin_db):
-                role, _ = Role.objects.using(MainRouter.admin_db).get_or_create(
-                    name=role_name,
-                    tenant=tenant,
-                    defaults={
-                        "manage_users": True,
-                        "manage_account": True,
-                        "manage_billing": True,
-                        "manage_providers": True,
-                        "manage_integrations": True,
-                        "manage_scans": True,
-                        "unlimited_visibility": True,
-                    },
+                role = (
+                    Role.objects.using(MainRouter.admin_db)
+                    .filter(name=role_name, tenant=tenant)
+                    .first()
                 )
 
                 # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
@@ -836,13 +828,30 @@ class TenantFinishACSView(FinishACSView):
                     )
                     .exists()
                 )
+                role_manage_account = role.manage_account if role else False
                 would_remove_last_manage_account = (
                     user_has_manage_account
                     and remaining_manage_account_users == 0
-                    and not role.manage_account
+                    and not role_manage_account
                 )
 
                 if not would_remove_last_manage_account:
+                    if role is None:
+                        # Roles auto-created from userType get read-only access:
+                        # visibility over all providers, no management permissions
+                        role, _ = Role.objects.using(MainRouter.admin_db).get_or_create(
+                            name=role_name,
+                            tenant=tenant,
+                            defaults={
+                                "manage_users": False,
+                                "manage_account": False,
+                                "manage_billing": False,
+                                "manage_providers": False,
+                                "manage_integrations": False,
+                                "manage_scans": False,
+                                "unlimited_visibility": True,
+                            },
+                        )
                     UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
                         user=user,
                         tenant_id=tenant.id,
