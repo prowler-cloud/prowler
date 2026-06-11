@@ -5,7 +5,7 @@ import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
 import { NavigationProgress, Toaster } from "@/components/shadcn";
-import { fontSans } from "@/config/fonts";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
 
@@ -38,6 +38,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         className={cn(
           "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>

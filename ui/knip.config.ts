@@ -33,9 +33,6 @@ const config: KnipConfig = {
     // Sentry instrumentation hooks — loaded via require() by the runtime
     "import-in-the-middle",
     "require-in-the-middle",
-    // @heroui/react re-exports all sub-packages; imports like @heroui/skeleton
-    // resolve to transitive deps of @heroui/react, not direct dependencies
-    "@heroui/*",
   ],
   ignoreExportsUsedInFile: {
     interface: true,

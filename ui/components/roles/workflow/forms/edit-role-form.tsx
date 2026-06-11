@@ -1,11 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { clsx } from "clsx";
 import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
@@ -62,10 +61,13 @@ export const EditRoleForm = ({
     },
   });
 
-  const { watch, setValue } = form;
+  const { setValue } = form;
 
-  const manageProviders = watch("manage_providers");
-  const unlimitedVisibility = watch("unlimited_visibility");
+  // useWatch instead of form.watch: the React Compiler can't track watch()
+  // getter reads during render, leaving memoized JSX with stale values.
+  const formValues = useWatch({ control: form.control });
+  const manageProviders = formValues.manage_providers;
+  const unlimitedVisibility = formValues.unlimited_visibility;
 
   useEffect(() => {
     if (manageProviders && !unlimitedVisibility) {
@@ -192,8 +194,8 @@ export const EditRoleForm = ({
             <Checkbox
               id="select-all-permissions"
               size="sm"
-              checked={visiblePermissionFormFields.every((perm) =>
-                form.watch(perm.field as keyof FormValues),
+              checked={visiblePermissionFormFields.every(
+                (perm) => !!formValues[perm.field as keyof FormValues],
               )}
               onCheckedChange={(checked) => onSelectAllChange(checked === true)}
             />
@@ -209,11 +211,11 @@ export const EditRoleForm = ({
           <div className="grid grid-cols-2 gap-4">
             {visiblePermissionFormFields.map(
               ({ field, label, description }) => (
-                <div key={field} className="flex items-center gap-2">
+                <div key={field} className="group flex items-center gap-2">
                   <Checkbox
                     id={`permission-${field}`}
                     size="sm"
-                    checked={!!form.watch(field as keyof FormValues)}
+                    checked={!!formValues[field as keyof FormValues]}
                     onCheckedChange={(checked) =>
                       form.setValue(
                         field as keyof FormValues,
@@ -236,9 +238,7 @@ export const EditRoleForm = ({
                     <TooltipTrigger asChild>
                       <div className="flex w-fit items-center justify-center">
                         <InfoIcon
-                          className={clsx(
-                            "text-text-neutral-tertiary group-data-[selected=true]:text-text-neutral-primary cursor-pointer",
-                          )}
+                          className="text-text-neutral-tertiary group-has-[[data-state=checked]]:text-text-neutral-primary cursor-pointer"
                           aria-hidden={"true"}
                           width={16}
                         />

@@ -8,7 +8,7 @@ import { getProviders } from "@/actions/providers";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
-import { fontSans } from "@/config/fonts";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { StoreInitializer } from "@/store/ui/store-initializer";
@@ -52,6 +52,7 @@ export default async function RootLayout({
         className={cn(
           "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>

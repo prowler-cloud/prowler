@@ -226,6 +226,7 @@ export const SignUpForm = ({
                         Terms of Service
                       </CustomLink>
                       &nbsp;of Prowler
+                      <span className="text-text-error-primary">*</span>
                     </label>
                   </div>
                   <FormMessage className="text-text-error" />
