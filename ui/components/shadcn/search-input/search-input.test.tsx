@@ -1,7 +1,31 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { SearchInput } from "./search-input";
+import { getClearButtonMotion, SearchInput } from "./search-input";
+
+describe("getClearButtonMotion", () => {
+  it("animates with scale when motion is allowed", () => {
+    // Given / When
+    const motion = getClearButtonMotion(false);
+
+    // Then
+    expect(motion.animate).toHaveProperty("scale", 1);
+    expect(motion.initial).toHaveProperty("scale");
+    expect(motion.exit).toHaveProperty("scale");
+    expect(motion.transition.duration).toBeGreaterThan(0);
+  });
+
+  it("degrades to opacity-only with no scale under reduced motion", () => {
+    // Given / When
+    const motion = getClearButtonMotion(true);
+
+    // Then
+    expect(motion.initial).not.toHaveProperty("scale");
+    expect(motion.animate).not.toHaveProperty("scale");
+    expect(motion.exit).not.toHaveProperty("scale");
+    expect(motion.transition.duration).toBe(0);
+  });
+});
 
 describe("SearchInput", () => {
   it("animates input focus, icon color, and clear button entry", () => {

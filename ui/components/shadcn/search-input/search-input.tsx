@@ -1,7 +1,7 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { SearchIcon, XCircle } from "lucide-react";
 import { ComponentProps, forwardRef } from "react";
 
@@ -67,6 +67,24 @@ export interface SearchInputProps
   onClear?: () => void;
 }
 
+export function getClearButtonMotion(shouldReduceMotion: boolean) {
+  if (shouldReduceMotion) {
+    return {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+      transition: { duration: 0, ease: "easeOut" as const },
+    };
+  }
+
+  return {
+    initial: { opacity: 0, scale: 0.95 },
+    animate: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.95 },
+    transition: { duration: 0.25, ease: "easeOut" as const },
+  };
+}
+
 const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   (
     {
@@ -84,6 +102,8 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     const iconPosition = iconPositionMap[size || "default"];
     const clearButtonPosition = clearButtonPositionMap[size || "default"];
     const hasValue = value && String(value).length > 0;
+    const shouldReduceMotion = useReducedMotion();
+    const clearButtonMotion = getClearButtonMotion(!!shouldReduceMotion);
 
     return (
       <div className={cn(searchInputWrapperVariants({ size }))}>
@@ -110,10 +130,10 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               type="button"
               data-slot="search-input-clear"
               aria-label="Clear search"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              initial={clearButtonMotion.initial}
+              animate={clearButtonMotion.animate}
+              exit={clearButtonMotion.exit}
+              transition={clearButtonMotion.transition}
               onClick={onClear}
               className={cn(
                 "text-text-neutral-tertiary hover:text-text-neutral-primary absolute transition-colors duration-250 ease-out focus:outline-none motion-reduce:transition-none",
