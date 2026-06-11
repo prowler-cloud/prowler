@@ -4,12 +4,12 @@ from typing import Optional
 
 from pydantic.v1 import BaseModel
 
-from prowler.lib.check.resource_limit import (
+from prowler.lib.logger import logger
+from prowler.lib.resource_limit import (
     get_resource_scan_limit,
     iter_limited_paginator_items,
     limit_resources,
 )
-from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -37,8 +37,8 @@ class ECS(AWSService):
     def _list_task_definition_arns(self) -> list:
         """List task definition ARNs newest-first, memoized.
 
-        Uses the ``list_task_definitions`` server-side ``sort=DESC`` so the
-        latest revisions are scanned first across all regions.
+        AWS returns ``list_task_definitions(sort=DESC)`` results per region.
+        Prowler limits the task definitions it describes and exposes to checks.
         """
         if self._task_definition_arns is not None:
             return self._task_definition_arns

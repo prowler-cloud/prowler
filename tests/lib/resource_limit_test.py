@@ -1,4 +1,4 @@
-from prowler.lib.check.resource_limit import (
+from prowler.lib.resource_limit import (
     get_resource_scan_limit,
     iter_limited_paginator_items,
     limit_resources,

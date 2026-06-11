@@ -4,11 +4,11 @@ from typing import Iterator, Optional, Tuple
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
-from prowler.lib.check.resource_limit import (
+from prowler.lib.logger import logger
+from prowler.lib.resource_limit import (
     get_resource_scan_limit,
     iter_limited_paginator_items,
 )
-from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 

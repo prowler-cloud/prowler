@@ -1,6 +1,6 @@
-"""Scoped resource scan limits for high-volume AWS resources.
+"""Scoped resource scan limits for high-volume resources.
 
-Some AWS services accumulate huge numbers of resources (EBS snapshots, backup
+Some services accumulate huge numbers of resources (EBS snapshots, backup
 recovery points, log groups, Lambda functions, ECS task definitions,
 CodeArtifact packages). Scanning all of them causes API throttling, slow
 scans, cost and noisy findings.
@@ -8,14 +8,27 @@ scans, cost and noisy findings.
 ``get_resource_scan_limit`` resolves the configured number of resources to
 analyze for a supported resource path. A limited resource can produce zero,
 one, or many findings; findings are not capped or re-ordered here.
+
+Tradeoff: for newest-based resources, services may need to list lightweight or
+base metadata broadly to select the truly newest resources, then apply limits
+only to expensive hydration or analysis. The helper must not send
+user-configured limits as unsafe paginator ``PageSize`` values because AWS
+services validate page sizes differently.
 """
 
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from itertools import islice
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional, Protocol, TypeVar
 
 GLOBAL_LIMIT_KEY = "max_scanned_resources_per_service"
 T = TypeVar("T")
+
+
+class PaginatorProtocol(Protocol):
+    """Minimal boto3-compatible paginator interface used by this module."""
+
+    def paginate(self, **operation_parameters: Any) -> Iterable[Mapping[str, Any]]:
+        """Return paginator pages for the provided operation parameters."""
 
 
 def get_resource_scan_limit(audit_config: dict, service_key: str) -> Optional[int]:
@@ -51,7 +64,7 @@ def limit_resources(resources: Iterable[T], limit: Optional[int]) -> Iterator[T]
 
 
 def iter_limited_paginator_items(
-    paginator: Any,
+    paginator: PaginatorProtocol,
     result_key: str,
     limit: Optional[int],
     item_filter: Optional[Callable[[T], bool]] = None,
