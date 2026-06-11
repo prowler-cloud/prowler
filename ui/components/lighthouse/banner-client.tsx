@@ -87,11 +87,11 @@ const AnimatedGradientCard = ({
             isSafari ? "blur-2xl" : "[filter:url(#blurMe)_blur(40px)]",
           )}
         >
-          <div className="animate-first absolute [top:calc(50%-60%)] [left:calc(50%-60%)] h-[120%] w-[120%] [transform-origin:center_center] opacity-100 [mix-blend-mode:hard-light] [background:radial-gradient(circle_at_center,_var(--bg-neutral-tertiary)_0,_transparent_50%)_no-repeat]" />
+          <div className="absolute [top:calc(50%-60%)] [left:calc(50%-60%)] h-[120%] w-[120%] [transform-origin:center_center] animate-[spin_20s_linear_infinite] opacity-100 [mix-blend-mode:hard-light] [background:radial-gradient(circle_at_center,_var(--bg-neutral-tertiary)_0,_transparent_50%)_no-repeat]" />
 
-          <div className="animate-second absolute [top:calc(50%-60%)] [left:calc(50%-60%)] h-[120%] w-[120%] [transform-origin:calc(50%-200px)] opacity-80 [mix-blend-mode:hard-light] [background:radial-gradient(circle_at_center,_var(--bg-button-primary)_0,_transparent_50%)_no-repeat]" />
+          <div className="absolute [top:calc(50%-60%)] [left:calc(50%-60%)] h-[120%] w-[120%] [transform-origin:calc(50%-200px)] animate-[spin_30s_linear_infinite] opacity-80 [mix-blend-mode:hard-light] [background:radial-gradient(circle_at_center,_var(--bg-button-primary)_0,_transparent_50%)_no-repeat]" />
 
-          <div className="animate-third absolute [top:calc(50%-60%)] [left:calc(50%-60%)] h-[120%] w-[120%] [transform-origin:calc(50%+200px)] opacity-70 [mix-blend-mode:hard-light] [background:radial-gradient(circle_at_center,_var(--bg-button-primary-hover)_0,_transparent_50%)_no-repeat]" />
+          <div className="absolute [top:calc(50%-60%)] [left:calc(50%-60%)] h-[120%] w-[120%] [transform-origin:calc(50%+200px)] animate-[spin_25s_linear_infinite] opacity-70 [mix-blend-mode:hard-light] [background:radial-gradient(circle_at_center,_var(--bg-button-primary-hover)_0,_transparent_50%)_no-repeat]" />
 
           <div
             ref={interactiveRef}

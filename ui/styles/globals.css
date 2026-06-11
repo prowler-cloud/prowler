@@ -1,8 +1,16 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 @source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Fonts are provided by next/font as CSS variables on <html>; `inline` avoids
+ * emitting a circular --font-sans: var(--font-sans) declaration on :root. */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+}
 
 /* ===== LIGHT THEME (ROOT) ===== */
 :root {
@@ -234,6 +242,57 @@
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);
+
+  /* Breakpoints */
+  --breakpoint-3xl: 1920px;
+
+  /* Animations */
+  --animate-fade-in: fade-in 200ms ease-out forwards;
+  --animate-collapsible-down: collapsible-down 0.2s ease-out;
+  --animate-collapsible-up: collapsible-up 0.2s ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/* Used from plain CSS (`.animate-download-icon`), so it must always be
+ * emitted — keep it outside @theme. */
+@keyframes dropArrow {
+  0% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ===== CONTAINER UTILITY ===== */
