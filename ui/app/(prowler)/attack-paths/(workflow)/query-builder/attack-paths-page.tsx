@@ -41,7 +41,7 @@ import {
   pickDemoScan,
 } from "@/lib/tours/attack-paths.tour";
 import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
-import { useDriverTour } from "@/lib/tours/use-driver-tour";
+import { advanceActiveTour, useDriverTour } from "@/lib/tours/use-driver-tour";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -243,6 +243,9 @@ export default function AttackPathsPage() {
       );
       return;
     }
+
+    // The tour's execute step is autoAdvance: the real Execute click moves it forward.
+    advanceActiveTour();
 
     graphState.startLoading();
     graphState.setError(null);

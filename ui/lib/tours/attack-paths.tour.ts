@@ -42,12 +42,15 @@ export const attackPathsTour = defineTour({
       align: TOUR_STEP_ALIGNMENTS.START,
       title: "Choose a query",
       description:
-        "Predefined queries cover common risk patterns (privilege escalation, public exposure, lateral movement). You can also write your own openCypher.",
+        "Predefined queries cover common risk patterns (privilege escalation, public exposure, lateral movement). You can also write your own query.",
     },
     {
       target: "execute-button",
       side: TOUR_STEP_SIDES.TOP,
       align: TOUR_STEP_ALIGNMENTS.END,
+      // No Next button: clicking the highlighted Execute Query button runs the query
+      // and advances the tour (see handleExecuteQuery in attack-paths-page).
+      autoAdvance: true,
       title: "Run it whenever you're ready",
       description:
         "Click Execute Query to see the graph with the possible attack paths.",
