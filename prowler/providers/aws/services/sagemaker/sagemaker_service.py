@@ -138,6 +138,17 @@ class SageMaker(AWSService):
             )
 
     def _list_processing_jobs(self, regional_client):
+        """List SageMaker processing jobs in a region.
+
+        Populates ``self.sagemaker_processing_jobs`` with `ProcessingJob`
+        entries and adds ``regional_client.region`` to
+        ``self.processing_jobs_scanned_regions`` once pagination succeeds, so
+        regions where ``ListProcessingJobs`` fails are skipped by checks that
+        consume that set.
+
+        Args:
+            regional_client: Regional SageMaker boto3 client.
+        """
         logger.info("SageMaker - listing processing jobs...")
         try:
             list_processing_jobs_paginator = regional_client.get_paginator(
@@ -164,6 +175,15 @@ class SageMaker(AWSService):
             )
 
     def _describe_processing_job(self, processing_job):
+        """Describe a SageMaker processing job and enrich its image metadata.
+
+        Reads ``AppSpecification.ImageUri`` from ``DescribeProcessingJob`` and
+        stores it on ``processing_job.image_uri``. Errors are logged and
+        swallowed so a failure in one job does not abort the scan.
+
+        Args:
+            processing_job: ProcessingJob model to enrich in-place.
+        """
         logger.info("SageMaker - describing processing job...")
         try:
             regional_client = self.regional_clients[processing_job.region]
@@ -501,6 +521,17 @@ class TrainingJob(BaseModel):
 
 
 class ProcessingJob(BaseModel):
+    """Represents a SageMaker processing job.
+
+    Attributes:
+        name: Processing job name.
+        region: AWS region where the job lives.
+        arn: Processing job ARN.
+        image_uri: Container image URI from `AppSpecification.ImageUri`,
+            populated by `_describe_processing_job`.
+        tags: Resource tags, populated by `_list_tags_for_resource`.
+    """
+
     name: str
     region: str
     arn: str
