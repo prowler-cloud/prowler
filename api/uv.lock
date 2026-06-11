@@ -4415,8 +4415,8 @@ wheels = [
 
 [[package]]
 name = "prowler"
-version = "5.27.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#0abbb7fc590eaf7de6ed354dd5a217bca261d2b0" }
+version = "5.30.0"
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#f1d741214a60df17158c3fdc97804fd1fde64f3a" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
@@ -4489,9 +4489,14 @@ dependencies = [
     { name = "pygithub" },
     { name = "python-dateutil" },
     { name = "pytz" },
+    { name = "scaleway" },
     { name = "schema" },
     { name = "shodan" },
     { name = "slack-sdk" },
+    { name = "stackit-core" },
+    { name = "stackit-iaas" },
+    { name = "stackit-objectstorage" },
+    { name = "stackit-resourcemanager" },
     { name = "tabulate" },
     { name = "tzlocal" },
     { name = "uuid6" },
@@ -4499,7 +4504,7 @@ dependencies = [
 
 [[package]]
 name = "prowler-api"
-version = "1.31.0"
+version = "1.32.0"
 source = { virtual = "." }
 dependencies = [
     { name = "cartography" },
@@ -5529,6 +5534,67 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/90/76/437d71068094df0726366574cf3432a4ed754217b436eb7429415cf2d480/sqlparse-0.5.5.tar.gz", hash = "sha256:e20d4a9b0b8585fdf63b10d30066c7c94c5d7a7ec47c889a2d83a3caa93ff28e", size = 120815, upload-time = "2025-12-19T07:17:45.073Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/4b/359f28a903c13438ef59ebeee215fb25da53066db67b305c125f1c6d2a25/sqlparse-0.5.5-py3-none-any.whl", hash = "sha256:12a08b3bf3eec877c519589833aed092e2444e68240a3577e8e26148acc7b1ba", size = 46138, upload-time = "2025-12-19T07:17:46.573Z" },
+]
+
+[[package]]
+name = "stackit-core"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "pydantic" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "requests" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/24/90/20f9ec7387eec4067cfd3d29055d0e2b5e1e0322c601a7f48125fd8ea35f/stackit_core-0.2.0.tar.gz", hash = "sha256:b8af91877cdb060d6969a303d8cf20bc0b33b345afd91f679c44a987381e2d47", size = 8987, upload-time = "2025-06-12T08:24:45.251Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/b4/7b53187ce68956870d864ccb9ccfb68066c9df9de1c9568fd2feb03c4504/stackit_core-0.2.0-py3-none-any.whl", hash = "sha256:04632fc6742790d08ddfcb7f2313e04d1254827397a80250f838a2f81b92645b", size = 10240, upload-time = "2025-06-12T08:24:44.214Z" },
+]
+
+[[package]]
+name = "stackit-iaas"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+    { name = "stackit-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/52/07/24e65278300d5c3cb19cb1660bff924c80812cf8aad3e715f826bae5aa80/stackit_iaas-1.4.0.tar.gz", hash = "sha256:93523b23442350c7ebefd9129485c4c2a539f694a9c36a0f8edfaba9862057ea", size = 116236, upload-time = "2026-05-13T09:43:15.996Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/08/51/2201164d7bfacf47539888c735f10f6320c188252384957aa1b23121a210/stackit_iaas-1.4.0-py3-none-any.whl", hash = "sha256:3f4a32321b57ac238f73e5d660c6428186b92cc0425c1f0783ba801e377149d9", size = 316588, upload-time = "2026-05-13T09:43:14.943Z" },
+]
+
+[[package]]
+name = "stackit-objectstorage"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+    { name = "stackit-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/90/80/b790756af40a5c6d979dd688b2557394ac54b594eb4c08edc33157ba890f/stackit_objectstorage-1.4.0.tar.gz", hash = "sha256:4a3812b4de102b199f061706a802909f9e53ae9b0858769d5bd720f814c8bdbe", size = 31814, upload-time = "2026-05-13T09:43:05.027Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/68/f1/ffa8d5e2ec9f818c72a6f045691364eb4e927ee86641993a70882d00205a/stackit_objectstorage-1.4.0-py3-none-any.whl", hash = "sha256:1a3285c6840d95cff591d84fd21803575cb0d010c398e6575ed92987b9c39866", size = 65061, upload-time = "2026-05-13T09:43:04.13Z" },
+]
+
+[[package]]
+name = "stackit-resourcemanager"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+    { name = "stackit-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/23/2d/f458f18e48ed2b1c83df52cff7dbdfd5dd904fb2980ffd9385876e47bbd9/stackit_resourcemanager-0.8.0.tar.gz", hash = "sha256:f44542beab4130857f5a7f465cf02defeef657bdf63c1beeb3102f0ba3c003fe", size = 33943, upload-time = "2026-05-13T09:43:08.667Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/9c/38a74d0f7a89b4320f6d2366fb660638bda8860daa08748b12c713d84381/stackit_resourcemanager-0.8.0-py3-none-any.whl", hash = "sha256:dd04bb8353d041a137c4dcba190beabded7acfaff1bc98b218fce20a99389ebc", size = 81288, upload-time = "2026-05-13T09:43:07.81Z" },
 ]
 
 [[package]]
