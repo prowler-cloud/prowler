@@ -21,6 +21,15 @@ class stepfunctions_statemachine_encryption_at_rest_enabled(Check):
     """
 
     def execute(self) -> List[Check_Report_AWS]:
+        """Execute the Step Functions state machine encryption at rest check.
+
+        Iterates over all Step Functions state machines and generates a report
+        indicating whether each state machine uses a customer-managed KMS key
+        for encryption at rest.
+
+        Returns:
+            List[Check_Report_AWS]: A list of report objects with the results of the check.
+        """
         findings = []
         for state_machine in stepfunctions_client.state_machines.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=state_machine)
