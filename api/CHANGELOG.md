@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.0] (Prowler UNRELEASED)
+## [1.31.0] (Prowler v5.30.0)
 
 ### 🚀 Added
 
@@ -19,11 +19,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
-- Compliance catalog now warms in a background thread after each worker forks, and `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the Gunicorn worker timeout [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
+- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
 
 ### 🔐 Security
 
-- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) flagged by osv-scanner in `api/uv.lock` [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
+- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
 
 ---
 
