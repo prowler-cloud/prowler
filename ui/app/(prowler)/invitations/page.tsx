@@ -11,8 +11,8 @@ import {
   SkeletonTableInvitation,
 } from "@/components/invitations/table";
 import { Button } from "@/components/shadcn";
-import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DataTable, DataTableFilterCustom } from "@/components/shadcn/table";
 import { InvitationProps, Role, SearchParamsProps } from "@/types";
 
 export default async function Invitations({

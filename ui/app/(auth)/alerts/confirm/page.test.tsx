@@ -16,7 +16,8 @@ vi.mock("@/components/auth/oss/auth-layout", () => ({
   ),
 }));
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Button: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 

@@ -16,8 +16,8 @@ import {
   type AlertRule,
 } from "@/app/(prowler)/alerts/_types";
 import { Button } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
 import { DOCS_URLS } from "@/lib/external-urls";
 import type { MetaDataProps } from "@/types";
 import type { ScanEntity } from "@/types";

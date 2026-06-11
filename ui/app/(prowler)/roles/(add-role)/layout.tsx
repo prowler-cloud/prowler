@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import React from "react";
 
 import { WorkflowAddEditRole } from "@/components/roles/workflow";
-import { NavigationHeader } from "@/components/ui";
+import { NavigationHeader } from "@/components/shadcn";
 
 interface RoleLayoutProps {
   children: React.ReactNode;

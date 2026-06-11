@@ -5,9 +5,9 @@ import { Metadata, Viewport } from "next";
 import { ReactNode } from "react";
 
 import { getProviders } from "@/actions/providers";
-import MainLayout from "@/components/ui/main-layout/main-layout";
-import { NavigationProgress } from "@/components/ui/navigation-progress";
-import { Toaster } from "@/components/ui/toast";
+import MainLayout from "@/components/layout/main-layout/main-layout";
+import { NavigationProgress } from "@/components/shadcn/navigation-progress";
+import { Toaster } from "@/components/shadcn/toast";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";

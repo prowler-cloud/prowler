@@ -6,7 +6,7 @@ import {
 } from "@/actions/lighthouse/lighthouse";
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 export const dynamic = "force-dynamic";
 

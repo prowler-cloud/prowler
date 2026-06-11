@@ -10,7 +10,7 @@
 import {
   cancelProgress,
   startProgress,
-} from "@/components/ui/navigation-progress/use-navigation-progress";
+} from "@/components/shadcn/navigation-progress/use-navigation-progress";
 
 export const NAVIGATION_TYPE = {
   PUSH: "push",

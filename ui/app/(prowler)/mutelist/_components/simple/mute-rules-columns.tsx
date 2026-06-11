@@ -5,8 +5,8 @@ import { List } from "lucide-react";
 
 import { MuteRuleData } from "@/actions/mute-rules/types";
 import { Button } from "@/components/shadcn";
-import { DateWithTime } from "@/components/ui/entities";
-import { DataTableColumnHeader } from "@/components/ui/table";
+import { DateWithTime } from "@/components/shadcn/entities";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
 
 import { MuteRuleEnabledToggle } from "./mute-rule-enabled-toggle";
 import { MuteRuleRowActions } from "./mute-rule-row-actions";

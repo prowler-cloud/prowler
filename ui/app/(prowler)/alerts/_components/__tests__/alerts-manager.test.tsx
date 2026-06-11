@@ -56,11 +56,9 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(routerMocks.currentSearch),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock }),
-}));
-
-vi.mock("@/components/shadcn", () => ({
   Button: ({
     asChild,
     children,
