@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_azure_monitor_enabled",
+  "CheckTitle": "AKS cluster has Azure Monitor metrics enabled",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "container",
+  "Description": "**Azure Kubernetes Service** clusters are evaluated for **Azure Monitor** integration. Monitor provides metrics collection, log aggregation, and alerting for cluster health and workload performance.",
+  "Risk": "Without monitoring, cluster degradation, resource exhaustion, and anomalous behavior go undetected. Lack of observability delays incident detection and hampers forensic investigation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://hub.prowler.com/check/aks_cluster_azure_monitor_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
