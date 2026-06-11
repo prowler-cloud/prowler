@@ -5104,15 +5104,28 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         # returns its check IDs, leaving azure/gcp/... requirements with no
         # matching findings.
         scan_id = request.query_params.get("filter[scan_id]")
-        if scan_id:
+        if "filter[scan_id]" in request.query_params:
             # An explicit scan_id is authoritative: fail closed instead of
-            # falling back to another provider. Otherwise an invalid or
-            # inaccessible scan would silently return the first provider's check
-            # IDs, recreating the multi-provider mismatch this endpoint fixes.
+            # falling back to another provider. Otherwise an invalid, empty
+            # (filter[scan_id]=) or inaccessible scan would silently return the
+            # first provider's check IDs, recreating the multi-provider mismatch
+            # this endpoint fixes.
+            if not scan_id:
+                raise NotFound(detail=f"Scan '{scan_id}' not found.")
+
+            # Tenant isolation is already enforced by Postgres RLS on the
+            # connection (see BaseRLSViewSet). Scope the lookup by provider
+            # group as well so a user with limited visibility can't resolve
+            # another provider's scan and read its compliance metadata, mirroring
+            # the RBAC scoping get_queryset() applies to the rest of the ViewSet.
+            role = get_role(request.user, request.tenant_id)
+            if getattr(role, Permissions.UNLIMITED_VISIBILITY.value, False):
+                scan_queryset = Scan.objects.filter(tenant_id=request.tenant_id)
+            else:
+                scan_queryset = Scan.objects.filter(provider__in=get_providers(role))
+
             try:
-                scan = Scan.objects.select_related("provider").get(
-                    id=scan_id, tenant_id=request.tenant_id
-                )
+                scan = scan_queryset.select_related("provider").get(id=scan_id)
             except (Scan.DoesNotExist, DjangoValidationError, ValueError):
                 raise NotFound(detail=f"Scan '{scan_id}' not found.")
 

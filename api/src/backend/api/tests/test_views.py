@@ -9653,6 +9653,11 @@ class TestComplianceOverviewViewSet:
         malformed_response = request_attributes("not-a-uuid")
         assert malformed_response.status_code == status.HTTP_404_NOT_FOUND
 
+        # An empty value (filter[scan_id]=) must not fall back to the legacy
+        # provider picker: the explicit (if blank) selector fails closed.
+        empty_response = request_attributes("")
+        assert empty_response.status_code == status.HTTP_404_NOT_FOUND
+
         # A scan belonging to another tenant is not visible (RLS), so it must
         # return 404 rather than leaking the fallback provider's check IDs.
         other_tenant = Tenant.objects.create(name="Other Compliance Tenant")
@@ -9673,6 +9678,80 @@ class TestComplianceOverviewViewSet:
         )
         foreign_response = request_attributes(foreign_scan.id)
         assert foreign_response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_compliance_overview_attributes_scan_scoped_by_provider_group(
+        self,
+        authenticated_client_no_permissions_rbac,
+        providers_fixture,
+    ):
+        # A user with limited visibility (no UNLIMITED_VISIBILITY) must only be
+        # able to resolve scans for providers in its provider groups. Tenant RLS
+        # alone is not enough here: both scans belong to the same tenant, so the
+        # endpoint has to scope the scan lookup by provider group, otherwise a
+        # restricted user could read another provider's compliance metadata.
+        client = authenticated_client_no_permissions_rbac
+        limited_user = client.user
+        membership = Membership.objects.filter(user=limited_user).first()
+        tenant = membership.tenant
+
+        allowed_provider = providers_fixture[2]
+        denied_provider = providers_fixture[4]
+        assert allowed_provider.provider == Provider.ProviderChoices.GCP.value
+        assert denied_provider.provider == Provider.ProviderChoices.AZURE.value
+
+        provider_group = ProviderGroup.objects.create(
+            name="limited-compliance-group",
+            tenant_id=tenant.id,
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider_group=provider_group,
+            provider=allowed_provider,
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=limited_user.roles.first(),
+            provider_group=provider_group,
+        )
+
+        now = datetime.now(timezone.utc)
+        allowed_scan = Scan.objects.create(
+            name="allowed scan",
+            provider=allowed_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+        denied_scan = Scan.objects.create(
+            name="denied scan",
+            provider=denied_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+
+        def request_attributes(scan_id):
+            return client.get(
+                reverse("complianceoverview-attributes"),
+                {
+                    "filter[compliance_id]": "csa_ccm_4.0",
+                    "filter[scan_id]": str(scan_id),
+                },
+            )
+
+        # The scan in the user's provider group resolves normally.
+        assert request_attributes(allowed_scan.id).status_code == status.HTTP_200_OK
+
+        # The scan outside the user's provider group is invisible, so it fails
+        # closed with 404 instead of leaking the other provider's check IDs.
+        assert (
+            request_attributes(denied_scan.id).status_code
+            == status.HTTP_404_NOT_FOUND
+        )
 
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client
