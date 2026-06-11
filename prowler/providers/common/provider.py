@@ -261,36 +261,16 @@ class Provider(ABC):
     @staticmethod
     def init_global_provider(arguments: Namespace) -> None:
         try:
-            # Discriminate built-in vs external upfront via find_spec, so an
-            # ImportError from a transitive dependency missing inside a
-            # built-in's own import chain surfaces clearly instead of being
-            # silently re-routed to the entry-point path.
-            provider_class = None
-            if Provider.is_builtin(arguments.provider):
-                # Built-in wins on provider-name collision. Plug-ins are
-                # first-class extenders (they can register new provider
-                # names) but cannot override existing built-ins — a security
-                # tool prefers fail-loud predictability over silent
-                # overrides. Surface the override so the user knows their
-                # plug-in is being ignored and can rename it.
-                # Match by name only — never ep.load() a shadowing plug-in.
-                if any(
-                    ep.name == arguments.provider
-                    for ep in importlib.metadata.entry_points(group="prowler.providers")
-                ):
-                    logger.warning(
-                        f"Plug-in provider '{arguments.provider}' registered "
-                        f"via entry points is being IGNORED — a built-in with "
-                        f"the same name exists. To use your plug-in, register "
-                        f"it under a different name."
-                    )
-                provider_class_path = f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
-                provider_class_name = f"{arguments.provider.capitalize()}Provider"
-                try:
-                    provider_class = getattr(
-                        import_module(provider_class_path), provider_class_name
-                    )
-                except ImportError as e:
+            # Delegate class resolution to the public, side-effect-free
+            # resolver.  init_global_provider owns the CLI-specific error
+            # handling: a missing transitive dep in a built-in becomes a
+            # logger.critical + sys.exit(1); a completely unknown provider
+            # re-raises so the outer try/except can sys.exit too.
+            try:
+                provider_class = Provider.get_class(arguments.provider)
+            except ImportError as e:
+                if Provider.is_builtin(arguments.provider):
+                    # Built-in's transitive dependency is missing — loud CLI error.
                     logger.critical(
                         f"Failed to load built-in provider '{arguments.provider}'. "
                         f"Missing dependency: {e}. "
@@ -298,24 +278,27 @@ class Provider(ABC):
                     )
                     logger.debug("Full traceback:", exc_info=True)
                     sys.exit(1)
-                except AttributeError:
-                    # Module exists but doesn't define the expected class —
-                    # treat as external and try entry points.
-                    provider_class = Provider._load_ep_provider(arguments.provider)
-            else:
-                provider_class = Provider._load_ep_provider(arguments.provider)
+                # Unknown or missing external provider — propagate so the
+                # outer try/except can handle it (sys.exit(1) via generic
+                # exception handler).
+                raise
 
-            if provider_class is None:
-                raise ImportError(
-                    f"Provider '{arguments.provider}' not found as built-in or entry point"
+            # Built-in wins on name collision — warn that a same-named
+            # plug-in is ignored.  This lives here (not in get_class) so
+            # that `prowler --help` and API callers that resolve a class
+            # without initialising a global provider do not see spurious
+            # warnings. Match by name only — never ep.load() a shadowing
+            # plug-in, or its module code would run during a built-in run.
+            if Provider.is_builtin(arguments.provider) and any(
+                ep.name == arguments.provider
+                for ep in importlib.metadata.entry_points(group="prowler.providers")
+            ):
+                logger.warning(
+                    f"Plug-in provider '{arguments.provider}' registered "
+                    f"via entry points is being IGNORED — a built-in with "
+                    f"the same name exists. To use your plug-in, register "
+                    f"it under a different name."
                 )
-
-            # Kept for downstream forks that may extend the dispatch below
-            # with their own custom built-in branches and reference this name.
-            # The upstream chain dispatches by `arguments.provider` directly.
-            provider_class_name = (
-                f"{arguments.provider.capitalize()}Provider"  # noqa: F841
-            )
 
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
@@ -694,29 +677,57 @@ class Provider(ABC):
         return None
 
     @staticmethod
+    def get_class(provider: str) -> type:
+        """Resolve the provider class for a name (built-in or entry-point).
+
+        Does not call ``sys.exit`` and does not initialize the global
+        provider (it may populate the ``_ep_providers`` memoization cache).
+        Collision warnings are emitted by ``init_global_provider``, not here.
+        The caller handles errors (CLI exits; the API can return HTTP 400).
+
+        Args:
+            provider: Provider name, e.g. ``"aws"`` or an external plug-in.
+
+        Returns:
+            The provider class (a subclass of :class:`Provider`).
+
+        Raises:
+            ImportError: If not found as built-in or entry point, or a
+                built-in's transitive dependency is missing.
+        """
+        if Provider.is_builtin(provider):
+            provider_class_path = f"{providers_path}.{provider}.{provider}_provider"
+            provider_class_name = f"{provider.capitalize()}Provider"
+            # Let ImportError propagate — the caller decides whether to
+            # sys.exit (CLI) or return HTTP 400 (API).
+            module = import_module(provider_class_path)
+            try:
+                return getattr(module, provider_class_name)
+            except AttributeError:
+                # Module exists but doesn't define the expected class —
+                # fall through to entry points.
+                cls = Provider._load_ep_provider(provider)
+                if cls is not None:
+                    return cls
+                raise ImportError(
+                    f"Provider '{provider}' not found as built-in or entry point"
+                )
+
+        cls = Provider._load_ep_provider(provider)
+        if cls is None:
+            raise ImportError(
+                f"Provider '{provider}' not found as built-in or entry point"
+            )
+        return cls
+
+    @staticmethod
     def get_providers_help_text() -> dict:
         """Returns a dict of {provider_name: cli_help_text} for all available providers."""
         help_text = {}
         for name in Provider.get_available_providers():
             try:
-                # Try built-in first
-                module_path = f"{providers_path}.{name}.{name}_provider"
-                module = import_module(module_path)
-                cls = None
-                for attr_name in dir(module):
-                    attr = getattr(module, attr_name)
-                    if (
-                        isinstance(attr, type)
-                        and issubclass(attr, Provider)
-                        and attr is not Provider
-                    ):
-                        cls = attr
-                        break
-                help_text[name] = getattr(cls, "_cli_help_text", "") if cls else ""
-            except ImportError:
-                # External provider — load via entry point
-                cls = Provider._load_ep_provider(name)
-                help_text[name] = getattr(cls, "_cli_help_text", "") if cls else ""
+                cls = Provider.get_class(name)
+                help_text[name] = getattr(cls, "_cli_help_text", "")
             except Exception as error:
                 logger.warning(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

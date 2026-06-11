@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.31.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `compliance-overviews/attributes` now resolves the provider from the scan, so multi-provider universal frameworks (e.g. CSA CCM) return the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
+
+---
+
 ## [1.31.0] (Prowler v5.30.0)
 
 ### 🚀 Added

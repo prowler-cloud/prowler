@@ -30,6 +30,7 @@ from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
 from django.contrib.postgres.search import SearchQuery
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import (
     BooleanField,
@@ -4644,6 +4645,16 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 location=OpenApiParameter.QUERY,
                 description="Compliance framework ID to get attributes for.",
             ),
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=False,
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Scan ID used to resolve the provider for "
+                "multi-provider universal frameworks (e.g. CSA CCM), so "
+                "the returned check IDs match the scan's provider. When omitted, "
+                "the first provider that declares the framework is used.",
+            ),
         ],
         responses={
             200: OpenApiResponse(
@@ -5084,7 +5095,26 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
         provider_type = None
 
-        # If we couldn't determine from database, try each provider type
+        # When a scan is provided, resolve the provider from it. Multi-provider
+        # universal frameworks (e.g. CSA CCM) share a single compliance_id
+        # across providers but expose different checks per provider, so the
+        # metadata (and therefore the check IDs the UI uses to fetch findings)
+        # must be returned for the scan's provider. Without this, the endpoint
+        # falls back to the first provider that declares the framework and
+        # returns its check IDs, leaving azure/gcp/... requirements with no
+        # matching findings.
+        scan_id = request.query_params.get("filter[scan_id]")
+        if scan_id:
+            try:
+                scan = Scan.objects.get(id=scan_id)
+                scan_provider_type = scan.provider.provider
+                if compliance_id in get_compliance_frameworks(scan_provider_type):
+                    provider_type = scan_provider_type
+            except (Scan.DoesNotExist, DjangoValidationError, ValueError):
+                provider_type = None
+
+        # Fall back to the first provider that declares the framework. Keeps the
+        # endpoint working for provider-agnostic callers that omit the scan.
         if not provider_type:
             for pt in Provider.ProviderChoices.values:
                 if compliance_id in get_compliance_frameworks(pt):

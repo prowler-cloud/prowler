@@ -9570,6 +9570,150 @@ class TestComplianceOverviewViewSet:
             assert "Category" in first_attr
             assert "AWSService" in first_attr
 
+    def test_compliance_overview_attributes_resolves_provider_from_scan(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        # csa_ccm_4.0 is a multi-provider universal framework: a single
+        # compliance_id whose requirements expose different checks per provider.
+        # Passing a scan must return the check IDs for that scan's provider,
+        # otherwise the endpoint defaults to the first provider that declares the
+        # framework and azure/gcp requirements end up with check IDs that match
+        # no findings.
+        tenant = tenants_fixture[0]
+        gcp_provider = providers_fixture[2]
+        azure_provider = providers_fixture[4]
+        assert gcp_provider.provider == Provider.ProviderChoices.GCP.value
+        assert azure_provider.provider == Provider.ProviderChoices.AZURE.value
+
+        now = datetime.now(timezone.utc)
+        gcp_scan = Scan.objects.create(
+            name="gcp scan",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+        azure_scan = Scan.objects.create(
+            name="azure scan",
+            provider=azure_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+
+        def collect_check_ids(scan_id=None):
+            params = {"filter[compliance_id]": "csa_ccm_4.0"}
+            if scan_id is not None:
+                params["filter[scan_id]"] = str(scan_id)
+            response = authenticated_client.get(
+                reverse("complianceoverview-attributes"), params
+            )
+            assert response.status_code == status.HTTP_200_OK
+            check_ids = set()
+            for item in response.json()["data"]:
+                check_ids.update(item["attributes"]["attributes"]["check_ids"])
+            return check_ids
+
+        gcp_check_ids = collect_check_ids(gcp_scan.id)
+        azure_check_ids = collect_check_ids(azure_scan.id)
+
+        # Each scan resolves to its own provider's checks, and they differ.
+        assert gcp_check_ids
+        assert azure_check_ids
+        assert gcp_check_ids != azure_check_ids
+
+        # The returned check IDs belong to the SDK's per-provider definition.
+        from api.compliance import get_prowler_provider_compliance
+
+        def expected_check_ids(provider_type):
+            framework = get_prowler_provider_compliance(provider_type)["csa_ccm_4.0"]
+            expected = set()
+            for requirement in framework.requirements:
+                expected.update(requirement.checks.get(provider_type, []))
+            return expected
+
+        assert gcp_check_ids <= expected_check_ids(Provider.ProviderChoices.GCP.value)
+        assert azure_check_ids <= expected_check_ids(
+            Provider.ProviderChoices.AZURE.value
+        )
+        # The gcp check IDs are not what the first-provider fallback would return.
+        assert gcp_check_ids != azure_check_ids
+
+    def test_compliance_overview_attributes_invalid_scan_id_falls_back(
+        self, authenticated_client
+    ):
+        # An unknown or malformed scan_id must not break the endpoint: it falls
+        # back to the first provider that declares the framework, matching the
+        # behaviour of a provider-agnostic caller that omits the scan entirely.
+        def collect_check_ids(scan_id=None):
+            params = {"filter[compliance_id]": "csa_ccm_4.0"}
+            if scan_id is not None:
+                params["filter[scan_id]"] = scan_id
+            response = authenticated_client.get(
+                reverse("complianceoverview-attributes"), params
+            )
+            assert response.status_code == status.HTTP_200_OK
+            check_ids = set()
+            for item in response.json()["data"]:
+                check_ids.update(item["attributes"]["attributes"]["check_ids"])
+            return check_ids
+
+        fallback_check_ids = collect_check_ids()
+        assert fallback_check_ids
+
+        # Valid UUID with no matching scan -> Scan.DoesNotExist.
+        assert (
+            collect_check_ids("00000000-0000-4000-8000-000000000000")
+            == fallback_check_ids
+        )
+        # Malformed scan id -> ValidationError / ValueError.
+        assert collect_check_ids("not-a-uuid") == fallback_check_ids
+
+    def test_compliance_overview_attributes_scan_provider_without_framework_falls_back(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        # When the scan's provider does not declare the requested framework, the
+        # endpoint ignores the scan and falls back to the first provider that
+        # does. aws_account_security_onboarding_aws is AWS-only, so a GCP scan
+        # must not change the resolved provider.
+        tenant = tenants_fixture[0]
+        gcp_provider = providers_fixture[2]
+        assert gcp_provider.provider == Provider.ProviderChoices.GCP.value
+
+        now = datetime.now(timezone.utc)
+        gcp_scan = Scan.objects.create(
+            name="gcp scan",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+
+        compliance_id = "aws_account_security_onboarding_aws"
+
+        def collect_check_ids(scan_id=None):
+            params = {"filter[compliance_id]": compliance_id}
+            if scan_id is not None:
+                params["filter[scan_id]"] = str(scan_id)
+            response = authenticated_client.get(
+                reverse("complianceoverview-attributes"), params
+            )
+            assert response.status_code == status.HTTP_200_OK
+            check_ids = set()
+            for item in response.json()["data"]:
+                check_ids.update(item["attributes"]["attributes"]["check_ids"])
+            return check_ids
+
+        # The GCP scan does not declare an AWS-only framework, so the response
+        # matches the provider-agnostic fallback.
+        assert collect_check_ids(gcp_scan.id) == collect_check_ids()
+
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client
     ):
