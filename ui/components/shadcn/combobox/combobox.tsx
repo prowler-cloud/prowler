@@ -40,7 +40,7 @@ const comboboxContentVariants = cva("p-0", {
       default:
         "w-[calc(100vw-2rem)] max-w-md rounded-xl border border-border-neutral-secondary bg-bg-neutral-secondary shadow-md sm:w-full",
       ghost:
-        "w-[calc(100vw-2rem)] max-w-md rounded-lg border border-slate-400 bg-white sm:w-full dark:border-[#262626] dark:bg-[#171717]",
+        "w-[calc(100vw-2rem)] max-w-md rounded-lg border border-slate-400 bg-white sm:w-full dark:border-border-neutral-secondary dark:bg-bg-neutral-tertiary",
     },
   },
   defaultVariants: {

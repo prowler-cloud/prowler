@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  */
 const TRIGGER_STYLES = {
   base: "relative inline-flex min-w-0 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&:not(:first-child)]:pl-4 [&:not(:last-child)]:pr-4",
-  border: "border-r border-[#E9E9F0] last:border-r-0 dark:border-[#171D30]",
+  border: "border-r border-border-neutral-secondary last:border-r-0",
   text: "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
   active:
     "data-[state=active]:text-slate-900 dark:data-[state=active]:text-white",
@@ -55,7 +55,7 @@ function buildListClassName(): string {
   // `flex` + `min-w-0` lets the triggers shrink proportionally when the
   // container is narrow, so each trigger truncates with ellipsis instead
   // of forcing a horizontal scrollbar.
-  return "flex w-full min-w-0 items-center border-[#E9E9F0] dark:border-[#171D30]";
+  return "flex w-full min-w-0 items-center border-border-neutral-secondary";
 }
 
 function Tabs({
