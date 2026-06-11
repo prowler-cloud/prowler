@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronRightIcon } from "lucide-react";
 import { KeyboardEvent } from "react";
 
@@ -13,6 +13,24 @@ import { TreeLeaf } from "./tree-leaf";
 import { TreeSpinner } from "./tree-spinner";
 import { TreeStatusIndicator } from "./tree-status-indicator";
 import { getAllDescendantIds, getTreeNodePadding } from "./utils";
+
+export function getTreeChildrenMotion(shouldReduceMotion: boolean) {
+  if (shouldReduceMotion) {
+    return {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+      transition: { duration: 0, ease: "easeInOut" as const },
+    };
+  }
+
+  return {
+    initial: { opacity: 0, height: 0 },
+    animate: { opacity: 1, height: "auto" as const },
+    exit: { opacity: 0, height: 0 },
+    transition: { duration: 0.2, ease: "easeInOut" as const },
+  };
+}
 
 /**
  * TreeNode component for rendering expandable nodes with children.
@@ -36,6 +54,8 @@ export function TreeNode({
   renderItem,
   enableSelectChildren,
 }: TreeNodeProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const childrenMotion = getTreeChildrenMotion(!!shouldReduceMotion);
   const isExpanded = expandedIds.includes(item.id);
   const isSelected = selectedIds.includes(item.id);
   const statusIcon =
@@ -96,7 +116,9 @@ export function TreeNode({
         className={cn(
           "flex items-center gap-2 rounded-md px-2 py-1.5",
           "hover:bg-prowler-white/5 cursor-pointer",
+          "transition-[background-color,box-shadow,color] duration-150 ease-out motion-reduce:transition-none",
           "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
+          isSelected && "bg-prowler-white/5",
           item.disabled && "cursor-not-allowed opacity-50",
           item.className,
         )}
@@ -110,7 +132,7 @@ export function TreeNode({
         onKeyDown={handleKeyDown}
       >
         <button
-          className="hover:bg-prowler-white/10 shrink-0 rounded p-0.5"
+          className="hover:bg-prowler-white/10 shrink-0 rounded p-0.5 transition-colors duration-150 ease-out motion-reduce:transition-none"
           aria-label={isExpanded ? "Collapse" : "Expand"}
           onClick={(e) => {
             e.stopPropagation();
@@ -123,7 +145,7 @@ export function TreeNode({
           ) : (
             <ChevronRightIcon
               className={cn(
-                "h-4 w-4 transition-transform duration-200",
+                "h-4 w-4 transition-transform duration-200 ease-out motion-reduce:transition-none",
                 isExpanded && "rotate-90",
               )}
             />
@@ -164,10 +186,10 @@ export function TreeNode({
         {isExpanded && (
           <motion.ul
             key={`children-${item.id}`}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
+            initial={childrenMotion.initial}
+            animate={childrenMotion.animate}
+            exit={childrenMotion.exit}
+            transition={childrenMotion.transition}
             className="mt-1 space-y-1 overflow-hidden"
             role="group"
           >

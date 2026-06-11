@@ -58,7 +58,9 @@ export function TreeLeaf({
       className={cn(
         "flex items-center gap-2 rounded-md px-2 py-1.5",
         "hover:bg-prowler-white/5 cursor-pointer",
+        "transition-[background-color,box-shadow,color] duration-150 ease-out motion-reduce:transition-none",
         "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
+        isSelected && "bg-prowler-white/5",
         item.disabled && "cursor-not-allowed opacity-50",
         item.className,
       )}
