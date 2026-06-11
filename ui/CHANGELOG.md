@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Findings Severity Over Time chart Y-axis labels no longer overflow for large findings counts [(#PR)](https://github.com/prowler-cloud/prowler/pull/PR)
+- Findings Severity Over Time chart Y-axis labels no longer overflow for large findings counts [(#11545)](https://github.com/prowler-cloud/prowler/pull/11545)
 
 ---
 
