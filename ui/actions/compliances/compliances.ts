@@ -82,7 +82,7 @@ export const getComplianceAttributes = async (
   try {
     const url = new URL(`${apiBaseUrl}/compliance-overviews/attributes`);
     url.searchParams.append("filter[compliance_id]", complianceId);
-    // Pass the scan so multi-provider universal frameworks (e.g. CSA CCM, NATO)
+    // Pass the scan so multi-provider universal frameworks (e.g. CSA CCM)
     // resolve the check IDs for the scan's provider instead of defaulting to
     // the first provider that declares the framework.
     if (scanId) {

@@ -4651,7 +4651,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 type=str,
                 location=OpenApiParameter.QUERY,
                 description="Scan ID used to resolve the provider for "
-                "multi-provider universal frameworks (e.g. CSA CCM, NATO), so "
+                "multi-provider universal frameworks (e.g. CSA CCM), so "
                 "the returned check IDs match the scan's provider. When omitted, "
                 "the first provider that declares the framework is used.",
             ),
@@ -5096,7 +5096,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         provider_type = None
 
         # When a scan is provided, resolve the provider from it. Multi-provider
-        # universal frameworks (e.g. CSA CCM, NATO) share a single compliance_id
+        # universal frameworks (e.g. CSA CCM) share a single compliance_id
         # across providers but expose different checks per provider, so the
         # metadata (and therefore the check IDs the UI uses to fetch findings)
         # must be returned for the scan's provider. Without this, the endpoint
