@@ -20,6 +20,8 @@ export * from "./select/multiselect";
 export * from "./select/select";
 export * from "./separator/separator";
 export * from "./skeleton/skeleton";
+export * from "./skeleton/skeleton-boundary";
+export * from "./skeleton/skeleton-content-reveal";
 export * from "./tabs/generic-tabs";
 export * from "./tabs/tabs";
 export * from "./textarea/textarea";

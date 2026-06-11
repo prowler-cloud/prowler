@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles/roles";
 import { getCurrentUserTenantRole, getUsers } from "@/actions/users/users";
 import { auth } from "@/auth.config";
 import { FilterControls } from "@/components/filters";
 import { AddIcon } from "@/components/icons";
-import { Button } from "@/components/shadcn";
+import { Button, SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
@@ -35,9 +34,12 @@ export default async function Users({
           </Button>
         </div>
 
-        <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
+        <SkeletonBoundary
+          key={searchParamsKey}
+          fallback={<SkeletonTableUser />}
+        >
           <SSRDataTable searchParams={resolvedSearchParams} />
-        </Suspense>
+        </SkeletonBoundary>
       </div>
     </ContentLayout>
   );

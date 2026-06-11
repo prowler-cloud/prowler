@@ -19,7 +19,10 @@ interface SpinnerProps {
 export function Spinner({ className }: SpinnerProps) {
   return (
     <svg
-      className={cn("size-5 shrink-0 animate-spin", className)}
+      className={cn(
+        "size-5 shrink-0 animate-spin motion-reduce:animate-none",
+        className,
+      )}
       viewBox="0 0 20 20"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

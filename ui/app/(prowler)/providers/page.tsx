@@ -1,8 +1,6 @@
-import { Suspense } from "react";
-
 import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
-import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { Skeleton, SkeletonBoundary } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import { SearchParamsProps } from "@/types";
@@ -30,20 +28,20 @@ export default async function Providers({
         <ProviderPageTabs
           activeTab={activeTab}
           providersContent={
-            <Suspense
+            <SkeletonBoundary
               key={`providers-${searchParamsKey}`}
               fallback={<ProvidersTableFallback />}
             >
               <ProvidersTabContent searchParams={resolvedSearchParams} />
-            </Suspense>
+            </SkeletonBoundary>
           }
           providerGroupsContent={
-            <Suspense
+            <SkeletonBoundary
               key={`groups-${searchParamsKey}`}
               fallback={<ProviderGroupsFallback />}
             >
               <ProviderGroupsContent searchParams={resolvedSearchParams} />
-            </Suspense>
+            </SkeletonBoundary>
           }
         />
       </FilterTransitionWrapper>
