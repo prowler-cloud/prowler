@@ -806,7 +806,9 @@ export class ProvidersPage extends BasePage {
         if (actionName === "Check connection") {
           await this.handleCheckConnectionCompletion();
         }
-        if (actionName === "Launch scan") {
+        // "Save" is the wizard's final action (saves the scan schedule) and
+        // "Launch scan" its legacy/manual counterpart; both close the modal.
+        if (actionName === "Launch scan" || actionName === "Save") {
           await this.handleLaunchScanCompletion();
         }
         return;
@@ -819,6 +821,12 @@ export class ProvidersPage extends BasePage {
   }
 
   private async handleCheckConnectionCompletion(): Promise<void> {
+    // A successful connection advances to the schedule step ("Save"); older
+    // flows surfaced a "Launch scan" action instead.
+    const saveScheduleButton = this.page.getByRole("button", {
+      name: "Save",
+      exact: true,
+    });
     const launchScanButton = this.page.getByRole("button", {
       name: "Launch scan",
       exact: true,
@@ -829,6 +837,7 @@ export class ProvidersPage extends BasePage {
 
     try {
       await Promise.race([
+        saveScheduleButton.waitFor({ state: "visible", timeout: 30000 }),
         launchScanButton.waitFor({ state: "visible", timeout: 30000 }),
         this.wizardModal.waitFor({ state: "hidden", timeout: 30000 }),
         connectionError.waitFor({ state: "visible", timeout: 30000 }),
@@ -844,7 +853,10 @@ export class ProvidersPage extends BasePage {
       );
     }
 
-    if (await launchScanButton.isVisible().catch(() => false)) {
+    if (await saveScheduleButton.isVisible().catch(() => false)) {
+      await saveScheduleButton.click();
+      await this.handleLaunchScanCompletion();
+    } else if (await launchScanButton.isVisible().catch(() => false)) {
       await launchScanButton.click();
       await this.handleLaunchScanCompletion();
     }
@@ -855,7 +867,7 @@ export class ProvidersPage extends BasePage {
       "div.border-border-error p.text-text-error-primary",
     );
     const launchErrorToast = this.page.getByRole("alert").filter({
-      hasText: /Unable to launch scan/i,
+      hasText: /Unable to (launch scan|save scan schedule)/i,
     });
 
     try {
@@ -1383,9 +1395,11 @@ export class ProvidersPage extends BasePage {
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
 
-    // Some providers show "Check connection" before "Launch scan".
+    // The final step saves the scan schedule ("Save"); manual-only accounts
+    // show "Launch scan" and some providers show "Check connection" first.
     const launchAction = this.page
-      .getByRole("button", { name: "Launch scan", exact: true })
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }))
       .or(
         this.page.getByRole("button", {
           name: "Check connection",
