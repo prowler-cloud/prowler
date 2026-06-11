@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.31.1] (Prowler UNRELEASED)
+
+
+### 🐞 Fixed
+
+- Attack Paths: `drop_subgraph` now deletes relationships first and then nodes in batches, using less memory on Neo4j when clearing a dense provider graph [(#11557)](https://github.com/prowler-cloud/prowler/pull/11557)
+
+---
+
 ## [1.31.0] (Prowler v5.30.0)
 
 ### 🚀 Added
