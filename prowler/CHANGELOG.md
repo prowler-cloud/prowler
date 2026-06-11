@@ -2,6 +2,16 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.31.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `securityhub_delegated_admin_enabled_all_regions` check for AWS provider, verifying that Security Hub has a delegated administrator, is active in all opted-in regions, and has organization auto-enable on [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
+- `config_delegated_admin_and_org_aggregator_all_regions` check for AWS provider, verifying that AWS Config has a delegated administrator and an organization aggregator covering all AWS regions [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
+- `sagemaker_clarify_exists` check for AWS provider [(#11211)](https://github.com/prowler-cloud/prowler/pull/11211)
+
+---
+
 ## [5.30.0] (Prowler v5.30.0)
 
 ### 🚀 Added

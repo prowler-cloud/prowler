@@ -396,13 +396,13 @@ class Test_SageMaker_Service:
                 sagemaker_service = SageMaker(audit_info)
 
                 # Check that __threading_call__ was called for _list_tags_for_resource
-                # (one for each resource type: models, notebooks, training jobs, endpoint configs, domains)
+                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains)
                 tag_calls = [
                     c
                     for c in mock_threading_call.call_args_list
                     if c[0][0] == sagemaker_service._list_tags_for_resource
                 ]
-                assert len(tag_calls) == 5
+                assert len(tag_calls) == 6
 
     # Test SageMaker list model package groups
     def test_list_model_package_groups(self):
