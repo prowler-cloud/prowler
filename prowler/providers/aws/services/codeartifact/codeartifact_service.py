@@ -4,7 +4,10 @@ from typing import Iterator, Optional, Tuple
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
-from prowler.lib.check.resource_limit import get_resource_scan_limit
+from prowler.lib.check.resource_limit import (
+    get_resource_scan_limit,
+    iter_limited_paginator_items,
+)
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -59,7 +62,9 @@ class CodeArtifact(AWSService):
                 f" {error}"
             )
 
-    def _iter_repository_packages(self, repository) -> Iterator["Package"]:
+    def _iter_repository_packages(
+        self, repository, limit: Optional[int] = None
+    ) -> Iterator["Package"]:
         """Yield packages for a single repository, hydrating each one lazily.
 
         Each package requires an extra ``list_package_versions`` call to
@@ -74,67 +79,69 @@ class CodeArtifact(AWSService):
                 "domainOwner": repository.domain_owner,
                 "repository": repository.name,
             }
-            for page in list_packages_paginator.paginate(**list_packages_parameters):
-                for package in page["packages"]:
-                    # Package information
-                    package_format = package["format"]
-                    package_namespace = package.get("namespace")
-                    package_name = package["package"]
-                    package_origin_configuration_restrictions_publish = package[
-                        "originConfiguration"
-                    ]["restrictions"]["publish"]
-                    package_origin_configuration_restrictions_upstream = package[
-                        "originConfiguration"
-                    ]["restrictions"]["upstream"]
-                    # Get Latest Package Version
-                    list_package_versions_parameters = {
-                        "domain": repository.domain_name,
-                        "domainOwner": repository.domain_owner,
-                        "repository": repository.name,
-                        "format": package_format,
-                        "package": package_name,
-                        "sortBy": "PUBLISHED_TIME",
-                        "maxResults": 1,
-                    }
-                    if package_namespace:
-                        list_package_versions_parameters["namespace"] = (
-                            package_namespace
-                        )
-                    latest_version_information = regional_client.list_package_versions(
-                        **list_package_versions_parameters
+            for package in iter_limited_paginator_items(
+                list_packages_paginator,
+                "packages",
+                limit,
+                **list_packages_parameters,
+            ):
+                # Package information
+                package_format = package["format"]
+                package_namespace = package.get("namespace")
+                package_name = package["package"]
+                package_origin_configuration_restrictions_publish = package[
+                    "originConfiguration"
+                ]["restrictions"]["publish"]
+                package_origin_configuration_restrictions_upstream = package[
+                    "originConfiguration"
+                ]["restrictions"]["upstream"]
+                # Get Latest Package Version
+                list_package_versions_parameters = {
+                    "domain": repository.domain_name,
+                    "domainOwner": repository.domain_owner,
+                    "repository": repository.name,
+                    "format": package_format,
+                    "package": package_name,
+                    "sortBy": "PUBLISHED_TIME",
+                    "maxResults": 1,
+                }
+                if package_namespace:
+                    list_package_versions_parameters["namespace"] = package_namespace
+                latest_version_information = regional_client.list_package_versions(
+                    **list_package_versions_parameters
+                )
+                latest_version = ""
+                latest_origin_type = "UNKNOWN"
+                latest_status = "Published"
+                if latest_version_information.get("versions"):
+                    latest_version = latest_version_information["versions"][0].get(
+                        "version"
                     )
-                    latest_version = ""
-                    latest_origin_type = "UNKNOWN"
-                    latest_status = "Published"
-                    if latest_version_information.get("versions"):
-                        latest_version = latest_version_information["versions"][0].get(
-                            "version"
-                        )
-                        latest_origin_type = (
-                            latest_version_information["versions"][0]
-                            .get("origin", {})
-                            .get("originType", "UNKNOWN")
-                        )
-                        latest_status = latest_version_information["versions"][0].get(
-                            "status", "Published"
-                        )
+                    latest_origin_type = (
+                        latest_version_information["versions"][0]
+                        .get("origin", {})
+                        .get("originType", "UNKNOWN")
+                    )
+                    latest_status = latest_version_information["versions"][0].get(
+                        "status", "Published"
+                    )
 
-                    yield Package(
-                        name=package_name,
-                        namespace=package_namespace,
-                        format=package_format,
-                        origin_configuration=OriginConfiguration(
-                            restrictions=Restrictions(
-                                publish=package_origin_configuration_restrictions_publish,
-                                upstream=package_origin_configuration_restrictions_upstream,
-                            )
-                        ),
-                        latest_version=LatestPackageVersion(
-                            version=latest_version,
-                            status=latest_status,
-                            origin=OriginInformation(origin_type=latest_origin_type),
-                        ),
-                    )
+                yield Package(
+                    name=package_name,
+                    namespace=package_namespace,
+                    format=package_format,
+                    origin_configuration=OriginConfiguration(
+                        restrictions=Restrictions(
+                            publish=package_origin_configuration_restrictions_publish,
+                            upstream=package_origin_configuration_restrictions_upstream,
+                        )
+                    ),
+                    latest_version=LatestPackageVersion(
+                        version=latest_version,
+                        status=latest_status,
+                        origin=OriginInformation(origin_type=latest_origin_type),
+                    ),
+                )
 
         except ClientError as error:
             if error.response["Error"]["Code"] == "ResourceNotFoundException":
@@ -172,7 +179,12 @@ class CodeArtifact(AWSService):
                         return
                 continue
             collected = []
-            for package in self._iter_repository_packages(repository):
+            remaining_limit = None
+            if self.package_limit:
+                remaining_limit = self.package_limit - yielded
+                if remaining_limit <= 0:
+                    return
+            for package in self._iter_repository_packages(repository, remaining_limit):
                 collected.append(package)
                 repository.packages = collected
                 yield repository, package

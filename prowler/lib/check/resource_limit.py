@@ -10,9 +10,9 @@ analyze for a supported resource path. A limited resource can produce zero,
 one, or many findings; findings are not capped or re-ordered here.
 """
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from itertools import islice
-from typing import Optional, TypeVar
+from typing import Any, Optional, TypeVar
 
 GLOBAL_LIMIT_KEY = "max_scanned_resources_per_service"
 T = TypeVar("T")
@@ -48,3 +48,28 @@ def limit_resources(resources: Iterable[T], limit: Optional[int]) -> Iterator[T]
         yield from resources
         return
     yield from islice(resources, limit)
+
+
+def iter_limited_paginator_items(
+    paginator: Any,
+    result_key: str,
+    limit: Optional[int],
+    item_filter: Optional[Callable[[T], bool]] = None,
+    **operation_parameters: Any,
+) -> Iterator[T]:
+    """Yield paginator result items, stopping after ``limit`` selected items.
+
+    The configured resource-analysis limit is intentionally not sent as
+    ``PageSize`` because AWS services validate page sizes differently. The
+    paginator receives only the operation parameters needed by the AWS API,
+    while this iterator applies the analysis limit defensively client-side.
+    """
+    selected = 0
+    for page in paginator.paginate(**operation_parameters):
+        for item in page.get(result_key, []):
+            if item_filter and not item_filter(item):
+                continue
+            yield item
+            selected += 1
+            if limit and selected >= limit:
+                return

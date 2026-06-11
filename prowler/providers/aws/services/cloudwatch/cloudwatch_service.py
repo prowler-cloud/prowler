@@ -5,7 +5,10 @@ from typing import Optional
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
+from prowler.lib.check.resource_limit import (
+    get_resource_scan_limit,
+    limit_resources,
+)
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -181,9 +184,9 @@ class Logs(AWSService):
                 "describe_log_groups"
             )
             for page in describe_log_groups_paginator.paginate():
-                for log_group in page["logGroups"]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(log_group["arn"], self.audit_resources)
+                for log_group in page.get("logGroups", []):
+                    if not self.audit_resources or is_resource_filtered(
+                        log_group["arn"], self.audit_resources
                     ):
                         never_expire = False
                         kms = log_group.get("kmsKeyId")

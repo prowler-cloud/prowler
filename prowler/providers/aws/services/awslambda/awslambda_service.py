@@ -9,7 +9,10 @@ import requests
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
+from prowler.lib.check.resource_limit import (
+    get_resource_scan_limit,
+    limit_resources,
+)
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -37,11 +40,9 @@ class Lambda(AWSService):
         try:
             list_functions_paginator = regional_client.get_paginator("list_functions")
             for page in list_functions_paginator.paginate():
-                for function in page["Functions"]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(
-                            function["FunctionArn"], self.audit_resources
-                        )
+                for function in page.get("Functions", []):
+                    if not self.audit_resources or is_resource_filtered(
+                        function["FunctionArn"], self.audit_resources
                     ):
                         lambda_name = function["FunctionName"]
                         lambda_arn = function["FunctionArn"]

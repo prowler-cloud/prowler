@@ -142,6 +142,60 @@ class Test_EC2_Service:
         assert [snapshot.id for snapshot in ec2.snapshots] == ["snap-new"]
         assert regional_client.calls == ["snap-new"]
 
+    def test_snapshot_limit_preserves_volume_index_and_selects_global_latest(self):
+        class FakePaginator:
+            def __init__(self, snapshots):
+                self.snapshots = snapshots
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [{"Snapshots": self.snapshots}]
+
+        class FakeEC2Client:
+            def __init__(self, region, snapshots):
+                self.region = region
+                self.snapshots = snapshots
+
+            def get_paginator(self, name):
+                assert name == "describe_snapshots"
+                return FakePaginator(self.snapshots)
+
+        ec2 = EC2.__new__(EC2)
+        ec2.snapshots = []
+        ec2.volumes_with_snapshots = {}
+        ec2.regions_with_snapshots = {}
+        ec2.snapshot_limit = 1
+        ec2.audit_resources = []
+        ec2.audited_partition = "aws"
+        ec2.audited_account = AWS_ACCOUNT_NUMBER
+        old_client = FakeEC2Client(
+            AWS_REGION_EU_WEST_1,
+            [
+                {
+                    "SnapshotId": "snap-old",
+                    "VolumeId": "vol-old",
+                    "StartTime": datetime(2024, 1, 1),
+                }
+            ],
+        )
+        new_client = FakeEC2Client(
+            AWS_REGION_US_EAST_1,
+            [
+                {
+                    "SnapshotId": "snap-new",
+                    "VolumeId": "vol-new",
+                    "StartTime": datetime(2024, 1, 2),
+                }
+            ],
+        )
+
+        ec2._describe_snapshots(old_client)
+        ec2._describe_snapshots(new_client)
+        ec2._select_snapshots_for_analysis()
+
+        assert ec2.volumes_with_snapshots == {"vol-old": True, "vol-new": True}
+        assert [snapshot.id for snapshot in ec2.snapshots] == ["snap-new"]
+
     # Test EC2 Describe Instances
     @mock_aws
     @freeze_time(MOCK_DATETIME)

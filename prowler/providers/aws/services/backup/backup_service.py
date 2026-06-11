@@ -4,7 +4,10 @@ from typing import Optional
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
+from prowler.lib.check.resource_limit import (
+    get_resource_scan_limit,
+    limit_resources,
+)
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -35,6 +38,7 @@ class Backup(AWSService):
             self.audit_config, "max_backup_recovery_points"
         )
         self._list_recovery_points()
+        self._select_recovery_points_for_analysis()
         self.__threading_call__(self._list_tags, self.recovery_points)
 
     def _list_backup_vaults(self, regional_client):
@@ -192,7 +196,6 @@ class Backup(AWSService):
     def _list_recovery_points(self):
         logger.info("Backup - Listing Recovery Points...")
         try:
-            candidates = []
             for backup_vault in self.backup_vaults or []:
                 regional_client = self.regional_clients[backup_vault.region]
                 paginator = regional_client.get_paginator(
@@ -201,33 +204,18 @@ class Backup(AWSService):
                 for page in paginator.paginate(BackupVaultName=backup_vault.name):
                     for recovery_point in page.get("RecoveryPoints", []):
                         arn = recovery_point.get("RecoveryPointArn")
-                        if not arn:
-                            continue
-                        candidates.append((backup_vault, recovery_point))
-            for backup_vault, recovery_point in limit_resources(
-                sorted(
-                    candidates,
-                    key=lambda candidate: (
-                        candidate[1]["CreationDate"].timestamp()
-                        if candidate[1].get("CreationDate")
-                        else 0.0
-                    ),
-                    reverse=True,
-                ),
-                self.recovery_point_limit,
-            ):
-                arn = recovery_point.get("RecoveryPointArn")
-                rp = RecoveryPoint(
-                    arn=arn,
-                    id=arn.split(":")[-1],
-                    backup_vault_name=backup_vault.name,
-                    encrypted=recovery_point.get("IsEncrypted", False),
-                    creation_date=recovery_point.get("CreationDate"),
-                    backup_vault_region=backup_vault.region,
-                    region=backup_vault.region,
-                    tags=[],
-                )
-                self.recovery_points.append(rp)
+                        if arn:
+                            rp = RecoveryPoint(
+                                arn=arn,
+                                id=arn.split(":")[-1],
+                                backup_vault_name=backup_vault.name,
+                                encrypted=recovery_point.get("IsEncrypted", False),
+                                creation_date=recovery_point.get("CreationDate"),
+                                backup_vault_region=backup_vault.region,
+                                region=backup_vault.region,
+                                tags=[],
+                            )
+                            self.recovery_points.append(rp)
         except ClientError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -236,6 +224,18 @@ class Backup(AWSService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _select_recovery_points_for_analysis(self):
+        self.recovery_points = list(
+            limit_resources(
+                sorted(
+                    self.recovery_points,
+                    key=lambda rp: rp.creation_date or datetime.min,
+                    reverse=True,
+                ),
+                self.recovery_point_limit,
+            )
+        )
 
 
 class BackupVault(BaseModel):

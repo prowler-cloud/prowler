@@ -260,3 +260,54 @@ class Test_CloudWatch_Service:
         assert list(logs.log_groups) == ["arn:2"]
         assert tagged == ["arn:2"]
         assert regional_client.filter_calls == ["log-2"]
+
+    def test_log_group_limit_selects_global_newest_across_regions(self):
+        class FakePaginator:
+            def __init__(self, log_groups):
+                self.log_groups = log_groups
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [{"logGroups": self.log_groups}]
+
+        class FakeLogsClient:
+            def __init__(self, region, log_groups):
+                self.region = region
+                self.log_groups = log_groups
+
+            def get_paginator(self, name):
+                assert name == "describe_log_groups"
+                return FakePaginator(self.log_groups)
+
+        logs = Logs.__new__(Logs)
+        logs.log_groups = {}
+        logs.log_group_limit = 1
+        logs.audit_resources = []
+
+        logs._describe_log_groups(
+            FakeLogsClient(
+                "eu-west-1",
+                [
+                    {
+                        "arn": "arn:aws:logs:eu-west-1:123456789012:log-group:old:*",
+                        "logGroupName": "old",
+                        "creationTime": 1,
+                    }
+                ],
+            )
+        )
+        logs._describe_log_groups(
+            FakeLogsClient(
+                AWS_REGION_US_EAST_1,
+                [
+                    {
+                        "arn": "arn:aws:logs:us-east-1:123456789012:log-group:new:*",
+                        "logGroupName": "new",
+                        "creationTime": 2,
+                    }
+                ],
+            )
+        )
+        logs._select_log_groups_for_analysis()
+
+        assert [log_group.name for log_group in logs.log_groups.values()] == ["new"]

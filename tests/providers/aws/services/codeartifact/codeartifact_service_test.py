@@ -294,8 +294,10 @@ class Test_CodeArtifact_Service:
         codeartifact.repositories = {repository.arn: repository}
         enriched = []
 
-        def iter_repository_packages(repository):
+        def iter_repository_packages(repository, limit=None):
             for index in range(3):
+                if limit is not None and index >= limit:
+                    return
                 enriched.append(index)
                 yield SimpleNamespace(name=f"package-{index}")
 

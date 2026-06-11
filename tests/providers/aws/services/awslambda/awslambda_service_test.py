@@ -113,6 +113,55 @@ class Test_Lambda_Service:
 
         assert list(awslambda.functions) == ["new"]
 
+    def test_function_limit_selects_global_latest_across_regions(self):
+        class FakePaginator:
+            def __init__(self, functions):
+                self.functions = functions
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [{"Functions": self.functions}]
+
+        class FakeLambdaClient:
+            def __init__(self, region, functions):
+                self.region = region
+                self.functions = functions
+
+            def get_paginator(self, name):
+                assert name == "list_functions"
+                return FakePaginator(self.functions)
+
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.functions = {}
+        awslambda.function_limit = 1
+        awslambda.audit_resources = []
+        old_client = FakeLambdaClient(
+            AWS_REGION_EU_WEST_1,
+            [
+                {
+                    "FunctionName": "old",
+                    "FunctionArn": "arn:aws:lambda:eu-west-1:123456789012:function:old",
+                    "LastModified": "2024-01-01T00:00:00.000+0000",
+                }
+            ],
+        )
+        new_client = FakeLambdaClient(
+            AWS_REGION_US_EAST_1,
+            [
+                {
+                    "FunctionName": "new",
+                    "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:new",
+                    "LastModified": "2024-01-02T00:00:00.000+0000",
+                }
+            ],
+        )
+
+        awslambda._list_functions(old_client)
+        awslambda._list_functions(new_client)
+        awslambda._select_functions_for_analysis()
+
+        assert [function.name for function in awslambda.functions.values()] == ["new"]
+
     @mock_aws
     def test_list_functions(self):
         # Create IAM Lambda Role

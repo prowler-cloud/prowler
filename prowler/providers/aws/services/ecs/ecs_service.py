@@ -4,7 +4,11 @@ from typing import Optional
 
 from pydantic.v1 import BaseModel
 
-from prowler.lib.check.resource_limit import get_resource_scan_limit, limit_resources
+from prowler.lib.check.resource_limit import (
+    get_resource_scan_limit,
+    iter_limited_paginator_items,
+    limit_resources,
+)
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
@@ -45,12 +49,20 @@ class ECS(AWSService):
                 list_ecs_paginator = regional_client.get_paginator(
                     "list_task_definitions"
                 )
-                for page in list_ecs_paginator.paginate(sort="DESC"):
-                    for task_definition in page["taskDefinitionArns"]:
-                        if not self.audit_resources or (
-                            is_resource_filtered(task_definition, self.audit_resources)
-                        ):
-                            arns.append((task_definition, region))
+                remaining_limit = None
+                if self.task_definition_limit:
+                    remaining_limit = self.task_definition_limit - len(arns)
+                    if remaining_limit <= 0:
+                        break
+                for task_definition in iter_limited_paginator_items(
+                    list_ecs_paginator,
+                    "taskDefinitionArns",
+                    remaining_limit,
+                    item_filter=lambda task_definition: not self.audit_resources
+                    or is_resource_filtered(task_definition, self.audit_resources),
+                    sort="DESC",
+                ):
+                    arns.append((task_definition, region))
             except Exception as error:
                 logger.error(
                     f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

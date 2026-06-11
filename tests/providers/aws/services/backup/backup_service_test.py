@@ -343,6 +343,7 @@ class TestBackupService:
         backup.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
 
         backup._list_recovery_points()
+        backup._select_recovery_points_for_analysis()
         for recovery_point in backup.recovery_points:
             backup._list_tags(recovery_point)
 
@@ -350,6 +351,76 @@ class TestBackupService:
         assert regional_client.tag_calls == [
             "arn:aws:backup:eu-west-1:123456789012:recovery-point:new"
         ]
+
+    def test_recovery_point_limit_selects_global_newest_across_vaults(self):
+        class FakePaginator:
+            def __init__(self, recovery_points_by_vault):
+                self.recovery_points_by_vault = recovery_points_by_vault
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [
+                    {
+                        "RecoveryPoints": self.recovery_points_by_vault[
+                            kwargs["BackupVaultName"]
+                        ]
+                    }
+                ]
+
+        class FakeBackupClient:
+            def __init__(self, recovery_points_by_vault):
+                self.recovery_points_by_vault = recovery_points_by_vault
+
+            def get_paginator(self, name):
+                assert name == "list_recovery_points_by_backup_vault"
+                return FakePaginator(self.recovery_points_by_vault)
+
+        backup = Backup.__new__(Backup)
+        backup.recovery_point_limit = 1
+        backup.recovery_points = []
+        backup.backup_vaults = [
+            BackupVault(
+                arn="arn:aws:backup:eu-west-1:123456789012:backup-vault:old-vault",
+                name="old-vault",
+                region=AWS_REGION_EU_WEST_1,
+                encryption="",
+                recovery_points=1,
+                locked=False,
+            ),
+            BackupVault(
+                arn="arn:aws:backup:eu-west-1:123456789012:backup-vault:new-vault",
+                name="new-vault",
+                region=AWS_REGION_EU_WEST_1,
+                encryption="",
+                recovery_points=1,
+                locked=False,
+            ),
+        ]
+        backup.regional_clients = {
+            AWS_REGION_EU_WEST_1: FakeBackupClient(
+                {
+                    "old-vault": [
+                        {
+                            "RecoveryPointArn": "arn:aws:backup:eu-west-1:123456789012:recovery-point:old",
+                            "IsEncrypted": True,
+                            "CreationDate": datetime(2024, 1, 1),
+                        }
+                    ],
+                    "new-vault": [
+                        {
+                            "RecoveryPointArn": "arn:aws:backup:eu-west-1:123456789012:recovery-point:new",
+                            "IsEncrypted": True,
+                            "CreationDate": datetime(2024, 1, 2),
+                        }
+                    ],
+                }
+            )
+        }
+
+        backup._list_recovery_points()
+        backup._select_recovery_points_for_analysis()
+
+        assert [rp.id for rp in backup.recovery_points] == ["new"]
 
     def test_recovery_point_limit_exposes_only_selected_resources(self):
         backup = Backup.__new__(Backup)
@@ -391,6 +462,7 @@ class TestBackupService:
         backup._list_tags = list_tags
 
         backup._list_recovery_points()
+        backup._select_recovery_points_for_analysis()
         for recovery_point in backup.recovery_points:
             backup._list_tags(recovery_point)
 
