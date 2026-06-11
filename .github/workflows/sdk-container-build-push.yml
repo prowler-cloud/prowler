@@ -168,13 +168,13 @@ jobs:
           persist-credentials: false
 
       - name: Login to DockerHub
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: public.ecr.aws
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
@@ -224,13 +224,13 @@ jobs:
 
 
       - name: Login to DockerHub
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: public.ecr.aws
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
@@ -267,7 +267,7 @@ jobs:
       # Push to toniblyx/prowler only for current version (latest/stable/release tags)
       - name: Login to DockerHub (toniblyx)
         if: needs.setup.outputs.latest_tag == 'latest'
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           username: ${{ secrets.TONIBLYX_DOCKERHUB_USERNAME }}
           password: ${{ secrets.TONIBLYX_DOCKERHUB_PASSWORD }}
@@ -292,7 +292,7 @@ jobs:
       # Re-login as prowlercloud for cleanup of intermediate tags
       - name: Login to DockerHub (prowlercloud)
         if: always()
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
