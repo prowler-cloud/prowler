@@ -57,6 +57,33 @@ describe("Dialog", () => {
     );
   });
 
+  it("animates the close affordance as internal dialog feedback", () => {
+    // Given
+    renderOpenDialog();
+
+    // When
+    const closeButton = screen.getByRole("button", { name: /close/i });
+    const closeIcon = closeButton.querySelector("svg");
+
+    // Then
+    expect(closeButton).toHaveClass(
+      "transition-[opacity,scale,background-color,color]",
+      "duration-150",
+      "ease-out",
+      "active:scale-95",
+      "motion-reduce:active:scale-100",
+      "motion-reduce:transition-none",
+    );
+    expect(closeIcon).toHaveClass(
+      "transition-transform",
+      "duration-150",
+      "ease-out",
+      "group-hover/dialog-close:rotate-90",
+      "motion-reduce:rotate-0",
+      "motion-reduce:transition-none",
+    );
+  });
+
   it("uses an intentional content motion contract", () => {
     // Given
     renderOpenDialog();

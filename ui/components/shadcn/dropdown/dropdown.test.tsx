@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -72,6 +75,108 @@ describe("DropdownMenu", () => {
     expect(menu).toHaveClass(
       "motion-reduce:animate-none",
       "motion-reduce:transform-none",
+      "motion-reduce:transition-none",
+    );
+  });
+
+  it("animates checkbox and radio item indicators as internal state feedback", () => {
+    // Given
+    render(
+      <DropdownMenu open>
+        <DropdownMenuTrigger>Open filters</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuCheckboxItem checked>
+            Show muted
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuRadioGroup value="failed">
+            <DropdownMenuRadioItem value="failed">Failed</DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+
+    // When
+    const checkboxItem = screen.getByRole("menuitemcheckbox", {
+      name: "Show muted",
+    });
+    const radioItem = screen.getByRole("menuitemradio", { name: "Failed" });
+    const checkboxIndicator = checkboxItem.querySelector("span");
+    const checkboxIcon = checkboxItem.querySelector("svg");
+    const radioIndicator = radioItem.querySelector("span");
+    const radioIcon = radioItem.querySelector("svg");
+
+    // Then
+    expect(checkboxItem).toHaveClass(
+      "transition-colors",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+    expect(checkboxIndicator).toHaveClass(
+      "transition-[opacity,scale]",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:scale-100",
+      "motion-reduce:transition-none",
+    );
+    expect(checkboxIcon).toHaveClass(
+      "animate-in",
+      "zoom-in-75",
+      "motion-reduce:animate-none",
+    );
+    expect(radioItem).toHaveClass(
+      "transition-colors",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+    expect(radioIndicator).toHaveClass(
+      "transition-[opacity,scale]",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:scale-100",
+      "motion-reduce:transition-none",
+    );
+    expect(radioIcon).toHaveClass(
+      "animate-in",
+      "zoom-in-75",
+      "motion-reduce:animate-none",
+    );
+  });
+
+  it("animates submenu chevrons as internal open-state feedback", () => {
+    // Given
+    render(
+      <DropdownMenu open>
+        <DropdownMenuTrigger>Open actions</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuSub open>
+            <DropdownMenuSubTrigger>More actions</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem>Archive</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+
+    // When
+    const subTrigger = screen.getByRole("menuitem", { name: "More actions" });
+    const chevron = subTrigger.querySelector("svg");
+
+    // Then
+    expect(subTrigger).toHaveClass(
+      "transition-colors",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+    expect(chevron).toHaveClass(
+      "transition-[translate,opacity]",
+      "duration-150",
+      "ease-out",
+      "group-data-[state=open]:translate-x-0.5",
+      "motion-reduce:translate-x-0",
       "motion-reduce:transition-none",
     );
   });

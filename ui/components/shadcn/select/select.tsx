@@ -245,7 +245,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-3 pr-12 pl-4 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-3 pr-12 pl-4 text-sm outline-hidden transition-colors duration-150 ease-out select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 motion-reduce:transition-none dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         className,
       )}
       {...props}
@@ -256,7 +256,7 @@ function SelectItem({
         </span>
       </SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator asChild>
-        <CheckIcon className="text-bg-button-secondary absolute right-4 size-5" />
+        <CheckIcon className="text-bg-button-secondary animate-in fade-in-0 zoom-in-75 absolute right-4 size-5 duration-150 ease-out motion-reduce:animate-none" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   );

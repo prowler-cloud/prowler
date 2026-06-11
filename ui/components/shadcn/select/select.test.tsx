@@ -179,6 +179,31 @@ describe("Select", () => {
     expect(trigger).toHaveAttribute("data-closing", "true");
   });
 
+  it("animates option rows and selected check indicators as internal feedback", () => {
+    // Given
+    renderTypeSelect({ open: true });
+
+    // When
+    const selectedOption = screen.getByRole("option", { name: "All Types" });
+    const checkIcon = selectedOption.querySelector("svg");
+
+    // Then
+    expect(selectedOption).toHaveClass(
+      "transition-colors",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+    expect(checkIcon).toHaveClass(
+      "animate-in",
+      "fade-in-0",
+      "zoom-in-75",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:animate-none",
+    );
+  });
+
   it("uses explicit open and close motion classes", () => {
     // Given
     renderTypeSelect({ open: true });

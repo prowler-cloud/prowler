@@ -68,6 +68,39 @@ describe("Combobox", () => {
     );
   });
 
+  it("animates option rows and selected check indicators as internal feedback", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <Combobox value="aws" options={options} placeholder="Select provider" />,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: /aws/i }));
+    const selectedItem = screen.getByRole("option", { name: /aws/i });
+    const unselectedItem = screen.getByRole("option", { name: /azure/i });
+    const selectedCheck = selectedItem.querySelector("svg");
+    const unselectedCheck = unselectedItem.querySelector("svg");
+
+    // Then
+    expect(selectedItem).toHaveClass(
+      "transition-[background-color,color]",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    );
+    expect(selectedCheck).toHaveClass(
+      "transition-[opacity,scale]",
+      "duration-150",
+      "ease-out",
+      "scale-100",
+      "opacity-100",
+      "motion-reduce:scale-100",
+      "motion-reduce:transition-none",
+    );
+    expect(unselectedCheck).toHaveClass("scale-95", "opacity-0");
+  });
+
   it("opens with the shared Popover content motion contract", async () => {
     // Given
     const user = userEvent.setup();

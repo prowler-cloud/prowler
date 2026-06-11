@@ -152,7 +152,7 @@ export function Combobox({
                   value={selectedOption.value}
                   onSelect={handleSelect}
                 >
-                  <Check className="mr-2 h-4 w-4 opacity-100" />
+                  <Check className="mr-2 h-4 w-4 scale-100 opacity-100 transition-[opacity,scale] duration-150 ease-out motion-reduce:scale-100 motion-reduce:transition-none" />
                   {selectedOption.label}
                 </CommandItem>
               </CommandGroup>
@@ -177,10 +177,10 @@ export function Combobox({
                       >
                         <Check
                           className={cn(
-                            "mr-2 h-4 w-4",
+                            "mr-2 h-4 w-4 transition-[opacity,scale] duration-150 ease-out motion-reduce:scale-100 motion-reduce:transition-none",
                             value === option.value
-                              ? "opacity-100"
-                              : "opacity-0",
+                              ? "scale-100 opacity-100"
+                              : "scale-95 opacity-0",
                           )}
                         />
                         {option.label}
@@ -205,8 +205,10 @@ export function Combobox({
                     >
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4",
-                          value === option.value ? "opacity-100" : "opacity-0",
+                          "mr-2 h-4 w-4 transition-[opacity,scale] duration-150 ease-out motion-reduce:scale-100 motion-reduce:transition-none",
+                          value === option.value
+                            ? "scale-100 opacity-100"
+                            : "scale-95 opacity-0",
                         )}
                       />
                       {option.label}
