@@ -1,6 +1,6 @@
 <p align="center">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png#gh-light-mode-only" width="50%" height="50%">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
+  <img align="center" alt="Prowler logo" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png#gh-light-mode-only" width="50%" height="50%">
+  <img align="center" alt="Prowler logo" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
   <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
@@ -22,8 +22,8 @@
   <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=downloads"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://gallery.ecr.aws/prowler-cloud/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
-  <a href="https://codecov.io/gh/prowler-cloud/prowler"><img src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
-  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
+  <a href="https://codecov.io/gh/prowler-cloud/prowler"><img alt="Codecov coverage" src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
+  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img alt="Linux Foundation insights health score" src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
 </p>
 <p align="center">
     <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
@@ -36,7 +36,7 @@
 </p>
 <hr>
 <p align="center">
-  <img align="center" src="/docs/img/prowler-cloud.gif" width="100%" height="100%">
+  <img align="center" alt="Prowler Cloud demo" src="/docs/img/prowler-cloud.gif" width="100%" height="100%">
 </p>
 
 # Description
@@ -104,24 +104,25 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 595 | 84 | 43 | 17 | Official | UI, API, CLI |
+| AWS | 600 | 84 | 44 | 18 | Official | UI, API, CLI |
 | Azure | 167 | 22 | 19 | 16 | Official | UI, API, CLI |
 | GCP | 102 | 18 | 17 | 12 | Official | UI, API, CLI |
 | Kubernetes | 83 | 7 | 7 | 11 | Official | UI, API, CLI |
 | GitHub | 24 | 3 | 1 | 5 | Official | UI, API, CLI |
-| M365 | 101 | 10 | 4 | 10 | Official | UI, API, CLI |
+| M365 | 102 | 10 | 4 | 10 | Official | UI, API, CLI |
 | OCI | 51 | 14 | 4 | 10 | Official | UI, API, CLI |
-| Alibaba Cloud | 61 | 9 | 4 | 9 | Official | UI, API, CLI |
+| Alibaba Cloud | 63 | 9 | 4 | 9 | Official | UI, API, CLI |
 | Cloudflare | 29 | 3 | 0 | 5 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
 | MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | Image | N/A | N/A | N/A | N/A | Official | CLI, API |
-| Google Workspace | 25 | 4 | 2 | 4 | Official | UI, API, CLI |
+| Google Workspace | 39 | 5 | 2 | 5 | Official | UI, API, CLI |
 | OpenStack | 34 | 5 | 0 | 9 | Official | UI, API, CLI |
-| Vercel | 26 | 6 | 0 | 5 | Official | UI, API, CLI |
+| Vercel | 26 | 6 | 0 | 8 | Official | UI, API, CLI |
 | Okta | 1 | 1 | 0 | 1 | Official | CLI |
 | Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 0 | 1 | Unofficial | CLI |
+| StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 0 | 3 | Unofficial | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]
@@ -146,17 +147,29 @@ Prowler App offers flexible installation methods tailored to various environment
 
 ### Docker Compose
 
-**Requirements**
+#### Requirements
 
-* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+- `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
-**Commands**
+#### Commands
+
+_macOS/Linux:_
 
 ``` console
 VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
 # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
+docker compose up -d
+```
+
+_Windows PowerShell:_
+
+``` powershell
+$VERSION = (Invoke-RestMethod -Uri "https://api.github.com/repos/prowler-cloud/prowler/releases/latest").tag_name
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/docker-compose.yml" -OutFile "docker-compose.yml"
+# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/.env" -OutFile ".env"
 docker compose up -d
 ```
 
@@ -175,14 +188,14 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 
 ### From GitHub
 
-**Requirements**
+#### Requirements
 
-* `git` installed.
-* `uv` installed: [uv installation](https://docs.astral.sh/uv/getting-started/installation/).
-* `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
-* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+- `git` installed.
+- `uv` installed: [uv installation](https://docs.astral.sh/uv/getting-started/installation/).
+- `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
+- `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
-**Commands to run the API**
+#### Commands to run the API
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -199,7 +212,7 @@ gunicorn -c config/guniconf.py config.wsgi:application
 
 > After completing the setup, access the API documentation at http://localhost:8080/api/v1/docs.
 
-**Commands to run the API Worker**
+#### Commands to run the API Worker
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -212,7 +225,7 @@ cd src/backend
 python -m celery -A config.celery worker -l info -E
 ```
 
-**Commands to run the API Scheduler**
+#### Commands to run the API Scheduler
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -225,7 +238,7 @@ cd src/backend
 python -m celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
-**Commands to run the UI**
+#### Commands to run the UI
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -237,7 +250,7 @@ pnpm start
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
-**Pre-commit Hooks Setup**
+#### Pre-commit Hooks Setup
 
 Some pre-commit hooks require tools installed on your system:
 
@@ -257,14 +270,14 @@ prowler -v
 
 ### Containers
 
-**Available Versions of Prowler CLI**
+#### Available Versions of Prowler CLI
 
 The following versions of Prowler CLI are available, depending on your requirements:
 
 - `latest`: Synchronizes with the `master` branch. Note that this version is not stable.
 - `v4-latest`: Synchronizes with the `v4` branch. Note that this version is not stable.
 - `v3-latest`: Synchronizes with the `v3` branch. Note that this version is not stable.
-- `<x.y.z>` (release): Stable releases corresponding to specific versions. You can find the complete list of releases [here](https://github.com/prowler-cloud/prowler/releases).
+- `<x.y.z>` (release): Stable releases corresponding to specific versions. See the [complete list of Prowler releases](https://github.com/prowler-cloud/prowler/releases).
 - `stable`: Always points to the latest release.
 - `v4-stable`: Always points to the latest release for v4.
 - `v3-stable`: Always points to the latest release for v3.
@@ -293,7 +306,7 @@ python prowler-cli.py -v
 
 # 🛡️ GitHub Action
 
-The official **Prowler GitHub Action** runs Prowler scans in your GitHub workflows using the official [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) Docker image. Scans run on any [supported provider](https://docs.prowler.com/user-guide/providers/), with optional [`--push-to-cloud`](https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings) to send findings to Prowler Cloud and optional SARIF upload so findings show up in the repo's **Security → Code scanning** tab and as inline PR annotations.
+The official **Prowler GitHub Action** runs Prowler scans in your GitHub workflows using the official [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) Docker image. Scans run on any [supported provider](https://docs.prowler.com/user-guide/providers/), with optional [`--push-to-cloud`](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings) to send findings to Prowler Cloud and optional SARIF upload so findings show up in the repo's **Security → Code scanning** tab and as inline PR annotations.
 
 ```yaml
 name: Prowler IaC Scan
@@ -338,7 +351,7 @@ Full configuration, per-provider authentication, and SARIF examples: [Prowler Gi
 
 ## Prowler CLI
 
-**Running Prowler**
+### Running Prowler
 
 Prowler can be executed across various environments, offering flexibility to meet your needs. It can be run from:
 

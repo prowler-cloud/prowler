@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import os
+import threading
 
 from config.env import env
 
@@ -11,6 +12,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.django.production")
 import django  # noqa: E402
 
 django.setup()
+from api.compliance import warm_compliance_caches  # noqa: E402
 from config.django.production import LOGGING as DJANGO_LOGGERS, DEBUG  # noqa: E402
 from config.custom_logging import BackendLogger  # noqa: E402
 
@@ -41,3 +43,26 @@ def on_reload(_):
 
 def when_ready(_):
     gunicorn_logger.info("Gunicorn server is ready")
+
+
+def _warm_compliance_caches_in_background():
+    """Warm compliance caches off the request path and log the outcome."""
+    failed = warm_compliance_caches()
+    if failed:
+        gunicorn_logger.warning("Compliance caches warmed (skipped: %s)", failed)
+    else:
+        gunicorn_logger.info("Compliance caches warmed")
+
+
+def post_fork(_server, worker):
+    """Warm compliance caches after each worker fork.
+
+    Warm compliance caches in a background thread so the worker becomes ready
+    immediately. A request for a not-yet-warmed provider lazily loads just that
+    provider, which stays well under the worker timeout.
+    """
+    threading.Thread(
+        target=_warm_compliance_caches_in_background,
+        name="warm-compliance-caches",
+        daemon=True,
+    ).start()

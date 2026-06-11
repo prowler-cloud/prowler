@@ -778,26 +778,26 @@
   {
     "section": "devDependencies",
     "name": "@vitest/browser",
-    "from": "4.1.6",
-    "to": "4.0.18",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:22:47.378Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/browser-playwright",
-    "from": "4.1.6",
-    "to": "4.0.18",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:22:47.378Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/coverage-v8",
-    "from": "4.1.6",
-    "to": "4.0.18",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:22:47.378Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",
@@ -945,6 +945,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "prettier-plugin-packagejson",
+    "from": "2.5.22",
+    "to": "2.5.22",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T14:59:45.730Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "prettier-plugin-tailwindcss",
     "from": "0.6.14",
     "to": "0.6.14",
@@ -970,10 +978,10 @@
   {
     "section": "devDependencies",
     "name": "vitest",
-    "from": "4.1.6",
-    "to": "4.0.18",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:22:47.378Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",

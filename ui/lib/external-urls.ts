@@ -4,6 +4,8 @@ import { IntegrationType } from "../types/integrations";
 export const DOCS_URLS = {
   FINDINGS_ANALYSIS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings",
+  FINDINGS_INGESTION:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings",
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",
@@ -99,6 +101,11 @@ export const getProviderHelpText = (provider: string) => {
       return {
         text: "Need help connecting your Vercel team?",
         link: "https://goto.prowler.com/provider-vercel",
+      };
+    case "okta":
+      return {
+        text: "Need help connecting your Okta organization?",
+        link: "https://goto.prowler.com/provider-okta",
       };
     default:
       return {

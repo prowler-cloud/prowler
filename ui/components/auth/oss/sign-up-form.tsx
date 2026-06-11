@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 
 import { createNewUser } from "@/actions/auth";
+import {
+  getInvitationErrorDisplay,
+  INVITATION_ERROR_FLOW,
+  isInvitationTokenError,
+} from "@/app/(auth)/invitation/_lib/invitation-errors";
 import { AuthDivider } from "@/components/auth/oss/auth-divider";
 import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
@@ -28,7 +33,10 @@ const AUTH_ERROR_PATHS = {
   EMAIL: "/data/attributes/email",
   PASSWORD: "/data/attributes/password",
   COMPANY_NAME: "/data/attributes/company_name",
-  INVITATION_TOKEN: "/data",
+} as const;
+
+const FORM_ERROR_TYPE = {
+  SERVER: "server",
 } as const;
 
 export const SignUpForm = ({
@@ -86,31 +94,47 @@ export const SignUpForm = ({
         router.push("/sign-in");
       }
     } else {
+      const invitationTokenError = newUser.errors.find((error: ApiError) =>
+        isInvitationTokenError(error),
+      );
+
+      if (invitationToken && invitationTokenError) {
+        const { message } = getInvitationErrorDisplay(
+          { status: newUser.status, errors: [invitationTokenError] },
+          INVITATION_ERROR_FLOW.SIGNUP,
+        );
+        form.setError("invitationToken", {
+          type: FORM_ERROR_TYPE.SERVER,
+          message,
+        });
+        return;
+      }
+
       newUser.errors.forEach((error: ApiError) => {
         const errorMessage = error.detail;
         const pointer = error.source?.pointer;
         switch (pointer) {
           case AUTH_ERROR_PATHS.NAME:
-            form.setError("name", { type: "server", message: errorMessage });
+            form.setError("name", {
+              type: FORM_ERROR_TYPE.SERVER,
+              message: errorMessage,
+            });
             break;
           case AUTH_ERROR_PATHS.EMAIL:
-            form.setError("email", { type: "server", message: errorMessage });
+            form.setError("email", {
+              type: FORM_ERROR_TYPE.SERVER,
+              message: errorMessage,
+            });
             break;
           case AUTH_ERROR_PATHS.COMPANY_NAME:
             form.setError("company", {
-              type: "server",
+              type: FORM_ERROR_TYPE.SERVER,
               message: errorMessage,
             });
             break;
           case AUTH_ERROR_PATHS.PASSWORD:
             form.setError("password", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case AUTH_ERROR_PATHS.INVITATION_TOKEN:
-            form.setError("invitationToken", {
-              type: "server",
+              type: FORM_ERROR_TYPE.SERVER,
               message: errorMessage,
             });
             break;

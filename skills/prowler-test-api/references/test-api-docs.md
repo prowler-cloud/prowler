@@ -14,7 +14,7 @@
 
 ## Fixture Dependency Graph
 
-```
+```text
 create_test_user (session)
     │
     └─► tenants_fixture (function)

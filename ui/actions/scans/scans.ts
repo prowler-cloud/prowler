@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
@@ -140,6 +141,7 @@ export const scanOnDemand = async (formData: FormData) => {
     const result = await handleApiResponse(response, "/scans");
     if (result?.data?.id) {
       addScanOperation("start", result.data.id);
+      revalidatePath("/scans");
     }
     return result;
   } catch (error) {
@@ -390,6 +392,27 @@ export const getComplianceCsv = async (scanId: string, complianceId: string) =>
     `compliance/${complianceId}`,
     `scan-${scanId}-compliance-${complianceId}.csv`,
     "compliance report",
+  );
+
+/**
+ * Get the OCSF JSON export for a universal compliance framework.
+ *
+ * Only universal frameworks that declare an ``outputs`` block (today: DORA,
+ * CSA CCM 4.0) produce a per-framework OCSF artifact. For any other framework
+ * the backend returns 404; callers should gate this download via
+ * ``isOcsfSupported(framework)``.
+ *
+ * NOTE: this is a dedicated path (``compliance/{id}/ocsf``), not a query
+ * param. The API's JSON:API ``QueryParameterValidationFilter`` rejects any
+ * non-JSON:API query param with 400, so ``?type=`` / ``?format=`` is not an
+ * option — the format must be encoded in the route.
+ */
+export const getComplianceOcsf = async (scanId: string, complianceId: string) =>
+  _fetchScanBinary(
+    scanId,
+    `compliance/${complianceId}/ocsf`,
+    `scan-${scanId}-compliance-${complianceId}.ocsf.json`,
+    "compliance OCSF report",
   );
 
 /**
