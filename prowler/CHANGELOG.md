@@ -30,6 +30,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - M365 Admin Center group enumeration now follows Microsoft Graph pagination so group-scoped checks include groups beyond the first page [(#11510)](https://github.com/prowler-cloud/prowler/pull/11510)
 - GCP `kms_key_rotation_enabled` check now only verifies that automatic key rotation is enabled (any interval) instead of enforcing a 90-day period, resolving the mismatch between the check and its documentation; the CIS, Prowler ThreatScore, and CCC requirements that mandate a 90-day maximum were remapped to the new `kms_key_rotation_max_90_days` check [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
 - AWS CloudWatch log metric filter checks now validate `filterPattern` clauses regardless of order [(#11345)](https://github.com/prowler-cloud/prowler/pull/11345)
+- AWS `bedrock_api_key_no_long_term_credentials` now applies severity per finding (never-expires keys correctly flag as critical, no leak across findings) and aligns title and wording with AWS guidance to prefer short-term Bedrock API keys [(#11526)](https://github.com/prowler-cloud/prowler/pull/11526)
 
 ### 🔐 Security
 
