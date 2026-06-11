@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "stepfunctions_statemachine_encryption_at_rest_enabled",
+  "CheckTitle": "Step Functions state machine is encrypted at rest with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)"
+  ],
+  "ServiceName": "stepfunctions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsStepFunctionStateMachine",
+  "ResourceGroup": "serverless",
+  "Description": "**AWS Step Functions state machines** store execution history and input/output data passed between workflow states. This check verifies that each state machine uses a **customer-managed KMS key** (`CUSTOMER_MANAGED_KMS_KEY`) for encryption at rest rather than the default AWS-owned key.",
+  "Risk": "Without a customer-managed KMS key, execution history containing **sensitive input/output data** is protected only by an AWS-owned key you cannot control, rotate, or revoke. This limits **auditability** via CloudTrail, prevents independent access revocation, and weakens **confidentiality** for regulated workloads.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/step-functions/latest/dg/encryption-at-rest.html",
+    "https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#customer-cmk"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws stepfunctions update-state-machine --state-machine-arn <state-machine-arn> --encryption-configuration '{\"kmsKeyId\": \"<kms-key-id>\", \"type\": \"CUSTOMER_MANAGED_KMS_KEY\", \"kmsDataKeyReusePeriodSeconds\": 300}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::StepFunctions::StateMachine\n    Properties:\n      RoleArn: arn:aws:iam::<account-id>:role/<example_role_name>\n      DefinitionString: |\n        {\"StartAt\":\"Pass\",\"States\":{\"Pass\":{\"Type\":\"Pass\",\"End\":true}}}\n      EncryptionConfiguration:\n        KmsKeyId: arn:aws:kms:<region>:<account-id>:key/<key-id>  # Critical: customer-managed KMS key\n        Type: CUSTOMER_MANAGED_KMS_KEY                             # Critical: must be CUSTOMER_MANAGED_KMS_KEY\n        KmsDataKeyReusePeriodSeconds: 300\n```",
+      "Other": "1. Open AWS Console > Step Functions > State machines\n2. Select the state machine and click Edit\n3. Under Encryption, select Customer managed key\n4. Choose an existing KMS key or create a new one\n5. Save changes",
+      "Terraform": "```hcl\nresource \"aws_sfn_state_machine\" \"<example_resource_name>\" {\n  name       = \"<example_resource_name>\"\n  role_arn   = \"arn:aws:iam::<account-id>:role/<example_role_name>\"\n  definition = jsonencode({ StartAt = \"Pass\", States = { Pass = { Type = \"Pass\", End = true } } })\n\n  encryption_configuration {\n    kms_key_id                        = \"arn:aws:kms:<region>:<account-id>:key/<key-id>\"  # Critical: customer-managed KMS key\n    type                              = \"CUSTOMER_MANAGED_KMS_KEY\"                         # Critical: must be CUSTOMER_MANAGED_KMS_KEY\n    kms_data_key_reuse_period_seconds = 300\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure each Step Functions state machine to use a **customer-managed KMS key** for encryption at rest. Assign a least-privilege key policy, enable **automatic key rotation**, and grant the execution role `kms:GenerateDataKey` and `kms:Decrypt`. Monitor key usage via CloudTrail.",
+      "Url": "https://hub.prowler.com/check/stepfunctions_statemachine_encryption_at_rest_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "stepfunctions_statemachine_logging_enabled"
+  ],
+  "Notes": ""
+}
