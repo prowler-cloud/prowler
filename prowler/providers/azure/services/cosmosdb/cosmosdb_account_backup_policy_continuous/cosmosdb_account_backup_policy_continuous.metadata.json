@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "cosmosdb_account_backup_policy_continuous",
+  "CheckTitle": "Cosmos DB account uses continuous backup policy",
+  "CheckType": [],
+  "ServiceName": "cosmosdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Azure Cosmos DB** accounts are evaluated for **continuous backup** policy. Continuous backup provides point-in-time restore (PITR) enabling recovery to any point within the retention window, unlike periodic backup which only supports full restores at fixed intervals.",
+  "Risk": "Periodic backup limits recovery to the last backup snapshot. Data changes between snapshots are lost during restore. Continuous backup enables **granular recovery** from accidental deletes, corruption, or ransomware.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_backup_policy_continuous"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
