@@ -31,7 +31,8 @@ export function OnboardingWelcomeModal({
       }}
     >
       <DialogFooter>
-        <Button variant="ghost" onClick={onDismiss}>
+        {/* Outline matches the app's modal secondary action (e.g. Launch Scan's Cancel). */}
+        <Button variant="outline" onClick={onDismiss}>
           Skip for now
         </Button>
         <Button onClick={onAccept}>Get started</Button>

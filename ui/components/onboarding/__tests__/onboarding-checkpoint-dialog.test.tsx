@@ -53,7 +53,7 @@ describe("OnboardingCheckpointDialog", () => {
       expect(onFinish).not.toHaveBeenCalled();
     });
 
-    it("calls onFinish when the ghost button is clicked", async () => {
+    it("calls onFinish when the outline button is clicked", async () => {
       const user = userEvent.setup();
       const onContinue = vi.fn();
       const onFinish = vi.fn();

@@ -27,7 +27,8 @@ export function OnboardingCheckpointDialog({
       }}
     >
       <DialogFooter>
-        <Button variant="ghost" onClick={onFinish}>
+        {/* Outline matches the app's modal secondary action (e.g. Launch Scan's Cancel). */}
+        <Button variant="outline" onClick={onFinish}>
           Finish here
         </Button>
         <Button onClick={onContinue}>Continue the tour</Button>
