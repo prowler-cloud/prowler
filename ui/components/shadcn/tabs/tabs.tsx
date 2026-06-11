@@ -10,9 +10,6 @@ import {
 } from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 
-/**
- * Trigger component style parts using semantic class names
- */
 const TRIGGER_STYLES = {
   base: "relative inline-flex min-w-0 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&:not(:first-child)]:pl-4 [&:not(:last-child)]:pr-4",
   border: "border-r border-[#E9E9F0] last:border-r-0 dark:border-[#171D30]",
@@ -26,15 +23,9 @@ const TRIGGER_STYLES = {
   icon: "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 } as const;
 
-/**
- * Content component styles
- */
 const CONTENT_STYLES =
   "mt-2 focus-visible:rounded-md focus-visible:outline-1 focus-visible:ring-[3px] focus-visible:border-ring focus-visible:outline-ring focus-visible:ring-ring/50" as const;
 
-/**
- * Build trigger className by combining style parts
- */
 function buildTriggerClassName(): string {
   return [
     TRIGGER_STYLES.base,
@@ -47,13 +38,8 @@ function buildTriggerClassName(): string {
   ].join(" ");
 }
 
-/**
- * Build list className
- */
 function buildListClassName(): string {
-  // `flex` + `min-w-0` lets the triggers shrink proportionally when the
-  // container is narrow, so each trigger truncates with ellipsis instead
-  // of forcing a horizontal scrollbar.
+  // min-w-0 lets triggers shrink to ellipsis instead of forcing a scrollbar
   return "flex w-full min-w-0 items-center border-[#E9E9F0] dark:border-[#171D30]";
 }
 
@@ -85,11 +71,7 @@ function TabsList({
 
 interface TabsTriggerProps
   extends ComponentProps<typeof TabsPrimitive.Trigger> {
-  /**
-   * When set, the trigger is wrapped in a shadcn Tooltip rendered below
-   * the bar. Useful for showing the full name when the label is truncated
-   * to ellipsis on narrow containers.
-   */
+  /** Tooltip shown below the trigger — useful when the label is truncated. */
   tooltip?: ReactNode;
 }
 
@@ -105,9 +87,7 @@ function TabsTrigger({
       className={cn(buildTriggerClassName(), className)}
       {...props}
     >
-      {/* Wrapper provides the block-level box needed for `truncate` to
-       * actually render an ellipsis. Padding and gap on the trigger stay
-       * constant; only this span shrinks below its content width. */}
+      {/* block + min-w-0 needed for truncate to render ellipsis */}
       <span className="block min-w-0 truncate">{children}</span>
     </TabsPrimitive.Trigger>
   );

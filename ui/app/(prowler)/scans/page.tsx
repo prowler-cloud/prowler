@@ -1,8 +1,10 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
+import { PageReady } from "@/components/onboarding";
 import {
   getScanJobsTab,
   getScanJobsTabFilters,
@@ -69,19 +71,45 @@ export default async function Scans({
   const thereIsNoProviders = providers.length === 0;
   const thereIsNoProvidersConnected =
     !thereIsNoProviders && connectedProviders.length === 0;
+  const missingScanPrerequisite =
+    thereIsNoProviders || thereIsNoProvidersConnected;
+
+  if (
+    missingScanPrerequisite &&
+    resolvedSearchParams.onboarding === "view-first-scan"
+  ) {
+    redirect("/providers?onboarding=add-provider");
+  }
 
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
   );
-  const activeScanCount =
-    thereIsNoProviders || thereIsNoProvidersConnected
-      ? 0
-      : await getActiveScanCount(resolvedSearchParams);
+  const activeScanCount = missingScanPrerequisite
+    ? 0
+    : await getActiveScanCount(resolvedSearchParams);
+  const onboardingAction = missingScanPrerequisite
+    ? {
+        flowId: "view-first-scan",
+        fallbackFlowId: "add-provider",
+        useFallback: true,
+      }
+    : { flowId: "view-first-scan" };
 
   return (
-    <ContentLayout title="Scan Jobs" icon="lucide:timer">
-      {thereIsNoProviders || thereIsNoProvidersConnected ? (
-        <ScansProvidersEmptyState thereIsNoProviders={thereIsNoProviders} />
+    <ContentLayout
+      title="Scan Jobs"
+      icon="lucide:timer"
+      onboardingAction={onboardingAction}
+    >
+      {missingScanPrerequisite ? (
+        <>
+          {/* The populated branch mounts <PageReady/> inside ScansPageShell to
+              enable the navbar tour icon. The empty branch must mark the route
+              ready too, otherwise the icon (which falls back to the add-provider
+              flow here) stays hidden for users with no connected provider. */}
+          <PageReady />
+          <ScansProvidersEmptyState thereIsNoProviders={thereIsNoProviders} />
+        </>
       ) : (
         <ScansPageShell
           providers={providers}

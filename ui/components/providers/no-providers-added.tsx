@@ -13,6 +13,8 @@ const NO_PROVIDERS_ADDED_ACTION = {
 
 interface NoProvidersAddedBaseProps {
   containerClassName?: string;
+  // Tour anchor for the CTA; needed because this empty state replaces the table's AddProviderButton.
+  ctaTourId?: string;
 }
 
 interface NoProvidersAddedButtonProps extends NoProvidersAddedBaseProps {
@@ -40,7 +42,7 @@ const renderCta = (props: NoProvidersAddedProps) => {
         className="w-full max-w-xs justify-center"
         size="lg"
       >
-        <Link href={props.href}>Get Started</Link>
+        <Link href={props.href}>Add a Provider</Link>
       </Button>
     );
   }
@@ -49,10 +51,11 @@ const renderCta = (props: NoProvidersAddedProps) => {
     <Button
       aria-label="Open Add Provider modal"
       className="w-full max-w-xs justify-center"
+      data-tour-id={props.ctaTourId}
       size="lg"
       onClick={props.onOpenWizard}
     >
-      Get Started
+      Add a Provider
     </Button>
   );
 };

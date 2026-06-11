@@ -46,16 +46,26 @@ export default async function Compliance({
   });
 
   if (!scansData?.data) {
-    return <NoScansAvailable />;
+    return (
+      <ContentLayout
+        title="Compliance"
+        icon="lucide:shield-check"
+        onboardingAction={{
+          flowId: "view-compliance",
+          fallbackFlowId: "view-first-scan",
+          useFallback: true,
+        }}
+      >
+        <NoScansAvailable />
+      </ContentLayout>
+    );
   }
 
-  // Process scans with provider information from included data
   const expandedScansData: ExpandedScanData[] = scansData.data
     .filter((scan: ScanProps) => scan.relationships?.provider?.data?.id)
     .map((scan: ScanProps) => {
       const providerId = scan.relationships!.provider!.data!.id;
 
-      // Find the provider data in the included array
       const providerData = scansData.included?.find(
         (item: { type: string; id: string }) =>
           item.type === "providers" && item.id === providerId,
@@ -76,15 +86,20 @@ export default async function Compliance({
     })
     .filter(Boolean) as ExpandedScanData[];
 
-  // Use scanId from URL, or select the first scan if not provided
   const scanIdParam = resolvedSearchParams.scanId;
   const scanIdFromUrl = Array.isArray(scanIdParam)
     ? scanIdParam[0]
     : scanIdParam;
   const selectedScanId: string | null =
     scanIdFromUrl || expandedScansData[0]?.id || null;
+  const onboardingAction = selectedScanId
+    ? { flowId: "view-compliance" }
+    : {
+        flowId: "view-compliance",
+        fallbackFlowId: "view-first-scan",
+        useFallback: true,
+      };
 
-  // Find the selected scan
   const selectedScan = expandedScansData.find(
     (scan) => scan.id === selectedScanId,
   );
@@ -100,7 +115,6 @@ export default async function Compliance({
       }
     : undefined;
 
-  // Fetch metadata if we have a selected scan
   const metadataInfoData = selectedScanId
     ? await getComplianceOverviewMetadataInfo({
         filters: {
@@ -111,7 +125,6 @@ export default async function Compliance({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
-  // Fetch ThreatScore data from API if we have a selected scan
   let threatScoreData = null;
   if (selectedScanId && typeof selectedScanId === "string") {
     const threatScoreResponse = await getThreatScore({
@@ -128,10 +141,13 @@ export default async function Compliance({
   }
 
   return (
-    <ContentLayout title="Compliance" icon="lucide:shield-check">
+    <ContentLayout
+      title="Compliance"
+      icon="lucide:shield-check"
+      onboardingAction={onboardingAction}
+    >
       {selectedScanId ? (
         <>
-          {/* Row 1: Filters */}
           <div className="mb-6">
             <ComplianceFilters
               scans={expandedScansData}
@@ -140,7 +156,6 @@ export default async function Compliance({
             />
           </div>
 
-          {/* Row 2: ThreatScore card — full width, horizontal */}
           {threatScoreData &&
             typeof selectedScanId === "string" &&
             selectedScan && (
@@ -155,7 +170,6 @@ export default async function Compliance({
               </div>
             )}
 
-          {/* Row 3: Compliance grid with client-side search */}
           <Suspense
             key={searchParamsKey}
             fallback={
@@ -189,7 +203,6 @@ const SSRComplianceGrid = async ({
 }) => {
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
-  // Only fetch compliance data if we have a valid scanId
   const compliancesData =
     scanId && scanId.trim() !== ""
       ? await getCompliancesOverview({
@@ -207,7 +220,6 @@ const SSRComplianceGrid = async ({
       a.attributes.framework.localeCompare(b.attributes.framework),
     );
 
-  // Check if the response contains no data
   if (
     !compliancesData ||
     !compliancesData.data ||
@@ -225,7 +237,6 @@ const SSRComplianceGrid = async ({
     );
   }
 
-  // Handle errors returned by the API
   if (compliancesData?.errors?.length > 0) {
     return (
       <Alert variant="info">
@@ -235,10 +246,7 @@ const SSRComplianceGrid = async ({
     );
   }
 
-  // Compute the set of latest CIS variants per provider once, so each card
-  // can gate its PDF button without re-parsing on every render. The backend
-  // only generates a CIS PDF for the latest version per provider, so any
-  // other CIS card must not expose the PDF download button.
+  // Backend only generates CIS PDFs for the latest version per provider.
   const latestCisIds = pickLatestCisPerProvider(
     compliancesData.data.map(
       (compliance: ComplianceOverviewData) => compliance.id,

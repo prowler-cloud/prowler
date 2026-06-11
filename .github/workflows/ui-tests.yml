@@ -131,6 +131,10 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run healthcheck
 
+      - name: Check product-tour alignment
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run tour:check
+
       - name: Run pnpm audit
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run audit

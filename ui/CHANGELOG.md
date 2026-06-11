@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - DISA Okta IDaaS STIG V1R2 compliance framework support with its dedicated mapper, details panel, and icon [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- Guided product onboarding for new users — step-by-step tours covering providers, scans, findings, compliance, and attack paths, replayable anytime from the info icon in the page header [(#11430)](https://github.com/prowler-cloud/prowler/pull/11430)
 
 ### 🔄 Changed
 
