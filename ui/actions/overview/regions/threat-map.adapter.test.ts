@@ -54,6 +54,9 @@ describe("adaptRegionsOverviewToThreatMap", () => {
       providerType: "googleworkspace",
       region: "global",
       name: "Google Workspace - Global",
+      totalFindings: 10,
+      failFindings: 4,
     });
+    expect(result.regions).toEqual(["global"]);
   });
 });
