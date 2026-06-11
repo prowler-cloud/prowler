@@ -16,7 +16,7 @@ vi.mock("@/actions/scans", () => ({
   updateScan: updateScanMock,
 }));
 
-vi.mock("@/components/ui/toast", () => ({
+vi.mock("@/components/shadcn/toast", () => ({
   toast: toastMock,
 }));
 

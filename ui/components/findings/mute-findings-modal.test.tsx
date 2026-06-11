@@ -12,7 +12,9 @@ vi.mock("@/actions/mute-rules", () => ({
   createMuteRule: createMuteRuleMock,
 }));
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useToast: () => ({ toast: toastMock }),
   Button: ({
     children,
     ...props
@@ -56,13 +58,7 @@ vi.mock("@/components/shadcn/spinner/spinner", () => ({
   ),
 }));
 
-vi.mock("@/components/ui", () => ({
-  useToast: () => ({
-    toast: toastMock,
-  }),
-}));
-
-vi.mock("@/components/ui/form", () => ({
+vi.mock("@/components/shadcn/form", () => ({
   FormButtons: ({
     onCancel,
     submitText = "Save",

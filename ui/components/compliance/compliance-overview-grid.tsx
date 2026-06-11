@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
-import { DataTableSearch } from "@/components/ui/table/data-table-search";
+import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { ScanEntity } from "@/types/scans";
 

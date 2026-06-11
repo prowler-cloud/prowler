@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
 import { ProviderType } from "@/types";
 
 interface ComplianceScanInfoProps {

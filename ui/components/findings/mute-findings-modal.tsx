@@ -5,10 +5,10 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { createMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState } from "@/actions/mute-rules/types";
 import { Button, Input, Textarea } from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
+import { Label } from "@/components/shadcn/form/Label";
 import { Modal } from "@/components/shadcn/modal";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { FormButtons } from "@/components/ui/form";
-import { Label } from "@/components/ui/form/Label";
 import { useMuteRuleAction } from "@/hooks/use-mute-rule-action";
 import {
   enforceMuteRuleNameLimit,

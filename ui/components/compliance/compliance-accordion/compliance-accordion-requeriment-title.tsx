@@ -1,4 +1,4 @@
-import { FindingStatus, StatusFindingBadge } from "@/components/ui/table";
+import { FindingStatus, StatusFindingBadge } from "@/components/shadcn/table";
 
 interface ComplianceAccordionRequirementTitleProps {
   type: string;

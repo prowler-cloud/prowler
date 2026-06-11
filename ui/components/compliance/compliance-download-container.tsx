@@ -3,6 +3,7 @@
 import { DownloadIcon, FileJsonIcon, FileTextIcon } from "lucide-react";
 import { useState } from "react";
 
+import { toast } from "@/components/shadcn";
 import { Button } from "@/components/shadcn/button/button";
 import {
   ActionDropdown,
@@ -13,7 +14,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { toast } from "@/components/ui";
 import {
   type ComplianceReportType,
   isOcsfSupported,

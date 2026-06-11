@@ -14,7 +14,8 @@ vi.mock("@/actions/users/tenants", () => ({
 }));
 
 const mockToast = vi.fn();
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: mockToast }),
 }));
 

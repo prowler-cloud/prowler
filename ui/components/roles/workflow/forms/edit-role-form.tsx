@@ -16,10 +16,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form, FormButtons } from "@/components/shadcn/form";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form, FormButtons } from "@/components/ui/form";
 import { getErrorMessage, permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
 

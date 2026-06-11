@@ -18,9 +18,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CustomTextarea } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { CustomTextarea } from "@/components/shadcn/custom";
+import { Form } from "@/components/shadcn/form";
 
 const lighthouseSettingsSchema = z.object({
   businessContext: z

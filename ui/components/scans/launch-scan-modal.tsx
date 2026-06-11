@@ -10,9 +10,9 @@ import { z } from "zod";
 import { scanOnDemand } from "@/actions/scans";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
-import { FormButtons } from "@/components/ui/form";
-import { toast, ToastAction } from "@/components/ui/toast";
+import { toast, ToastAction } from "@/components/shadcn/toast";
 import { SCAN_JOBS_TAB } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 

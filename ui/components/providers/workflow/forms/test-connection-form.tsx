@@ -12,7 +12,7 @@ import { z } from "zod";
 import { deleteCredentials } from "@/actions/providers";
 import { CheckIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { Form } from "@/components/ui/form";
+import { Form } from "@/components/shadcn/form";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { ProviderType } from "@/types";
 import { testConnectionFormSchema } from "@/types";

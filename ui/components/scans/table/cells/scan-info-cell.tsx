@@ -1,7 +1,7 @@
 "use client";
 
 import { getScanAlias } from "@/components/scans/scans.utils";
-import { EntityInfo } from "@/components/ui/entities";
+import { EntityInfo } from "@/components/shadcn/entities";
 import type { ScanProps } from "@/types";
 
 export function ScanInfoCell({ scan }: { scan: ScanProps }) {

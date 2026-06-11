@@ -1,7 +1,7 @@
 "use client";
 
 import { getScanScheduleLabel } from "@/components/scans/scans.utils";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/shadcn/entities";
 import type { ScanProps } from "@/types";
 
 export function ScheduleCell({ scan }: { scan: ScanProps }) {

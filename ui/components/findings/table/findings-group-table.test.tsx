@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({ toolbarRightContent }: { toolbarRightContent?: ReactNode }) => (
     <div>
       <div data-testid="table-toolbar-right">{toolbarRightContent}</div>

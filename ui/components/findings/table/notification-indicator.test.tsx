@@ -23,7 +23,8 @@ vi.mock("@/components/icons", () => ({
   ),
 }));
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Button: ({
     children,
     asChild,

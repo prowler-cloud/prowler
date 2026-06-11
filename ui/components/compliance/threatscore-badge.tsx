@@ -6,13 +6,13 @@ import { useState } from "react";
 
 import type { SectionScores } from "@/actions/overview/threat-score";
 import { ThreatScoreLogo } from "@/components/compliance/threatscore-logo";
+import { toast } from "@/components/shadcn";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Progress } from "@/components/shadcn/progress";
-import { toast } from "@/components/ui";
 import { COMPLIANCE_REPORT_TYPES } from "@/lib/compliance/compliance-report-types";
 import {
   getScoreColor,

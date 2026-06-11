@@ -60,11 +60,12 @@ vi.mock("next/link", () => ({
 }));
 
 // Mock the entire shadcn barrel to avoid auth import chain
-vi.mock("@/components/shadcn", () => {
+vi.mock("@/components/shadcn", async (importOriginal) => {
   const Passthrough = ({ children }: { children?: ReactNode }) => (
     <>{children}</>
   );
   return {
+    ...(await importOriginal<Record<string, unknown>>()),
     Badge: ({
       children,
       className,
@@ -125,7 +126,8 @@ vi.mock("@/components/shadcn", () => {
   };
 });
 
-vi.mock("@/components/shadcn/card/card", () => ({
+vi.mock("@/components/shadcn/card/card", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Card: ({ children, variant }: { children: ReactNode; variant?: string }) => (
     <div data-slot="card" data-variant={variant}>
       {children}
@@ -263,7 +265,7 @@ vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
 
-vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
+vi.mock("@/components/shadcn/code-snippet/code-snippet", () => ({
   CodeSnippet: ({
     value,
     formatter,
@@ -282,11 +284,11 @@ vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities/date-with-time", () => ({
+vi.mock("@/components/shadcn/entities/date-with-time", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string }) => <span>{dateTime}</span>,
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     nameAction,
     idAction,
@@ -304,7 +306,7 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   Table: ({ children }: { children: ReactNode }) => <table>{children}</table>,
   TableBody: ({ children }: { children: ReactNode }) => (
     <tbody>{children}</tbody>
@@ -319,13 +321,13 @@ vi.mock("@/components/ui/table", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table/severity-badge", () => ({
+vi.mock("@/components/shadcn/table/severity-badge", () => ({
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>
   ),
 }));
 
-vi.mock("@/components/ui/table/status-finding-badge", () => ({
+vi.mock("@/components/shadcn/table/status-finding-badge", () => ({
   FindingStatus: {},
   StatusFindingBadge: ({ status }: { status: string }) => <span>{status}</span>,
 }));

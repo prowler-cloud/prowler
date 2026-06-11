@@ -8,9 +8,9 @@ import {
   switchTenant,
   SwitchTenantState,
 } from "@/actions/users/tenants";
-import { useToast } from "@/components/ui";
-import { CustomServerInput } from "@/components/ui/custom";
-import { FormButtons } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { CustomServerInput } from "@/components/shadcn/custom";
+import { FormButtons } from "@/components/shadcn/form";
 import { reloadPage } from "@/lib/navigation";
 
 export const CreateTenantForm = ({

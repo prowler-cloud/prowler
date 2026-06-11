@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { DataTableColumnHeader } from "@/components/ui/table";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 import {

@@ -13,17 +13,17 @@ import {
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { Separator } from "@/components/shadcn";
-import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   Form,
   FormControl,
   FormField,
   FormMessage,
-} from "@/components/ui/form";
-import { FormButtons } from "@/components/ui/form/form-buttons";
+} from "@/components/shadcn/form";
+import { FormButtons } from "@/components/shadcn/form/form-buttons";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
 import {

@@ -16,8 +16,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
+} from "@/components/shadcn/table";
+import { SeverityBadge, StatusFindingBadge } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
 import {
