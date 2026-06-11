@@ -9605,13 +9605,16 @@ class TestComplianceOverviewViewSet:
             completed_at=now,
         )
 
-        def collect_check_ids(scan_id=None):
+        def request_attributes(scan_id=None):
             params = {"filter[compliance_id]": "csa_ccm_4.0"}
             if scan_id is not None:
                 params["filter[scan_id]"] = str(scan_id)
-            response = authenticated_client.get(
+            return authenticated_client.get(
                 reverse("complianceoverview-attributes"), params
             )
+
+        def collect_check_ids(scan_id=None):
+            response = request_attributes(scan_id)
             assert response.status_code == status.HTTP_200_OK
             check_ids = set()
             for item in response.json()["data"]:
@@ -9640,8 +9643,36 @@ class TestComplianceOverviewViewSet:
         assert azure_check_ids <= expected_check_ids(
             Provider.ProviderChoices.AZURE.value
         )
-        # The gcp check IDs are not what the first-provider fallback would return.
-        assert gcp_check_ids != azure_check_ids
+
+        # An explicit scan_id is authoritative: a non-existent scan must fail
+        # closed with 404 instead of silently falling back to another provider.
+        missing_response = request_attributes("00000000-0000-0000-0000-000000000000")
+        assert missing_response.status_code == status.HTTP_404_NOT_FOUND
+
+        # A malformed scan_id is rejected with 404 as well.
+        malformed_response = request_attributes("not-a-uuid")
+        assert malformed_response.status_code == status.HTTP_404_NOT_FOUND
+
+        # A scan belonging to another tenant is not visible (RLS), so it must
+        # return 404 rather than leaking the fallback provider's check IDs.
+        other_tenant = Tenant.objects.create(name="Other Compliance Tenant")
+        foreign_provider = Provider.objects.create(
+            provider="gcp",
+            uid="foreign-gcp-test",
+            alias="foreign_gcp",
+            tenant_id=other_tenant.id,
+        )
+        foreign_scan = Scan.objects.create(
+            name="foreign scan",
+            provider=foreign_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=other_tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+        foreign_response = request_attributes(foreign_scan.id)
+        assert foreign_response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client

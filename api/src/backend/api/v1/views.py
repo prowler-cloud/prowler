@@ -4648,7 +4648,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
             OpenApiParameter(
                 name="filter[scan_id]",
                 required=False,
-                type=str,
+                type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
                 description="Scan ID used to resolve the provider for "
                 "multi-provider universal frameworks (e.g. CSA CCM), so "
@@ -5105,13 +5105,25 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         # matching findings.
         scan_id = request.query_params.get("filter[scan_id]")
         if scan_id:
+            # An explicit scan_id is authoritative: fail closed instead of
+            # falling back to another provider. Otherwise an invalid or
+            # inaccessible scan would silently return the first provider's check
+            # IDs, recreating the multi-provider mismatch this endpoint fixes.
             try:
-                scan = Scan.objects.get(id=scan_id)
-                scan_provider_type = scan.provider.provider
-                if compliance_id in get_compliance_frameworks(scan_provider_type):
-                    provider_type = scan_provider_type
+                scan = Scan.objects.select_related("provider").get(
+                    id=scan_id, tenant_id=request.tenant_id
+                )
             except (Scan.DoesNotExist, DjangoValidationError, ValueError):
-                provider_type = None
+                raise NotFound(detail=f"Scan '{scan_id}' not found.")
+
+            provider_type = scan.provider.provider
+            if compliance_id not in get_compliance_frameworks(provider_type):
+                raise NotFound(
+                    detail=(
+                        f"Compliance framework '{compliance_id}' is not "
+                        f"available for scan '{scan_id}'."
+                    )
+                )
 
         # Fall back to the first provider that declares the framework. Keeps the
         # endpoint working for provider-agnostic callers that omit the scan.
