@@ -317,7 +317,7 @@ export function InlineResourceContainer({
               {showScrollHint && (
                 <div className="pointer-events-none absolute right-0 bottom-0 left-6 z-30">
                   <div className="absolute inset-x-0 bottom-2 flex justify-center">
-                    <div className="bg-bg-neutral-tertiary text-text-neutral-secondary animate-bounce rounded-full px-3 py-1 text-xs shadow-md">
+                    <div className="bg-bg-neutral-tertiary text-text-neutral-secondary animate-bounce rounded-full px-3 py-1 text-xs shadow-md motion-reduce:animate-none">
                       <ChevronsDown className="inline size-3.5" /> Scroll for
                       more
                     </div>

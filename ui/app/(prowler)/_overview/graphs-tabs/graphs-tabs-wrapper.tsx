@@ -1,8 +1,5 @@
-import { Skeleton } from "@heroui/skeleton";
-import { Suspense } from "react";
-
 import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table";
-import { SkeletonBoundary } from "@/components/shadcn";
+import { Skeleton, SkeletonBoundary } from "@/components/shadcn";
 import { SearchParamsProps } from "@/types";
 
 import { GraphsTabsClient } from "./_components/graphs-tabs-client";
@@ -15,8 +12,8 @@ import { ThreatMapViewSSR } from "./threat-map-view/threat-map-view.ssr";
 
 const LoadingFallback = () => (
   <div className="border-border-neutral-primary bg-bg-neutral-secondary flex w-full flex-col space-y-4 rounded-lg border p-4">
-    <Skeleton className="bg-bg-neutral-tertiary h-6 w-1/3 rounded" />
-    <Skeleton className="bg-bg-neutral-tertiary h-[457px] w-full rounded" />
+    <Skeleton className="h-6 w-1/3 rounded" />
+    <Skeleton className="h-[457px] w-full rounded" />
   </div>
 );
 
@@ -47,20 +44,11 @@ export const GraphsTabsWrapper = async ({
       const fallback = TAB_FALLBACKS[tab.id] ?? <LoadingFallback />;
       const content = <Component searchParams={searchParams} />;
 
-      if (tab.id === "findings") {
-        return [
-          tab.id,
-          <SkeletonBoundary key={tab.id} fallback={fallback}>
-            {content}
-          </SkeletonBoundary>,
-        ];
-      }
-
       return [
         tab.id,
-        <Suspense key={tab.id} fallback={fallback}>
+        <SkeletonBoundary key={tab.id} fallback={fallback}>
           {content}
-        </Suspense>,
+        </SkeletonBoundary>,
       ];
     }),
   ) as Record<TabId, React.ReactNode>;
