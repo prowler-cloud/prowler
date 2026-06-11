@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
 import { getReportTypeForCompliance } from "@/lib/compliance/compliance-report-types";
 import {
   getScoreIndicatorClass,
@@ -69,20 +70,15 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   };
 
   const navigateToDetail = () => {
-    const formattedTitleForUrl = encodeURIComponent(title);
-    const path = `/compliance/${formattedTitleForUrl}`;
-    const params = new URLSearchParams();
-
-    params.set("complianceId", id);
-    params.set("version", version);
-    params.set("scanId", scanId);
-
-    const regionFilter = searchParams.get("filter[region__in]");
-    if (regionFilter) {
-      params.set("filter[region__in]", regionFilter);
-    }
-
-    router.push(`${path}?${params.toString()}`);
+    router.push(
+      buildComplianceDetailPath({
+        title,
+        complianceId: id,
+        version,
+        scanId,
+        regionFilter: searchParams.get("filter[region__in]"),
+      }),
+    );
   };
 
   return (
