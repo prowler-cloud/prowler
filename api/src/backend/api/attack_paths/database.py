@@ -176,7 +176,7 @@ def drop_subgraph(database: str, provider_id: str) -> int:
     Delete all nodes for a provider from the tenant database.
 
     Deletes relationships then nodes in batches (not `DETACH DELETE`) so a dense
-    provider's graph cannot exceed Neo4j's transaction limit.
+    provider's graph cannot exceed Neo4j's transaction memory limit.
     Silently returns 0 if the database doesn't exist.
     """
     provider_label = get_provider_label(provider_id)
@@ -190,7 +190,7 @@ def drop_subgraph(database: str, provider_id: str) -> int:
                 result = session.run(
                     f"""
                     MATCH (:`{provider_label}`)-[r]-()
-                    WITH r LIMIT $batch_size
+                    WITH DISTINCT r LIMIT $batch_size
                     DELETE r
                     RETURN COUNT(r) AS deleted_rels_count
                     """,
