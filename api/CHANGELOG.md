@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.31.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- OCI scans now use API key credentials with the configured region instead of falling back to `/home/prowler/.oci/config` [(#11558)](https://github.com/prowler-cloud/prowler/pull/11558)
+
+---
+
 ## [1.31.0] (Prowler v5.30.0)
 
 ### 🚀 Added
