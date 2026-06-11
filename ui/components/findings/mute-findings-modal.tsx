@@ -7,6 +7,7 @@ import { MuteRuleActionState } from "@/actions/mute-rules/types";
 import { Button, Input, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { SkeletonContentReveal } from "@/components/shadcn/skeleton/skeleton-content-reveal";
 import { FormButtons } from "@/components/ui/form";
 import { Label } from "@/components/ui/form/Label";
 import { useMuteRuleAction } from "@/hooks/use-mute-rule-action";
@@ -170,7 +171,7 @@ export function MuteFindingsModal({
             </div>
           </>
         ) : preparationError ? (
-          <>
+          <SkeletonContentReveal>
             <div className="border-border-neutral-secondary bg-bg-neutral-tertiary rounded-xl border p-4">
               <p className="text-text-neutral-primary text-sm font-medium">
                 We couldn&apos;t prepare this mute action.
@@ -190,9 +191,9 @@ export function MuteFindingsModal({
                 Close
               </Button>
             </div>
-          </>
+          </SkeletonContentReveal>
         ) : (
-          <>
+          <SkeletonContentReveal>
             <div className="space-y-4">
               <div className="border-border-neutral-secondary bg-bg-neutral-tertiary rounded-xl border p-4">
                 <p className="text-text-neutral-tertiary text-xs font-medium tracking-[0.08em] uppercase">
@@ -315,7 +316,7 @@ export function MuteFindingsModal({
               submitText="Mute Findings"
               isDisabled={isPending}
             />
-          </>
+          </SkeletonContentReveal>
         )}
       </form>
     </Modal>

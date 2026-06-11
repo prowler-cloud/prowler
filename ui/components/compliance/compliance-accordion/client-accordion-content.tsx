@@ -8,6 +8,7 @@ import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
 } from "@/components/findings/table";
+import { SkeletonContentReveal } from "@/components/shadcn/skeleton/skeleton-content-reveal";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
@@ -177,7 +178,7 @@ export const ClientAccordionContent = ({
 
     if (findings?.data?.length && findings.data.length > 0) {
       return (
-        <>
+        <SkeletonContentReveal>
           <h4 className="mb-2 text-sm font-medium">Findings</h4>
 
           <DataTable
@@ -186,14 +187,14 @@ export const ClientAccordionContent = ({
             metadata={findings?.meta}
             disableScroll={true}
           />
-        </>
+        </SkeletonContentReveal>
       );
     }
 
     return (
-      <div className="mt-3 mb-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+      <SkeletonContentReveal className="mt-3 mb-1 text-sm font-medium text-gray-800 dark:text-gray-200">
         ⚠️ There are no findings for these regions
-      </div>
+      </SkeletonContentReveal>
     );
   };
 

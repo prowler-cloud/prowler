@@ -45,6 +45,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { SkeletonContentReveal } from "@/components/shadcn/skeleton/skeleton-content-reveal";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
@@ -175,17 +176,19 @@ const PreviewSummarySkeleton = () => (
 const PreviewSummary = ({ preview }: { preview: PreviewState }) => {
   if (preview.status === "error") {
     return (
-      <Card variant="danger" padding="sm">
-        <CardContent className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-text-neutral-primary text-sm font-medium">
-              Test result
-            </span>
-            <Badge variant="tag">Error</Badge>
-          </div>
-          <p className="text-text-error-primary text-sm">{preview.error}</p>
-        </CardContent>
-      </Card>
+      <SkeletonContentReveal>
+        <Card variant="danger" padding="sm">
+          <CardContent className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-text-neutral-primary text-sm font-medium">
+                Test result
+              </span>
+              <Badge variant="tag">Error</Badge>
+            </div>
+            <p className="text-text-error-primary text-sm">{preview.error}</p>
+          </CardContent>
+        </Card>
+      </SkeletonContentReveal>
     );
   }
 
@@ -193,16 +196,18 @@ const PreviewSummary = ({ preview }: { preview: PreviewState }) => {
   if (!data) return null;
 
   return (
-    <Card variant="inner" padding="sm">
-      <CardContent className="flex flex-col gap-2">
-        <span className="text-text-neutral-primary text-sm font-medium">
-          Test result
-        </span>
-        <p className="text-text-neutral-secondary text-sm">
-          {getPreviewMessage(data)}
-        </p>
-      </CardContent>
-    </Card>
+    <SkeletonContentReveal>
+      <Card variant="inner" padding="sm">
+        <CardContent className="flex flex-col gap-2">
+          <span className="text-text-neutral-primary text-sm font-medium">
+            Test result
+          </span>
+          <p className="text-text-neutral-secondary text-sm">
+            {getPreviewMessage(data)}
+          </p>
+        </CardContent>
+      </Card>
+    </SkeletonContentReveal>
   );
 };
 

@@ -15,6 +15,7 @@ import {
 import { Modal } from "@/components/shadcn/modal";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { SkeletonContentReveal } from "@/components/shadcn/skeleton/skeleton-content-reveal";
 import { useToast } from "@/components/ui";
 import { CustomBanner } from "@/components/ui/custom/custom-banner";
 import { Form, FormField, FormMessage } from "@/components/ui/form";
@@ -270,151 +271,152 @@ export const SendToJiraModal = ({
             </div>
           )}
 
-          {/* Integration Selection */}
-          {!isFetchingIntegrations && integrations.length > 1 && (
-            <FormField
-              control={form.control}
-              name="integration"
-              render={({ field }) => (
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="jira-integration-select"
-                    className="text-text-neutral-secondary text-xs font-light tracking-tight"
-                  >
-                    Jira Integration
-                  </label>
-                  <EnhancedMultiSelect
-                    id="jira-integration-select"
-                    options={integrationOptions}
-                    onValueChange={(values) => {
-                      const selectedValue = values.at(-1) ?? "";
-                      field.onChange(selectedValue);
-                      // Reset dependent fields
-                      form.setValue("project", "");
-                      form.setValue("issueType", "");
-                      setFetchedIssueTypes({});
-                    }}
-                    defaultValue={field.value ? [field.value] : []}
-                    placeholder="Select a Jira integration"
-                    searchable={true}
-                    emptyIndicator="No integrations found."
-                    disabled={isFetchingIntegrations}
-                    hideSelectAll={true}
-                    maxCount={1}
-                    closeOnSelect={true}
-                    resetOnDefaultValueChange={true}
-                  />
-                  <FormMessage className="text-text-error text-xs" />
-                </div>
+          {!isFetchingIntegrations && (
+            <SkeletonContentReveal className="flex flex-col gap-4">
+              {/* Integration Selection */}
+              {integrations.length > 1 && (
+                <FormField
+                  control={form.control}
+                  name="integration"
+                  render={({ field }) => (
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        htmlFor="jira-integration-select"
+                        className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                      >
+                        Jira Integration
+                      </label>
+                      <EnhancedMultiSelect
+                        id="jira-integration-select"
+                        options={integrationOptions}
+                        onValueChange={(values) => {
+                          const selectedValue = values.at(-1) ?? "";
+                          field.onChange(selectedValue);
+                          // Reset dependent fields
+                          form.setValue("project", "");
+                          form.setValue("issueType", "");
+                          setFetchedIssueTypes({});
+                        }}
+                        defaultValue={field.value ? [field.value] : []}
+                        placeholder="Select a Jira integration"
+                        searchable={true}
+                        emptyIndicator="No integrations found."
+                        disabled={isFetchingIntegrations}
+                        hideSelectAll={true}
+                        maxCount={1}
+                        closeOnSelect={true}
+                        resetOnDefaultValueChange={true}
+                      />
+                      <FormMessage className="text-text-error text-xs" />
+                    </div>
+                  )}
+                />
               )}
-            />
-          )}
 
-          {/* Project Selection */}
-          {!isFetchingIntegrations &&
-            selectedIntegration &&
-            projectEntries.length > 0 && (
-              <FormField
-                control={form.control}
-                name="project"
-                render={({ field }) => (
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="jira-project-select"
-                      className="text-text-neutral-secondary text-xs font-light tracking-tight"
-                    >
-                      Project
-                    </label>
-                    <EnhancedMultiSelect
-                      id="jira-project-select"
-                      options={projectOptions}
-                      onValueChange={(values) => {
-                        const selectedValue = values.at(-1) ?? "";
-                        field.onChange(selectedValue);
-                        // Reset issue type when project changes
-                        form.setValue("issueType", "");
-                      }}
-                      defaultValue={field.value ? [field.value] : []}
-                      placeholder="Select a Jira project"
-                      searchable={true}
-                      emptyIndicator="No projects found."
-                      hideSelectAll={true}
-                      maxCount={1}
-                      closeOnSelect={true}
-                      resetOnDefaultValueChange={true}
-                    />
-                    <FormMessage className="text-text-error text-xs" />
-                  </div>
-                )}
-              />
-            )}
-
-          {/* Issue Type Selection */}
-          {selectedProject && (
-            <FormField
-              control={form.control}
-              name="issueType"
-              render={({ field }) => (
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="jira-issue-type-select"
-                    className="text-text-neutral-secondary text-xs font-light tracking-tight"
-                  >
-                    Issue Type
-                  </label>
-                  <EnhancedMultiSelect
-                    id="jira-issue-type-select"
-                    options={issueTypeOptions}
-                    onValueChange={(values) => {
-                      const selectedValue = values.at(-1) ?? "";
-                      field.onChange(selectedValue);
-                    }}
-                    defaultValue={field.value ? [field.value] : []}
-                    placeholder={
-                      isFetchingIssueTypes
-                        ? "Loading issue types..."
-                        : "Select an issue type"
-                    }
-                    searchable={true}
-                    emptyIndicator="No issue types found."
-                    disabled={isFetchingIssueTypes}
-                    hideSelectAll={true}
-                    maxCount={1}
-                    closeOnSelect={true}
-                    resetOnDefaultValueChange={true}
-                  />
-                  <FormMessage className="text-text-error text-xs" />
-                </div>
+              {/* Project Selection */}
+              {selectedIntegration && projectEntries.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="project"
+                  render={({ field }) => (
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        htmlFor="jira-project-select"
+                        className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                      >
+                        Project
+                      </label>
+                      <EnhancedMultiSelect
+                        id="jira-project-select"
+                        options={projectOptions}
+                        onValueChange={(values) => {
+                          const selectedValue = values.at(-1) ?? "";
+                          field.onChange(selectedValue);
+                          // Reset issue type when project changes
+                          form.setValue("issueType", "");
+                        }}
+                        defaultValue={field.value ? [field.value] : []}
+                        placeholder="Select a Jira project"
+                        searchable={true}
+                        emptyIndicator="No projects found."
+                        hideSelectAll={true}
+                        maxCount={1}
+                        closeOnSelect={true}
+                        resetOnDefaultValueChange={true}
+                      />
+                      <FormMessage className="text-text-error text-xs" />
+                    </div>
+                  )}
+                />
               )}
-            />
-          )}
 
-          {/* No integrations or none connected message */}
-          {!isFetchingIntegrations &&
-          (integrations.length === 0 || !hasConnectedIntegration) ? (
-            <CustomBanner
-              title="Jira integration is not available"
-              message="Please add or connect an integration first"
-              buttonLabel="Configure"
-              buttonLink="/integrations/jira"
-            />
-          ) : (
-            <FormButtons
-              setIsOpen={setOpenForFormButtons}
-              onCancel={() => onOpenChange(false)}
-              submitText="Send to Jira"
-              cancelText="Cancel"
-              loadingText="Sending..."
-              isDisabled={
-                !form.formState.isValid ||
-                form.formState.isSubmitting ||
-                isFetchingIntegrations ||
-                isFetchingIssueTypes ||
-                integrations.length === 0 ||
-                !hasConnectedIntegration
-              }
-              rightIcon={<Send size={20} />}
-            />
+              {/* Issue Type Selection */}
+              {selectedProject && (
+                <FormField
+                  control={form.control}
+                  name="issueType"
+                  render={({ field }) => (
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        htmlFor="jira-issue-type-select"
+                        className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                      >
+                        Issue Type
+                      </label>
+                      <EnhancedMultiSelect
+                        id="jira-issue-type-select"
+                        options={issueTypeOptions}
+                        onValueChange={(values) => {
+                          const selectedValue = values.at(-1) ?? "";
+                          field.onChange(selectedValue);
+                        }}
+                        defaultValue={field.value ? [field.value] : []}
+                        placeholder={
+                          isFetchingIssueTypes
+                            ? "Loading issue types..."
+                            : "Select an issue type"
+                        }
+                        searchable={true}
+                        emptyIndicator="No issue types found."
+                        disabled={isFetchingIssueTypes}
+                        hideSelectAll={true}
+                        maxCount={1}
+                        closeOnSelect={true}
+                        resetOnDefaultValueChange={true}
+                      />
+                      <FormMessage className="text-text-error text-xs" />
+                    </div>
+                  )}
+                />
+              )}
+
+              {/* No integrations or none connected message */}
+              {integrations.length === 0 || !hasConnectedIntegration ? (
+                <CustomBanner
+                  title="Jira integration is not available"
+                  message="Please add or connect an integration first"
+                  buttonLabel="Configure"
+                  buttonLink="/integrations/jira"
+                />
+              ) : (
+                <FormButtons
+                  setIsOpen={setOpenForFormButtons}
+                  onCancel={() => onOpenChange(false)}
+                  submitText="Send to Jira"
+                  cancelText="Cancel"
+                  loadingText="Sending..."
+                  isDisabled={
+                    !form.formState.isValid ||
+                    form.formState.isSubmitting ||
+                    isFetchingIntegrations ||
+                    isFetchingIssueTypes ||
+                    integrations.length === 0 ||
+                    !hasConnectedIntegration
+                  }
+                  rightIcon={<Send size={20} />}
+                />
+              )}
+            </SkeletonContentReveal>
           )}
         </form>
       </Form>

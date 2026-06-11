@@ -10,6 +10,7 @@ import { ChevronsDown } from "lucide-react";
 import { useImperativeHandle, useRef } from "react";
 
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { SkeletonContentReveal } from "@/components/shadcn/skeleton/skeleton-content-reveal";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
@@ -233,56 +234,64 @@ export function InlineResourceContainer({
                 className="max-h-[440px] overflow-y-auto pl-6"
               >
                 {/* Resource rows or skeleton placeholder */}
-                <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
-                  <tbody>
-                    {isLoading && rows.length === 0 ? (
-                      Array.from({ length: skeletonRowCount }).map((_, i) => (
+                {isLoading && rows.length === 0 ? (
+                  <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
+                    <tbody>
+                      {Array.from({ length: skeletonRowCount }).map((_, i) => (
                         <ResourceSkeletonRow
                           key={i}
                           isEmptyStateSized={filteredResourceCount === 0}
                         />
-                      ))
-                    ) : rows.length > 0 ? (
-                      rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                          className="cursor-pointer"
-                          onClick={(e) => {
-                            // Don't open drawer if clicking interactive elements
-                            // (links, buttons, checkboxes, dropdown items)
-                            const target = e.target as HTMLElement;
-                            if (
-                              target.closest(
-                                "a, button, input, [role=menuitem]",
-                              )
-                            )
-                              return;
-                            drawer.openDrawer(row.index);
-                          }}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext(),
-                              )}
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <SkeletonContentReveal>
+                    <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
+                      <tbody>
+                        {rows.length > 0 ? (
+                          rows.map((row) => (
+                            <TableRow
+                              key={row.id}
+                              data-state={row.getIsSelected() && "selected"}
+                              className="cursor-pointer"
+                              onClick={(e) => {
+                                // Don't open drawer if clicking interactive elements
+                                // (links, buttons, checkboxes, dropdown items)
+                                const target = e.target as HTMLElement;
+                                if (
+                                  target.closest(
+                                    "a, button, input, [role=menuitem]",
+                                  )
+                                )
+                                  return;
+                                drawer.openDrawer(row.index);
+                              }}
+                            >
+                              {row.getVisibleCells().map((cell) => (
+                                <TableCell key={cell.id}>
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext(),
+                                  )}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow className="hover:bg-transparent">
+                            <TableCell
+                              colSpan={columns.length}
+                              className="h-24 text-center"
+                            >
+                              {getFindingGroupEmptyStateMessage(group, filters)}
                             </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow className="hover:bg-transparent">
-                        <TableCell
-                          colSpan={columns.length}
-                          className="h-24 text-center"
-                        >
-                          {getFindingGroupEmptyStateMessage(group, filters)}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </tbody>
-                </table>
+                          </TableRow>
+                        )}
+                      </tbody>
+                    </table>
+                  </SkeletonContentReveal>
+                )}
 
                 {/* Loading state for infinite scroll (subsequent pages only) */}
                 {isLoading && rows.length > 0 && (
@@ -308,7 +317,7 @@ export function InlineResourceContainer({
               {showScrollHint && (
                 <div className="pointer-events-none absolute right-0 bottom-0 left-6 z-30">
                   <div className="absolute inset-x-0 bottom-2 flex justify-center">
-                    <div className="bg-bg-neutral-tertiary text-text-neutral-secondary animate-bounce rounded-full px-3 py-1 text-xs shadow-md">
+                    <div className="bg-bg-neutral-tertiary text-text-neutral-secondary animate-bounce rounded-full px-3 py-1 text-xs shadow-md motion-reduce:animate-none">
                       <ChevronsDown className="inline size-3.5" /> Scroll for
                       more
                     </div>
