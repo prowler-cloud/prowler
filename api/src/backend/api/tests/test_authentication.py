@@ -1,13 +1,13 @@
 import time
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from django.test import RequestFactory
 from rest_framework.exceptions import AuthenticationFailed
 
-from api.authentication import TenantAPIKeyAuthentication
+from api.authentication import SSEAuthentication, TenantAPIKeyAuthentication
 from api.db_router import MainRouter
 from api.models import TenantAPIKey
 
@@ -382,3 +382,46 @@ class TestTenantAPIKeyAuthentication:
             auth_backend.authenticate(request)
 
         assert str(exc_info.value.detail) == "API Key has already expired."
+
+
+class TestSSEAuthentication:
+    """`SSEAuthentication` adds an `?access_token=<jwt>` fallback for
+    browser `EventSource` clients while keeping the standard
+    `Authorization` header as the authoritative source."""
+
+    def test_header_present_delegates_to_super(self):
+        request = MagicMock()
+        request.headers = {"Authorization": "Bearer header-token"}
+        with patch.object(
+            SSEAuthentication.__bases__[0], "authenticate", return_value=("user", "tok")
+        ) as super_auth:
+            result = SSEAuthentication().authenticate(request)
+        super_auth.assert_called_once_with(request)
+        assert result == ("user", "tok")
+
+    def test_no_header_no_query_token_delegates_to_super(self):
+        request = MagicMock()
+        request.headers = {}
+        request.query_params = {}
+        with patch.object(
+            SSEAuthentication.__bases__[0], "authenticate", return_value=None
+        ) as super_auth:
+            result = SSEAuthentication().authenticate(request)
+        super_auth.assert_called_once_with(request)
+        assert result is None
+
+    def test_query_token_used_only_as_fallback(self):
+        request = MagicMock()
+        request.headers = {}
+        request.query_params = {"access_token": "query-jwt"}
+
+        jwt_instance = MagicMock()
+        jwt_instance.get_validated_token.return_value = "validated"
+        jwt_instance.get_user.return_value = "query-user"
+
+        with patch("api.authentication.JWTAuthentication", return_value=jwt_instance):
+            user, token = SSEAuthentication().authenticate(request)
+
+        jwt_instance.get_validated_token.assert_called_once_with("query-jwt")
+        assert user == "query-user"
+        assert token == "validated"
