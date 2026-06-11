@@ -30,7 +30,9 @@ vi.mock("@/lib/server-actions-helper", () => ({
   handleApiResponse: handleApiResponseMock,
 }));
 
-import { removeSchedule, updateSchedule } from "./schedules";
+import { getSchedule, removeSchedule, updateSchedule } from "./schedules";
+
+const PROVIDER_ID = "1795f636-37e6-42f6-b158-d4faaa64e0fc";
 
 const payload = {
   scan_enabled: true,
@@ -53,7 +55,7 @@ describe("schedule write actions revalidate only on success", () => {
   it("revalidates /scans and /providers after a successful update", async () => {
     handleApiResponseMock.mockResolvedValue({ success: true });
 
-    await updateSchedule("provider-1", payload);
+    await updateSchedule(PROVIDER_ID, payload);
 
     expect(revalidatePathMock).toHaveBeenCalledWith("/scans");
     expect(revalidatePathMock).toHaveBeenCalledWith("/providers");
@@ -62,7 +64,7 @@ describe("schedule write actions revalidate only on success", () => {
   it("does not revalidate when the update returns an error result", async () => {
     handleApiResponseMock.mockResolvedValue({ error: "Schedule rejected" });
 
-    await updateSchedule("provider-1", payload);
+    await updateSchedule(PROVIDER_ID, payload);
 
     expect(revalidatePathMock).not.toHaveBeenCalled();
   });
@@ -70,7 +72,7 @@ describe("schedule write actions revalidate only on success", () => {
   it("revalidates /scans and /providers after a successful delete", async () => {
     handleApiResponseMock.mockResolvedValue({ success: true });
 
-    await removeSchedule("provider-1");
+    await removeSchedule(PROVIDER_ID);
 
     expect(revalidatePathMock).toHaveBeenCalledWith("/scans");
     expect(revalidatePathMock).toHaveBeenCalledWith("/providers");
@@ -79,8 +81,23 @@ describe("schedule write actions revalidate only on success", () => {
   it("does not revalidate when the delete returns an error result", async () => {
     handleApiResponseMock.mockResolvedValue({ error: "Not allowed" });
 
-    await removeSchedule("provider-1");
+    await removeSchedule(PROVIDER_ID);
 
     expect(revalidatePathMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-UUID provider ids without issuing a request", async () => {
+    const malicious = "../users/me";
+
+    expect(await getSchedule(malicious)).toEqual({
+      error: "Invalid provider id.",
+    });
+    expect(await updateSchedule(malicious, payload)).toEqual({
+      error: "Invalid provider id.",
+    });
+    expect(await removeSchedule(malicious)).toEqual({
+      error: "Invalid provider id.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

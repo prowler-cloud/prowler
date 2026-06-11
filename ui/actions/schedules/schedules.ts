@@ -1,10 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type { ScheduleProps, ScheduleUpdatePayload } from "@/types/schedules";
+
+// SSRF guard: the id is interpolated into the request URL, so only UUIDs pass.
+const providerIdSchema = z.uuid();
+
+function parseProviderId(providerId: string): string | null {
+  const parsed = providerIdSchema.safeParse(providerId);
+  return parsed.success ? parsed.data : null;
+}
 
 function revalidateScheduleViews() {
   revalidatePath("/scans");
@@ -12,8 +21,11 @@ function revalidateScheduleViews() {
 }
 
 export const getSchedule = async (providerId: string) => {
+  const id = parseProviderId(providerId);
+  if (!id) return { error: "Invalid provider id." };
+
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/schedules/${providerId}`);
+  const url = new URL(`${apiBaseUrl}/schedules/${id}`);
   url.searchParams.set("include", "provider");
 
   try {
@@ -61,13 +73,16 @@ export const updateSchedule = async (
   providerId: string,
   payload: ScheduleUpdatePayload,
 ) => {
+  const id = parseProviderId(providerId);
+  if (!id) return { error: "Invalid provider id." };
+
   const headers = await getAuthHeaders({ contentType: true });
-  const url = new URL(`${apiBaseUrl}/schedules/${providerId}`);
+  const url = new URL(`${apiBaseUrl}/schedules/${id}`);
 
   const body = {
     data: {
       type: "schedules",
-      id: providerId,
+      id,
       attributes: payload,
     },
   };
@@ -90,8 +105,11 @@ export const updateSchedule = async (
 };
 
 export const removeSchedule = async (providerId: string) => {
+  const id = parseProviderId(providerId);
+  if (!id) return { error: "Invalid provider id." };
+
   const headers = await getAuthHeaders({ contentType: true });
-  const url = new URL(`${apiBaseUrl}/schedules/${providerId}`);
+  const url = new URL(`${apiBaseUrl}/schedules/${id}`);
 
   try {
     const response = await fetch(url.toString(), {
