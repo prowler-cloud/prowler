@@ -52,7 +52,7 @@ export function DataTableExpandToggle<TData>({
       onClick={row.getToggleExpandedHandler()}
       className={cn(
         "rounded transition-colors",
-        "hover:bg-prowler-white/10",
+        "hover:bg-white/10",
         "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
       )}
       aria-label={isExpanded ? "Collapse row" : "Expand row"}

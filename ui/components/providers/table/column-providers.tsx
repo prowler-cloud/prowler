@@ -47,7 +47,7 @@ const OrganizationIcon = ({ groupKind }: { groupKind: string }) => {
 const ProviderStatusCell = ({ connected }: { connected: boolean | null }) => {
   if (connected === true) {
     return (
-      <div className="text-system-success flex items-center gap-2 text-sm whitespace-nowrap">
+      <div className="text-text-success-primary flex items-center gap-2 text-sm whitespace-nowrap">
         <ShieldCheck className="size-4 shrink-0" />
         <span>Connected</span>
       </div>

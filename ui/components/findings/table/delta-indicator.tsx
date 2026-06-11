@@ -19,9 +19,9 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
           className={cn(
             "h-2 w-2 min-w-2 cursor-pointer rounded-full",
             delta === "new"
-              ? "bg-system-severity-high"
+              ? "bg-bg-data-high"
               : delta === "changed"
-                ? "bg-system-severity-low"
+                ? "bg-bg-data-low"
                 : "bg-text-neutral-tertiary",
           )}
         />

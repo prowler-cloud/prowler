@@ -24,8 +24,8 @@ export const ProviderConnectionInfo = ({
     switch (connected) {
       case true:
         return (
-          <div className="border-system-success bg-system-success-lighter flex items-center justify-center rounded-xl border-2 p-1">
-            <ConnectionTrue className="text-system-success" size={24} />
+          <div className="border-bg-pass bg-bg-pass-secondary flex items-center justify-center rounded-xl border-2 p-1">
+            <ConnectionTrue className="text-text-success-primary" size={24} />
           </div>
         );
       case false:

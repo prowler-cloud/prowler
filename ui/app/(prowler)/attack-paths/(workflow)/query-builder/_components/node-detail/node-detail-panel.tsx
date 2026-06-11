@@ -46,7 +46,7 @@ export const NodeDetailContent = ({
       {/* Node Overview Section */}
       <Card className="border-border-neutral-secondary">
         <CardContent className="flex flex-col gap-3 p-4">
-          <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+          <h3 className="dark:text-text-neutral-primary/90 text-sm font-semibold">
             Node Overview
           </h3>
           <NodeOverview node={node} />
@@ -57,7 +57,7 @@ export const NodeDetailContent = ({
       {!isProwlerFinding && (
         <Card className="border-border-neutral-secondary">
           <CardContent className="flex flex-col gap-3 p-4">
-            <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+            <h3 className="dark:text-text-neutral-primary/90 text-sm font-semibold">
               Related Findings
             </h3>
             <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
@@ -77,7 +77,7 @@ export const NodeDetailContent = ({
       {isProwlerFinding && (
         <Card className="border-border-neutral-secondary">
           <CardContent className="flex flex-col gap-3 p-4">
-            <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+            <h3 className="dark:text-text-neutral-primary/90 text-sm font-semibold">
               Affected Resources
             </h3>
             <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">

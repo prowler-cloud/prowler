@@ -95,7 +95,7 @@ export function TreeNode({
       <div
         className={cn(
           "flex items-center gap-2 rounded-md px-2 py-1.5",
-          "hover:bg-prowler-white/5 cursor-pointer",
+          "cursor-pointer hover:bg-white/5",
           "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
           item.disabled && "cursor-not-allowed opacity-50",
           item.className,
@@ -110,7 +110,7 @@ export function TreeNode({
         onKeyDown={handleKeyDown}
       >
         <button
-          className="hover:bg-prowler-white/10 shrink-0 rounded p-0.5"
+          className="shrink-0 rounded p-0.5 hover:bg-white/10"
           aria-label={isExpanded ? "Collapse" : "Expand"}
           onClick={(e) => {
             e.stopPropagation();
