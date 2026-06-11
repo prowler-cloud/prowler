@@ -2,11 +2,71 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.29.0] (Prowler UNRELEASED)
+## [1.31.0] (Prowler v5.30.0)
+
+### 🚀 Added
+
+- Opt-in automatic recovery of allowlisted idempotent background tasks whose worker died during a deploy or crash: when enabled via `DJANGO_TASK_RECOVERY_ENABLED` (off by default), stuck summary and deletion tasks are detected and re-run instead of staying pending forever (scan and Jira tasks are excluded), with a `reconcile_orphan_tasks` management command for on-demand recovery [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- Label Postgres connections with `application_name="<component>:<alias>"` (component injected per process via `DJANGO_APP_COMPONENT`) so connections are attributable by component in `pg_stat_activity` [(#11494)](https://github.com/prowler-cloud/prowler/pull/11494)
+- DISA Okta IDaaS STIG V1R2 compliance framework export support for the Okta provider [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+
+### 🔄 Changed
+
+- Allowlisted idempotent background tasks are no longer lost when a worker is stopped or crashes mid-task; tasks with external side effects are marked terminal instead of blindly re-running [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+
+### 🐞 Fixed
+
+- Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+- Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
+- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
+
+### 🔐 Security
+
+- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
+
+---
+
+## [1.30.3] (Prowler v5.29.3)
+
+### 🐞 Fixed
+
+- API startup no longer crashes when Neo4j is unreachable, as the Neo4j driver now connects lazily on first use rather than during app initialization [(#11491)](https://github.com/prowler-cloud/prowler/pull/11491)
+
+---
+
+## [1.30.1] (Prowler v5.29.1)
+
+### 🐞 Fixed
+
+- `GET /api/v1/findings` N+1 query loading `resources__tags` when listing findings [(#11420)](https://github.com/prowler-cloud/prowler/pull/11420)
+- Clean up the scan tmp output directory when `scan-report` fails so partial files do not accumulate and fill the worker disk (`No space left on device`) [(#11421)](https://github.com/prowler-cloud/prowler/pull/11421)
+
+---
+
+## [1.30.0] (Prowler v5.29.0)
+
+### 🔄 Changed
+
+- Scan finding ingestion: bulk-resolve `Resource`/`ResourceTag` rows, replace per-mapping `SELECT FOR UPDATE` with deferred `ResourceTagMapping.bulk_create(ignore_conflicts=True)`, wrap each micro-batch in a single `rls_transaction`, and raise `SCAN_DB_BATCH_SIZE` to 1000 [(#11249)](https://github.com/prowler-cloud/prowler/pull/11249)
+- Faster `GET /api/v1/finding-groups/latest` aggregation on tenants where one recent scan holds most findings [(#11380)](https://github.com/prowler-cloud/prowler/pull/11380)
+
+---
+
+## [1.29.1] (Prowler v5.28.1)
+
+### 🐞 Fixed
+
+- `finding-groups` slow response with finding-level filters such as `region`; check title and description are now read from the daily summaries, which drops sorting by `check_title` [(#11326)](https://github.com/prowler-cloud/prowler/pull/11326)
+
+---
+
+## [1.29.0] (Prowler v5.28.0)
 
 ### 🚀 Added
 
 - `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+- `resource.metadata` attribute included in `/api/v1/findings?include=resources` [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
 ---
 
@@ -27,7 +87,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
 - Attack Paths: `BEDROCK-001` and `BEDROCK-002` now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
-
 
 ---
 

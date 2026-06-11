@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -70,7 +70,7 @@ jobs:
 
       - name: Check for SDK changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: ./**
           files_ignore: |
@@ -103,7 +103,7 @@ jobs:
       - name: Check if AWS files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-aws
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/aws/**
@@ -233,7 +233,7 @@ jobs:
       - name: Check if Azure files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-azure
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/azure/**
@@ -257,7 +257,7 @@ jobs:
       - name: Check if GCP files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-gcp
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/gcp/**
@@ -281,7 +281,7 @@ jobs:
       - name: Check if Kubernetes files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-kubernetes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/kubernetes/**
@@ -305,7 +305,7 @@ jobs:
       - name: Check if GitHub files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-github
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/github/**
@@ -329,7 +329,7 @@ jobs:
       - name: Check if Okta files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-okta
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/okta/**
@@ -353,7 +353,7 @@ jobs:
       - name: Check if NHN files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-nhn
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/nhn/**
@@ -377,7 +377,7 @@ jobs:
       - name: Check if M365 files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-m365
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/m365/**
@@ -401,7 +401,7 @@ jobs:
       - name: Check if IaC files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-iac
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/iac/**
@@ -425,7 +425,7 @@ jobs:
       - name: Check if MongoDB Atlas files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-mongodbatlas
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/mongodbatlas/**
@@ -449,7 +449,7 @@ jobs:
       - name: Check if OCI files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-oraclecloud
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/oraclecloud/**
@@ -473,7 +473,7 @@ jobs:
       - name: Check if OpenStack files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-openstack
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/openstack/**
@@ -497,7 +497,7 @@ jobs:
       - name: Check if Google Workspace files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-googleworkspace
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/googleworkspace/**
@@ -521,7 +521,7 @@ jobs:
       - name: Check if Vercel files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-vercel
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/**/vercel/**
@@ -540,12 +540,87 @@ jobs:
         with:
           flags: prowler-py${{ matrix.python-version }}-vercel
           files: ./vercel_coverage.xml
+      
+      # Scaleway Provider
+      - name: Check if Scaleway files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-scaleway
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ./prowler/**/scaleway/**
+            ./tests/**/scaleway/**
+            ./uv.lock
 
+      - name: Run Scaleway tests
+        if: steps.changed-scaleway.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/scaleway --cov-report=xml:scaleway_coverage.xml tests/providers/scaleway
+
+      - name: Upload Scaleway coverage to Codecov
+        if: steps.changed-scaleway.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-scaleway
+          files: ./scaleway_coverage.xml
+
+      # StackIT Provider
+      - name: Check if StackIT files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-stackit
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ./prowler/**/stackit/**
+            ./tests/**/stackit/**
+            ./uv.lock
+
+      - name: Run StackIT tests
+        if: steps.changed-stackit.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/stackit --cov-report=xml:stackit_coverage.xml tests/providers/stackit
+
+      - name: Upload StackIT coverage to Codecov
+        if: steps.changed-stackit.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-stackit
+          files: ./stackit_coverage.xml
+ 
+      # External Provider (dynamic loading)
+      - name: Check if External Provider files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-external
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files: |
+            ./prowler/providers/common/**
+            ./prowler/config/**
+            ./prowler/lib/**
+            ./tests/providers/external/**
+            ./uv.lock
+
+      - name: Run External Provider tests
+        if: steps.changed-external.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/common --cov=./prowler/config --cov=./prowler/lib --cov-report=xml:external_coverage.xml tests/providers/external
+
+      - name: Upload External Provider coverage to Codecov
+        if: steps.changed-external.outputs.any_changed == 'true'
+     
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-external
+          files: ./external_coverage.xml
+          
       # Lib
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-lib
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/lib/**
@@ -569,7 +644,7 @@ jobs:
       - name: Check if Config files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-config
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             ./prowler/config/**

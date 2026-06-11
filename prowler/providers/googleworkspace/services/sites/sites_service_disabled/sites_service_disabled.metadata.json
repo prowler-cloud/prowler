@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "sites_service_disabled",
+  "CheckTitle": "Service status for Google Sites is set to off",
+  "CheckType": [],
+  "ServiceName": "sites",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The domain-wide Google Sites configuration has the service **disabled for all users**. Google Sites allows users to create internal and external websites, which may expose sensitive information or create unmanaged content outside the organization's control.",
+  "Risk": "When Google Sites is enabled, users can create websites that may **inadvertently expose internal information** to external parties. These sites can be difficult to track and manage, creating potential **data leakage vectors** outside the organization's standard content management controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/users/advanced/turn-a-service-on-or-off-for-google-workspace-users",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Sites**\n3. Click **Service status**\n4. Select **OFF for everyone**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable **Google Sites** for all users to reduce the organization's attack surface. If specific users require access, enable it by exception for those users or groups only.",
+      "Url": "https://hub.prowler.com/check/sites_service_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

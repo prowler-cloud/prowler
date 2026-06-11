@@ -247,7 +247,7 @@ class JSONAPIMeta:
 
 ## Decision Tree: New Model
 
-```
+```text
 Is it tenant-scoped data?
 ├── Yes → Inherit RowLevelSecurityProtectedModel
 │         Add RowLevelSecurityConstraint

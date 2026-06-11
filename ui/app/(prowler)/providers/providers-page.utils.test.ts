@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const providersActionsMock = vi.hoisted(() => ({
   getProviders: vi.fn(),
+  getAllProviders: vi.fn(),
 }));
 
 const organizationsActionsMock = vi.hoisted(() => ({
@@ -619,6 +620,7 @@ describe("loadProvidersAccountsViewData", () => {
   it("does not call organizations endpoints in OSS", async () => {
     // Given
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     scansActionsMock.getScans.mockResolvedValue({ data: [] });
 
     // When
@@ -662,6 +664,7 @@ describe("loadProvidersAccountsViewData", () => {
         },
       })),
     });
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
       data: [
         {
@@ -724,6 +727,7 @@ describe("loadProvidersAccountsViewData", () => {
   it("falls back to empty cloud grouping data when organizations endpoints fail", async () => {
     // Given
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
       data: [],
     });

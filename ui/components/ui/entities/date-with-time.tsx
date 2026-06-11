@@ -18,7 +18,7 @@ export const DateWithTime = ({
   showTime = true,
   inline = false,
 }: DateWithTimeProps) => {
-  if (!dateTime) return <span>--</span>;
+  if (!dateTime) return <span>-</span>;
 
   try {
     const date = parseISO(dateTime);
