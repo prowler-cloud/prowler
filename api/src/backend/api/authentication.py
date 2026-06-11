@@ -93,3 +93,31 @@ class CombinedJWTOrAPIKeyAuthentication(BaseAuthentication):
 
         # Default fallback
         return self.jwt_auth.authenticate(request)
+
+
+class SSEAuthentication(CombinedJWTOrAPIKeyAuthentication):
+    """JWT/API-Key auth that also accepts `?access_token=<jwt>`.
+
+    Browser `EventSource` is the only widely available SSE client API
+    and it cannot set the `Authorization` header (its constructor takes
+    only a URL and `withCredentials`). To keep browser SSE clients on
+    the same auth stack as the rest of the API, SSE endpoints additionally
+    accept a JWT via the `?access_token=<jwt>` query parameter — the
+    standard parameter name defined in RFC 6750 Section 2.3 for bearer tokens.
+    """
+
+    def authenticate(self, request: Request):
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header:
+            return super().authenticate(request)
+
+        raw_token = request.query_params.get("access_token")
+        if not raw_token:
+            # No header and no query token — let the default path raise
+            # the canonical AuthenticationFailed via the parent class.
+            return super().authenticate(request)
+
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(raw_token)
+        user = jwt_auth.get_user(validated_token)
+        return user, validated_token
