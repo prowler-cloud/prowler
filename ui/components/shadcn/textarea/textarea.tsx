@@ -6,7 +6,7 @@ import { ComponentProps, forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 const textareaVariants = cva(
-  "flex w-full rounded-lg border text-sm transition-all outline-none resize-none disabled:cursor-not-allowed disabled:opacity-50",
+  "flex w-full rounded-lg border text-sm transition-[background-color,border-color,box-shadow,color] duration-150 ease-out outline-none motion-reduce:transition-none resize-none disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {

@@ -25,7 +25,7 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
       className={cn(
-        "border-border-input-primary aspect-square size-4 shrink-0 rounded-full border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)] transition-all outline-none",
+        "border-border-input-primary aspect-square size-4 shrink-0 rounded-full border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)] transition-[background-color,border-color,box-shadow] duration-200 ease-out outline-none motion-reduce:transition-none",
         "focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press/50 focus-visible:ring-2",
         "data-[state=checked]:border-button-primary",
         "disabled:cursor-not-allowed disabled:opacity-40",
@@ -34,8 +34,9 @@ function RadioGroupItem({
       {...props}
     >
       <RadioGroupPrimitive.Indicator
+        forceMount
         data-slot="radio-group-indicator"
-        className="grid place-content-center"
+        className="grid place-content-center transition-[opacity,transform] duration-200 ease-out data-[state=checked]:scale-100 data-[state=checked]:opacity-100 data-[state=unchecked]:scale-75 data-[state=unchecked]:opacity-0 motion-reduce:scale-100 motion-reduce:transition-none"
       >
         <span className="bg-button-primary size-2 rounded-full" />
       </RadioGroupPrimitive.Indicator>

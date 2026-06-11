@@ -142,13 +142,17 @@ export const DataTableSearch = ({
     >
       <div className="relative w-full">
         <div
+          data-testid="data-table-search-control"
           className={cn(
-            "border-border-neutral-tertiary bg-bg-neutral-tertiary hover:bg-bg-neutral-secondary flex items-center gap-1.5 rounded-md border transition-colors",
-            isFocused && "border-border-input-primary-pressed",
+            "border-border-neutral-tertiary bg-bg-neutral-tertiary hover:bg-bg-neutral-secondary focus-within:ring-border-input-primary-press flex items-center gap-1.5 rounded-md border transition-[background-color,border-color,box-shadow,color] duration-250 ease-out focus-within:ring-1 focus-within:ring-inset motion-reduce:transition-none",
+            isFocused && "border-border-input-primary-press",
           )}
         >
           <div className="flex shrink-0 items-center pl-3">
-            <SearchIcon className="text-text-neutral-tertiary size-4" />
+            <SearchIcon
+              data-testid="data-table-search-icon"
+              className="text-text-neutral-tertiary size-4 transition-colors duration-250 ease-out motion-reduce:transition-none"
+            />
           </div>
 
           {hasBadge && (
@@ -180,6 +184,7 @@ export const DataTableSearch = ({
             ref={inputRef}
             id={id}
             type="search"
+            aria-label={placeholder}
             placeholder={placeholder}
             value={value}
             onChange={(e) => handleChange(e.target.value)}
