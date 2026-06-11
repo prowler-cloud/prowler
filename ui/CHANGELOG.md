@@ -14,6 +14,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Renamed "Customer Support" to "Support Desk" in the side menu, showing it only in Prowler Cloud/Enterprise, while "Community Support" now shows only in Prowler OSS [(#11508)](https://github.com/prowler-cloud/prowler/pull/11508)
 - Compliance detail page now shows a "still loading" retry state while the API warms its compliance catalog, instead of rendering an empty page [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
 
+### 🐞 Fixed
+
+- Risk Pipeline Sankey chart now adapts height and node spacing for dense provider datasets, keeping provider and severity labels readable [(#11527)](https://github.com/prowler-cloud/prowler/pull/11527)
+
 ---
 
 ## [1.29.3] (Prowler v5.29.3)
