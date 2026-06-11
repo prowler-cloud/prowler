@@ -19,6 +19,16 @@ KMS_KEY_ARN = "arn:aws:kms:eu-west-1:123456789012:key/some-key-id"
 
 
 def create_state_machine(name, encryption_configuration):
+    """Create a mock StateMachine instance for use in tests.
+
+    Args:
+        name (str): The display name of the state machine.
+        encryption_configuration (Optional[EncryptionConfiguration]): The encryption
+            configuration to assign to the state machine, or None.
+
+    Returns:
+        StateMachine: A StateMachine instance pre-populated with test constants.
+    """
     return StateMachine(
         id=STATE_MACHINE_ID,
         arn=STATE_MACHINE_ARN,
@@ -92,6 +102,20 @@ def test_stepfunctions_statemachine_encryption_at_rest(
     expected_status,
     expected_status_extended,
 ):
+    """Test stepfunctions_statemachine_encryption_at_rest_enabled check across multiple scenarios.
+
+    Parametrized test cases cover:
+    - No state machines present (empty findings).
+    - State machine using the default AWS-owned key (FAIL).
+    - State machine with no encryption configuration set (FAIL).
+    - State machine using a customer-managed KMS key (PASS).
+
+    Args:
+        state_machines (dict): Mapping of ARN to StateMachine used to mock the service client.
+        expected_count (int): Expected number of findings returned by the check.
+        expected_status (Optional[str]): Expected status of the finding, or None if no findings.
+        expected_status_extended (Optional[str]): Expected status_extended message, or None.
+    """
     mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
     stepfunctions_client = StepFunctions(mocked_aws_provider)
     stepfunctions_client.state_machines = state_machines
