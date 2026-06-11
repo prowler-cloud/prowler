@@ -29,11 +29,10 @@ function CollapsibleContent({
     <CollapsiblePrimitive.CollapsibleContent
       data-slot="collapsible-content"
       className={cn(
-        "overflow-hidden duration-200 ease-out",
-        "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1",
-        "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-1",
-        "data-[state=closed]:duration-150 data-[state=closed]:ease-in",
-        "motion-reduce:transform-none motion-reduce:animate-none motion-reduce:transition-none",
+        "overflow-hidden",
+        "data-[state=open]:animate-collapsible-down",
+        "data-[state=closed]:animate-collapsible-up",
+        "motion-reduce:animate-none motion-reduce:transition-none",
         className,
       )}
       {...props}

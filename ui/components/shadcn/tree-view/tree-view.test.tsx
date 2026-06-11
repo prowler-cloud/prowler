@@ -1,7 +1,31 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { getTreeChildrenMotion } from "./tree-node";
 import { TreeView } from "./tree-view";
+
+describe("getTreeChildrenMotion", () => {
+  it("animates height when motion is allowed", () => {
+    // Given / When
+    const motion = getTreeChildrenMotion(false);
+
+    // Then
+    expect(motion.initial).toHaveProperty("height", 0);
+    expect(motion.animate).toHaveProperty("height", "auto");
+    expect(motion.transition.duration).toBeGreaterThan(0);
+  });
+
+  it("degrades to opacity-only with no height under reduced motion", () => {
+    // Given / When
+    const motion = getTreeChildrenMotion(true);
+
+    // Then
+    expect(motion.initial).not.toHaveProperty("height");
+    expect(motion.animate).not.toHaveProperty("height");
+    expect(motion.exit).not.toHaveProperty("height");
+    expect(motion.transition.duration).toBe(0);
+  });
+});
 
 const treeData = [
   {

@@ -24,16 +24,8 @@ describe("Collapsible", () => {
     expect(content).toHaveAttribute("data-slot", "collapsible-content");
     expect(content).toHaveClass(
       "overflow-hidden",
-      "duration-200",
-      "ease-out",
-      "data-[state=open]:animate-in",
-      "data-[state=open]:fade-in-0",
-      "data-[state=open]:slide-in-from-top-1",
-      "data-[state=closed]:animate-out",
-      "data-[state=closed]:fade-out-0",
-      "data-[state=closed]:slide-out-to-top-1",
-      "data-[state=closed]:duration-150",
-      "data-[state=closed]:ease-in",
+      "data-[state=open]:animate-collapsible-down",
+      "data-[state=closed]:animate-collapsible-up",
     );
   });
 
@@ -52,7 +44,6 @@ describe("Collapsible", () => {
     // Then
     expect(content).toHaveClass(
       "motion-reduce:animate-none",
-      "motion-reduce:transform-none",
       "motion-reduce:transition-none",
     );
   });
