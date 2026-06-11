@@ -157,6 +157,75 @@ def make_mock_access_denied_on_orgs():
     return _mock
 
 
+def make_mock_aggregators_access_denied():
+    def _mock(self, operation_name, api_params):
+        if operation_name == "DescribeConfigurationAggregators":
+            raise botocore.exceptions.ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDeniedException",
+                        "Message": "denied",
+                    }
+                },
+                operation_name,
+            )
+        if operation_name == "ListDelegatedAdministrators":
+            return {"DelegatedAdministrators": []}
+        return orig(self, operation_name, api_params)
+
+    return _mock
+
+
+def make_mock_aggregators_other_client_error():
+    def _mock(self, operation_name, api_params):
+        if operation_name == "DescribeConfigurationAggregators":
+            raise botocore.exceptions.ClientError(
+                {
+                    "Error": {
+                        "Code": "InternalServerError",
+                        "Message": "boom",
+                    }
+                },
+                operation_name,
+            )
+        if operation_name == "ListDelegatedAdministrators":
+            return {"DelegatedAdministrators": []}
+        return orig(self, operation_name, api_params)
+
+    return _mock
+
+
+def make_mock_aggregators_unexpected_exception():
+    def _mock(self, operation_name, api_params):
+        if operation_name == "DescribeConfigurationAggregators":
+            raise RuntimeError("simulated transient error")
+        if operation_name == "ListDelegatedAdministrators":
+            return {"DelegatedAdministrators": []}
+        return orig(self, operation_name, api_params)
+
+    return _mock
+
+
+def make_mock_delegated_admins_unexpected_exception():
+    def _mock(self, operation_name, api_params):
+        if operation_name == "DescribeConfigurationAggregators":
+            return {
+                "ConfigurationAggregators": [
+                    _aggregator_payload(
+                        "org-aggregator",
+                        AWS_REGION_EU_WEST_1,
+                        org_aware=True,
+                        all_regions=True,
+                    )
+                ]
+            }
+        if operation_name == "ListDelegatedAdministrators":
+            raise RuntimeError("simulated transient error")
+        return orig(self, operation_name, api_params)
+
+    return _mock
+
+
 class Test_config_delegated_admin_and_org_aggregator_all_regions:
     @mock_aws
     def test_no_aggregators_no_admin(self):
@@ -367,3 +436,56 @@ class Test_config_delegated_admin_and_org_aggregator_all_regions:
                     "delegated administrator status for config.amazonaws.com could not be determined"
                     in eu_west_1_result.status_extended
                 )
+
+    @mock_aws
+    def test_aggregators_access_denied(self):
+        """AccessDenied on DescribeConfigurationAggregators is swallowed: no aggregators recorded for that region."""
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=make_mock_aggregators_access_denied(),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            from prowler.providers.aws.services.config.config_service import Config
+
+            service = Config(aws_provider)
+            assert service.aggregators == {}
+
+    @mock_aws
+    def test_aggregators_other_client_error(self):
+        """Non-access ClientError on DescribeConfigurationAggregators is logged at error level."""
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=make_mock_aggregators_other_client_error(),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            from prowler.providers.aws.services.config.config_service import Config
+
+            service = Config(aws_provider)
+            assert service.aggregators == {}
+
+    @mock_aws
+    def test_aggregators_unexpected_exception(self):
+        """Non-ClientError on DescribeConfigurationAggregators is caught by bare except."""
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=make_mock_aggregators_unexpected_exception(),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            from prowler.providers.aws.services.config.config_service import Config
+
+            service = Config(aws_provider)
+            assert service.aggregators == {}
+
+    @mock_aws
+    def test_delegated_admins_unexpected_exception(self):
+        """Non-ClientError on ListDelegatedAdministrators must still set lookup_failed."""
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=make_mock_delegated_admins_unexpected_exception(),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            from prowler.providers.aws.services.config.config_service import Config
+
+            service = Config(aws_provider)
+            assert service.delegated_administrators_lookup_failed is True
+            assert service.delegated_administrators == []
