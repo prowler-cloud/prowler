@@ -1,0 +1,199 @@
+/**
+ * Utility functions for attack path graph operations
+ */
+
+import type { AttackPathGraphData } from "@/types/attack-paths";
+
+export const resolveHiddenFindingIds = ({
+  expandedResources,
+  findingNodeIds,
+  findingToResources,
+  isFilteredView,
+}: {
+  expandedResources: ReadonlySet<string>;
+  findingNodeIds: ReadonlySet<string>;
+  findingToResources: ReadonlyMap<string, ReadonlySet<string>>;
+  isFilteredView: boolean;
+}): Set<string> => {
+  const hiddenFindingIds = new Set<string>();
+
+  if (isFilteredView) {
+    return hiddenFindingIds;
+  }
+
+  findingNodeIds.forEach((findingId) => {
+    const connectedResources = findingToResources.get(findingId);
+
+    if (!connectedResources) {
+      return;
+    }
+
+    const anyExpanded = Array.from(connectedResources).some((resourceId) =>
+      expandedResources.has(resourceId),
+    );
+
+    if (!anyExpanded) {
+      hiddenFindingIds.add(findingId);
+    }
+  });
+
+  return hiddenFindingIds;
+};
+
+/**
+ * Compute a filtered subgraph containing only the path through the target node.
+ * This follows the directed graph structure of attack paths:
+ * - Upstream: traces back to the root (AWS Account)
+ * - Downstream: traces forward to leaf nodes
+ * - Also includes findings connected to the selected node
+ */
+export const computeFilteredSubgraph = (
+  fullData: AttackPathGraphData,
+  targetNodeId: string,
+): AttackPathGraphData => {
+  const nodes = fullData.nodes;
+  const edges = fullData.edges || [];
+
+  // Build directed adjacency lists
+  const forwardEdges = new Map<string, Set<string>>(); // source -> targets
+  const backwardEdges = new Map<string, Set<string>>(); // target -> sources
+  nodes.forEach((node) => {
+    forwardEdges.set(node.id, new Set());
+    backwardEdges.set(node.id, new Set());
+  });
+
+  edges.forEach((edge) => {
+    forwardEdges.get(edge.source)?.add(edge.target);
+    backwardEdges.get(edge.target)?.add(edge.source);
+  });
+
+  const visibleNodeIds = new Set<string>();
+  visibleNodeIds.add(targetNodeId);
+
+  // Traverse upstream (backward) - find all ancestors
+  const traverseUpstream = (nodeId: string) => {
+    const sources = backwardEdges.get(nodeId);
+    if (sources) {
+      sources.forEach((sourceId) => {
+        if (!visibleNodeIds.has(sourceId)) {
+          visibleNodeIds.add(sourceId);
+          traverseUpstream(sourceId);
+        }
+      });
+    }
+  };
+
+  // Traverse downstream (forward) - find all descendants
+  const traverseDownstream = (nodeId: string) => {
+    const targets = forwardEdges.get(nodeId);
+    if (targets) {
+      targets.forEach((targetId) => {
+        if (!visibleNodeIds.has(targetId)) {
+          visibleNodeIds.add(targetId);
+          traverseDownstream(targetId);
+        }
+      });
+    }
+  };
+
+  // Start traversal from the target node
+  traverseUpstream(targetNodeId);
+  traverseDownstream(targetNodeId);
+
+  // Also include findings directly connected to the selected node
+  const nodeLabelMap = new Map(nodes.map((n) => [n.id, n.labels]));
+  edges.forEach((edge) => {
+    const sourceIsFinding = (nodeLabelMap.get(edge.source) ?? []).some((l) =>
+      l.toLowerCase().includes("finding"),
+    );
+    const targetIsFinding = (nodeLabelMap.get(edge.target) ?? []).some((l) =>
+      l.toLowerCase().includes("finding"),
+    );
+
+    // Include findings connected to the selected node
+    if (edge.source === targetNodeId && targetIsFinding) {
+      visibleNodeIds.add(edge.target);
+    }
+    if (edge.target === targetNodeId && sourceIsFinding) {
+      visibleNodeIds.add(edge.source);
+    }
+  });
+
+  // Filter nodes and edges to only include visible ones
+  const filteredNodes = nodes.filter((node) => visibleNodeIds.has(node.id));
+  const filteredEdges = edges.filter(
+    (edge) =>
+      visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
+  );
+
+  return {
+    nodes: filteredNodes,
+    edges: filteredEdges,
+  };
+};
+
+/**
+ * Find edges in the path from a given node.
+ * Upstream: follows only ONE parent path (first parent at each level) to avoid lighting up siblings
+ * Downstream: follows ALL children recursively
+ *
+ * Uses pre-built adjacency maps for O(1) lookups instead of O(n) array searches per traversal step.
+ *
+ * @param nodeId - The starting node ID
+ * @param edges - Array of edges with sourceId and targetId
+ * @returns Set of edge IDs in the format "sourceId-targetId"
+ */
+export const getPathEdges = (
+  nodeId: string,
+  edges: Array<{ sourceId: string; targetId: string }>,
+): Set<string> => {
+  // Build adjacency maps once - O(n)
+  const parentMap = new Map<string, { sourceId: string; targetId: string }>();
+  const childrenMap = new Map<
+    string,
+    Array<{ sourceId: string; targetId: string }>
+  >();
+
+  edges.forEach((edge) => {
+    // First parent only (matches original behavior of find())
+    if (!parentMap.has(edge.targetId)) {
+      parentMap.set(edge.targetId, edge);
+    }
+    const children = childrenMap.get(edge.sourceId) || [];
+    children.push(edge);
+    childrenMap.set(edge.sourceId, children);
+  });
+
+  const pathEdgeIds = new Set<string>();
+  const visitedNodes = new Set<string>();
+
+  // Traverse upstream - only follow ONE parent at each level (first found)
+  // This creates a single path to the root, not all paths
+  const traverseUpstream = (currentNodeId: string) => {
+    if (visitedNodes.has(`up-${currentNodeId}`)) return;
+    visitedNodes.add(`up-${currentNodeId}`);
+
+    const parentEdge = parentMap.get(currentNodeId); // O(1) lookup
+    if (parentEdge) {
+      pathEdgeIds.add(`${parentEdge.sourceId}-${parentEdge.targetId}`);
+      traverseUpstream(parentEdge.sourceId);
+    }
+  };
+
+  // Traverse downstream (find ALL targets from this node)
+  const traverseDownstream = (currentNodeId: string) => {
+    if (visitedNodes.has(`down-${currentNodeId}`)) return;
+    visitedNodes.add(`down-${currentNodeId}`);
+
+    const children = childrenMap.get(currentNodeId) || []; // O(1) lookup
+    children.forEach((edge) => {
+      pathEdgeIds.add(`${edge.sourceId}-${edge.targetId}`);
+      traverseDownstream(edge.targetId);
+    });
+  };
+
+  traverseUpstream(nodeId);
+  traverseDownstream(nodeId);
+
+  return pathEdgeIds;
+};
