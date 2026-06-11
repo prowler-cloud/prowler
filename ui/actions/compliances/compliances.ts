@@ -73,12 +73,21 @@ export const getComplianceOverviewMetadataInfo = async ({
   }
 };
 
-export const getComplianceAttributes = async (complianceId: string) => {
+export const getComplianceAttributes = async (
+  complianceId: string,
+  scanId?: string,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
     const url = new URL(`${apiBaseUrl}/compliance-overviews/attributes`);
     url.searchParams.append("filter[compliance_id]", complianceId);
+    // Pass the scan so multi-provider universal frameworks (e.g. CSA CCM, NATO)
+    // resolve the check IDs for the scan's provider instead of defaulting to
+    // the first provider that declares the framework.
+    if (scanId) {
+      url.searchParams.append("filter[scan_id]", scanId);
+    }
 
     const response = await fetch(url.toString(), {
       headers,
