@@ -101,6 +101,24 @@ describe("Combobox", () => {
     expect(unselectedCheck).toHaveClass("scale-95", "opacity-0");
   });
 
+  it("degrades the loading spinner animation under reduced motion", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <Combobox options={options} placeholder="Select provider" loading />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("combobox", { name: /select provider/i }),
+    );
+    const content = document.querySelector("[data-slot='popover-content']");
+    const spinner = content?.querySelector("svg");
+
+    // Then
+    expect(spinner).toHaveClass("animate-spin", "motion-reduce:animate-none");
+  });
+
   it("opens with the shared Popover content motion contract", async () => {
     // Given
     const user = userEvent.setup();

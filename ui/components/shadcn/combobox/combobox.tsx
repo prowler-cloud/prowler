@@ -139,7 +139,7 @@ export function Combobox({
           <CommandList className="minimal-scrollbar max-h-[400px]">
             {loading && (
               <div className="text-text-neutral-tertiary flex items-center gap-2 px-3 py-2 text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
                 <span>{loadingMessage}</span>
               </div>
             )}
