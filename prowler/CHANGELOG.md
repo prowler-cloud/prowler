@@ -22,7 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `exchange_mailbox_primary_smtp_uses_custom_domain` check for M365 provider [(#11215)](https://github.com/prowler-cloud/prowler/pull/11215)
 - `bedrock_agent_role_least_privilege` check for AWS provider, flagging Bedrock Agent execution roles with full-access managed policies, broad `Resource:*` inline statements, or missing permissions boundaries [(#11335)](https://github.com/prowler-cloud/prowler/pull/11335)
 - STACKIT ObjectStorage service with Object Lock, default retention policy, and access key expiration checks [(#11397)](https://github.com/prowler-cloud/prowler/pull/11397)
-- `iaas_server_public_ip_attached` check for STACKIT provider, flagging IaaS servers that have a public IP address directly attached to a network interface [(#11541)](https://github.com/prowler-cloud/prowler/pull/11541)
+- `iaas_server_public_ip_attached` check for STACKIT provider, flagging IaaS servers that have a public IP address directly attached to a network interface [(#11549)](https://github.com/prowler-cloud/prowler/pull/11549)
 
 ### 🐞 Fixed
 
