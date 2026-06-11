@@ -380,6 +380,14 @@ aws:
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
 
+  # AWS Post-Quantum TLS Configuration
+  # aws.acmpca_certificate_authority_pqc_key_algorithm
+  # Allowed post-quantum key algorithms for AWS Private CA certificate authorities
+  acmpca_pqc_key_algorithms:
+    - "ML_DSA_44"
+    - "ML_DSA_65"
+    - "ML_DSA_87"
+
   # AWS Elasticache Configuration
   # aws.elasticache_redis_cluster_backup_enabled
   # Minimum number of days that a Redis cluster must have backups retention period
