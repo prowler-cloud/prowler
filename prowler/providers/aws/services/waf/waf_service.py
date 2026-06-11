@@ -281,6 +281,15 @@ class WAFRegional(AWSService):
             )
 
     def _get_logging_configuration(self, acl):
+        """Fetch and store the logging configuration for a Regional Web ACL.
+
+        Calls the WAF Regional GetLoggingConfiguration API for the given ACL and
+        sets acl.logging_enabled to True if at least one log destination is configured,
+        False otherwise.
+
+        Args:
+            acl (WebAcl): The Regional Web ACL instance to update.
+        """
         logger.info(
             f"WAFRegional - Getting Regional Web ACL {acl.name} logging configuration..."
         )
