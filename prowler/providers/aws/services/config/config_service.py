@@ -172,10 +172,12 @@ class Config(AWSService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
+                self.delegated_administrators_lookup_failed = True
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.delegated_administrators_lookup_failed = True
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

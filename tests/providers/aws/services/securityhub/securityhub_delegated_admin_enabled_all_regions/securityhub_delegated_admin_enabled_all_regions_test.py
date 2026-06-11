@@ -111,6 +111,26 @@ def mock_make_api_call_securityhub_not_subscribed(self, operation_name, api_para
     return orig(self, operation_name, api_params)
 
 
+def mock_make_api_call_admin_lookup_access_denied(self, operation_name, api_params):
+    """Hub is ACTIVE but ListOrganizationAdminAccounts is denied — lookup-failed path."""
+    hub_resp = _active_hub_responses(operation_name)
+    if hub_resp is not None:
+        return hub_resp
+    if operation_name == "ListOrganizationAdminAccounts":
+        raise botocore.exceptions.ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDeniedException",
+                    "Message": "User is not authorized to perform: securityhub:ListOrganizationAdminAccounts",
+                }
+            },
+            operation_name,
+        )
+    if operation_name == "DescribeOrganizationConfiguration":
+        return {"AutoEnable": True, "AutoEnableStandards": "DEFAULT"}
+    return orig(self, operation_name, api_params)
+
+
 class Test_securityhub_delegated_admin_enabled_all_regions:
     def teardown_method(self):
         """Evict cached securityhub modules so legacy mock.patch-based tests
@@ -288,3 +308,50 @@ class Test_securityhub_delegated_admin_enabled_all_regions:
             assert "delegated admin configured" in eu_west_1_result.status_extended
             assert "auto-enable" in eu_west_1_result.status_extended
             assert eu_west_1_result.resource_arn == HUB_ARN
+
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_admin_lookup_access_denied,
+    )
+    @mock_aws
+    def test_admin_lookup_access_denied(self):
+        """AccessDenied on ListOrganizationAdminAccounts must FAIL with unknown-admin message."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        from prowler.providers.aws.services.securityhub.securityhub_service import (
+            SecurityHub,
+        )
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.securityhub.securityhub_delegated_admin_enabled_all_regions.securityhub_delegated_admin_enabled_all_regions.securityhub_client",
+                new=SecurityHub(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.securityhub.securityhub_delegated_admin_enabled_all_regions.securityhub_delegated_admin_enabled_all_regions import (
+                securityhub_delegated_admin_enabled_all_regions,
+            )
+
+            check = securityhub_delegated_admin_enabled_all_regions()
+            result = check.execute()
+
+            eu_west_1_result = None
+            for finding in result:
+                if finding.region == AWS_REGION_EU_WEST_1:
+                    eu_west_1_result = finding
+                    break
+
+            assert eu_west_1_result is not None
+            assert eu_west_1_result.status == "FAIL"
+            assert (
+                "delegated administrator status could not be determined"
+                in eu_west_1_result.status_extended
+            )
+            assert (
+                "no delegated administrator configured"
+                not in eu_west_1_result.status_extended
+            )

@@ -14,6 +14,7 @@ class SecurityHub(AWSService):
         super().__init__(__class__.__name__, provider)
         self.securityhubs = []
         self.organization_admin_accounts = []
+        self.organization_admin_lookup_failed: bool = False
         self.__threading_call__(self._describe_hub)
         self.__threading_call__(self._list_tags, self.securityhubs)
         self.__threading_call__(self._list_organization_admin_accounts)
@@ -135,6 +136,7 @@ class SecurityHub(AWSService):
                     ):
                         self.organization_admin_accounts.append(admin_account)
         except ClientError as error:
+            self.organization_admin_lookup_failed = True
             if error.response["Error"]["Code"] in (
                 "AccessDeniedException",
                 "InvalidAccessException",
@@ -148,6 +150,7 @@ class SecurityHub(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.organization_admin_lookup_failed = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

@@ -27,6 +27,7 @@ class securityhub_delegated_admin_enabled_all_regions(Check):
             for admin in securityhub_client.organization_admin_accounts
             if admin.admin_status == "ENABLED"
         }
+        admin_lookup_failed = securityhub_client.organization_admin_lookup_failed
 
         for securityhub in securityhub_client.securityhubs:
             report = Check_Report_AWS(metadata=self.metadata(), resource=securityhub)
@@ -42,7 +43,9 @@ class securityhub_delegated_admin_enabled_all_regions(Check):
 
             # Determine overall status
             issues = []
-            if not has_delegated_admin:
+            if admin_lookup_failed:
+                issues.append("delegated administrator status could not be determined")
+            elif not has_delegated_admin:
                 issues.append("no delegated administrator configured")
             if not hub_active:
                 issues.append("Security Hub not enabled")
