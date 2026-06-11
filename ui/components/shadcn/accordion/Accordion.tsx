@@ -49,10 +49,10 @@ const AccordionContent = ({
     : content;
 
   return (
-    <div className="text-sm text-gray-700 dark:text-gray-300">
+    <div className="text-text-neutral-secondary text-sm">
       {normalizedContent}
       {items && items.length > 0 && (
-        <div className="mt-4 ml-2 border-l-2 border-gray-200 pl-4 dark:border-gray-700">
+        <div className="border-border-neutral-secondary mt-4 ml-2 border-l-2 pl-4">
           <Accordion
             items={items}
             variant="light"
@@ -141,13 +141,15 @@ export const Accordion = ({
                 <div className="flex-1 text-left">
                   <div className="text-sm">{item.title}</div>
                   {item.subtitle && (
-                    <div className="text-xs text-gray-500">{item.subtitle}</div>
+                    <div className="text-text-neutral-tertiary text-xs">
+                      {item.subtitle}
+                    </div>
                   )}
                 </div>
                 <ChevronDown
                   aria-hidden="true"
                   className={cn(
-                    "shrink-0 text-gray-500 transition-transform duration-200",
+                    "text-text-neutral-tertiary shrink-0 transition-transform duration-200",
                     isExpanded && "rotate-180",
                   )}
                 />
