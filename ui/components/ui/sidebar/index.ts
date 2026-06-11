@@ -1,7 +1,3 @@
-export * from "./collapsible-menu";
-export * from "./menu";
-export * from "./menu-item";
-export * from "./sheet-menu";
-export * from "./sidebar";
-export * from "./sidebar-toggle";
-export * from "./submenu-item";
+// Temporary re-export shim for prowler-cloud overlay imports.
+// Remove after the cloud repo migrates to @/components/shadcn paths.
+export * from "@/components/layout/sidebar";

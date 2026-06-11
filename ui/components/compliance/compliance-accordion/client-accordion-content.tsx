@@ -8,8 +8,8 @@ import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
 } from "@/components/findings/table";
-import { Accordion } from "@/components/ui/accordion/Accordion";
-import { DataTable } from "@/components/ui/table";
+import { Accordion } from "@/components/shadcn/accordion/Accordion";
+import { DataTable } from "@/components/shadcn/table";
 import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { Requirement } from "@/types/compliance";

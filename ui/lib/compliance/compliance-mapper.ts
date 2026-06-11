@@ -14,7 +14,7 @@ import { KISACustomDetails } from "@/components/compliance/compliance-custom-det
 import { MITRECustomDetails } from "@/components/compliance/compliance-custom-details/mitre-details";
 import { OktaIDaaSStigCustomDetails } from "@/components/compliance/compliance-custom-details/okta-idaas-stig-details";
 import { ThreatCustomDetails } from "@/components/compliance/compliance-custom-details/threat-details";
-import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
+import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
 import {
   AttributesData,
   CategoryData,

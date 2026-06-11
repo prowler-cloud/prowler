@@ -2,8 +2,8 @@ import { ClientAccordionContent } from "@/components/compliance/compliance-accor
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
 import { ComplianceBadgeVariant } from "@/components/compliance/compliance-custom-details/shared-components";
-import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import { FindingStatus } from "@/components/ui/table/status-finding-badge";
+import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
+import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
 import {
   AttributesData,
   CCCAttributesMetadata,

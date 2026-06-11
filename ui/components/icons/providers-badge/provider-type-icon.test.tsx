@@ -29,7 +29,8 @@ vi.mock("@/components/icons/providers-badge", () => ({
 }));
 
 // Render the tooltip pieces inline so the hover content is queryable in jsdom.
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Badge: ({ children }: { children: React.ReactNode }) => (
     <span data-testid="badge">{children}</span>
   ),

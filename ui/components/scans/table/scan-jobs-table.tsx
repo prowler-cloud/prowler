@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import type { MetaDataProps, ScanJobsTab, ScanProps } from "@/types";
 
 import { AutoRefresh } from "../auto-refresh";

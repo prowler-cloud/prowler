@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
+import { DataTableFilterCustom } from "@/components/shadcn/table/data-table-filter-custom";
 import { ScanEntity } from "@/types/scans";
 
 import { ComplianceScanInfo } from "./compliance-scan-info";

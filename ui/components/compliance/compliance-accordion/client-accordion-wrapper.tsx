@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/shadcn";
-import { Accordion, AccordionItemProps } from "@/components/ui";
+import { Accordion, AccordionItemProps } from "@/components/shadcn";
 
 export const ClientAccordionWrapper = ({
   items,

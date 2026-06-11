@@ -1,5 +1,5 @@
 import { LighthouseSettings, LLMProvidersTable } from "@/components/lighthouse";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 export const dynamic = "force-dynamic";
 

@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import React from "react";
 
 import { WorkflowSendInvite } from "@/components/invitations/workflow";
-import { NavigationHeader } from "@/components/ui";
+import { NavigationHeader } from "@/components/shadcn";
 
 interface InvitationLayoutProps {
   children: React.ReactNode;

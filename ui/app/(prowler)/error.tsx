@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card/card";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 export default function Error({

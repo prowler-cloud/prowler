@@ -7,8 +7,8 @@ import { filterRoles } from "@/components/filters/data-filters";
 import { AddIcon } from "@/components/icons";
 import { ColumnsRoles, SkeletonTableRoles } from "@/components/roles/table";
 import { Button } from "@/components/shadcn";
-import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DataTable, DataTableFilterCustom } from "@/components/shadcn/table";
 import { SearchParamsProps } from "@/types";
 
 export default async function Roles({

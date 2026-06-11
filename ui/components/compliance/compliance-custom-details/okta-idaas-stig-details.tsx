@@ -1,4 +1,4 @@
-import { Severity, SeverityBadge } from "@/components/ui/table";
+import { Severity, SeverityBadge } from "@/components/shadcn/table";
 import { Requirement } from "@/types/compliance";
 
 import {

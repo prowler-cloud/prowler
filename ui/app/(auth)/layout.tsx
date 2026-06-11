@@ -4,7 +4,7 @@ import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
-import { NavigationProgress, Toaster } from "@/components/ui";
+import { NavigationProgress, Toaster } from "@/components/shadcn";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";

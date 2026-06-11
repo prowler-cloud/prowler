@@ -4,9 +4,9 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CloudIcon, FolderIcon, ServerIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 
-import { DataTable } from "@/components/ui/table/data-table";
-import { DataTableExpandAllToggle } from "@/components/ui/table/data-table-expand-all-toggle";
-import { DataTableExpandableCell } from "@/components/ui/table/data-table-expandable-cell";
+import { DataTable } from "@/components/shadcn/table/data-table";
+import { DataTableExpandAllToggle } from "@/components/shadcn/table/data-table-expand-all-toggle";
+import { DataTableExpandableCell } from "@/components/shadcn/table/data-table-expandable-cell";
 
 /**
  * Demo page for the Expandable DataTable component.

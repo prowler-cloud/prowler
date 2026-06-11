@@ -4,7 +4,7 @@ import { getSamlConfig } from "@/actions/integrations/saml";
 import { getUserInfo } from "@/actions/users/users";
 import { auth } from "@/auth.config";
 import { SamlIntegrationCard } from "@/components/integrations/saml/saml-integration-card";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { ApiKeysCard, UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";

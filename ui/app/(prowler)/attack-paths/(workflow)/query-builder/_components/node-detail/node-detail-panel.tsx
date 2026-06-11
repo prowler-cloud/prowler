@@ -1,14 +1,14 @@
 "use client";
 
 import { Button, Card, CardContent } from "@/components/shadcn";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet/sheet";
+} from "@/components/shadcn/sheet/sheet";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import type { GraphNode } from "@/types/attack-paths";
 
 import { NodeFindings } from "./node-findings";

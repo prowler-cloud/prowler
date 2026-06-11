@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/shadcn";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
 import type { GraphNode } from "@/types/attack-paths";
 
 const SEVERITY_LEVELS = {

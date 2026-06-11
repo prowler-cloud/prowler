@@ -4,8 +4,8 @@ import { Icon } from "@iconify/react";
 import { InputHTMLAttributes, useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
+import { FormControl, FormField, FormMessage } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input/input";
-import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
 interface WizardInputFieldProps<T extends FieldValues> {

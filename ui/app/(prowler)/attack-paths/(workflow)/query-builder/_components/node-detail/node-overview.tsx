@@ -1,8 +1,8 @@
 "use client";
 
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
 
 import { formatNodeLabels } from "../../_lib";

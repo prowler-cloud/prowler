@@ -23,6 +23,7 @@ import {
   AlertTitle,
   Button,
 } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/shadcn/dialog";
-import { useToast } from "@/components/ui";
 import type {
   AttackPathQuery,
   AttackPathQueryError,

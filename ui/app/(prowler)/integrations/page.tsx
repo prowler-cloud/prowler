@@ -5,7 +5,7 @@ import {
   SecurityHubIntegrationCard,
   SsoLinkCard,
 } from "@/components/integrations";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 export default async function Integrations() {
   return (

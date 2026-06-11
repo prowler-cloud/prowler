@@ -2,9 +2,9 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { DateWithTime } from "@/components/ui/entities";
-import { DataTableColumnHeader } from "@/components/ui/table";
-import { StatusBadge } from "@/components/ui/table/status-badge";
+import { DateWithTime } from "@/components/shadcn/entities";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
+import { StatusBadge } from "@/components/shadcn/table/status-badge";
 import { SCAN_JOBS_TAB, type ScanJobsTab, type ScanProps } from "@/types";
 
 import { formatScanDuration } from "../scans.utils";

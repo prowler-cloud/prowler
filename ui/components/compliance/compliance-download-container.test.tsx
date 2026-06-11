@@ -22,7 +22,8 @@ vi.mock("@/lib/helper", () => ({
   downloadCompliancePdf: downloadCompliancePdfMock,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   toast: {},
 }));
 

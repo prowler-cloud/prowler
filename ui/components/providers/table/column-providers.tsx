@@ -14,11 +14,11 @@ import type {
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
-import { DataTableColumnHeader } from "@/components/ui/table";
-import { DataTableExpandAllToggle } from "@/components/ui/table/data-table-expand-all-toggle";
-import { DataTableExpandableCell } from "@/components/ui/table/data-table-expandable-cell";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
+import { DataTableExpandAllToggle } from "@/components/shadcn/table/data-table-expand-all-toggle";
+import { DataTableExpandableCell } from "@/components/shadcn/table/data-table-expandable-cell";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,

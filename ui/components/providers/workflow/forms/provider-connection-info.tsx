@@ -1,3 +1,4 @@
+import { getProviderLogo } from "@/components/shadcn/entities/get-provider-logo";
 import { ProviderType } from "@/types";
 
 import {
@@ -5,7 +6,6 @@ import {
   ConnectionPending,
   ConnectionTrue,
 } from "../../../icons";
-import { getProviderLogo } from "../../../ui/entities/get-provider-logo";
 
 interface ProviderConnectionInfoProps {
   connected: boolean | null;
