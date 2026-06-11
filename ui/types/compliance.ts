@@ -279,6 +279,12 @@ const isOneOf = <T extends string>(
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
 
+const isOptionalString = (value: unknown): value is string | undefined =>
+  value === undefined || typeof value === "string";
+
+const isOptionalStringArray = (value: unknown): value is string[] | undefined =>
+  value === undefined || isStringArray(value);
+
 const ASD_METADATA_STRING_FIELDS = [
   "Section",
   "Description",
@@ -325,6 +331,43 @@ export interface ASDEssentialEightRequirement extends Requirement {
   audit_procedure: ASDEssentialEightAttributesMetadata["AuditProcedure"];
   additional_information: ASDEssentialEightAttributesMetadata["AdditionalInformation"];
   references: ASDEssentialEightAttributesMetadata["References"];
+}
+
+export interface OktaIDaaSStigAttributesMetadata {
+  Section: string;
+  Severity: string;
+  RuleID: string;
+  StigID: string;
+  CCI?: string[];
+  CheckText?: string;
+  FixText?: string;
+}
+
+const OKTA_IDAAS_STIG_REQUIRED_STRING_FIELDS = [
+  "Section",
+  "Severity",
+  "RuleID",
+  "StigID",
+] as const satisfies readonly (keyof OktaIDaaSStigAttributesMetadata)[];
+
+export const isOktaIDaaSStigAttributesMetadata = (
+  value: unknown,
+): value is OktaIDaaSStigAttributesMetadata =>
+  isRecord(value) &&
+  OKTA_IDAAS_STIG_REQUIRED_STRING_FIELDS.every(
+    (field) => typeof value[field] === "string",
+  ) &&
+  isOptionalStringArray(value.CCI) &&
+  isOptionalString(value.CheckText) &&
+  isOptionalString(value.FixText);
+
+export interface OktaIDaaSStigRequirement extends Requirement {
+  severity: OktaIDaaSStigAttributesMetadata["Severity"];
+  rule_id: OktaIDaaSStigAttributesMetadata["RuleID"];
+  stig_id: OktaIDaaSStigAttributesMetadata["StigID"];
+  cci: OktaIDaaSStigAttributesMetadata["CCI"];
+  check_text: OktaIDaaSStigAttributesMetadata["CheckText"];
+  fix_text: OktaIDaaSStigAttributesMetadata["FixText"];
 }
 
 // DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554).
@@ -374,6 +417,7 @@ export interface AttributesItemData {
         | CCCAttributesMetadata[]
         | CSAAttributesMetadata[]
         | ASDEssentialEightAttributesMetadata[]
+        | OktaIDaaSStigAttributesMetadata[]
         | DORAAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];

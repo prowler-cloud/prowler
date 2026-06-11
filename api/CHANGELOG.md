@@ -2,13 +2,22 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.0] (Prowler UNRELEASED)
+## [1.31.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `compliance-overviews/attributes` now resolves the provider from the scan, so multi-provider universal frameworks (e.g. CSA CCM) return the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
+
+---
+
+## [1.31.0] (Prowler v5.30.0)
 
 ### 🚀 Added
 
 - Opt-in automatic recovery of allowlisted idempotent background tasks whose worker died during a deploy or crash: when enabled via `DJANGO_TASK_RECOVERY_ENABLED` (off by default), stuck summary and deletion tasks are detected and re-run instead of staying pending forever (scan and Jira tasks are excluded), with a `reconcile_orphan_tasks` management command for on-demand recovery [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 - Label Postgres connections with `application_name="<component>:<alias>"` (component injected per process via `DJANGO_APP_COMPONENT`) so connections are attributable by component in `pg_stat_activity` [(#11494)](https://github.com/prowler-cloud/prowler/pull/11494)
+- DISA Okta IDaaS STIG V1R2 compliance framework export support for the Okta provider [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
 
 ### 🔄 Changed
 
@@ -17,10 +26,12 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🐞 Fixed
 
 - Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+- Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
+- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
 
 ### 🔐 Security
 
-- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) flagged by osv-scanner in `api/uv.lock` [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
+- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
 
 ---
 

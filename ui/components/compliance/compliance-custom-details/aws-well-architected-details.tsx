@@ -52,7 +52,7 @@ export const AWSWellArchitectedCustomDetails = ({
           <ComplianceBadge
             label="Question ID"
             value={requirement.well_architected_question_id as string}
-            color="indigo"
+            variant="tag"
           />
         )}
 
@@ -60,7 +60,7 @@ export const AWSWellArchitectedCustomDetails = ({
           <ComplianceBadge
             label="Practice ID"
             value={requirement.well_architected_practice_id as string}
-            color="indigo"
+            variant="tag"
           />
         )}
 
@@ -68,7 +68,7 @@ export const AWSWellArchitectedCustomDetails = ({
           <ComplianceBadge
             label="Assessment"
             value={requirement.assessment_method as string}
-            color="blue"
+            variant="info"
           />
         )}
       </ComplianceBadgeContainer>

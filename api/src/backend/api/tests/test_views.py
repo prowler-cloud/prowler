@@ -9570,6 +9570,79 @@ class TestComplianceOverviewViewSet:
             assert "Category" in first_attr
             assert "AWSService" in first_attr
 
+    def test_compliance_overview_attributes_resolves_provider_from_scan(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        # csa_ccm_4.0 is a multi-provider universal framework: a single
+        # compliance_id whose requirements expose different checks per provider.
+        # Passing a scan must return the check IDs for that scan's provider,
+        # otherwise the endpoint defaults to the first provider that declares the
+        # framework and azure/gcp requirements end up with check IDs that match
+        # no findings.
+        tenant = tenants_fixture[0]
+        gcp_provider = providers_fixture[2]
+        azure_provider = providers_fixture[4]
+        assert gcp_provider.provider == Provider.ProviderChoices.GCP.value
+        assert azure_provider.provider == Provider.ProviderChoices.AZURE.value
+
+        now = datetime.now(timezone.utc)
+        gcp_scan = Scan.objects.create(
+            name="gcp scan",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+        azure_scan = Scan.objects.create(
+            name="azure scan",
+            provider=azure_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+
+        def collect_check_ids(scan_id=None):
+            params = {"filter[compliance_id]": "csa_ccm_4.0"}
+            if scan_id is not None:
+                params["filter[scan_id]"] = str(scan_id)
+            response = authenticated_client.get(
+                reverse("complianceoverview-attributes"), params
+            )
+            assert response.status_code == status.HTTP_200_OK
+            check_ids = set()
+            for item in response.json()["data"]:
+                check_ids.update(item["attributes"]["attributes"]["check_ids"])
+            return check_ids
+
+        gcp_check_ids = collect_check_ids(gcp_scan.id)
+        azure_check_ids = collect_check_ids(azure_scan.id)
+
+        # Each scan resolves to its own provider's checks, and they differ.
+        assert gcp_check_ids
+        assert azure_check_ids
+        assert gcp_check_ids != azure_check_ids
+
+        # The returned check IDs belong to the SDK's per-provider definition.
+        from api.compliance import get_prowler_provider_compliance
+
+        def expected_check_ids(provider_type):
+            framework = get_prowler_provider_compliance(provider_type)["csa_ccm_4.0"]
+            expected = set()
+            for requirement in framework.requirements:
+                expected.update(requirement.checks.get(provider_type, []))
+            return expected
+
+        assert gcp_check_ids <= expected_check_ids(Provider.ProviderChoices.GCP.value)
+        assert azure_check_ids <= expected_check_ids(
+            Provider.ProviderChoices.AZURE.value
+        )
+        # The gcp check IDs are not what the first-provider fallback would return.
+        assert gcp_check_ids != azure_check_ids
+
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client
     ):
@@ -9577,6 +9650,39 @@ class TestComplianceOverviewViewSet:
             reverse("complianceoverview-attributes"),
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_compliance_overview_attributes_503_while_warming(
+        self, authenticated_client
+    ):
+        from api.compliance import COMPLIANCE_WARMED, COMPLIANCE_WARMING_STARTED
+
+        COMPLIANCE_WARMING_STARTED.set()
+        COMPLIANCE_WARMED.clear()
+        try:
+            response = authenticated_client.get(
+                reverse("complianceoverview-attributes"),
+                {"filter[compliance_id]": "aws_account_security_onboarding_aws"},
+            )
+        finally:
+            COMPLIANCE_WARMING_STARTED.clear()
+
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert response.json()["errors"][0]["code"] == "compliance_warming"
+
+    def test_compliance_overview_attributes_serves_when_warming_not_started(
+        self, authenticated_client
+    ):
+        # Dev fallback: under runserver warming never runs, so the guard must
+        # not refuse — the endpoint lazily loads and serves as before.
+        from api.compliance import COMPLIANCE_WARMED, COMPLIANCE_WARMING_STARTED
+
+        COMPLIANCE_WARMING_STARTED.clear()
+        COMPLIANCE_WARMED.clear()
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "aws_account_security_onboarding_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
 
     def test_compliance_overview_task_management_integration(
         self, authenticated_client, compliance_requirements_overviews_fixture

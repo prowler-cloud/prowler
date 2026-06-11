@@ -30,6 +30,7 @@ from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
 from django.contrib.postgres.search import SearchQuery
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import (
     BooleanField,
@@ -114,6 +115,8 @@ from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
+    COMPLIANCE_WARMED,
+    COMPLIANCE_WARMING_STARTED,
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
     get_prowler_provider_compliance,
@@ -122,6 +125,7 @@ from api.constants import SEVERITY_ORDER
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import (
+    ComplianceWarmingError,
     TaskFailedException,
     UpstreamAccessDeniedError,
     UpstreamAuthenticationError,
@@ -4641,6 +4645,16 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 location=OpenApiParameter.QUERY,
                 description="Compliance framework ID to get attributes for.",
             ),
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=False,
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Scan ID used to resolve the provider for "
+                "multi-provider universal frameworks (e.g. CSA CCM), so "
+                "the returned check IDs match the scan's provider. When omitted, "
+                "the first provider that declares the framework is used.",
+            ),
         ],
         responses={
             200: OpenApiResponse(
@@ -5059,6 +5073,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
     @action(detail=False, methods=["get"], url_name="attributes")
     def attributes(self, request):
+        # While the background warm-up is in progress, refuse immediately
+        # instead of falling through to the slow cold load on the request
+        # thread (which would trip the Gunicorn worker timeout). `is_set()` is
+        # a non-blocking flag read, so this never touches the loader.
+        if COMPLIANCE_WARMING_STARTED.is_set() and not COMPLIANCE_WARMED.is_set():
+            raise ComplianceWarmingError()
+
         compliance_id = request.query_params.get("filter[compliance_id]")
         if not compliance_id:
             raise ValidationError(
@@ -5074,7 +5095,26 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
         provider_type = None
 
-        # If we couldn't determine from database, try each provider type
+        # When a scan is provided, resolve the provider from it. Multi-provider
+        # universal frameworks (e.g. CSA CCM) share a single compliance_id
+        # across providers but expose different checks per provider, so the
+        # metadata (and therefore the check IDs the UI uses to fetch findings)
+        # must be returned for the scan's provider. Without this, the endpoint
+        # falls back to the first provider that declares the framework and
+        # returns its check IDs, leaving azure/gcp/... requirements with no
+        # matching findings.
+        scan_id = request.query_params.get("filter[scan_id]")
+        if scan_id:
+            try:
+                scan = Scan.objects.get(id=scan_id)
+                scan_provider_type = scan.provider.provider
+                if compliance_id in get_compliance_frameworks(scan_provider_type):
+                    provider_type = scan_provider_type
+            except (Scan.DoesNotExist, DjangoValidationError, ValueError):
+                provider_type = None
+
+        # Fall back to the first provider that declares the framework. Keeps the
+        # endpoint working for provider-agnostic callers that omit the scan.
         if not provider_type:
             for pt in Provider.ProviderChoices.values:
                 if compliance_id in get_compliance_frameworks(pt):
