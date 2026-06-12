@@ -34,6 +34,10 @@ class GCPBaseException(ProwlerException):
             "message": "Error loading Service Account Private Key credentials from dictionary",
             "remediation": "Check the dictionary and ensure it contains a Service Account Private Key.",
         },
+        (3011, "GCPGetOrganizationProjectsError"): {
+            "message": "Error retrieving projects under the organization via the Cloud Asset API",
+            "remediation": "Ensure the Cloud Asset API is enabled in the credentials' project and that the principal has 'roles/cloudasset.viewer' bound at the organization level. See https://cloud.google.com/asset-inventory/docs/access-control.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -103,4 +107,11 @@ class GCPLoadServiceAccountKeyFromDictError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3010, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPGetOrganizationProjectsError(GCPBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            3011, file=file, original_exception=original_exception, message=message
         )
