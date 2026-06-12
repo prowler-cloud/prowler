@@ -154,6 +154,8 @@ class User(AbstractBaseUser):
     company_name = models.CharField(max_length=150, blank=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True, editable=False)
+    totp_secret = models.CharField(max_length=32, blank=True, null=True)
+    totp_enabled = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]

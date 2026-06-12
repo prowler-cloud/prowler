@@ -6,6 +6,10 @@ from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
 from api.v1.views import (
+    TOTPSetupView,
+    TOTPVerifyView,
+    TOTPDisableView,
+    TOTPValidateView,
     AttackPathsScanViewSet,
     ComplianceOverviewViewSet,
     CustomSAMLLoginView,
@@ -221,5 +225,9 @@ urlpatterns = [
     path("", include(users_router.urls)),
     path("", include(integrations_router.urls)),
     path("schema", SchemaView.as_view(), name="schema"),
+    path("totp/setup", TOTPSetupView.as_view(), name="totp-setup"),
+    path("totp/verify", TOTPVerifyView.as_view(), name="totp-verify"),
+    path("totp/disable", TOTPDisableView.as_view(), name="totp-disable"),
+    path("totp/validate", TOTPValidateView.as_view(), name="totp-validate"),
     path("docs", SpectacularRedocView.as_view(url_name="schema"), name="docs"),
 ]
