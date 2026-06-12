@@ -76,6 +76,7 @@ jobs:
           files_ignore: |
             .github/**
             prowler/CHANGELOG.md
+            prowler/changelog.d/**
             docs/**
             permissions/**
             api/**
@@ -540,7 +541,7 @@ jobs:
         with:
           flags: prowler-py${{ matrix.python-version }}-vercel
           files: ./vercel_coverage.xml
-      
+
       # Scaleway Provider
       - name: Check if Scaleway files changed
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -588,7 +589,7 @@ jobs:
         with:
           flags: prowler-py${{ matrix.python-version }}-stackit
           files: ./stackit_coverage.xml
- 
+
       # External Provider (dynamic loading)
       - name: Check if External Provider files changed
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -608,14 +609,14 @@ jobs:
 
       - name: Upload External Provider coverage to Codecov
         if: steps.changed-external.outputs.any_changed == 'true'
-     
+
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: prowler-py${{ matrix.python-version }}-external
           files: ./external_coverage.xml
-          
+
       # Lib
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'

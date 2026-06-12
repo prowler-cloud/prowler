@@ -2,6 +2,8 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+<!-- changelog: release notes start -->
+
 ## [1.30.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed

@@ -105,6 +105,7 @@ jobs:
           files: ui/**
           files_ignore: |
             ui/CHANGELOG.md
+            ui/changelog.d/**
             ui/README.md
             ui/AGENTS.md
 
