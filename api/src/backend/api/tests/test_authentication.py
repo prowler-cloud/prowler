@@ -425,3 +425,19 @@ class TestSSEAuthentication:
         jwt_instance.get_validated_token.assert_called_once_with("query-jwt")
         assert user == "query-user"
         assert token == "validated"
+
+    def test_query_token_invalid_raises_authentication_failed(self):
+        request = MagicMock()
+        request.headers = {}
+        request.query_params = {"access_token": "bad-token"}
+
+        jwt_instance = MagicMock()
+        jwt_instance.get_validated_token.side_effect = AuthenticationFailed(
+            "Invalid token"
+        )
+
+        with patch("api.authentication.JWTAuthentication", return_value=jwt_instance):
+            with pytest.raises(AuthenticationFailed):
+                SSEAuthentication().authenticate(request)
+
+        jwt_instance.get_validated_token.assert_called_once_with("bad-token")
