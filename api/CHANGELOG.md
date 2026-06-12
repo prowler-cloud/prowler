@@ -2,8 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.1] (Prowler UNRELEASED)
-
+## [1.31.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed
 
