@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,7 +14,10 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk(Check):
     def execute(self):
-        pattern = r"\$\.eventSource\s*=\s*.?kms.amazonaws.com.+\$\.eventName\s*=\s*.?DisableKey.+\$\.eventName\s*=\s*.?ScheduleKeyDeletion.?"
+        pattern = build_metric_filter_pattern(
+            event_source="kms.amazonaws.com",
+            event_names=["DisableKey", "ScheduleKeyDeletion"],
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

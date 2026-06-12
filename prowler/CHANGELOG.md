@@ -6,8 +6,18 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- DISA Okta IDaaS STIG V1R2 compliance framework for the Okta provider, with a dedicated CSV output formatter and terminal summary table [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+- `securityhub_delegated_admin_enabled_all_regions` check for AWS provider, verifying that Security Hub has a delegated administrator, is active in all opted-in regions, and has organization auto-enable on [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
+- `config_delegated_admin_and_org_aggregator_all_regions` check for AWS provider, verifying that AWS Config has a delegated administrator and an organization aggregator covering all AWS regions [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
+- `sagemaker_clarify_exists` check for AWS provider [(#11211)](https://github.com/prowler-cloud/prowler/pull/11211)
 - `identity_storage_service_level_admins_scoped` check for OCI provider CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions [(#11523)](https://github.com/prowler-cloud/prowler/pull/11523)
+
+---
+
+## [5.30.0] (Prowler v5.30.0)
+
+### 🚀 Added
+
+- DISA Okta IDaaS STIG V1R2 compliance framework for the Okta provider, with a dedicated CSV output formatter and terminal summary table [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
 - `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 - Okta authenticator and password policy checks for STIG-aligned hardening requirements [(#11465)](https://github.com/prowler-cloud/prowler/pull/11465)
@@ -22,6 +32,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `kms_key_rotation_max_90_days` check for GCP provider, verifying KMS customer-managed keys are rotated every 90 days or less in line with the CIS Benchmark [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
 - `exchange_mailbox_primary_smtp_uses_custom_domain` check for M365 provider [(#11215)](https://github.com/prowler-cloud/prowler/pull/11215)
 - `bedrock_agent_role_least_privilege` check for AWS provider, flagging Bedrock Agent execution roles with full-access managed policies, broad `Resource:*` inline statements, or missing permissions boundaries [(#11335)](https://github.com/prowler-cloud/prowler/pull/11335)
+- STACKIT ObjectStorage service with Object Lock, default retention policy, and access key expiration checks [(#11397)](https://github.com/prowler-cloud/prowler/pull/11397)
 
 ### 🐞 Fixed
 
@@ -29,6 +40,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_users_mfa_capable` no longer flags pre-provisioned users with future `employeeHireDate`; future-hire date comparisons now tolerate naive datetimes [(#11511)](https://github.com/prowler-cloud/prowler/pull/11511)
 - M365 Admin Center group enumeration now follows Microsoft Graph pagination so group-scoped checks include groups beyond the first page [(#11510)](https://github.com/prowler-cloud/prowler/pull/11510)
 - GCP `kms_key_rotation_enabled` check now only verifies that automatic key rotation is enabled (any interval) instead of enforcing a 90-day period, resolving the mismatch between the check and its documentation; the CIS, Prowler ThreatScore, and CCC requirements that mandate a 90-day maximum were remapped to the new `kms_key_rotation_max_90_days` check [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
+- AWS CloudWatch log metric filter checks now validate `filterPattern` clauses regardless of order [(#11345)](https://github.com/prowler-cloud/prowler/pull/11345)
+- AWS `bedrock_api_key_no_long_term_credentials` now applies severity per finding (never-expires keys correctly flag as critical, no leak across findings) and aligns title and wording with AWS guidance to prefer short-term Bedrock API keys [(#11526)](https://github.com/prowler-cloud/prowler/pull/11526)
+
+### 🔐 Security
+
+- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
 
 ---
 
@@ -40,10 +57,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - GCP `logging_log_metric_filter_and_alert_*` checks now recognize organization-level aggregated sinks with `includeChildren=True`, no longer false-failing projects covered by a central bucket-scoped metric + alert [(#11488)](https://github.com/prowler-cloud/prowler/pull/11488)
 - Jira integration no longer fails with `400 INVALID_INPUT` when a finding has empty fields [(#11474)](https://github.com/prowler-cloud/prowler/pull/11474)
 - GCP `iam_service_account_unused` now passes disabled service accounts instead of failing them, since a disabled account cannot authenticate or be used [(#11467)](https://github.com/prowler-cloud/prowler/pull/11467)
-
-### 🔐 Security
-
-- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) flagged by osv-scanner [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
 
 ---
 
