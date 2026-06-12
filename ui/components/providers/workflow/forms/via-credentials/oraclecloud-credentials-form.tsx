@@ -52,9 +52,9 @@ export const OracleCloudCredentialsForm = ({
         control={control}
         name={ProviderCredentialFields.OCI_REGION}
         type="text"
-        label="Region"
+        label="Regions"
         labelPlacement="inside"
-        placeholder="e.g. us-ashburn-1"
+        placeholder="e.g. us-ashburn-1, us-phoenix-1"
         variant="bordered"
         isRequired
       />

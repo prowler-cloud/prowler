@@ -172,6 +172,36 @@ class TestInitializeProwlerProvider:
             key="value", mutelist_content={"key": "value"}
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_normalizes_regions_list(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {"regions": ["us-phoenix-1", "us-ashburn-1"]}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            region={"us-phoenix-1", "us-ashburn-1"}
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_preserves_legacy_region_string(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {"region": "us-ashburn-1"}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            region={"us-ashburn-1"}
+        )
+
 
 class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
@@ -184,6 +214,41 @@ class TestProwlerProviderConnectionTest:
         prowler_provider_connection_test(provider)
         mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
             key="value", provider_id="1234567890", raise_on_exception=False
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_uses_deterministic_region_string(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {"regions": ["us-phoenix-1", "us-ashburn-1"]}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            region="us-ashburn-1",
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_ignores_empty_regions_list(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {"regions": []}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
         )
 
     @pytest.mark.django_db

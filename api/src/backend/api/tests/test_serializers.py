@@ -2,7 +2,7 @@ import pytest
 from rest_framework.exceptions import ValidationError
 
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
-from api.v1.serializers import ImageProviderSecret
+from api.v1.serializers import ImageProviderSecret, OracleCloudProviderSecret
 
 
 class TestS3ConfigSerializer:
@@ -133,3 +133,75 @@ class TestImageProviderSecret:
         serializer = ImageProviderSecret(data={"registry_password": "pass"})
         assert not serializer.is_valid()
         assert "non_field_errors" in serializer.errors
+
+
+class TestOracleCloudProviderSecret:
+    def valid_secret(self, **overrides):
+        secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+            "regions": ["us-ashburn-1"],
+        }
+        secret.update(overrides)
+        return secret
+
+    def test_accepts_regions_list(self):
+        serializer = OracleCloudProviderSecret(data=self.valid_secret())
+
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["regions"] == ["us-ashburn-1"]
+
+    def test_accepts_regions_list_trims_values(self):
+        serializer = OracleCloudProviderSecret(
+            data=self.valid_secret(regions=[" us-ashburn-1 "])
+        )
+
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["regions"] == ["us-ashburn-1"]
+
+    def test_accepts_legacy_region_string(self):
+        secret = self.valid_secret(region="us-phoenix-1")
+        secret.pop("regions")
+        serializer = OracleCloudProviderSecret(data=secret)
+
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["region"] == "us-phoenix-1"
+
+    def test_accepts_legacy_region_string_trims_value(self):
+        secret = self.valid_secret(region=" us-phoenix-1 ")
+        secret.pop("regions")
+        serializer = OracleCloudProviderSecret(data=secret)
+
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["region"] == "us-phoenix-1"
+
+    @pytest.mark.parametrize(
+        "regions",
+        [
+            [],
+            [""],
+            ["us-ashburn-1", " "],
+            ["us-ashburn-1", "us-ashburn-1"],
+            ["us-ashburn-1", " us-ashburn-1 "],
+        ],
+    )
+    def test_rejects_invalid_regions_list(self, regions):
+        serializer = OracleCloudProviderSecret(data=self.valid_secret(regions=regions))
+
+        assert not serializer.is_valid()
+
+    def test_rejects_missing_regions_and_region(self):
+        secret = self.valid_secret()
+        secret.pop("regions")
+        serializer = OracleCloudProviderSecret(data=secret)
+
+        assert not serializer.is_valid()
+
+    def test_rejects_both_regions_and_legacy_region(self):
+        serializer = OracleCloudProviderSecret(
+            data=self.valid_secret(region="us-phoenix-1")
+        )
+
+        assert not serializer.is_valid()
