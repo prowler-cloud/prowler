@@ -4,14 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.31.1] (Prowler UNRELEASED)
 
-
 ### 🐞 Fixed
 
-<<<<<<< HEAD
-=======
 - `compliance-overviews/attributes` now resolves the provider from the scan, so multi-provider universal frameworks (e.g. CSA CCM) return the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
 - Attack Paths: `drop_subgraph` now deletes relationships first and then nodes in batches, using less memory on Neo4j when clearing a dense provider graph [(#11557)](https://github.com/prowler-cloud/prowler/pull/11557)
->>>>>>> a394c0fdf (fix(api): drop_subgraph deletes relationships then nodes to cut Neo4j memory (#11557))
 - OCI scans now use API key credentials with the configured region instead of falling back to `/home/prowler/.oci/config` [(#11558)](https://github.com/prowler-cloud/prowler/pull/11558)
 
 ---
