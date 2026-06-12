@@ -134,7 +134,7 @@ Example 1 is vague and even potentially ambiguous. Verbs state your purpose and 
 
 Explicit use of second-person pronouns (you) and possessives (your) should be minimized whenever possible. Those constructions are best reserved for cases when instructions are directly given in an imperative form:
 
-**Example of Improvement Through Avoiding Second Person Pronouns**
+### Example of Improvement Through Avoiding Second Person Pronouns
 
 **Original:**
 Prowler App can be installed in different ways, depending on your environment:
@@ -236,7 +236,7 @@ The use of bullet points is highly recommended when:
 * Information can be logically divided into multiple categories, each sharing characteristics, features, or other relevant classifications.
 * Items are significant enough as standalone concepts to deserve their own bullet point.
 
-**Example of Improvement Through Bullet Points**
+#### Example of Improvement Through Bullet Points
 
 **Original:**
 It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMS, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme), and your custom security frameworks.
@@ -467,7 +467,7 @@ Effective headers and section titles enhance document readability and structure,
 
     * **Example:**
         * How to Clone and Install Prowler from GitHub (header: Title case)
-            * How to install poetry dependencies (subheading: Sentence case)
+            * How to install uv dependencies (subheading: Sentence case)
 5.  **Using Keywords in Headers**
     Headers should include relevant keywords to improve document searchability:
     * **Good:** Scanning AWS Accounts in Parallel

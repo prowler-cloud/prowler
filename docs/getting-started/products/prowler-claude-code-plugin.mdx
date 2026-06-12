@@ -1,0 +1,101 @@
+---
+title: 'Prowler for Claude Code'
+---
+
+End-to-end cloud security and compliance from inside [Claude Code](https://www.claude.com/product/claude-code), powered by the [Prowler MCP server](/getting-started/products/prowler-mcp). The plugin lets Claude walk a Prowler Cloud-connected account through a compliance assessment and remediate findings until the chosen security or industry framework is compliant.
+
+<Warning>
+**Preview**: this plugin is under active development. Please report issues on [GitHub](https://github.com/prowler-cloud/prowler/issues) or join the [Slack community](https://goto.prowler.com/slack) for feedback.
+</Warning>
+
+## Requirements
+
+<CardGroup cols={3}>
+  <Card title="Claude Code" icon="terminal">
+    Installed and signed in. See the [official install guide](https://www.claude.com/product/claude-code).
+  </Card>
+  <Card title="Prowler Cloud account" icon="cloud">
+    The free tier is enough to start. Sign up at [cloud.prowler.com](https://cloud.prowler.com).
+  </Card>
+  <Card title="Prowler API key" icon="key">
+    Create one at [cloud.prowler.com/profile](https://cloud.prowler.com/profile).
+  </Card>
+</CardGroup>
+
+## Installation
+
+<Tabs>
+  <Tab title="From GitHub (recommended)">
+    Inside a Claude Code session:
+
+    ```text
+    /plugin marketplace add prowler-cloud/prowler
+    /plugin install prowler@prowler-plugins
+    ```
+  </Tab>
+  <Tab title="From a local clone">
+    If you already have the repository checked out:
+
+    ```text
+    /plugin marketplace add /absolute/path/to/prowler
+    /plugin install prowler@prowler-plugins
+    ```
+  </Tab>
+</Tabs>
+
+## Configuration
+
+On first install, Claude Code prompts for your **Prowler API key**. The value is stored securely (macOS keychain or `~/.claude/.credentials.json`) and used to authenticate against Prowler Cloud.
+
+<Note>
+To rotate the key, uninstall and reinstall the plugin — Claude Code will prompt again.
+</Note>
+
+## Verify the installation
+
+In a Claude Code session:
+
+```text
+/mcp          → "prowler" appears as a connected server
+/plugin       → "prowler" enabled, skill listed as prowler:framework-compliance-triage
+```
+
+If `/mcp` reports the `prowler` server as failed, the most common cause is a rejected API key — re-issue one in Prowler Cloud and reinstall the plugin so it re-prompts.
+
+## Usage
+
+Open a conversation that mentions the framework you want to comply with. Examples:
+
+- *"Make my AWS production account compliant with CIS 4.0."*
+- *"Make my current Terraform project compliant with Prowler ThreatScore Compliance Framework based on the latest scan results."*
+- *"Help me get to 100% on PCI-DSS for this GCP project."*
+
+You pick a **primary tool** (Terraform, gh / az / aws CLI, web console, or mixed) and a **mode**:
+
+<CardGroup cols={2}>
+  <Card title="Claude-assisted (default)" icon="hand">
+    Claude shows each fix — target resource, exact commands, side effects, reversibility — and waits for your go-ahead before applying.
+  </Card>
+  <Card title="Claude autonomous" icon="robot">
+    Claude presents a single up-front plan grouped by shared fixes, waits for one confirmation, then proceeds. It pauses mid-loop if a fix has wide blast radius or a finding is not applicable.
+  </Card>
+</CardGroup>
+
+Claude tracks progress in a markdown report under `.prowler/` at your project root — one file per framework × account. Open it any time to see exactly where the flow is. When all findings are addressed, Claude proposes a fresh Prowler scan to verify everything end-to-end.
+
+## Uninstalling
+
+```text
+/plugin uninstall prowler@prowler-plugins
+/plugin marketplace remove prowler-plugins
+```
+
+The stored API key is removed automatically.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `/mcp` shows `prowler` as failed | Rejected API key | Generate a new one in Prowler Cloud and reinstall the plugin to re-prompt. |
+| Skill not invoked when expected | The skill description didn't match the prompt | Mention the framework name plus "compliance" or "compliant" in your prompt. |
+| "Framework not supported" | Prowler Hub does not list the framework for that provider | Open an issue or PR at [github.com/prowler-cloud/prowler](https://github.com/prowler-cloud/prowler). |

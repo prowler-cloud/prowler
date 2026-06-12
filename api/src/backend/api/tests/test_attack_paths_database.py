@@ -1,16 +1,19 @@
 """
 Tests for Neo4j database lazy initialization.
 
-The Neo4j driver connects on first use by default. API processes may
-eagerly initialize the driver during app startup, while Celery workers
-remain lazy. These tests validate the database module behavior itself.
+The Neo4j driver is created on first use for every process type; app startup
+never contacts Neo4j. These tests validate the database module behavior itself.
 """
 
 import threading
+
 from unittest.mock import MagicMock, patch
 
 import neo4j
+import neo4j.exceptions
 import pytest
+
+import api.attack_paths.database as db_module
 
 
 class TestLazyInitialization:
@@ -19,8 +22,6 @@ class TestLazyInitialization:
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         """Reset module-level singleton state before each test."""
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
 
         db_module._driver = None
@@ -31,8 +32,6 @@ class TestLazyInitialization:
 
     def test_driver_not_initialized_at_import(self):
         """Driver should be None after module import (no eager connection)."""
-        import api.attack_paths.database as db_module
-
         assert db_module._driver is None
 
     @patch("api.attack_paths.database.settings")
@@ -41,8 +40,6 @@ class TestLazyInitialization:
         self, mock_driver_factory, mock_settings
     ):
         """init_driver() should create connection only when called."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver_factory.return_value = mock_driver
         mock_settings.DATABASES = {
@@ -65,12 +62,36 @@ class TestLazyInitialization:
 
     @patch("api.attack_paths.database.settings")
     @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
+    def test_init_driver_leaves_driver_none_when_verify_fails(
+        self, mock_driver_factory, mock_settings
+    ):
+        """A failed verify_connectivity() must not publish or leak the driver."""
+        mock_driver = MagicMock()
+        mock_driver.verify_connectivity.side_effect = (
+            neo4j.exceptions.ServiceUnavailable("down")
+        )
+        mock_driver_factory.return_value = mock_driver
+        mock_settings.DATABASES = {
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": 7687,
+                "USER": "neo4j",
+                "PASSWORD": "password",
+            }
+        }
+
+        with pytest.raises(neo4j.exceptions.ServiceUnavailable):
+            db_module.init_driver()
+
+        assert db_module._driver is None
+        mock_driver.close.assert_called_once()
+
+    @patch("api.attack_paths.database.settings")
+    @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
     def test_init_driver_returns_cached_driver_on_subsequent_calls(
         self, mock_driver_factory, mock_settings
     ):
         """Subsequent calls should return cached driver without reconnecting."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver_factory.return_value = mock_driver
         mock_settings.DATABASES = {
@@ -99,8 +120,6 @@ class TestLazyInitialization:
         self, mock_driver_factory, mock_settings
     ):
         """get_driver() should use init_driver() for lazy initialization."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver_factory.return_value = mock_driver
         mock_settings.DATABASES = {
@@ -118,14 +137,54 @@ class TestLazyInitialization:
         mock_driver_factory.assert_called_once()
 
 
+class TestConnectionAcquisitionTimeout:
+    """Test that the connection acquisition timeout is configurable."""
+
+    @pytest.fixture(autouse=True)
+    def reset_module_state(self):
+        original_driver = db_module._driver
+        original_acq_timeout = db_module.CONN_ACQUISITION_TIMEOUT
+        original_conn_timeout = db_module.CONNECTION_TIMEOUT
+
+        db_module._driver = None
+
+        yield
+
+        db_module._driver = original_driver
+        db_module.CONN_ACQUISITION_TIMEOUT = original_acq_timeout
+        db_module.CONNECTION_TIMEOUT = original_conn_timeout
+
+    @patch("api.attack_paths.database.settings")
+    @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
+    def test_driver_receives_configured_timeout(
+        self, mock_driver_factory, mock_settings
+    ):
+        """init_driver() should pass the configured timeouts to the neo4j driver."""
+        mock_driver_factory.return_value = MagicMock()
+        mock_settings.DATABASES = {
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": 7687,
+                "USER": "neo4j",
+                "PASSWORD": "password",
+            }
+        }
+        db_module.CONN_ACQUISITION_TIMEOUT = 42
+        db_module.CONNECTION_TIMEOUT = 7
+
+        db_module.init_driver()
+
+        _, kwargs = mock_driver_factory.call_args
+        assert kwargs["connection_acquisition_timeout"] == 42
+        assert kwargs["connection_timeout"] == 7
+
+
 class TestAtexitRegistration:
     """Test that atexit cleanup handler is registered correctly."""
 
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         """Reset module-level singleton state before each test."""
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
 
         db_module._driver = None
@@ -141,8 +200,6 @@ class TestAtexitRegistration:
         self, mock_driver_factory, mock_atexit_register, mock_settings
     ):
         """atexit.register should be called on first initialization."""
-        import api.attack_paths.database as db_module
-
         mock_driver_factory.return_value = MagicMock()
         mock_settings.DATABASES = {
             "neo4j": {
@@ -168,8 +225,6 @@ class TestAtexitRegistration:
         The double-checked locking on _driver ensures the atexit registration
         block only executes once (when _driver is first created).
         """
-        import api.attack_paths.database as db_module
-
         mock_driver_factory.return_value = MagicMock()
         mock_settings.DATABASES = {
             "neo4j": {
@@ -194,8 +249,6 @@ class TestCloseDriver:
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         """Reset module-level singleton state before each test."""
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
 
         db_module._driver = None
@@ -206,8 +259,6 @@ class TestCloseDriver:
 
     def test_close_driver_closes_and_clears_driver(self):
         """close_driver() should close the driver and set it to None."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         db_module._driver = mock_driver
 
@@ -218,8 +269,6 @@ class TestCloseDriver:
 
     def test_close_driver_handles_none_driver(self):
         """close_driver() should handle case where driver is None."""
-        import api.attack_paths.database as db_module
-
         db_module._driver = None
 
         # Should not raise
@@ -229,8 +278,6 @@ class TestCloseDriver:
 
     def test_close_driver_clears_driver_even_on_close_error(self):
         """Driver should be cleared even if close() raises an exception."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver.close.side_effect = Exception("Connection error")
         db_module._driver = mock_driver
@@ -246,8 +293,6 @@ class TestExecuteReadQuery:
     """Test read query execution helper."""
 
     def test_execute_read_query_calls_read_session_and_returns_result(self):
-        import api.attack_paths.database as db_module
-
         tx = MagicMock()
         expected_graph = MagicMock()
         run_result = MagicMock()
@@ -289,8 +334,6 @@ class TestExecuteReadQuery:
         assert result is expected_graph
 
     def test_execute_read_query_defaults_parameters_to_empty_dict(self):
-        import api.attack_paths.database as db_module
-
         tx = MagicMock()
         run_result = MagicMock()
         run_result.graph.return_value = MagicMock()
@@ -325,8 +368,6 @@ class TestGetSessionReadOnly:
 
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
         db_module._driver = None
         yield
@@ -341,8 +382,6 @@ class TestGetSessionReadOnly:
     )
     def test_get_session_raises_write_query_not_allowed(self, neo4j_code):
         """Read-mode Neo4j errors should raise `WriteQueryNotAllowedException`."""
-        import api.attack_paths.database as db_module
-
         mock_session = MagicMock()
         neo4j_error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
             code=neo4j_code,
@@ -362,8 +401,6 @@ class TestGetSessionReadOnly:
 
     def test_get_session_raises_generic_exception_for_other_errors(self):
         """Non-read-mode Neo4j errors should raise GraphDatabaseQueryException."""
-        import api.attack_paths.database as db_module
-
         mock_session = MagicMock()
         neo4j_error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
             code="Neo.ClientError.Statement.SyntaxError",
@@ -388,8 +425,6 @@ class TestThreadSafety:
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         """Reset module-level singleton state before each test."""
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
 
         db_module._driver = None
@@ -404,8 +439,6 @@ class TestThreadSafety:
         self, mock_driver_factory, mock_settings
     ):
         """Multiple threads calling init_driver() should create only one driver."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver_factory.return_value = mock_driver
         mock_settings.DATABASES = {
@@ -448,8 +481,6 @@ class TestHasProviderData:
     """Test has_provider_data helper for checking provider nodes in Neo4j."""
 
     def test_returns_true_when_nodes_exist(self):
-        import api.attack_paths.database as db_module
-
         mock_session = MagicMock()
         mock_result = MagicMock()
         mock_result.single.return_value = MagicMock()  # non-None record
@@ -468,8 +499,6 @@ class TestHasProviderData:
         mock_session.run.assert_called_once()
 
     def test_returns_false_when_no_nodes(self):
-        import api.attack_paths.database as db_module
-
         mock_session = MagicMock()
         mock_result = MagicMock()
         mock_result.single.return_value = None
@@ -486,8 +515,6 @@ class TestHasProviderData:
             assert db_module.has_provider_data("db-tenant-abc", "provider-123") is False
 
     def test_returns_false_when_database_not_found(self):
-        import api.attack_paths.database as db_module
-
         session_ctx = MagicMock()
         session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
             message="Database does not exist",
@@ -503,8 +530,6 @@ class TestHasProviderData:
             )
 
     def test_raises_on_other_errors(self):
-        import api.attack_paths.database as db_module
-
         session_ctx = MagicMock()
         session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
             message="Connection refused",
@@ -517,3 +542,84 @@ class TestHasProviderData:
         ):
             with pytest.raises(db_module.GraphDatabaseQueryException):
                 db_module.has_provider_data("db-tenant-abc", "provider-123")
+
+
+class TestDropSubgraph:
+    """Test drop_subgraph two-phase batched deletion of a provider's graph."""
+
+    @staticmethod
+    def _result(count):
+        result = MagicMock()
+        result.single.return_value.get.return_value = count
+        return result
+
+    @staticmethod
+    def _session_ctx(session):
+        ctx = MagicMock()
+        ctx.__enter__.return_value = session
+        ctx.__exit__.return_value = False
+        return ctx
+
+    def test_deletes_relationships_then_nodes_in_batches(self):
+        session = MagicMock()
+        # Phase 1 (relationships): one full batch then empty.
+        # Phase 2 (nodes): one full batch then empty.
+        session.run.side_effect = [
+            self._result(1000),
+            self._result(0),
+            self._result(1000),
+            self._result(0),
+        ]
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=self._session_ctx(session),
+        ):
+            deleted = db_module.drop_subgraph("db-tenant-abc", "provider-123")
+
+        # Only phase-2 node counts contribute to the return value.
+        assert deleted == 1000
+        assert session.run.call_count == 4
+
+        queries = [call.args[0] for call in session.run.call_args_list]
+
+        # Regression guard: the memory blow-up was caused by DETACH DELETE.
+        assert all("DETACH DELETE" not in query for query in queries)
+
+        rel_queries = [query for query in queries if "DELETE r" in query]
+        node_queries = [query for query in queries if "DELETE n" in query]
+        assert rel_queries and node_queries
+        # DISTINCT avoids double-counting relationships matched from both ends.
+        assert all("DISTINCT r" in query for query in rel_queries)
+
+        # Relationships must be fully drained before nodes are deleted.
+        first_node = next(i for i, q in enumerate(queries) if "DELETE n" in q)
+        last_rel = max(i for i, q in enumerate(queries) if "DELETE r" in q)
+        assert last_rel < first_node
+
+    def test_returns_zero_when_database_not_found(self):
+        session_ctx = MagicMock()
+        session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
+            message="Database does not exist",
+            code="Neo.ClientError.Database.DatabaseNotFound",
+        )
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            assert db_module.drop_subgraph("db-tenant-gone", "provider-123") == 0
+
+    def test_raises_on_other_errors(self):
+        session_ctx = MagicMock()
+        session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
+            message="Connection refused",
+            code="Neo.TransientError.General.UnknownError",
+        )
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            with pytest.raises(db_module.GraphDatabaseQueryException):
+                db_module.drop_subgraph("db-tenant-abc", "provider-123")

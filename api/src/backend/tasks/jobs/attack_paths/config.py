@@ -37,6 +37,8 @@ class ProviderConfig:
     # Label for resources connected to the account node, enabling indexed finding lookups.
     resource_label: str  # e.g., "_AWSResource"
     ingestion_function: Callable
+    # Maps a Postgres resource UID (e.g. full ARN) to the short-id form Cartography stores on some node types (e.g. `i-xxx` for EC2Instance).
+    short_uid_extractor: Callable[[str], str]
 
 
 # Provider Configurations
@@ -48,6 +50,7 @@ AWS_CONFIG = ProviderConfig(
     uid_field="arn",
     resource_label="_AWSResource",
     ingestion_function=aws.start_aws_ingestion,
+    short_uid_extractor=aws.extract_short_uid,
 )
 
 PROVIDER_CONFIGS: dict[str, ProviderConfig] = {
@@ -114,6 +117,21 @@ def get_provider_resource_label(provider_type: str) -> str:
     """Get the resource label for a provider type (e.g., `_AWSResource`)."""
     config = PROVIDER_CONFIGS.get(provider_type)
     return config.resource_label if config else "_UnknownProviderResource"
+
+
+def _identity_short_uid(uid: str) -> str:
+    """Fallback short-uid extractor for providers without a custom mapping."""
+    return uid
+
+
+def get_short_uid_extractor(provider_type: str) -> Callable[[str], str]:
+    """Get the short-uid extractor for a provider type.
+
+    Returns an identity function when the provider is unknown, so callers can
+    rely on a callable always being returned.
+    """
+    config = PROVIDER_CONFIGS.get(provider_type)
+    return config.short_uid_extractor if config else _identity_short_uid
 
 
 # Dynamic Isolation Label Helpers

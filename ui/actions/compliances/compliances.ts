@@ -6,12 +6,10 @@ import { handleApiResponse } from "@/lib/server-actions-helper";
 export const getCompliancesOverview = async ({
   scanId,
   region,
-  query,
   filters = {},
 }: {
   scanId?: string;
   region?: string | string[];
-  query?: string;
   filters?: Record<string, string | string[] | undefined>;
 } = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -31,8 +29,6 @@ export const getCompliancesOverview = async ({
 
   setParam("filter[scan_id]", scanId);
   setParam("filter[region__in]", region);
-  if (query) url.searchParams.set("filter[search]", query);
-
   try {
     const response = await fetch(url.toString(), {
       headers,
@@ -46,15 +42,16 @@ export const getCompliancesOverview = async ({
 };
 
 export const getComplianceOverviewMetadataInfo = async ({
-  query = "",
   sort = "",
   filters = {},
-}) => {
+}: {
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
+} = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/compliance-overviews/metadata`);
 
-  if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
@@ -76,16 +73,32 @@ export const getComplianceOverviewMetadataInfo = async ({
   }
 };
 
-export const getComplianceAttributes = async (complianceId: string) => {
+export const getComplianceAttributes = async (
+  complianceId: string,
+  scanId?: string,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
     const url = new URL(`${apiBaseUrl}/compliance-overviews/attributes`);
     url.searchParams.append("filter[compliance_id]", complianceId);
+    // Pass the scan so multi-provider universal frameworks (e.g. CSA CCM)
+    // resolve the check IDs for the scan's provider instead of defaulting to
+    // the first provider that declares the framework.
+    if (scanId) {
+      url.searchParams.append("filter[scan_id]", scanId);
+    }
 
     const response = await fetch(url.toString(), {
       headers,
     });
+
+    // The compliance catalog is still warming after a deploy/restart. Signal
+    // the page to render the "still loading" state instead of letting this
+    // become a thrown 5xx (which would be captured as a server error).
+    if (response.status === 503) {
+      return { warming: true as const, status: 503 };
+    }
 
     return handleApiResponse(response);
   } catch (error) {

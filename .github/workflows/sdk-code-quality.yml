@@ -1,14 +1,14 @@
-name: "SDK: Code Quality"
+name: 'SDK: Code Quality'
 
 on:
   push:
     branches:
-      - "master"
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
   pull_request:
     branches:
-      - "master"
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -26,18 +26,20 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
-            github.com:443 pypi.org:443 files.pythonhosted.org:443
+            github.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -47,7 +49,7 @@ jobs:
 
       - name: Check for SDK changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: ./**
           files_ignore: |
@@ -70,25 +72,26 @@ jobs:
             contrib/**
             **/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Check Poetry lock file
+      - name: Check uv lock file
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry check --lock
+        run: uv lock --check
 
       - name: Lint with flake8
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude
-          contrib,ui,api,skills
+        run: uv run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude .venv,contrib,ui,api,skills,mcp_server
 
       - name: Check format with black
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run black --exclude "api|ui|skills" --check .
+        # mcp_server has its own pyproject and uses ruff format, exclude it so SDK black
+        # does not fight ruff over rules it never formatted.
+        run: uv run black --exclude "\.venv|api|ui|skills|mcp_server" --check .
 
       - name: Lint with pylint
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/
+        run: uv run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/

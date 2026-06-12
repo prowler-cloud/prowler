@@ -11,10 +11,10 @@ from typing import Any, Dict, Optional, Set
 from pydantic.v1 import BaseModel, Field, ValidationError, validator
 from pydantic.v1.error_wrappers import ErrorWrapper
 
-from prowler.config.config import EXTERNAL_TOOL_PROVIDERS, Provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
+from prowler.providers.common.provider import Provider as ProviderABC
 
 # Valid ResourceGroup values as defined in the RFC
 VALID_RESOURCE_GROUPS = frozenset(
@@ -62,6 +62,9 @@ VALID_CATEGORIES = frozenset(
         "e5",
         "privilege-escalation",
         "ec2-imdsv1",
+        "vercel-hobby-plan",
+        "vercel-pro-plan",
+        "vercel-enterprise-plan",
     }
 )
 
@@ -244,18 +247,19 @@ class CheckMetadata(BaseModel):
     # store the compliance later if supplied
     Compliance: Optional[list[Any]] = Field(default_factory=list)
 
+    # TODO: Remove noqa and fix cls vulture errors
     @validator("Categories", each_item=True, pre=True, always=True)
-    def valid_category(cls, value, values):
+    def valid_category(cls, value, values):  # noqa: F841
         if not isinstance(value, str):
             raise ValueError("Categories must be a list of strings")
         value_lower = value.lower()
         if not re.match("^[a-z0-9-]+$", value_lower):
             raise ValueError(
-                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers and hyphen '-'"
+                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers, and hyphen '-'"
             )
         if (
             value_lower not in VALID_CATEGORIES
-            and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS
+            and not ProviderABC.is_tool_wrapper_provider(values.get("Provider"))
         ):
             raise ValueError(
                 f"Invalid category: '{value_lower}'. Must be one of: {', '.join(sorted(VALID_CATEGORIES))}."
@@ -279,12 +283,14 @@ class CheckMetadata(BaseModel):
         return resource_type
 
     @validator("ServiceName", pre=True, always=True)
-    def validate_service_name(cls, service_name, values):
+    def validate_service_name(cls, service_name, values):  # noqa: F841
         if not service_name:
             raise ValueError("ServiceName must be a non-empty string")
 
         check_id = values.get("CheckID")
-        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if check_id and not ProviderABC.is_tool_wrapper_provider(
+            values.get("Provider")
+        ):
             service_from_check_id = check_id.split("_")[0]
             if service_name != service_from_check_id:
                 raise ValueError(
@@ -296,11 +302,13 @@ class CheckMetadata(BaseModel):
         return service_name
 
     @validator("CheckID", pre=True, always=True)
-    def valid_check_id(cls, check_id, values):
+    def valid_check_id(cls, check_id, values):  # noqa: F841
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
-        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if check_id and not ProviderABC.is_tool_wrapper_provider(
+            values.get("Provider")
+        ):
             if "-" in check_id:
                 raise ValueError(
                     f"CheckID {check_id} contains a hyphen, which is not allowed"
@@ -309,8 +317,9 @@ class CheckMetadata(BaseModel):
         return check_id
 
     @validator("CheckTitle", pre=True, always=True)
-    def validate_check_title(cls, check_title, values):
-        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+    @classmethod
+    def validate_check_title(cls, check_title, values):  # noqa: F841
+        if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(check_title) > 150:
                 raise ValueError(
                     f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
@@ -322,14 +331,18 @@ class CheckMetadata(BaseModel):
         return check_title
 
     @validator("RelatedUrl", pre=True, always=True)
-    def validate_related_url(cls, related_url, values):
-        if related_url and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+    @classmethod
+    def validate_related_url(cls, related_url, values):  # noqa: F841
+        if related_url and not ProviderABC.is_tool_wrapper_provider(
+            values.get("Provider")
+        ):
             raise ValueError("RelatedUrl must be empty. This field is deprecated.")
         return related_url
 
     @validator("Remediation")
-    def validate_recommendation_url(cls, remediation, values):
-        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+    @classmethod
+    def validate_recommendation_url(cls, remediation, values):  # noqa: F841
+        if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             url = remediation.Recommendation.Url
             if url and not url.startswith("https://hub.prowler.com/"):
                 raise ValueError(
@@ -338,11 +351,11 @@ class CheckMetadata(BaseModel):
         return remediation
 
     @validator("CheckType", pre=True, always=True)
-    def validate_check_type(cls, check_type, values):
+    def validate_check_type(cls, check_type, values):  # noqa: F841
         provider = values.get("Provider", "").lower()
 
         # Non-AWS providers must have an empty CheckType list
-        if provider != "aws" and provider not in EXTERNAL_TOOL_PROVIDERS:
+        if provider != "aws" and not ProviderABC.is_tool_wrapper_provider(provider):
             if check_type:
                 raise ValueError(
                     f"CheckType must be empty for non-AWS providers. Got {check_type} for provider '{provider}'."
@@ -367,8 +380,9 @@ class CheckMetadata(BaseModel):
         return check_type
 
     @validator("Description", pre=True, always=True)
-    def validate_description(cls, description, values):
-        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+    @classmethod
+    def validate_description(cls, description, values):  # noqa: F841
+        if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(description) > 400:
                 raise ValueError(
                     f"Description must not exceed 400 characters, got {len(description)} characters"
@@ -376,8 +390,9 @@ class CheckMetadata(BaseModel):
         return description
 
     @validator("Risk", pre=True, always=True)
-    def validate_risk(cls, risk, values):
-        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+    @classmethod
+    def validate_risk(cls, risk, values):  # noqa: F841
+        if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(risk) > 400:
                 raise ValueError(
                     f"Risk must not exceed 400 characters, got {len(risk)} characters"
@@ -385,7 +400,7 @@ class CheckMetadata(BaseModel):
         return risk
 
     @validator("ResourceGroup", pre=True, always=True)
-    def validate_resource_group(cls, resource_group):
+    def validate_resource_group(cls, resource_group):  # noqa: F841
         if resource_group and resource_group not in VALID_RESOURCE_GROUPS:
             raise ValueError(
                 f"Invalid ResourceGroup: '{resource_group}'. Must be one of: {', '.join(sorted(VALID_RESOURCE_GROUPS))} or empty string."
@@ -393,7 +408,7 @@ class CheckMetadata(BaseModel):
         return resource_group
 
     @validator("AdditionalURLs", pre=True, always=True)
-    def validate_additional_urls(cls, additional_urls):
+    def validate_additional_urls(cls, additional_urls):  # noqa: F841
         if not isinstance(additional_urls, list):
             raise ValueError("AdditionalURLs must be a list")
 
@@ -429,6 +444,20 @@ class CheckMetadata(BaseModel):
             metadata_file = f"{check_path}/{check_name}.metadata.json"
             # Load metadata
             check_metadata = load_check_metadata(metadata_file)
+            # Built-in wins on CheckID collision. Plug-in entry points are
+            # appended after built-ins by `recover_checks_from_provider`, so
+            # a duplicate CheckID here means an entry-point check is trying
+            # to override a built-in. Ignore the override (the built-in
+            # metadata stays) and surface it via a warning — matching the
+            # precedence enforced by `_resolve_check_module`.
+            if check_metadata.CheckID in bulk_check_metadata:
+                logger.warning(
+                    f"Plug-in check metadata '{check_metadata.CheckID}' "
+                    f"(loaded from '{metadata_file}') is being IGNORED — "
+                    f"a built-in with the same CheckID exists. To use your "
+                    f"plug-in, register it under a different CheckID."
+                )
+                continue
             bulk_check_metadata[check_metadata.CheckID] = check_metadata
 
         return bulk_check_metadata
@@ -466,7 +495,7 @@ class CheckMetadata(BaseModel):
         # If the bulk checks metadata is not provided, get it
         if not bulk_checks_metadata:
             bulk_checks_metadata = {}
-            available_providers = [p.value for p in Provider]
+            available_providers = ProviderABC.get_available_providers()
             for provider_name in available_providers:
                 bulk_checks_metadata.update(CheckMetadata.get_bulk(provider_name))
         if provider:
@@ -491,7 +520,7 @@ class CheckMetadata(BaseModel):
             # Loaded here, as it is not always needed
             if not bulk_compliance_frameworks:
                 bulk_compliance_frameworks = {}
-                available_providers = [p.value for p in Provider]
+                available_providers = ProviderABC.get_available_providers()
                 for provider in available_providers:
                     bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             checks_from_compliance_framework = (
@@ -930,6 +959,41 @@ class CheckReportGithub(Check_Report):
 
 
 @dataclass
+class CheckReportOkta(Check_Report):
+    """Contains the Okta Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    org_domain: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        org_domain: str = None,
+        region: str = "global",
+    ) -> None:
+        """Initialize the Okta Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            org_domain: The Okta organization domain related with the finding.
+            region: Always "global" — Okta has no regional concept.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.org_domain = org_domain or getattr(resource, "org_domain", "")
+        self.region = region
+
+
+@dataclass
 class CheckReportGoogleWorkspace(Check_Report):
     """Contains the Google Workspace Check's finding information."""
 
@@ -1094,15 +1158,10 @@ class CheckReportIAC(Check_Report):
 
         self.resource = finding
         self.resource_name = file_path
-        self.resource_line_range = (
-            (
-                str(finding.get("CauseMetadata", {}).get("StartLine", ""))
-                + ":"
-                + str(finding.get("CauseMetadata", {}).get("EndLine", ""))
-            )
-            if finding.get("CauseMetadata", {}).get("StartLine", "")
-            else ""
-        )
+        cause = finding.get("CauseMetadata", {})
+        start = cause.get("StartLine") or finding.get("StartLine")
+        end = cause.get("EndLine") or finding.get("EndLine")
+        self.resource_line_range = f"{start}:{end}" if start else ""
 
 
 @dataclass
@@ -1197,6 +1256,31 @@ class CheckReportNHN(Check_Report):
 
 
 @dataclass
+class CheckReportStackIT(Check_Report):
+    """Contains the StackIT Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the StackIT Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.location = getattr(resource, "region", getattr(resource, "location", ""))
+
+
+@dataclass
 class CheckReportOpenStack(Check_Report):
     """Contains the OpenStack Check's finding information."""
 
@@ -1282,6 +1366,54 @@ class CheckReportVercel(Check_Report):
     def region(self) -> str:
         """Vercel is global - return 'global'."""
         return "global"
+
+
+@dataclass
+class CheckReportScaleway(Check_Report):
+    """Contains the Scaleway Check's finding information.
+
+    Scaleway scans run at the organization level. Most IAM/account-level
+    resources are global; regional resources expose a ``region`` attribute
+    on the underlying object, which we surface as the report ``region``.
+    """
+
+    resource_name: str
+    resource_id: str
+    organization_id: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        organization_id: str = None,
+    ) -> None:
+        """Initialize the Scaleway Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary.
+            resource: The Scaleway resource being checked.
+            resource_name: Override for resource name.
+            resource_id: Override for resource ID.
+            organization_id: Override for the organization ID.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.organization_id = organization_id or getattr(
+            resource, "organization_id", ""
+        )
+        self._region = getattr(resource, "region", None) or "global"
+
+    @property
+    def region(self) -> str:
+        """Scaleway regional resources expose their own region; IAM is global."""
+        return self._region
 
 
 # Testing Pending

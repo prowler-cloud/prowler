@@ -296,6 +296,7 @@ class Provider(RowLevelSecurityProtectedModel):
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
         VERCEL = "vercel", _("Vercel")
+        OKTA = "okta", _("Okta")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -351,6 +352,26 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
                 code="googleworkspace-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_okta_uid(value):
+        if not re.match(
+            r"^[a-z0-9][a-z0-9-]*\.("
+            r"okta\.com|oktapreview\.com|okta-emea\.com|"
+            r"okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com"
+            r")$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail=(
+                    "Okta provider ID must be a valid Okta-managed org domain "
+                    "(e.g., acme.okta.com, also .oktapreview.com / .okta-emea.com "
+                    "/ .okta-gov.com / .okta.mil / .okta-miltest.com / "
+                    ".trex-govcloud.com), without scheme or path."
+                ),
+                code="okta-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -480,6 +501,12 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider == self.ProviderChoices.OKTA and self.uid:
+            # Mirror the SDK, which lowercases the org domain before connecting.
+            # Without this the API would reject Acme.okta.com even though the
+            # SDK would accept it, and stored uids could disagree with the
+            # authenticated org domain.
+            self.uid = self.uid.strip().lower()
         getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):
@@ -595,9 +622,39 @@ class Scan(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
+    _SCOPING_SCANNER_ARG_KEYS_CACHE: tuple[str, ...] | None = None
+
+    @classmethod
+    def get_scoping_scanner_arg_keys(cls) -> tuple[str, ...]:
+        """Return the scanner_args keys that mark a scan as scoped.
+
+        Derived from ``prowler.lib.scan.scan.Scan.__init__`` so the API stays
+        in sync with whatever the SDK actually accepts as filters. Cached at
+        class level — the signature is stable for the process lifetime.
+        """
+        if cls._SCOPING_SCANNER_ARG_KEYS_CACHE is None:
+            import inspect
+
+            from prowler.lib.scan.scan import Scan as ProwlerScan
+
+            params = inspect.signature(ProwlerScan.__init__).parameters
+            cls._SCOPING_SCANNER_ARG_KEYS_CACHE = tuple(
+                name for name in params if name not in ("self", "provider")
+            )
+        return cls._SCOPING_SCANNER_ARG_KEYS_CACHE
+
     class TriggerChoices(models.TextChoices):
         SCHEDULED = "scheduled", _("Scheduled")
         MANUAL = "manual", _("Manual")
+
+    # Trigger values for scans that ran the SDK end-to-end. Imported scans (or
+    # any future trigger) are intentionally NOT in this set — they may carry
+    # only a partial slice of resources, so post-scan logic that depends on a
+    # full-scope sweep (e.g. resetting ephemeral resource findings) must skip
+    # them by default.
+    LIVE_SCAN_TRIGGERS = frozenset(
+        (TriggerChoices.SCHEDULED.value, TriggerChoices.MANUAL.value)
+    )
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     name = models.CharField(
@@ -680,6 +737,24 @@ class Scan(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "scans"
+
+    def is_full_scope(self) -> bool:
+        """Return True if this scan ran with no scoping filters at all.
+
+        Used to gate post-scan operations (such as resetting the
+        failed_findings_count of resources missing from the scan) that are only
+        safe when the scan covered every check, service, and category. Imported
+        scans are NOT full-scope by definition — they may carry only a partial
+        slice of resources, so they're rejected via ``trigger`` even before the
+        scanner_args check.
+        """
+        if self.trigger not in self.LIVE_SCAN_TRIGGERS:
+            return False
+        scanner_args = self.scanner_args or {}
+        for key in self.get_scoping_scanner_arg_keys():
+            if scanner_args.get(key):
+                return False
+        return True
 
 
 class AttackPathsScan(RowLevelSecurityProtectedModel):
@@ -898,7 +973,6 @@ class Resource(RowLevelSecurityProtectedModel):
                 OpClass(Upper("name"), name="gin_trgm_ops"),
                 name="res_name_trgm_idx",
             ),
-            GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
             models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
             models.Index(
                 fields=["tenant_id", "provider_id"],
@@ -1103,6 +1177,15 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id", "check_id"],
                 name="find_tenant_scan_check_idx",
+            ),
+            GinIndex(
+                fields=[
+                    "categories",
+                    "resource_services",
+                    "resource_regions",
+                    "resource_types",
+                ],
+                name="gin_find_arrays_idx",
             ),
         ]
 

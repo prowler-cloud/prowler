@@ -5,10 +5,16 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'mcp_server/**'
+      - '.github/workflows/mcp-container-checks.yml'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'mcp_server/**'
+      - '.github/workflows/mcp-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,7 +36,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -44,7 +50,7 @@ jobs:
 
       - name: Check if Dockerfile changed
         id: dockerfile-changed
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: mcp_server/Dockerfile
 
@@ -56,16 +62,7 @@ jobs:
 
   mcp-container-build-and-scan:
     if: github.repository == 'prowler-cloud/prowler'
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-latest
-            arch: amd64
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
-            arch: arm64
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
@@ -74,7 +71,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -82,6 +79,7 @@ jobs:
             registry-1.docker.io:443
             auth.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             ghcr.io:443
             pkg-containers.githubusercontent.com:443
             files.pythonhosted.org:443
@@ -101,7 +99,7 @@ jobs:
 
       - name: Check for MCP changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: mcp_server/**
           files_ignore: |
@@ -112,23 +110,22 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
-      - name: Build MCP container for ${{ matrix.arch }}
+      - name: Build MCP container
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: ${{ env.MCP_WORKING_DIR }}
           push: false
           load: true
-          platforms: ${{ matrix.platform }}
-          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }}
 
-      - name: Scan MCP container with Trivy for ${{ matrix.arch }}
+      - name: Scan MCP container with Trivy
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/trivy-scan
         with:
           image-name: ${{ env.IMAGE_NAME }}
-          image-tag: ${{ github.sha }}-${{ matrix.arch }}
+          image-tag: ${{ github.sha }}
           fail-on-critical: 'false'
           severity: 'CRITICAL'

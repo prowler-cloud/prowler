@@ -22,6 +22,8 @@ const SIZE_CLASSES = {
 
 type ModalSize = keyof typeof SIZE_CLASSES;
 
+const preventInitialAutoFocus = (event: Event) => event.preventDefault();
+
 interface ModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,6 +32,7 @@ interface ModalProps {
   children: ReactNode;
   size?: ModalSize;
   className?: string;
+  onOpenAutoFocus?: (event: Event) => void;
 }
 
 export const Modal = ({
@@ -40,12 +43,14 @@ export const Modal = ({
   children,
   size = "xl",
   className,
+  onOpenAutoFocus = preventInitialAutoFocus,
 }: ModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        onOpenAutoFocus={onOpenAutoFocus}
         className={cn(
-          "border-border-neutral-secondary bg-bg-neutral-secondary",
+          "border-text-neutral-tertiary bg-bg-neutral-secondary rounded-[24px] border shadow-[0_0_200px_0_rgba(15,44,46,0.50)]",
           SIZE_CLASSES[size],
           className,
         )}

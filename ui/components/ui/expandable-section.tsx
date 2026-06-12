@@ -6,6 +6,7 @@ interface ExpandableSectionProps {
   isExpanded: boolean;
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string;
 }
 
 /**
@@ -16,6 +17,7 @@ export function ExpandableSection({
   isExpanded,
   children,
   className,
+  contentClassName,
 }: ExpandableSectionProps) {
   return (
     <div
@@ -26,7 +28,11 @@ export function ExpandableSection({
       )}
     >
       <div className="overflow-hidden">
-        <div className={cn("pt-4", !isExpanded && "invisible")}>{children}</div>
+        <div
+          className={cn("pt-4", contentClassName, !isExpanded && "invisible")}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

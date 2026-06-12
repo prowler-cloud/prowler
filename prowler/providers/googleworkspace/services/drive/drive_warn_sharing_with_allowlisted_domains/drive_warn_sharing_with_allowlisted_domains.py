@@ -19,11 +19,10 @@ class drive_warn_sharing_with_allowlisted_domains(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.identity,
-                resource_name=drive_client.provider.identity.domain,
-                resource_id=drive_client.provider.identity.customer_id,
+                resource=drive_client.policies,
+                resource_id="drivePolicies",
+                resource_name="Drive Policies",
                 customer_id=drive_client.provider.identity.customer_id,
-                location="global",
             )
 
             warn_enabled = (

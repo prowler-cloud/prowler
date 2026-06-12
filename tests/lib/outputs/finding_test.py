@@ -331,8 +331,8 @@ class TestFinding:
         assert finding_output.auth_method == "mock_identity_type: mock_identity_id"
         assert finding_output.account_organization_uid == "mock_tenant_id_1"
         assert finding_output.account_organization_name == "mock_tenant_domain"
-        assert finding_output.account_uid == "mock_subscription_name"
-        assert finding_output.account_name == "mock_subscription_id"
+        assert finding_output.account_uid == "mock_subscription_id"
+        assert finding_output.account_name == "mock_subscription_name"
         assert finding_output.resource_name == "test_resource_name"
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "us-west-1"
@@ -557,7 +557,7 @@ class TestFinding:
         assert finding_output.resource_tags == {}
         assert finding_output.partition is None
         assert finding_output.account_uid == "test_cluster"
-        assert finding_output.provider_uid == "In-Cluster"
+        assert finding_output.provider_uid == "test_cluster"
         assert finding_output.account_name == "context: In-Cluster"
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
@@ -590,6 +590,40 @@ class TestFinding:
         assert finding_output.metadata.RelatedTo == ["check1", "check2"]
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
+
+    def test_generate_output_kubernetes_kubeconfig(self):
+        # Mock provider
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.identity.context = "test-context"
+        provider.identity.cluster = "test_cluster"
+
+        # Mock check result
+        check_output = MagicMock()
+        check_output.resource_name = "test_resource_name"
+        check_output.resource_id = "test_resource_id"
+        check_output.namespace = "test_namespace"
+        check_output.resource_details = "test_resource_details"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="kubernetes")
+        check_output.timestamp = datetime.now()
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        # Mock Output Options
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        # Generate the finding
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "kubeconfig"
+        assert finding_output.account_uid == "test_cluster"
+        assert finding_output.provider_uid == "test-context"
+        assert finding_output.account_name == "context: test-context"
 
     def test_generate_output_github_personal_access_token(self):
         """Test GitHub output generation with Personal Access Token authentication."""
@@ -1473,3 +1507,106 @@ class TestFinding:
 
         with pytest.raises(KeyError):
             Finding.transform_api_finding(dummy_finding, provider)
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    def test_generate_output_stackit(self):
+        provider = MagicMock()
+        provider.type = "stackit"
+        provider.auth_method = "service_account_key"
+        provider.identity.project_id = "test-project-id"
+        provider.identity.project_name = "test-project-name"
+
+        check_output = MagicMock()
+        check_output.resource_id = "test_resource_id"
+        check_output.resource_name = "test_resource_name"
+        check_output.resource_details = ""
+        check_output.location = "eu01"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="stackit")
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "service_account_key"
+        assert finding_output.account_uid == "test-project-id"
+        assert finding_output.account_name == "test-project-name"
+        assert finding_output.resource_name == "test_resource_name"
+        assert finding_output.resource_uid == "test_resource_id"
+        assert finding_output.region == "eu01"
+        assert finding_output.status == Status.PASS
+        assert finding_output.muted is False
+
+    def test_transform_api_finding_stackit(self):
+        provider = MagicMock()
+        provider.type = "stackit"
+        provider.auth_method = "service_account_key"
+        provider.identity.project_id = "stackit-project-id"
+        provider.identity.project_name = "stackit-project-name"
+        dummy_finding = DummyAPIFinding()
+        dummy_finding.inserted_at = 1234567890
+        dummy_finding.scan = DummyScan(provider=provider)
+        dummy_finding.uid = "finding-uid-stackit"
+        dummy_finding.status = "PASS"
+        dummy_finding.status_extended = "StackIT check extended"
+        check_metadata = {
+            "provider": "stackit",
+            "checkid": "service_stackit_check_001",
+            "checktitle": "Test StackIT Check",
+            "checktype": [],
+            "servicename": "service",
+            "subservicename": "",
+            "severity": "high",
+            "resourcetype": "StackITResourceType",
+            "description": "StackIT check description",
+            "risk": "High risk",
+            "relatedurl": "",
+            "remediation": {
+                "code": {
+                    "nativeiac": "",
+                    "terraform": "",
+                    "cli": "",
+                    "other": "",
+                },
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_stackit_check_001",
+                },
+            },
+            "resourceidtemplate": "template",
+            "categories": ["encryption"],
+            "dependson": [],
+            "relatedto": [],
+            "notes": "StackIT notes",
+        }
+        dummy_finding.check_metadata = check_metadata
+        dummy_finding.raw_result = {}
+        dummy_finding.resource_name = "stackit-resource-name"
+        dummy_finding.resource_id = "stackit-resource-uid"
+        dummy_finding.location = "eu01"
+        dummy_finding.project_id = "stackit-project-id"
+        resource = DummyResource(
+            uid="stackit-resource-uid",
+            name="stackit-resource-name",
+            resource_arn="",
+            region="eu01",
+            tags=[],
+        )
+        dummy_finding.resources = DummyResources(resource)
+        dummy_finding.muted = False
+        finding_obj = Finding.transform_api_finding(dummy_finding, provider)
+        assert finding_obj.auth_method == "service_account_key"
+        assert finding_obj.account_uid == "stackit-project-id"
+        assert finding_obj.account_name == "stackit-project-name"
+        assert finding_obj.resource_name == "stackit-resource-name"
+        assert finding_obj.resource_uid == "stackit-resource-uid"
+        assert finding_obj.region == "eu01"

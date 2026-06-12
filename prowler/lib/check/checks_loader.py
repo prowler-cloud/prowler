@@ -5,6 +5,7 @@ from colorama import Fore, Style
 from prowler.lib.check.check import parse_checks_from_file
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata, Severity
+from prowler.lib.check.tool_wrapper import is_tool_wrapper_provider
 from prowler.lib.logger import logger
 
 
@@ -21,11 +22,17 @@ def load_checks_to_execute(
     categories: set = None,
     resource_groups: set = None,
     list_checks: bool = False,
+    universal_frameworks: dict = None,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
-        # Bypass check loading for providers that use Trivy directly
-        if provider in ("iac", "image"):
+        # Bypass check loading for tool-wrapper providers — they delegate
+        # scanning to an external tool and have no checks to recover.
+        # Single source of truth across __main__, the CheckMetadata validators,
+        # check discovery and this loader, covering both built-in tool wrappers
+        # (iac/llm/image) and external plug-ins that declare
+        # `is_external_tool_provider = True` via the contract.
+        if is_tool_wrapper_provider(provider):
             return set()
 
         # Local subsets
@@ -154,12 +161,21 @@ def load_checks_to_execute(
             if not bulk_compliance_frameworks:
                 bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             for compliance_framework in compliance_frameworks:
-                checks_to_execute.update(
-                    CheckMetadata.list(
-                        bulk_compliance_frameworks=bulk_compliance_frameworks,
-                        compliance_framework=compliance_framework,
+                # Try universal frameworks first (snake_case dict-keyed checks)
+                if (
+                    universal_frameworks
+                    and compliance_framework in universal_frameworks
+                ):
+                    fw = universal_frameworks[compliance_framework]
+                    for req in fw.requirements:
+                        checks_to_execute.update(req.checks.get(provider.lower(), []))
+                elif compliance_framework in bulk_compliance_frameworks:
+                    checks_to_execute.update(
+                        CheckMetadata.list(
+                            bulk_compliance_frameworks=bulk_compliance_frameworks,
+                            compliance_framework=compliance_framework,
+                        )
                     )
-                )
 
         # Handle if there are categories passed using --categories
         elif categories:

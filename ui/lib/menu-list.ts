@@ -1,4 +1,5 @@
 import {
+  BellRing,
   CloudCog,
   Cog,
   GitBranch,
@@ -32,6 +33,8 @@ interface MenuListOptions {
 }
 
 export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
   return [
     {
       groupLabel: "",
@@ -74,7 +77,6 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           label: "Attack Paths",
           icon: GitBranch,
           active: pathname.startsWith("/attack-paths"),
-          highlight: true,
         },
       ],
     },
@@ -107,7 +109,16 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           label: "Configuration",
           icon: Settings,
           submenus: [
-            { href: "/providers", label: "Cloud Providers", icon: CloudCog },
+            { href: "/providers", label: "Providers", icon: CloudCog },
+            {
+              href: "/alerts",
+              label: "Alerts",
+              icon: BellRing,
+              active: isCloudEnv && pathname.startsWith("/alerts"),
+              highlight: true,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
+            },
             {
               href: "/mutelist",
               label: "Mutelist",
@@ -161,18 +172,23 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               label: "API reference",
               icon: APIdocIcon,
             },
-            {
-              href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
-              target: "_blank",
-              label: "Customer Support",
-              icon: MessageCircleQuestion,
-            },
-            {
-              href: "https://github.com/prowler-cloud/prowler/issues",
-              target: "_blank",
-              label: "Community Support",
-              icon: GithubIcon,
-            },
+            ...(isCloudEnv
+              ? [
+                  {
+                    href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
+                    target: "_blank",
+                    label: "Support Desk",
+                    icon: MessageCircleQuestion,
+                  },
+                ]
+              : [
+                  {
+                    href: "https://github.com/prowler-cloud/prowler/issues",
+                    target: "_blank",
+                    label: "Community Support",
+                    icon: GithubIcon,
+                  },
+                ]),
           ],
           defaultOpen: false,
         },

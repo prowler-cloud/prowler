@@ -6,6 +6,7 @@ from unittest import mock
 from requests import Response
 
 from prowler.config.config import (
+    Provider,
     check_current_version,
     get_available_compliance_frameworks,
     load_and_validate_config_file,
@@ -17,7 +18,13 @@ MOCK_OLD_PROWLER_VERSION = "0.0.0"
 MOCK_PROWLER_MASTER_VERSION = "3.4.0"
 
 
-def mock_prowler_get_latest_release(_, **kwargs):
+def test_provider_enum_includes_stackit_for_global_discovery():
+    providers = [provider.value for provider in Provider]
+
+    assert "stackit" in providers
+
+
+def mock_prowler_get_latest_release(_, **_kwargs):
     """Mock requests.get() to get the Prowler latest release"""
     response = Response()
     response._content = b'[{"name":"3.3.0"}]'
@@ -75,6 +82,7 @@ config_aws = {
     "mute_non_default_regions": False,
     "max_unused_access_keys_days": 45,
     "max_console_access_days": 45,
+    "max_unused_sagemaker_access_days": 90,
     "shodan_api_key": None,
     "max_security_group_rules": 50,
     "max_ec2_instance_age_in_days": 180,
@@ -394,6 +402,7 @@ class Test_Config:
 
     def test_get_available_compliance_frameworks(self):
         compliance_frameworks = [
+            "csa_ccm_4.0",
             "cisa_aws",
             "soc2_aws",
             "cis_1.4_aws",
@@ -427,6 +436,66 @@ class Test_Config:
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()
         )
+
+    def test_get_available_compliance_frameworks_filters_universal_by_provider(self):
+        aws_frameworks = get_available_compliance_frameworks("aws")
+        kubernetes_frameworks = get_available_compliance_frameworks("kubernetes")
+
+        assert "csa_ccm_4.0" in aws_frameworks
+        assert "csa_ccm_4.0" not in kubernetes_frameworks
+
+    def test_get_available_compliance_frameworks_no_provider_includes_universals(self):
+        """Regression test for the variable shadowing bug.
+
+        Previously, the inner ``for provider in providers`` loop shadowed
+        the outer ``provider`` parameter. When called without a provider,
+        the post-loop ``if provider:`` branch wrongly applied
+        ``framework.supports_provider(<last provider iterated>)`` and
+        excluded universal frameworks from the result.
+
+        Result: the parser-level ``available_compliance_frameworks``
+        constant was missing universal frameworks like ``csa_ccm_4.0``,
+        which made ``--compliance csa_ccm_4.0`` reject the choice.
+        """
+        all_frameworks = get_available_compliance_frameworks()
+        assert "csa_ccm_4.0" in all_frameworks
+
+    def test_get_available_compliance_frameworks_does_not_mutate_provider_param(self):
+        """Calling with a specific provider must not affect a subsequent
+        call without provider. Validates that the loop variable rename
+        prevents leaking state between calls."""
+        # Force an iteration over multiple providers first
+        get_available_compliance_frameworks("kubernetes")
+        # Then a no-provider call must still include universals supported
+        # by ANY provider (not filtered by some leaked value)
+        all_frameworks = get_available_compliance_frameworks()
+        assert "csa_ccm_4.0" in all_frameworks
+
+    @mock.patch("prowler.config.config._get_ep_compliance_dirs")
+    def test_get_available_compliance_frameworks_dedupes_ep_collisions_with_builtins(
+        self, mock_dirs
+    ):
+        """Entry-point compliance frameworks that collide with a built-in
+        name must appear only once in the available frameworks list.
+        Built-in wins silently — same policy as the universal frameworks
+        loop and as Compliance.get_bulk."""
+        import json
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # cis_2.0_aws ships as a built-in under prowler/compliance/aws/
+            json_path = os.path.join(tmpdir, "cis_2.0_aws.json")
+            with open(json_path, "w") as f:
+                json.dump({"Framework": "CIS", "Provider": "aws"}, f)
+
+            mock_dirs.return_value = {"aws": tmpdir}
+
+            frameworks = get_available_compliance_frameworks("aws")
+
+            assert frameworks.count("cis_2.0_aws") == 1, (
+                f"Expected cis_2.0_aws to appear exactly once, got "
+                f"{frameworks.count('cis_2.0_aws')} occurrences in: {frameworks}"
+            )
 
     def test_load_and_validate_config_file_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -464,6 +533,32 @@ class Test_Config:
         assert load_and_validate_config_file("gcp", config_test_file) == {}
         assert load_and_validate_config_file("azure", config_test_file) == {}
         assert load_and_validate_config_file("kubernetes", config_test_file) == {}
+
+    def test_load_and_validate_config_file_namespaced_non_listed_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # github is a built-in not in the legacy hardcoded list; namespaced format must unwrap it.
+        assert load_and_validate_config_file("github", config_test_file) == {
+            "token": "abc",
+            "org": "prowler-cloud",
+        }
+
+    def test_load_and_validate_config_file_namespaced_external_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # External plug-in provider: namespaced format must unwrap its block.
+        assert load_and_validate_config_file("custom_plugin", config_test_file) == {
+            "setting": "value",
+            "nested": {"key": 42},
+        }
+
+    def test_load_and_validate_config_file_namespaced_missing_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # Provider with no section in a namespaced file must return empty config,
+        # not the full file (prevents cross-provider config leakage).
+        assert load_and_validate_config_file("aws", config_test_file) == {}
+        assert load_and_validate_config_file("gcp", config_test_file) == {}
 
     def test_load_and_validate_config_file_invalid_config_file_path(self, caplog):
         provider = "aws"

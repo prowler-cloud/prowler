@@ -33,7 +33,7 @@ services:
       neo4j:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:${DJANGO_PORT:-8080}/api/v1/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:${DJANGO_PORT:-8080}/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -48,10 +48,16 @@ services:
       - path: .env
         required: false
     ports:
-      - ${UI_PORT:-3000}:${UI_PORT:-3000}
+      - ${UI_PORT:-3000}:3000
     depends_on:
       mcp-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   postgres:
     image: postgres:16.3-alpine3.20
@@ -123,6 +129,8 @@ services:
 
   worker:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    # Give Celery soft shutdown time to drain/re-queue in-flight tasks on stop.
+    stop_grace_period: 120s
     env_file:
       - path: .env
         required: false
@@ -170,6 +178,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 60s
 
 volumes:
   output:

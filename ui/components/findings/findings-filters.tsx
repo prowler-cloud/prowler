@@ -1,32 +1,35 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 
-import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
+import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
-import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
 import { CustomDatePicker } from "@/components/filters/custom-date-picker";
 import { filterFindings } from "@/components/filters/data-filters";
 import {
   FilterChip,
   FilterSummaryStrip,
 } from "@/components/filters/filter-summary-strip";
+import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
-import { DataTableFilterCustom } from "@/components/ui/table";
+import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { FilterType, ScanEntity } from "@/types";
-import { DATA_TABLE_FILTER_MODE, FilterParam } from "@/types/filters";
+import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
 
-import { getFindingsFilterDisplayValue } from "./findings-filters.utils";
+import {
+  buildFindingsFilterChips,
+  getFindingsFilterDisplayValue,
+} from "./findings-filters.utils";
 
 interface FindingsFiltersProps {
-  /** Provider data for ProviderTypeSelector and AccountsSelector */
+  /** Provider data for provider/account filter controls. */
   providers: ProviderProps[];
   completedScanIds: string[];
   scanDetails: { [key: string]: ScanEntity }[];
@@ -35,33 +38,37 @@ interface FindingsFiltersProps {
   uniqueResourceTypes: string[];
   uniqueCategories: string[];
   uniqueGroups: string[];
+  trailingControls?: ReactNode;
+  variant?: "default" | "alerts-edit";
 }
 
-/**
- * Maps raw filter param keys (e.g. "filter[severity__in]") to human-readable labels.
- * Used to render chips in the FilterSummaryStrip.
- * Typed as Record<FilterParam, string> so TypeScript enforces exhaustiveness — any
- * addition to FilterParam will cause a compile error here if the label is missing.
- */
-const FILTER_KEY_LABELS: Record<FilterParam, string> = {
-  "filter[provider_type__in]": "Provider",
-  "filter[provider_id__in]": "Account",
-  "filter[severity__in]": "Severity",
-  "filter[status__in]": "Status",
-  "filter[delta__in]": "Delta",
-  "filter[region__in]": "Region",
-  "filter[service__in]": "Service",
-  "filter[resource_type__in]": "Resource Type",
-  "filter[category__in]": "Category",
-  "filter[resource_groups__in]": "Resource Group",
-  "filter[scan__in]": "Scan",
-  "filter[scan_id]": "Scan",
-  "filter[scan_id__in]": "Scan",
-  "filter[inserted_at]": "Date",
-  "filter[muted]": "Muted",
-};
+interface FindingsFilterBatchControlsProps extends FindingsFiltersProps {
+  appliedFilters: Record<string, string[]>;
+  pendingFilters: Record<string, string[]>;
+  changedFilters: Record<string, string[]>;
+  setPending: (filterKey: string, values: string[]) => void;
+  applyAll?: () => void;
+  discardAll?: () => void;
+  clearAndApply?: () => void;
+  removeAppliedAndApply?: (filterKey: string, value?: string) => void;
+  hasChanges?: boolean;
+  changeCount?: number;
+  getFilterValue: (filterKey: string) => string[];
+  showSummaries?: boolean;
+}
 
-export const FindingsFilters = ({
+const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
+  Object.entries(filters).filter(([key, values]) => {
+    if (!values || values.length === 0) return false;
+    if (key === "filter[muted]") return false;
+    return true;
+  }).length;
+
+const FILTER_CONTROL_COLUMN_CLASS =
+  "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
+const FILTER_GRID_ITEM_CLASS = "min-w-0";
+
+export const FindingsFilterBatchControls = ({
   providers,
   completedScanIds,
   scanDetails,
@@ -70,32 +77,36 @@ export const FindingsFilters = ({
   uniqueResourceTypes,
   uniqueCategories,
   uniqueGroups,
-}: FindingsFiltersProps) => {
+  trailingControls,
+  appliedFilters,
+  pendingFilters,
+  changedFilters,
+  setPending,
+  applyAll,
+  discardAll,
+  clearAndApply,
+  removeAppliedAndApply,
+  hasChanges = false,
+  changeCount = 0,
+  getFilterValue,
+  showSummaries = true,
+  variant = "default",
+}: FindingsFilterBatchControlsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isAlertsEdit = variant === "alerts-edit";
 
-  const {
-    pendingFilters,
-    setPending,
-    applyAll,
-    discardAll,
-    clearAndApply,
-    hasChanges,
-    changeCount,
-    getFilterValue,
-  } = useFilterBatch({
-    defaultParams: { "filter[muted]": "false" },
-  });
-
-  // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
+  // Custom filters for the expandable section.
   const customFilters = [
-    ...filterFindings.map((filter) => ({
-      ...filter,
-      labelFormatter: (value: string) =>
-        getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
-          providers,
-          scans: scanDetails,
-        }),
-    })),
+    ...filterFindings
+      .filter((filter) => !isAlertsEdit || filter.key !== FilterType.STATUS)
+      .map((filter) => ({
+        ...filter,
+        labelFormatter: (value: string) =>
+          getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
+            providers,
+            scans: scanDetails,
+          }),
+      })),
     {
       key: FilterType.REGION,
       labelCheckboxGroup: "Regions",
@@ -128,61 +139,61 @@ export const FindingsFilters = ({
       labelFormatter: getGroupLabel,
       index: 6,
     },
-    {
-      key: FilterType.SCAN,
-      labelCheckboxGroup: "Scan ID",
-      values: completedScanIds,
-      width: "wide" as const,
-      valueLabelMapping: scanDetails,
-      labelFormatter: (value: string) =>
-        getFindingsFilterDisplayValue(`filter[${FilterType.SCAN}]`, value, {
-          providers,
-          scans: scanDetails,
-        }),
-      index: 7,
-    },
+    ...(isAlertsEdit
+      ? []
+      : [
+          {
+            key: FilterType.SCAN,
+            labelCheckboxGroup: "Scan ID",
+            values: completedScanIds,
+            width: "wide" as const,
+            valueLabelMapping: scanDetails,
+            labelFormatter: (value: string) =>
+              getFindingsFilterDisplayValue(
+                `filter[${FilterType.SCAN}]`,
+                value,
+                {
+                  providers,
+                  scans: scanDetails,
+                },
+              ),
+            index: 7,
+          },
+        ]),
   ];
 
   const hasCustomFilters = customFilters.length > 0;
 
-  // Build FilterChip[] from pendingFilters — one chip per individual value, not per key.
-  // Skip filter[muted]="false" — it is the silent default and should not appear as a chip.
-  const filterChips: FilterChip[] = [];
-  Object.entries(pendingFilters).forEach(([key, values]) => {
-    if (!values || values.length === 0) return;
-    const label = FILTER_KEY_LABELS[key as FilterParam] ?? key;
-    values.forEach((value) => {
-      // Do not show a chip for the default muted=false state
-      if (key === "filter[muted]" && value === "false") return;
-      filterChips.push({
-        key,
-        label,
-        value,
-        displayValue: getFindingsFilterDisplayValue(key, value, {
-          providers,
-          scans: scanDetails,
-        }),
-      });
-    });
-  });
+  const appliedFilterChips: FilterChip[] = buildFindingsFilterChips(
+    appliedFilters,
+    {
+      providers,
+      scans: scanDetails,
+    },
+  );
+  const pendingFilterChips: FilterChip[] = buildFindingsFilterChips(
+    changedFilters,
+    {
+      providers,
+      scans: scanDetails,
+    },
+  );
+  const appliedCount = countVisibleFilterKeys(appliedFilters);
+  const showAppliedRow = appliedFilterChips.length > 0;
+  const showPendingRow = hasChanges;
 
   // Handler for removing a single chip: update the pending filter to remove that value.
   // setPending handles both "filter[key]" and "key" formats internally.
-  const handleChipRemove = (filterKey: string, value: string) => {
+  const handleChipRemove = (filterKey: string, value?: string) => {
+    if (value === undefined) {
+      setPending(filterKey, []);
+      return;
+    }
+
     const currentValues = pendingFilters[filterKey] ?? [];
     const nextValues = currentValues.filter((v) => v !== value);
     setPending(filterKey, nextValues);
   };
-
-  // Derive pending muted state for the checkbox.
-  // Note: "filter[muted]" participates in batch mode — applyAll includes it
-  // when present in pending state, and the defaultParams option ensures
-  // filter[muted]=false is applied as a fallback when no muted value is pending.
-  const pendingMutedValue = pendingFilters["filter[muted]"];
-  const mutedChecked =
-    pendingMutedValue !== undefined
-      ? pendingMutedValue[0] === "include"
-      : undefined;
 
   // For the date picker, read from pendingFilters
   const pendingDateValues = pendingFilters["filter[inserted_at]"];
@@ -191,89 +202,150 @@ export const FindingsFilters = ({
       ? pendingDateValues[0]
       : undefined;
 
-  return (
-    <div className="flex flex-col">
-      {/* First row: Provider selectors + Muted checkbox + More Filters button + Apply/Clear */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="min-w-[200px] flex-1 md:max-w-[280px]">
-          <ProviderTypeSelector
-            providers={providers}
-            onBatchChange={setPending}
-            selectedValues={getFilterValue("filter[provider_type__in]")}
-          />
-        </div>
-        <div className="min-w-[200px] flex-1 md:max-w-[280px]">
-          <AccountsSelector
-            providers={providers}
-            onBatchChange={setPending}
-            selectedValues={getFilterValue("filter[provider_id__in]")}
-            selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
-          />
-        </div>
-        <CustomCheckboxMutedFindings
-          onBatchChange={(filterKey, value) => setPending(filterKey, [value])}
-          checked={mutedChecked}
-        />
-        {hasCustomFilters && (
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? "Less Filters" : "More Filters"}
-            <ChevronDown
-              className={`size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
-            />
-          </Button>
-        )}
-        <ClearFiltersButton
-          showCount
-          onClear={clearAndApply}
-          pendingCount={
-            Object.entries(pendingFilters).filter(([key, values]) => {
-              if (!values || values.length === 0) return false;
-              // filter[muted]=false is the silent default — don't count it as active
-              if (
-                key === "filter[muted]" &&
-                values.length === 1 &&
-                values[0] === "false"
-              )
-                return false;
-              return true;
-            }).length
-          }
-        />
-        <ApplyFiltersButton
-          hasChanges={hasChanges}
-          changeCount={changeCount}
-          onApply={applyAll}
-          onDiscard={discardAll}
-        />
-      </div>
+  const providerAccountControls = (className: string) => (
+    <ProviderAccountSelectors
+      providers={providers}
+      mode="batch"
+      selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
+      selectedAccounts={getFilterValue("filter[provider_id__in]")}
+      onBatchChange={setPending}
+      providerSelectorClassName={className}
+      accountSelectorClassName={className}
+    />
+  );
 
-      {/* Summary strip: shown below filter bar when there are pending changes */}
-      <FilterSummaryStrip chips={filterChips} onRemove={handleChipRemove} />
+  const alertEditFilterGrid = hasCustomFilters ? (
+    <DataTableFilterCustom
+      gridClassName="w-full gap-3 xl:grid-cols-3 2xl:grid-cols-3"
+      filters={customFilters}
+      prependElement={providerAccountControls(FILTER_GRID_ITEM_CLASS)}
+      hideClearButton
+      mode={DATA_TABLE_FILTER_MODE.BATCH}
+      onBatchChange={setPending}
+      getFilterValue={getFilterValue}
+    />
+  ) : null;
 
-      {/* Expandable filters section */}
-      {hasCustomFilters && (
-        <ExpandableSection isExpanded={isExpanded}>
-          <DataTableFilterCustom
-            filters={customFilters}
-            prependElement={
+  const expandedFilters =
+    hasCustomFilters && !isAlertsEdit ? (
+      <ExpandableSection isExpanded={isExpanded} contentClassName="pt-0">
+        <DataTableFilterCustom
+          gridClassName="gap-3"
+          filters={customFilters}
+          prependElement={
+            isAlertsEdit ? undefined : (
               <CustomDatePicker
                 onBatchChange={(filterKey, value) =>
                   setPending(filterKey, value ? [value] : [])
                 }
                 value={pendingDateValue}
               />
-            }
-            hideClearButton
-            mode={DATA_TABLE_FILTER_MODE.BATCH}
-            onBatchChange={setPending}
-            getFilterValue={getFilterValue}
-          />
-        </ExpandableSection>
-      )}
-    </div>
+            )
+          }
+          hideClearButton
+          mode={DATA_TABLE_FILTER_MODE.BATCH}
+          onBatchChange={setPending}
+          getFilterValue={getFilterValue}
+        />
+      </ExpandableSection>
+    ) : null;
+
+  const appliedSummary = (
+    <FilterSummaryStrip
+      chips={appliedFilterChips}
+      onRemove={removeAppliedAndApply ?? (() => undefined)}
+      trailingContent={
+        <ClearFiltersButton
+          showCount
+          onClear={clearAndApply ?? (() => undefined)}
+          pendingCount={appliedCount}
+        />
+      }
+    />
+  );
+
+  const pendingSummary = (
+    <FilterSummaryStrip
+      chips={pendingFilterChips}
+      onRemove={handleChipRemove}
+      trailingContent={
+        <ApplyFiltersButton
+          hasChanges={hasChanges}
+          changeCount={changeCount}
+          onApply={applyAll ?? (() => undefined)}
+          onDiscard={discardAll ?? (() => undefined)}
+        />
+      }
+    />
+  );
+
+  return (
+    <BatchFiltersLayout
+      testIdPrefix="findings"
+      controlsClassName="gap-3"
+      controls={
+        isAlertsEdit ? (
+          alertEditFilterGrid
+        ) : (
+          <>
+            {providerAccountControls(FILTER_CONTROL_COLUMN_CLASS)}
+            {hasCustomFilters && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? "Less Filters" : "More Filters"}
+                <ChevronDown
+                  className={`size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                />
+              </Button>
+            )}
+            {trailingControls}
+          </>
+        )
+      }
+      expandedFilters={expandedFilters}
+      expandedFiltersVisible={isExpanded}
+      appliedSummary={showSummaries ? appliedSummary : null}
+      pendingSummary={showSummaries ? pendingSummary : null}
+      showAppliedRow={showSummaries && showAppliedRow}
+      showPendingRow={showSummaries && showPendingRow}
+    />
+  );
+};
+
+export const FindingsFilters = (props: FindingsFiltersProps) => {
+  const {
+    appliedFilters,
+    pendingFilters,
+    changedFilters,
+    setPending,
+    applyAll,
+    discardAll,
+    clearAndApply,
+    removeAppliedAndApply,
+    hasChanges,
+    changeCount,
+    getFilterValue,
+  } = useFilterBatch({
+    defaultParams: { "filter[muted]": "false" },
+  });
+
+  return (
+    <FindingsFilterBatchControls
+      {...props}
+      appliedFilters={appliedFilters}
+      pendingFilters={pendingFilters}
+      changedFilters={changedFilters}
+      setPending={setPending}
+      applyAll={applyAll}
+      discardAll={discardAll}
+      clearAndApply={clearAndApply}
+      removeAppliedAndApply={removeAppliedAndApply}
+      hasChanges={hasChanges}
+      changeCount={changeCount}
+      getFilterValue={getFilterValue}
+    />
   );
 };

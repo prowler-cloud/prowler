@@ -1,12 +1,14 @@
 import logging
 import os
 import sys
+
 from pathlib import Path
+
+from django.apps import AppConfig
+from django.conf import settings
 
 from config.custom_logging import BackendLogger
 from config.env import env
-from django.apps import AppConfig
-from django.conf import settings
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -30,7 +32,6 @@ class ApiConfig(AppConfig):
     def ready(self):
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
-        from api.attack_paths import database as graph_database
 
         # Generate required cryptographic keys if not present, but only if:
         #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app
@@ -41,37 +42,8 @@ class ApiConfig(AppConfig):
         ):
             self._ensure_crypto_keys()
 
-        # Commands that don't need Neo4j
-        SKIP_NEO4J_DJANGO_COMMANDS = [
-            "makemigrations",
-            "migrate",
-            "pgpartition",
-            "check",
-            "help",
-            "showmigrations",
-            "check_and_fix_socialaccount_sites_migration",
-        ]
-
-        # Skip Neo4j initialization during tests, some Django commands, and Celery
-        if getattr(settings, "TESTING", False) or (
-            len(sys.argv) > 1
-            and (
-                (
-                    "manage.py" in sys.argv[0]
-                    and sys.argv[1] in SKIP_NEO4J_DJANGO_COMMANDS
-                )
-                or "celery" in sys.argv[0]
-            )
-        ):
-            logger.info(
-                "Skipping Neo4j initialization because tests, some Django commands or Celery"
-            )
-
-        else:
-            graph_database.init_driver()
-
-        # Neo4j driver is initialized at API startup (see api.attack_paths.database)
-        # It remains lazy for Celery workers and selected Django commands
+        # Neo4j driver is created lazily on first use (see api.attack_paths.database).
+        # App init never contacts Neo4j, so a Neo4j outage cannot block API startup.
 
     def _ensure_crypto_keys(self):
         """

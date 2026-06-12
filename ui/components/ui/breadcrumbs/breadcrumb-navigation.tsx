@@ -43,6 +43,7 @@ export function BreadcrumbNavigation({
   const generateAutoBreadcrumbs = (): CustomBreadcrumbItem[] => {
     const pathIconMapping: Record<string, string | ReactNode> = {
       "/integrations": "lucide:puzzle",
+      "/alerts": "lucide:bell-ring",
       "/providers": "lucide:cloud",
       "/users": "lucide:users",
       "/compliance": "lucide:shield-check",

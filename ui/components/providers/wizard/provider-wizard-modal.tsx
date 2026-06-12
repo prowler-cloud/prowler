@@ -10,7 +10,10 @@ import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
-import { PROVIDER_WIZARD_STEP } from "@/types/provider-wizard";
+import {
+  PROVIDER_WIZARD_MODE,
+  PROVIDER_WIZARD_STEP,
+} from "@/types/provider-wizard";
 
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
 import {
@@ -23,13 +26,19 @@ import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
 import { LaunchStep } from "./steps/launch-step";
 import { TestConnectionStep } from "./steps/test-connection-step";
 import type { OrgWizardInitialData, ProviderWizardInitialData } from "./types";
-import { WizardStepper } from "./wizard-stepper";
+import { PROVIDER_WIZARD_STEPS, WizardStepper } from "./wizard-stepper";
+
+const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(
+  0,
+  PROVIDER_WIZARD_STEP.LAUNCH,
+);
 
 interface ProviderWizardModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
   orgInitialData?: OrgWizardInitialData;
+  refreshOnClose?: boolean;
 }
 
 export function ProviderWizardModal({
@@ -37,6 +46,7 @@ export function ProviderWizardModal({
   onOpenChange,
   initialData,
   orgInitialData,
+  refreshOnClose,
 }: ProviderWizardModalProps) {
   const {
     backToProviderFlow,
@@ -47,6 +57,7 @@ export function ProviderWizardModal({
     handleTestSuccess,
     isOrgDirectEntry,
     isProviderFlow,
+    mode,
     modalTitle,
     openOrganizationsFlow,
     orgCurrentStep,
@@ -63,6 +74,7 @@ export function ProviderWizardModal({
     onOpenChange,
     initialData,
     orgInitialData,
+    refreshOnClose,
   });
   const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}`;
   const { containerRef, sentinelRef, showScrollHint } = useScrollHint({
@@ -84,7 +96,7 @@ export function ProviderWizardModal({
         </DialogTitle>
         <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
           <Info className="size-4 shrink-0" />
-          <span>For assistance connecting a Cloud Provider visit</span>
+          <span>For assistance connecting a Provider visit</span>
           <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
             <a href={docsLink} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="size-3.5 shrink-0" />
@@ -97,7 +109,14 @@ export function ProviderWizardModal({
       <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8 lg:flex-row">
         <div className="mb-4 box-border w-full shrink-0 lg:mb-0 lg:w-[328px]">
           {isProviderFlow ? (
-            <WizardStepper currentStep={currentStep} />
+            <WizardStepper
+              currentStep={currentStep}
+              steps={
+                mode === PROVIDER_WIZARD_MODE.UPDATE
+                  ? UPDATE_MODE_WIZARD_STEPS
+                  : undefined
+              }
+            />
           ) : (
             <WizardStepper
               currentStep={orgCurrentStep}

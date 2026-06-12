@@ -10,8 +10,6 @@ import { EditorState } from "@codemirror/state";
 import { tags } from "@lezer/highlight";
 import CodeMirror, {
   EditorView,
-  highlightActiveLineGutter,
-  lineNumbers,
   placeholder as codeEditorPlaceholder,
 } from "@uiw/react-codemirror";
 import { Check, Copy } from "lucide-react";
@@ -24,6 +22,7 @@ import { cn } from "@/lib/utils";
 export const QUERY_EDITOR_LANGUAGE = {
   OPEN_CYPHER: "openCypher",
   PLAIN_TEXT: "plainText",
+  JSON: "json",
   SHELL: "shell",
   HCL: "hcl",
   BICEP: "bicep",
@@ -204,6 +203,74 @@ const HCL_FUNCTIONS = new Set([
   "cidrsubnet",
   "cidrhost",
 ]);
+
+interface JsonParserState {
+  inString: boolean;
+  stringIsProperty: boolean;
+  escapeNext: boolean;
+}
+
+const jsonLanguage = StreamLanguage.define<JsonParserState>({
+  startState() {
+    return {
+      inString: false,
+      stringIsProperty: false,
+      escapeNext: false,
+    };
+  },
+  token(stream, state) {
+    if (state.inString) {
+      while (!stream.eol()) {
+        const next = stream.next();
+
+        if (state.escapeNext) {
+          state.escapeNext = false;
+          continue;
+        }
+
+        if (next === "\\") {
+          state.escapeNext = true;
+          continue;
+        }
+
+        if (next === '"') {
+          state.inString = false;
+          return state.stringIsProperty ? "propertyName" : "string";
+        }
+      }
+
+      return state.stringIsProperty ? "propertyName" : "string";
+    }
+
+    if (stream.eatSpace()) {
+      return null;
+    }
+
+    if (stream.peek() === '"') {
+      const restOfLine = stream.string.slice(stream.pos);
+      state.inString = true;
+      state.escapeNext = false;
+      state.stringIsProperty = /^\s*"([^"\\]|\\.)*"\s*:/.test(restOfLine);
+      stream.next();
+      return state.stringIsProperty ? "propertyName" : "string";
+    }
+
+    if (stream.match(/[{}\[\],:]/)) {
+      return "punctuation";
+    }
+
+    if (stream.match(/-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/)) {
+      return "number";
+    }
+
+    if (stream.match(/\b(?:true|false|null)\b/)) {
+      return "keyword";
+    }
+
+    stream.next();
+    return null;
+  },
+});
 
 const BICEP_KEYWORDS = new Set([
   "resource",
@@ -1036,9 +1103,11 @@ const DARK_SELECTION_BG = "rgba(121, 192, 255, 0.18)";
 function createEditorTheme({
   isDarkMode,
   minHeight,
+  fill,
 }: {
   isDarkMode: boolean;
   minHeight: number;
+  fill?: boolean;
 }) {
   return EditorView.theme(
     {
@@ -1047,12 +1116,17 @@ function createEditorTheme({
         color: "var(--text-neutral-primary)",
         fontFamily: MONO_FONT,
         fontSize: "12px",
+        // When filling, the editor takes the full height of its (bounded)
+        // wrapper so the scroller below can scroll instead of growing.
+        ...(fill && { height: "100%" }),
       },
       "&.cm-focused": {
         outline: "none",
       },
       ".cm-scroller": {
-        minHeight: `${minHeight}px`,
+        // A fixed min-height would force the editor to overflow a smaller
+        // container; when filling we let flexbox size it instead.
+        ...(fill ? {} : { minHeight: `${minHeight}px` }),
         overflow: "auto",
         fontFamily: MONO_FONT,
         lineHeight: "1.5rem",
@@ -1098,6 +1172,7 @@ function createEditorTheme({
 interface QueryCodeEditorProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
   ariaLabel: string;
+  visibleLabel?: string | null;
   language?: QueryEditorLanguage;
   value: string;
   copyValue?: string;
@@ -1106,7 +1181,14 @@ interface QueryCodeEditorProps
   requirementBadge?: string;
   editable?: boolean;
   minHeight?: number;
+  /**
+   * When true the editor fills the height of its parent (which must be a
+   * bounded flex container) and scrolls internally instead of growing with
+   * its content.
+   */
+  fill?: boolean;
   showCopyButton?: boolean;
+  showLineNumbers?: boolean;
   onChange: (value: string) => void;
   onBlur?: () => void;
 }
@@ -1115,6 +1197,7 @@ export const QueryCodeEditor = ({
   id,
   className,
   ariaLabel,
+  visibleLabel = ariaLabel,
   language = QUERY_EDITOR_LANGUAGE.OPEN_CYPHER,
   value,
   copyValue,
@@ -1123,7 +1206,9 @@ export const QueryCodeEditor = ({
   requirementBadge,
   editable = true,
   minHeight = 320,
+  fill = false,
   showCopyButton = false,
+  showLineNumbers = true,
   onChange,
   onBlur,
   ...props
@@ -1131,14 +1216,12 @@ export const QueryCodeEditor = ({
   const { resolvedTheme } = useTheme();
   const [copied, setCopied] = useState(false);
   const isDarkMode = resolvedTheme === "dark";
-  const editorTheme = createEditorTheme({ isDarkMode, minHeight });
+  const editorTheme = createEditorTheme({ isDarkMode, minHeight, fill });
   const editorHighlightStyle = isDarkMode
     ? darkHighlightStyle
     : lightHighlightStyle;
 
   const extensions = [
-    lineNumbers(),
-    highlightActiveLineGutter(),
     EditorView.lineWrapping,
     codeEditorPlaceholder(placeholder ?? ""),
     EditorView.contentAttributes.of({
@@ -1171,6 +1254,8 @@ export const QueryCodeEditor = ({
     extensions.push(shellLanguage, syntaxHighlighting(editorHighlightStyle));
   } else if (language === QUERY_EDITOR_LANGUAGE.HCL) {
     extensions.push(hclLanguage, syntaxHighlighting(editorHighlightStyle));
+  } else if (language === QUERY_EDITOR_LANGUAGE.JSON) {
+    extensions.push(jsonLanguage, syntaxHighlighting(editorHighlightStyle));
   } else if (language === QUERY_EDITOR_LANGUAGE.BICEP) {
     extensions.push(bicepLanguage, syntaxHighlighting(editorHighlightStyle));
   } else if (language === QUERY_EDITOR_LANGUAGE.YAML) {
@@ -1187,17 +1272,23 @@ export const QueryCodeEditor = ({
     <div
       data-testid="query-code-editor"
       data-language={language}
+      data-show-line-numbers={String(showLineNumbers)}
       className={cn(
         "border-border-neutral-secondary bg-bg-neutral-primary overflow-hidden rounded-xl border",
+        fill && "flex min-h-0 flex-1 flex-col",
         invalid && "border-border-error-primary",
         className,
       )}
       {...props}
     >
-      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex items-center justify-between border-b px-4 py-2">
-        <span className="text-text-neutral-secondary text-xs font-medium">
-          {ariaLabel}
-        </span>
+      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex shrink-0 items-center justify-between border-b px-4 py-2">
+        {visibleLabel ? (
+          <span className="text-text-neutral-secondary text-xs font-medium">
+            {visibleLabel}
+          </span>
+        ) : (
+          <span aria-hidden="true" />
+        )}
         <div className="flex items-center gap-2">
           {requirementBadge ? (
             <Badge
@@ -1227,11 +1318,13 @@ export const QueryCodeEditor = ({
       <CodeMirror
         value={value}
         theme={editorTheme}
+        className={cn(fill && "min-h-0 flex-1")}
         basicSetup={{
           foldGutter: false,
           highlightActiveLine: false,
-          highlightActiveLineGutter: false,
+          highlightActiveLineGutter: showLineNumbers,
           searchKeymap: false,
+          lineNumbers: showLineNumbers,
         }}
         editable={editable}
         onChange={onChange}

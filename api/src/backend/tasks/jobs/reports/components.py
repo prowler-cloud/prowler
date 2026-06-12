@@ -26,6 +26,52 @@ from .config import (
 )
 
 
+def truncate_text(text: str, max_len: int) -> str:
+    """Truncate ``text`` to ``max_len`` characters, appending an ellipsis if cut.
+
+    Used by report generators that need to squeeze long descriptions, section
+    titles or finding titles into a fixed-width table cell.
+
+    Args:
+        text: Source string. ``None`` and non-string values are treated as empty.
+        max_len: Maximum output length including the ellipsis. Values < 4 are
+            clamped so the result never grows beyond ``max_len``.
+
+    Returns:
+        The original string if short enough, otherwise ``text[: max_len - 3] + "..."``.
+        When ``max_len < 4`` a plain substring of length ``max_len`` is returned
+        so callers never get a string longer than they asked for.
+    """
+    if not text:
+        return ""
+    text = str(text)
+    if len(text) <= max_len:
+        return text
+    if max_len < 4:
+        return text[:max_len]
+    return text[: max_len - 3] + "..."
+
+
+def escape_html(text: str) -> str:
+    """Escape the minimal HTML entities required for safe ReportLab Paragraph rendering.
+
+    ReportLab's ``Paragraph`` parses a small HTML subset, so raw ``<``, ``>``
+    and ``&`` in user-provided content (rationale, remediation, etc.) would
+    break layout or be interpreted as tags. This helper mirrors
+    ``html.escape`` but avoids pulling in the stdlib dependency and keeps the
+    output deterministic.
+
+    Args:
+        text: Untrusted source string.
+
+    Returns:
+        A string safe to embed inside a ReportLab Paragraph.
+    """
+    return (
+        str(text or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    )
+
+
 def get_color_for_risk_level(risk_level: int) -> colors.Color:
     """
     Get color based on risk level.
@@ -429,8 +475,15 @@ def create_data_table(
             else:
                 value = item.get(col.field, "")
 
+            # Wrap every string cell in Paragraph so the data rows keep the
+            # caller-supplied font/colour/alignment. Skipping Paragraph for
+            # short cells (a tempting micro-optimisation) breaks visual
+            # consistency: ReportLab Table falls back to Helvetica/black for
+            # raw strings, mixing fonts within the same table.
+            # ``escape_html`` keeps ``<``/``>``/``&`` in resource names from
+            # breaking Paragraph's mini-HTML parser.
             if normal_style and isinstance(value, str):
-                value = Paragraph(value, normal_style)
+                value = Paragraph(escape_html(value), normal_style)
             row.append(value)
         table_data.append(row)
 
@@ -462,17 +515,26 @@ def create_data_table(
     for idx, col in enumerate(columns):
         styles.append(("ALIGN", (idx, 0), (idx, -1), col.align))
 
-    # Alternate row backgrounds - skip for very large tables as it adds memory overhead
+    # Alternate row backgrounds: single O(1) ROWBACKGROUNDS style entry.
+    # The previous implementation appended N per-row BACKGROUND commands,
+    # which scaled the TableStyle list linearly with row count. ReportLab
+    # cycles through the colour list row-by-row so the visual is identical.
+    # The ALTERNATE_ROWS_MAX_SIZE cap is preserved to mirror legacy
+    # behaviour (very large tables stay plain), but the memory cost of the
+    # styles list is now constant regardless of row count.
     if (
         alternate_rows
         and len(table_data) > 1
         and len(table_data) <= ALTERNATE_ROWS_MAX_SIZE
     ):
-        for i in range(1, len(table_data)):
-            if i % 2 == 0:
-                styles.append(
-                    ("BACKGROUND", (0, i), (-1, i), colors.Color(0.98, 0.98, 0.98))
-                )
+        styles.append(
+            (
+                "ROWBACKGROUNDS",
+                (0, 1),
+                (-1, -1),
+                [colors.white, colors.Color(0.98, 0.98, 0.98)],
+            )
+        )
 
     table.setStyle(TableStyle(styles))
     return table

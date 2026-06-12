@@ -13,6 +13,7 @@ export const addRoleFormSchema = z.object({
   manage_providers: z.boolean().default(false),
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
+  manage_alerts: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
@@ -25,26 +26,10 @@ export const editRoleFormSchema = z.object({
   manage_providers: z.boolean().default(false),
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
+  manage_alerts: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
-
-export const editScanFormSchema = (currentName: string) =>
-  z.object({
-    scanName: z
-      .string()
-      .refine((val) => val === "" || val.length >= 3, {
-        message: "Must be empty or have at least 3 characters.",
-      })
-      .refine((val) => val === "" || val.length <= 32, {
-        message: "Must not exceed 32 characters.",
-      })
-      .refine((val) => val !== currentName, {
-        message: "The new name must be different from the current one.",
-      })
-      .optional(),
-    scanId: z.string(),
-  });
 
 export const onDemandScanFormSchema = () =>
   z.object({
@@ -160,6 +145,18 @@ export const addProviderFormSchema = z
         providerType: z.literal("vercel"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string().trim().min(1, "Team ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("okta"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(
+            /^[a-z0-9][a-z0-9-]*\.(okta\.com|oktapreview\.com|okta-emea\.com|okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com)$/,
+            "Org Domain must be an Okta-managed domain (e.g. acme.okta.com), without scheme or path",
+          ),
       }),
     ]),
   );
@@ -389,7 +386,23 @@ export const addCredentialsFormSchema = (
                                             .trim()
                                             .min(1, "API Token is required"),
                                       }
-                                    : {}),
+                                    : providerType === "okta"
+                                      ? {
+                                          [ProviderCredentialFields.OKTA_CLIENT_ID]:
+                                            z
+                                              .string()
+                                              .trim()
+                                              .min(1, "Client ID is required"),
+                                          [ProviderCredentialFields.OKTA_PRIVATE_KEY]:
+                                            z
+                                              .string()
+                                              .trim()
+                                              .min(
+                                                1,
+                                                "Private Key is required",
+                                              ),
+                                        }
+                                      : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {

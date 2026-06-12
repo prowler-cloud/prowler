@@ -1,7 +1,8 @@
 import {
   getComplianceCsv,
+  getComplianceOcsf,
   getCompliancePdfReport,
-  getExportsZip,
+  type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
@@ -101,60 +102,78 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
   return url.toString();
 };
 
+const REPORT_PREPARATION_ERROR =
+  "Unable to prepare the scan report. Please try again in a few minutes.";
+
+const getPreflightErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+
+  if (contentType.includes("text/html")) {
+    return REPORT_PREPARATION_ERROR;
+  }
+
+  return (await response.text()) || "An unknown error occurred.";
+};
+
 export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ) => {
-  const result = await getExportsZip(scanId);
+  const reportUrl = `/api/scans/${encodeURIComponent(scanId)}/report`;
 
-  if (result?.pending) {
+  try {
+    const preflightResponse = await fetch(`${reportUrl}?preflight=1`, {
+      cache: "no-store",
+    });
+
+    if (preflightResponse.status === 202) {
+      toast({
+        title: "The report is still being generated",
+        description: "Please try again in a few minutes.",
+      });
+      return;
+    }
+
+    if (!preflightResponse.ok) {
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: await getPreflightErrorMessage(preflightResponse),
+      });
+      return;
+    }
+  } catch (_error) {
     toast({
-      title: "The report is still being generated",
-      description: "Please try again in a few minutes.",
+      variant: "destructive",
+      title: "Download Failed",
+      description: "Unable to start the report download. Please try again.",
     });
     return;
   }
 
-  if (result?.success && result.data) {
-    const binaryString = window.atob(result.data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
+  const a = document.createElement("a");
+  a.href = reportUrl;
+  a.download = `scan-${scanId}-report.zip`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-    const blob = new Blob([bytes], { type: "application/zip" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Download Complete",
-      description: "Your scan report has been downloaded successfully.",
-    });
-  } else {
-    toast({
-      variant: "destructive",
-      title: "Download Failed",
-      description: result?.error || "An unknown error occurred.",
-    });
-  }
+  toast({
+    title: "Download Started",
+    description: "Your browser is downloading the scan report.",
+  });
 };
 
 /**
  * Generic function to download a file from base64 data
  */
 const downloadFile = async (
-  result: any,
+  result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  if (result?.pending) {
+  if ("pending" in result && result.pending) {
     toast({
       title: "The report is still being generated",
       description: "Please try again in a few minutes.",
@@ -162,7 +181,7 @@ const downloadFile = async (
     return;
   }
 
-  if (result?.success && result.data) {
+  if ("success" in result && result.success) {
     try {
       const binaryString = window.atob(result.data);
       const bytes = new Uint8Array(binaryString.length);
@@ -194,7 +213,7 @@ const downloadFile = async (
     return;
   }
 
-  if (result?.error) {
+  if ("error" in result) {
     toast({
       variant: "destructive",
       title: "Download Failed",
@@ -216,6 +235,10 @@ export const downloadComplianceCsv = async (
   complianceId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the CSV report. This may take a moment.",
+  });
   const result = await getComplianceCsv(scanId, complianceId);
   await downloadFile(
     result,
@@ -226,18 +249,54 @@ export const downloadComplianceCsv = async (
 };
 
 /**
- * Generic function to download a compliance PDF report (ThreatScore, ENS, etc.)
+ * Download the per-framework OCSF JSON export.
+ *
+ * Only universal frameworks declaring an ``outputs`` block produce this
+ * artifact (currently DORA and CSA CCM 4.0); callers must gate the call
+ * via ``isOcsfSupported`` to avoid surfacing a broken download on
+ * frameworks the API will 404 on.
+ */
+export const downloadComplianceOcsf = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the OCSF report. This may take a moment.",
+  });
+  const result = await getComplianceOcsf(scanId, complianceId);
+  await downloadFile(
+    result,
+    "application/json",
+    "The compliance OCSF report has been downloaded successfully.",
+    toast,
+  );
+};
+
+/**
+ * Download a compliance PDF report.
+ *
+ * The call hits ``/scans/{id}/{reportType}`` for every supported framework.
+ * For CIS — which ships multiple versions per provider — the backend only
+ * generates the PDF for the highest available version, so the call site
+ * does not need to resolve a specific variant.
+ *
  * @param scanId - The scan ID
  * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @param toast - Toast notification function
  */
-export const downloadComplianceReportPdf = async (
+export const downloadCompliancePdf = async (
   scanId: string,
   reportType: ComplianceReportType,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  const result = await getCompliancePdfReport(scanId, reportType);
   const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
+  toast({
+    title: "Download Started",
+    description: `Preparing the ${reportName} PDF report. This may take a moment.`,
+  });
+  const result = await getCompliancePdfReport(scanId, reportType);
   await downloadFile(
     result,
     "application/pdf",
@@ -245,6 +304,16 @@ export const downloadComplianceReportPdf = async (
     toast,
   );
 };
+
+/**
+ * @deprecated Use {@link downloadCompliancePdf} instead. Kept as a thin
+ * wrapper for callers not yet migrated.
+ */
+export const downloadComplianceReportPdf = async (
+  scanId: string,
+  reportType: ComplianceReportType,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => downloadCompliancePdf(scanId, reportType, toast);
 
 export const isGoogleOAuthEnabled =
   !!process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID &&
@@ -360,9 +429,8 @@ export const permissionFormFields: PermissionInfo[] = [
   },
   {
     field: "manage_providers",
-    label: "Manage Cloud Providers",
-    description:
-      "Allows configuration and management of cloud provider connections",
+    label: "Manage Providers",
+    description: "Allows configuration and management of provider connections",
   },
   {
     field: "manage_integrations",
@@ -374,6 +442,11 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "manage_scans",
     label: "Manage Scans",
     description: "Allows launching and configuring scans security scans",
+  },
+  {
+    field: "manage_alerts",
+    label: "Manage Alerts",
+    description: "Allows creating and managing custom alerts",
   },
 
   {

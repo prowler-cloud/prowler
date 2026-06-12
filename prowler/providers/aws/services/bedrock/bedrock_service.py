@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -13,6 +14,8 @@ class Bedrock(AWSService):
         super().__init__(__class__.__name__, provider)
         self.logging_configurations = {}
         self.guardrails = {}
+        self.guardrails_scanned_regions = set()
+        self.guardrails_scan_errors = {}
         self.__threading_call__(self._get_model_invocation_logging_configuration)
         self.__threading_call__(self._list_guardrails)
         self.__threading_call__(self._get_guardrail, self.guardrails.values())
@@ -67,7 +70,18 @@ class Bedrock(AWSService):
                             arn=guardrail["arn"],
                             region=regional_client.region,
                         )
+            self.guardrails_scanned_regions.add(regional_client.region)
+        except ClientError as error:
+            self.guardrails_scan_errors[regional_client.region] = error.response[
+                "Error"
+            ].get("Code", error.__class__.__name__)
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            self.guardrails_scan_errors[regional_client.region] = (
+                error.__class__.__name__
+            )
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -122,11 +136,19 @@ class Guardrail(BaseModel):
 
 
 class BedrockAgent(AWSService):
+    """Bedrock Agent service class for managing agents and prompts."""
+
     def __init__(self, provider):
+        """Initialize the BedrockAgent service."""
         # Call AWSService's __init__
         super().__init__("bedrock-agent", provider)
         self.agents = {}
+        self.prompts = {}
+        self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
+        self.__threading_call__(self._get_agent, self.agents.values())
+        self.__threading_call__(self._list_prompts)
+        self.__threading_call__(self._get_prompt, self.prompts.values())
         self.__threading_call__(self._list_tags_for_resource, self.agents.values())
 
     def _list_agents(self, regional_client):
@@ -153,7 +175,62 @@ class BedrockAgent(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_agent(self, agent):
+        """Fetch full agent details to capture the execution role ARN.
+
+        list_agents only returns summaries (no agentResourceRoleArn), so we
+        need a per-agent GetAgent call. Stored on the Agent model for use by
+        checks like bedrock_agent_role_least_privilege.
+        """
+        logger.info("Bedrock Agent - Getting Agent...")
+        try:
+            agent_info = self.regional_clients[agent.region].get_agent(agentId=agent.id)
+            agent.role_arn = agent_info.get("agent", {}).get("agentResourceRoleArn")
+        except Exception as error:
+            logger.error(
+                f"{agent.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_prompts(self, regional_client):
+        """List all prompts in a region."""
+        logger.info("Bedrock Agent - Listing Prompts...")
+        try:
+            paginator = regional_client.get_paginator("list_prompts")
+            for page in paginator.paginate():
+                for prompt in page.get("promptSummaries", []):
+                    prompt_arn = prompt.get("arn", "")
+                    if not self.audit_resources or (
+                        is_resource_filtered(prompt_arn, self.audit_resources)
+                    ):
+                        self.prompts[prompt_arn] = Prompt(
+                            id=prompt.get("id", ""),
+                            name=prompt.get("name", ""),
+                            arn=prompt_arn,
+                            region=regional_client.region,
+                        )
+            self.prompt_scanned_regions.add(regional_client.region)
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_prompt(self, prompt):
+        """Get detailed prompt information including encryption configuration."""
+        logger.info("Bedrock Agent - Getting Prompt...")
+        try:
+            prompt_info = self.regional_clients[prompt.region].get_prompt(
+                promptIdentifier=prompt.id
+            )
+            prompt.customer_encryption_key_arn = prompt_info.get(
+                "customerEncryptionKeyArn"
+            )
+        except Exception as error:
+            logger.error(
+                f"{prompt.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_resource(self, resource):
+        """List tags for a Bedrock Agent resource."""
         logger.info("Bedrock Agent - Listing Tags for Resource...")
         try:
             agent_tags = (
@@ -170,9 +247,22 @@ class BedrockAgent(AWSService):
 
 
 class Agent(BaseModel):
+    """Model for a Bedrock Agent resource."""
+
     id: str
     name: str
     arn: str
     guardrail_id: Optional[str] = None
+    role_arn: Optional[str] = None
     region: str
     tags: Optional[list] = []
+
+
+class Prompt(BaseModel):
+    """Model representing a Bedrock Prompt Management prompt."""
+
+    id: str
+    name: str
+    arn: str
+    region: str
+    customer_encryption_key_arn: Optional[str] = None

@@ -2,12 +2,13 @@ import { Suspense } from "react";
 
 import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
+import { CliImportBanner } from "@/components/scans";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import { SearchParamsProps } from "@/types";
 
-import { AccountGroupsContent } from "./account-groups-content";
+import { ProviderGroupsContent } from "./provider-groups-content";
 import { ProviderPageTabs } from "./provider-page-tabs";
 import { getProviderTab } from "./provider-page-tabs.shared";
 import { loadProvidersAccountsViewData } from "./providers-page.utils";
@@ -19,30 +20,32 @@ export default async function Providers({
 }) {
   const resolvedSearchParams = await searchParams;
   const activeTab = getProviderTab(resolvedSearchParams.tab);
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   // Exclude `tab` from the Suspense key so switching tabs doesn't re-suspend
   const { tab: _, ...paramsWithoutTab } = resolvedSearchParams || {};
   const searchParamsKey = JSON.stringify(paramsWithoutTab);
 
   return (
-    <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
+    <ContentLayout title="Providers" icon="lucide:cloud-cog">
+      {isCloudEnvironment && <CliImportBanner className="mb-6" />}
       <FilterTransitionWrapper>
         <ProviderPageTabs
           activeTab={activeTab}
-          accountsContent={
+          providersContent={
             <Suspense
-              key={`accounts-${searchParamsKey}`}
+              key={`providers-${searchParamsKey}`}
               fallback={<ProvidersTableFallback />}
             >
-              <ProvidersAccountsContent searchParams={resolvedSearchParams} />
+              <ProvidersTabContent searchParams={resolvedSearchParams} />
             </Suspense>
           }
-          accountGroupsContent={
+          providerGroupsContent={
             <Suspense
               key={`groups-${searchParamsKey}`}
-              fallback={<AccountGroupsFallback />}
+              fallback={<ProviderGroupsFallback />}
             >
-              <AccountGroupsContent searchParams={resolvedSearchParams} />
+              <ProviderGroupsContent searchParams={resolvedSearchParams} />
             </Suspense>
           }
         />
@@ -59,7 +62,7 @@ const ProvidersTableFallback = () => {
         <Skeleton className="h-[52px] min-w-[200px] flex-1 rounded-lg md:max-w-[280px]" />
         {/* Organizations filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Account Groups filter */}
+        {/* Provider Groups filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
         {/* Status filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
@@ -74,7 +77,7 @@ const ProvidersTableFallback = () => {
   );
 };
 
-const AccountGroupsFallback = () => {
+const ProviderGroupsFallback = () => {
   return (
     <div className="grid min-h-[50vh] grid-cols-1 items-start gap-8 md:grid-cols-12">
       <div className="col-span-1 md:col-span-4">
@@ -95,7 +98,7 @@ const AccountGroupsFallback = () => {
   );
 };
 
-const ProvidersAccountsContent = async ({
+const ProvidersTabContent = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;

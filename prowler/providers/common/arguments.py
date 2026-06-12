@@ -16,18 +16,41 @@ def init_providers_parser(self):
     # We need to call the arguments parser for each provider
     providers = Provider.get_available_providers()
     for provider in providers:
-        try:
-            getattr(
-                import_module(
-                    f"{providers_path}.{provider}.{provider_arguments_lib_path}"
-                ),
-                init_provider_arguments_function,
-            )(self)
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            sys.exit(1)
+        # Discriminate built-in vs external upfront via find_spec, so an
+        # ImportError from a transitive dependency missing inside a built-in
+        # arguments module surfaces clearly instead of being silently
+        # re-routed to the entry-point path (which only has external providers).
+        if Provider.is_builtin(provider):
+            try:
+                getattr(
+                    import_module(
+                        f"{providers_path}.{provider}.{provider_arguments_lib_path}"
+                    ),
+                    init_provider_arguments_function,
+                )(self)
+            except ImportError as e:
+                logger.critical(
+                    f"Failed to load arguments for built-in provider '{provider}'. "
+                    f"Missing dependency: {e}. "
+                    f"Ensure all required dependencies are installed."
+                )
+                logger.debug("Full traceback:", exc_info=True)
+                sys.exit(1)
+            except Exception as error:
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                sys.exit(1)
+        else:
+            # External provider — init_parser classmethod via entry point
+            cls = Provider._load_ep_provider(provider)
+            if cls and hasattr(cls, "init_parser"):
+                try:
+                    cls.init_parser(self)
+                except Exception as error:
+                    logger.warning(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
 
 def validate_provider_arguments(arguments: Namespace) -> tuple[bool, str]:
@@ -69,4 +92,20 @@ def validate_asff_usage(
     return (
         False,
         f"json-asff output format is only available for the aws provider, but {provider} was selected",
+    )
+
+
+def validate_sarif_usage(
+    provider: Optional[str], output_formats: Optional[Sequence[str]]
+) -> tuple[bool, str]:
+    """Ensure sarif output is only requested for the IaC provider."""
+    if not output_formats or "sarif" not in output_formats:
+        return (True, "")
+
+    if provider == "iac":
+        return (True, "")
+
+    return (
+        False,
+        f"sarif output format is only available for the iac provider, but {provider} was selected",
     )

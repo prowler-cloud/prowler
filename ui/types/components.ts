@@ -21,6 +21,8 @@ export type SubmenuProps = {
   active?: boolean;
   icon: IconComponent;
   disabled?: boolean;
+  highlight?: boolean;
+  cloudOnly?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
@@ -226,22 +228,6 @@ export interface FindingsSeverityOverview {
   };
 }
 
-export interface TaskDetails {
-  attributes: {
-    state: string;
-    completed_at: string;
-    result: {
-      exc_type?: string;
-      exc_message?: string[];
-      exc_module?: string;
-    };
-    task_args: {
-      scan_id: string;
-      provider_id: string;
-      checks_to_execute: string[];
-    };
-  };
-}
 export const AWS_CREDENTIALS_TYPE = {
   AWS_SDK_DEFAULT: "aws-sdk-default",
   ACCESS_SECRET_KEY: "access-secret-key",
@@ -387,6 +373,12 @@ export type VercelCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type OktaCredentials = {
+  [ProviderCredentialFields.OKTA_CLIENT_ID]: string;
+  [ProviderCredentialFields.OKTA_PRIVATE_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -404,19 +396,22 @@ export type CredentialsFormSchema =
   | CloudflareCredentials
   | OpenStackCredentials
   | GoogleWorkspaceCredentials
-  | VercelCredentials;
+  | VercelCredentials
+  | OktaCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
 }
 
+export interface ApiErrorSource {
+  pointer?: string;
+}
+
 export interface ApiError {
   detail: string;
-  status: string;
-  source: {
-    pointer: string;
-  };
-  code: string;
+  status?: string;
+  source?: ApiErrorSource;
+  code?: string;
 }
 
 export type ApiResponse = {
@@ -458,6 +453,7 @@ export interface InvitationProps {
         manage_providers?: boolean;
         manage_integrations?: boolean;
         manage_scans?: boolean;
+        manage_alerts?: boolean;
         permission_state?: PermissionState;
       };
     };
@@ -482,6 +478,7 @@ export interface Role {
     manage_providers: boolean;
     manage_integrations: boolean;
     manage_scans: boolean;
+    manage_alerts?: boolean;
     unlimited_visibility: boolean;
     permission_state: PermissionState;
     inserted_at: string;
