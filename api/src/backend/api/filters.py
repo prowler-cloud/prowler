@@ -102,7 +102,7 @@ class BaseProviderFilter(FilterSet):
     """
     Abstract base filter for models with direct FK to Provider.
 
-    Provides standard provider_id and provider_type filters.
+    Provides standard provider_id, provider_type, and provider_groups filters.
     Subclasses must define Meta.model.
     """
 
@@ -116,6 +116,16 @@ class BaseProviderFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
 
     class Meta:
         abstract = True
@@ -126,7 +136,7 @@ class BaseScanProviderFilter(FilterSet):
     """
     Abstract base filter for models with FK to Scan (and Scan has FK to Provider).
 
-    Provides standard provider_id and provider_type filters via scan relationship.
+    Provides standard provider_id, provider_type, and provider_groups filters via scan relationship.
     Subclasses must define Meta.model.
     """
 
@@ -139,6 +149,16 @@ class BaseScanProviderFilter(FilterSet):
         field_name="scan__provider__provider",
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
+    )
+    provider_groups = UUIDFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
 
     class Meta:
@@ -159,6 +179,16 @@ class CommonFindingFilters(FilterSet):
     )
     provider_type__in = ChoiceInFilter(
         choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
+    )
+    provider_groups = UUIDFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     provider_uid = CharFilter(field_name="scan__provider__uid", lookup_expr="exact")
     provider_uid__in = CharInFilter(field_name="scan__provider__uid", lookup_expr="in")
@@ -370,6 +400,12 @@ class ProviderFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    provider_groups = UUIDFilter(
+        field_name="provider_groups__id", lookup_expr="exact", distinct=True
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider_groups__id", lookup_expr="in", distinct=True
+    )
 
     class Meta:
         model = Provider
@@ -394,6 +430,16 @@ class ProviderRelationshipFilterSet(FilterSet):
     )
     provider_type__in = ChoiceInFilter(
         choices=Provider.ProviderChoices.choices, field_name="provider__provider"
+    )
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     provider_uid = CharFilter(field_name="provider__uid", lookup_expr="exact")
     provider_uid__in = CharInFilter(field_name="provider__uid", lookup_expr="in")
@@ -1001,6 +1047,16 @@ class FindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
         field_name="provider__provider", choices=Provider.ProviderChoices.choices
     )
     provider_type__in = CharInFilter(field_name="provider__provider", lookup_expr="in")
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
 
     class Meta:
         model = FindingGroupDailySummary
@@ -1101,6 +1157,16 @@ class LatestFindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
         field_name="provider__provider", choices=Provider.ProviderChoices.choices
     )
     provider_type__in = CharInFilter(field_name="provider__provider", lookup_expr="in")
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
 
     class Meta:
         model = FindingGroupDailySummary
@@ -1306,6 +1372,16 @@ class ScanSummaryFilter(FilterSet):
     provider_type__in = ChoiceInFilter(
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
+    provider_groups = UUIDFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
     region = CharFilter(field_name="region")
 
     class Meta:
@@ -1328,6 +1404,16 @@ class DailySeveritySummaryFilter(FilterSet):
     )
     provider_type__in = ChoiceInFilter(
         field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     date_from = DateFilter(method="filter_noop")
     date_to = DateFilter(method="filter_noop")
@@ -1585,6 +1671,16 @@ class ThreatScoreSnapshotFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
     compliance_id = CharFilter(field_name="compliance_id", lookup_expr="exact")
     compliance_id__in = CharInFilter(field_name="compliance_id", lookup_expr="in")
 
@@ -1627,6 +1723,16 @@ class ResourceGroupOverviewFilter(FilterSet):
         field_name="scan__provider__provider",
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
+    )
+    provider_groups = UUIDFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")
     resource_group__in = CharInFilter(field_name="resource_group", lookup_expr="in")
