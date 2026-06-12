@@ -425,3 +425,21 @@ class TestSSEAuthentication:
         jwt_instance.get_validated_token.assert_called_once_with("query-jwt")
         assert user == "query-user"
         assert token == "validated"
+
+    def test_query_token_invalid_raises_authentication_error(self):
+        """An invalid JWT in `?access_token` must propagate as an auth error,
+        not be swallowed or treated as unauthenticated."""
+        from rest_framework_simplejwt.exceptions import InvalidToken
+
+        request = MagicMock()
+        request.headers = {}
+        request.query_params = {"access_token": "bad-token"}
+
+        jwt_instance = MagicMock()
+        jwt_instance.get_validated_token.side_effect = InvalidToken("Token is invalid")
+
+        with patch("api.authentication.JWTAuthentication", return_value=jwt_instance):
+            with pytest.raises(InvalidToken):
+                SSEAuthentication().authenticate(request)
+
+        jwt_instance.get_validated_token.assert_called_once_with("bad-token")
