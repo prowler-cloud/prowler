@@ -279,6 +279,11 @@ def get_prowler_provider_kwargs(
                 **{k: v for k, v in prowler_provider_kwargs.items() if v},
             }
 
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        prowler_provider_kwargs = _normalize_oraclecloud_provider_kwargs(
+            prowler_provider_kwargs
+        )
+
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
         # IaC and Image providers don't support mutelist (both use Trivy's built-in logic)
@@ -287,6 +292,31 @@ def get_prowler_provider_kwargs(
             Provider.ProviderChoices.IMAGE.value,
         ):
             prowler_provider_kwargs["mutelist_content"] = mutelist_content
+
+    return prowler_provider_kwargs
+
+
+def _normalize_oraclecloud_provider_kwargs(secret: dict) -> dict:
+    """Normalize external OCI secret fields into SDK provider kwargs."""
+    prowler_provider_kwargs = secret.copy()
+
+    if "regions" in prowler_provider_kwargs:
+        regions = prowler_provider_kwargs.pop("regions")
+        prowler_provider_kwargs["region"] = set(regions)
+    elif "region" in prowler_provider_kwargs:
+        prowler_provider_kwargs["region"] = {prowler_provider_kwargs["region"]}
+
+    return prowler_provider_kwargs
+
+
+def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
+    """Normalize external OCI secret fields into test_connection kwargs."""
+    prowler_provider_kwargs = secret.copy()
+
+    if "regions" in prowler_provider_kwargs:
+        regions = prowler_provider_kwargs.pop("regions")
+        if regions:
+            prowler_provider_kwargs["region"] = sorted(regions)[0]
 
     return prowler_provider_kwargs
 
@@ -393,6 +423,15 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         if prowler_provider_kwargs.get("registry_token"):
             image_kwargs["registry_token"] = prowler_provider_kwargs["registry_token"]
         return prowler_provider.test_connection(**image_kwargs)
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        oraclecloud_kwargs = _normalize_oraclecloud_connection_test_kwargs(
+            prowler_provider_kwargs
+        )
+        return prowler_provider.test_connection(
+            **oraclecloud_kwargs,
+            provider_id=provider.uid,
+            raise_on_exception=False,
+        )
     else:
         return prowler_provider.test_connection(
             **prowler_provider_kwargs,

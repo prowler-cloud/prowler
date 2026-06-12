@@ -359,6 +359,15 @@ const base64Encode = (str: string): string => {
   return btoa(binaryString);
 };
 
+const parseCommaSeparatedRegions = (value: FormDataEntryValue | null) => {
+  if (typeof value !== "string") return [];
+
+  return value
+    .split(",")
+    .map((region) => region.trim())
+    .filter(Boolean);
+};
+
 export const buildOracleCloudSecret = (
   formData: FormData,
   providerUid?: string,
@@ -385,9 +394,8 @@ export const buildOracleCloudSecret = (
     [ProviderCredentialFields.OCI_TENANCY]:
       providerUid ||
       getFormValue(formData, ProviderCredentialFields.OCI_TENANCY),
-    [ProviderCredentialFields.OCI_REGION]: getFormValue(
-      formData,
-      ProviderCredentialFields.OCI_REGION,
+    regions: parseCommaSeparatedRegions(
+      getFormValue(formData, ProviderCredentialFields.OCI_REGION),
     ),
     [ProviderCredentialFields.OCI_PASS_PHRASE]: getFormValue(
       formData,

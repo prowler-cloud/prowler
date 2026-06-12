@@ -1740,8 +1740,45 @@ class OracleCloudProviderSecret(serializers.Serializer):
     key_file = serializers.CharField(required=False)
     key_content = serializers.CharField(required=False)
     tenancy = serializers.CharField()
-    region = serializers.CharField()
+    regions = serializers.ListField(
+        child=serializers.CharField(allow_blank=False),
+        allow_empty=False,
+        required=False,
+        help_text="OCI regions to audit. Canonical field for new payloads.",
+    )
+    region = serializers.CharField(
+        required=False,
+        help_text="Legacy single OCI region. Deprecated; use regions instead.",
+    )
     pass_phrase = serializers.CharField(required=False)
+
+    def validate(self, attrs):
+        has_regions = "regions" in attrs
+        has_region = "region" in attrs
+
+        if has_regions == has_region:
+            raise serializers.ValidationError(
+                "Provide exactly one of regions or legacy region."
+            )
+
+        if has_regions:
+            regions = [region.strip() for region in attrs["regions"]]
+            if any(not region for region in regions):
+                raise serializers.ValidationError(
+                    {"regions": "Regions cannot contain blank values."}
+                )
+            if len(regions) != len(set(regions)):
+                raise serializers.ValidationError(
+                    {"regions": "Regions cannot contain duplicate values."}
+                )
+            attrs["regions"] = regions
+        else:
+            region = attrs["region"].strip()
+            if not region:
+                raise serializers.ValidationError({"region": "Region cannot be blank."})
+            attrs["region"] = region
+
+        return attrs
 
     class Meta:
         resource_name = "provider-secrets"
