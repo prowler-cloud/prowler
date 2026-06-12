@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_models_registry_in_use",
+  "CheckTitle": "Amazon SageMaker Model Registry should have at least one approved model package",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**SageMaker Model Registry** is evaluated to verify that at least one Model Package Group exists and contains at least one model package with **ModelApprovalStatus = Approved**. This confirms that the ML governance workflow (register → review → approve → deploy) is actively in use.",
+  "Risk": "An empty Model Registry, or one with no approved packages, indicates that models are being deployed outside any review process. This breaks provenance and accountability for production ML workloads, making it impossible to enforce governance controls such as auditing, versioning, and approval workflows.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry-approve.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_ListModelPackageGroups.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_ListModelPackages.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker list-model-package-groups\naws sagemaker list-model-packages --model-package-group-name <group-name>\naws sagemaker update-model-package --model-package-arn <arn> --model-approval-status Approved",
+      "NativeIaC": "",
+      "Other": "1. In the AWS console, navigate to SageMaker > Models > Model Registry.\n2. Create a Model Package Group if none exists.\n3. Register a model version in the group.\n4. Review and approve at least one model package by setting its approval status to Approved.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Register all production models in the **SageMaker Model Registry** and enforce an approval workflow before deployment. Ensure at least one model package per group reaches **Approved** status. Use **IAM policies** to restrict who can approve model packages and integrate with **CI/CD pipelines** to automate registration.",
+      "Url": "https://hub.prowler.com/check/sagemaker_models_registry_in_use"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "software-supply-chain"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -50,6 +50,9 @@ class CloudSQL(GCPService):
                                     "availabilityType", "ZONAL"
                                 )
                                 == "REGIONAL",
+                                instance_type=instance.get(
+                                    "instanceType", "CLOUD_SQL_INSTANCE"
+                                ),
                                 cmek_key_name=instance.get(
                                     "diskEncryptionConfiguration", {}
                                 ).get("kmsKeyName"),
@@ -78,5 +81,6 @@ class Instance(BaseModel):
     automated_backups: bool
     flags: list
     high_availability: bool = False
+    instance_type: str = "CLOUD_SQL_INSTANCE"
     cmek_key_name: Optional[str] = None
     project_id: str

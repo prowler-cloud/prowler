@@ -45,6 +45,7 @@ NEXT_PUBLIC_SENTRY_ENVIRONMENT=development
 ## Ignored Errors
 
 The following errors are intentionally ignored as they are expected behavior:
+
 - `NEXT_REDIRECT` - Next.js redirect mechanism
 - `NEXT_NOT_FOUND` - Next.js 404 handling
 - `401` - Unauthorized (expected when token expires)

@@ -10,6 +10,7 @@ export interface ScannerArgs {
 export const SCAN_TRIGGER = {
   SCHEDULED: "scheduled",
   MANUAL: "manual",
+  IMPORTED: "imported",
 } as const;
 
 export type ScanTrigger = (typeof SCAN_TRIGGER)[keyof typeof SCAN_TRIGGER];
@@ -25,6 +26,29 @@ export const SCAN_STATE = {
 
 export type ScanState = (typeof SCAN_STATE)[keyof typeof SCAN_STATE];
 
+export const SCAN_JOBS_TAB = {
+  ACTIVE: "active",
+  COMPLETED: "completed",
+  SCHEDULED: "scheduled",
+} as const;
+
+export type ScanJobsTab = (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB];
+
+export const DEFAULT_SCAN_JOBS_TAB: ScanJobsTab = SCAN_JOBS_TAB.COMPLETED;
+
+export const SCAN_TAB_LABELS: Record<ScanJobsTab, string> = {
+  [SCAN_JOBS_TAB.ACTIVE]: "In Progress",
+  [SCAN_JOBS_TAB.COMPLETED]: "Completed",
+  [SCAN_JOBS_TAB.SCHEDULED]: "Scheduled",
+};
+
+export interface ScanFindingsSummary {
+  fail: number;
+  pass: number;
+  failNew?: number;
+  passNew?: number;
+}
+
 export interface ScanAttributes {
   name: string;
   trigger: ScanTrigger;
@@ -32,12 +56,12 @@ export interface ScanAttributes {
   unique_resource_count: number;
   progress: number;
   scanner_args: ScannerArgs | null;
-  duration: number;
-  started_at: string;
+  duration: number | null;
+  started_at: string | null;
   inserted_at: string;
-  completed_at: string;
-  scheduled_at: string;
-  next_scan_at: string;
+  completed_at: string | null;
+  scheduled_at: string | null;
+  next_scan_at: string | null;
 }
 
 export interface ScanRelationships {
@@ -45,10 +69,18 @@ export interface ScanRelationships {
   task: RelationshipWrapper;
 }
 
-export interface ScanProviderInfo {
+export interface ScanResultProviderInfo {
   provider: ProviderType;
   uid: string;
   alias: string;
+}
+
+export interface ScanProviderInfo {
+  providerId: string;
+  alias: string;
+  providerType: string;
+  uid: string;
+  connected: boolean;
 }
 
 export interface ScanProps {
@@ -56,7 +88,7 @@ export interface ScanProps {
   id: string;
   attributes: ScanAttributes;
   relationships: ScanRelationships;
-  providerInfo?: ScanProviderInfo;
+  providerInfo?: ScanResultProviderInfo;
 }
 
 export interface ScanEntityProviderInfo {
@@ -67,7 +99,7 @@ export interface ScanEntityProviderInfo {
 
 export interface ScanEntityAttributes {
   name?: string;
-  completed_at: string;
+  completed_at: string | null;
 }
 
 export interface ScanEntity {
@@ -77,7 +109,7 @@ export interface ScanEntity {
 }
 
 export interface ExpandedScanData extends ScanProps {
-  providerInfo: ScanProviderInfo;
+  providerInfo: ScanResultProviderInfo;
 }
 
 export interface IncludedResource {

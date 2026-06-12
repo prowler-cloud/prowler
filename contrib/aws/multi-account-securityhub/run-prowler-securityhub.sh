@@ -1,8 +1,9 @@
 #!/bin/bash
 # Run Prowler against All AWS Accounts in an AWS Organization
 
-# Activate Poetry Environment
-eval "$(poetry env activate)"
+# Activate uv-managed virtualenv
+# shellcheck disable=SC1091
+source .venv/bin/activate
 
 # Show Prowler Version
 prowler -v

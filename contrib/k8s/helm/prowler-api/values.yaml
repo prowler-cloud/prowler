@@ -73,7 +73,7 @@ secrets:
   DJANGO_SECRETS_ENCRYPTION_KEY:
   DJANGO_BROKER_VISIBILITY_TIMEOUT: 86400
 
-releaseConfigRoot: /home/prowler/.cache/pypoetry/virtualenvs/prowler-api-NnJNioq7-py3.12/lib/python3.12/site-packages/
+releaseConfigRoot: /home/prowler/.venv/lib/python3.12/site-packages/
 releaseConfigPath: prowler/config/config.yaml
 
 mainConfig:
@@ -590,13 +590,16 @@ resources: {}
   #   memory: 128Mi
 
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# /health/live succeeds while the process answers; /health/ready also
+# checks PostgreSQL, Valkey and Neo4j connectivity and returns 503 when
+# any of them is unreachable.
 livenessProbe:
   httpGet:
-    path: /
+    path: /health/live
     port: http
 readinessProbe:
   httpGet:
-    path: /
+    path: /health/ready
     port: http
 
 #This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/

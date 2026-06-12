@@ -10,7 +10,7 @@
 > - [`jsonapi`](../skills/jsonapi/SKILL.md) - Strict JSON:API v1.1 spec compliance
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
 
-### Auto-invoke Skills
+## Auto-invoke Skills
 
 When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
@@ -81,7 +81,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 ## DECISION TREES
 
 ### Serializer Selection
-```
+```text
 Read → <Model>Serializer
 Create → <Model>CreateSerializer
 Update → <Model>UpdateSerializer
@@ -89,7 +89,7 @@ Nested read → <Model>IncludeSerializer
 ```
 
 ### Task vs View
-```
+```text
 < 100ms → View
 > 100ms or external API → Celery task
 Needs retry → Celery task
@@ -105,7 +105,7 @@ Django 5.1.x | DRF 3.15.x | djangorestframework-jsonapi 7.x | Celery 5.4.x | Pos
 
 ## PROJECT STRUCTURE
 
-```
+```text
 api/src/backend/
 ├── api/                    # Main Django app
 │   ├── v1/                # API version 1 (views, serializers, urls)
@@ -124,24 +124,24 @@ api/src/backend/
 
 ```bash
 # Development
-poetry run python src/backend/manage.py runserver
-poetry run celery -A config.celery worker -l INFO
+uv run python src/backend/manage.py runserver
+uv run celery -A config.celery worker -l INFO
 
 # Database
-poetry run python src/backend/manage.py makemigrations
-poetry run python src/backend/manage.py migrate
+uv run python src/backend/manage.py makemigrations
+uv run python src/backend/manage.py migrate
 
 # Testing & Linting
-poetry run pytest -x --tb=short
-poetry run make lint
+uv run pytest -x --tb=short
+uv run make lint
 ```
 
 ---
 
 ## QA CHECKLIST
 
-- [ ] `poetry run pytest` passes
-- [ ] `poetry run make lint` passes
+- [ ] `uv run pytest` passes
+- [ ] `uv run make lint` passes
 - [ ] Migrations created if models changed
 - [ ] New endpoints have `@extend_schema` decorators
 - [ ] RLS properly applied for tenant data

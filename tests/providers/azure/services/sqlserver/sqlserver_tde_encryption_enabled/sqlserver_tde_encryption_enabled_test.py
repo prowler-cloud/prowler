@@ -8,7 +8,9 @@ from prowler.providers.azure.services.sqlserver.sqlserver_service import (
     Server,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -16,6 +18,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_sqlserver_tde_encryption_enabled:
     def test_no_sql_servers(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sqlserver_client.sql_servers = {}
 
         with (
@@ -38,6 +43,9 @@ class Test_sqlserver_tde_encryption_enabled:
 
     def test_no_sql_servers_databases(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
@@ -76,6 +84,9 @@ class Test_sqlserver_tde_encryption_enabled:
 
     def test_sql_servers_database_encryption_disabled(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database_name = "Database Name"
@@ -125,7 +136,7 @@ class Test_sqlserver_tde_encryption_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has TDE disabled"
+                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has TDE disabled"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == database_name
@@ -134,6 +145,9 @@ class Test_sqlserver_tde_encryption_enabled:
 
     def test_sql_servers_database_encryption_enabled(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database_name = "Database Name"
@@ -183,7 +197,7 @@ class Test_sqlserver_tde_encryption_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has TDE enabled"
+                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has TDE enabled"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == database_name
@@ -192,6 +206,9 @@ class Test_sqlserver_tde_encryption_enabled:
 
     def test_sql_servers_database_encryption_disabled_on_master_db(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database_master_name = "MASTER"
@@ -251,7 +268,7 @@ class Test_sqlserver_tde_encryption_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has TDE enabled"
+                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has TDE enabled"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == database_name

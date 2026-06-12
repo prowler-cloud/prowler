@@ -20,7 +20,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
 
 ## TDD Cycle (MANDATORY)
 
-```
+```text
 +-----------------------------------------+
 |  RED -> GREEN -> REFACTOR               |
 |     ^                        |          |
@@ -28,7 +28,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
 +-----------------------------------------+
 ```
 
-**The question is NOT "should I write tests?" but "what tests do I need?"**
+The question is NOT "should I write tests?" but "what tests do I need?"
 
 ---
 
@@ -75,7 +75,7 @@ pnpm test:coverage -- components/feature/
 fd "*_test.py" tests/providers/aws/services/ec2/
 
 # 2. Run specific test
-poetry run pytest tests/providers/aws/services/ec2/ec2_ami_public/ -v
+uv run pytest tests/providers/aws/services/ec2/ec2_ami_public/ -v
 
 # 3. Read existing tests
 ```
@@ -87,14 +87,14 @@ poetry run pytest tests/providers/aws/services/ec2/ec2_ami_public/ -v
 fd "test_*.py" api/src/backend/api/tests/
 
 # 2. Run specific test
-poetry run pytest api/src/backend/api/tests/test_models.py -v
+uv run pytest api/src/backend/api/tests/test_models.py -v
 
 # 3. Read existing tests
 ```
 
 ### Decision Tree (All Stacks)
 
-```
+```text
 +------------------------------------------+
 |     Does test file exist for this code?  |
 +----------+-----------------------+-------+
@@ -122,7 +122,7 @@ poetry run pytest api/src/backend/api/tests/test_models.py -v
 
 ### For NEW Functionality
 
-**UI (Vitest)**
+#### UI (Vitest)
 
 ```typescript
 describe("PriceCalculator", () => {
@@ -139,7 +139,7 @@ describe("PriceCalculator", () => {
 });
 ```
 
-**SDK (pytest)**
+#### SDK (pytest)
 
 ```python
 class Test_ec2_ami_public:
@@ -159,7 +159,7 @@ class Test_ec2_ami_public:
             assert len(result) == 0
 ```
 
-**API (pytest-django)**
+#### API (pytest-django)
 
 ```python
 @pytest.mark.django_db
@@ -192,18 +192,18 @@ Write a test that **reproduces the bug** first:
 
 **API:** `assert response.status_code == 403  # Currently returns 200`
 
-**Run -> Should FAIL (reproducing the bug)**
+Run -> Should FAIL (reproducing the bug).
 
 ### For REFACTORING
 
 Capture ALL current behavior BEFORE refactoring:
 
-```
+```text
 # Any stack: run ALL existing tests, they should PASS
 # This is your safety net - if any fail after refactoring, you broke something
 ```
 
-**Run -> All should PASS (baseline)**
+Run -> All should PASS (baseline).
 
 ---
 
@@ -288,13 +288,13 @@ Tests GREEN -> Improve code quality WITHOUT changing behavior.
 - Add types/validation
 - Reduce duplication
 
-**Run tests after EACH change -> Must stay GREEN**
+Run tests after EACH change -> Must stay GREEN.
 
 ---
 
 ## Quick Reference
 
-```
+```text
 +------------------------------------------------+
 |                 TDD WORKFLOW                    |
 +------------------------------------------------+
@@ -320,7 +320,7 @@ Tests GREEN -> Improve code quality WITHOUT changing behavior.
 
 ## Anti-Patterns (NEVER DO)
 
-```
+```python
 # ANY language:
 
 # 1. Code first, tests after
@@ -356,16 +356,16 @@ pnpm test ComponentName             # Filter by name
 ### SDK (`prowler/`)
 
 ```bash
-poetry run pytest tests/path/ -v              # Run specific tests
-poetry run pytest tests/path/ -v -k "test_name"  # Filter by name
-poetry run pytest -n auto tests/              # Parallel run
-poetry run pytest --cov=./prowler tests/      # Coverage
+uv run pytest tests/path/ -v              # Run specific tests
+uv run pytest tests/path/ -v -k "test_name"  # Filter by name
+uv run pytest -n auto tests/              # Parallel run
+uv run pytest --cov=./prowler tests/      # Coverage
 ```
 
 ### API (`api/`)
 
 ```bash
-poetry run pytest -x --tb=short                           # Run all (stop on first fail)
-poetry run pytest api/src/backend/api/tests/test_file.py  # Specific file
-poetry run pytest -k "test_name" -v                       # Filter by name
+uv run pytest -x --tb=short                           # Run all (stop on first fail)
+uv run pytest api/src/backend/api/tests/test_file.py     # Specific file
+uv run pytest -k "test_name" -v                       # Filter by name
 ```

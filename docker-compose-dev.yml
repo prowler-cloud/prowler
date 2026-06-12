@@ -37,7 +37,7 @@ services:
       neo4j:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:${DJANGO_PORT:-8080}/api/v1/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:${DJANGO_PORT:-8080}/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -139,6 +139,8 @@ services:
 
   worker-dev:
     image: prowler-api-dev
+    # Give Celery soft shutdown time to drain/re-queue in-flight tasks on stop.
+    stop_grace_period: 120s
     build:
       context: ./api
       dockerfile: Dockerfile
@@ -211,6 +213,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 60s
 
 volumes:
   outputs:

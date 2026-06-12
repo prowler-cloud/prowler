@@ -15,12 +15,15 @@ from tasks.jobs.lighthouse_providers import (
 from tasks.tasks import (
     DJANGO_TMP_OUTPUT_DIRECTORY,
     STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    ScanReportRLSTask,
     _cleanup_orphan_scheduled_scans,
     _perform_scan_complete_tasks,
+    _scan_tmp_output_directory,
     check_integrations_task,
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
     perform_attack_paths_scan_task,
+    perform_scan_task,
     perform_scheduled_scan_task,
     reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
@@ -320,6 +323,7 @@ class TestGenerateOutputs:
 
         mock_transformed_stats = {"some": "stats"}
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
                 return_value=mock_transformed_stats,
@@ -438,6 +442,7 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -593,6 +598,7 @@ class TestGenerateOutputs:
         ]
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
             patch(
                 "tasks.tasks.Provider.objects.get",
@@ -667,6 +673,7 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -768,6 +775,38 @@ class TestGenerateOutputs:
                 enabled=True,
             )
             mock_s3_task.assert_called_once()
+
+
+class TestScanReportRLSTaskOnFailure:
+    def test_on_failure_removes_scan_tmp_directory(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_called_once_with(
+            _scan_tmp_output_directory("t-1", "s-1"), ignore_errors=True
+        )
+
+    def test_on_failure_skips_when_missing_kwargs(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_not_called()
 
 
 class TestScanCompleteTasks:
@@ -1078,6 +1117,7 @@ class TestCheckIntegrationsTask:
             enabled=True,
         )
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1110,6 +1150,7 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is generated for AWS providers with SecurityHub integration."""
         # Setup
@@ -1206,6 +1247,7 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1238,6 +1280,7 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for AWS providers without SecurityHub integration."""
         # Setup
@@ -1331,6 +1374,7 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.ScanSummary.objects.filter")
     @patch("tasks.tasks.Provider.objects.get")
     @patch("tasks.tasks.initialize_prowler_provider")
@@ -1359,6 +1403,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider,
         mock_provider_get,
         mock_scan_summary,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for non-AWS providers (e.g., Azure, GCP)."""
         # Setup
@@ -2454,6 +2499,57 @@ class TestPerformScheduledScanTask:
             == 1
         )
 
+    def test_no_op_when_provider_does_not_exist(self, tenants_fixture):
+        """Return None without raising when the provider was already deleted."""
+        tenant = tenants_fixture[0]
+        missing_provider_id = str(uuid.uuid4())
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+        # Orphan PeriodicTask left behind from a previous lifecycle.
+        self._create_periodic_task(missing_provider_id, tenant.id)
+        orphan_name = f"scan-perform-scheduled-{missing_provider_id}"
+        assert PeriodicTask.objects.filter(name=orphan_name).exists()
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=missing_provider_id
+            )
+
+        assert result is None
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        # Orphan PeriodicTask is cleaned up so beat stops re-firing it.
+        assert not PeriodicTask.objects.filter(name=orphan_name).exists()
+
+
+@pytest.mark.django_db
+class TestPerformScanTask:
+    """Unit tests for perform_scan_task."""
+
+    def test_no_op_when_provider_does_not_exist(self, tenants_fixture):
+        """Return None without raising when the provider was already deleted."""
+        tenant = tenants_fixture[0]
+        missing_provider_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+        ):
+            result = perform_scan_task.run(
+                tenant_id=str(tenant.id),
+                scan_id=scan_id,
+                provider_id=missing_provider_id,
+            )
+
+        assert result is None
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+
 
 @pytest.mark.django_db
 class TestReaggregateAllFindingGroupSummaries:
@@ -2620,3 +2716,36 @@ class TestReaggregateAllFindingGroupSummaries:
         assert result == {"scans_reaggregated": 0}
         mock_group.assert_not_called()
         mock_chain.assert_not_called()
+
+
+class TestTaskTimeLimits:
+    """The per-task limits in task_annotations must actually take effect.
+
+    Celery applies a "*" annotation after the per-task one, so a "*" entry would
+    silently overwrite every specific limit and cap long scans at the default. The
+    default is set as the global limit instead, and these per-task limits must win.
+    """
+
+    def test_long_running_tasks_exceed_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "scan-perform",
+            "scan-perform-scheduled",
+            "provider-deletion",
+            "tenant-deletion",
+        ):
+            assert celery_app.tasks[name].time_limit > default
+
+    def test_connection_checks_stay_below_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "provider-connection-check",
+            "integration-connection-check",
+            "lighthouse-connection-check",
+            "lighthouse-provider-connection-check",
+        ):
+            assert celery_app.tasks[name].time_limit < default

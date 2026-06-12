@@ -46,10 +46,12 @@ vi.mock("next/link", () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...props
   }: AnchorHTMLAttributes<HTMLAnchorElement> & {
     children: ReactNode;
     href: string;
+    prefetch?: boolean;
   }) => (
     <a href={href} {...props}>
       {children}
@@ -89,12 +91,14 @@ vi.mock("@/components/shadcn", () => {
     InfoField: ({
       children,
       label,
+      className,
     }: {
       children: ReactNode;
       label: string;
       variant?: string;
+      className?: string;
     }) => (
-      <div>
+      <div className={className}>
         <span>{label}</span>
         {children}
       </div>
@@ -213,27 +217,32 @@ vi.mock("@/components/shared/query-code-editor", () => ({
     HCL: "hcl",
     BICEP: "bicep",
     YAML: "yaml",
+    JSON: "json",
   },
   QueryCodeEditor: ({
     ariaLabel,
     language,
     value,
     copyValue,
+    showLineNumbers = true,
   }: {
     ariaLabel: string;
     language?: string;
     value: string;
     copyValue?: string;
+    showLineNumbers?: boolean;
   }) => (
     <div
       data-testid="query-code-editor"
       data-aria-label={ariaLabel}
       data-language={language}
+      data-show-line-numbers={String(showLineNumbers)}
     >
       <span>{ariaLabel}</span>
       <span>{value}</span>
       <button
         type="button"
+        aria-label={`Copy ${ariaLabel}`}
         onClick={() => mockClipboardWriteText(copyValue ?? value)}
       >
         Copy editor code
@@ -255,12 +264,21 @@ vi.mock("@/components/icons/services/IconServices", () => ({
 }));
 
 vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
-  CodeSnippet: ({ value }: { value: string }) => <span>{value}</span>,
-}));
-
-vi.mock("@/components/ui/custom/custom-link", () => ({
-  CustomLink: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  CodeSnippet: ({
+    value,
+    formatter,
+    ariaLabel = "Copy to clipboard",
+  }: {
+    value: string;
+    formatter?: (value: string) => string;
+    ariaLabel?: string;
+  }) => (
+    <div data-testid="code-snippet">
+      <span>{formatter ? formatter(value) : value}</span>
+      <button type="button" onClick={() => mockClipboardWriteText(value)}>
+        {ariaLabel}
+      </button>
+    </div>
   ),
 }));
 
@@ -269,7 +287,21 @@ vi.mock("@/components/ui/entities/date-with-time", () => ({
 }));
 
 vi.mock("@/components/ui/entities/entity-info", () => ({
-  EntityInfo: () => null,
+  EntityInfo: ({
+    nameAction,
+    idAction,
+  }: {
+    nameAction?: ReactNode;
+    idAction?: ReactNode;
+  }) =>
+    nameAction || idAction ? (
+      <span>
+        {nameAction && (
+          <span data-testid="entity-name-action">{nameAction}</span>
+        )}
+        {idAction && <span data-testid="entity-id-action">{idAction}</span>}
+      </span>
+    ) : null,
 }));
 
 vi.mock("@/components/ui/table", () => ({
@@ -391,6 +423,8 @@ const mockFinding: ResourceDrawerFinding = {
   resourceRegion: "us-east-1",
   resourceType: "Bucket",
   resourceGroup: "default",
+  resourceDetails: null,
+  resourceMetadata: null,
   providerType: "aws",
   providerAlias: "prod",
   providerUid: "123456789",
@@ -408,7 +442,7 @@ const mockFinding: ResourceDrawerFinding = {
 };
 
 describe("ResourceDetailDrawerContent — resource navigation", () => {
-  it("should render a View Resource link below the resource actions menu", () => {
+  it("should render an icon-only View Resource link next to the resource name", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -429,9 +463,6 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     const viewResourceLink = screen.getByRole("link", {
       name: "View Resource",
     });
-    const resourceActionsMenu = screen.getByRole("menu", {
-      name: "Resource actions",
-    });
 
     // Then
     expect(viewResourceLink).toHaveAttribute(
@@ -440,10 +471,12 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     );
     expect(viewResourceLink).toHaveAttribute("target", "_blank");
     expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
-    expect(
-      resourceActionsMenu.compareDocumentPosition(viewResourceLink) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
+    // Icon-only: accessible name comes from an sr-only span, not from an
+    // aria-label attribute, so the text lives in the DOM (more semantic).
+    expect(viewResourceLink).toHaveAccessibleName("View Resource");
+    expect(viewResourceLink).not.toHaveAttribute("aria-label");
+    const srOnlyLabel = viewResourceLink.querySelector(".sr-only");
+    expect(srOnlyLabel).toHaveTextContent("View Resource");
   });
 });
 const mockResourceRow: FindingResourceRow = {
@@ -592,7 +625,7 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
     expect(allText).toContain("CLI Command");
   });
 
-  it("should render remediation snippets with the shared code editor and copy CLI without the visual prompt", async () => {
+  it("should render CLI remediation in the code editor without line numbers and copy without the visual prompt", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -612,17 +645,19 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
 
     // When
     const editors = screen.getAllByTestId("query-code-editor");
-    await user.click(
-      within(editors[0]).getByRole("button", { name: "Copy editor code" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Copy CLI Command" }));
 
     // Then
     expect(editors).toHaveLength(3);
+    expect(editors[0]).toHaveAttribute("data-aria-label", "CLI Command");
+    expect(editors[0]).toHaveAttribute("data-show-line-numbers", "false");
+    expect(editors[1]).toHaveAttribute("data-show-line-numbers", "true");
+    expect(editors[2]).toHaveAttribute("data-show-line-numbers", "true");
     expect(mockClipboardWriteText).toHaveBeenCalledWith("aws s3 ...");
     expect(screen.getByText("$ aws s3 ...")).toBeInTheDocument();
   });
 
-  it("should pass syntax highlighting languages to each remediation editor", () => {
+  it("should pass syntax highlighting languages to all remediation editors", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -643,11 +678,264 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
     const editors = screen.getAllByTestId("query-code-editor");
 
     // Then
+    expect(editors).toHaveLength(3);
     expect(editors[0]).toHaveAttribute("data-language", "shell");
     expect(editors[1]).toHaveAttribute("data-language", "hcl");
     expect(editors[2]).toHaveAttribute("data-language", "yaml");
     expect(editors[0]).toHaveAttribute("data-aria-label", "CLI Command");
+    expect(editors[1]).toHaveAttribute("data-aria-label", "Terraform");
     expect(editors[2]).toHaveAttribute("data-aria-label", "CloudFormation");
+  });
+});
+
+describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
+  const statusExtendedWithFixVersions =
+    "framework.security.spring-security-web@5.8.7 (fix available: 5.7.13, 5.8.15, 6.2.7, 6.0.13, 6.1.11, 6.3.4)";
+  const externalCveUrl = "https://www.cve.org/CVERecord?id=CVE-2026-12345";
+
+  it("should render a View CVE button when the recommendation URL points to an external CVE advisory and keep status extended as plain text", () => {
+    const cveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+    };
+    const cveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={cveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={cveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+    expect(screen.getByText(statusExtendedWithFixVersions)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "View in Prowler Hub" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should show View in Prowler Hub when the recommendation URL points to Prowler Hub", () => {
+    const hubCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Open the check in Hub",
+          url: "https://hub.prowler.com/check/image_vulnerability",
+        },
+      },
+    };
+    const hubFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Open the check in Hub",
+          url: "https://hub.prowler.com/check/image_vulnerability",
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={hubCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={hubFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(statusExtendedWithFixVersions)).toBeInTheDocument();
+    const hubLink = screen.getByRole("link", { name: "View in Prowler Hub" });
+    expect(hubLink).toHaveAttribute(
+      "href",
+      "https://hub.prowler.com/check/image_vulnerability",
+    );
+    expect(hubLink).toHaveAttribute("target", "_blank");
+    expect(hubLink).toHaveAttribute("rel", "noopener noreferrer");
+    const headingRow = screen.getByTestId("remediation-heading-row");
+    expect(within(headingRow).getByText("Remediation:")).toBeInTheDocument();
+    expect(hubLink).toHaveClass("shrink-0", "whitespace-nowrap");
+    expect(
+      within(headingRow).queryByText("Open the check in Hub"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should render the official CVE reference", () => {
+    const cveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+      additionalUrls: [externalCveUrl],
+    };
+    const cveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+      additionalUrls: [externalCveUrl],
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={cveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={cveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+    const referenceLink = screen.getByRole("link", { name: externalCveUrl });
+    expect(referenceLink).toHaveAttribute("href", externalCveUrl);
+    expect(referenceLink).toHaveAttribute("target", "_blank");
+    expect(referenceLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(referenceLink).toHaveClass("break-all", "text-left");
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
+
+  it("should render View Advisory when the recommendation URL points to GitHub Security Advisories", () => {
+    const advisoryUrl = "https://github.com/advisories/GHSA-abcd-1234-efgh";
+    const advisoryCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: advisoryUrl,
+        },
+      },
+    };
+    const advisoryFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: advisoryUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={advisoryCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={advisoryFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View Advisory" })).toHaveAttribute(
+      "href",
+      advisoryUrl,
+    );
+    expect(
+      screen.queryByRole("link", { name: "View CVE" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should render a remediation label when the only remediation content is a recommendation link", () => {
+    const cveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "",
+          url: externalCveUrl,
+        },
+      },
+    };
+    const cveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "",
+          url: externalCveUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={cveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={cveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Remediation:")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
   });
 });
 
@@ -655,8 +943,8 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
 // Fix 5 & 6: Risk section has danger styling, sections have separators and bigger headings
 // ---------------------------------------------------------------------------
 
-describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () => {
-  it("should wrap the Risk section in a Card component (data-slot='card')", () => {
+describe("ResourceDetailDrawerContent — Risk section styling", () => {
+  it("should render the Risk section with a vertical accent border (no danger card)", () => {
     // Given
     const { container } = render(
       <ResourceDetailDrawerContent
@@ -673,16 +961,16 @@ describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () =
       />,
     );
 
-    // When — find a Card with variant="danger" that contains the Risk label
-    const dangerCards = Array.from(
-      container.querySelectorAll('[data-variant="danger"]'),
+    // When — find the Risk heading and walk up to the section wrapper
+    const riskHeading = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent?.trim() === "Risk:",
     );
-    const riskCard = dangerCards.find((el) =>
-      el.textContent?.includes("Risk:"),
-    );
+    const riskSection = riskHeading?.parentElement;
 
-    // Then — Risk section must be wrapped in a Card variant="danger"
-    expect(riskCard).toBeDefined();
+    // Then — Risk wrapper has a left accent border, not a danger Card
+    expect(riskSection).toBeDefined();
+    expect(riskSection?.className).toMatch(/border-l/);
+    expect(riskSection?.getAttribute("data-variant")).toBeNull();
   });
 
   it("should use larger heading size for section labels (text-sm → text-base or larger)", () => {
@@ -1062,6 +1350,64 @@ describe("ResourceDetailDrawerContent — synthetic resource empty state", () =>
 });
 
 describe("ResourceDetailDrawerContent — current resource row display", () => {
+  it("should place service and region in the primary metadata row after provider and resource", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    const primaryMetadataRow = screen.getByTestId(
+      "resource-detail-primary-metadata-row",
+    );
+    expect(primaryMetadataRow).toHaveClass("grid-cols-2");
+    expect(primaryMetadataRow).toHaveClass(
+      "@md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)]",
+    );
+    expect(
+      within(primaryMetadataRow).getByText("Provider"),
+    ).toBeInTheDocument();
+    expect(
+      within(primaryMetadataRow).getByText("Resource"),
+    ).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("Service")).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("Region")).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("s3")).toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    );
+    expect(within(primaryMetadataRow).getByText("us-east-1")).toHaveClass(
+      "truncate",
+    );
+
+    const secondaryMetadataRow = screen.getByTestId(
+      "resource-detail-secondary-metadata-row",
+    );
+    expect(secondaryMetadataRow).toHaveClass("grid-cols-2");
+    expect(secondaryMetadataRow).toHaveClass("@md:grid-cols-3");
+    expect(
+      within(secondaryMetadataRow).queryByText("Service"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(secondaryMetadataRow).queryByText("Region"),
+    ).not.toBeInTheDocument();
+    expect(within(secondaryMetadataRow).getByText("2 days")).toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    );
+  });
+
   it("should render resource card fields from the current resource row instead of the fetched finding", () => {
     // Given
     const currentResource: FindingResourceRow = {
@@ -1111,14 +1457,10 @@ describe("ResourceDetailDrawerContent — current resource row display", () => {
     // Then
     expect(screen.getByText("row-service")).toBeInTheDocument();
     expect(screen.getByText("eu-west-1")).toBeInTheDocument();
-    expect(screen.getByText("row-group")).toBeInTheDocument();
-    expect(screen.getByText("row-type")).toBeInTheDocument();
     expect(screen.getByText("FAIL")).toBeInTheDocument();
     expect(screen.getByText("critical")).toBeInTheDocument();
     expect(screen.queryByText("finding-service")).not.toBeInTheDocument();
     expect(screen.queryByText("ap-south-1")).not.toBeInTheDocument();
-    expect(screen.queryByText("finding-group")).not.toBeInTheDocument();
-    expect(screen.queryByText("finding-type")).not.toBeInTheDocument();
   });
 
   it("should prefer the fetched finding status and severity in the header when the current row is stale", () => {
@@ -1201,12 +1543,11 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("low")).toBeInTheDocument();
     expect(screen.getByText("ec2")).toBeInTheDocument();
     expect(screen.getByText("eu-west-1")).toBeInTheDocument();
-    expect(screen.getByText("row-group")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Finding Overview" }),
+      screen.getByRole("button", { name: "Overview" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Other Findings For This Resource" }),
+      screen.getByRole("button", { name: "Other findings" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(screen.queryByText("Status extended")).not.toBeInTheDocument();
@@ -1316,10 +1657,10 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.queryByText("Description:")).not.toBeInTheDocument();
     expect(screen.queryByText("Remediation:")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Finding Overview" }),
+      screen.getByRole("button", { name: "Overview" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Other Findings For This Resource" }),
+      screen.getByRole("button", { name: "Other findings" }),
     ).toBeInTheDocument();
   });
 
@@ -1385,7 +1726,6 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("Started At")).toBeInTheDocument();
     expect(screen.getByText("Completed At")).toBeInTheDocument();
     expect(screen.getByText("Launched At")).toBeInTheDocument();
-    expect(screen.getByText("Scheduled At")).toBeInTheDocument();
     expect(screen.getByTestId("scans-navigation-skeleton")).toBeInTheDocument();
   });
 
@@ -1488,5 +1828,162 @@ describe("ResourceDetailDrawerContent — other findings delta/muted indicator",
       mutedReason: "False positive",
       showDeltaWhenMuted: true,
     });
+  });
+});
+
+describe("ResourceDetailDrawerContent — Metadata tab", () => {
+  const getMetadataEditor = () =>
+    screen
+      .queryAllByTestId("query-code-editor")
+      .find(
+        (editor) =>
+          editor.getAttribute("data-aria-label") === "Resource metadata",
+      );
+
+  it("should render a Metadata tab trigger", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Evidence" }),
+    ).toBeInTheDocument();
+  });
+
+  it("should render the resource metadata as formatted JSON and copy it to the clipboard", async () => {
+    // Given
+    const user = userEvent.setup();
+    const findingWithMetadata: ResourceDrawerFinding = {
+      ...mockFinding,
+      resourceDetails: "Python",
+      resourceMetadata: {
+        VulnerabilityID: "CVE-2026-0001",
+        PkgName: "requests",
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithMetadata}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then — Details section + JSON editor are rendered
+    expect(screen.getByText("Details:")).toBeInTheDocument();
+    expect(screen.getByText("Python")).toBeInTheDocument();
+
+    const metadataEditor = getMetadataEditor();
+    expect(metadataEditor).toBeDefined();
+    expect(metadataEditor).toHaveAttribute("data-language", "json");
+    expect(metadataEditor?.textContent).toContain("CVE-2026-0001");
+
+    // When — copy the metadata JSON
+    await user.click(
+      screen.getByRole("button", { name: "Copy Resource metadata" }),
+    );
+
+    // Then
+    expect(mockClipboardWriteText).toHaveBeenCalledWith(
+      JSON.stringify(findingWithMetadata.resourceMetadata, null, 2),
+    );
+  });
+
+  it("should parse stringified resource metadata", () => {
+    // Given
+    const findingWithStringMetadata: ResourceDrawerFinding = {
+      ...mockFinding,
+      resourceMetadata: '{"PkgName":"requests"}',
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithStringMetadata}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(getMetadataEditor()?.textContent).toContain("requests");
+  });
+
+  it("should show an empty state when no metadata or details are available", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByText("No metadata available for this resource."),
+    ).toBeInTheDocument();
+    expect(getMetadataEditor()).toBeUndefined();
+  });
+
+  it("should show a metadata skeleton while navigating", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByTestId("metadata-navigation-skeleton"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("No metadata available for this resource."),
+    ).not.toBeInTheDocument();
   });
 });

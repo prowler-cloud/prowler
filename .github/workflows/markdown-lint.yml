@@ -1,0 +1,60 @@
+name: 'Docs: Markdown Lint'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  markdown-lint:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: ui/.nvmrc
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          package_json_file: ui/package.json
+          run_install: false
+
+      - name: Run markdownlint
+        # Pin must match .pre-commit-config.yaml so prek and CI behave identically.
+        # pnpm dlx doesn't accept --ignore-scripts as a flag; the env var
+        # disables postinstall scripts on transitives the same way.
+        env:
+          pnpm_config_ignore_scripts: 'true'
+        run: pnpm dlx markdownlint-cli@0.45.0 '**/*.md'
