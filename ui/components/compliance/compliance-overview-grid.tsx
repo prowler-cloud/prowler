@@ -18,7 +18,7 @@ const viewComplianceFlow = getFlowById("view-compliance")!;
 // `useDriverTour`, and a fresh object per keystroke would tear the tour down mid-typing.
 const VIEW_COMPLIANCE_TOUR_CONFIG = {
   // Last step opens the first card (see createViewComplianceTourStepHandlers).
-  doneBtnText: "Open the first framework",
+  doneBtnText: "Open Compliance",
 };
 
 interface ComplianceOverviewGridProps {
