@@ -88,7 +88,9 @@ class Logs(AWSService):
         super().__init__(__class__.__name__, provider)
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
         # Log groups are listed first, then only the selected subset is enriched
-        # and exposed for checks.
+        # and exposed for primary log group checks. Keep a complete lightweight
+        # index for cross-service evidence lookups.
+        self.all_log_groups = {}
         self.log_groups = {}
         self._log_groups_hydrated = set()
         self.log_group_limit = get_resource_scan_limit(
@@ -143,7 +145,7 @@ class Logs(AWSService):
                             self.metric_filters = []
 
                         log_group = None
-                        for lg in self.log_groups.values():
+                        for lg in (self.all_log_groups or {}).values():
                             if lg.name == filter["logGroupName"]:
                                 log_group = lg
                                 break
@@ -196,7 +198,9 @@ class Logs(AWSService):
                             retention_days = 9999
                         if self.log_groups is None:
                             self.log_groups = {}
-                        self.log_groups[log_group["arn"]] = LogGroup(
+                        if self.all_log_groups is None:
+                            self.all_log_groups = {}
+                        log_group_object = LogGroup(
                             arn=log_group["arn"],
                             name=log_group["logGroupName"],
                             retention_days=retention_days,
@@ -205,12 +209,15 @@ class Logs(AWSService):
                             creation_time=log_group.get("creationTime"),
                             region=regional_client.region,
                         )
+                        self.all_log_groups[log_group_object.arn] = log_group_object
+                        self.log_groups[log_group_object.arn] = log_group_object
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 if not self.log_groups:
+                    self.all_log_groups = None
                     self.log_groups = None
             else:
                 logger.error(

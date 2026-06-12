@@ -133,6 +133,8 @@ class Test_Lambda_Service:
 
         awslambda = Lambda.__new__(Lambda)
         awslambda.functions = {}
+        awslambda.security_groups_in_use = set()
+        awslambda.regions_with_functions = set()
         awslambda.function_limit = 1
         awslambda.audit_resources = []
         old_client = FakeLambdaClient(
@@ -161,6 +163,57 @@ class Test_Lambda_Service:
         awslambda._select_functions_for_analysis()
 
         assert [function.name for function in awslambda.functions.values()] == ["new"]
+
+    def test_function_limit_keeps_complete_auxiliary_indexes(self):
+        class FakePaginator:
+            def __init__(self, functions):
+                self.functions = functions
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [{"Functions": self.functions}]
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "list_functions"
+                return FakePaginator(
+                    [
+                        {
+                            "FunctionName": "old",
+                            "FunctionArn": (
+                                f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                                f"{AWS_ACCOUNT_NUMBER}:function:old"
+                            ),
+                            "LastModified": "2024-01-01T00:00:00.000+0000",
+                            "VpcConfig": {"SecurityGroupIds": ["sg-old"]},
+                        },
+                        {
+                            "FunctionName": "new",
+                            "FunctionArn": (
+                                f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                                f"{AWS_ACCOUNT_NUMBER}:function:new"
+                            ),
+                            "LastModified": "2024-01-02T00:00:00.000+0000",
+                            "VpcConfig": {"SecurityGroupIds": ["sg-new"]},
+                        },
+                    ]
+                )
+
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.functions = {}
+        awslambda.security_groups_in_use = set()
+        awslambda.regions_with_functions = set()
+        awslambda.function_limit = 1
+        awslambda.audit_resources = []
+
+        awslambda._list_functions(FakeLambdaClient())
+        awslambda._select_functions_for_analysis()
+
+        assert [function.name for function in awslambda.functions.values()] == ["new"]
+        assert awslambda.security_groups_in_use == {"sg-old", "sg-new"}
+        assert awslambda.regions_with_functions == {AWS_REGION_US_EAST_1}
 
     def test_list_event_source_mappings_uses_selected_functions_as_api_scope(self):
         class FakePaginator:

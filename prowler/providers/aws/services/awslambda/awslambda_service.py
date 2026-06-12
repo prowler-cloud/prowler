@@ -25,6 +25,8 @@ class Lambda(AWSService):
         # Functions are listed first, then trimmed to the subset selected for
         # analysis before expensive per-function detail is hydrated.
         self.functions = {}
+        self.security_groups_in_use = set()
+        self.regions_with_functions = set()
         self.function_limit = get_resource_scan_limit(
             self.audit_config, "max_lambda_functions"
         )
@@ -47,11 +49,14 @@ class Lambda(AWSService):
                         lambda_name = function["FunctionName"]
                         lambda_arn = function["FunctionArn"]
                         vpc_config = function.get("VpcConfig", {})
+                        security_groups = vpc_config.get("SecurityGroupIds", [])
+                        self.security_groups_in_use.update(security_groups)
+                        self.regions_with_functions.add(regional_client.region)
                         # We must use the Lambda ARN as the dict key since we could have Lambdas in different regions with the same name
                         self.functions[lambda_arn] = Function(
                             name=lambda_name,
                             arn=lambda_arn,
-                            security_groups=vpc_config.get("SecurityGroupIds", []),
+                            security_groups=security_groups,
                             vpc_id=vpc_config.get("VpcId"),
                             subnet_ids=set(vpc_config.get("SubnetIds", [])),
                             region=regional_client.region,

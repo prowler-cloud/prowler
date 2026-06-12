@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest import mock
 
 from prowler.providers.aws.services.inspector2.inspector2_service import Inspector
@@ -13,6 +14,60 @@ FINDING_ARN = (
 
 
 class Test_inspector2_is_enabled:
+    def test_lambda_disabled_with_region_hidden_by_function_analysis_limit(self):
+        inspector2_client = mock.MagicMock()
+        inspector2_client.provider = SimpleNamespace(scan_unused_services=False)
+        inspector2_client.inspectors = [
+            Inspector(
+                id=AWS_ACCOUNT_NUMBER,
+                arn=f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2",
+                status="ENABLED",
+                ec2_status="ENABLED",
+                ecr_status="ENABLED",
+                lambda_status="DISABLED",
+                lambda_code_status="ENABLED",
+                region=AWS_REGION_EU_WEST_1,
+            )
+        ]
+        awslambda_client = mock.MagicMock()
+        awslambda_client.functions = {}
+        awslambda_client.regions_with_functions = {AWS_REGION_EU_WEST_1}
+        ec2_client = mock.MagicMock()
+        ec2_client.instances = []
+        ecr_client = mock.MagicMock()
+        ecr_client.registries = {AWS_REGION_EU_WEST_1: SimpleNamespace(repositories=[])}
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.inspector2_client",
+                new=inspector2_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.awslambda_client",
+                new=awslambda_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.ec2_client",
+                new=ec2_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.ecr_client",
+                new=ecr_client,
+            ),
+        ):
+            from prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled import (
+                inspector2_is_enabled,
+            )
+
+            result = inspector2_is_enabled().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "Inspector2 is not enabled for the following services: Lambda."
+        )
+
     def test_inspector2_disabled(self):
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
