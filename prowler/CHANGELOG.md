@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.31.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- CLI compliance summary tables no longer undercount findings mapped to multiple sections, and the Provider column no longer leaks a value from another framework [(#11567)](https://github.com/prowler-cloud/prowler/pull/11567)
+
+
+---
+
 ## [5.31.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
