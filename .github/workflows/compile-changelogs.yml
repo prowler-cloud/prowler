@@ -1,0 +1,352 @@
+name: 'Tools: Compile Changelogs'
+
+run-name: 'Compile changelogs for Prowler ${{ inputs.prowler_version }}'
+
+on:
+  workflow_dispatch:
+    inputs:
+      prowler_version:
+        description: 'Prowler version being released (e.g., 5.31.0)'
+        required: true
+        type: string
+      target_branch:
+        description: 'Branch to compile on (master for minor releases, v5.X for patches)'
+        required: true
+        type: string
+      sdk_version:
+        description: 'SDK version override (empty = auto-derive from prowler/CHANGELOG.md + pending fragment types; "skip" = hold this component back)'
+        required: false
+        type: string
+      api_version:
+        description: 'API version override (empty = auto-derive; "skip" = hold back)'
+        required: false
+        type: string
+      ui_version:
+        description: 'UI version override (empty = auto-derive; "skip" = hold back)'
+        required: false
+        type: string
+      mcp_version:
+        description: 'MCP Server version override (empty = auto-derive; "skip" = hold back)'
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.prowler_version }}
+  cancel-in-progress: false
+
+env:
+  PROWLER_VERSION: ${{ inputs.prowler_version }}
+  TARGET_BRANCH: ${{ inputs.target_branch }}
+  SDK_VERSION: ${{ inputs.sdk_version }}
+  API_VERSION: ${{ inputs.api_version }}
+  UI_VERSION: ${{ inputs.ui_version }}
+  MCP_VERSION: ${{ inputs.mcp_version }}
+
+permissions: {}
+
+jobs:
+  compile-changelogs:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.target_branch }}
+          fetch-depth: 0 # PR attribution resolves each fragment's adding commit from history
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install towncrier
+        run: pip install --no-cache-dir towncrier==25.8.0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'prowler-bot'
+          git config --global user.email '179230569+prowler-bot@users.noreply.github.com'
+
+      - name: Validate version inputs
+        run: |
+          if [[ ! "$PROWLER_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid prowler_version syntax: '$PROWLER_VERSION' (must be N.N.N)"
+            exit 1
+          fi
+          for pair in "sdk_version:$SDK_VERSION" "api_version:$API_VERSION" "ui_version:$UI_VERSION" "mcp_version:$MCP_VERSION"; do
+            input_name="${pair%%:*}"
+            input_value="${pair#*:}"
+            if [ -n "$input_value" ] && [ "$input_value" != "skip" ] && [[ ! "$input_value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Invalid $input_name syntax: '$input_value' (must be N.N.N, empty for auto-derivation, or 'skip')"
+              exit 1
+            fi
+          done
+
+      - name: Compile changelogs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          component_input() {
+            case "$1" in
+              prowler) echo "$SDK_VERSION" ;;
+              api) echo "$API_VERSION" ;;
+              ui) echo "$UI_VERSION" ;;
+              mcp_server) echo "$MCP_VERSION" ;;
+            esac
+          }
+
+          pending_fragments() {
+            find "$1/changelog.d" -maxdepth 1 -type f ! -name '.gitkeep' ! -name 'README.md' | sort
+          }
+
+          # The component's last released version is the first stamped heading
+          # of its CHANGELOG.md, the same source prepare-release.yml greps.
+          latest_released_version() {
+            grep -m1 -E '^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]' "$1/CHANGELOG.md" | sed -E 's/^## \[v?([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/'
+          }
+
+          # Resolve every component's effective version before compiling
+          # anything, so a wrong input cannot leave the tree half-compiled.
+          # Empty input = auto-derive (latest released version + semver bump
+          # from the pending fragment types). 'skip' = hold the component back.
+          errors=0
+          compiling=""
+          for component in prowler api ui mcp_server; do
+            input=$(component_input "$component")
+            fragments=$(pending_fragments "$component")
+
+            if [ "$input" = "skip" ]; then
+              if [ -n "$fragments" ]; then
+                echo "::warning::${component}: held back by request; these pending fragments stay for a future release:"
+                echo "$fragments"
+              fi
+              continue
+            fi
+            if [ -n "$input" ] && [ -z "$fragments" ]; then
+              echo "::error::${component}: version input '$input' provided but ${component}/changelog.d/ has no pending fragments (wrong input?)"
+              errors=1
+              continue
+            fi
+            if [ -z "$fragments" ]; then
+              continue
+            fi
+
+            if [ -n "$input" ]; then
+              effective="$input"
+              mode="explicit"
+            else
+              if echo "$fragments" | grep -qE '\.removed(\.[0-9]+)?\.md$'; then
+                echo "::error::${component}: pending 'removed' fragments imply a major bump (breaking change); provide its version input explicitly"
+                errors=1
+                continue
+              fi
+              current=$(latest_released_version "$component")
+              if [ -z "$current" ]; then
+                echo "::error::${component}: could not read the latest released version from ${component}/CHANGELOG.md; provide its version input explicitly"
+                errors=1
+                continue
+              fi
+              IFS=. read -r major minor patch <<< "$current"
+              if echo "$fragments" | grep -qE '\.(added|changed|deprecated)(\.[0-9]+)?\.md$'; then
+                effective="${major}.$((minor + 1)).0"
+              else
+                effective="${major}.${minor}.$((patch + 1))"
+              fi
+              mode="auto"
+              echo "::notice::${component}: version auto-derived ${current} -> ${effective} from the pending fragment types"
+            fi
+
+            # Without the marker the build would insert the new block above the
+            # file header instead of below it.
+            if ! grep -q '^<!-- changelog: release notes start -->$' "$component/CHANGELOG.md"; then
+              echo "::error::${component}/CHANGELOG.md is missing the '<!-- changelog: release notes start -->' marker; restore it after the intro line before compiling"
+              errors=1
+              continue
+            fi
+            # A hand-written UNRELEASED block means someone followed the old
+            # convention; its entries would be left out of the compiled block
+            # and out of the release notes extraction.
+            if grep -q '(Prowler UNRELEASED)' "$component/CHANGELOG.md"; then
+              echo "::error::${component}/CHANGELOG.md contains a hand-written '(Prowler UNRELEASED)' block; convert its entries to fragments in ${component}/changelog.d/ and delete the block before compiling"
+              errors=1
+              continue
+            fi
+
+            echo "${effective} ${mode}" > "${RUNNER_TEMP}/version-${component}.txt"
+            compiling="${compiling}${component} "
+          done
+          if [ "$errors" -ne 0 ]; then
+            exit 1
+          fi
+          if [ -z "$compiling" ]; then
+            echo "::error::Nothing to compile: no component has pending fragments to release"
+            exit 1
+          fi
+
+          body_file="${RUNNER_TEMP}/compile-changelogs-pr-body.md"
+          {
+            echo "### Description"
+            echo ""
+            echo "Compiles the pending changelog fragments into the per-component \`CHANGELOG.md\` files for Prowler v${PROWLER_VERSION}, replacing the manual stamping PR."
+            echo ""
+            echo "| Component | Version | Fragments consumed |"
+            echo "|---|---|---|"
+          } > "$body_file"
+
+          compiled_components=""
+          for component in prowler api ui mcp_server; do
+            if [ ! -f "${RUNNER_TEMP}/version-${component}.txt" ]; then
+              echo "Skipping ${component} (no pending fragments or held back)"
+              echo "| \`${component}\` | - | 0 |" >> "$body_file"
+              continue
+            fi
+            read -r version mode < "${RUNNER_TEMP}/version-${component}.txt"
+            version_label="$version"
+            if [ "$mode" = "auto" ]; then
+              version_label="${version} (auto)"
+            fi
+
+            count=$(pending_fragments "$component" | wc -l | tr -d ' ')
+            echo "Compiling ${component} ${version} (${count} fragments, ${mode} version)..."
+
+            # Captured before attribution renames them: these original paths are
+            # what the forward-sync deletes on master (backports copy fragments
+            # verbatim, so filenames match across branches).
+            pending_fragments "$component" > "${RUNNER_TEMP}/consumed-${component}.txt"
+            pre_lines=$(wc -l < "$component/CHANGELOG.md")
+
+            # Attribution must run before the build: towncrier renders the
+            # first dotted segment of each filename as the PR number.
+            python .github/scripts/changelog_attribution.py "$component"
+            towncrier build --config "$component/towncrier.toml" --version "$version" --name "Prowler v${PROWLER_VERSION}" --yes
+
+            # The build only inserts lines right after the marker, so the new
+            # stamped block is exactly the added lines following it. Captured
+            # for the forward-sync to master.
+            post_lines=$(wc -l < "$component/CHANGELOG.md")
+            delta=$((post_lines - pre_lines))
+            marker_line=$(grep -n -m1 '^<!-- changelog: release notes start -->$' "$component/CHANGELOG.md" | cut -d: -f1)
+            sed -n "$((marker_line + 1)),$((marker_line + delta))p" "$component/CHANGELOG.md" > "${RUNNER_TEMP}/block-${component}.md"
+
+            compiled_components="${compiled_components}${component} "
+            echo "| \`${component}\` | ${version_label} | ${count} |" >> "$body_file"
+          done
+          echo "COMPILED_COMPONENTS=${compiled_components}" >> "$GITHUB_ENV"
+
+          {
+            echo ""
+            echo "Review that no pending fragment was dropped (the diff must delete every consumed fragment) and that each new version block is correct, then squash-merge."
+            echo ""
+            echo "### License"
+            echo ""
+            echo "By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license."
+          } >> "$body_file"
+
+          echo "PR_BODY_FILE=${body_file}" >> "$GITHUB_ENV"
+
+      - name: Create compile PR
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          commit-message: 'chore(changelog): v${{ env.PROWLER_VERSION }}'
+          branch: compile-changelogs-${{ env.PROWLER_VERSION }}
+          base: ${{ env.TARGET_BRANCH }}
+          title: 'chore(changelog): v${{ env.PROWLER_VERSION }}'
+          body-path: ${{ env.PR_BODY_FILE }}
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          labels: |
+            no-changelog
+
+      # Patch compiles (target_branch = v5.X) leave master holding the consumed
+      # fragments and missing the new version block. This applies the equivalent
+      # change to master: insert the same stamped blocks under the marker and
+      # delete the consumed fragments, so the next minor compile cannot
+      # re-release entries that already shipped in the patch.
+      - name: Apply forward-sync to master
+        if: env.TARGET_BRANCH != 'master'
+        run: |
+          set -euo pipefail
+
+          git checkout -f master
+
+          sync_body="${RUNNER_TEMP}/forward-sync-pr-body.md"
+          {
+            echo "### Description"
+            echo ""
+            echo "Forward-syncs the v${PROWLER_VERSION} compiled changelogs from \`${TARGET_BRANCH}\` to \`master\`: inserts the same stamped version blocks under the insertion marker and deletes the consumed fragments, so the next minor compile cannot re-release entries that already shipped in this patch. Opened automatically by the same run that opened the compile PR; review and squash-merge after it."
+            echo ""
+            echo "| Component | Fragments deleted on master | Skipped (only on ${TARGET_BRANCH}) |"
+            echo "|---|---|---|"
+          } > "$sync_body"
+
+          for component in $COMPILED_COMPONENTS; do
+            block_file="${RUNNER_TEMP}/block-${component}.md"
+            consumed_file="${RUNNER_TEMP}/consumed-${component}.txt"
+
+            if ! grep -qm1 '^<!-- changelog: release notes start -->$' "$component/CHANGELOG.md"; then
+              echo "::error::${component}/CHANGELOG.md on master is missing the insertion marker; cannot forward-sync"
+              exit 1
+            fi
+
+            deleted=0
+            skipped=0
+            while IFS= read -r fragment; do
+              if [ -z "$fragment" ]; then
+                continue
+              fi
+              if [ -f "$fragment" ]; then
+                git rm -q "$fragment"
+                deleted=$((deleted + 1))
+              else
+                echo "::notice::${fragment} does not exist on master (change landed only on ${TARGET_BRANCH}); skipping its deletion"
+                skipped=$((skipped + 1))
+              fi
+            done < "$consumed_file"
+
+            marker_line=$(grep -n -m1 '^<!-- changelog: release notes start -->$' "$component/CHANGELOG.md" | cut -d: -f1)
+            {
+              head -n "$marker_line" "$component/CHANGELOG.md"
+              cat "$block_file"
+              tail -n +"$((marker_line + 1))" "$component/CHANGELOG.md"
+            } > "${RUNNER_TEMP}/changelog.tmp"
+            mv "${RUNNER_TEMP}/changelog.tmp" "$component/CHANGELOG.md"
+
+            echo "| \`${component}\` | ${deleted} | ${skipped} |" >> "$sync_body"
+          done
+
+          {
+            echo ""
+            echo "### License"
+            echo ""
+            echo "By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license."
+          } >> "$sync_body"
+
+          echo "SYNC_BODY_FILE=${sync_body}" >> "$GITHUB_ENV"
+
+      - name: Create forward-sync PR
+        if: env.TARGET_BRANCH != 'master'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          commit-message: 'chore(changelog): v${{ env.PROWLER_VERSION }} forward-sync to master'
+          branch: forward-sync-changelogs-${{ env.PROWLER_VERSION }}
+          base: master
+          title: 'chore(changelog): v${{ env.PROWLER_VERSION }} forward-sync to master'
+          body-path: ${{ env.SYNC_BODY_FILE }}
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          labels: |
+            no-changelog
