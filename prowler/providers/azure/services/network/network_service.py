@@ -23,8 +23,13 @@ class Network(AzureService):
         security_groups = {}
         for subscription, client in self.clients.items():
             try:
+                security_groups_list = self.list_with_rg_scope(
+                    subscription,
+                    client.network_security_groups.list_all,
+                    client.network_security_groups.list,
+                )
+
                 security_groups.update({subscription: []})
-                security_groups_list = client.network_security_groups.list_all()
                 for security_group in security_groups_list:
                     security_groups[subscription].append(
                         SecurityGroup(
@@ -63,8 +68,8 @@ class Network(AzureService):
         network_watchers = {}
         for subscription, client in self.clients.items():
             try:
-                network_watchers.update({subscription: []})
                 network_watchers_list = client.network_watchers.list_all()
+                network_watchers.update({subscription: []})
                 for network_watcher in network_watchers_list:
                     flow_logs = self._get_flow_logs(
                         subscription, network_watcher.name, network_watcher.id
@@ -163,8 +168,13 @@ class Network(AzureService):
         bastion_hosts = {}
         for subscription, client in self.clients.items():
             try:
+                bastion_hosts_list = self.list_with_rg_scope(
+                    subscription,
+                    client.bastion_hosts.list,
+                    client.bastion_hosts.list_by_resource_group,
+                )
+
                 bastion_hosts.update({subscription: []})
-                bastion_hosts_list = client.bastion_hosts.list()
                 for bastion_host in bastion_hosts_list:
                     bastion_hosts[subscription].append(
                         BastionHost(
@@ -185,8 +195,13 @@ class Network(AzureService):
         public_ip_addresses = {}
         for subscription, client in self.clients.items():
             try:
+                public_ip_addresses_list = self.list_with_rg_scope(
+                    subscription,
+                    client.public_ip_addresses.list_all,
+                    client.public_ip_addresses.list,
+                )
+
                 public_ip_addresses.update({subscription: []})
-                public_ip_addresses_list = client.public_ip_addresses.list_all()
                 for public_ip_address in public_ip_addresses_list:
                     public_ip_addresses[subscription].append(
                         PublicIp(
