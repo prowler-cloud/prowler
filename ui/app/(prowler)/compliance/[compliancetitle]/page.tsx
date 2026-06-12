@@ -87,7 +87,7 @@ export default async function ComplianceDetail({
           "filter[scan_id]": selectedScanId ?? undefined,
         },
       }),
-      getComplianceAttributes(complianceId),
+      getComplianceAttributes(complianceId, selectedScanId ?? undefined),
       selectedScanId
         ? getScan(selectedScanId, { include: "provider" })
         : Promise.resolve(null),
