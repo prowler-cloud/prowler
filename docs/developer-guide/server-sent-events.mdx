@@ -2,6 +2,10 @@
 title: 'Server-Sent Events (SSE)'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="1.32.0" />
+
 This guide explains how to add a **Server-Sent Events (SSE)** endpoint to the Prowler API. SSE lets the backend push a one-way stream of events to a client over a single long-lived HTTP connection — ideal for live progress, token-by-token LLM output, or any "the server has news for you" use case where the client should not poll.
 
 <Info>
