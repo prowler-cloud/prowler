@@ -10,11 +10,9 @@ def _mock_instance(
     label="my-instance",
     region="us-east",
     status="running",
-    ipv4=None,
     backups_enabled=True,
     disk_encryption="enabled",
     watchdog_enabled=True,
-    firewalls=None,
     tags=None,
 ):
     inst = MagicMock()
@@ -24,17 +22,12 @@ def _mock_instance(
     region_mock.id = region
     inst.region = region_mock
     inst.status = status
-    inst.ipv4 = ipv4 or ["192.0.2.1"]
     backups = MagicMock()
     backups.enabled = backups_enabled
     inst.backups = backups
     inst.disk_encryption = disk_encryption
     inst.watchdog_enabled = watchdog_enabled
     inst.tags = tags or []
-    # Use a dedicated MagicMock for the firewalls method
-    firewalls_mock = MagicMock()
-    firewalls_mock.return_value = firewalls or []
-    inst.firewalls = firewalls_mock
     return inst
 
 
@@ -64,9 +57,7 @@ def _build_service(linode_instances_return=None, linode_instances_side_effect=No
 class TestLinodeInstanceService:
     def test_describe_instances_parses_correctly(self):
         mock_instances = [
-            _mock_instance(
-                id=1, label="web-1", region="us-east", firewalls=[MagicMock()]
-            ),
+            _mock_instance(id=1, label="web-1", region="us-east"),
             _mock_instance(id=2, label="db-1", region="eu-west", backups_enabled=False),
         ]
 
@@ -76,7 +67,6 @@ class TestLinodeInstanceService:
         assert len(service.instances) == 2
         assert service.instances[0].label == "web-1"
         assert service.instances[0].region == "us-east"
-        assert service.instances[0].firewalls_count == 1
         assert service.instances[0].backups_enabled is True
         assert service.instances[1].label == "db-1"
         assert service.instances[1].backups_enabled is False

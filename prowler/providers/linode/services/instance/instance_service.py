@@ -13,8 +13,6 @@ class Instance(BaseModel):
     label: str
     region: str
     status: str
-    ipv4_public: List[str] = []
-    firewalls_count: int = 0
     backups_enabled: bool = False
     disk_encryption: str = "disabled"  # "enabled" or "disabled"
     watchdog_enabled: bool = False
@@ -36,32 +34,12 @@ class InstanceService(LinodeService):
             raw_instances = self.client.linode.instances()
             for inst in raw_instances:
                 try:
-                    # Count firewalls attached to this instance
-                    firewalls_count = 0
-                    try:
-                        firewalls = inst.firewalls()
-                        firewalls_count = len(list(firewalls))
-                    except Exception as error:
-                        logger.warning(
-                            f"instance - Unable to fetch firewalls for instance {inst.id}: {error}"
-                        )
-
-                    # Get public IPv4 addresses
-                    ipv4_public = []
-                    try:
-                        for ip in inst.ipv4:
-                            ipv4_public.append(str(ip))
-                    except Exception:
-                        pass
-
                     # Get backup status
                     backups_enabled = False
                     try:
                         backups = getattr(inst, "backups", None)
                         if backups:
-                            backups_enabled = (
-                                getattr(backups, "enabled", False) or False
-                            )
+                            backups_enabled = getattr(backups, "enabled", False)
                     except Exception:
                         pass
 
@@ -78,8 +56,6 @@ class InstanceService(LinodeService):
                     watchdog_enabled = False
                     try:
                         watchdog_enabled = getattr(inst, "watchdog_enabled", False)
-                        if watchdog_enabled is None:
-                            watchdog_enabled = False
                     except Exception:
                         pass
 
@@ -93,8 +69,6 @@ class InstanceService(LinodeService):
                                 else str(inst.region)
                             ),
                             status=inst.status or "unknown",
-                            ipv4_public=ipv4_public,
-                            firewalls_count=firewalls_count,
                             backups_enabled=backups_enabled,
                             disk_encryption=disk_encryption,
                             watchdog_enabled=watchdog_enabled,

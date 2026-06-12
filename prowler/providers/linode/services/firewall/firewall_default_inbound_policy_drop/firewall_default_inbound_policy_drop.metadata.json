@@ -1,0 +1,38 @@
+{
+  "Provider": "linode",
+  "CheckID": "firewall_default_inbound_policy_drop",
+  "CheckTitle": "Linode Cloud Firewall default inbound policy is DROP",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Firewall",
+  "ResourceGroup": "network",
+  "Description": "Linode Cloud Firewalls are checked to ensure the default inbound policy is DROP.",
+  "Risk": "If the default inbound policy is not DROP, traffic not explicitly controlled by rules may be allowed, increasing exposure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Select the associated firewall\n4. In the Rules tab, set the default inbound policy to DROP",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set default inbound policy to DROP and only allow explicitly required inbound traffic.",
+      "Url": "https://hub.prowler.com/checks/linode/firewall_default_inbound_policy_drop"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "firewall_inbound_rules_configured"
+  ],
+  "Notes": ""
+}

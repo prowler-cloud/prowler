@@ -38,7 +38,6 @@ class Test_instance_watchdog_enabled:
                 label="my-linode",
                 region="us-east",
                 status="running",
-                ipv4_public=["192.0.2.1"],
                 watchdog_enabled=True,
                 tags=[],
             )
@@ -75,7 +74,6 @@ class Test_instance_watchdog_enabled:
                 label="my-linode",
                 region="us-east",
                 status="running",
-                ipv4_public=["192.0.2.1"],
                 watchdog_enabled=False,
                 tags=[],
             )

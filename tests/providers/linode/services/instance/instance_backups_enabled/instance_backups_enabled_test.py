@@ -38,7 +38,6 @@ class Test_instance_backups_enabled:
                 label="my-linode",
                 region="us-east",
                 status="running",
-                ipv4_public=["192.0.2.1"],
                 backups_enabled=True,
                 tags=[],
             )
@@ -75,7 +74,6 @@ class Test_instance_backups_enabled:
                 label="my-linode",
                 region="us-east",
                 status="running",
-                ipv4_public=["192.0.2.1"],
                 backups_enabled=False,
                 tags=[],
             )

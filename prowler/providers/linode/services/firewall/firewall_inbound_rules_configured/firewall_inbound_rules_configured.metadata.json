@@ -1,0 +1,38 @@
+{
+  "Provider": "linode",
+  "CheckID": "firewall_inbound_rules_configured",
+  "CheckTitle": "Linode Cloud Firewall inbound rules are configured",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "informational",
+  "ResourceType": "Firewall",
+  "ResourceGroup": "network",
+  "Description": "Linode Cloud Firewalls are checked to determine whether inbound rules are explicitly configured.",
+  "Risk": "When inbound rules are not configured, ingress filtering will not be enforced.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Select the associated firewall\n4. Click Add an Inbound Rule in the Rules tab",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure inbound rules to explicitly define allowed ingress traffic and enforce expected security boundaries.",
+      "Url": "https://hub.prowler.com/checks/linode/firewall_inbound_rules_configured"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "firewall_default_inbound_policy_drop"
+  ],
+  "Notes": ""
+}

@@ -1,0 +1,38 @@
+{
+  "Provider": "linode",
+  "CheckID": "firewall_status_enabled",
+  "CheckTitle": "Linode Cloud Firewall status is enabled",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Firewall",
+  "ResourceGroup": "network",
+  "Description": "Linode Cloud Firewalls are checked to verify if their status is enabled.",
+  "Risk": "A disabled firewall does not enforce configured network filtering controls, increasing exposure to unwanted traffic.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/update-cloud-firewall-status"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Click on the Enable button from the options corresponding to the firewall whose status you would like to update",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Linode Cloud Firewalls to ensure network filtering controls are actively enforced.",
+      "Url": "https://hub.prowler.com/checks/linode/firewall_status_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "firewall_assigned_to_entities"
+  ],
+  "Notes": ""
+}

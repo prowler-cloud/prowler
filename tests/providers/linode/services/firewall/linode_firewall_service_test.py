@@ -31,7 +31,9 @@ def _mock_firewall(
     rules = MagicMock()
     rules.inbound = inbound or []
     rules.outbound = outbound or []
-    fw.get_rules.return_value = rules
+    rules.inbound_policy = "DROP"
+    rules.outbound_policy = "DROP"
+    fw.rules = rules
     return fw
 
 
@@ -103,7 +105,9 @@ class TestLinodeFirewallService:
         fw.label = "broken-fw"
         fw.status = "enabled"
         fw.tags = []
-        fw.get_rules.side_effect = Exception("rules API error")
+        type(fw).rules = property(
+            lambda _: (_ for _ in ()).throw(Exception("rules API error"))
+        )
 
         service = _build_service(networking_firewalls_return=[fw])
         service._describe_firewalls()

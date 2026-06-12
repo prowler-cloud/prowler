@@ -1,0 +1,38 @@
+{
+  "Provider": "linode",
+  "CheckID": "firewall_assigned_to_entities",
+  "CheckTitle": "Linode Cloud Firewall is assigned to entities",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Firewall",
+  "ResourceGroup": "network",
+  "Description": "Linode Cloud Firewalls are checked to verify they are attached to at least one Linode entity.",
+  "Risk": "Unassigned firewalls do not provide protection to running workloads and can indicate a misconfigured security control.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/apply-firewall-rules-to-a-service"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Select the associated firewall\n4. Click on either the Linodes or Nodebalancers tab and add those entities to the firewall",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach firewalls to applicable Linode entities to enforce intended network controls.",
+      "Url": "https://hub.prowler.com/checks/linode/firewall_assigned_to_entities"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "firewall_status_enabled"
+  ],
+  "Notes": ""
+}

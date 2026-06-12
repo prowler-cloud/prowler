@@ -52,19 +52,6 @@ Prowler for Linode currently supports the following services:
 
 | Service | Description |
 |---------|-------------|
-| `account` | User account settings (2FA enforcement) |
-| `instance` | Linode instance configuration (backups, encryption, watchdog, firewalls) |
-| `firewall` | Cloud firewall rules (SSH, RDP, overly permissive inbound rules) |
-
-## Available Checks
-
-| Check ID | Service | Description |
-|----------|---------|-------------|
-| `account_user_2fa_enabled` | Account | Ensures all users have two-factor authentication enabled |
-| `instance_backups_enabled` | Instance | Ensures instances have the Linode Backup service enabled |
-| `instance_disk_encryption_enabled` | Instance | Ensures instances have disk encryption enabled |
-| `instance_watchdog_enabled` | Instance | Ensures instances have Watchdog (Lassie) enabled for auto-recovery |
-| `instance_firewall_attached` | Instance | Ensures public-facing instances have a firewall attached |
-| `firewall_blocks_ssh_from_internet` | Firewall | Ensures firewalls do not allow SSH (port 22) from the internet |
-| `firewall_blocks_rdp_from_internet` | Firewall | Ensures firewalls do not allow RDP (port 3389) from the internet |
-| `firewall_inbound_rules_restricted` | Firewall | Ensures firewalls do not allow all ports from the internet |
+| `account` | An account can have multiple users and specific roles can be assigned to each user to restrict access |
+| `instance` | A Linode instance is a cloud-based virtual machine, the foundational infrastructure component for most applications & workloads |
+| `firewall` | A Cloud firewall can be used to create, configure, and add stateful network-based firewalls to resources |

@@ -25,6 +25,9 @@ class Firewall(BaseModel):
     status: str
     inbound_rules: List[FirewallRule] = []
     outbound_rules: List[FirewallRule] = []
+    inbound_policy: str
+    outbound_policy: str
+    attached_devices_count: int
     tags: List[str] = []
 
 
@@ -45,41 +48,41 @@ class FirewallService(LinodeService):
                 try:
                     inbound_rules = []
                     outbound_rules = []
+                    inbound_policy = ""
+                    outbound_policy = ""
+                    entities = []
 
                     try:
-                        rules = fw.get_rules()
-                        for rule in getattr(rules, "inbound", []) or []:
+                        # linode_api4 Firewall objects expose rules as a mapped object.
+                        rules = fw.rules
+                        inbound_policy = getattr(rules, "inbound_policy", "")
+                        outbound_policy = getattr(rules, "outbound_policy", "")
+                        inbound = getattr(rules, "inbound", [])
+                        outbound = getattr(rules, "outbound", [])
+
+                        entities = getattr(fw, "entities", [])
+                        for rule in inbound:
+                            addresses = getattr(rule, "addresses", None)
                             inbound_rules.append(
                                 FirewallRule(
                                     protocol=getattr(rule, "protocol", "TCP").upper(),
-                                    ports=getattr(rule, "ports", "") or "",
-                                    addresses_ipv4=getattr(
-                                        getattr(rule, "addresses", None), "ipv4", []
-                                    )
-                                    or [],
-                                    addresses_ipv6=getattr(
-                                        getattr(rule, "addresses", None), "ipv6", []
-                                    )
-                                    or [],
+                                    ports=getattr(rule, "ports", ""),
+                                    addresses_ipv4=getattr(addresses, "ipv4", []),
+                                    addresses_ipv6=getattr(addresses, "ipv6", []),
                                     action=getattr(rule, "action", "ACCEPT").upper(),
-                                    label=getattr(rule, "label", "") or "",
+                                    label=getattr(rule, "label", ""),
                                 )
                             )
-                        for rule in getattr(rules, "outbound", []) or []:
+                        for rule in outbound:
+                            addresses = getattr(rule, "addresses", None)
                             outbound_rules.append(
                                 FirewallRule(
                                     protocol=getattr(rule, "protocol", "TCP").upper(),
-                                    ports=getattr(rule, "ports", "") or "",
-                                    addresses_ipv4=getattr(
-                                        getattr(rule, "addresses", None), "ipv4", []
-                                    )
-                                    or [],
-                                    addresses_ipv6=getattr(
-                                        getattr(rule, "addresses", None), "ipv6", []
-                                    )
-                                    or [],
+                                    ports=getattr(rule, "ports", ""),
+                                    addresses_ipv4=getattr(addresses, "ipv4", []),
+                                    addresses_ipv6=getattr(addresses, "ipv6", []),
                                     action=getattr(rule, "action", "ACCEPT").upper(),
-                                    label=getattr(rule, "label", "") or "",
+                                    label=getattr(rule, "label", ""),
                                 )
                             )
                     except Exception as error:
@@ -94,6 +97,9 @@ class FirewallService(LinodeService):
                             status=fw.status or "unknown",
                             inbound_rules=inbound_rules,
                             outbound_rules=outbound_rules,
+                            inbound_policy=inbound_policy,
+                            outbound_policy=outbound_policy,
+                            attached_devices_count=len(entities),
                             tags=fw.tags or [],
                         )
                     )
