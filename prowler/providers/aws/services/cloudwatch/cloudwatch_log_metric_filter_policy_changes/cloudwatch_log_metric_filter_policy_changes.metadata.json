@@ -17,7 +17,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://www.clouddefense.ai/compliance-rules/cis-v140/monitoring/cis-v140-4-4",
     "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-iam-policy-change"
   ],
   "Remediation": {

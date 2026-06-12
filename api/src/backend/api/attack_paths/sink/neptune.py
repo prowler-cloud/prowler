@@ -282,7 +282,7 @@ class NeptuneSink(SinkDatabase):
                 result = session.run(
                     f"""
                     MATCH (:`{provider_label}`)-[r]-()
-                    WITH r LIMIT $batch_size
+                    WITH DISTINCT r LIMIT $batch_size
                     DELETE r
                     RETURN COUNT(r) AS deleted_rels_count
                     """,

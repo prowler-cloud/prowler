@@ -2,7 +2,16 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.30.0] (Prowler UNRELEASED)
+## [1.30.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Threat Map no longer shows an empty map for accounts that only have Okta or Google Workspace scans [(#11542)](https://github.com/prowler-cloud/prowler/pull/11542)
+- Compliance attributes requests now pass the selected scan, so multi-provider universal frameworks (e.g. CSA CCM) load the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
+
+---
+
+## [1.30.0] (Prowler v5.30.0)
 
 ### 🚀 Added
 
@@ -12,6 +21,11 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Renamed "Customer Support" to "Support Desk" in the side menu, showing it only in Prowler Cloud/Enterprise, while "Community Support" now shows only in Prowler OSS [(#11508)](https://github.com/prowler-cloud/prowler/pull/11508)
+- Compliance detail page now shows a "still loading" retry state while the API warms its compliance catalog, instead of rendering an empty page [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
+
+### 🐞 Fixed
+
+- Risk Pipeline Sankey chart now adapts height and node spacing for dense provider datasets, keeping provider and severity labels readable [(#11527)](https://github.com/prowler-cloud/prowler/pull/11527)
 
 ---
 

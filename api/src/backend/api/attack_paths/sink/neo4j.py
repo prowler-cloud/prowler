@@ -191,7 +191,12 @@ class Neo4jSink(SinkDatabase):
             session.run(f"DROP DATABASE `{database}` IF EXISTS DESTROY DATA")
 
     def drop_subgraph(self, database: str, provider_id: str) -> int:
-        """Delete all nodes for a provider from a tenant database, batched."""
+        """Delete all nodes for a provider from a tenant database, batched.
+
+        Deletes relationships then nodes in batches (not `DETACH DELETE`) so a
+        dense provider's graph cannot exceed Neo4j's transaction memory limit.
+        Silently returns 0 if the database doesn't exist.
+        """
         from api.attack_paths.database import GraphDatabaseQueryException
         from tasks.jobs.attack_paths.config import (
             BATCH_SIZE,
@@ -204,13 +209,31 @@ class Neo4jSink(SinkDatabase):
 
         try:
             with self.get_session(database) as session:
+                # Phase 1: delete relationships incident to provider nodes in
+                # batches. The undirected pattern matches an edge between two
+                # provider nodes from both ends, so `DISTINCT r` dedupes it to
+                # delete a full batch of unique relationships each round.
+                deleted_count = 1
+                while deleted_count > 0:
+                    result = session.run(
+                        f"""
+                        MATCH (:`{provider_label}`)-[r]-()
+                        WITH DISTINCT r LIMIT $batch_size
+                        DELETE r
+                        RETURN COUNT(r) AS deleted_rels_count
+                        """,
+                        {"batch_size": BATCH_SIZE},
+                    )
+                    deleted_count = result.single().get("deleted_rels_count", 0)
+
+                # Phase 2: delete the now relationship-free nodes in batches.
                 deleted_count = 1
                 while deleted_count > 0:
                     result = session.run(
                         f"""
                         MATCH (n:{PROVIDER_RESOURCE_LABEL}:`{provider_label}`)
                         WITH n LIMIT $batch_size
-                        DETACH DELETE n
+                        DELETE n
                         RETURN COUNT(n) AS deleted_nodes_count
                         """,
                         {"batch_size": BATCH_SIZE},

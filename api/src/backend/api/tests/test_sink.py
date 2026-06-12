@@ -327,37 +327,60 @@ class TestNeptuneSinkDropSubgraph:
         first_query = session.run.call_args_list[0].args[0]
         assert "DELETE r" in first_query
         assert "DETACH DELETE" not in first_query
+        # DISTINCT avoids double-counting relationships matched from both ends.
+        assert "DISTINCT r" in first_query
         third_query = session.run.call_args_list[2].args[0]
         assert "DELETE n" in third_query
 
 
 class TestNeo4jSinkDropSubgraph:
-    """Neo4j drop runs a single-phase ``DETACH DELETE`` loop, bounded by batch size."""
+    """Neo4j drop deletes relationships then nodes in batches (no ``DETACH DELETE``)."""
 
-    def test_drop_subgraph_batches_until_empty_and_returns_total(self):
+    def test_drop_subgraph_deletes_rels_before_nodes_in_bounded_batches(self):
         from api.attack_paths.sink.neo4j import Neo4jSink
 
         sink = Neo4jSink()
         session = MagicMock()
 
-        first_record = MagicMock()
-        first_record.get = lambda key, default=0: 10
-        drain_record = MagicMock()
-        drain_record.get = lambda key, default=0: 0
+        rel_first = MagicMock()
+        rel_first.get = lambda key, default=0: 50
+        rel_drain = MagicMock()
+        rel_drain.get = lambda key, default=0: 0
+        node_first = MagicMock()
+        node_first.get = lambda key, default=0: 10
+        node_drain = MagicMock()
+        node_drain.get = lambda key, default=0: 0
         session.run.side_effect = [
-            MagicMock(single=MagicMock(return_value=first_record)),
-            MagicMock(single=MagicMock(return_value=drain_record)),
+            MagicMock(single=MagicMock(return_value=rel_first)),
+            MagicMock(single=MagicMock(return_value=rel_drain)),
+            MagicMock(single=MagicMock(return_value=node_first)),
+            MagicMock(single=MagicMock(return_value=node_drain)),
         ]
 
         provider_id = "00000000-0000-0000-0000-000000000abc"
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
             deleted = sink.drop_subgraph("db-tenant-x", provider_id)
 
+        # Only phase-2 node counts contribute to the return value.
         assert deleted == 10
-        first_query = session.run.call_args_list[0].args[0]
-        assert "DETACH DELETE n" in first_query
+        assert session.run.call_count == 4
+
+        queries = [call.args[0] for call in session.run.call_args_list]
+        # Regression guard: the memory blow-up was caused by DETACH DELETE.
+        assert all("DETACH DELETE" not in query for query in queries)
+
+        first_query = queries[0]
+        assert "DELETE r" in first_query
+        # DISTINCT avoids double-counting relationships matched from both ends.
+        assert "DISTINCT r" in first_query
         assert ":`_Provider_00000000000000000000000000000abc`" in first_query
-        assert session.run.call_count == 2
+
+        assert "DELETE n" in queries[2]
+
+        # Relationships must be fully drained before nodes are deleted.
+        first_node = next(i for i, q in enumerate(queries) if "DELETE n" in q)
+        last_rel = max(i for i, q in enumerate(queries) if "DELETE r" in q)
+        assert last_rel < first_node
 
     def test_drop_subgraph_returns_zero_when_database_does_not_exist(self):
         from api.attack_paths.database import GraphDatabaseQueryException

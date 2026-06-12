@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import os
+import threading
 
 from config.env import env
 
@@ -11,6 +12,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.django.production")
 import django  # noqa: E402
 
 django.setup()
+from api.compliance import warm_compliance_caches  # noqa: E402
 from config.django.production import LOGGING as DJANGO_LOGGERS, DEBUG  # noqa: E402
 from config.custom_logging import BackendLogger  # noqa: E402
 
@@ -43,8 +45,17 @@ def when_ready(_):
     gunicorn_logger.info("Gunicorn server is ready")
 
 
+def _warm_compliance_caches_in_background():
+    """Warm compliance caches off the request path and log the outcome."""
+    failed = warm_compliance_caches()
+    if failed:
+        gunicorn_logger.warning("Compliance caches warmed (skipped: %s)", failed)
+    else:
+        gunicorn_logger.info("Compliance caches warmed")
+
+
 def post_fork(_server, worker):
-    """Re-initialize attack-paths drivers after each worker fork.
+    """Re-initialize attack-paths drivers and warm compliance caches per worker.
 
     Neo4j / Neptune drivers spawn background IO threads that do not survive
     ``fork()``. When the gunicorn master runs with ``preload_app=True``, the
@@ -52,6 +63,10 @@ def post_fork(_server, worker):
     hangs on the first ``pool.acquire`` call until the watchdog kills the
     worker. Re-initializing per worker guarantees each child owns its own
     live threads. See GUNICORN_WORKER_TIMEOUTS_ANALYSIS.md for detail.
+
+    Compliance caches are then warmed in a background thread so the worker
+    becomes ready immediately. A request for a not-yet-warmed provider lazily
+    loads just that provider, which stays well under the worker timeout.
     """
     from api.attack_paths import database as graph_database
 
@@ -61,3 +76,9 @@ def post_fork(_server, worker):
         pass
     graph_database.init_driver()
     gunicorn_logger.info(f"Attack-paths drivers initialized for worker {worker.pid}")
+
+    threading.Thread(
+        target=_warm_compliance_caches_in_background,
+        name="warm-compliance-caches",
+        daemon=True,
+    ).start()
