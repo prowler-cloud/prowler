@@ -1411,6 +1411,42 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_providers_filter_provider_groups(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        provider_groups_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider2, provider_group=group2
+        )
+
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_groups]": str(group1.id)}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert [item["id"] for item in data] == [str(provider1.id)]
+
+        response = authenticated_client.get(
+            reverse("provider-list"),
+            {"filter[provider_groups__in]": f"{group1.id},{group2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        provider_ids = {item["id"] for item in response.json()["data"]}
+        assert provider_ids == {str(provider1.id), str(provider2.id)}
+        assert len(response.json()["data"]) == 2
+
     def test_providers_disable_pagination(
         self, authenticated_client, providers_fixture, tenants_fixture
     ):
@@ -1472,9 +1508,9 @@ class TestProviderViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -3715,6 +3751,41 @@ class TestScanViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == expected_count
 
+    def test_scans_filter_provider_groups(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        scans_fixture,
+        provider_groups_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        scan1, scan2, *_ = scans_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=scan1.provider, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=scan1.provider, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=scan2.provider, provider_group=group2
+        )
+
+        response = authenticated_client.get(
+            reverse("scan-list"), {"filter[provider_groups]": str(group1.id)}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert {item["id"] for item in response.json()["data"]} == {str(scan1.id)}
+
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[provider_groups__in]": f"{group1.id},{group2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        scan_ids = {item["id"] for item in response.json()["data"]}
+        assert scan_ids == {str(scan1.id), str(scan2.id), str(scans_fixture[2].id)}
+        assert len(response.json()["data"]) == 3
+
     @pytest.mark.parametrize(
         "filter_name",
         [
@@ -5714,13 +5785,13 @@ class TestAttackPathsScanViewSet:
                     content_type=API_JSON_CONTENT_TYPE,
                 )
                 if i < 10:
-                    assert (
-                        response.status_code == status.HTTP_200_OK
-                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    assert response.status_code == status.HTTP_200_OK, (
+                        f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    )
                 else:
-                    assert (
-                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-                    ), f"Request {i + 1} should be throttled"
+                    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS, (
+                        f"Request {i + 1} should be throttled"
+                    )
 
     # -- Timeout simulation -------------------------------------------------------
 
@@ -5923,9 +5994,9 @@ class TestResourceViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -5995,6 +6066,49 @@ class TestResourceViewSet:
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == expected_count
+
+    def test_resource_filter_provider_groups(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        resources_fixture,
+        provider_groups_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        resource1, resource2, resource3, *_ = resources_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=resource1.provider, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=resource1.provider, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=resource3.provider, provider_group=group2
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-list"),
+            {"filter[updated_at]": TODAY, "filter[provider_groups]": str(group1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+        assert {item["id"] for item in response.json()["data"]} == {
+            str(resource1.id),
+            str(resource2.id),
+        }
+
+        response = authenticated_client.get(
+            reverse("resource-list"),
+            {
+                "filter[updated_at]": TODAY,
+                "filter[provider_groups__in]": f"{group1.id},{group2.id}",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        resource_ids = {item["id"] for item in response.json()["data"]}
+        assert resource_ids == {str(resource1.id), str(resource2.id), str(resource3.id)}
+        assert len(response.json()["data"]) == 3
 
     def test_resource_filter_by_scan_id(
         self, authenticated_client, resources_fixture, scans_fixture
@@ -6474,9 +6588,9 @@ class TestResourceViewSet:
             (e for e in errors if e["source"]["parameter"] == expected_invalid_param),
             None,
         )
-        assert (
-            error is not None
-        ), f"Expected error for parameter '{expected_invalid_param}'"
+        assert error is not None, (
+            f"Expected error for parameter '{expected_invalid_param}'"
+        )
         assert error["code"] == "invalid"
         assert error["status"] == "400"  # Must be string per JSON:API spec
         assert expected_invalid_param in error["detail"]
@@ -7008,16 +7122,16 @@ class TestResourceViewSet:
         # Test with completely malformed token
         client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for malformed token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for malformed token but got {response.status_code}"
+        )
 
         # Test with empty bearer token
         client.credentials(HTTP_AUTHORIZATION="Bearer ")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for empty bearer token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for empty bearer token but got {response.status_code}"
+        )
 
 
 @pytest.mark.django_db
@@ -7152,9 +7266,9 @@ class TestFindingViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -7303,6 +7417,40 @@ class TestFindingViewSet:
                     findings_fixture[1].scan.provider.id,
                 ],
                 "filter[inserted_at]": TODAY,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_finding_filter_provider_groups(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        findings_fixture,
+        provider_groups_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        finding1, finding2, *_ = findings_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=finding1.scan.provider, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=finding1.scan.provider, provider_group=group2
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {"filter[inserted_at]": TODAY, "filter[provider_groups]": str(group1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[provider_groups__in]": f"{group1.id},{group2.id}",
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -7719,9 +7867,9 @@ class TestJWTFields:
             reverse("token-obtain"), data, format="json"
         )
 
-        assert (
-            response.status_code == status.HTTP_200_OK
-        ), f"Unexpected status code: {response.status_code}"
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Unexpected status code: {response.status_code}"
+        )
 
         access_token = response.data["attributes"]["access"]
         payload = jwt.decode(access_token, options={"verify_signature": False})
@@ -7735,23 +7883,23 @@ class TestJWTFields:
         # Verify expected fields
         for field in expected_fields:
             assert field in payload, f"The field '{field}' is not in the JWT"
-            assert (
-                payload[field] == expected_fields[field]
-            ), f"The value of '{field}' does not match"
+            assert payload[field] == expected_fields[field], (
+                f"The value of '{field}' does not match"
+            )
 
         # Verify time fields are integers
         for time_field in ["exp", "iat", "nbf"]:
             assert time_field in payload, f"The field '{time_field}' is not in the JWT"
-            assert isinstance(
-                payload[time_field], int
-            ), f"The field '{time_field}' is not an integer"
+            assert isinstance(payload[time_field], int), (
+                f"The field '{time_field}' is not an integer"
+            )
 
         # Verify identification fields are non-empty strings
         for id_field in ["jti", "sub", "tenant_id"]:
             assert id_field in payload, f"The field '{id_field}' is not in the JWT"
-            assert (
-                isinstance(payload[id_field], str) and payload[id_field]
-            ), f"The field '{id_field}' is not a valid string"
+            assert isinstance(payload[id_field], str) and payload[id_field], (
+                f"The field '{id_field}' is not a valid string"
+            )
 
 
 @pytest.mark.django_db
@@ -10578,6 +10726,87 @@ class TestOverviewViewSet:
         assert combined_attributes["muted"] == 3
         assert combined_attributes["total"] == 14
 
+    def test_overview_findings_provider_groups_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        provider_groups_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider2, provider_group=group2
+        )
+
+        scan1 = Scan.objects.create(
+            name="scan-provider-group-one",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="scan-provider-group-two",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="check-provider-group-one",
+            service="service-a",
+            severity="high",
+            region="region-a",
+            _pass=5,
+            fail=1,
+            muted=2,
+            total=8,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan2,
+            check_id="check-provider-group-two",
+            service="service-b",
+            severity="medium",
+            region="region-b",
+            _pass=2,
+            fail=3,
+            muted=1,
+            total=6,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-findings"),
+            {"filter[provider_groups]": str(group1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["pass"] == 5
+        assert attributes["fail"] == 1
+        assert attributes["muted"] == 2
+        assert attributes["total"] == 8
+
+        response = authenticated_client.get(
+            reverse("overview-findings"),
+            {"filter[provider_groups__in]": f"{group1.id},{group2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["pass"] == 7
+        assert attributes["fail"] == 4
+        assert attributes["muted"] == 3
+        assert attributes["total"] == 14
+
     def test_overview_findings_severity_provider_id_in_filter(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
@@ -11346,9 +11575,21 @@ class TestOverviewViewSet:
     @pytest.mark.parametrize(
         "filter_key,filter_value_fn,expected_total,expected_failed",
         [
-            ("filter[provider_id]", lambda p1, _: str(p1.id), 10, 5),
+            ("filter[provider_id]", lambda p1, *_: str(p1.id), 10, 5),
             ("filter[provider_type]", lambda *_: "aws", 10, 5),
             ("filter[provider_type__in]", lambda *_: "aws,gcp", 30, 20),
+            (
+                "filter[provider_groups]",
+                lambda p1, _, group1, __: str(group1.id),
+                10,
+                5,
+            ),
+            (
+                "filter[provider_groups__in]",
+                lambda p1, _, group1, group2: f"{group1.id},{group2.id}",
+                30,
+                20,
+            ),
         ],
     )
     def test_overview_categories_filters(
@@ -11356,6 +11597,7 @@ class TestOverviewViewSet:
         authenticated_client,
         tenants_fixture,
         providers_fixture,
+        provider_groups_fixture,
         create_scan_category_summary,
         filter_key,
         filter_value_fn,
@@ -11364,6 +11606,16 @@ class TestOverviewViewSet:
     ):
         tenant = tenants_fixture[0]
         provider1, _, gcp_provider, *_ = providers_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=gcp_provider, provider_group=group2
+        )
 
         scan1 = Scan.objects.create(
             name="categories-scan-1",
@@ -11389,7 +11641,7 @@ class TestOverviewViewSet:
 
         response = authenticated_client.get(
             reverse("overview-categories"),
-            {filter_key: filter_value_fn(provider1, gcp_provider)},
+            {filter_key: filter_value_fn(provider1, gcp_provider, group1, group2)},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
@@ -11563,10 +11815,22 @@ class TestOverviewViewSet:
     @pytest.mark.parametrize(
         "filter_key,filter_value_fn,expected_total,expected_failed",
         [
-            ("filter[provider_id]", lambda p1, p2: str(p1.id), 10, 5),
-            ("filter[provider_id__in]", lambda p1, p2: f"{p1.id},{p2.id}", 25, 12),
-            ("filter[provider_type]", lambda p1, p2: "aws", 10, 5),
-            ("filter[provider_type__in]", lambda p1, p2: "aws,gcp", 25, 12),
+            ("filter[provider_id]", lambda p1, *_: str(p1.id), 10, 5),
+            ("filter[provider_id__in]", lambda p1, p2, *_: f"{p1.id},{p2.id}", 25, 12),
+            ("filter[provider_type]", lambda *_: "aws", 10, 5),
+            ("filter[provider_type__in]", lambda *_: "aws,gcp", 25, 12),
+            (
+                "filter[provider_groups]",
+                lambda p1, p2, group1, group2: str(group1.id),
+                10,
+                5,
+            ),
+            (
+                "filter[provider_groups__in]",
+                lambda p1, p2, group1, group2: f"{group1.id},{group2.id}",
+                25,
+                12,
+            ),
         ],
     )
     def test_overview_groups_provider_filters(
@@ -11574,6 +11838,7 @@ class TestOverviewViewSet:
         authenticated_client,
         tenants_fixture,
         providers_fixture,
+        provider_groups_fixture,
         create_scan_resource_group_summary,
         filter_key,
         filter_value_fn,
@@ -11583,6 +11848,16 @@ class TestOverviewViewSet:
         tenant = tenants_fixture[0]
         provider1 = providers_fixture[0]  # AWS
         gcp_provider = providers_fixture[2]  # GCP
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=gcp_provider, provider_group=group2
+        )
 
         scan1 = Scan.objects.create(
             name="aws-rg-scan",
@@ -11608,7 +11883,7 @@ class TestOverviewViewSet:
 
         response = authenticated_client.get(
             reverse("overview-resource-groups"),
-            {filter_key: filter_value_fn(provider1, gcp_provider)},
+            {filter_key: filter_value_fn(provider1, gcp_provider, group1, group2)},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
@@ -11783,6 +12058,49 @@ class TestOverviewViewSet:
         data = response.json()["data"]
         assert len(data) >= 1
 
+    def test_compliance_watchlist_provider_groups_filter(
+        self,
+        authenticated_client,
+        provider_compliance_scores_fixture,
+        providers_fixture,
+        provider_groups_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider2, provider_group=group2
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-compliance-watchlist"),
+            {"filter[provider_groups]": str(group1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        by_id = {item["id"]: item["attributes"] for item in data}
+        assert by_id["aws_cis_2.0"]["requirements_passed"] == 1
+        assert by_id["aws_cis_2.0"]["requirements_failed"] == 1
+        assert by_id["aws_cis_2.0"]["requirements_manual"] == 1
+
+        response = authenticated_client.get(
+            reverse("overview-compliance-watchlist"),
+            {"filter[provider_groups__in]": f"{group1.id},{group2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        by_id = {item["id"]: item["attributes"] for item in data}
+        assert by_id["aws_cis_2.0"]["requirements_passed"] == 0
+        assert by_id["aws_cis_2.0"]["requirements_failed"] == 2
+        assert by_id["aws_cis_2.0"]["requirements_manual"] == 1
+
     def test_compliance_watchlist_empty_result(self, authenticated_client):
         response = authenticated_client.get(reverse("overview-compliance-watchlist"))
         assert response.status_code == status.HTTP_200_OK
@@ -11917,9 +12235,9 @@ class TestIntegrationViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
@@ -13356,9 +13674,9 @@ class TestLighthouseConfigViewSet:
         )
         # Check that API key is masked with asterisks only
         masked_api_key = data["attributes"]["api_key"]
-        assert all(
-            c == "*" for c in masked_api_key
-        ), "API key should contain only asterisks"
+        assert all(c == "*" for c in masked_api_key), (
+            "API key should contain only asterisks"
+        )
 
     @pytest.mark.parametrize(
         "field_name, invalid_value",
@@ -16935,6 +17253,44 @@ class TestFindingGroupViewSet:
         # All fixture findings are from AWS provider
         assert len(response.json()["data"]) == 5
 
+    def test_finding_groups_provider_groups_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        finding_groups_fixture,
+        providers_fixture,
+        provider_groups_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider2, provider_group=group2
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[provider_groups]": str(group1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 4
+
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[provider_groups__in]": f"{group1.id},{group2.id}",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 5
+
     def test_finding_groups_check_id_filter(
         self, authenticated_client, finding_groups_fixture
     ):
@@ -17109,9 +17465,9 @@ class TestFindingGroupViewSet:
         assert len(data) == 2
         for item in data:
             resource = item["attributes"]["resource"]
-            assert (
-                resource["resource_group"] == "storage"
-            ), "resource_group must be 'storage'"
+            assert resource["resource_group"] == "storage", (
+                "resource_group must be 'storage'"
+            )
 
     def test_resources_name_icontains(
         self, authenticated_client, finding_groups_fixture
@@ -17425,12 +17781,12 @@ class TestFindingGroupViewSet:
         assert response_p1.status_code == status.HTTP_200_OK
         p1_check_ids = {item["id"] for item in response_p1.json()["data"]}
         # Provider1 has scan1 with 4 checks
-        assert (
-            len(p1_check_ids) == 4
-        ), f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
-        assert (
-            "cloudtrail_enabled" not in p1_check_ids
-        ), "cloudtrail_enabled should NOT be in provider1"
+        assert len(p1_check_ids) == 4, (
+            f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
+        )
+        assert "cloudtrail_enabled" not in p1_check_ids, (
+            "cloudtrail_enabled should NOT be in provider1"
+        )
 
         # Get finding groups for provider2 only
         response_p2 = authenticated_client.get(
@@ -17440,12 +17796,12 @@ class TestFindingGroupViewSet:
         assert response_p2.status_code == status.HTTP_200_OK
         p2_check_ids = {item["id"] for item in response_p2.json()["data"]}
         # Provider2 has scan2 with 1 check
-        assert (
-            len(p2_check_ids) == 1
-        ), f"Provider2 should have 1 check, got {len(p2_check_ids)}"
-        assert (
-            "cloudtrail_enabled" in p2_check_ids
-        ), "cloudtrail_enabled should be in provider2"
+        assert len(p2_check_ids) == 1, (
+            f"Provider2 should have 1 check, got {len(p2_check_ids)}"
+        )
+        assert "cloudtrail_enabled" in p2_check_ids, (
+            "cloudtrail_enabled should be in provider2"
+        )
 
     # Test provider_type filter actually filters data
     def test_finding_groups_provider_type_filter_actually_filters(
@@ -17468,9 +17824,9 @@ class TestFindingGroupViewSet:
             {"filter[inserted_at]": TODAY, "filter[provider_type]": "gcp"},
         )
         assert response_gcp.status_code == status.HTTP_200_OK
-        assert (
-            len(response_gcp.json()["data"]) == 0
-        ), "GCP filter should return 0 results"
+        assert len(response_gcp.json()["data"]) == 0, (
+            "GCP filter should return 0 results"
+        )
 
     def test_finding_groups_pagination(
         self, authenticated_client, finding_groups_fixture
@@ -17844,6 +18200,41 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         # All providers in fixture are AWS
         assert len(data) == 5
+
+    def test_finding_groups_latest_provider_groups_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        finding_groups_fixture,
+        providers_fixture,
+        provider_groups_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+        group1, group2, *_ = provider_groups_fixture
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group1
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=group2
+        )
+        ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider2, provider_group=group2
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[provider_groups]": str(group1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 4
+
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[provider_groups__in]": f"{group1.id},{group2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 5
 
     def test_finding_groups_latest_check_id_filter(
         self, authenticated_client, finding_groups_fixture

@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.32.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Provider group filters for API endpoints that support cloud provider filtering, including exact and `__in` variants [(#11573)](https://github.com/prowler-cloud/prowler/pull/11573)
+
+---
+
 ## [1.31.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed

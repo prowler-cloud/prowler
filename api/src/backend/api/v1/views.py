@@ -5509,6 +5509,14 @@ class OverviewViewSet(BaseRLSViewSet):
                 )
             filters["provider__provider__in"] = types
 
+        provider_groups = params.get("filter[provider_groups]")
+        if provider_groups:
+            filters["provider__provider_groups__id"] = provider_groups
+
+        provider_groups_in = params.get("filter[provider_groups__in]")
+        if provider_groups_in:
+            filters["provider__provider_groups__id__in"] = provider_groups_in.split(",")
+
         return filters
 
     @action(detail=False, methods=["get"], url_name="providers")
@@ -5827,6 +5835,18 @@ class OverviewViewSet(BaseRLSViewSet):
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider types (comma-separated)",
+            ),
+            OpenApiParameter(
+                name="provider_groups",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider group ID",
+            ),
+            OpenApiParameter(
+                name="provider_groups__in",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider group IDs (comma-separated UUIDs)",
             ),
         ],
     )
@@ -6169,6 +6189,8 @@ class OverviewViewSet(BaseRLSViewSet):
             "provider_id__in",
             "provider_type",
             "provider_type__in",
+            "provider_groups",
+            "provider_groups__in",
         }
         filtered_queryset = self._apply_filterset(
             base_queryset, CategoryOverviewFilter, exclude_keys=provider_filter_keys
@@ -6238,6 +6260,8 @@ class OverviewViewSet(BaseRLSViewSet):
             "provider_id__in",
             "provider_type",
             "provider_type__in",
+            "provider_groups",
+            "provider_groups__in",
         }
         filtered_queryset = self._apply_filterset(
             base_queryset,
@@ -8484,9 +8508,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         This endpoint returns finding groups without requiring date filters,
         automatically using the latest available data per check_id.
-        All other filters (provider_id, provider_type, check_id) are still supported.
+        Provider, provider group, check, and computed filters are still supported.
         """,
         tags=["Finding Groups"],
+        filters=True,
     )
     @action(detail=False, methods=["get"], url_name="latest")
     def latest(self, request):
