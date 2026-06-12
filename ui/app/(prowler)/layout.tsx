@@ -5,6 +5,7 @@ import { Metadata, Viewport } from "next";
 import { ReactNode } from "react";
 
 import { getProviders } from "@/actions/providers";
+import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
 import { Toaster } from "@/components/ui/toast";
@@ -46,7 +47,9 @@ export default async function RootLayout({
 
   return (
     <html suppressHydrationWarning lang="en">
-      <head />
+      <head>
+        <RuntimePublicConfig />
+      </head>
       <body
         suppressHydrationWarning
         className={cn(
