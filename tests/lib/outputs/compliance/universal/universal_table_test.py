@@ -167,6 +167,85 @@ class TestGroupedMode:
         assert "PASS" in captured.out
         assert "FAIL" in captured.out
 
+    def test_grouped_multi_section_no_undercount(self, capsys):
+        """A single check mapped to several sections must be counted in
+        every section it belongs to, not only the first one seen."""
+        reqs = [
+            UniversalComplianceRequirement(
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a", "check_b"]},
+            ),
+            UniversalComplianceRequirement(
+                id="2.1",
+                description="test2",
+                attributes={"Section": "Logging"},
+                checks={"aws": ["check_a"]},
+            ),
+        ]
+        tc = TableConfig(group_by="Section")
+        fw = _make_framework(reqs, tc)
+
+        # check_a (FAIL) belongs to both IAM and Logging sections; check_b
+        # (PASS, IAM only) is added so the overview total reaches 2 and the
+        # results table is rendered.
+        findings = [
+            _make_finding("check_a", "FAIL"),
+            _make_finding("check_b", "PASS"),
+        ]
+        bulk_metadata = {
+            "check_a": MagicMock(Compliance=[]),
+            "check_b": MagicMock(Compliance=[]),
+        }
+
+        get_universal_table(
+            findings,
+            bulk_metadata,
+            "test_fw",
+            "output",
+            "/tmp",
+            False,
+            framework=fw,
+        )
+
+        captured = capsys.readouterr()
+        # Both sections must show FAIL(1); previously Logging showed FAIL(0).
+        assert captured.out.count("FAIL(1)") == 2
+
+    def test_grouped_provider_from_framework(self, capsys):
+        """The Provider column must come from the framework, never from a
+        leaked loop variable."""
+        reqs = [
+            UniversalComplianceRequirement(
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"]},
+            ),
+        ]
+        tc = TableConfig(group_by="Section")
+        fw = _make_framework(reqs, tc, provider="AWS")
+
+        findings = [
+            _make_finding("check_a", "FAIL"),
+            _make_finding("check_a", "PASS"),
+        ]
+        bulk_metadata = {"check_a": MagicMock(Compliance=[])}
+
+        get_universal_table(
+            findings,
+            bulk_metadata,
+            "test_fw",
+            "output",
+            "/tmp",
+            False,
+            framework=fw,
+        )
+
+        captured = capsys.readouterr()
+        assert "AWS" in captured.out
+
 
 class TestSplitMode:
     def test_split_rendering(self, capsys):
