@@ -103,13 +103,38 @@ class TestSSEChannelManager:
     def test_malformed_channel_is_rejected(self, create_test_user, tenants_fixture):
         assert not SSEChannelManager().can_read_channel(create_test_user, "garbage")
 
-    def test_get_channels_for_request_reads_stashed_set(self):
+    def test_get_channels_for_request_returns_active_tenant_channels(self):
+        tenant_id = uuid.uuid4()
+        own = make_channel_name("prefix", tenant_id, "resource")
         request = MagicMock()
-        request.sse_channels = {"prefix:tenant:resource"}
-        manager = SSEChannelManager()
-        assert manager.get_channels_for_request(request, {}) == {
-            "prefix:tenant:resource"
-        }
+        request.tenant_id = str(tenant_id)
+        request.sse_channels = {own}
+        assert SSEChannelManager().get_channels_for_request(request, {}) == {own}
+
+    def test_get_channels_for_request_drops_other_tenant_channels(self):
+        # Fail-closed: a channel for a tenant other than the active JWT
+        # tenant is dropped before reaching django-eventstream, even if the
+        # viewset mistakenly stashed it. This is the primary tenant gate that
+        # binds authorization to request.tenant_id, not just membership.
+        active_tenant = uuid.uuid4()
+        own = make_channel_name("prefix", active_tenant, "resource")
+        foreign = make_channel_name("prefix", uuid.uuid4(), "resource")
+        request = MagicMock()
+        request.tenant_id = str(active_tenant)
+        request.sse_channels = {own, foreign}
+        assert SSEChannelManager().get_channels_for_request(request, {}) == {own}
+
+    def test_get_channels_for_request_drops_malformed_channels(self):
+        request = MagicMock()
+        request.tenant_id = str(uuid.uuid4())
+        request.sse_channels = {"garbage", "prefix:not-a-uuid:resource"}
+        assert SSEChannelManager().get_channels_for_request(request, {}) == set()
+
+    def test_get_channels_for_request_without_tenant_returns_empty(self):
+        # No active tenant on the request (auth/RLS never ran) → fail closed,
+        # regardless of any channels stashed on it.
+        request = MagicMock(spec=[])
+        assert SSEChannelManager().get_channels_for_request(request, {}) == set()
 
     def test_get_channels_for_request_defaults_to_empty(self):
         # A request that never went through BaseSSEViewSet.list has no
