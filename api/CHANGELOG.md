@@ -2,11 +2,15 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.1] (Prowler UNRELEASED)
+## [1.32.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
 - Provider group filters for API endpoints that support cloud provider filtering, including exact and `__in` variants [(#11573)](https://github.com/prowler-cloud/prowler/pull/11573)
+
+---
+
+## [1.31.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed
 
@@ -33,7 +37,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
-- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
+- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#11530)](https://github.com/prowler-cloud/prowler/pull/11530)
 
 ### 🔐 Security
 
