@@ -31,6 +31,8 @@
     "resilience"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
+  "RelatedTo": [
+    "cloudsql_instance_automated_backups"
+  ],
   "Notes": "Enabling HA increases instance cost approximately 2x due to the standby replica. ZONAL instances are acceptable for non-production workloads where downtime is tolerable."
 }

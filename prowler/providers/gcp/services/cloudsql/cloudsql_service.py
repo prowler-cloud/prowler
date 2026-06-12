@@ -46,10 +46,9 @@ class CloudSQL(GCPService):
                                     "authorizedNetworks", []
                                 ),
                                 flags=settings.get("databaseFlags", []),
-                                high_availability=settings.get(
+                                availability_type=settings.get(
                                     "availabilityType", "ZONAL"
-                                )
-                                == "REGIONAL",
+                                ),
                                 instance_type=instance.get(
                                     "instanceType", "CLOUD_SQL_INSTANCE"
                                 ),
@@ -80,7 +79,7 @@ class Instance(BaseModel):
     ssl_mode: str
     automated_backups: bool
     flags: list
-    high_availability: bool = False
+    availability_type: str = "ZONAL"
     instance_type: str = "CLOUD_SQL_INSTANCE"
     cmek_key_name: Optional[str] = None
     project_id: str
