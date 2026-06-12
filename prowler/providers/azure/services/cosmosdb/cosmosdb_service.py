@@ -36,8 +36,9 @@ class CosmosDB(AzureService):
                                     name=private_endpoint_connection.name,
                                     type=private_endpoint_connection.type,
                                 )
-                                for private_endpoint_connection in getattr(
-                                    account, "private_endpoint_connections", []
+                                for private_endpoint_connection in (
+                                    getattr(account, "private_endpoint_connections", [])
+                                    or []
                                 )
                                 if private_endpoint_connection
                             ],
