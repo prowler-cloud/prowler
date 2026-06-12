@@ -2,12 +2,12 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.30.0] (Prowler UNRELEASED)
+## [5.31.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
 - DISA Okta IDaaS STIG V1R2 compliance framework for the Okta provider, with a dedicated CSV output formatter and terminal summary table [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
-- `identity_storage_service_level_admins_scoped` check for OCI provider CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions [(#10567)](https://github.com/prowler-cloud/prowler/issues/10567)
+- `identity_storage_service_level_admins_scoped` check for OCI provider CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions [(#11523)](https://github.com/prowler-cloud/prowler/pull/11523)
 - `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 - Okta authenticator and password policy checks for STIG-aligned hardening requirements [(#11465)](https://github.com/prowler-cloud/prowler/pull/11465)

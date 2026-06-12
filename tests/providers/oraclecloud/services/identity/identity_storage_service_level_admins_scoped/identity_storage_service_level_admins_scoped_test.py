@@ -3,6 +3,7 @@ from unittest import mock
 
 import pytest
 
+from prowler.lib.check.models import Check_Report_OCI
 from prowler.providers.oraclecloud.services.identity.identity_service import Policy
 from tests.providers.oraclecloud.oci_fixtures import (
     OCI_COMPARTMENT_ID,
@@ -14,7 +15,9 @@ from tests.providers.oraclecloud.oci_fixtures import (
 CHECK_PATH = "prowler.providers.oraclecloud.services.identity.identity_storage_service_level_admins_scoped.identity_storage_service_level_admins_scoped"
 
 
-def _policy(name, statements, lifecycle_state="ACTIVE"):
+def _policy(
+    name: str, statements: list[str], lifecycle_state: str = "ACTIVE"
+) -> Policy:
     return Policy(
         id=f"ocid1.policy.oc1..{name.lower().replace(' ', '-')}",
         name=name,
@@ -27,7 +30,7 @@ def _policy(name, statements, lifecycle_state="ACTIVE"):
     )
 
 
-def _identity_client(policies):
+def _identity_client(policies: list[Policy]) -> mock.MagicMock:
     identity_client = mock.MagicMock()
     identity_client.policies = policies
     identity_client.audited_tenancy = OCI_TENANCY_ID
@@ -35,7 +38,7 @@ def _identity_client(policies):
     return identity_client
 
 
-def _run_check(policies):
+def _run_check(policies: list[Policy]) -> list[Check_Report_OCI]:
     identity_client = _identity_client(policies)
 
     with (
@@ -148,6 +151,21 @@ class Test_identity_storage_service_level_admins_scoped:
         assert len(result) == 1
         assert result[0].status == "FAIL"
         assert "BUCKET_DELETE" in result[0].status_extended
+
+    def test_quoted_literals_do_not_make_delete_exclusion_disjunctive(self):
+        result = _run_check(
+            [
+                _policy(
+                    "Bucket Admins",
+                    [
+                        "Allow group BucketUsers to manage buckets in tenancy where request.permission!='BUCKET_DELETE' and target.tag.namespace='any-tag'"
+                    ],
+                )
+            ]
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
 
     @pytest.mark.parametrize(
         "resource,permission",
@@ -285,6 +303,20 @@ class Test_identity_storage_service_level_admins_scoped:
                 _policy(
                     "Tenant Admin Policy",
                     ["Allow group Administrators to manage all-resources in tenancy"],
+                )
+            ]
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert result[0].resource_name == "Tenancy"
+
+    def test_policies_without_storage_manage_statements_are_ignored(self):
+        result = _run_check(
+            [
+                _policy(
+                    "Network Admins",
+                    ["Allow group NetworkUsers to manage vcns in tenancy"],
                 )
             ]
         )

@@ -28,6 +28,7 @@ MANAGE_STATEMENT_PATTERN = re.compile(
     r"\ballow\s+group\b.+?\bto\s+manage\s+(?P<resource>[a-z-]+)\b",
     re.IGNORECASE,
 )
+QUOTED_LITERAL_PATTERN = re.compile(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"")
 
 
 def _normalize_statement(statement: str) -> str:
@@ -41,7 +42,24 @@ def _has_disjunctive_condition(statement: str) -> bool:
     if len(condition) != 2:
         return False
 
-    return bool(re.search(r"\b(any|or)\b|\|\|", condition[1], re.IGNORECASE))
+    condition_without_literals = QUOTED_LITERAL_PATTERN.sub("", condition[1])
+    return bool(
+        re.search(r"\b(any|or)\b|\|\|", condition_without_literals, re.IGNORECASE)
+    )
+
+
+def _storage_manage_resource(statement: str) -> str | None:
+    """Return the managed storage resource in a policy statement, if any."""
+    normalized_statement = _normalize_statement(statement)
+    match = MANAGE_STATEMENT_PATTERN.search(normalized_statement)
+    if not match:
+        return None
+
+    resource = match.group("resource").lower()
+    if resource not in STORAGE_DELETE_PERMISSIONS_BY_RESOURCE:
+        return None
+
+    return resource
 
 
 def _excluded_permissions(statement: str) -> set[str]:
@@ -63,14 +81,11 @@ def _excluded_permissions(statement: str) -> set[str]:
 def _missing_delete_exclusions(statement: str) -> tuple[str, set[str]] | None:
     """Return the storage resource and missing delete exclusions for a statement."""
     normalized_statement = _normalize_statement(statement)
-    match = MANAGE_STATEMENT_PATTERN.search(normalized_statement)
-    if not match:
+    resource = _storage_manage_resource(normalized_statement)
+    if not resource:
         return None
 
-    resource = match.group("resource").lower()
-    required_permissions = STORAGE_DELETE_PERMISSIONS_BY_RESOURCE.get(resource)
-    if not required_permissions:
-        return None
+    required_permissions = STORAGE_DELETE_PERMISSIONS_BY_RESOURCE[resource]
 
     excluded_permissions = _excluded_permissions(normalized_statement)
     missing_permissions = required_permissions - excluded_permissions
@@ -100,8 +115,12 @@ class identity_storage_service_level_admins_scoped(Check):
 
             region = policy.region if hasattr(policy, "region") else "global"
             violations = []
+            has_storage_manage_statement = False
 
             for statement in policy.statements:
+                if _storage_manage_resource(statement):
+                    has_storage_manage_statement = True
+
                 missing_result = _missing_delete_exclusions(statement)
                 if not missing_result:
                     continue
@@ -110,6 +129,9 @@ class identity_storage_service_level_admins_scoped(Check):
                 violations.append(
                     f"statement `{_normalize_statement(statement)}` manages {resource} without excluding: {', '.join(sorted(missing_permissions))}"
                 )
+
+            if not has_storage_manage_statement:
+                continue
 
             report = Check_Report_OCI(
                 metadata=self.metadata(),
