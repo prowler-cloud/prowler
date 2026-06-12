@@ -9,6 +9,18 @@ vi.mock("@/components/shadcn", () => ({
     <span>{children}</span>
   ),
   Progress: () => <div />,
+  StackedCell: ({
+    primary,
+    secondary,
+  }: {
+    primary: React.ReactNode;
+    secondary?: React.ReactNode;
+  }) => (
+    <div>
+      <span>{primary}</span>
+      {secondary ? <span>{secondary}</span> : null}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/ui/entities", () => ({
@@ -148,6 +160,8 @@ describe("getScanJobsColumns", () => {
       "account",
       "scanInfo",
       "scanSchedule",
+      "nextScan",
+      "lastScan",
       "actions",
     ]);
   });

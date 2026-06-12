@@ -157,18 +157,20 @@ export const scheduleDaily = async (formData: FormData) => {
 
   const url = new URL(`${apiBaseUrl}/schedules/daily`);
 
+  const body = {
+    data: {
+      type: "daily-schedules",
+      attributes: {
+        provider_id: providerId,
+      },
+    },
+  };
+
   try {
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        data: {
-          type: "daily-schedules",
-          attributes: {
-            provider_id: providerId,
-          },
-        },
-      }),
+      body: JSON.stringify(body),
     });
 
     return handleApiResponse(response, "/scans");

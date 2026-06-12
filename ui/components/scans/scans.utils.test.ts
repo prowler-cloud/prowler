@@ -8,6 +8,7 @@ import {
 } from "@/types";
 
 import {
+  buildPendingScheduleRows,
   formatScanDuration,
   getScanAlias,
   getScanFindingsSummary,
@@ -109,9 +110,9 @@ describe("scans.utils", () => {
   it("formats scan labels and durations for table display", () => {
     expect(getScanAlias(makeScan(""))).toBe("-");
     expect(getScanAlias(makeScan("Daily scheduled scan", "scheduled"))).toBe(
-      "scheduled scan",
+      "Scheduled Scan",
     );
-    expect(getScanAlias(makeScan("", "scheduled"))).toBe("scheduled scan");
+    expect(getScanAlias(makeScan("", "scheduled"))).toBe("Scheduled Scan");
     expect(getScanAlias(makeScan("Production scan"))).toBe("Production scan");
     expect(formatScanDuration(73)).toBe("1 min 13 sec");
     expect(formatScanDuration(null)).toBe("-");
@@ -159,5 +160,106 @@ describe("scans.utils", () => {
     ).toEqual({ fail: 4, pass: 8, passNew: 2 });
 
     expect(getScanFindingsSummary(makeScan("x").attributes)).toBeNull();
+  });
+});
+
+describe("buildPendingScheduleRows", () => {
+  const now = new Date("2026-06-10T10:30:00Z");
+
+  const makeProvider = (id: string) =>
+    ({
+      id,
+      type: "providers",
+      attributes: {
+        provider: "aws",
+        uid: `uid-${id}`,
+        alias: `alias-${id}`,
+      },
+      relationships: {},
+    }) as never;
+
+  const weeklySchedule = {
+    scan_enabled: true,
+    scan_frequency: "WEEKLY",
+    scan_hour: 9,
+    scan_timezone: "Europe/Madrid",
+    scan_interval_hours: null,
+    scan_day_of_week: 1,
+    scan_day_of_month: null,
+  } as const;
+
+  it("synthesizes a pending row for a configured schedule without scan rows", () => {
+    const rows = buildPendingScheduleRows({
+      providers: [makeProvider("p1")],
+      schedulesByProviderId: { p1: weeklySchedule },
+      coveredProviderIds: new Set(),
+      now,
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id).toBe("pending-schedule-p1");
+    expect(rows[0].attributes.state).toBe("scheduled");
+    expect(rows[0].attributes.trigger).toBe("scheduled");
+    expect(rows[0].pendingSchedule?.summary).toBe(
+      "Weekly on Monday @ 9:00am (Europe/Madrid)",
+    );
+    expect(rows[0].pendingSchedule?.cadence).toBe("Weekly on Monday");
+    expect(rows[0].providerInfo?.uid).toBe("uid-p1");
+  });
+
+  it("prefers the server-computed next_scan_at and carries last_scan_at", () => {
+    const rows = buildPendingScheduleRows({
+      providers: [makeProvider("p1")],
+      schedulesByProviderId: {
+        p1: {
+          ...weeklySchedule,
+          next_scan_at: "2026-06-15T00:00:00Z",
+          last_scan_at: "2026-06-01T10:00:00Z",
+        },
+      },
+      coveredProviderIds: new Set(),
+      now,
+    });
+
+    expect(rows[0].attributes.scheduled_at).toBe("2026-06-15T00:00:00Z");
+    expect(rows[0].pendingSchedule?.nextScanAt).toBe("2026-06-15T00:00:00Z");
+    expect(rows[0].pendingSchedule?.lastScanAt).toBe("2026-06-01T10:00:00Z");
+  });
+
+  it("falls back to a client estimate when next_scan_at is absent", () => {
+    const rows = buildPendingScheduleRows({
+      providers: [makeProvider("p1")],
+      schedulesByProviderId: { p1: weeklySchedule },
+      coveredProviderIds: new Set(),
+      now,
+    });
+
+    expect(rows[0].attributes.scheduled_at).not.toBeNull();
+    expect(rows[0].pendingSchedule?.lastScanAt).toBeNull();
+  });
+
+  it("skips providers already covered by a real scheduled scan row", () => {
+    const rows = buildPendingScheduleRows({
+      providers: [makeProvider("p1")],
+      schedulesByProviderId: { p1: weeklySchedule },
+      coveredProviderIds: new Set(["p1"]),
+      now,
+    });
+
+    expect(rows).toHaveLength(0);
+  });
+
+  it("skips unconfigured and disabled schedules", () => {
+    const rows = buildPendingScheduleRows({
+      providers: [makeProvider("p1"), makeProvider("p2"), makeProvider("p3")],
+      schedulesByProviderId: {
+        p1: { ...weeklySchedule, scan_hour: null },
+        p2: { ...weeklySchedule, scan_enabled: false },
+      },
+      coveredProviderIds: new Set(),
+      now,
+    });
+
+    expect(rows).toHaveLength(0);
   });
 });

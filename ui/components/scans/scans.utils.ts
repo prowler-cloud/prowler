@@ -1,5 +1,12 @@
 import {
+  describeScheduleCadence,
+  getNextScheduledRunInTimezone,
+  getScheduleCadenceParts,
+  isScheduleConfigured,
+} from "@/lib/schedules";
+import {
   DEFAULT_SCAN_JOBS_TAB,
+  type ProviderProps,
   SCAN_JOBS_TAB,
   SCAN_STATE,
   SCAN_TRIGGER,
@@ -9,6 +16,7 @@ import {
   type ScanProps,
   type ScanState,
   type ScanTrigger,
+  type ScheduleAttributes,
   type SearchParamsProps,
 } from "@/types";
 
@@ -136,7 +144,7 @@ export function getScanJobsTabFilters(
 
 export function getScanAlias(scan: ScanProps): string {
   if (scan.attributes.trigger === SCAN_TRIGGER.SCHEDULED)
-    return "scheduled scan";
+    return "Scheduled Scan";
   return scan.attributes.name?.trim() || "-";
 }
 
@@ -177,6 +185,76 @@ export function getScanStatusFilterOptions(
       label: getScanStatusLabel(state),
     })),
   ];
+}
+
+export interface BuildPendingScheduleRowsParams {
+  providers: ProviderProps[];
+  schedulesByProviderId: Record<string, ScheduleAttributes>;
+  /** Providers that already have a real `state=scheduled` Scan row. */
+  coveredProviderIds: Set<string>;
+  now: Date;
+}
+
+/**
+ * Synthesizes Scheduled-tab rows for configured schedules without a Scan row
+ * yet (the backend only creates one after each run).
+ */
+export function buildPendingScheduleRows({
+  providers,
+  schedulesByProviderId,
+  coveredProviderIds,
+  now,
+}: BuildPendingScheduleRowsParams): ScanProps[] {
+  return providers.flatMap((provider) => {
+    if (coveredProviderIds.has(provider.id)) return [];
+
+    const schedule = schedulesByProviderId[provider.id];
+    if (!schedule || !isScheduleConfigured(schedule) || !schedule.scan_enabled)
+      return [];
+
+    // Prefer the server-computed next fire time; fall back to a client estimate.
+    const nextScanAt =
+      schedule.next_scan_at ??
+      getNextScheduledRunInTimezone(schedule, now)?.toISOString() ??
+      null;
+
+    return [
+      {
+        type: "scans" as const,
+        id: `pending-schedule-${provider.id}`,
+        attributes: {
+          name: "",
+          trigger: SCAN_TRIGGER.SCHEDULED,
+          state: SCAN_STATE.SCHEDULED,
+          unique_resource_count: 0,
+          progress: 0,
+          scanner_args: null,
+          duration: null,
+          started_at: null,
+          inserted_at: now.toISOString(),
+          completed_at: null,
+          scheduled_at: nextScanAt,
+          next_scan_at: null,
+        },
+        relationships: {
+          provider: { data: { type: "providers", id: provider.id } },
+          // No Celery task behind synthetic rows.
+          task: { data: { type: "tasks", id: "" } },
+        },
+        providerInfo: {
+          provider: provider.attributes.provider,
+          uid: provider.attributes.uid,
+          alias: provider.attributes.alias,
+        },
+        pendingSchedule: {
+          summary: describeScheduleCadence(schedule),
+          cadence: getScheduleCadenceParts(schedule).cadence,
+          nextScanAt,
+          lastScanAt: schedule.last_scan_at ?? null,
+        },
+      },
+    ];
+  });
 }
 
 function getNumericValue(
