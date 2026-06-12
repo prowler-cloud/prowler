@@ -18,8 +18,8 @@ Please add a detailed description of how to review this PR.
 
 <summary><b>Community Checklist</b></summary>
 
-- [ ] This feature/issue is listed in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or roadmap.prowler.com
-- [ ] Is it assigned to me, if not, request it via the issue/feature in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or [Prowler Community Slack](goto.prowler.com/slack)
+- [ ] This feature/issue is listed in the [open issues](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or roadmap.prowler.com
+- [ ] Is it assigned to me, if not, request it via the [open issues](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or [Prowler Community Slack](goto.prowler.com/slack)
 
 </details>
 
@@ -28,7 +28,7 @@ Please add a detailed description of how to review this PR.
 - [ ] Review if code is being documented following this specification https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 - [ ] Review if backport is needed.
 - [ ] Review if is needed to change the [Readme.md](https://github.com/prowler-cloud/prowler/blob/master/README.md)
-- [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/prowler/CHANGELOG.md), if applicable.
+- [ ] Ensure a changelog fragment is added under [prowler/changelog.d/](https://github.com/prowler-cloud/prowler/tree/master/prowler/changelog.d), if applicable.
 
 #### SDK/CLI
 - Are there new checks included in this PR? Yes / No
@@ -40,7 +40,7 @@ Please add a detailed description of how to review this PR.
 - [ ] Screenshots/Video of the functionality flow (if applicable) - Mobile (X < 640px)
 - [ ] Screenshots/Video of the functionality flow (if applicable) - Table (640px > X < 1024px)
 - [ ] Screenshots/Video of the functionality flow (if applicable) - Desktop (X > 1024px)
-- [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/ui/CHANGELOG.md), if applicable.
+- [ ] Ensure a changelog fragment is added under [ui/changelog.d/](https://github.com/prowler-cloud/prowler/tree/master/ui/changelog.d), if applicable.
 
 #### API
 - [ ] All issue/task requirements work as expected on the API
@@ -50,7 +50,7 @@ Please add a detailed description of how to review this PR.
 - [ ] Any other relevant evidence of the implementation (if applicable)
 - [ ] Verify if API specs need to be regenerated.
 - [ ] Check if version updates are required (e.g., specs, uv, etc.).
-- [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/api/CHANGELOG.md), if applicable.
+- [ ] Ensure a changelog fragment is added under [api/changelog.d/](https://github.com/prowler-cloud/prowler/tree/master/api/changelog.d), if applicable.
 
 ### License
 
