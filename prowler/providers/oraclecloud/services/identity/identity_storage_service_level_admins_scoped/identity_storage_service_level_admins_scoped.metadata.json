@@ -1,0 +1,39 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "identity_storage_service_level_admins_scoped",
+  "CheckTitle": "OCI IAM storage service-level admin policies exclude delete permissions",
+  "CheckType": [],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Policy",
+  "ResourceGroup": "IAM",
+  "Description": "**OCI IAM policies** are reviewed to ensure storage service-level administrator statements that grant `manage` permissions exclude the relevant storage delete permissions with `request.permission`. This supports CIS OCI 3.1 control 1.15 separation of duties for Block Volume, File Storage, and Object Storage administrators.",
+  "Risk": "Storage service-level administrators with unrestricted `manage` permissions can delete the resources they administer, including volumes, backups, file systems, mount targets, export sets, objects, or buckets. This weakens separation of duties and can lead to data loss, service disruption, or destructive insider activity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/policyreference.htm",
+    "https://docs.oracle.com/en-us/iaas/Content/Block/home.htm",
+    "https://docs.oracle.com/en-us/iaas/Content/File/home.htm",
+    "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "oci iam policy update --policy-id <policy-ocid> --statements \"[\\\"Allow group VolumeUsers to manage volumes in tenancy where request.permission!='VOLUME_DELETE'\\\"]\"",
+      "NativeIaC": "",
+      "Other": "1. In OCI Console, go to Identity & Security > Policies\n2. Open each active policy that grants storage service-level administrators `manage` permissions\n3. Edit storage manage statements to exclude the relevant delete permission with `request.permission`\n4. Example: Allow group BucketUsers to manage buckets in tenancy where request.permission!='BUCKET_DELETE'\n5. Save changes",
+      "Terraform": "```hcl\nresource \"oci_identity_policy\" \"storage_admins\" {\n  compartment_id = var.compartment_id\n  name           = \"storage-admins\"\n  description    = \"Storage administrators without delete permissions\"\n\n  statements = [\n    \"Allow group VolumeUsers to manage volumes in tenancy where request.permission!='VOLUME_DELETE'\",\n    \"Allow group VolumeUsers to manage volume-backups in tenancy where request.permission!='VOLUME_BACKUP_DELETE'\",\n    \"Allow group FileUsers to manage file-systems in tenancy where request.permission!='FILE_SYSTEM_DELETE'\",\n    \"Allow group FileUsers to manage mount-targets in tenancy where request.permission!='MOUNT_TARGET_DELETE'\",\n    \"Allow group FileUsers to manage export-sets in tenancy where request.permission!='EXPORT_SET_DELETE'\",\n    \"Allow group BucketUsers to manage objects in tenancy where request.permission!='OBJECT_DELETE'\",\n    \"Allow group BucketUsers to manage buckets in tenancy where request.permission!='BUCKET_DELETE'\"\n  ]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Exclude delete permissions from storage service-level administrator policies. Use `request.permission!='VOLUME_DELETE'`, `request.permission!='VOLUME_BACKUP_DELETE'`, `request.permission!='FILE_SYSTEM_DELETE'`, `request.permission!='MOUNT_TARGET_DELETE'`, `request.permission!='EXPORT_SET_DELETE'`, `request.permission!='OBJECT_DELETE'`, and `request.permission!='BUCKET_DELETE'` as appropriate for each storage manage statement.",
+      "Url": "https://hub.prowler.com/check/identity_storage_service_level_admins_scoped"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

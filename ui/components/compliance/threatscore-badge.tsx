@@ -20,6 +20,10 @@ import {
   getScoreTextClass,
 } from "@/lib/compliance/score-utils";
 import {
+  getOrderedPillars,
+  THREATSCORE_SECTION_PARAM,
+} from "@/lib/compliance/threatscore-pillars";
+import {
   downloadComplianceCsv,
   downloadComplianceReportPdf,
 } from "@/lib/helper";
@@ -46,7 +50,7 @@ export const ThreatScoreBadge = ({
 
   const complianceId = `prowler_threatscore_${provider.toLowerCase()}`;
 
-  const handleCardClick = () => {
+  const buildDetailHref = (section?: string) => {
     const title = "ProwlerThreatScore";
     const version = "1.0";
     const formattedTitleForUrl = encodeURIComponent(title);
@@ -62,8 +66,22 @@ export const ThreatScoreBadge = ({
       params.set("filter[region__in]", regionFilter);
     }
 
-    router.push(`${path}?${params.toString()}`);
+    if (section) {
+      params.set(THREATSCORE_SECTION_PARAM, section);
+    }
+
+    return `${path}?${params.toString()}`;
   };
+
+  const handleCardClick = () => {
+    router.push(buildDetailHref());
+  };
+
+  const handlePillarClick = (section: string) => {
+    router.push(buildDetailHref(section));
+  };
+
+  const pillars = getOrderedPillars(sectionScores);
 
   const handleDownloadCsv = async () => {
     if (isDownloadingCsv) return;
@@ -113,31 +131,45 @@ export const ThreatScoreBadge = ({
           </div>
         </button>
 
-        {/* Pillar breakdown — always visible */}
-        {sectionScores && Object.keys(sectionScores).length > 0 && (
+        {/* Pillar breakdown — always visible, in canonical order */}
+        {pillars.length > 0 && (
           <div className="border-border-neutral-secondary flex-1 space-y-2 border-t pt-3 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-            {Object.entries(sectionScores)
-              .sort(([, a], [, b]) => a - b)
-              .map(([section, sectionScore]) => (
-                <div key={section} className="flex items-center gap-2 text-xs">
-                  <span className="text-text-neutral-secondary w-1/3 min-w-0 shrink-0 truncate lg:w-1/4">
-                    {section}
-                  </span>
-                  <Progress
-                    aria-label={`${section} score`}
-                    value={sectionScore}
-                    className="border-border-neutral-secondary h-2 min-w-16 flex-1 border"
-                    indicatorClassName={getScoreIndicatorClass(
-                      getScoreColor(sectionScore),
-                    )}
-                  />
-                  <span
-                    className={`w-12 shrink-0 text-right font-medium ${getScoreTextClass(sectionScore)}`}
-                  >
-                    {sectionScore.toFixed(1)}%
-                  </span>
-                </div>
-              ))}
+            {pillars.map(({ name, score: sectionScore, hasData }) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => hasData && handlePillarClick(name)}
+                disabled={!hasData}
+                aria-disabled={!hasData}
+                aria-label={
+                  hasData
+                    ? `Open ${name} details`
+                    : `${name} (no data for this scan)`
+                }
+                className="hover:bg-bg-neutral-secondary focus-visible:ring-border-neutral-primary -mx-1 flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left text-xs transition-colors focus:outline-none focus-visible:ring-2 enabled:cursor-pointer disabled:cursor-default disabled:opacity-60"
+              >
+                <span className="text-text-neutral-secondary w-1/3 min-w-0 shrink-0 truncate lg:w-1/4">
+                  {name}
+                </span>
+                <Progress
+                  aria-label={`${name} score`}
+                  value={hasData ? sectionScore : 0}
+                  className="border-border-neutral-secondary h-2 min-w-16 flex-1 border"
+                  indicatorClassName={getScoreIndicatorClass(
+                    getScoreColor(sectionScore),
+                  )}
+                />
+                <span
+                  className={`w-12 shrink-0 text-right font-medium ${
+                    hasData
+                      ? getScoreTextClass(sectionScore)
+                      : "text-text-neutral-tertiary"
+                  }`}
+                >
+                  {hasData ? `${sectionScore.toFixed(1)}%` : "—"}
+                </span>
+              </button>
+            ))}
           </div>
         )}
       </CardContent>

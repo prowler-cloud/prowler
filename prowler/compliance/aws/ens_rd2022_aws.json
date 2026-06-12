@@ -544,6 +544,7 @@
       "Checks": [
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -2538,8 +2539,7 @@
         }
       ],
       "Checks": [
-        "vpc_subnet_separate_private_public",
-        "vpc_different_regions"
+        "vpc_subnet_separate_private_public"
       ]
     },
     {
@@ -2592,8 +2592,8 @@
         }
       ],
       "Checks": [
-        "vpc_subnet_different_az",
-        "vpc_different_regions"
+        "vpc_different_regions",
+        "vpc_subnet_different_az"
       ]
     },
     {
@@ -4260,6 +4260,29 @@
         }
       ],
       "Checks": []
+    },
+    {
+      "Id": "op.cont.2.aws.vpc.1",
+      "Description": "Plan de continuidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.cont.2",
+          "Marco": "operacional",
+          "Categoria": "continuidad del servicio",
+          "DescripcionControl": "Distribución de las VPCs entre múltiples regiones y zonas de disponibilidad de AWS para garantizar la continuidad del servicio ante fallos regionales o zonales.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "vpc_different_regions",
+        "vpc_subnet_different_az"
+      ]
     },
     {
       "Id": "op.cont.3.aws.drs.1",

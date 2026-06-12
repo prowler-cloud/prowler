@@ -66,6 +66,7 @@ class OraclecloudProvider(Provider):
     _compartments: list = []
     _mutelist: OCIMutelist
     audit_metadata: Audit_Metadata
+    _home_region: str = "us-ashburn-1"
 
     def __init__(
         self,
@@ -160,6 +161,15 @@ class OraclecloudProvider(Provider):
 
         # Get regions
         self._regions = self.get_regions_to_audit(region)
+        # Determine the tenancy home region from the full subscription list, independent of
+        # the --region filter, so tenancy-level APIs (e.g. the Audit configuration) always
+        # target the home region instead of a filtered, non-home region.
+        all_subscribed_regions = self.get_regions_to_audit()
+        self._home_region = next(
+            (region.key for region in all_subscribed_regions if region.is_home_region),
+            self._regions[0].key if self._regions else "us-ashburn-1",
+        )
+        logger.info(f"Home region is: {self._home_region}")
 
         # Get compartments
         self._compartments = self.get_compartments_to_audit(
@@ -216,6 +226,10 @@ class OraclecloudProvider(Provider):
     @property
     def regions(self):
         return self._regions
+
+    @property
+    def home_region(self):
+        return self._home_region
 
     @property
     def compartments(self):

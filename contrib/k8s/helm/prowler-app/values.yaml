@@ -270,20 +270,23 @@ api:
   # 3m30s to setup DB
   # startupProbe:
   #   httpGet:
-  #     path: /api/v1/docs
+  #     path: /health/live
   #     port: http
 
   # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+  # /health/live succeeds while the process answers; /health/ready also
+  # checks PostgreSQL, Valkey and Neo4j connectivity and returns 503 when
+  # any of them is unreachable.
   livenessProbe:
     failureThreshold: 10
     httpGet:
-      path: /api/v1/docs
+      path: /health/live
       port: http
     periodSeconds: 20
   readinessProbe:
     failureThreshold: 10
     httpGet:
-      path: /api/v1/docs
+      path: /health/ready
       port: http
     periodSeconds: 20
 
