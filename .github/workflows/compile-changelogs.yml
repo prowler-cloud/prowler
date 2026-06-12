@@ -85,6 +85,10 @@ jobs:
             echo "::error::Invalid prowler_version syntax: '$PROWLER_VERSION' (must be N.N.N)"
             exit 1
           fi
+          if [ "$TARGET_BRANCH" != "master" ] && [[ ! "$TARGET_BRANCH" =~ ^v[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid target_branch syntax: '$TARGET_BRANCH' (must be 'master' or vN.N, e.g. v5.31)"
+            exit 1
+          fi
           for pair in "sdk_version:$SDK_VERSION" "api_version:$API_VERSION" "ui_version:$UI_VERSION" "mcp_version:$MCP_VERSION"; do
             input_name="${pair%%:*}"
             input_value="${pair#*:}"
@@ -281,7 +285,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          git checkout -f master
+          git checkout -B master origin/master
 
           sync_body="${RUNNER_TEMP}/forward-sync-pr-body.md"
           {

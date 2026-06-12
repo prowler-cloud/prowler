@@ -27,9 +27,7 @@ API_TIMEOUT_SECONDS = 10
 
 
 def git(*args: str) -> str:
-    result = subprocess.run(
-        ["git", *args], check=True, capture_output=True, text=True
-    )
+    result = subprocess.run(["git", *args], check=True, capture_output=True, text=True)
     return result.stdout.strip()
 
 
@@ -83,9 +81,7 @@ def unique_destination(directory: str, base_name: str, fragment_type: str) -> st
     counter = 0
     while os.path.exists(candidate):
         counter += 1
-        candidate = os.path.join(
-            directory, f"{base_name}.{fragment_type}.{counter}.md"
-        )
+        candidate = os.path.join(directory, f"{base_name}.{fragment_type}.{counter}.md")
     return candidate
 
 
@@ -131,9 +127,7 @@ def main() -> int:
                 fragments_dir, str(pr_number), fragment_type
             )
         else:
-            destination = unique_destination(
-                fragments_dir, f"+{slug}", fragment_type
-            )
+            destination = unique_destination(fragments_dir, f"+{slug}", fragment_type)
             print(
                 f"::warning::Could not resolve a PR for {path}; renamed to "
                 f"{os.path.basename(destination)} (entry will render without a PR link)"
