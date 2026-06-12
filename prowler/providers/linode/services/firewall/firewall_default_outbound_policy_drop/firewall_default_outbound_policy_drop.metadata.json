@@ -6,7 +6,7 @@
   "ServiceName": "firewall",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "Firewall",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to ensure the default outbound policy is DROP.",

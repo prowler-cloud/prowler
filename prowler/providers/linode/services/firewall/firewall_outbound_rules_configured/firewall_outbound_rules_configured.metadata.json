@@ -6,7 +6,7 @@
   "ServiceName": "firewall",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "informational",
+  "Severity": "low",
   "ResourceType": "Firewall",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to determine whether outbound rules are explicitly configured.",

@@ -4,7 +4,7 @@ from prowler.providers.linode.services.firewall.firewall_service import Firewall
 from tests.providers.linode.linode_fixtures import set_mocked_linode_provider
 
 
-class Test_firewall_assigned_to_entities:
+class Test_firewall_assigned_to_devices:
     def test_no_firewalls(self):
         firewall_client = mock.MagicMock
         firewall_client.firewalls = []
@@ -15,15 +15,15 @@ class Test_firewall_assigned_to_entities:
                 return_value=set_mocked_linode_provider(),
             ),
             mock.patch(
-                "prowler.providers.linode.services.firewall.firewall_assigned_to_entities.firewall_assigned_to_entities.firewall_client",
+                "prowler.providers.linode.services.firewall.firewall_assigned_to_devices.firewall_assigned_to_devices.firewall_client",
                 new=firewall_client,
             ),
         ):
-            from prowler.providers.linode.services.firewall.firewall_assigned_to_entities.firewall_assigned_to_entities import (
-                firewall_assigned_to_entities,
+            from prowler.providers.linode.services.firewall.firewall_assigned_to_devices.firewall_assigned_to_devices import (
+                firewall_assigned_to_devices,
             )
 
-            check = firewall_assigned_to_entities()
+            check = firewall_assigned_to_devices()
             result = check.execute()
 
             assert len(result) == 0
@@ -50,15 +50,15 @@ class Test_firewall_assigned_to_entities:
                 return_value=set_mocked_linode_provider(),
             ),
             mock.patch(
-                "prowler.providers.linode.services.firewall.firewall_assigned_to_entities.firewall_assigned_to_entities.firewall_client",
+                "prowler.providers.linode.services.firewall.firewall_assigned_to_devices.firewall_assigned_to_devices.firewall_client",
                 new=firewall_client,
             ),
         ):
-            from prowler.providers.linode.services.firewall.firewall_assigned_to_entities.firewall_assigned_to_entities import (
-                firewall_assigned_to_entities,
+            from prowler.providers.linode.services.firewall.firewall_assigned_to_devices.firewall_assigned_to_devices import (
+                firewall_assigned_to_devices,
             )
 
-            check = firewall_assigned_to_entities()
+            check = firewall_assigned_to_devices()
             result = check.execute()
 
             assert len(result) == 1
@@ -88,15 +88,15 @@ class Test_firewall_assigned_to_entities:
                 return_value=set_mocked_linode_provider(),
             ),
             mock.patch(
-                "prowler.providers.linode.services.firewall.firewall_assigned_to_entities.firewall_assigned_to_entities.firewall_client",
+                "prowler.providers.linode.services.firewall.firewall_assigned_to_devices.firewall_assigned_to_devices.firewall_client",
                 new=firewall_client,
             ),
         ):
-            from prowler.providers.linode.services.firewall.firewall_assigned_to_entities.firewall_assigned_to_entities import (
-                firewall_assigned_to_entities,
+            from prowler.providers.linode.services.firewall.firewall_assigned_to_devices.firewall_assigned_to_devices import (
+                firewall_assigned_to_devices,
             )
 
-            check = firewall_assigned_to_entities()
+            check = firewall_assigned_to_devices()
             result = check.execute()
 
             assert len(result) == 1

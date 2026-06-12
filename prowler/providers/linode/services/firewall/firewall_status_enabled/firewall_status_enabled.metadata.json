@@ -6,7 +6,7 @@
   "ServiceName": "firewall",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "Firewall",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to verify if their status is enabled.",
@@ -32,7 +32,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "firewall_assigned_to_entities"
+    "firewall_assigned_to_devices"
   ],
   "Notes": ""
 }

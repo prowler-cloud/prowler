@@ -60,7 +60,7 @@ class FirewallService(LinodeService):
                         inbound = getattr(rules, "inbound", [])
                         outbound = getattr(rules, "outbound", [])
 
-                        entities = getattr(fw, "entities", [])
+                        entities = fw.devices
                         for rule in inbound:
                             addresses = getattr(rule, "addresses", None)
                             inbound_rules.append(

@@ -2,8 +2,8 @@ from prowler.lib.check.models import Check, CheckReportLinode
 from prowler.providers.linode.services.firewall.firewall_client import firewall_client
 
 
-class firewall_assigned_to_entities(Check):
-    """Check if Linode Cloud Firewalls are assigned to at least one entity."""
+class firewall_assigned_to_devices(Check):
+    """Check if Linode Cloud Firewalls are assigned to at least one device."""
 
     def execute(self) -> list[CheckReportLinode]:
         findings = []

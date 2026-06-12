@@ -1,15 +1,15 @@
 {
   "Provider": "linode",
-  "CheckID": "firewall_assigned_to_entities",
-  "CheckTitle": "Linode Cloud Firewall is assigned to entities",
+  "CheckID": "firewall_assigned_to_devices",
+  "CheckTitle": "Linode Cloud Firewall is assigned to devices",
   "CheckType": [],
   "ServiceName": "firewall",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
+  "Severity": "medium",
   "ResourceType": "Firewall",
   "ResourceGroup": "network",
-  "Description": "Linode Cloud Firewalls are checked to verify they are attached to at least one Linode entity.",
+  "Description": "Linode Cloud Firewalls are checked to verify they are attached to at least one device.",
   "Risk": "Unassigned firewalls do not provide protection to running workloads and can indicate a misconfigured security control.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -19,12 +19,12 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Select the associated firewall\n4. Click on either the Linodes or Nodebalancers tab and add those entities to the firewall",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Select the associated firewall\n4. Click on either the Linodes or Nodebalancers tab and add those devices to the firewall",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Attach firewalls to applicable Linode entities to enforce intended network controls.",
-      "Url": "https://hub.prowler.com/checks/linode/firewall_assigned_to_entities"
+      "Text": "Attach firewalls to applicable Linode devices to enforce intended network controls.",
+      "Url": "https://hub.prowler.com/checks/linode/firewall_assigned_to_devices"
     }
   },
   "Categories": [
