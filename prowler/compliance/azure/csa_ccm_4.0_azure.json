@@ -842,7 +842,8 @@
         "storage_blob_versioning_is_enabled",
         "storage_geo_redundant_enabled",
         "vm_scaleset_associated_with_load_balancer",
-        "vm_scaleset_not_empty"
+        "vm_scaleset_not_empty",
+        "cosmosdb_account_automatic_failover_enabled"
       ]
     },
     {
