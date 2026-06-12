@@ -114,6 +114,22 @@
           "organizations_account_part_of_organizations",
           "iam_user_mfa_enabled_console_access",
           "iam_user_hardware_mfa_enabled"
+        ],
+        "azure": [
+          "entra_global_admin_in_less_than_five_users",
+          "entra_privileged_user_has_mfa",
+          "entra_non_privileged_user_has_mfa",
+          "entra_user_with_vm_access_has_mfa",
+          "entra_security_defaults_enabled",
+          "entra_conditional_access_policy_require_mfa_for_admin_portals",
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_users_cannot_create_microsoft_365_groups",
+          "iam_subscription_roles_owner_custom_not_created",
+          "iam_role_user_access_admin_restricted",
+          "iam_custom_role_has_permissions_to_administer_resource_locks"
         ]
       }
     },
@@ -136,6 +152,24 @@
           "organizations_delegated_administrators",
           "guardduty_centrally_managed",
           "guardduty_delegated_admin_enabled_all_regions"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "policy_ensure_asc_enforcement_enabled"
         ]
       }
     },
@@ -167,6 +201,22 @@
           "cloudfront_distributions_using_deprecated_ssl_protocols",
           "cloudfront_distributions_https_enabled",
           "rds_instance_transport_encrypted"
+        ],
+        "azure": [
+          "storage_ensure_minimum_tls_version_12",
+          "storage_secure_transfer_required_is_enabled",
+          "storage_smb_channel_encryption_with_secure_algorithm",
+          "storage_smb_protocol_version_is_latest",
+          "app_minimum_tls_version_12",
+          "app_ensure_http_is_redirected_to_https",
+          "app_ensure_using_http20",
+          "sqlserver_recommended_minimal_tls_version",
+          "mysql_flexible_server_minimum_tls_version_12",
+          "mysql_flexible_server_ssl_connection_enabled",
+          "postgresql_flexible_server_enforce_ssl_enabled",
+          "keyvault_key_rotation_enabled",
+          "storage_key_rotation_90_days",
+          "aks_network_policy_enabled"
         ]
       }
     },
@@ -189,6 +239,12 @@
           "ec2_elastic_ip_unassigned",
           "ec2_networkacl_unused",
           "secretsmanager_secret_unused"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "network_watcher_enabled",
+          "network_public_ip_shodan",
+          "vm_scaleset_not_empty"
         ]
       }
     },
@@ -236,6 +292,43 @@
           "ec2_instance_account_imdsv2_enabled",
           "efs_encryption_at_rest_enabled",
           "awslambda_function_not_publicly_accessible"
+        ],
+        "azure": [
+          "storage_account_public_network_access_disabled",
+          "storage_blob_public_access_level_is_disabled",
+          "storage_default_network_access_rule_is_denied",
+          "storage_ensure_private_endpoints_in_storage_accounts",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled",
+          "storage_account_key_access_disabled",
+          "storage_default_to_entra_authorization_enabled",
+          "containerregistry_not_publicly_accessible",
+          "containerregistry_uses_private_link",
+          "cosmosdb_account_use_private_endpoints",
+          "cosmosdb_account_firewall_use_selected_networks",
+          "keyvault_private_endpoints",
+          "keyvault_access_only_through_private_endpoints",
+          "keyvault_rbac_enabled",
+          "app_function_not_publicly_accessible",
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_public_access_disabled",
+          "aks_clusters_created_with_private_nodes",
+          "sqlserver_unrestricted_inbound_access",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk",
+          "vm_ensure_using_managed_disks",
+          "vm_trusted_launch_enabled",
+          "vm_linux_enforce_ssh_authentication",
+          "vm_jit_access_enabled",
+          "sqlserver_tde_encryption_enabled",
+          "sqlserver_tde_encrypted_with_cmk",
+          "databricks_workspace_cmk_encryption_enabled",
+          "network_ssh_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_http_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "network_bastion_host_exists"
         ]
       }
     },
@@ -266,6 +359,22 @@
           "inspector2_is_enabled",
           "inspector2_active_findings_exist",
           "ec2_elastic_ip_shodan"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_mcas_is_enabled",
+          "defender_container_images_scan_enabled",
+          "defender_container_images_resolved_vulnerabilities",
+          "sqlserver_microsoft_defender_enabled",
+          "apim_threat_detection_llm_jacking"
         ]
       }
     },
@@ -288,6 +397,17 @@
           "backup_vaults_exist",
           "rds_instance_critical_event_subscription",
           "rds_cluster_critical_event_subscription"
+        ],
+        "azure": [
+          "monitor_alert_service_health_exists",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_delete_security_solution",
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_attack_path_notifications_properly_configured",
+          "vm_backup_enabled",
+          "vm_sufficient_daily_backup_retention_period"
         ]
       }
     },
@@ -329,6 +449,16 @@
           "elbv2_is_in_multiple_az",
           "cloudfront_distributions_multiple_origin_failover_configured",
           "dynamodb_table_protected_by_backup_plan"
+        ],
+        "azure": [
+          "vm_backup_enabled",
+          "vm_sufficient_daily_backup_retention_period",
+          "vm_ensure_using_managed_disks",
+          "storage_ensure_soft_delete_is_enabled",
+          "storage_ensure_file_shares_soft_delete_is_enabled",
+          "storage_blob_versioning_is_enabled",
+          "storage_geo_redundant_enabled",
+          "keyvault_recoverable"
         ]
       }
     },
@@ -348,6 +478,16 @@
           "inspector2_active_findings_exist",
           "accessanalyzer_enabled_without_findings",
           "cloudtrail_insights_exist"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_assessments_vm_endpoint_protection_installed",
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_system_updates_are_applied",
+          "sqlserver_vulnerability_assessment_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "sqlserver_va_scan_reports_configured"
         ]
       }
     },
@@ -370,6 +510,13 @@
           "eventbridge_schema_registry_cross_account_access",
           "cloudwatch_alarm_actions_enabled",
           "cloudwatch_alarm_actions_alarm_state_configured"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_attack_path_notifications_properly_configured",
+          "monitor_alert_service_health_exists"
         ]
       }
     },
@@ -406,6 +553,26 @@
           "elbv2_logging_enabled",
           "cloudfront_distributions_logging_enabled",
           "s3_bucket_server_access_logging_enabled"
+        ],
+        "azure": [
+          "monitor_diagnostic_settings_exists",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_storage_account_with_activity_logs_is_private",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "keyvault_logging_enabled",
+          "sqlserver_auditing_enabled",
+          "sqlserver_auditing_retention_90_days",
+          "mysql_flexible_server_audit_log_enabled",
+          "mysql_flexible_server_audit_log_connection_activated",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on",
+          "postgresql_flexible_server_log_retention_days_greater_3",
+          "app_http_logs_enabled",
+          "app_function_application_insights_enabled",
+          "appinsights_ensure_is_configured"
         ]
       }
     },
@@ -429,6 +596,15 @@
           "cloudtrail_threat_detection_enumeration",
           "cloudtrail_threat_detection_llm_jacking",
           "cloudtrail_threat_detection_privilege_escalation"
+        ],
+        "azure": [
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_attack_path_notifications_properly_configured",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_mcas_is_enabled",
+          "sqlserver_microsoft_defender_enabled",
+          "apim_threat_detection_llm_jacking"
         ]
       }
     },
@@ -459,6 +635,20 @@
           "cloudwatch_changes_to_network_route_tables_alarm_configured",
           "cloudwatch_changes_to_vpcs_alarm_configured",
           "sns_subscription_not_using_http_endpoints"
+        ],
+        "azure": [
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_sqlserver_fr",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_service_health_exists",
+          "defender_additional_email_configured_with_a_security_contact"
         ]
       }
     },
@@ -479,6 +669,16 @@
           "ec2_instance_managed_by_ssm",
           "ec2_instance_with_outdated_ami",
           "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_ensure_system_updates_are_applied",
+          "defender_container_images_scan_enabled",
+          "defender_assessments_vm_endpoint_protection_installed",
+          "sqlserver_vulnerability_assessment_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "vm_ensure_using_approved_images",
+          "vm_desired_sku_size"
         ]
       }
     },
@@ -506,6 +706,23 @@
           "rds_instance_certificate_expiration",
           "iam_no_expired_server_certificates_stored",
           "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_resolved_vulnerabilities",
+          "sqlserver_vulnerability_assessment_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "sqlserver_va_scan_reports_configured",
+          "sqlserver_va_emails_notifications_admins_enabled",
+          "keyvault_key_expiration_set_in_non_rbac",
+          "keyvault_rbac_key_expiration_set",
+          "keyvault_non_rbac_secret_expiration_set",
+          "keyvault_rbac_secret_expiration_set",
+          "app_ensure_java_version_is_latest",
+          "app_ensure_php_version_is_latest",
+          "app_ensure_python_version_is_latest",
+          "app_function_latest_runtime_version",
+          "storage_smb_protocol_version_is_latest"
         ]
       }
     },
@@ -537,6 +754,17 @@
           "vpc_endpoint_services_allowed_principals_trust_boundaries",
           "vpc_peering_routing_tables_with_least_privilege",
           "awslambda_function_using_cross_account_layers"
+        ],
+        "azure": [
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_policy_user_consent_for_verified_apps",
+          "storage_cross_tenant_replication_disabled",
+          "containerregistry_uses_private_link",
+          "cosmosdb_account_use_private_endpoints",
+          "keyvault_access_only_through_private_endpoints",
+          "aks_clusters_created_with_private_nodes"
         ]
       }
     },
@@ -567,6 +795,15 @@
           "iam_administrator_access_with_mfa",
           "iam_policy_attached_only_to_group_or_roles",
           "accessanalyzer_enabled"
+        ],
+        "azure": [
+          "iam_subscription_roles_owner_custom_not_created",
+          "iam_role_user_access_admin_restricted",
+          "iam_custom_role_has_permissions_to_administer_resource_locks",
+          "entra_global_admin_in_less_than_five_users",
+          "app_function_identity_without_admin_privileges",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps"
         ]
       }
     },
@@ -590,6 +827,14 @@
           "cloudtrail_threat_detection_llm_jacking",
           "cloudtrail_threat_detection_privilege_escalation",
           "accessanalyzer_enabled_without_findings"
+        ],
+        "azure": [
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_attack_path_notifications_properly_configured",
+          "sqlserver_microsoft_defender_enabled",
+          "apim_threat_detection_llm_jacking"
         ]
       }
     }
