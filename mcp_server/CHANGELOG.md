@@ -2,6 +2,8 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+<!-- changelog: release notes start -->
+
 ## [0.7.2] (Prowler v5.28.1)
 
 ### 🐞 Fixed
