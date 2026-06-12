@@ -105,6 +105,7 @@ jobs:
           files_ignore: |
             mcp_server/README.md
             mcp_server/CHANGELOG.md
+            mcp_server/changelog.d/**
 
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'
