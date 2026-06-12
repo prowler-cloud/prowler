@@ -15,7 +15,8 @@ from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
 
 
 @pytest.fixture
-def entra_client():
+def entra_client() -> mock.MagicMock:
+    """Return a mocked Entra client with empty directory sync data."""
     client = mock.MagicMock()
     client.directory_sync_settings = []
     client.directory_sync_error = None
@@ -24,7 +25,10 @@ def entra_client():
 
 
 class Test_entra_directory_sync_object_takeover_blocked:
-    def run_check(self, entra_client):
+    """Test directory synchronization object takeover protection reporting."""
+
+    def run_check(self, entra_client: mock.MagicMock) -> list:
+        """Execute the check with the supplied mocked Entra client."""
         client_module = SimpleNamespace(entra_client=entra_client)
         with (
             mock.patch(
@@ -45,7 +49,14 @@ class Test_entra_directory_sync_object_takeover_blocked:
 
             return check_module.entra_directory_sync_object_takeover_blocked().execute()
 
-    def test_both_takeover_paths_blocked(self, entra_client):
+    def test_no_resources(self, entra_client: mock.MagicMock) -> None:
+        """Return no findings when the tenant has no applicable resources."""
+        result = self.run_check(entra_client)
+
+        assert len(result) == 0
+
+    def test_both_takeover_paths_blocked(self, entra_client: mock.MagicMock) -> None:
+        """Report PASS when both takeover protections are enabled."""
         entra_client.directory_sync_settings = [
             DirectorySyncSettings(
                 id="sync-001",
@@ -71,11 +82,12 @@ class Test_entra_directory_sync_object_takeover_blocked:
     )
     def test_reports_unblocked_takeover_paths(
         self,
-        entra_client,
-        soft_match_blocked,
-        hard_match_blocked,
-        expected,
-    ):
+        entra_client: mock.MagicMock,
+        soft_match_blocked: bool,
+        hard_match_blocked: bool,
+        expected: str,
+    ) -> None:
+        """Report FAIL and identify each disabled takeover protection."""
         entra_client.directory_sync_settings = [
             DirectorySyncSettings(
                 id="sync-001",
@@ -90,7 +102,10 @@ class Test_entra_directory_sync_object_takeover_blocked:
         assert result[0].status == "FAIL"
         assert expected in result[0].status_extended
 
-    def test_permission_error_is_manual_for_hybrid_tenant(self, entra_client):
+    def test_permission_error_is_manual_for_hybrid_tenant(
+        self, entra_client: mock.MagicMock
+    ) -> None:
+        """Report MANUAL when hybrid directory sync settings cannot be read."""
         entra_client.directory_sync_error = (
             "Insufficient privileges to read directory sync settings"
         )
@@ -108,7 +123,10 @@ class Test_entra_directory_sync_object_takeover_blocked:
         assert result[0].status == "MANUAL"
         assert "Insufficient privileges" in result[0].status_extended
 
-    def test_cloud_only_tenant_is_not_applicable(self, entra_client):
+    def test_cloud_only_tenant_is_not_applicable(
+        self, entra_client: mock.MagicMock
+    ) -> None:
+        """Report cloud-only tenants as not applicable."""
         entra_client.organizations = [
             Organization(
                 id="org-001",
@@ -123,7 +141,10 @@ class Test_entra_directory_sync_object_takeover_blocked:
         assert result[0].status == "PASS"
         assert "cloud-only" in result[0].status_extended
 
-    def test_permission_error_cloud_only_tenant_is_not_applicable(self, entra_client):
+    def test_permission_error_cloud_only_tenant_is_not_applicable(
+        self, entra_client: mock.MagicMock
+    ) -> None:
+        """Keep cloud-only tenants not applicable when sync reads fail."""
         entra_client.directory_sync_error = (
             "Insufficient privileges to read directory sync settings"
         )
@@ -141,7 +162,10 @@ class Test_entra_directory_sync_object_takeover_blocked:
         assert result[0].status == "PASS"
         assert "cloud-only" in result[0].status_extended
 
-    def test_missing_settings_is_manual_for_hybrid_tenant(self, entra_client):
+    def test_missing_settings_is_manual_for_hybrid_tenant(
+        self, entra_client: mock.MagicMock
+    ) -> None:
+        """Report MANUAL when a hybrid tenant returns no sync settings."""
         entra_client.organizations = [
             Organization(
                 id="org-001",
@@ -157,7 +181,8 @@ class Test_entra_directory_sync_object_takeover_blocked:
         assert "no directory sync settings were returned" in result[0].status_extended
 
 
-def test_directory_sync_service_loads_takeover_protection_flags():
+def test_directory_sync_service_loads_takeover_protection_flags() -> None:
+    """Load both takeover protection flags from the Graph response."""
     features = SimpleNamespace(
         password_sync_enabled=True,
         seamless_sso_enabled=False,
