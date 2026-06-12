@@ -419,7 +419,7 @@ class TestSSEAuthentication:
         jwt_instance.get_validated_token.return_value = "validated"
         jwt_instance.get_user.return_value = "query-user"
 
-        with patch("api.authentication.JWTAuthentication", return_value=jwt_instance):
+        with patch.object(SSEAuthentication, "jwt_auth", jwt_instance):
             user, token = SSEAuthentication().authenticate(request)
 
         jwt_instance.get_validated_token.assert_called_once_with("query-jwt")
@@ -436,7 +436,7 @@ class TestSSEAuthentication:
             "Invalid token"
         )
 
-        with patch("api.authentication.JWTAuthentication", return_value=jwt_instance):
+        with patch.object(SSEAuthentication, "jwt_auth", jwt_instance):
             with pytest.raises(AuthenticationFailed):
                 SSEAuthentication().authenticate(request)
 

@@ -117,7 +117,6 @@ class SSEAuthentication(CombinedJWTOrAPIKeyAuthentication):
             # the canonical AuthenticationFailed via the parent class.
             return super().authenticate(request)
 
-        jwt_auth = JWTAuthentication()
-        validated_token = jwt_auth.get_validated_token(raw_token)
-        user = jwt_auth.get_user(validated_token)
+        validated_token = self.jwt_auth.get_validated_token(raw_token)
+        user = self.jwt_auth.get_user(validated_token)
         return user, validated_token
