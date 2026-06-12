@@ -49,7 +49,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -160,6 +160,7 @@ class TestAttackPathsRun:
             target_database="tenant-db",
             tenant_id=str(provider.tenant_id),
             provider_id=str(provider.id),
+            provider_type="aws",
         )
         mock_get_ingestion.assert_called_once_with(provider.provider)
         mock_event_loop.assert_called_once()
@@ -195,7 +196,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
@@ -294,7 +295,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
@@ -397,7 +398,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
@@ -506,7 +507,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -619,7 +620,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -735,7 +736,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -856,7 +857,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -1117,7 +1118,7 @@ class TestFailAttackPathsScan:
             fail_attack_paths_scan(str(tenant.id), "nonexistent", "setup exploded")
 
     def test_fail_recovers_graph_data_ready_when_data_exists(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, providers_fixture, scans_fixture, sink_backend_stub
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
@@ -1136,16 +1137,18 @@ class TestFailAttackPathsScan:
             state=StateChoices.EXECUTING,
         )
 
+        # `recover_graph_data_ready` routes `has_provider_data` through
+        # `sink_module.get_backend_for_scan(scan)`. With `is_migrated=False`
+        # and the default `ATTACK_PATHS_SINK_DATABASE=neo4j`, the factory
+        # returns the active backend, which `sink_backend_stub` replaces.
+        sink_backend_stub.has_provider_data.return_value = True
+
         with (
             patch(
                 "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
                 return_value=attack_paths_scan,
             ),
             patch("tasks.jobs.attack_paths.db_utils.graph_database.drop_database"),
-            patch(
-                "tasks.jobs.attack_paths.db_utils.graph_database.has_provider_data",
-                return_value=True,
-            ),
             patch(
                 "tasks.jobs.attack_paths.db_utils.set_provider_graph_data_ready"
             ) as mock_set_ready,
@@ -1155,7 +1158,7 @@ class TestFailAttackPathsScan:
         mock_set_ready.assert_called_once_with(attack_paths_scan, True)
 
     def test_fail_leaves_graph_data_ready_false_when_no_data(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, providers_fixture, scans_fixture, sink_backend_stub
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
@@ -1174,16 +1177,14 @@ class TestFailAttackPathsScan:
             state=StateChoices.EXECUTING,
         )
 
+        sink_backend_stub.has_provider_data.return_value = False
+
         with (
             patch(
                 "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
                 return_value=attack_paths_scan,
             ),
             patch("tasks.jobs.attack_paths.db_utils.graph_database.drop_database"),
-            patch(
-                "tasks.jobs.attack_paths.db_utils.graph_database.has_provider_data",
-                return_value=False,
-            ),
             patch(
                 "tasks.jobs.attack_paths.db_utils.set_provider_graph_data_ready"
             ) as mock_set_ready,
@@ -1271,6 +1272,20 @@ class TestAttackPathsFindingsHelpers:
         mock_run_write.assert_has_calls(
             [call(mock_session, stmt) for stmt in FINDINGS_INDEX_STATEMENTS]
         )
+
+    def test_create_findings_indexes_runs_even_when_sink_is_neptune(self, settings):
+        # The index helpers run against the temp ingest DB, which is always
+        # Neo4j regardless of the configured sink. A Neptune sink must not
+        # suppress index creation on that DB (regression for the dropped
+        # in-helper sink gate).
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        mock_session = MagicMock()
+        with patch("tasks.jobs.attack_paths.indexes.run_write_query") as mock_run_write:
+            indexes_module.create_findings_indexes(mock_session)
+
+        from tasks.jobs.attack_paths.indexes import FINDINGS_INDEX_STATEMENTS
+
+        assert mock_run_write.call_count == len(FINDINGS_INDEX_STATEMENTS)
 
     def test_load_findings_batches_requests(self, providers_fixture):
         provider = providers_fixture[0]
@@ -1803,7 +1818,7 @@ def _make_session_ctx(session, call_order=None, name=None):
 
 
 class TestSyncNodes:
-    def test_sync_nodes_adds_private_label(self):
+    def test_sync_nodes_passes_isolation_labels_to_sink(self):
         row = {
             "internal_id": 1,
             "element_id": "elem-1",
@@ -1813,29 +1828,32 @@ class TestSyncNodes:
 
         mock_source_1 = MagicMock()
         mock_source_1.run.return_value = [row]
-        mock_target = MagicMock()
         mock_source_2 = MagicMock()
         mock_source_2.run.return_value = []
+        sink = MagicMock()
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[
                 _make_session_ctx(mock_source_1),
-                _make_session_ctx(mock_target),
                 _make_session_ctx(mock_source_2),
             ],
         ):
-            total = sync_module.sync_nodes(
-                "source-db", "target-db", "tenant-1", "prov-1"
+            result = sync_module.sync_nodes(
+                "source-db", "target-db", "tenant-1", "prov-1", sink, []
             )
 
-        assert total == 1
-        query = mock_target.run.call_args.args[0]
-        assert "_ProviderResource" in query
-        assert "_Tenant_tenant1" in query
-        assert "_Provider_prov1" in query
+        assert result["parents"] == 1
+        sink.write_nodes.assert_called_once()
+        target_db, labels, batch = sink.write_nodes.call_args.args
+        assert target_db == "target-db"
+        assert "_ProviderResource" in labels
+        assert "_Tenant_tenant1" in labels
+        assert "_Provider_prov1" in labels
+        assert batch[0]["provider_element_id"] == "prov-1:elem-1"
+        assert batch[0]["props"] == {"key": "value"}
 
-    def test_sync_nodes_source_closes_before_target_opens(self):
+    def test_sync_nodes_writes_after_source_session_closes(self):
         row = {
             "internal_id": 1,
             "element_id": "elem-1",
@@ -1847,21 +1865,23 @@ class TestSyncNodes:
 
         src_1 = MagicMock()
         src_1.run.return_value = [row]
-        tgt = MagicMock()
         src_2 = MagicMock()
         src_2.run.return_value = []
+        sink = MagicMock()
+        sink.write_nodes.side_effect = lambda *_a, **_kw: call_order.append(
+            "sink:write"
+        )
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[
                 _make_session_ctx(src_1, call_order, "source1"),
-                _make_session_ctx(tgt, call_order, "target"),
                 _make_session_ctx(src_2, call_order, "source2"),
             ],
         ):
-            sync_module.sync_nodes("src-db", "tgt-db", "t-1", "p-1")
+            sync_module.sync_nodes("src-db", "tgt-db", "t-1", "p-1", sink, [])
 
-        assert call_order.index("source1:exit") < call_order.index("target:enter")
+        assert call_order.index("source1:exit") < call_order.index("sink:write")
 
     def test_sync_nodes_pagination_with_batch_size_1(self):
         row_a = {
@@ -1883,44 +1903,44 @@ class TestSyncNodes:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        tgt_1 = MagicMock()
-        tgt_2 = MagicMock()
+        sink = MagicMock()
 
         with (
             patch(
                 "tasks.jobs.attack_paths.sync.graph_database.get_session",
                 side_effect=[
                     _make_session_ctx(src_1),
-                    _make_session_ctx(tgt_1),
                     _make_session_ctx(src_2),
-                    _make_session_ctx(tgt_2),
                     _make_session_ctx(src_3),
                 ],
             ),
             patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
         ):
-            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1")
+            result = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink, [])
 
-        assert total == 2
+        assert result["parents"] == 2
+        assert sink.write_nodes.call_count == 2
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
 
     def test_sync_nodes_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
+        sink = MagicMock()
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[_make_session_ctx(src)],
         ) as mock_get_session:
-            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1")
+            result = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink, [])
 
-        assert total == 0
+        assert result["parents"] == 0
         assert mock_get_session.call_count == 1
+        sink.write_nodes.assert_not_called()
 
 
 class TestSyncRelationships:
-    def test_sync_relationships_source_closes_before_target_opens(self):
+    def test_sync_relationships_writes_after_source_session_closes(self):
         row = {
             "internal_id": 1,
             "rel_type": "HAS",
@@ -1933,21 +1953,23 @@ class TestSyncRelationships:
 
         src_1 = MagicMock()
         src_1.run.return_value = [row]
-        tgt = MagicMock()
         src_2 = MagicMock()
         src_2.run.return_value = []
+        sink = MagicMock()
+        sink.write_relationships.side_effect = lambda *_a, **_kw: call_order.append(
+            "sink:write"
+        )
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[
                 _make_session_ctx(src_1, call_order, "source1"),
-                _make_session_ctx(tgt, call_order, "target"),
                 _make_session_ctx(src_2, call_order, "source2"),
             ],
         ):
-            sync_module.sync_relationships("src", "tgt", "p-1")
+            sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
-        assert call_order.index("source1:exit") < call_order.index("target:enter")
+        assert call_order.index("source1:exit") < call_order.index("sink:write")
 
     def test_sync_relationships_pagination_with_batch_size_1(self):
         row_a = {
@@ -1971,40 +1993,40 @@ class TestSyncRelationships:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        tgt_1 = MagicMock()
-        tgt_2 = MagicMock()
+        sink = MagicMock()
 
         with (
             patch(
                 "tasks.jobs.attack_paths.sync.graph_database.get_session",
                 side_effect=[
                     _make_session_ctx(src_1),
-                    _make_session_ctx(tgt_1),
                     _make_session_ctx(src_2),
-                    _make_session_ctx(tgt_2),
                     _make_session_ctx(src_3),
                 ],
             ),
             patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
         ):
-            total = sync_module.sync_relationships("src", "tgt", "p-1")
+            total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
         assert total == 2
+        assert sink.write_relationships.call_count == 2
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
 
     def test_sync_relationships_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
+        sink = MagicMock()
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[_make_session_ctx(src)],
         ) as mock_get_session:
-            total = sync_module.sync_relationships("src", "tgt", "p-1")
+            total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
         assert total == 0
         assert mock_get_session.call_count == 1
+        sink.write_relationships.assert_not_called()
 
 
 class TestInternetAnalysis:
@@ -2872,3 +2894,57 @@ class TestCleanupStaleAttackPathsScans:
         ap_scan.refresh_from_db()
         assert ap_scan.state == StateChoices.SCHEDULED
         mock_revoke.assert_not_called()
+
+
+class TestNormalizeSinkProperties:
+    """Coerce Cartography-emitted property values into sink-portable primitives.
+
+    Lists become comma-strings, dicts become JSON strings, temporals become
+    ISO strings, spatials become their stringified form. The same coercion
+    runs regardless of the active sink so queries are portable.
+    """
+
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            (
+                {"a": "x", "b": 1, "c": 1.5, "d": True, "e": None},
+                {"a": "x", "b": 1, "c": 1.5, "d": True, "e": None},
+            ),
+            (
+                {"actions": ["s3:GetObject", "s3:PutObject"], "tags": []},
+                {"actions": "s3:GetObject,s3:PutObject", "tags": ""},
+            ),
+            (
+                {"condition": {"StringEquals": {"aws:SourceAccount": "123456789012"}}},
+                {
+                    "condition": '{"StringEquals": {"aws:SourceAccount": "123456789012"}}'
+                },
+            ),
+        ],
+    )
+    def test_primitive_list_and_dict_branches(self, raw, expected):
+        sync_module._normalize_sink_properties(raw, labels=None)
+        assert raw == expected
+
+    def test_temporal_and_spatial_become_strings(self):
+        class FakeDateTime:
+            def iso_format(self) -> str:
+                return "2026-05-13T10:00:00+00:00"
+
+        class FakeSpatialPoint:
+            def __str__(self) -> str:
+                return "POINT(1.0 2.0)"
+
+        # The spatial branch is detected by module prefix, not by base class.
+        FakeSpatialPoint.__module__ = "neo4j.spatial.fake"
+
+        props = {
+            "created_at": FakeDateTime(),
+            "location": FakeSpatialPoint(),
+        }
+        sync_module._normalize_sink_properties(props, labels=None)
+        assert props == {
+            "created_at": "2026-05-13T10:00:00+00:00",
+            "location": "POINT(1.0 2.0)",
+        }

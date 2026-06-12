@@ -15,6 +15,12 @@ import neo4j
 
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
+
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Finding as FindingModel
+from api.models import Provider, ResourceFindingMapping
+from prowler.config import config as ProwlerConfig
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     FINDINGS_BATCH_SIZE,
@@ -28,12 +34,6 @@ from tasks.jobs.attack_paths.queries import (
     INSERT_FINDING_TEMPLATE,
     render_cypher_template,
 )
-
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.models import Finding as FindingModel
-from api.models import Provider, ResourceFindingMapping
-from prowler.config import config as ProwlerConfig
 
 logger = get_task_logger(__name__)
 
@@ -83,7 +83,6 @@ def _to_neo4j_dict(
 
 
 # Public API
-# ----------
 
 
 def analysis(
@@ -197,7 +196,6 @@ def load_findings(
 
 
 # Findings Streaming (Generator-based)
-# -------------------------------------
 
 
 def stream_findings_with_resources(
@@ -276,7 +274,6 @@ def _fetch_findings_batch(
 
 
 # Batch Enrichment
-# -----------------
 
 
 def _enrich_batch_with_resources(

@@ -7,6 +7,7 @@ Cover the IETF response envelope, status code mapping (200 / 503), the
 from unittest.mock import patch
 
 import pytest
+
 from config import version as config_version
 from django.core.cache import cache
 from django.urls import reverse
@@ -69,7 +70,7 @@ class TestLivenessEndpoint:
         with (
             patch("api.health._probe_postgres") as mock_pg,
             patch("api.health._probe_valkey") as mock_vk,
-            patch("api.health._probe_neo4j") as mock_neo,
+            patch("api.health._probe_graph_db") as mock_neo,
         ):
             response = api_client.get(reverse("health-live"))
 
@@ -85,14 +86,14 @@ class TestReadinessEndpoint:
         return (
             patch("api.health._probe_postgres", return_value=None),
             patch("api.health._probe_valkey", return_value=None),
-            patch("api.health._probe_neo4j", return_value=None),
+            patch("api.health._probe_graph_db", return_value=None),
         )
 
     def test_returns_200_and_pass_when_all_dependencies_healthy(self, api_client):
         with (
             patch("api.health._probe_postgres"),
             patch("api.health._probe_valkey"),
-            patch("api.health._probe_neo4j"),
+            patch("api.health._probe_graph_db"),
         ):
             response = api_client.get(reverse("health-ready"))
 
@@ -109,7 +110,7 @@ class TestReadinessEndpoint:
         assert set(body["checks"].keys()) == {
             "postgres:responseTime",
             "valkey:responseTime",
-            "neo4j:responseTime",
+            "graphdb:responseTime",
         }
         for key in body["checks"]:
             entries = body["checks"][key]
@@ -124,6 +125,23 @@ class TestReadinessEndpoint:
             # `output` must not leak when the check passed.
             assert "output" not in entry
 
+    @pytest.mark.parametrize("sink", ["neo4j", "neptune"])
+    def test_graphdb_component_id_reflects_active_sink(self, api_client, sink):
+        from django.test import override_settings
+
+        with (
+            override_settings(ATTACK_PATHS_SINK_DATABASE=sink),
+            patch("api.health._probe_postgres"),
+            patch("api.health._probe_valkey"),
+            patch("api.health._probe_graph_db"),
+        ):
+            response = api_client.get(reverse("health-ready"))
+
+        assert response.status_code == status.HTTP_200_OK
+        entry = response.json()["checks"]["graphdb:responseTime"][0]
+        # Stable key, but the concrete store is named in componentId.
+        assert entry["componentId"] == sink
+
     def test_returns_503_and_fail_when_postgres_is_down(self, api_client):
         with (
             patch(
@@ -131,7 +149,7 @@ class TestReadinessEndpoint:
                 side_effect=RuntimeError("connection refused"),
             ),
             patch("api.health._probe_valkey"),
-            patch("api.health._probe_neo4j"),
+            patch("api.health._probe_graph_db"),
         ):
             response = api_client.get(reverse("health-ready"))
 
@@ -143,13 +161,13 @@ class TestReadinessEndpoint:
         # Exception detail is never echoed in the response, only logged.
         assert "output" not in pg_entry
         assert body["checks"]["valkey:responseTime"][0]["status"] == "pass"
-        assert body["checks"]["neo4j:responseTime"][0]["status"] == "pass"
+        assert body["checks"]["graphdb:responseTime"][0]["status"] == "pass"
 
     def test_returns_503_and_fail_when_valkey_is_down(self, api_client):
         with (
             patch("api.health._probe_postgres"),
             patch("api.health._probe_valkey", side_effect=ConnectionError("timeout")),
-            patch("api.health._probe_neo4j"),
+            patch("api.health._probe_graph_db"),
         ):
             response = api_client.get(reverse("health-ready"))
 
@@ -160,12 +178,12 @@ class TestReadinessEndpoint:
         assert vk_entry["status"] == "fail"
         assert "output" not in vk_entry
 
-    def test_returns_503_and_fail_when_neo4j_is_down(self, api_client):
+    def test_returns_503_and_fail_when_graph_db_is_down(self, api_client):
         with (
             patch("api.health._probe_postgres"),
             patch("api.health._probe_valkey"),
             patch(
-                "api.health._probe_neo4j",
+                "api.health._probe_graph_db",
                 side_effect=RuntimeError("ServiceUnavailable"),
             ),
         ):
@@ -174,15 +192,15 @@ class TestReadinessEndpoint:
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         body = response.json()
         assert body["status"] == "fail"
-        neo_entry = body["checks"]["neo4j:responseTime"][0]
-        assert neo_entry["status"] == "fail"
-        assert "output" not in neo_entry
+        graph_db_entry = body["checks"]["graphdb:responseTime"][0]
+        assert graph_db_entry["status"] == "fail"
+        assert "output" not in graph_db_entry
 
     def test_reports_all_failures_simultaneously(self, api_client):
         with (
             patch("api.health._probe_postgres", side_effect=RuntimeError("pg down")),
             patch("api.health._probe_valkey", side_effect=RuntimeError("vk down")),
-            patch("api.health._probe_neo4j", side_effect=RuntimeError("neo down")),
+            patch("api.health._probe_graph_db", side_effect=RuntimeError("neo down")),
         ):
             response = api_client.get(reverse("health-ready"))
 
@@ -192,7 +210,7 @@ class TestReadinessEndpoint:
         for key in (
             "postgres:responseTime",
             "valkey:responseTime",
-            "neo4j:responseTime",
+            "graphdb:responseTime",
         ):
             entry = body["checks"][key][0]
             assert entry["status"] == "fail"
@@ -211,7 +229,7 @@ class TestReadinessEndpoint:
         with (
             patch("api.health._probe_postgres", side_effect=RuntimeError(sensitive)),
             patch("api.health._probe_valkey"),
-            patch("api.health._probe_neo4j"),
+            patch("api.health._probe_graph_db"),
         ):
             response = api_client.get(reverse("health-ready"))
 
@@ -231,7 +249,7 @@ class TestReadinessEndpoint:
         with (
             patch("api.health._probe_postgres"),
             patch("api.health._probe_valkey"),
-            patch("api.health._probe_neo4j"),
+            patch("api.health._probe_graph_db"),
         ):
             api_client.credentials()
             response = api_client.get(reverse("health-ready"))
@@ -246,7 +264,7 @@ class TestReadinessCache:
         with (
             patch("api.health._probe_postgres") as pg,
             patch("api.health._probe_valkey") as vk,
-            patch("api.health._probe_neo4j") as neo,
+            patch("api.health._probe_graph_db") as neo,
         ):
             r1 = api_client.get(reverse("health-ready"))
             r2 = api_client.get(reverse("health-ready"))
@@ -264,7 +282,7 @@ class TestReadinessCache:
         with (
             patch("api.health._probe_postgres") as pg,
             patch("api.health._probe_valkey"),
-            patch("api.health._probe_neo4j"),
+            patch("api.health._probe_graph_db"),
         ):
             api_client.get(reverse("health-ready"))
             assert pg.call_count == 1
@@ -288,7 +306,7 @@ class TestReadinessCache:
         with (
             patch("api.health._probe_postgres", side_effect=RuntimeError("down")) as pg,
             patch("api.health._probe_valkey"),
-            patch("api.health._probe_neo4j"),
+            patch("api.health._probe_graph_db"),
         ):
             r1 = api_client.get(reverse("health-ready"))
             r2 = api_client.get(reverse("health-ready"))
@@ -322,7 +340,7 @@ class TestRateLimiting:
         with (
             patch("api.health._probe_postgres"),
             patch("api.health._probe_valkey"),
-            patch("api.health._probe_neo4j"),
+            patch("api.health._probe_graph_db"),
             patch.object(ScopedRateThrottle, "parse_rate", return_value=(2, 60)),
         ):
             statuses = [
@@ -416,19 +434,42 @@ class TestProbeImplementations:
             with pytest.raises(RuntimeError, match="bug"):
                 health._probe_valkey()
 
-    def test_neo4j_probe_calls_verify_connectivity(self):
-        with patch("api.attack_paths.database.get_driver") as mock_get_driver:
-            mock_get_driver.return_value.verify_connectivity.return_value = None
-            assert health._probe_neo4j() is None
-            mock_get_driver.return_value.verify_connectivity.assert_called_once_with()
+    def test_graph_db_probe_calls_verify_connectivity(self):
+        with patch("api.attack_paths.database.verify_connectivity") as mock_verify:
+            mock_verify.return_value = None
+            assert health._probe_graph_db() is None
+            mock_verify.assert_called_once_with()
 
-    def test_neo4j_probe_propagates_driver_errors(self):
-        with patch("api.attack_paths.database.get_driver") as mock_get_driver:
-            mock_get_driver.return_value.verify_connectivity.side_effect = RuntimeError(
-                "unreachable"
-            )
+    def test_graph_db_probe_propagates_errors(self):
+        with patch(
+            "api.attack_paths.database.verify_connectivity",
+            side_effect=RuntimeError("unreachable"),
+        ):
             with pytest.raises(RuntimeError, match="unreachable"):
-                health._probe_neo4j()
+                health._probe_graph_db()
+
+    def test_graph_db_probe_times_out_when_check_exceeds_budget(self):
+        # A sink whose connectivity check blocks past the probe budget must
+        # surface as a failure fast, not pin the request thread for the
+        # driver's full acquisition timeout.
+        import time as _time
+
+        def _hang() -> None:
+            _time.sleep(2)
+
+        with (
+            patch("api.health.GRAPH_DB_PROBE_TIMEOUT_SECONDS", 0.2),
+            patch(
+                "api.attack_paths.database.verify_connectivity",
+                side_effect=_hang,
+            ),
+        ):
+            started = _time.perf_counter()
+            with pytest.raises(TimeoutError):
+                health._probe_graph_db()
+            elapsed = _time.perf_counter() - started
+
+        assert elapsed < health.GRAPH_DB_PROBE_TIMEOUT_SECONDS + 1
 
 
 class TestStatusAggregation:

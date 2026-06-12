@@ -2,8 +2,9 @@
 Format (draft-inadarei-api-health-check-06).
 
 Liveness reports only process status. Readiness verifies that PostgreSQL,
-Valkey and Neo4j are reachable and returns per-dependency detail when any
-of them is unreachable.
+Valkey and the attack-paths graph store (Neo4j or Neptune, per
+``ATTACK_PATHS_SINK_DATABASE``) are reachable and returns per-dependency
+detail when any of them is unreachable.
 """
 
 from __future__ import annotations
@@ -11,11 +12,15 @@ from __future__ import annotations
 import logging
 import threading
 import time
+
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any
 
 import redis
+
 from config.version import API_VERSION, RELEASE_ID
 from django.conf import settings
 from django.db import connections
@@ -37,8 +42,27 @@ STATUS_FAIL = "fail"
 STATUS_WARN = "warn"
 
 # Short socket timeout so a stuck Valkey cannot stall the probe.
-# Neo4j inherits its driver-level ``connection_acquisition_timeout``.
 VALKEY_PROBE_TIMEOUT_SECONDS = 2
+
+# Probe-scoped budget for the graph database.
+# ``Driver.verify_connectivity()`` takes no timeout; its only bound is the
+# driver-level ``connection_acquisition_timeout`` (60s on Neptune). The
+# probe needs its own budget, independent of the workload driver, so a
+# graph-database outage cannot pin a worker thread (and the readiness lock)
+# for a minute.
+GRAPH_DB_PROBE_TIMEOUT_SECONDS = 5
+
+# Bounded pool that enforces ``GRAPH_DB_PROBE_TIMEOUT_SECONDS``. If the
+# graph database is unreachable the probe call blocks until the driver's
+# own acquisition timeout fires; we abandon the future after the budget and
+# report ``fail``. Orphaned tasks are capped by ``max_workers`` plus the 3s
+# readiness cache plus the per-IP throttle, so they cannot pile up: worst
+# case during a graph-database outage is every readiness call failing fast
+# in ``GRAPH_DB_PROBE_TIMEOUT_SECONDS`` with at most 2 background threads
+# stuck for <= the driver acquisition timeout.
+_graph_db_probe_executor = ThreadPoolExecutor(
+    max_workers=2, thread_name_prefix="health-graph-db-probe"
+)
 
 # Brief cache window so high-frequency probes (ALB target groups, scrapers)
 # do not stampede the actual dependency checks.
@@ -113,11 +137,24 @@ def _probe_valkey() -> None:
             client.close()
 
 
-def _probe_neo4j() -> None:
-    # Lazy import: avoids pulling attack_paths into the boot import graph.
-    from api.attack_paths.database import get_driver
+def _graph_db_component_id() -> str:
+    """Return the active graph database name for the ``componentId`` field."""
+    return settings.ATTACK_PATHS_SINK_DATABASE.strip().lower()
 
-    get_driver().verify_connectivity()
+
+def _probe_graph_db() -> None:
+    # Lazy import: avoids pulling attack_paths into the boot import graph
+    from api.attack_paths.database import verify_connectivity
+
+    future = _graph_db_probe_executor.submit(verify_connectivity)
+    try:
+        future.result(timeout=GRAPH_DB_PROBE_TIMEOUT_SECONDS)
+    except FuturesTimeoutError as exc:
+        # Do not wait for the abandoned task; it ends when the driver's own acquisition timeout fires
+        future.cancel()
+        raise TimeoutError(
+            f"graph-db probe exceeded {GRAPH_DB_PROBE_TIMEOUT_SECONDS}s"
+        ) from exc
 
 
 def _build_check_entry(
@@ -180,14 +217,18 @@ def _readiness_payload() -> tuple[dict[str, Any], int]:
         ):
             return snapshot[1], snapshot[2]
 
+        graph_db_component_id = _graph_db_component_id()
+
         postgres_result, postgres_ms = _measure("postgres", _probe_postgres)
         valkey_result, valkey_ms = _measure("valkey", _probe_valkey)
-        neo4j_result, neo4j_ms = _measure("neo4j", _probe_neo4j)
+        graph_db_result, graph_db_ms = _measure(graph_db_component_id, _probe_graph_db)
 
         entries = [
             _build_check_entry("postgres", "datastore", postgres_result, postgres_ms),
             _build_check_entry("valkey", "datastore", valkey_result, valkey_ms),
-            _build_check_entry("neo4j", "datastore", neo4j_result, neo4j_ms),
+            _build_check_entry(
+                graph_db_component_id, "datastore", graph_db_result, graph_db_ms
+            ),
         ]
         overall = _aggregate_status(entries)
 
@@ -195,7 +236,7 @@ def _readiness_payload() -> tuple[dict[str, Any], int]:
         payload["checks"] = {
             "postgres:responseTime": [entries[0]],
             "valkey:responseTime": [entries[1]],
-            "neo4j:responseTime": [entries[2]],
+            "graphdb:responseTime": [entries[2]],
         }
 
         http_status = (
@@ -237,10 +278,10 @@ class LivenessView(APIView):
 class ReadinessView(APIView):
     """Readiness probe.
 
-    Returns 200 when PostgreSQL, Valkey and Neo4j all respond, or 503 with
-    per-dependency detail when any of them is unreachable. Per-IP throttle
-    plus the short in-process result cache cap the real dependency hits
-    regardless of inbound traffic shape.
+    Returns 200 when PostgreSQL, Valkey and the attack-paths graph store
+    all respond, or 503 with per-dependency detail when any of them is
+    unreachable. Per-IP throttle plus the short in-process result cache cap
+    the real dependency hits regardless of inbound traffic shape.
     """
 
     authentication_classes: list = []

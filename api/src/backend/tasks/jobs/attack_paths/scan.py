@@ -60,17 +60,25 @@ from typing import Any
 
 from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
-from cartography.intel import create_indexes as cartography_create_indexes
 from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths import db_utils, findings, indexes, internet, sync, utils
-from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
+from django.conf import settings
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from api.models import Provider as ProwlerAPIProvider
 from api.models import StateChoices
 from api.utils import initialize_prowler_provider
+from tasks.jobs.attack_paths import (
+    db_utils,
+    findings,
+    indexes,
+    internet,
+    legacy_drain,
+    sync,
+    utils,
+)
+from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 # Without this Celery goes crazy with Cartography logging
 logging.getLogger("cartography").setLevel(logging.ERROR)
@@ -98,7 +106,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     attack_paths_scan = db_utils.retrieve_attack_paths_scan(tenant_id, scan_id)
 
     # Idempotency guard: cleanup may have flipped this row to a terminal state
-    # while the message was still in flight. Bail out before touching state.
+    # while the message was still in flight. Bail out before touching state
     if attack_paths_scan and attack_paths_scan.state in (
         StateChoices.FAILED,
         StateChoices.COMPLETED,
@@ -127,7 +135,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     else:
         if not attack_paths_scan:
-            # Safety net for in-flight messages or direct task invocations; dispatcher normally pre-creates the row.
+            # Safety net for in-flight messages or direct task invocations; dispatcher normally pre-creates the row
             logger.warning(
                 f"No Attack Paths Scan found for scan {scan_id} and tenant {tenant_id}, let's create it then"
             )
@@ -193,7 +201,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             tmp_cartography_config.neo4j_database
         ) as tmp_neo4j_session:
             # Indexes creation
-            cartography_create_indexes.run(tmp_neo4j_session, tmp_cartography_config)
+            indexes.create_cartography_indexes(
+                tmp_neo4j_session, tmp_cartography_config
+            )
             indexes.create_findings_indexes(tmp_neo4j_session)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
@@ -225,7 +235,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             cartography_analysis.run(tmp_neo4j_session, tmp_cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
-            # Creating Internet node and CAN_ACCESS relationships
+            # Creating Internet node and `CAN_ACCESS` relationships
             logger.info(
                 f"Creating Internet graph for AWS account {prowler_api_provider.uid}"
             )
@@ -257,12 +267,18 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"Ensuring tenant database {tenant_database_name}, and its indexes, exists for tenant {prowler_api_provider.tenant_id}"
         )
         graph_database.create_database(tenant_database_name)
-        with graph_database.get_session(tenant_database_name) as tenant_neo4j_session:
-            cartography_create_indexes.run(
-                tenant_neo4j_session, tenant_cartography_config
-            )
-            indexes.create_findings_indexes(tenant_neo4j_session)
-            indexes.create_sync_indexes(tenant_neo4j_session)
+        # Sink-side index creation: Neptune auto-manages indexes and rejects
+        # `CREATE INDEX`, so only run it when the sink is Neo4j
+        # The temp ingest DB is always Neo4j and is always indexed above
+        if settings.ATTACK_PATHS_SINK_DATABASE != "neptune":
+            with graph_database.get_session(
+                tenant_database_name
+            ) as tenant_neo4j_session:
+                indexes.create_cartography_indexes(
+                    tenant_neo4j_session, tenant_cartography_config
+                )
+                indexes.create_findings_indexes(tenant_neo4j_session)
+                indexes.create_sync_indexes(tenant_neo4j_session)
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
         db_utils.set_provider_graph_data_ready(attack_paths_scan, False)
@@ -289,6 +305,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             target_database=tenant_database_name,
             tenant_id=str(prowler_api_provider.tenant_id),
             provider_id=str(prowler_api_provider.id),
+            provider_type=prowler_api_provider.provider,
         )
         logger.info(
             f"Synced graph in {time.perf_counter() - t0:.3f}s "
@@ -297,6 +314,13 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         sync_completed = True
         db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
+
+        # TODO: drop after Neptune cutover
+        if settings.ATTACK_PATHS_SINK_DATABASE == "neptune":
+            legacy_drain.drain_legacy_neo4j_for_provider(
+                tenant_id=str(prowler_api_provider.tenant_id),
+                provider_id=str(prowler_api_provider.id),
+            )
 
         logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
         graph_database.clear_cache(tenant_database_name)
@@ -318,9 +342,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.exception(exception_message)
         ingestion_exceptions["global_error"] = exception_message
 
-        # Recover graph_data_ready based on how far the swap got.
-        # Partial drop (mid-batch failure) may leave `subgraph_dropped=False`
-        # with data partially deleted, so we prefer that over permanently blocked queries.
+        # Recover `graph_data_ready` based on how far the swap got
+        # Partial drop (mid-batch failure) may leave `subgraph_dropped=False` with data partially deleted,
+        # so we prefer that over permanently blocked queries
         try:
             if sync_completed:
                 db_utils.set_graph_data_ready(attack_paths_scan, True)

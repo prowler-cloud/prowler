@@ -3,13 +3,13 @@ from typing import Any
 
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths.config import is_provider_available
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan
 from api.models import Provider as ProwlerAPIProvider
 from api.models import StateChoices
+from tasks.jobs.attack_paths.config import is_provider_available
 
 logger = get_task_logger(__name__)
 
@@ -45,6 +45,8 @@ def create_attack_paths_scan(
             state=StateChoices.SCHEDULED,
             started_at=datetime.now(tz=timezone.utc),
             graph_data_ready=previous_data_ready,
+            # TODO: drop after Neptune cutover
+            is_migrated=True,
         )
         attack_paths_scan.save()
 
@@ -115,7 +117,7 @@ def starting_attack_paths_scan(
     return True
 
 
-def _mark_scan_finished(
+def mark_scan_finished(
     attack_paths_scan: ProwlerAPIAttackPathsScan,
     state: StateChoices,
     ingestion_exceptions: dict[str, Any],
@@ -149,7 +151,7 @@ def finish_attack_paths_scan(
     ingestion_exceptions: dict[str, Any],
 ) -> None:
     with rls_transaction(attack_paths_scan.tenant_id):
-        _mark_scan_finished(attack_paths_scan, state, ingestion_exceptions)
+        mark_scan_finished(attack_paths_scan, state, ingestion_exceptions)
 
 
 def update_attack_paths_scan_progress(
@@ -203,10 +205,15 @@ def recover_graph_data_ready(
     next successful scan) is a worse outcome for the user.
     """
     try:
+        from api.attack_paths import sink as sink_module
+
         tenant_db = graph_database.get_database_name(attack_paths_scan.tenant_id)
-        if graph_database.has_provider_data(
-            tenant_db, str(attack_paths_scan.provider_id)
-        ):
+        # TODO: drop after Neptune cutover
+        # Check the backend that actually holds this scan's data, not the
+        # currently configured sink, a stale `EXECUTING` scan from before a
+        # backend switch must still be recoverable
+        backend = sink_module.get_backend_for_scan(attack_paths_scan)
+        if backend.has_provider_data(tenant_db, str(attack_paths_scan.provider_id)):
             set_provider_graph_data_ready(attack_paths_scan, True)
             logger.info(
                 f"Recovered `graph_data_ready` for provider {attack_paths_scan.provider_id}"
@@ -248,6 +255,6 @@ def fail_attack_paths_scan(
             return
         if fresh.state in (StateChoices.COMPLETED, StateChoices.FAILED):
             return
-        _mark_scan_finished(fresh, StateChoices.FAILED, {"global_error": error})
+        mark_scan_finished(fresh, StateChoices.FAILED, {"global_error": error})
 
     recover_graph_data_ready(fresh)

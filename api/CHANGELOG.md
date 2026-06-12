@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.32.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: AWS Neptune is now supported as a persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`), Cartography's per-scan staging database stays on Neo4j [(#11524)](https://github.com/prowler-cloud/prowler/pull/11524)
+
+---
+
 ## [1.31.1] (Prowler UNRELEASED)
 
 
@@ -86,7 +94,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
-- `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
+- `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable; both endpoints centralize the API version on `config/version.py` (read from `pyproject.toml`) and are wired into the Helm charts and the Docker Compose healthcheck [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
 
 ### 🔄 Changed
 

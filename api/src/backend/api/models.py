@@ -806,6 +806,14 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     )
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
 
+    # True when the scan was synced with the current schema (list-typed
+    # properties materialised as child item nodes) and lives in the current
+    # sink. False for pre-cutover scans still in the legacy Neo4j tenant DB
+    # with the previous shape. Reads route via this flag so a single API
+    # surface keeps both shapes queryable during the cutover window.
+    # TODO: drop after Neptune cutover
+    is_migrated = models.BooleanField(default=False)
+
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "attack_paths_scans"
 

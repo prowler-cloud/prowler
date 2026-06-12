@@ -307,6 +307,11 @@ ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
 )  # 48h
 
+# Selects where the persistent attack-paths graph is stored. The scan
+# temporary database is always Neo4j; only the sink is configurable.
+# Valid values: "neo4j" (default, OSS and local dev), "neptune" (hosted).
+ATTACK_PATHS_SINK_DATABASE = env.str("ATTACK_PATHS_SINK_DATABASE", default="neo4j")
+
 # Orphan task recovery feature flags. The master switch is OFF by default, so task
 # recovery is opt-in; enable it with DJANGO_TASK_RECOVERY_ENABLED=true. The per-group
 # toggles default to enabled, so once the master is on every group recovers unless a

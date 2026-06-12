@@ -2889,7 +2889,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     )
     def attack_paths_queries(self, request, pk=None):
         attack_paths_scan = self.get_object()
-        queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        queries = get_queries_for_provider(
+            attack_paths_scan.provider.provider,
+            is_migrated=attack_paths_scan.is_migrated,
+        )
 
         if not queries:
             return Response(
@@ -2922,7 +2926,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
-        query_definition = get_query_by_id(serializer.validated_data["id"])
+        # TODO: drop the is_migrated argument after Neptune cutover
+        query_definition = get_query_by_id(
+            serializer.validated_data["id"],
+            is_migrated=attack_paths_scan.is_migrated,
+        )
         if (
             query_definition is None
             or query_definition.provider != attack_paths_scan.provider.provider
@@ -2948,6 +2956,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             query_definition,
             parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
@@ -3015,6 +3024,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             database_name,
             serializer.validated_data["query"],
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 

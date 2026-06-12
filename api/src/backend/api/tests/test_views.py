@@ -4804,7 +4804,8 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_queries.assert_called_once_with(provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        mock_get_queries.assert_called_once_with(provider.provider, is_migrated=False)
         payload = response.json()["data"]
         assert len(payload) == 1
         assert payload[0]["id"] == "aws-rds"
@@ -4904,7 +4905,8 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_query.assert_called_once_with("aws-rds")
+        # TODO: drop the is_migrated argument after Neptune cutover
+        mock_get_query.assert_called_once_with("aws-rds", is_migrated=False)
         mock_get_db_name.assert_called_once_with(attack_paths_scan.provider.tenant_id)
         provider_id = str(attack_paths_scan.provider_id)
         mock_prepare.assert_called_once_with(
@@ -4918,6 +4920,7 @@ class TestAttackPathsScanViewSet:
             query_definition,
             prepared_parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         result = response.json()["data"]
         attributes = result["attributes"]
@@ -5269,6 +5272,7 @@ class TestAttackPathsScanViewSet:
             "db-test",
             "MATCH (n) RETURN n",
             str(attack_paths_scan.provider_id),
+            scan=attack_paths_scan,
         )
         attributes = response.json()["data"]["attributes"]
         assert len(attributes["nodes"]) == 1
