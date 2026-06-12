@@ -13,6 +13,8 @@ def get_ens_table(
     compliance_overview: bool,
 ):
     marcos = {}
+    marco_muted_seen = {}
+    provider = ""
     ens_compliance_table = {
         "Proveedor": [],
         "Marco/Categoria": [],
@@ -31,6 +33,7 @@ def get_ens_table(
         check_compliances = check.Compliance
         for compliance in check_compliances:
             if compliance.Framework == "ENS":
+                provider = compliance.Provider
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         marco_categoria = f"{attribute.Marco}/{attribute.Categoria}"
@@ -44,17 +47,23 @@ def get_ens_table(
                                 "Bajo": 0,
                                 "Muted": 0,
                             }
+                            marco_muted_seen[marco_categoria] = set()
                         if finding.muted:
+                            # Overview total: count each finding once per framework
                             if index not in muted_count:
                                 muted_count.append(index)
+                            # Per-marco Muted: count each finding once per marco
+                            # it belongs to (a finding can map to several marcos).
+                            if index not in marco_muted_seen[marco_categoria]:
+                                marco_muted_seen[marco_categoria].add(index)
                                 marcos[marco_categoria]["Muted"] += 1
                         else:
                             if finding.status == "FAIL":
-                                if (
-                                    attribute.Tipo != "recomendacion"
-                                    and index not in fail_count
-                                ):
-                                    fail_count.append(index)
+                                if attribute.Tipo != "recomendacion":
+                                    if index not in fail_count:
+                                        fail_count.append(index)
+                                    # Mark every marco the finding belongs to as
+                                    # NO CUMPLE, not just the first one seen.
                                     marcos[marco_categoria][
                                         "Estado"
                                     ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
@@ -71,7 +80,7 @@ def get_ens_table(
 
     # Add results to table
     for marco in sorted(marcos):
-        ens_compliance_table["Proveedor"].append(compliance.Provider)
+        ens_compliance_table["Proveedor"].append(provider)
         ens_compliance_table["Marco/Categoria"].append(marco)
         ens_compliance_table["Estado"].append(marcos[marco]["Estado"])
         ens_compliance_table["Opcional"].append(

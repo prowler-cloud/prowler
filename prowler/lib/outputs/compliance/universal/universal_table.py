@@ -163,6 +163,7 @@ def _render_grouped(
     """Grouped mode: one row per group with pass/fail counts."""
     check_map = _build_requirement_check_map(framework, provider)
     groups = {}
+    group_seen = {}
     pass_count = []
     fail_count = []
     muted_count = []
@@ -176,17 +177,28 @@ def _render_grouped(
             for group_key in _get_group_key(req, group_by):
                 if group_key not in groups:
                     groups[group_key] = {"FAIL": 0, "PASS": 0, "Muted": 0}
+                    group_seen[group_key] = set()
 
+                # Overview totals: count each finding once per framework
                 if finding.muted:
                     if index not in muted_count:
                         muted_count.append(index)
-                        groups[group_key]["Muted"] += 1
-                else:
-                    if finding.status == "FAIL" and index not in fail_count:
+                elif finding.status == "FAIL":
+                    if index not in fail_count:
                         fail_count.append(index)
-                        groups[group_key]["FAIL"] += 1
-                    elif finding.status == "PASS" and index not in pass_count:
+                elif finding.status == "PASS":
+                    if index not in pass_count:
                         pass_count.append(index)
+
+                # Per-group counts: count each finding once per group it belongs
+                # to (a finding can map to several groups via several requirements).
+                if index not in group_seen[group_key]:
+                    group_seen[group_key].add(index)
+                    if finding.muted:
+                        groups[group_key]["Muted"] += 1
+                    elif finding.status == "FAIL":
+                        groups[group_key]["FAIL"] += 1
+                    elif finding.status == "PASS":
                         groups[group_key]["PASS"] += 1
 
     if not _print_overview(
@@ -258,6 +270,7 @@ def _render_split(
     split_field = split_by.field
     split_values = split_by.values
     groups = {}
+    group_muted_seen = {}
     pass_count = []
     fail_count = []
     muted_count = []
@@ -274,12 +287,18 @@ def _render_split(
                         sv: {"FAIL": 0, "PASS": 0} for sv in split_values
                     }
                     groups[group_key]["Muted"] = 0
+                    group_muted_seen[group_key] = set()
 
                 split_val = req.attributes.get(split_field, "")
 
                 if finding.muted:
+                    # Overview total: count each finding once per framework
                     if index not in muted_count:
                         muted_count.append(index)
+                    # Per-group Muted: count each finding once per group it
+                    # belongs to (a finding can map to several groups).
+                    if index not in group_muted_seen[group_key]:
+                        group_muted_seen[group_key].add(index)
                         groups[group_key]["Muted"] += 1
                 else:
                     if finding.status == "FAIL" and index not in fail_count:
@@ -364,6 +383,7 @@ def _render_scored(
     risk_field = scoring.risk_field
     weight_field = scoring.weight_field
     groups = {}
+    group_seen = {}
     pass_count = []
     fail_count = []
     muted_count = []
@@ -388,6 +408,7 @@ def _render_scored(
 
                 if group_key not in groups:
                     groups[group_key] = {"FAIL": 0, "PASS": 0, "Muted": 0}
+                    group_seen[group_key] = set()
                     score_per_group[group_key] = 0
                     max_score_per_group[group_key] = 0
                     counted_per_group[group_key] = []
@@ -398,16 +419,26 @@ def _render_scored(
                     max_score_per_group[group_key] += risk * weight
                     counted_per_group[group_key].append(index)
 
+                # Overview totals: count each finding once per framework
                 if finding.muted:
                     if index not in muted_count:
                         muted_count.append(index)
-                        groups[group_key]["Muted"] += 1
-                else:
-                    if finding.status == "FAIL" and index not in fail_count:
+                elif finding.status == "FAIL":
+                    if index not in fail_count:
                         fail_count.append(index)
-                        groups[group_key]["FAIL"] += 1
-                    elif finding.status == "PASS" and index not in pass_count:
+                elif finding.status == "PASS":
+                    if index not in pass_count:
                         pass_count.append(index)
+
+                # Per-group counts: count each finding once per group it belongs
+                # to (a finding can map to several groups via several requirements).
+                if index not in group_seen[group_key]:
+                    group_seen[group_key].add(index)
+                    if finding.muted:
+                        groups[group_key]["Muted"] += 1
+                    elif finding.status == "FAIL":
+                        groups[group_key]["FAIL"] += 1
+                    elif finding.status == "PASS":
                         groups[group_key]["PASS"] += 1
 
                 if index not in counted_generic and not finding.muted:

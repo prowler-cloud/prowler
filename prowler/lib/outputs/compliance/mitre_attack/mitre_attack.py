@@ -13,6 +13,8 @@ def get_mitre_attack_table(
     compliance_overview: bool,
 ):
     tactics = {}
+    tactic_seen = {}
+    provider = ""
     mitre_compliance_table = {
         "Provider": [],
         "Tactic": [],
@@ -30,27 +32,38 @@ def get_mitre_attack_table(
                 "MITRE-ATTACK" in compliance.Framework
                 and compliance.Version in compliance_framework
             ):
+                provider = compliance.Provider
                 for requirement in compliance.Requirements:
                     for tactic in requirement.Tactics:
                         if tactic not in tactics:
                             tactics[tactic] = {"FAIL": 0, "PASS": 0, "Muted": 0}
+                            tactic_seen[tactic] = set()
+
+                        # Overview totals: count each finding once per framework
                         if finding.muted:
                             if index not in muted_count:
                                 muted_count.append(index)
+                        elif finding.status == "FAIL":
+                            if index not in fail_count:
+                                fail_count.append(index)
+                        elif finding.status == "PASS":
+                            if index not in pass_count:
+                                pass_count.append(index)
+
+                        # Per-tactic counts: count each finding once per tactic
+                        # it belongs to (a finding can map to several tactics).
+                        if index not in tactic_seen[tactic]:
+                            tactic_seen[tactic].add(index)
+                            if finding.muted:
                                 tactics[tactic]["Muted"] += 1
-                        else:
-                            if finding.status == "FAIL":
-                                if index not in fail_count:
-                                    fail_count.append(index)
-                                    tactics[tactic]["FAIL"] += 1
+                            elif finding.status == "FAIL":
+                                tactics[tactic]["FAIL"] += 1
                             elif finding.status == "PASS":
-                                if index not in pass_count:
-                                    pass_count.append(index)
-                                    tactics[tactic]["PASS"] += 1
+                                tactics[tactic]["PASS"] += 1
     # Add results to table
     tactics = dict(sorted(tactics.items()))
     for tactic in tactics:
-        mitre_compliance_table["Provider"].append(compliance.Provider)
+        mitre_compliance_table["Provider"].append(provider)
         mitre_compliance_table["Tactic"].append(tactic)
         if tactics[tactic]["FAIL"] > 0:
             mitre_compliance_table["Status"].append(

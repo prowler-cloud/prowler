@@ -22,33 +22,47 @@ def get_okta_idaas_stig_table(
     fail_count = []
     muted_count = []
     sections = {}
+    section_seen = {}
+    provider = ""
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
             if compliance.Framework == "Okta-IDaaS-STIG":
+                provider = compliance.Provider
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         section = attribute.Section
 
                         if section not in sections:
                             sections[section] = {"FAIL": 0, "PASS": 0, "Muted": 0}
+                            section_seen[section] = set()
 
+                        # Overview totals: count each finding once per framework
                         if finding.muted:
                             if index not in muted_count:
                                 muted_count.append(index)
-                                sections[section]["Muted"] += 1
-                        else:
-                            if finding.status == "FAIL" and index not in fail_count:
+                        elif finding.status == "FAIL":
+                            if index not in fail_count:
                                 fail_count.append(index)
-                                sections[section]["FAIL"] += 1
-                            elif finding.status == "PASS" and index not in pass_count:
+                        elif finding.status == "PASS":
+                            if index not in pass_count:
                                 pass_count.append(index)
+
+                        # Per-section counts: count each finding once per section
+                        # it belongs to (a finding can map to several sections).
+                        if index not in section_seen[section]:
+                            section_seen[section].add(index)
+                            if finding.muted:
+                                sections[section]["Muted"] += 1
+                            elif finding.status == "FAIL":
+                                sections[section]["FAIL"] += 1
+                            elif finding.status == "PASS":
                                 sections[section]["PASS"] += 1
 
     sections = dict(sorted(sections.items()))
     for section in sections:
-        section_table["Provider"].append(compliance.Provider)
+        section_table["Provider"].append(provider)
         section_table["Section"].append(section)
         if sections[section]["FAIL"] > 0:
             section_table["Status"].append(
