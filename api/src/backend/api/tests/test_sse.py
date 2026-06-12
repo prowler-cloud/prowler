@@ -12,7 +12,10 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
+from django.http import StreamingHttpResponse
+from rest_framework.test import APIRequestFactory, force_authenticate
 
+from api.sse.base_views import BaseSSEViewSet
 from api.sse.channelmanager import SSEChannelManager
 from api.sse.utils import make_channel_name, tenant_id_from_channel
 
@@ -119,3 +122,45 @@ class TestSSEChannelManager:
         assert (
             SSEChannelManager().is_channel_reliable("prefix:tenant:resource") is False
         )
+
+
+@pytest.mark.django_db
+class TestBaseSSEViewSet:
+    """End-to-end check that the base viewset opens a stream.
+
+    ``BaseSSEViewSet.list`` hands the DRF ``Request`` straight to
+    django-eventstream's ``events()``, which is written for a plain
+    Django request. This drives a real request through the full DRF
+    stack (authentication, RLS, content negotiation, channel manager)
+    and asserts the result is an SSE stream, so the DRF/Django request
+    mismatch cannot regress silently.
+    """
+
+    def test_list_opens_event_stream(self, create_test_user, tenants_fixture):
+        tenant = tenants_fixture[0]
+        channel = make_channel_name("test-sse", tenant.id, uuid.uuid4())
+        seen_tenant_ids = []
+
+        class _StreamingSSEViewSet(BaseSSEViewSet):
+            def get_channels(self):
+                # Reached only after dispatch/initial ran, so the RLS
+                # tenant context is already on the request.
+                seen_tenant_ids.append(self.request.tenant_id)
+                return {channel}
+
+        request = APIRequestFactory().get("/api/v1/test-sse/stream")
+        force_authenticate(
+            request, user=create_test_user, token={"tenant_id": str(tenant.id)}
+        )
+
+        view = _StreamingSSEViewSet.as_view({"get": "list"})
+        response = view(request)
+
+        # A StreamingHttpResponse (not the plain HttpResponse used for SSE
+        # error envelopes) means events() accepted the DRF request, the
+        # channel manager handed it a non-empty channel set, and the
+        # stream was opened end to end.
+        assert isinstance(response, StreamingHttpResponse)
+        assert response.status_code == 200
+        assert response["Content-Type"] == "text/event-stream"
+        assert seen_tenant_ids == [str(tenant.id)]
