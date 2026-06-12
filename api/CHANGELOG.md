@@ -2,14 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.32.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- Support for Python 3.13 [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
-
----
-
 ## [1.31.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed
