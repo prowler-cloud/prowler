@@ -148,7 +148,7 @@ export const pollJiraDispatchTask = async (
   { success: true; message: string } | { success: false; error: string }
 > => {
   const res = await pollTaskUntilSettled(taskId, {
-    maxAttempts: 10,
+    maxAttempts: 30,
     delayMs: 2000,
   });
   if (!res.ok) {

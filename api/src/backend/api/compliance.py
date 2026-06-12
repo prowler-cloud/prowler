@@ -1,10 +1,25 @@
+import logging
+import threading
 from collections.abc import Iterable, Mapping
 
 from api.models import Provider
-from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.compliance_models import (
+    get_bulk_compliance_frameworks_universal,
+)
 from prowler.lib.check.models import CheckMetadata
 
+logger = logging.getLogger(__name__)
+
 AVAILABLE_COMPLIANCE_FRAMEWORKS = {}
+
+# Per-process readiness flags for the background compliance warm-up.
+# `STARTED` is set as soon as warming begins (only happens under Gunicorn via
+# the post_fork hook); `WARMED` is set when it finishes. The attributes
+# endpoint checks both: it returns 503 only while warming is in progress.
+# Under `runserver` warming never runs, so `STARTED` stays clear and the
+# endpoint keeps lazy-loading as before.
+COMPLIANCE_WARMING_STARTED = threading.Event()
+COMPLIANCE_WARMED = threading.Event()
 
 
 class LazyComplianceTemplate(Mapping):
@@ -94,25 +109,22 @@ PROWLER_CHECKS = LazyChecksMapping()
 
 
 def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[str]:
-    """List compliance frameworks the API can load for `provider_type`.
+    """List compliance framework identifiers available for `provider_type`.
 
-    The list is sourced from `Compliance.get_bulk` so that the names
-    returned here are guaranteed to be loadable by the bulk loader. This
-    prevents downstream key mismatches (e.g. CSV report generation iterating
-    framework names and looking them up in the bulk dict).
+    Includes both per-provider frameworks and universal top-level frameworks
+    (e.g. ``dora``, ``csa_ccm_4.0``).
 
     Args:
-        provider_type (Provider.ProviderChoices): The cloud provider type for which to retrieve
-            available compliance frameworks (e.g., "aws", "azure", "gcp", "m365").
+        provider_type (Provider.ProviderChoices): The cloud provider type
+            (e.g., "aws", "azure", "gcp", "m365").
 
     Returns:
-        list[str]: A list of framework identifiers (e.g., "cis_1.4_aws", "mitre_attack_azure") available
-        for the given provider.
+        list[str]: Framework identifiers (e.g., "cis_1.4_aws", "dora").
     """
     global AVAILABLE_COMPLIANCE_FRAMEWORKS
     if provider_type not in AVAILABLE_COMPLIANCE_FRAMEWORKS:
         AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type] = list(
-            Compliance.get_bulk(provider_type).keys()
+            get_bulk_compliance_frameworks_universal(provider_type).keys()
         )
 
     return AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type]
@@ -139,18 +151,14 @@ def get_prowler_provider_compliance(provider_type: Provider.ProviderChoices) -> 
     """
     Retrieve the Prowler compliance data for a specified provider type.
 
-    This function fetches the compliance frameworks and their associated
-    requirements for the given cloud provider.
-
     Args:
         provider_type (Provider.ProviderChoices): The provider type
             (e.g., 'aws', 'azure') for which to retrieve compliance data.
 
     Returns:
-        dict: A dictionary mapping compliance framework names to their respective
-            Compliance objects for the specified provider.
+        dict: Mapping of framework name to `ComplianceFramework` for the provider.
     """
-    return Compliance.get_bulk(provider_type)
+    return get_bulk_compliance_frameworks_universal(provider_type)
 
 
 def _load_provider_assets(provider_type: Provider.ProviderChoices) -> tuple[dict, dict]:
@@ -177,6 +185,56 @@ def _ensure_provider_loaded(provider_type: Provider.ProviderChoices) -> None:
         PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE._cache[provider_type] = template
     if checks_cached is None:
         PROWLER_CHECKS._cache[provider_type] = checks
+
+
+def warm_compliance_caches(
+    provider_types: Iterable[str] | None = None,
+) -> list[str]:
+    """
+    Eagerly populate the per-process compliance caches at server startup.
+
+    Moves the cold-cache catalog load off the request thread so the first
+    request does not trip the Gunicorn worker timeout. Reads only on-disk
+    metadata (no database access). Each provider is warmed in isolation;
+    failures are logged and fall back to lazy loading.
+
+    Args:
+        provider_types (Iterable[str] | None): Subset to warm. Defaults to all.
+
+    Returns:
+        list[str]: Provider types that could not be warmed.
+    """
+    if provider_types is None:
+        provider_types = Provider.ProviderChoices.values
+    provider_types = list(provider_types)
+
+    COMPLIANCE_WARMING_STARTED.set()
+    logger.info("Compliance cache warm-up started for providers: %s", provider_types)
+
+    failed = []
+    for provider_type in provider_types:
+        try:
+            get_compliance_frameworks(provider_type)
+            _ensure_provider_loaded(provider_type)
+        # Prowler check loading may sys.exit (SystemExit, not Exception).
+        except (Exception, SystemExit):
+            logger.warning(
+                "Failed to warm compliance caches for provider '%s'; "
+                "loading lazily on first request",
+                provider_type,
+                exc_info=True,
+            )
+            failed.append(provider_type)
+
+    # Mark as warmed even when some providers failed: a failed provider falls
+    # back to a single-provider lazy load, which stays under the worker timeout.
+    COMPLIANCE_WARMED.set()
+    logger.info(
+        "Compliance cache warm-up finished (providers warmed: %d, failed: %s)",
+        len(provider_types) - len(failed),
+        failed,
+    )
+    return failed
 
 
 def load_prowler_checks(
@@ -209,8 +267,8 @@ def load_prowler_checks(
         for compliance_name, compliance_data in prowler_compliance.get(
             provider_type, {}
         ).items():
-            for requirement in compliance_data.Requirements:
-                for check in requirement.Checks:
+            for requirement in compliance_data.requirements:
+                for check in requirement.checks.get(provider_type, []):
                     try:
                         checks[provider_type][check].add(compliance_name)
                     except KeyError:
@@ -290,24 +348,40 @@ def generate_compliance_overview_template(
             requirements_status = {"passed": 0, "failed": 0, "manual": 0}
             total_requirements = 0
 
-            for requirement in compliance_data.Requirements:
+            for requirement in compliance_data.requirements:
                 total_requirements += 1
-                total_checks = len(requirement.Checks)
-                checks_dict = {check: None for check in requirement.Checks}
+                provider_check_list = list(requirement.checks.get(provider_type, []))
+                total_checks = len(provider_check_list)
+                checks_dict = {check: None for check in provider_check_list}
 
                 req_status_val = "MANUAL" if total_checks == 0 else "PASS"
 
+                # MITRE attrs are wrapped under `_raw_attributes` by the
+                # universal adapter — unwrap so consumers see the flat list.
+                requirement_attributes = requirement.attributes
+                if (
+                    isinstance(requirement_attributes, dict)
+                    and "_raw_attributes" in requirement_attributes
+                ):
+                    attributes_payload = list(requirement_attributes["_raw_attributes"])
+                elif isinstance(requirement_attributes, dict):
+                    attributes_payload = (
+                        [dict(requirement_attributes)] if requirement_attributes else []
+                    )
+                else:
+                    attributes_payload = [
+                        dict(attribute) for attribute in requirement_attributes
+                    ]
+
                 # Build requirement dictionary
                 requirement_dict = {
-                    "name": requirement.Name or requirement.Id,
-                    "description": requirement.Description,
-                    "tactics": getattr(requirement, "Tactics", []),
-                    "subtechniques": getattr(requirement, "SubTechniques", []),
-                    "platforms": getattr(requirement, "Platforms", []),
-                    "technique_url": getattr(requirement, "TechniqueURL", ""),
-                    "attributes": [
-                        dict(attribute) for attribute in requirement.Attributes
-                    ],
+                    "name": requirement.name or requirement.id,
+                    "description": requirement.description,
+                    "tactics": requirement.tactics or [],
+                    "subtechniques": requirement.sub_techniques or [],
+                    "platforms": requirement.platforms or [],
+                    "technique_url": requirement.technique_url or "",
+                    "attributes": attributes_payload,
                     "checks": checks_dict,
                     "checks_status": {
                         "pass": 0,
@@ -325,15 +399,15 @@ def generate_compliance_overview_template(
                     requirements_status["passed"] += 1
 
                 # Add requirement to compliance requirements
-                compliance_requirements[requirement.Id] = requirement_dict
+                compliance_requirements[requirement.id] = requirement_dict
 
             # Build compliance dictionary
             compliance_dict = {
-                "framework": compliance_data.Framework,
-                "name": compliance_data.Name,
-                "version": compliance_data.Version,
+                "framework": compliance_data.framework,
+                "name": compliance_data.name,
+                "version": compliance_data.version,
                 "provider": provider_type,
-                "description": compliance_data.Description,
+                "description": compliance_data.description,
                 "requirements": compliance_requirements,
                 "requirements_status": requirements_status,
                 "total_requirements": total_requirements,

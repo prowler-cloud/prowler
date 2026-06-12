@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "chat_external_messaging_restricted",
+  "CheckTitle": "External Chat messaging is restricted to allowed domains",
+  "CheckType": [],
+  "ServiceName": "chat",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Google Chat **external messaging** controls whether users can send messages to people outside the organization. If external messaging is allowed, it can optionally be restricted to only **allowlisted domains** to limit the scope of external communication.",
+  "Risk": "Unrestricted external messaging allows users to communicate freely with **any external party**, increasing the risk of **data exfiltration** through conversation content and **social engineering attacks** from untrusted domains targeting internal users.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/chat/set-up-chat-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Google Chat and classic Hangouts**\n3. Click **External Chat Settings**\n4. Select **Chat externally**\n5. Set **Allow users to send messages outside the organization** to **ON**\n6. Check **Only allow this for allowlisted domains**\n7. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict **external Chat messaging** to **allowlisted domains** only to limit information flow to trusted parties and reduce exposure to external threats.",
+      "Url": "https://hub.prowler.com/check/chat_external_messaging_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "chat_external_spaces_restricted",
+    "drive_sharing_allowlisted_domains"
+  ],
+  "Notes": ""
+}

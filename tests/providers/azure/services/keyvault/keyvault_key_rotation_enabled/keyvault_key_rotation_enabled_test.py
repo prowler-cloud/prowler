@@ -4,7 +4,9 @@ from azure.keyvault.keys import KeyRotationLifetimeAction, KeyRotationPolicy
 from azure.mgmt.keyvault.v2023_07_01.models import KeyAttributes, VaultProperties
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -12,6 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_keyvault_key_rotation_enabled:
     def test_no_key_vaults(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_client.key_vaults = {}
 
         with (
@@ -34,6 +37,7 @@ class Test_keyvault_key_rotation_enabled:
 
     def test_no_keys(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -75,6 +79,7 @@ class Test_keyvault_key_rotation_enabled:
 
     def test_key_without_rotation_policy(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "keyvault_name"
         key_name = "key_name"
 
@@ -128,7 +133,7 @@ class Test_keyvault_key_rotation_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have a rotation policy set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have a rotation policy set."
             )
             assert result[0].resource_name == key_name
             assert result[0].resource_id == "id"
@@ -137,6 +142,7 @@ class Test_keyvault_key_rotation_enabled:
 
     def test_key_with_rotation_policy(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "keyvault_name"
         key_name = "key_name"
 
@@ -198,7 +204,7 @@ class Test_keyvault_key_rotation_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has a rotation policy set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has a rotation policy set."
             )
             assert result[0].resource_name == key_name
             assert result[0].resource_id == "id"
@@ -207,6 +213,7 @@ class Test_keyvault_key_rotation_enabled:
 
     def test_multiple_keys_mixed_rotation_policies(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "keyvault_name"
         key_with_rotation = "key_with_rotation"
         key_without_rotation = "key_without_rotation"
@@ -306,6 +313,7 @@ class Test_keyvault_key_rotation_enabled:
 
     def test_rotation_action_not_first_in_lifetime_actions(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "keyvault_name"
         key_name = "key_name"
 
@@ -372,5 +380,5 @@ class Test_keyvault_key_rotation_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has a rotation policy set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has a rotation policy set."
             )

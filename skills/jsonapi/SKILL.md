@@ -35,7 +35,7 @@ This skill focuses on **spec compliance**. For **implementation patterns** (View
 
 If Context7 MCP is available, query the JSON:API spec directly:
 
-```
+```text
 mcp_context7_resolve-library-id(query="jsonapi specification")
 mcp_context7_query-docs(libraryId="<resolved-id>", query="[specific topic: relationships, errors, etc.]")
 ```
@@ -44,7 +44,7 @@ mcp_context7_query-docs(libraryId="<resolved-id>", query="[specific topic: relat
 
 If Context7 is not available, fetch from the official spec:
 
-```
+```text
 WebFetch(url="https://jsonapi.org/format/", prompt="Extract rules for [specific topic]")
 ```
 

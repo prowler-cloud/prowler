@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "application_dashboard_phishing_resistant_authentication",
+  "CheckTitle": "Okta Dashboard authentication policy enforces phishing-resistant factors",
+  "CheckType": [],
+  "ServiceName": "application",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "The **Authentication Policy** bound to the **Okta Dashboard** app must restrict possession factors to phishing-resistant authenticators. On the top active rule, *Possession factor constraints are: Phishing resistant* must be checked (`possession.phishingResistant=REQUIRED`).",
+  "Risk": "Phishable possession factors leave end-user SSO sessions exposed to credential phishing and AiTM proxies.\n\n- **Credential phishing** against end users succeeds despite MFA\n- **Session token theft** through reverse-proxy AiTM attacks (Evilginx-class tooling)\n- **Compromise of every downstream SSO app** the user has access to",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/phishing-resistant-auth.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Authentication Policies**.\n3. Open the **Okta Dashboard** policy.\n4. Edit the top active rule.\n5. Under *Possession factor constraints are*, check **Phishing resistant**.\n6. Save the rule.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require phishing-resistant possession factors on the top active rule of the Okta Dashboard authentication policy.",
+      "Url": "https://hub.prowler.com/check/application_dashboard_phishing_resistant_authentication"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Aligns with DISA STIG V-273190 / OKTA-APP-000180."
+}

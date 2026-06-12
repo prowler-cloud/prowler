@@ -121,6 +121,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Team ID",
         placeholder: "e.g. team_xxxxxxxxxxxxxxxxxxxxxxxx",
       };
+    case "okta":
+      return {
+        label: "Org Domain",
+        placeholder: "e.g. your-org.okta.com",
+      };
     default:
       return {
         label: "Provider UID",

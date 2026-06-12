@@ -13,8 +13,14 @@ class SecurityHub(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.securityhubs = []
+        self.organization_admin_accounts = []
+        self.organization_admin_lookup_failed: bool = False
         self.__threading_call__(self._describe_hub)
         self.__threading_call__(self._list_tags, self.securityhubs)
+        self.__threading_call__(self._list_organization_admin_accounts)
+        self.__threading_call__(
+            self._describe_organization_configuration, self.securityhubs
+        )
 
     def _describe_hub(self, regional_client):
         logger.info("SecurityHub - Describing Hub...")
@@ -104,6 +110,95 @@ class SecurityHub(AWSService):
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_organization_admin_accounts(self, regional_client):
+        """List Security Hub delegated administrator accounts for the organization.
+
+        This API is only available to the organization management account or
+        a delegated administrator account.
+        """
+        logger.info("SecurityHub - listing organization admin accounts...")
+        try:
+            paginator = regional_client.get_paginator(
+                "list_organization_admin_accounts"
+            )
+            for page in paginator.paginate():
+                for admin in page.get("AdminAccounts", []):
+                    admin_account = OrganizationAdminAccount(
+                        admin_account_id=admin.get("AdminAccountId"),
+                        admin_status=admin.get("AdminStatus"),
+                        region=regional_client.region,
+                    )
+                    # Avoid duplicates across regions for the same admin account
+                    if not any(
+                        existing.admin_account_id == admin_account.admin_account_id
+                        and existing.region == admin_account.region
+                        for existing in self.organization_admin_accounts
+                    ):
+                        self.organization_admin_accounts.append(admin_account)
+        except ClientError as error:
+            self.organization_admin_lookup_failed = True
+            if error.response["Error"]["Code"] in (
+                "AccessDeniedException",
+                "InvalidAccessException",
+                "BadRequestException",
+            ):
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            self.organization_admin_lookup_failed = True
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_organization_configuration(self, securityhub):
+        """Describe the organization configuration for a Security Hub instance.
+
+        This provides information about auto-enable settings for the organization.
+        Only invoked for hubs in ACTIVE status.
+        """
+        logger.info("SecurityHub - describing organization configuration...")
+        try:
+            if securityhub.status != "ACTIVE":
+                return
+            regional_client = self.regional_clients[securityhub.region]
+            org_config = regional_client.describe_organization_configuration()
+            securityhub.organization_auto_enable = org_config.get("AutoEnable", False)
+            securityhub.auto_enable_standards = org_config.get(
+                "AutoEnableStandards", "NONE"
+            )
+            securityhub.organization_config_available = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] in (
+                "AccessDeniedException",
+                "InvalidAccessException",
+                "BadRequestException",
+            ):
+                # Expected when not running from management or delegated admin account
+                logger.warning(
+                    f"{securityhub.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{securityhub.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{securityhub.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class OrganizationAdminAccount(BaseModel):
+    """Represents a Security Hub delegated administrator account."""
+
+    admin_account_id: str
+    admin_status: str  # ENABLED or DISABLE_IN_PROGRESS
+    region: str
+
 
 class SecurityHubHub(BaseModel):
     arn: str
@@ -112,4 +207,8 @@ class SecurityHubHub(BaseModel):
     standards: str
     integrations: str
     region: str
-    tags: Optional[list]
+    tags: Optional[list] = []
+    # Organization configuration fields
+    organization_auto_enable: bool = False
+    auto_enable_standards: str = "NONE"
+    organization_config_available: bool = False
