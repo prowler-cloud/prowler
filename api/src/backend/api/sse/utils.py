@@ -20,8 +20,18 @@ def make_channel_name(
         prefix: Feature-owned prefix (e.g. `"lighthouse-session"`).
         tenant_id: Tenant the resource belongs to.
         resource_id: Resource identifier within the tenant.
+
+    Raises:
+        ValueError: If any segment contains `CHANNEL_SEPARATOR`, which
+            would break the `<prefix>:<tenant_id>:<resource_id>` contract
+            and let a crafted name smuggle extra segments past the parser.
     """
-    return CHANNEL_SEPARATOR.join((prefix, str(tenant_id), str(resource_id)))
+    segments = (str(prefix), str(tenant_id), str(resource_id))
+    if any(CHANNEL_SEPARATOR in segment for segment in segments):
+        raise ValueError(
+            f"Channel segments must not contain '{CHANNEL_SEPARATOR}': {segments!r}"
+        )
+    return CHANNEL_SEPARATOR.join(segments)
 
 
 def tenant_id_from_channel(channel: str) -> uuid.UUID | None:
@@ -32,7 +42,8 @@ def tenant_id_from_channel(channel: str) -> uuid.UUID | None:
     a malformed channel cannot be safely read.
     """
     segments = channel.split(CHANNEL_SEPARATOR)
-    if len(segments) < 3:
+    if len(segments) != 3:
+        # Reject non-canonical names
         return None
     try:
         return uuid.UUID(segments[1])

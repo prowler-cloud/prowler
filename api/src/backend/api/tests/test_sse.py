@@ -35,11 +35,31 @@ class TestMakeChannel:
         channel = make_channel_name("a-long-hyphenated-prefix", tenant_id, "res")
         assert tenant_id_from_channel(channel) == tenant_id
 
+    @pytest.mark.parametrize(
+        "prefix, tenant_id, resource_id",
+        [
+            ("evil:prefix", uuid.uuid4(), "res"),
+            ("prefix", uuid.uuid4(), "res:extra"),
+            ("prefix", "tenant:smuggled", "res"),
+        ],
+    )
+    def test_rejects_separator_injection(self, prefix, tenant_id, resource_id):
+        # A colon in any segment would let a crafted name smuggle extra
+        # segments past the parser, so construction must fail loudly.
+        with pytest.raises(ValueError):
+            make_channel_name(prefix, tenant_id, resource_id)
+
 
 class TestTenantIdFromChannel:
     def test_returns_none_for_too_few_segments(self):
         assert tenant_id_from_channel("prefix:only") is None
         assert tenant_id_from_channel("garbage") is None
+
+    def test_returns_none_for_too_many_segments(self):
+        # A valid tenant UUID in position 1 must not authorize a
+        # non-canonical name that carries extra segments.
+        tenant_id = uuid.uuid4()
+        assert tenant_id_from_channel(f"prefix:{tenant_id}:resource:extra") is None
 
     def test_returns_none_for_non_uuid_tenant_segment(self):
         assert tenant_id_from_channel("prefix:not-a-uuid:resource") is None
