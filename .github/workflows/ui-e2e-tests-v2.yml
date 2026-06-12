@@ -13,7 +13,6 @@ on:
       - '.github/workflows/ui-e2e-tests-v2.yml'
       - '.github/test-impact.yml'
       - 'ui/**'
-      - 'api/**'  # API changes can affect UI E2E
   pull_request:
     types:
       - opened
