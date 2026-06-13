@@ -291,6 +291,37 @@ class TestGetProjectsCoveredByAggregatedMetric:
         )
         assert self._run(logging_client, monitoring_client) == {}
 
+    def test_not_covered_when_sink_filter_omits_activity_stream(self):
+        """A sink that routes cloudaudit streams but NOT Admin Activity (here,
+        data_access only) does not deliver the entries the CIS metric filters
+        match, so it must not be credited — right service, wrong stream."""
+        logging_client, monitoring_client = self._clients(
+            sink_filter="logName: /logs/cloudaudit.googleapis.com%2Fdata_access"
+        )
+        assert self._run(logging_client, monitoring_client) == {}
+
+    def test_covered_when_sink_filter_carries_activity_stream_encoded(self):
+        """A sink filtered to the cloudaudit streams (URL-encoded logName form,
+        as returned by the Logging API) delivers every Admin Activity entry the
+        CIS metric filters can match, so it must be credited."""
+        logging_client, monitoring_client = self._clients(
+            sink_filter=(
+                "logName: /logs/cloudaudit.googleapis.com%2Factivity OR "
+                "logName: /logs/cloudaudit.googleapis.com%2Fdata_access"
+            )
+        )
+        assert self._run(logging_client, monitoring_client) == {
+            GCP_PROJECT_ID: "central-metric"
+        }
+
+    def test_covered_when_sink_filter_carries_activity_stream_plain(self):
+        logging_client, monitoring_client = self._clients(
+            sink_filter='logName="projects/p/logs/cloudaudit.googleapis.com/activity"'
+        )
+        assert self._run(logging_client, monitoring_client) == {
+            GCP_PROJECT_ID: "central-metric"
+        }
+
     def test_not_covered_when_sink_destination_bucket_differs(self):
         logging_client, monitoring_client = self._clients(
             sink_destination="logging.googleapis.com/projects/x/locations/eu/buckets/other"
