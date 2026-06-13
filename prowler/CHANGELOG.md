@@ -6,12 +6,17 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- Support for Python 3.13 [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
 - `securityhub_delegated_admin_enabled_all_regions` check for AWS provider, verifying that Security Hub has a delegated administrator, is active in all opted-in regions, and has organization auto-enable on [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
 - `config_delegated_admin_and_org_aggregator_all_regions` check for AWS provider, verifying that AWS Config has a delegated administrator and an organization aggregator covering all AWS regions [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
 - `sagemaker_clarify_exists` check for AWS provider [(#11211)](https://github.com/prowler-cloud/prowler/pull/11211)
 - `cloudsql_instance_high_availability_enabled` check for GCP provider, verifying Cloud SQL primary instances use `REGIONAL` availability for automatic zone failover [(#11024)](https://github.com/prowler-cloud/prowler/pull/11024)
 - `identity_storage_service_level_admins_scoped` check for OCI provider CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions [(#11523)](https://github.com/prowler-cloud/prowler/pull/11523)
 - `cosmosdb_account_automatic_failover_enabled` check for Azure provider [(#11031)](https://github.com/prowler-cloud/prowler/pull/11031)
+
+### 🔄 Changed
+
+- Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
 
 ---
 
