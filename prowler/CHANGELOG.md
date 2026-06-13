@@ -13,6 +13,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `identity_storage_service_level_admins_scoped` check for OCI provider CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions [(#11523)](https://github.com/prowler-cloud/prowler/pull/11523)
 - `cosmosdb_account_automatic_failover_enabled` check for Azure provider [(#11031)](https://github.com/prowler-cloud/prowler/pull/11031)
 
+### 🐞 Fixed
+
+- GCP `logging_log_metric_filter_and_alert_*` checks now credit org-level aggregated sinks filtered to the Admin Activity audit stream, not only unfiltered sinks — the audit-filtered aggregated sink is the cost-sane default for centralized topologies and delivers every log entry the CIS metric filters can match (follow-up to [(#11488)](https://github.com/prowler-cloud/prowler/pull/11488))
+
 ---
 
 ## [5.30.0] (Prowler v5.30.0)

@@ -121,6 +121,27 @@ class Metric(BaseModel):
     bucket_name: str = ""
 
 
+def _sink_delivers_activity_logs(sink_filter: str) -> bool:
+    """True when a sink's filter exports the Admin Activity audit stream (or
+    everything).
+
+    The CIS logging-metric filters all match Admin Activity audit entries
+    (``protoPayload.methodName=...`` on audited resource types), so an
+    aggregated sink restricted to the cloudaudit streams still delivers every
+    log entry those metrics can match. Centralized topologies deliberately
+    filter their aggregated sink to the audit streams (an unfiltered org-wide
+    sink would duplicate every operational log entry into the central bucket),
+    so requiring ``filter == "all"`` rejects exactly the deployments this
+    crediting exists for. Sink filters reference the stream either URL-encoded
+    (``cloudaudit.googleapis.com%2Factivity``) or as a plain path — normalize
+    before matching.
+    """
+    if not sink_filter or sink_filter == "all":
+        return True
+    normalized = sink_filter.replace("%2F", "/").replace("%2f", "/")
+    return "cloudaudit.googleapis.com/activity" in normalized
+
+
 def get_projects_covered_by_aggregated_metric(
     logging_client, monitoring_client, metric_filter
 ):
@@ -133,6 +154,10 @@ def get_projects_covered_by_aggregated_metric(
     every child project's logs into one bucket, where a single bucket-scoped metric
     + alert covers them all. Without crediting that, those child projects are falsely
     failed. Mirrors the org-sink handling already in ``logging_sink_created`` (#11355).
+
+    A sink is credited when it exports everything (``filter == "all"``) or when its
+    filter carries the Admin Activity audit stream — the only stream the CIS metric
+    filters can match (see ``_sink_delivers_activity_logs``).
     """
     # Buckets that hold a matching, alerted, bucket-scoped metric -> metric name.
     bucket_to_metric = {}
@@ -155,7 +180,7 @@ def get_projects_covered_by_aggregated_metric(
     for sink in logging_client.sinks:
         if not getattr(sink, "include_children", False):
             continue
-        if getattr(sink, "filter", "all") != "all":
+        if not _sink_delivers_activity_logs(getattr(sink, "filter", "all")):
             continue
         for bucket, metric_name in bucket_to_metric.items():
             # sink.destination e.g. "logging.googleapis.com/projects/.../buckets/X";
