@@ -1,3 +1,4 @@
+import re
 from unittest import mock
 from uuid import uuid4
 
@@ -84,7 +85,7 @@ def _policy(
 
 def _run(policies):
     """Run the check with a mocked entra_client holding the given policies."""
-    entra_client = mock.MagicMock
+    entra_client = mock.MagicMock()
     entra_client.audited_tenant = "audited_tenant"
     entra_client.audited_domain = DOMAIN
     with (
@@ -257,6 +258,37 @@ class Test_entra_conditional_access_policy_no_exclusion_gaps:
         assert result[0].status == "PASS"
         assert "covered by an include condition" in result[0].status_extended
 
+    def test_emergency_access_ignores_report_only_blocking_policy(self):
+        # A break-glass user excluded from every ENABLED blocking policy is an
+        # intended gap, even if a report-only (non-enforced) blocking policy that
+        # does NOT exclude them also exists. Report-only policies must not dilute
+        # the emergency determination.
+        emergency = "breakglass-user"
+        result = _run(
+            [
+                _policy(
+                    display_name="Block1",
+                    block=True,
+                    included_users=["All"],
+                    excluded_users=[emergency],
+                ),
+                _policy(
+                    display_name="Block2",
+                    block=True,
+                    included_users=["All"],
+                    excluded_users=[emergency],
+                ),
+                _policy(
+                    display_name="ReportOnlyBlock",
+                    block=True,
+                    state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
+                    included_users=["All"],
+                ),
+            ]
+        )
+        assert result[0].status == "PASS"
+        assert "covered by an include condition" in result[0].status_extended
+
     def test_mixed_gap_and_covered(self):
         # user-1 covered, user-2 orphaned -> FAIL listing only user-2.
         result = _run(
@@ -271,4 +303,5 @@ class Test_entra_conditional_access_policy_no_exclusion_gaps:
         )
         assert result[0].status == "FAIL"
         assert "user-2" in result[0].status_extended
-        assert "users: user-1 " not in result[0].status_extended
+        # user-1 is covered, so it must not appear as a gap (whitespace-robust).
+        assert not re.search(r"\busers:\s*user-1\b", result[0].status_extended)

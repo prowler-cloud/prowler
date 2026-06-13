@@ -152,14 +152,16 @@ class entra_conditional_access_policy_no_exclusion_gaps(Check):
     def _emergency_access_objects(self) -> tuple[set, set]:
         """Return user and group IDs that act as emergency access (break-glass).
 
-        Mirrors entra_emergency_access_exclusion: objects excluded from *every*
-        enabled Conditional Access policy with a Block grant control are intended,
-        compensating gaps and must not be reported here.
+        Objects excluded from *every* enabled (enforced) Conditional Access policy
+        with a Block grant control are intended, compensating gaps and must not be
+        reported here. Only ENABLED policies count: report-only policies are not
+        enforced, so including them would dilute the "excluded everywhere" check
+        and could hide a genuine break-glass account (consistent with execute()).
         """
         blocking_policies = [
             policy
             for policy in entra_client.conditional_access_policies.values()
-            if policy.state != ConditionalAccessPolicyState.DISABLED
+            if policy.state == ConditionalAccessPolicyState.ENABLED
             and ConditionalAccessGrantControl.BLOCK
             in policy.grant_controls.built_in_controls
         ]
