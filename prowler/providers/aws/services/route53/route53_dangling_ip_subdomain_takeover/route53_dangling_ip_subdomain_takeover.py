@@ -45,6 +45,7 @@ class route53_dangling_ip_subdomain_takeover(Check):
             if record_set.type == "A" and not record_set.is_alias:
                 for record in record_set.records:
                     if validate_ip_address(record):
+                        record_ip = ip_address(record)
                         report = Check_Report_AWS(
                             metadata=self.metadata(), resource=record_set
                         )
@@ -56,18 +57,12 @@ class route53_dangling_ip_subdomain_takeover(Check):
                         report.status = "PASS"
                         report.status_extended = f"Route53 record {record} (name: {record_set.name}) in Hosted Zone {hosted_zone.name} is not a dangling IP."
                         # If Public IP check if it is in the AWS Account
-                        if (
-                            not ip_address(record).is_private
-                            and record not in public_ips
-                        ):
+                        if not record_ip.is_private and record not in public_ips:
                             report.status_extended = f"Route53 record {record} (name: {record_set.name}) in Hosted Zone {hosted_zone.name} does not belong to AWS and it is not a dangling IP."
                             # Check if potential dangling IP is within AWS Ranges
                             if aws_ip_networks is None:
                                 aws_ip_networks = get_public_ip_networks()
-                            if any(
-                                ip_address(record) in network
-                                for network in aws_ip_networks
-                            ):
+                            if any(record_ip in network for network in aws_ip_networks):
                                 report.status = "FAIL"
                                 report.status_extended = f"Route53 record {record} (name: {record_set.name}) in Hosted Zone {hosted_zone.name} is a dangling IP which can lead to a subdomain takeover attack."
                         findings.append(report)
