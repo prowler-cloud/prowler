@@ -36,7 +36,6 @@ classifiers = [
   "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
-  "awsipranges==0.3.3",
   "alive-progress==3.3.0",
   "azure-identity==1.21.0",
   "azure-keyvault-keys==4.10.0",

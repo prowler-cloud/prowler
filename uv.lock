@@ -848,15 +848,6 @@ wheels = [
 ]
 
 [[package]]
-name = "awsipranges"
-version = "0.3.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/19/2e/6efa95f995369da828715f41705686cd214b9259ed758266942553d40441/awsipranges-0.3.3.tar.gz", hash = "sha256:4f0b3f22a9dc1163c85b513bed812b6c92bdacd674e6a7b68252a3c25b99e2c0", size = 16739, upload-time = "2022-02-10T21:08:32.825Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/ce/5c9a8bf91bdc9592a409c99e58fd99f2727ab8d634719c0ad796021b76d7/awsipranges-0.3.3-py3-none-any.whl", hash = "sha256:f3d7a54aeaf7fe310beb5d377a4034a63a51b72677ae6af3e0967bc4de7eedaf", size = 18106, upload-time = "2022-02-10T21:08:31.497Z" },
-]
-
-[[package]]
 name = "azure-common"
 version = "1.1.28"
 source = { registry = "https://pypi.org/simple" }
@@ -3529,7 +3520,6 @@ dependencies = [
     { name = "alibabacloud-tea-openapi" },
     { name = "alibabacloud-vpc20160428" },
     { name = "alive-progress" },
-    { name = "awsipranges" },
     { name = "azure-identity" },
     { name = "azure-keyvault-keys" },
     { name = "azure-mgmt-apimanagement" },
@@ -3638,7 +3628,6 @@ requires-dist = [
     { name = "alibabacloud-tea-openapi", specifier = "==0.4.4" },
     { name = "alibabacloud-vpc20160428", specifier = "==6.13.0" },
     { name = "alive-progress", specifier = "==3.3.0" },
-    { name = "awsipranges", specifier = "==0.3.3" },
     { name = "azure-identity", specifier = "==1.21.0" },
     { name = "azure-keyvault-keys", specifier = "==4.10.0" },
     { name = "azure-mgmt-apimanagement", specifier = "==5.0.0" },
