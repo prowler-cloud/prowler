@@ -1,0 +1,42 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_no_exclusion_gaps",
+  "CheckTitle": "Conditional Access exclusions are covered by another policy (no exclusion gaps)",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Verifies that every object excluded from an enabled Microsoft Entra **Conditional Access** policy (users, groups, roles, applications, or platforms) is still included by at least one enabled policy, so the exclusion keeps a compensating control. The Directory Synchronization Accounts role and confirmed emergency access (break glass) accounts are treated as intentional and not reported.",
+  "Risk": "An object excluded from a Conditional Access policy but never included by any other enabled policy sits completely outside Conditional Access enforcement. This creates a silent **MFA bypass** and **lateral movement** path: a principal exempted as a one-off remains permanently uncontrolled if no compensating policy covers it.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/plan-conditional-access",
+    "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccesspolicy?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessusers?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Protection > Conditional Access > Policies in the Microsoft Entra admin center.\n2. For each object reported as an exclusion gap, decide whether the exclusion is still required.\n3. If the exclusion must stay, add the object to the Include scope of another enabled Conditional Access policy that enforces compensating controls (for example MFA).\n4. If the exclusion is no longer required, remove it so the object falls back under the original policy.\n5. Re-run the check to confirm no exclusion gaps remain.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure every object excluded from a Conditional Access policy is included by at least one other enabled policy that applies compensating controls. Reserve exclusions for break-glass accounts and the Directory Synchronization Accounts role, and review exclusion lists regularly so that exempted principals never drift outside Conditional Access enforcement.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_no_exclusion_gaps"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_directory_sync_account_excluded",
+    "entra_emergency_access_exclusion"
+  ],
+  "Notes": "Version 1 covers user, group, role, application, and platform exclusions. Service-principal and location exclusions require additional fields on the ConditionalAccessPolicy service model and are planned as a follow-up."
+}
