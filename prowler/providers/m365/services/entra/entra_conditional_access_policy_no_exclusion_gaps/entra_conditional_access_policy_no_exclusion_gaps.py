@@ -33,7 +33,7 @@ class entra_conditional_access_policy_no_exclusion_gaps(Check):
     - FAIL: At least one excluded object is never included by any enabled policy.
     """
 
-    # (human label, attribute holding the conditions object, included attr, excluded attr)
+    # (human label, included attr, excluded attr)
     _USER_COLLECTIONS = [
         ("users", "included_users", "excluded_users"),
         ("groups", "included_groups", "excluded_groups"),

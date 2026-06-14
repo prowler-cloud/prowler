@@ -37,8 +37,27 @@ def _policy(
     include_platforms=None,
     exclude_platforms=None,
     block=False,
-):
-    """Build a fully-populated ConditionalAccessPolicy for tests."""
+) -> ConditionalAccessPolicy:
+    """Build a fully-populated ConditionalAccessPolicy for tests.
+
+    Args:
+        display_name: Policy display name.
+        state: Policy state (default ENABLED).
+        included_users: Included user IDs, or None.
+        excluded_users: Excluded user IDs, or None.
+        included_groups: Included group IDs, or None.
+        excluded_groups: Excluded group IDs, or None.
+        included_roles: Included role template IDs, or None.
+        excluded_roles: Excluded role template IDs, or None.
+        included_applications: Included application IDs, or None.
+        excluded_applications: Excluded application IDs, or None.
+        include_platforms: Included platform names, or None.
+        exclude_platforms: Excluded platform names, or None.
+        block: Whether the policy uses a Block grant control (default False).
+
+    Returns:
+        A ConditionalAccessPolicy instance with the specified conditions.
+    """
     return ConditionalAccessPolicy(
         id=str(uuid4()),
         display_name=display_name,
@@ -83,8 +102,15 @@ def _policy(
     )
 
 
-def _run(policies):
-    """Run the check with a mocked entra_client holding the given policies."""
+def _run(policies: list[ConditionalAccessPolicy]) -> list:
+    """Run the check with a mocked entra_client holding the given policies.
+
+    Args:
+        policies: ConditionalAccessPolicy objects to inject into the mocked client.
+
+    Returns:
+        The list of check report objects returned by ``execute()``.
+    """
     entra_client = mock.MagicMock()
     entra_client.audited_tenant = "audited_tenant"
     entra_client.audited_domain = DOMAIN
@@ -105,6 +131,13 @@ def _run(policies):
 
 
 class Test_entra_conditional_access_policy_no_exclusion_gaps:
+    """Tests for the Conditional Access exclusion-gap check.
+
+    Verifies that objects excluded from enabled Conditional Access policies are
+    still covered by an include condition in another enabled policy, with the
+    directory-sync role and break-glass accounts treated as intended exclusions.
+    """
+
     def test_no_policies(self):
         result = _run([])
         assert len(result) == 1
