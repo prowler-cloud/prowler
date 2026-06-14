@@ -1960,6 +1960,30 @@ class TestDispatchFallbacks:
 class TestBaseContractDefaults:
     """Tests for Provider base class default implementations."""
 
+    def test_get_scan_arguments_passes_secret_through(self):
+        """Base get_scan_arguments returns the secret unchanged when no mutelist."""
+        kwargs = FakeProviderNoHelpText.get_scan_arguments("uid", {"token": "x"})
+
+        assert kwargs == {"token": "x"}
+
+    def test_get_scan_arguments_adds_mutelist_content(self):
+        """Base get_scan_arguments adds mutelist_content when provided."""
+        kwargs = FakeProviderNoHelpText.get_scan_arguments(
+            "uid", {"token": "x"}, {"Mutelist": {}}
+        )
+
+        assert kwargs == {"token": "x", "mutelist_content": {"Mutelist": {}}}
+
+    def test_get_connection_arguments_passes_secret_through(self):
+        """Base get_connection_arguments returns the secret unchanged."""
+        kwargs = FakeProviderNoHelpText.get_connection_arguments("uid", {"token": "x"})
+
+        assert kwargs == {"token": "x"}
+
+    def test_get_credentials_schema_defaults_to_empty(self):
+        """Base get_credentials_schema declares no schema by default."""
+        assert FakeProviderNoHelpText.get_credentials_schema() == {}
+
     def test_from_cli_args_raises_not_implemented(self):
         """Base Provider.from_cli_args raises NotImplementedError."""
         with pytest.raises(NotImplementedError):
