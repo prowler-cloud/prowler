@@ -778,15 +778,17 @@ class Provider(ABC):
             module = import_module(provider_class_path)
             try:
                 return getattr(module, provider_class_name)
-            except AttributeError:
-                # Module exists but doesn't define the expected class —
-                # fall through to entry points.
-                cls = Provider._load_ep_provider(provider)
-                if cls is not None:
-                    return cls
+            except AttributeError as error:
+                # is_builtin already confirmed this is a built-in, so the
+                # module MUST define the expected class. A missing class is a
+                # broken built-in contract — raise rather than fall back to a
+                # same-named external plug-in, which would contradict
+                # is_builtin and silently return a foreign class.
                 raise ImportError(
-                    f"Provider '{provider}' not found as built-in or entry point"
-                )
+                    f"Built-in provider '{provider}' module "
+                    f"'{provider_class_path}' does not define expected class "
+                    f"'{provider_class_name}'"
+                ) from error
 
         cls = Provider._load_ep_provider(provider)
         if cls is None:
