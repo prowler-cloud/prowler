@@ -2252,24 +2252,50 @@ class TestGetClass:
         assert "aws" not in Provider._ep_providers
 
     # -----------------------------------------------------------------------
-    # T5: Regression — init_global_provider still resolves built-in correctly
+    # T4b: Built-in module missing its expected class raises ImportError
+    #      and does NOT fall back to a same-named entry point
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_get_class_builtin_missing_class_raises_importerror(
+        self, mock_is_builtin, mock_import, mock_load_ep
+    ):
+        """When is_builtin is True but the module does not define the expected
+        provider class, get_class raises ImportError and does NOT fall back to a
+        same-named entry point — falling back would contradict is_builtin and
+        silently return a foreign class."""
+        import types
+
+        mock_is_builtin.return_value = True
+        # Module imports fine but lacks the expected `<Name>Provider` attribute.
+        empty_module = types.ModuleType("empty_builtin_module")
+        mock_import.return_value = empty_module
+
+        with pytest.raises(ImportError):
+            Provider.get_class("aws")
+
+        # Must NOT fall back to entry points for a (broken) built-in.
+        mock_load_ep.assert_not_called()
+
+    # -----------------------------------------------------------------------
+    # T5: Regression — init_global_provider still resolves external correctly
     # -----------------------------------------------------------------------
 
     @patch("prowler.providers.common.provider.load_and_validate_config_file")
     @patch("prowler.providers.common.provider.Provider._load_ep_provider")
-    @patch("prowler.providers.common.provider.import_module")
-    def test_init_global_provider_still_resolves_builtin_via_get_class(
-        self, mock_import, mock_load_ep, mock_config
+    def test_init_global_provider_still_resolves_external_via_get_class(
+        self, mock_load_ep, mock_config
     ):
         """Regression: init_global_provider continues to work for external providers
         after the class-resolution block is delegated to get_class.
 
-        This mirrors TestProviderInitialization.test_init_global_provider_fallback_to_entry_point
-        which tests the entry-point fallback path. Here we verify the FakePureContractProvider
-        path (pure from_cli_args returning instance) still works — i.e., init_global_provider
-        correctly wires the returned instance as global provider.
+        'fakepure' is not a built-in, so is_builtin() returns False and get_class
+        takes the entry-point path. This verifies the FakePureContractProvider path
+        (pure from_cli_args returning an instance) still works — i.e.,
+        init_global_provider correctly wires the returned instance as global provider.
         """
-        mock_import.side_effect = ImportError("No built-in")
         mock_load_ep.return_value = FakePureContractProvider
         mock_config.return_value = {}
 
