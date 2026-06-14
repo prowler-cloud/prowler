@@ -1538,6 +1538,186 @@ def get_section_container_iso(data, section_1, section_2):
     return html.Div(section_containers, className="compliance-data-layout")
 
 
+def _status_bar(success, failed, classname):
+    """Build the stacked PASS/FAIL bar shown next to an accordion title."""
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                name="Failed",
+                x=[failed],
+                y=[""],
+                orientation="h",
+                marker=dict(color="#e77676"),
+                width=[0.8],
+            ),
+            go.Bar(
+                name="Success",
+                x=[success],
+                y=[""],
+                orientation="h",
+                marker=dict(color="#45cc6e"),
+                width=[0.8],
+            ),
+        ]
+    )
+    fig.update_layout(
+        barmode="stack",
+        margin=dict(l=10, r=10, t=10, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        showlegend=False,
+        width=350,
+        height=30,
+        xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        annotations=[
+            dict(
+                x=success + failed,
+                y=0,
+                xref="x",
+                yref="y",
+                text=str(success),
+                showarrow=False,
+                font=dict(color="#45cc6e", size=14),
+                xanchor="left",
+                yanchor="middle",
+            ),
+            dict(
+                x=0,
+                y=0,
+                xref="x",
+                yref="y",
+                text=str(failed),
+                showarrow=False,
+                font=dict(color="#e77676", size=14),
+                xanchor="right",
+                yanchor="middle",
+            ),
+        ],
+    )
+    fig.add_annotation(
+        x=failed,
+        y=0.3,
+        text="|",
+        showarrow=False,
+        xanchor="center",
+        yanchor="middle",
+        font=dict(size=20),
+    )
+    return dcc.Graph(figure=fig, config={"staticPlot": True}, className=classname)
+
+
+def get_section_containers_generic(data, section_col, id_col):
+    """Two-level view: section -> requirement id (+ description) -> checks.
+
+    Sorts lexicographically so arbitrary requirement IDs never crash the
+    version-aware sort used by the CIS renderer.
+    """
+    data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
+    data[section_col] = data[section_col].astype(str)
+    data[id_col] = data[id_col].astype(str)
+    data.sort_values(by=[section_col, id_col], inplace=True)
+
+    counts_section = data.groupby([section_col, "STATUS"]).size().unstack(fill_value=0)
+    counts_id = (
+        data.groupby([section_col, id_col, "STATUS"]).size().unstack(fill_value=0)
+    )
+
+    def count(counts, key, emoji):
+        return counts.loc[key, emoji] if emoji in counts.columns else 0
+
+    has_description = "REQUIREMENTS_DESCRIPTION" in data.columns
+    table_cols = ["CHECKID", "STATUS", "REGION", "ACCOUNTID", "RESOURCEID"]
+
+    section_containers = []
+    for section in data[section_col].unique():
+        graph_div = html.Div(
+            _status_bar(
+                count(counts_section, section, pass_emoji),
+                count(counts_section, section, fail_emoji),
+                "info-bar",
+            ),
+            className="graph-section",
+        )
+
+        internal_items = []
+        for req_id in data[data[section_col] == section][id_col].unique():
+            specific_data = data[
+                (data[section_col] == section) & (data[id_col] == req_id)
+            ]
+            data_table = dash_table.DataTable(
+                data=specific_data.to_dict("records"),
+                columns=[
+                    {"name": i, "id": i}
+                    for i in table_cols
+                    if i in specific_data.columns
+                ],
+                style_table={"overflowX": "auto"},
+                style_as_list_view=True,
+                style_cell={"textAlign": "left", "padding": "5px"},
+            )
+            graph_div_req = html.Div(
+                _status_bar(
+                    count(counts_id, (section, req_id), pass_emoji),
+                    count(counts_id, (section, req_id), fail_emoji),
+                    "info-bar-child",
+                ),
+                className="graph-section-req",
+            )
+
+            title = req_id
+            if has_description:
+                title = (
+                    f"{req_id} - {specific_data['REQUIREMENTS_DESCRIPTION'].iloc[0]}"
+                )
+            if len(title) > 130:
+                title = title[:130] + " ..."
+
+            internal_items.append(
+                html.Div(
+                    [
+                        graph_div_req,
+                        dbc.Accordion(
+                            [
+                                dbc.AccordionItem(
+                                    title=title,
+                                    children=[
+                                        html.Div(
+                                            [data_table],
+                                            className="inner-accordion-content",
+                                        )
+                                    ],
+                                )
+                            ],
+                            start_collapsed=True,
+                            flush=True,
+                        ),
+                    ],
+                    className="accordion-inner--child",
+                )
+            )
+
+        section_containers.append(
+            html.Div(
+                [
+                    graph_div,
+                    dbc.Accordion(
+                        [
+                            dbc.AccordionItem(
+                                title=f"{section}", children=internal_items
+                            )
+                        ],
+                        start_collapsed=True,
+                        flush=True,
+                    ),
+                ],
+                className="accordion-inner",
+            )
+        )
+
+    return html.Div(section_containers, className="compliance-data-layout")
+
+
 def get_section_containers_format4(data, section_1):
 
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)

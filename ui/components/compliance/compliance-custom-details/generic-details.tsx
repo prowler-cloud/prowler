@@ -26,7 +26,7 @@ export const GenericCustomDetails = ({
           <ComplianceBadge
             label="Item ID"
             value={requirement.item_id as string}
-            color="indigo"
+            variant="tag"
           />
         )}
 
@@ -34,7 +34,7 @@ export const GenericCustomDetails = ({
           <ComplianceBadge
             label="Service"
             value={requirement.service as string}
-            color="blue"
+            variant="info"
           />
         )}
 
@@ -42,7 +42,7 @@ export const GenericCustomDetails = ({
           <ComplianceBadge
             label="Type"
             value={requirement.type as string}
-            color="orange"
+            variant="secondary"
           />
         )}
       </ComplianceBadgeContainer>

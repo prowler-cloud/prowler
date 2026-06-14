@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "securityhub_delegated_admin_enabled_all_regions",
+  "CheckTitle": "Security Hub has delegated admin configured and is enabled in all regions with organization auto-enable",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "securityhub",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsSecurityHubHub",
+  "ResourceGroup": "security",
+  "Description": "**AWS Security Hub** has a delegated administrator configured at the organization level, hubs are active in all opted-in regions, and organization auto-enable is active so that new member accounts are automatically enrolled.",
+  "Risk": "Without org-wide **AWS Security Hub** configuration, findings can be aggregated inconsistently, delegated admin may be missing in some regions, and new accounts will not be auto-enrolled. This fragments **security posture visibility**, delays **incident response**, and lets misconfigurations and compliance drift go undetected across the organization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/designate-orgs-admin-account.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/accounts-orgs-auto-enable.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-regions.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws securityhub enable-organization-admin-account --admin-account-id <ADMIN_ACCOUNT_ID> && aws securityhub update-organization-configuration --auto-enable --auto-enable-standards DEFAULT",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the AWS Organizations management account\n2. Open the AWS Organizations console\n3. Navigate to Services > AWS Security Hub\n4. Click Register delegated administrator and enter the security account ID\n5. Switch to the delegated admin account\n6. In Security Hub console, go to Settings > Accounts\n7. Enable auto-enable for new organization accounts\n8. Repeat hub enablement for all opted-in regions",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a **delegated administrator** for AWS Security Hub via AWS Organizations. Enable Security Hub in **all opted-in regions** and turn on **auto-enable** so new member accounts are automatically enrolled. This ensures uniform security posture monitoring across the entire organization.",
+      "Url": "https://hub.prowler.com/check/securityhub_delegated_admin_enabled_all_regions"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "securityhub_enabled",
+    "guardduty_delegated_admin_enabled_all_regions"
+  ],
+  "Notes": "This check requires execution from the organization management account or delegated administrator account to access organization-level APIs."
+}

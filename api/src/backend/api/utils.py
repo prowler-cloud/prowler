@@ -243,6 +243,12 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "filter_accounts": [provider.uid],
         }
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        if isinstance(prowler_provider_kwargs.get("region"), str):
+            prowler_provider_kwargs = {
+                **prowler_provider_kwargs,
+                "region": {prowler_provider_kwargs["region"]},
+            }
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
         # clouds_yaml_content, clouds_yaml_cloud and provider_id are validated
         # in the provider itself, so it's not needed here.
