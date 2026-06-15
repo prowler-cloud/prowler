@@ -1,3 +1,4 @@
+import ssl
 import urllib.error
 import urllib.request
 from unittest import mock
@@ -67,7 +68,7 @@ class Test_codepipeline_project_repo_private:
                     "Connection": {"ProviderType": "GitHub"}
                 }
 
-                def mock_urlopen_side_effect(req, context=None):
+                def mock_urlopen_side_effect(req, timeout=None):
                     raise urllib.error.HTTPError(
                         url="", code=404, msg="", hdrs={}, fp=None
                     )
@@ -145,7 +146,7 @@ class Test_codepipeline_project_repo_private:
                 mock_response.getcode.return_value = 200
                 mock_response.geturl.return_value = f"https://github.com/{repo_id}"
 
-                def mock_urlopen_side_effect(req, context=None):
+                def mock_urlopen_side_effect(req, timeout=None):
                     if "github.com" in req.get_full_url():
                         return mock_response
                     raise urllib.error.HTTPError(
@@ -171,6 +172,145 @@ class Test_codepipeline_project_repo_private:
                 assert result[0].resource_arn == pipeline_arn
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION
+
+    def test_pipeline_repo_ssl_verification_failure(self):
+        """Test that a TLS certificate verification failure is treated as private.
+        When the probe cannot verify the server certificate (e.g. a MITM
+        presenting a forged certificate), the repository must not be reported
+        as public.
+        """
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION]),
+        ):
+            codepipeline_client = mock.MagicMock
+            pipeline_name = "test-pipeline"
+            pipeline_arn = f"arn:aws:codepipeline:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:pipeline/{pipeline_name}"
+            connection_arn = f"arn:aws:codestar-connections:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:connection/test-connection"
+            repo_id = "prowler-cloud/prowler-private"
+
+            codepipeline_client.pipelines = {
+                pipeline_arn: Pipeline(
+                    name=pipeline_name,
+                    arn=pipeline_arn,
+                    region=AWS_REGION,
+                    source=Source(
+                        type="CodeStarSourceConnection",
+                        repository_id=repo_id,
+                        configuration={
+                            "FullRepositoryId": repo_id,
+                            "ConnectionArn": connection_arn,
+                        },
+                    ),
+                    tags=[],
+                )
+            }
+
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_service.CodePipeline",
+                    codepipeline_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private.codepipeline_client",
+                    codepipeline_client,
+                ),
+                mock.patch("boto3.client") as mock_client,
+                mock.patch("urllib.request.urlopen") as mock_urlopen,
+            ):
+                mock_connection = mock_client.return_value
+                mock_connection.get_connection.return_value = {
+                    "Connection": {"ProviderType": "GitHub"}
+                }
+
+                def mock_urlopen_side_effect(req, timeout=None):
+                    raise ssl.SSLError("certificate verify failed")
+
+                mock_urlopen.side_effect = mock_urlopen_side_effect
+
+                from prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private import (
+                    codepipeline_project_repo_private,
+                )
+
+                check = codepipeline_project_repo_private()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"CodePipeline {pipeline_name} source repository {repo_id} is private."
+                )
+
+    def test_pipeline_repo_probe_verifies_certificate_and_sets_timeout(self):
+        """Test the probe never disables certificate verification and sets a timeout.
+        Regression test for the SSL verification bypass: the check must not use
+        an unverified SSL context, and every request must carry a timeout.
+        """
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION]),
+        ):
+            codepipeline_client = mock.MagicMock
+            pipeline_name = "test-pipeline"
+            pipeline_arn = f"arn:aws:codepipeline:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:pipeline/{pipeline_name}"
+            connection_arn = f"arn:aws:codestar-connections:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:connection/test-connection"
+            repo_id = "prowler-cloud/prowler-private"
+
+            codepipeline_client.pipelines = {
+                pipeline_arn: Pipeline(
+                    name=pipeline_name,
+                    arn=pipeline_arn,
+                    region=AWS_REGION,
+                    source=Source(
+                        type="CodeStarSourceConnection",
+                        repository_id=repo_id,
+                        configuration={
+                            "FullRepositoryId": repo_id,
+                            "ConnectionArn": connection_arn,
+                        },
+                    ),
+                    tags=[],
+                )
+            }
+
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_service.CodePipeline",
+                    codepipeline_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private.codepipeline_client",
+                    codepipeline_client,
+                ),
+                mock.patch("boto3.client") as mock_client,
+                mock.patch("urllib.request.urlopen") as mock_urlopen,
+                mock.patch("ssl._create_unverified_context") as mock_unverified,
+            ):
+                mock_connection = mock_client.return_value
+                mock_connection.get_connection.return_value = {
+                    "Connection": {"ProviderType": "GitHub"}
+                }
+
+                def mock_urlopen_side_effect(req, timeout=None):
+                    raise urllib.error.HTTPError(
+                        url="", code=404, msg="", hdrs={}, fp=None
+                    )
+
+                mock_urlopen.side_effect = mock_urlopen_side_effect
+
+                from prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private import (
+                    HTTP_TIMEOUT,
+                    codepipeline_project_repo_private,
+                )
+
+                check = codepipeline_project_repo_private()
+                check.execute()
+
+                mock_unverified.assert_not_called()
+                assert mock_urlopen.call_count > 0
+                for call in mock_urlopen.call_args_list:
+                    assert call.kwargs.get("timeout") == HTTP_TIMEOUT
 
     def test_pipeline_public_gitlab_repo(self):
         """Test detection of public GitLab repository in CodePipeline.
@@ -225,7 +365,7 @@ class Test_codepipeline_project_repo_private:
                 mock_response.getcode.return_value = 200
                 mock_response.geturl.return_value = f"https://gitlab.com/{repo_id}"
 
-                def mock_urlopen_side_effect(req, context=None):
+                def mock_urlopen_side_effect(req, timeout=None):
                     if "gitlab.com" in req.get_full_url():
                         return mock_response
                     raise urllib.error.HTTPError(
