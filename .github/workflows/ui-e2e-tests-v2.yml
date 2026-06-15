@@ -77,6 +77,9 @@ jobs:
       E2E_ALIBABACLOUD_ACCESS_KEY_ID: ${{ secrets.E2E_ALIBABACLOUD_ACCESS_KEY_ID }}
       E2E_ALIBABACLOUD_ACCESS_KEY_SECRET: ${{ secrets.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET }}
       E2E_ALIBABACLOUD_ROLE_ARN: ${{ secrets.E2E_ALIBABACLOUD_ROLE_ARN }}
+      E2E_OKTA_DOMAIN: ${{ secrets.E2E_OKTA_DOMAIN }}
+      E2E_OKTA_CLIENT_ID: ${{ secrets.E2E_OKTA_CLIENT_ID }}
+      E2E_OKTA_BASE64_PRIVATE_KEY: ${{ secrets.E2E_OKTA_BASE64_PRIVATE_KEY }}
       # Pass E2E paths from impact analysis
       E2E_TEST_PATHS: ${{ needs.impact-analysis.outputs.ui-e2e }}
       RUN_ALL_TESTS: ${{ needs.impact-analysis.outputs.run-all }}
