@@ -1,0 +1,608 @@
+{
+  "framework": "Cyber-Essentials",
+  "name": "NCSC Cyber Essentials: Requirements for IT Infrastructure (Azure)",
+  "version": "3.3",
+  "description": "Mapping of the UK National Cyber Security Centre (NCSC) Cyber Essentials scheme - Requirements for IT Infrastructure v3.3 (April 2026) - to Azure checks. Cyber Essentials organises its technical requirements into five control themes: Firewalls, Secure Configuration, Security Update Management, User Access Control, and Malware Protection. Cloud services are explicitly in scope for Cyber Essentials, and this mapping focuses on the controls that the applicant organisation is responsible for implementing on Azure infrastructure (Infrastructure/Platform as a Service). Requirements that apply to end-user devices, on-premises network appliances, or organisational process and are not observable from Azure subscription-level evidence are included for completeness with an empty check list and 'non-applicable' or 'Manual' attributes.",
+  "icon": "cyber-essentials",
+  "attributes_metadata": [
+    {
+      "key": "Theme",
+      "label": "Technical Control Theme",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "Firewalls",
+        "Secure Configuration",
+        "Security Update Management",
+        "User Access Control",
+        "Malware Protection"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "AssessmentStatus",
+      "label": "Assessment Status",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "Automated",
+        "Manual"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "CloudApplicability",
+      "label": "Cloud Applicability",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "full",
+        "partial",
+        "non-applicable"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "RemediationProcedure",
+      "label": "Remediation Procedure",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": false
+      }
+    },
+    {
+      "key": "References",
+      "label": "References",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": false
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Theme"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#003D54",
+      "secondary_color": "#0072CE",
+      "bg_color": "#F0F4FA",
+      "group_by_field": "Theme",
+      "sections": [
+        "Firewalls",
+        "Secure Configuration",
+        "Security Update Management",
+        "User Access Control",
+        "Malware Protection"
+      ],
+      "section_short_names": {
+        "Firewalls": "Firewalls",
+        "Secure Configuration": "Secure Config",
+        "Security Update Management": "Update Mgmt",
+        "User Access Control": "Access Control",
+        "Malware Protection": "Malware"
+      },
+      "charts": [
+        {
+          "id": "theme_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Theme",
+          "title": "Compliance Score by Cyber Essentials Theme",
+          "y_label": "Theme",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "CE-FW-01",
+      "name": "Boundary firewall on every in-scope device",
+      "description": "Every device in scope must be protected by a correctly configured firewall or network device with firewall functionality, restricting inbound and outbound network services to those that are secure and necessary.",
+      "attributes": {
+        "Theme": "Firewalls",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Use Network Security Groups (or Azure Firewall) on every subnet/NIC and remove rules that allow unrestricted inbound access from the internet to RDP, SSH, and other management or data services.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "network_http_internet_access_restricted"
+        ]
+      }
+    },
+    {
+      "id": "CE-FW-02",
+      "name": "Change default administrative passwords or disable remote admin access",
+      "description": "Default administrative passwords on firewalls and network devices must be changed to a strong, unique password, or remote administrative access must be disabled entirely.",
+      "attributes": {
+        "Theme": "Firewalls",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "This requirement applies to on-premises network appliances and home/remote routers, which are outside the scope of Azure control-plane evidence. Manage and document this control as part of your organisation's device estate.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-FW-03",
+      "name": "Restrict access to firewall/network device administrative interfaces",
+      "description": "Access to the administrative interface used to manage firewall or network device configuration must not be possible from the internet, unless there is a documented business need and the interface is protected by MFA or an IP allow list combined with a managed password approach.",
+      "attributes": {
+        "Theme": "Firewalls",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "full",
+        "RemediationProcedure": "Disable public network access on management-plane resources (storage accounts, Key Vaults) or restrict access to trusted networks/IP ranges, and require MFA for any administrative access exposed to the internet.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "storage_account_public_network_access_disabled",
+          "storage_default_network_access_rule_is_denied",
+          "keyvault_access_only_through_private_endpoints",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted"
+        ]
+      }
+    },
+    {
+      "id": "CE-FW-04",
+      "name": "Block unauthenticated inbound connections by default",
+      "description": "Firewalls and network devices must block unauthenticated inbound connections by default.",
+      "attributes": {
+        "Theme": "Firewalls",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "full",
+        "RemediationProcedure": "Configure Network Security Group rules with a default-deny inbound posture and only allow specific, documented inbound services. Disable public network access on PaaS resources that do not require it.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "network_http_internet_access_restricted",
+          "storage_account_public_network_access_disabled"
+        ]
+      }
+    },
+    {
+      "id": "CE-FW-05",
+      "name": "Inbound firewall rules approved and documented",
+      "description": "Inbound firewall rules must be approved and documented by an authorised person, including the business need for the rule.",
+      "attributes": {
+        "Theme": "Firewalls",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "Maintain a change-approval record (e.g. change tickets or a network rule register) for every inbound Network Security Group rule, including the business justification and approver.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-FW-06",
+      "name": "Remove or disable unnecessary firewall rules",
+      "description": "Firewall rules that are no longer needed must be removed or disabled.",
+      "attributes": {
+        "Theme": "Firewalls",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "Periodically review Network Security Group rules and Azure Firewall rule collections, removing or disabling rules that no longer have a documented business need.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-FW-07",
+      "name": "Software firewall on devices used on untrusted networks",
+      "description": "Devices that connect to untrusted networks, such as public Wi-Fi hotspots, must use a software firewall.",
+      "attributes": {
+        "Theme": "Firewalls",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "This is an end-user device control (host-based firewall) and has no Azure control-plane equivalent. Enforce via endpoint management policy.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-SC-01",
+      "name": "Remove or disable unnecessary user accounts",
+      "description": "Unnecessary user accounts, such as guest accounts and unused administrative accounts, must be removed or disabled.",
+      "attributes": {
+        "Theme": "Secure Configuration",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Restrict guest user invitations and access, and review Microsoft Entra ID and Azure RBAC role assignments to remove unused guest or administrative accounts.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "iam_role_user_access_admin_restricted"
+        ]
+      }
+    },
+    {
+      "id": "CE-SC-02",
+      "name": "Change default or guessable account passwords",
+      "description": "Default or guessable account passwords must be changed before a device or service is used.",
+      "attributes": {
+        "Theme": "Secure Configuration",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Enable Microsoft Entra ID security defaults (or an equivalent Conditional Access baseline) so that default/weak credentials cannot be used for sign-in.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "entra_security_defaults_enabled"
+        ]
+      }
+    },
+    {
+      "id": "CE-SC-03",
+      "name": "Remove or disable unnecessary software",
+      "description": "Unnecessary software, including applications, system utilities and network services, must be removed or disabled.",
+      "attributes": {
+        "Theme": "Secure Configuration",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "This is an operating-system level control for devices and servers and has no direct Azure control-plane equivalent. Maintain an approved software baseline and image hardening process for VM images.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-SC-04",
+      "name": "Disable auto-run features",
+      "description": "Auto-run features that allow file execution without user authorisation must be disabled.",
+      "attributes": {
+        "Theme": "Secure Configuration",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "This is an operating-system level control and has no Azure control-plane equivalent. Disable AutoRun/AutoPlay via OS configuration or group policy on VM images.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-SC-05",
+      "name": "Authenticate users before granting access to organisational data or services",
+      "description": "Users must be authenticated before being allowed access to organisational data or services, including cloud services.",
+      "attributes": {
+        "Theme": "Secure Configuration",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "full",
+        "RemediationProcedure": "Disable anonymous/public access to storage and require authenticated, encrypted (TLS 1.2+) access. Use Azure RBAC for Key Vault data-plane access instead of access policies that allow unauthenticated retrieval.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "storage_secure_transfer_required_is_enabled",
+          "storage_blob_public_access_level_is_disabled",
+          "storage_account_public_network_access_disabled",
+          "storage_ensure_minimum_tls_version_12",
+          "keyvault_rbac_enabled"
+        ]
+      }
+    },
+    {
+      "id": "CE-SC-06",
+      "name": "Device locking and brute-force protection for unlocking credentials",
+      "description": "Devices that require a user's physical presence must use an unlocking credential (biometric, password or PIN) of at least 6 characters, protected against brute-force guessing by throttling or lockout after no more than 10 attempts.",
+      "attributes": {
+        "Theme": "Secure Configuration",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Enforce key-based SSH authentication on Linux VMs (disabling password authentication) and enable Microsoft Entra ID security defaults to apply baseline sign-in protections.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "vm_linux_enforce_ssh_authentication",
+          "entra_security_defaults_enabled"
+        ]
+      }
+    },
+    {
+      "id": "CE-SUM-01",
+      "name": "All software licensed and supported",
+      "description": "All software on in-scope devices must be licensed and supported by the vendor.",
+      "attributes": {
+        "Theme": "Security Update Management",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "Maintain a software asset inventory confirming each product is licensed and has an active vendor support commitment, including for VM operating systems and any third-party software running on Azure compute resources.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-SUM-02",
+      "name": "Remove unsupported software",
+      "description": "Software must be removed from devices when it becomes unsupported, or isolated into a defined sub-set that prevents all internet traffic.",
+      "attributes": {
+        "Theme": "Security Update Management",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "Track vendor end-of-support dates for operating systems and applications running on Azure VMs, and decommission or isolate workloads before support ends.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-SUM-03",
+      "name": "Automatic updates enabled where possible",
+      "description": "Automatic updates must be enabled on in-scope software where this is possible.",
+      "attributes": {
+        "Theme": "Security Update Management",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Enable Microsoft Defender for Cloud auto-provisioning for the Log Analytics agent and vulnerability assessment, and configure automatic guest OS updates on Azure VMs.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
+        ]
+      }
+    },
+    {
+      "id": "CE-SUM-04",
+      "name": "Critical and high-risk updates applied within 14 days",
+      "description": "Updates that fix vulnerabilities described by the vendor as critical or high risk, or that address a CVSS v3 base score of 7 or above (or where severity is unspecified), must be applied within 14 days of release.",
+      "attributes": {
+        "Theme": "Security Update Management",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Enable Microsoft Defender for Cloud system update recommendations and vulnerability assessment, and remediate flagged virtual machines within 14 days of a critical or high-risk update being released.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "defender_ensure_system_updates_are_applied",
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
+        ]
+      }
+    },
+    {
+      "id": "CE-UAC-01",
+      "name": "Process to create and approve user accounts",
+      "description": "A documented process must be in place to create and approve user accounts before access is granted.",
+      "attributes": {
+        "Theme": "User Access Control",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "Maintain a joiner/mover/leaver process with documented approval steps for creating Microsoft Entra ID accounts and assigning Azure RBAC roles.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-UAC-02",
+      "name": "Authenticate users with unique credentials",
+      "description": "Users must be authenticated with unique credentials before being granted access to applications or devices.",
+      "attributes": {
+        "Theme": "User Access Control",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Enable Microsoft Entra ID security defaults and prefer Entra ID authentication (over shared keys) for Azure resources such as storage accounts, so every user authenticates with their own unique identity.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "entra_security_defaults_enabled",
+          "storage_default_to_entra_authorization_enabled"
+        ]
+      }
+    },
+    {
+      "id": "CE-UAC-03",
+      "name": "Remove or disable user accounts when no longer required",
+      "description": "User accounts must be removed or disabled when they are no longer required, for example when a user leaves the organisation or after a defined period of inactivity.",
+      "attributes": {
+        "Theme": "User Access Control",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "Implement a leaver process and periodic access reviews (e.g. Microsoft Entra ID access reviews) to disable or remove accounts that are no longer required.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    },
+    {
+      "id": "CE-UAC-04",
+      "name": "Multi-factor authentication for cloud services",
+      "description": "Multi-factor authentication must be implemented where available, and authentication to cloud services must always use MFA.",
+      "attributes": {
+        "Theme": "User Access Control",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "full",
+        "RemediationProcedure": "Require multi-factor authentication for all users via Conditional Access policies, covering admin portals, the Azure management API, and users with access to virtual machines.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "entra_privileged_user_has_mfa",
+          "entra_non_privileged_user_has_mfa",
+          "entra_conditional_access_policy_require_mfa_for_admin_portals",
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_user_with_vm_access_has_mfa"
+        ]
+      }
+    },
+    {
+      "id": "CE-UAC-05",
+      "name": "Separate accounts for administrative activities",
+      "description": "Separate accounts must be used to perform administrative activities only, with no email, web browsing or other standard user activity that could expose administrative privileges to avoidable risk.",
+      "attributes": {
+        "Theme": "User Access Control",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Limit the number of Global Administrator assignments, avoid granting the User Access Administrator or subscription Owner role broadly, and require named administrators to use dedicated privileged accounts for administrative tasks.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "entra_global_admin_in_less_than_five_users",
+          "iam_role_user_access_admin_restricted",
+          "iam_subscription_roles_owner_custom_not_created"
+        ]
+      }
+    },
+    {
+      "id": "CE-UAC-06",
+      "name": "Remove or disable special access privileges when no longer required",
+      "description": "Special access privileges must be removed or disabled when they are no longer required, for example when a member of staff changes role.",
+      "attributes": {
+        "Theme": "User Access Control",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Periodically review Microsoft Entra ID directory role assignments and Azure RBAC role assignments, removing privileged roles that are no longer needed for a user's current role.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "entra_global_admin_in_less_than_five_users",
+          "iam_role_user_access_admin_restricted"
+        ]
+      }
+    },
+    {
+      "id": "CE-UAC-07",
+      "name": "Protect password-based authentication against brute-force attacks",
+      "description": "Where authentication is carried out using a password, accounts must be protected against brute-force guessing using MFA, attempt throttling, or account lockout.",
+      "attributes": {
+        "Theme": "User Access Control",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Enable Microsoft Entra ID security defaults (which include smart lockout) and require MFA, particularly for privileged accounts, to mitigate brute-force password attacks.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "entra_security_defaults_enabled",
+          "entra_privileged_user_has_mfa"
+        ]
+      }
+    },
+    {
+      "id": "CE-UAC-08",
+      "name": "Technical controls to manage password quality",
+      "description": "Technical controls must be used to manage the quality of passwords, using MFA, a minimum password length of at least 12 characters with no maximum length, or a minimum of 8 characters combined with a common-password deny list. Regular forced password expiry and complexity requirements should not be enforced.",
+      "attributes": {
+        "Theme": "User Access Control",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Enable Microsoft Entra ID security defaults and Microsoft Entra ID Password Protection (banned password list), and require MFA so that password length alone is not the only protection.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "entra_security_defaults_enabled",
+          "entra_privileged_user_has_mfa",
+          "entra_non_privileged_user_has_mfa"
+        ]
+      }
+    },
+    {
+      "id": "CE-MP-01",
+      "name": "Malware protection mechanism active on all in-scope devices",
+      "description": "A malware protection mechanism must be active on all devices in scope, using anti-malware software, application allow listing, or application sandboxing.",
+      "attributes": {
+        "Theme": "Malware Protection",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Ensure endpoint protection is installed on all virtual machines, enable Microsoft Defender for Endpoint integration, and enable Microsoft Defender for Servers.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "defender_assessments_vm_endpoint_protection_installed",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_defender_for_server_is_on"
+        ]
+      }
+    },
+    {
+      "id": "CE-MP-02",
+      "name": "Anti-malware software configuration",
+      "description": "Anti-malware software must be kept up to date in line with vendor recommendations, prevent malware from running, prevent execution of malicious code, and prevent connections to malicious websites.",
+      "attributes": {
+        "Theme": "Malware Protection",
+        "AssessmentStatus": "Automated",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Enable Microsoft Defender for Endpoint, Microsoft Defender for Servers, and Microsoft Defender for Storage so that signatures stay current and malicious files, code execution and connections are blocked.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": [
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_storage_is_on"
+        ]
+      }
+    },
+    {
+      "id": "CE-MP-03",
+      "name": "Application allow listing",
+      "description": "Where used as an alternative to anti-malware software, only approved applications restricted by code signing must be allowed to execute, with a maintained list of approved applications and no execution of unsigned or invalidly signed applications.",
+      "attributes": {
+        "Theme": "Malware Protection",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "This is an end-user device control implemented through application control policies (e.g. Microsoft Defender Application Control) and has no Azure subscription-level control-plane equivalent.",
+        "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
+      },
+      "checks": {
+        "azure": []
+      }
+    }
+  ]
+}
