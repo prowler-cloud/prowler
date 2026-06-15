@@ -18,6 +18,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
 
+### 🔐 Security
+
+- `microsoft-kiota-*` to 1.9.9 and `aiohttp` to 3.14.0, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+
 ---
 
 ## [5.30.0] (Prowler v5.30.0)
