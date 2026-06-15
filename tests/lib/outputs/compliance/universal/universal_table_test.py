@@ -1,3 +1,4 @@
+import re
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -24,6 +25,10 @@ def _make_finding(check_id, status="PASS", muted=False):
     finding.status = status
     finding.muted = muted
     return finding
+
+
+def _strip_ansi(text):
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 def _make_framework(requirements, table_config, provider="AWS"):
@@ -210,28 +215,48 @@ class TestGroupedMode:
         )
 
         captured = capsys.readouterr()
-        # Both sections must show FAIL(1); previously Logging showed FAIL(0).
-        assert captured.out.count("FAIL(1)") == 2
+        plain = _strip_ansi(captured.out)
+        # Both the IAM and Logging rows must report FAIL(1). Before the fix the
+        # second section seen (Logging) was undercounted to FAIL(0) and rendered
+        # as PASS. Anchor each occurrence to its own table row so an unrelated
+        # "FAIL(1)" elsewhere cannot mask an undercount.
+        iam_row = [line for line in plain.splitlines() if "IAM" in line and "FAIL(1)" in line]
+        logging_row = [
+            line for line in plain.splitlines() if "Logging" in line and "FAIL(1)" in line
+        ]
+        assert len(iam_row) == 1
+        assert len(logging_row) == 1
 
-    def test_grouped_provider_from_framework(self, capsys):
-        """The Provider column must come from the framework, never from a
-        leaked loop variable."""
+    def test_grouped_multi_section_muted_not_undercounted(self, capsys):
+        """A single MUTED finding mapped to several groups must be counted in
+        the per-group Muted column of every group it belongs to."""
         reqs = [
             UniversalComplianceRequirement(
                 id="1.1",
                 description="test",
                 attributes={"Section": "IAM"},
+                checks={"aws": ["check_a", "check_b"]},
+            ),
+            UniversalComplianceRequirement(
+                id="2.1",
+                description="test2",
+                attributes={"Section": "Logging"},
                 checks={"aws": ["check_a"]},
             ),
         ]
         tc = TableConfig(group_by="Section")
-        fw = _make_framework(reqs, tc, provider="AWS")
+        fw = _make_framework(reqs, tc)
 
+        # check_a is MUTED and belongs to both IAM and Logging; check_b is a
+        # plain FAIL so the overview total reaches 2 and the table is rendered.
         findings = [
-            _make_finding("check_a", "FAIL"),
-            _make_finding("check_a", "PASS"),
+            _make_finding("check_a", "FAIL", muted=True),
+            _make_finding("check_b", "FAIL"),
         ]
-        bulk_metadata = {"check_a": MagicMock(Compliance=[])}
+        bulk_metadata = {
+            "check_a": MagicMock(Compliance=[]),
+            "check_b": MagicMock(Compliance=[]),
+        }
 
         get_universal_table(
             findings,
@@ -244,7 +269,11 @@ class TestGroupedMode:
         )
 
         captured = capsys.readouterr()
-        assert "AWS" in captured.out
+        plain = _strip_ansi(captured.out)
+        # The muted finding belongs to both sections, so both the IAM row and
+        # the Logging row must carry a Muted count of 1 in their last cell.
+        muted_one_rows = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
+        assert len(muted_one_rows) == 2
 
 
 class TestSplitMode:
@@ -293,6 +322,57 @@ class TestSplitMode:
         assert "Level 1" in captured.out
         assert "Level 2" in captured.out
 
+    def test_split_muted_multi_section_not_undercounted(self, capsys):
+        """In split mode a single MUTED finding mapped to several groups must
+        be counted in the Muted column of every group it belongs to."""
+        reqs = [
+            UniversalComplianceRequirement(
+                id="1.1",
+                description="test",
+                attributes={"Section": "Storage", "Profile": "Level 1"},
+                checks={"aws": ["check_a", "check_b"]},
+            ),
+            UniversalComplianceRequirement(
+                id="2.1",
+                description="test2",
+                attributes={"Section": "Logging", "Profile": "Level 1"},
+                checks={"aws": ["check_a"]},
+            ),
+        ]
+        tc = TableConfig(
+            group_by="Section",
+            split_by=SplitByConfig(field="Profile", values=["Level 1", "Level 2"]),
+        )
+        fw = _make_framework(reqs, tc)
+
+        # check_a is MUTED and belongs to both Storage and Logging; check_b is a
+        # plain FAIL so the table is rendered.
+        findings = [
+            _make_finding("check_a", "FAIL", muted=True),
+            _make_finding("check_b", "FAIL"),
+        ]
+        bulk_metadata = {
+            "check_a": MagicMock(Compliance=[]),
+            "check_b": MagicMock(Compliance=[]),
+        }
+
+        get_universal_table(
+            findings,
+            bulk_metadata,
+            "test_fw",
+            "output",
+            "/tmp",
+            False,
+            framework=fw,
+        )
+
+        captured = capsys.readouterr()
+        plain = _strip_ansi(captured.out)
+        # Both section rows must carry a Muted count of 1 (last cell). Before the
+        # fix only the first group seen incremented Muted, leaving the other 0.
+        muted_one_rows = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
+        assert len(muted_one_rows) == 2
+
 
 class TestScoredMode:
     def test_scored_rendering(self, capsys):
@@ -339,6 +419,59 @@ class TestScoredMode:
         assert "IAM" in captured.out
         assert "Score" in captured.out
         assert "Threat Score" in captured.out
+
+    def test_scored_multi_section_fail_not_undercounted(self, capsys):
+        """In scored mode a single FAIL finding mapped to several groups must
+        show FAIL(1) in every group it belongs to, not only the first one."""
+        reqs = [
+            UniversalComplianceRequirement(
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM", "LevelOfRisk": 5, "Weight": 100},
+                checks={"aws": ["check_a", "check_b"]},
+            ),
+            UniversalComplianceRequirement(
+                id="2.1",
+                description="test2",
+                attributes={"Section": "Logging", "LevelOfRisk": 3, "Weight": 50},
+                checks={"aws": ["check_a"]},
+            ),
+        ]
+        tc = TableConfig(
+            group_by="Section",
+            scoring=ScoringConfig(risk_field="LevelOfRisk", weight_field="Weight"),
+        )
+        fw = _make_framework(reqs, tc)
+
+        # check_a (FAIL) belongs to both IAM and Logging; check_b (PASS, IAM
+        # only) raises the overview total to 2 so the table is rendered.
+        findings = [
+            _make_finding("check_a", "FAIL"),
+            _make_finding("check_b", "PASS"),
+        ]
+        bulk_metadata = {
+            "check_a": MagicMock(Compliance=[]),
+            "check_b": MagicMock(Compliance=[]),
+        }
+
+        get_universal_table(
+            findings,
+            bulk_metadata,
+            "test_fw",
+            "output",
+            "/tmp",
+            False,
+            framework=fw,
+        )
+
+        captured = capsys.readouterr()
+        plain = _strip_ansi(captured.out)
+        iam_row = [line for line in plain.splitlines() if "IAM" in line and "FAIL(1)" in line]
+        logging_row = [
+            line for line in plain.splitlines() if "Logging" in line and "FAIL(1)" in line
+        ]
+        assert len(iam_row) == 1
+        assert len(logging_row) == 1
 
 
 class TestCustomLabels:
