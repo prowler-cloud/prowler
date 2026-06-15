@@ -364,3 +364,13 @@ constraint-dependencies = [
   "zstd==1.5.7.3"
 ]
 override-dependencies = ["okta==3.4.2"]
+
+[tool.vulture]
+# Suppress known false positives. The CI command only passes --exclude and
+# --min-confidence on the CLI, so ignore_names from here still applies (vulture
+# only overrides the keys set on the CLI).
+# - mock_* : pytest fixtures injected as test params but unused in the body
+# (e.g. mock_sensitive_args in tests/lib/cli/redact_test.py)
+# - view   : DRF BasePermission.has_object_permission(self, request, view, obj)
+# framework-required signature param in skills/django-drf template assets
+ignore_names = ["mock_*", "view"]
