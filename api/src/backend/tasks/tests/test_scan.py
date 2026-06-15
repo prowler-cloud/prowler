@@ -3700,6 +3700,12 @@ class TestAggregateFindingsByRegion:
             )
         )
 
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
         # Verify structure of check_status_by_region
         assert isinstance(check_status_by_region, dict)
         assert "us-east-1" in check_status_by_region
@@ -3739,6 +3745,12 @@ class TestAggregateFindingsByRegion:
             tenant_id, scan_id, modeled_threatscore_compliance_id
         )
 
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
         # FAIL should override PASS
         assert check_status_by_region["us-east-1"]["check1"] == "FAIL"
 
@@ -3765,6 +3777,12 @@ class TestAggregateFindingsByRegion:
         _aggregate_findings_by_region(
             tenant_id, scan_id, modeled_threatscore_compliance_id
         )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
 
         # Verify filter was called with muted=False
         mock_findings_filter.assert_called_once_with(
@@ -3814,6 +3832,12 @@ class TestAggregateFindingsByRegion:
             tenant_id, scan_id, modeled_threatscore_compliance_id
         )
 
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
         # Verify compliance counts
         normalized_id = re.sub(
             r"[^a-z0-9]", "", modeled_threatscore_compliance_id.lower()
@@ -3856,6 +3880,12 @@ class TestAggregateFindingsByRegion:
             tenant_id, scan_id, modeled_threatscore_compliance_id
         )
 
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
         # Verify both regions are present with correct statuses
         assert "us-east-1" in check_status_by_region
         assert "us-west-2" in check_status_by_region
@@ -3897,6 +3927,12 @@ class TestAggregateFindingsByRegion:
             )
         )
 
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
         normalized_id = re.sub(
             r"[^a-z0-9]", "", modeled_threatscore_compliance_id.lower()
         )
@@ -3936,6 +3972,12 @@ class TestAggregateFindingsByRegion:
             )
         )
 
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
         assert check_status_by_region == {}
         assert findings_count_by_compliance == {}
 
@@ -3964,6 +4006,12 @@ class TestAggregateFindingsByRegion:
                 tenant_id, scan_id, modeled_threatscore_compliance_id
             )
         )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
 
         assert check_status_by_region == {}
         assert findings_count_by_compliance == {}
