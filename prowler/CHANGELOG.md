@@ -10,6 +10,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `config_delegated_admin_and_org_aggregator_all_regions` check for AWS provider, verifying that AWS Config has a delegated administrator and an organization aggregator covering all AWS regions [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
 - `sagemaker_clarify_exists` check for AWS provider [(#11211)](https://github.com/prowler-cloud/prowler/pull/11211)
 
+### 🔄 Changed
+
+- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
+
 ---
 
 ## [5.30.0] (Prowler v5.30.0)

@@ -192,12 +192,14 @@ class TestOracleCloudProviderSecret:
 
         assert not serializer.is_valid()
 
-    def test_rejects_missing_regions_and_region(self):
+    def test_accepts_missing_regions_and_region(self):
         secret = self.valid_secret()
         secret.pop("regions")
         serializer = OracleCloudProviderSecret(data=secret)
 
-        assert not serializer.is_valid()
+        assert serializer.is_valid(), serializer.errors
+        assert "region" not in serializer.validated_data
+        assert "regions" not in serializer.validated_data
 
     def test_rejects_both_regions_and_legacy_region(self):
         serializer = OracleCloudProviderSecret(

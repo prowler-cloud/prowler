@@ -4,6 +4,9 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.31.1] (Prowler UNRELEASED)
 
+### 🔄 Changed
+
+- OCI provider secrets can now omit `region` and `regions`, while legacy single-region and explicit multi-region filters remain supported [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
 
 ### 🐞 Fixed
 

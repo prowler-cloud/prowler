@@ -1756,9 +1756,9 @@ class OracleCloudProviderSecret(serializers.Serializer):
         has_regions = "regions" in attrs
         has_region = "region" in attrs
 
-        if has_regions == has_region:
+        if has_regions and has_region:
             raise serializers.ValidationError(
-                "Provide exactly one of regions or legacy region."
+                "Provide either regions or legacy region, not both."
             )
 
         if has_regions:
@@ -1772,7 +1772,7 @@ class OracleCloudProviderSecret(serializers.Serializer):
                     {"regions": "Regions cannot contain duplicate values."}
                 )
             attrs["regions"] = regions
-        else:
+        elif has_region:
             region = attrs["region"].strip()
             if not region:
                 raise serializers.ValidationError({"region": "Region cannot be blank."})

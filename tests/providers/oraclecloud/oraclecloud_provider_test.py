@@ -200,6 +200,41 @@ MIIEpQIBAAKCAQEA0Z3VS5JJcds3xfn/ygWyF8n0sMcD/QHWCJ7yGSEtLN2T
 
             assert connection.is_connected is True
 
+    def test_test_connection_direct_credentials_without_region_uses_bootstrap_region(
+        self,
+    ):
+        """Direct API key auth should not fall back to config-file auth without a region."""
+        import base64
+
+        valid_key = (
+            "-----BEGIN RSA PRIVATE KEY-----\nfake\n-----END RSA PRIVATE KEY-----"
+        )
+        encoded_key = base64.b64encode(valid_key.encode("utf-8")).decode("utf-8")
+
+        with (
+            patch("oci.config.validate_config") as mock_validate_config,
+            patch("oci.identity.IdentityClient") as mock_identity_client,
+        ):
+            mock_tenancy = MagicMock()
+            mock_tenancy.name = "test-tenancy"
+            mock_response = MagicMock()
+            mock_response.data = mock_tenancy
+            mock_client_instance = MagicMock()
+            mock_client_instance.get_tenancy.return_value = mock_response
+            mock_identity_client.return_value = mock_client_instance
+
+            connection = OraclecloudProvider.test_connection(
+                key_content=encoded_key,
+                user="ocid1.user.oc1..aaaaaaaexample",
+                fingerprint="aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+                provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+                raise_on_exception=False,
+            )
+
+        assert connection.is_connected is True
+        assert mock_validate_config.call_args.args[0]["region"] == "us-ashburn-1"
+
 
 class TestOraclecloudProviderInit:
     """Tests for OraclecloudProvider initialization"""
@@ -357,6 +392,57 @@ class TestOraclecloudProviderInit:
 
         assert mock_setup_session.call_args.kwargs["region"] == "us-ashburn-1"
         assert mock_set_identity.call_args.kwargs["region"] == "us-ashburn-1"
+
+    def test_init_without_region_uses_bootstrap_region_without_scan_filter(self):
+        mock_session = OCISession(
+            config={"region": "us-ashburn-1"}, signer=None, profile="DEFAULT"
+        )
+        mock_identity = OCIIdentityInfo(
+            tenancy_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            tenancy_name="test-tenancy",
+            user_id="ocid1.user.oc1..aaaaaaaexample",
+            region="us-ashburn-1",
+            profile="DEFAULT",
+            audited_regions=set(),
+            audited_compartments=[],
+        )
+        all_subscribed_regions = [
+            OCIRegion(key="us-ashburn-1", name="us-ashburn-1", is_home_region=True),
+            OCIRegion(key="us-phoenix-1", name="us-phoenix-1", is_home_region=False),
+        ]
+
+        with (
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.setup_session",
+                return_value=mock_session,
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.set_identity",
+                return_value=mock_identity,
+            ) as mock_set_identity,
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.get_regions_to_audit",
+                return_value=all_subscribed_regions,
+            ) as mock_get_regions_to_audit,
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.get_compartments_to_audit",
+                return_value=["ocid1.compartment.oc1..aaaaaaaexample"],
+            ),
+            patch("prowler.providers.common.provider.Provider.set_global_provider"),
+        ):
+            provider = OraclecloudProvider(
+                user="ocid1.user.oc1..aaaaaaaexample",
+                fingerprint="aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                key_content="fake-base64-key-content",
+                tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+                config_content={"dummy": True},
+                mutelist_content={"Accounts": {}},
+            )
+
+        assert mock_setup_session.call_args.kwargs["region"] == "us-ashburn-1"
+        assert mock_set_identity.call_args.kwargs["region"] == "us-ashburn-1"
+        assert mock_get_regions_to_audit.call_args_list[0].args == (None,)
+        assert provider.regions == all_subscribed_regions
 
     def test_home_region_uses_full_subscription_list_not_region_filter(self):
         """Home region must come from the full subscription list, not the --region filter.

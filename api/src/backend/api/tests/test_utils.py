@@ -202,6 +202,29 @@ class TestInitializeProwlerProvider:
             region={"us-ashburn-1"}
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_without_region_omits_scan_filter(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            user="ocid1.user.oc1..fake",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..fake",
+        )
+
 
 class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
@@ -445,6 +468,29 @@ class TestGetProwlerProviderKwargs:
 
         expected_result = {**secret_dict, "region": {"us-ashburn-1"}}
         assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_oraclecloud_without_region_keeps_secret_regionless(
+        self,
+    ):
+        secret_dict = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret = secret_mock
+        provider.uid = "ocid1.tenancy.oc1..fake"
+
+        result = get_prowler_provider_kwargs(provider)
+
+        assert result == secret_dict
+        assert "region" not in result
+        assert "regions" not in result
 
     def test_get_prowler_provider_kwargs_with_mutelist(self):
         provider_uid = "provider_uid"

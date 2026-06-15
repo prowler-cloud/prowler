@@ -1090,12 +1090,10 @@ test.describe("Add Provider", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
-    const region = process.env.E2E_OCI_REGION ?? "";
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       test.skip(
-        !tenancyId || !userId || !fingerprint || !keyContent || !region,
+        !tenancyId || !userId || !fingerprint || !keyContent,
         "OCI E2E env vars are not set",
       );
       providersPage = new ProvidersPage(page);
@@ -1132,7 +1130,6 @@ test.describe("Add Provider", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
-          region: region,
         };
 
         // Navigate to providers page
@@ -1446,12 +1443,10 @@ test.describe("Update Provider Credentials", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
-    const region = process.env.E2E_OCI_REGION ?? "";
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       test.skip(
-        !tenancyId || !userId || !fingerprint || !keyContent || !region,
+        !tenancyId || !userId || !fingerprint || !keyContent,
         "OCI E2E env vars are not set",
       );
       providersPage = new ProvidersPage(page);
@@ -1473,7 +1468,6 @@ test.describe("Update Provider Credentials", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
-          region: region,
         };
 
         // Navigate to providers page
