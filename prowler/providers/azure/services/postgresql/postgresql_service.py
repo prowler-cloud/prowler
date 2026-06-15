@@ -160,7 +160,9 @@ class PostgreSQL(AzureService):
             logger.error(f"Error getting Entra ID admins for {server_name}: {e}")
             return []
 
-    def _get_connection_throttling(self, subscription, resouce_group_name, server_name):
+    def _get_connection_throttling(
+        self, subscription, resouce_group_name, server_name
+    ) -> str | None:
         client = self.clients[subscription]
         try:
             connection_throttling = client.configurations.get(
@@ -228,6 +230,6 @@ class Server:
     log_checkpoints: str
     log_connections: str
     log_disconnections: str
-    connection_throttling: str
+    connection_throttling: str | None
     log_retention_days: str
     firewall: list[Firewall]
