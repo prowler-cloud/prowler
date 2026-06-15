@@ -94,12 +94,18 @@ class TestENSTable:
                 Compliance=[
                     _make_compliance(
                         "aws",
-                        [_attr("operacional", "control de acceso", tipo="recomendacion")],
+                        [
+                            _attr(
+                                "operacional", "control de acceso", tipo="recomendacion"
+                            )
+                        ],
                     )
                 ]
             ),
             "check_b": SimpleNamespace(
-                Compliance=[_make_compliance("aws", [_attr("organizativo", "politica")])]
+                Compliance=[
+                    _make_compliance("aws", [_attr("organizativo", "politica")])
+                ]
             ),
         }
         findings = [
@@ -175,7 +181,9 @@ class TestENSTable:
         bulk_metadata = {
             "check_a": SimpleNamespace(
                 Compliance=[
-                    _make_compliance("aws", [_attr("operacional", "control de acceso")]),
+                    _make_compliance(
+                        "aws", [_attr("operacional", "control de acceso")]
+                    ),
                     _make_compliance(
                         "gcp", [_attr("x", "y")], framework="OtherFramework"
                     ),
@@ -183,7 +191,9 @@ class TestENSTable:
             ),
             "check_b": SimpleNamespace(
                 Compliance=[
-                    _make_compliance("aws", [_attr("operacional", "control de acceso")]),
+                    _make_compliance(
+                        "aws", [_attr("operacional", "control de acceso")]
+                    ),
                     _make_compliance(
                         "gcp", [_attr("x", "y")], framework="OtherFramework"
                     ),

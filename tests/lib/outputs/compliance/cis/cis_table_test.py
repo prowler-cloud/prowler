@@ -42,9 +42,7 @@ class TestCISTable:
             # check_a is muted and belongs to two sections at once.
             "check_a": SimpleNamespace(
                 Compliance=[
-                    _make_compliance(
-                        "aws", [_attr("1 IAM"), _attr("2 Logging")]
-                    )
+                    _make_compliance("aws", [_attr("1 IAM"), _attr("2 Logging")])
                 ]
             ),
             # A real (non-muted) finding so the table is rendered.

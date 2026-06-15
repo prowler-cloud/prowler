@@ -220,9 +220,13 @@ class TestGroupedMode:
         # second section seen (Logging) was undercounted to FAIL(0) and rendered
         # as PASS. Anchor each occurrence to its own table row so an unrelated
         # "FAIL(1)" elsewhere cannot mask an undercount.
-        iam_row = [line for line in plain.splitlines() if "IAM" in line and "FAIL(1)" in line]
+        iam_row = [
+            line for line in plain.splitlines() if "IAM" in line and "FAIL(1)" in line
+        ]
         logging_row = [
-            line for line in plain.splitlines() if "Logging" in line and "FAIL(1)" in line
+            line
+            for line in plain.splitlines()
+            if "Logging" in line and "FAIL(1)" in line
         ]
         assert len(iam_row) == 1
         assert len(logging_row) == 1
@@ -466,9 +470,13 @@ class TestScoredMode:
 
         captured = capsys.readouterr()
         plain = _strip_ansi(captured.out)
-        iam_row = [line for line in plain.splitlines() if "IAM" in line and "FAIL(1)" in line]
+        iam_row = [
+            line for line in plain.splitlines() if "IAM" in line and "FAIL(1)" in line
+        ]
         logging_row = [
-            line for line in plain.splitlines() if "Logging" in line and "FAIL(1)" in line
+            line
+            for line in plain.splitlines()
+            if "Logging" in line and "FAIL(1)" in line
         ]
         assert len(iam_row) == 1
         assert len(logging_row) == 1

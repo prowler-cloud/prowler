@@ -28,9 +28,7 @@ def _make_compliance(provider, pillars, framework="ProwlerThreatScore"):
         Provider=provider,
         Requirements=[
             SimpleNamespace(
-                Attributes=[
-                    SimpleNamespace(Section=pillar, LevelOfRisk=5, Weight=100)
-                ]
+                Attributes=[SimpleNamespace(Section=pillar, LevelOfRisk=5, Weight=100)]
             )
             for pillar in pillars
         ],
