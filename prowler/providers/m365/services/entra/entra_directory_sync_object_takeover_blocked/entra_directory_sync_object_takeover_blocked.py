@@ -13,7 +13,8 @@ class entra_directory_sync_object_takeover_blocked(Check):
         Builds reports from the Entra client's directory sync settings. Hybrid
         tenants pass when both soft- and hard-match protections are enabled,
         fail when either protection is disabled, and require manual review when
-        settings cannot be read. Cloud-only tenants pass as not applicable.
+        settings cannot be read. Cloud-only tenants are reported as manual
+        guidance because the check is not applicable.
 
         Returns:
             List[CheckReportM365]: Reports for each sync configuration or
@@ -36,11 +37,12 @@ class entra_directory_sync_object_takeover_blocked(Check):
                         f"{organization.name}: {entra_client.directory_sync_error}."
                     )
                 else:
-                    report.status = "PASS"
+                    report.status = "MANUAL"
                     report.status_extended = (
                         f"Entra organization {organization.name} is cloud-only "
                         "(no on-premises sync), so directory sync object takeover "
-                        "protections are not applicable."
+                        "protections are not applicable. No action is required "
+                        "unless on-premises synchronization is enabled."
                     )
                 findings.append(report)
             return findings
@@ -88,11 +90,12 @@ class entra_directory_sync_object_takeover_blocked(Check):
                         "the tenant configuration manually."
                     )
                 else:
-                    report.status = "PASS"
+                    report.status = "MANUAL"
                     report.status_extended = (
                         f"Entra organization {organization.name} is cloud-only "
                         "(no on-premises sync), so directory sync object takeover "
-                        "protections are not applicable."
+                        "protections are not applicable. No action is required "
+                        "unless on-premises synchronization is enabled."
                     )
                 findings.append(report)
 

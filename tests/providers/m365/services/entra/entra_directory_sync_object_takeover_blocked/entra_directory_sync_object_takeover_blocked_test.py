@@ -138,8 +138,9 @@ class Test_entra_directory_sync_object_takeover_blocked:
         result = self.run_check(entra_client)
 
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "MANUAL"
         assert "cloud-only" in result[0].status_extended
+        assert "No action is required" in result[0].status_extended
 
     def test_permission_error_cloud_only_tenant_is_not_applicable(
         self, entra_client: mock.MagicMock
@@ -159,8 +160,9 @@ class Test_entra_directory_sync_object_takeover_blocked:
         result = self.run_check(entra_client)
 
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "MANUAL"
         assert "cloud-only" in result[0].status_extended
+        assert "No action is required" in result[0].status_extended
 
     def test_missing_settings_is_manual_for_hybrid_tenant(
         self, entra_client: mock.MagicMock
