@@ -15,12 +15,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'mcp_server/pyproject.toml'
-      - 'mcp_server/uv.lock'
-      - '.github/workflows/mcp-security.yml'
-      - '.github/actions/osv-scanner/**'
-      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

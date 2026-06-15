@@ -15,12 +15,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'ui/package.json'
-      - 'ui/pnpm-lock.yaml'
-      - '.github/workflows/ui-security.yml'
-      - '.github/actions/osv-scanner/**'
-      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
