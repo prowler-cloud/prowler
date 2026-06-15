@@ -99,7 +99,7 @@ export const AttackPathsStatusPanel = ({
         <Info className="size-4" />
         <AlertTitle>No Attack Paths data</AlertTitle>
         <AlertDescription>
-          <span>Your scan completed but didn&apos;t produce graph data.</span>
+          <span>This scan didn&apos;t produce Attack Paths data.</span>
         </AlertDescription>
       </Alert>
     );
