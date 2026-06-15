@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class SSEChannelManager(DefaultChannelManager):
     """Connect `django-eventstream` to the platform's SSE viewsets."""
 
-    def get_channels_for_request(self, request: Request, view_kwargs: dict) -> set[str]:
+    def get_channels_for_request(self, request: Request, view_kwargs: dict) -> set[str]:  # noqa: vulture
         """Return the request's channels scoped to the active JWT tenant.
 
         Args:
