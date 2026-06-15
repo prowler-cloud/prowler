@@ -6,8 +6,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔐 Security
 
-- `aiohttp` from 3.13.5 to 3.14.0 and `idna` from 3.11 to 3.15, patching `GHSA-jg22-mg44-37j8`, `GHSA-hg6j-4rv6-33pg`, and `GHSA-65pc-fj4g-8rjx` [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
-- API container base image from `python:3.12.10-slim-bookworm` to `python:3.12.13-slim-bookworm` and in-image `trivy` from 0.70.0 to 0.71.0, patching `libgnutls30` CVE-2026-33845 and CVE-2026-42010 and the Go module CVEs embedded in the Trivy binary [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- `aiohttp` to 3.14.0 and `idna` to 3.15, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- Container base image to `python:3.12.13-slim-bookworm` and `trivy` to 0.71.0, patching OS and Go module CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
 
 ---
 
