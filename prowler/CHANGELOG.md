@@ -20,7 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🔐 Security
 
-- SDK container image now applies `apt-get upgrade` at build time, patching `libgnutls30` (CVE-2026-33845, CVE-2026-42010); `.trivyignore` documents remaining bookworm criticals with no-fix or not-affected rationale [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+- SDK container base image bumped to `python:3.12.13-slim-bookworm` (patches `libgnutls30` CVE-2026-33845 and CVE-2026-42010) and `trivy` bumped to 0.71.0 (patches embedded `golang.org/x/crypto` and Go stdlib CVEs); `.trivyignore` documents remaining bookworm criticals with no-fix or not-affected rationale [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
 
 ---
 

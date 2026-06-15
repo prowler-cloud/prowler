@@ -13,15 +13,15 @@
 # neither vulnerable code path (Archive::Tar parsing or regex compilation of
 # attacker-controlled input) is reachable from Prowler. No Debian bookworm fix
 # is available yet.
-CVE-2026-42496 exp:2026-12-15
-CVE-2026-8376 exp:2026-12-15
+CVE-2026-42496 exp:2026-07-15
+CVE-2026-8376 exp:2026-07-15
 
 # CVE-2025-7458 — SQLite integer overflow.
 # Package: libsqlite3-0.
 # Why ignored: transitive dependency of CPython's stdlib sqlite3 module. The
 # Prowler SDK does not open user-supplied SQLite databases; SQLite usage is
 # internal and bounded. No Debian bookworm fix is available.
-CVE-2025-7458 exp:2026-12-15
+CVE-2025-7458 exp:2026-07-15
 
 # CVE-2026-43185 — Linux kernel ksmbd signedness bug.
 # Package: linux-libc-dev.
@@ -29,7 +29,7 @@ CVE-2025-7458 exp:2026-12-15
 # not a running kernel. Containers execute against the host kernel, so these
 # headers are inert at runtime. The upstream fix landed in kernel 7.0-rc2 and
 # has not been backported to Debian's 6.1 LTS line.
-CVE-2026-43185 exp:2026-12-15
+CVE-2026-43185 exp:2026-07-15
 
 # CVE-2023-45853 — zlib MiniZip integer overflow / heap overflow in
 # zipOpenNewFileInZip4_64.
@@ -41,4 +41,4 @@ CVE-2026-43185 exp:2026-12-15
 # zlib 1.3.1, available in Debian trixie (13); migrating the base image would
 # clear it fully.
 # Ref: https://security-tracker.debian.org/tracker/CVE-2023-45853
-CVE-2023-45853 exp:2026-12-15
+CVE-2023-45853 exp:2026-07-15
