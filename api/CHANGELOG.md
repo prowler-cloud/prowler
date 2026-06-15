@@ -6,7 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔐 Security
 
-- `trivy` binary bumped to 0.71.0 in the API image, patching embedded `golang.org/x/crypto`, `golang.org/x/net`, and Go stdlib CVEs in the shipped Trivy binary [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+- `trivy` binary bumped to 0.71.0 patching embedded `golang.org/x/crypto`, `golang.org/x/net`, and Go `stdlib` CVEs [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
 
 ---
 

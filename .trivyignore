@@ -2,6 +2,8 @@
 # Each entry below documents (a) the affected package and why it ships in the
 # image, (b) why the CVE is not exploitable in Prowler's runtime, and (c) the
 # upstream fix status. Entries carry an expiry so they auto-force re-review.
+# Entries are scoped per-package so suppressions cannot drift onto unrelated
+# packages that may be assigned the same CVE in the future.
 #
 # Scanned by: .github/actions/trivy-scan via .github/workflows/sdk-container-checks.yml
 
@@ -13,15 +15,21 @@
 # neither vulnerable code path (Archive::Tar parsing or regex compilation of
 # attacker-controlled input) is reachable from Prowler. No Debian bookworm fix
 # is available yet.
-CVE-2026-42496 exp:2026-07-15
-CVE-2026-8376 exp:2026-07-15
+CVE-2026-42496 pkg:perl exp:2026-07-15
+CVE-2026-42496 pkg:perl-base exp:2026-07-15
+CVE-2026-42496 pkg:perl-modules-5.36 exp:2026-07-15
+CVE-2026-42496 pkg:libperl5.36 exp:2026-07-15
+CVE-2026-8376 pkg:perl exp:2026-07-15
+CVE-2026-8376 pkg:perl-base exp:2026-07-15
+CVE-2026-8376 pkg:perl-modules-5.36 exp:2026-07-15
+CVE-2026-8376 pkg:libperl5.36 exp:2026-07-15
 
 # CVE-2025-7458 — SQLite integer overflow.
 # Package: libsqlite3-0.
 # Why ignored: transitive dependency of CPython's stdlib sqlite3 module. The
 # Prowler SDK does not open user-supplied SQLite databases; SQLite usage is
 # internal and bounded. No Debian bookworm fix is available.
-CVE-2025-7458 exp:2026-07-15
+CVE-2025-7458 pkg:libsqlite3-0 exp:2026-07-15
 
 # CVE-2026-43185 — Linux kernel ksmbd signedness bug.
 # Package: linux-libc-dev.
@@ -29,7 +37,7 @@ CVE-2025-7458 exp:2026-07-15
 # not a running kernel. Containers execute against the host kernel, so these
 # headers are inert at runtime. The upstream fix landed in kernel 7.0-rc2 and
 # has not been backported to Debian's 6.1 LTS line.
-CVE-2026-43185 exp:2026-07-15
+CVE-2026-43185 pkg:linux-libc-dev exp:2026-07-15
 
 # CVE-2023-45853 — zlib MiniZip integer overflow / heap overflow in
 # zipOpenNewFileInZip4_64.
@@ -41,4 +49,5 @@ CVE-2026-43185 exp:2026-07-15
 # zlib 1.3.1, available in Debian trixie (13); migrating the base image would
 # clear it fully.
 # Ref: https://security-tracker.debian.org/tracker/CVE-2023-45853
-CVE-2023-45853 exp:2026-07-15
+CVE-2023-45853 pkg:zlib1g exp:2026-07-15
+CVE-2023-45853 pkg:zlib1g-dev exp:2026-07-15
