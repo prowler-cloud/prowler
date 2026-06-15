@@ -13,7 +13,7 @@ ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     wget libicu72 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     build-essential pkg-config libzstd-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
