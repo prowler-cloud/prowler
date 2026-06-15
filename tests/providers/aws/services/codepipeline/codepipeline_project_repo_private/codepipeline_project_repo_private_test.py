@@ -68,7 +68,7 @@ class Test_codepipeline_project_repo_private:
                     "Connection": {"ProviderType": "GitHub"}
                 }
 
-                def mock_urlopen_side_effect(req, timeout=None):
+                def mock_urlopen_side_effect(req, **kwargs):
                     raise urllib.error.HTTPError(
                         url="", code=404, msg="", hdrs={}, fp=None
                     )
@@ -146,7 +146,7 @@ class Test_codepipeline_project_repo_private:
                 mock_response.getcode.return_value = 200
                 mock_response.geturl.return_value = f"https://github.com/{repo_id}"
 
-                def mock_urlopen_side_effect(req, timeout=None):
+                def mock_urlopen_side_effect(req, **kwargs):
                     if "github.com" in req.get_full_url():
                         return mock_response
                     raise urllib.error.HTTPError(
@@ -223,7 +223,7 @@ class Test_codepipeline_project_repo_private:
                     "Connection": {"ProviderType": "GitHub"}
                 }
 
-                def mock_urlopen_side_effect(req, timeout=None):
+                def mock_urlopen_side_effect(req, **kwargs):
                     raise ssl.SSLError("certificate verify failed")
 
                 mock_urlopen.side_effect = mock_urlopen_side_effect
@@ -292,7 +292,7 @@ class Test_codepipeline_project_repo_private:
                     "Connection": {"ProviderType": "GitHub"}
                 }
 
-                def mock_urlopen_side_effect(req, timeout=None):
+                def mock_urlopen_side_effect(req, **kwargs):
                     raise urllib.error.HTTPError(
                         url="", code=404, msg="", hdrs={}, fp=None
                     )
@@ -365,7 +365,7 @@ class Test_codepipeline_project_repo_private:
                 mock_response.getcode.return_value = 200
                 mock_response.geturl.return_value = f"https://gitlab.com/{repo_id}"
 
-                def mock_urlopen_side_effect(req, timeout=None):
+                def mock_urlopen_side_effect(req, **kwargs):
                     if "gitlab.com" in req.get_full_url():
                         return mock_response
                     raise urllib.error.HTTPError(
