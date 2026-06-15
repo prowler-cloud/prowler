@@ -9426,6 +9426,116 @@ class TestComplianceOverviewViewSet:
         with patch("api.v1.views.backfill_compliance_summaries_task.delay") as mock:
             yield mock
 
+    def _create_completed_scan(self, provider, name):
+        return Scan.objects.create(
+            name=name,
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=provider.tenant_id,
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
+        )
+
+    def _create_requirement(
+        self,
+        scan,
+        requirement_id,
+        status_choice,
+        region="eu-west-1",
+        compliance_id="cis_1.4_aws",
+    ):
+        passed = 1 if status_choice == StatusChoices.PASS else 0
+        total = 1 if status_choice != StatusChoices.MANUAL else 0
+        return ComplianceRequirementOverview.objects.create(
+            tenant_id=scan.tenant_id,
+            scan=scan,
+            compliance_id=compliance_id,
+            framework="CIS-1.4-AWS",
+            version="1.4",
+            description="CIS AWS Foundations Benchmark v1.4.0",
+            region=region,
+            requirement_id=requirement_id,
+            requirement_status=status_choice,
+            passed_checks=passed,
+            failed_checks=0 if status_choice == StatusChoices.PASS else 1,
+            total_checks=total,
+            passed_findings=passed,
+            total_findings=total,
+        )
+
+    def _create_compliance_summary(
+        self,
+        scan,
+        *,
+        passed,
+        failed,
+        manual=0,
+        compliance_id="cis_1.4_aws",
+    ):
+        return ComplianceOverviewSummary.objects.create(
+            tenant_id=scan.tenant_id,
+            scan=scan,
+            compliance_id=compliance_id,
+            requirements_passed=passed,
+            requirements_failed=failed,
+            requirements_manual=manual,
+            total_requirements=passed + failed + manual,
+        )
+
+    def _overview_attrs_by_id(self, response):
+        assert response.status_code == status.HTTP_200_OK
+        return {item["id"]: item["attributes"] for item in response.json()["data"]}
+
+    def _prepare_latest_compliance_data(self, providers_fixture):
+        provider1, provider2, provider3, *_ = providers_fixture
+        old_scan = self._create_completed_scan(provider1, "old aws compliance scan")
+        latest_scan1 = self._create_completed_scan(
+            provider1, "latest aws compliance scan 1"
+        )
+        latest_scan2 = self._create_completed_scan(
+            provider2, "latest aws compliance scan 2"
+        )
+        latest_gcp_scan = self._create_completed_scan(
+            provider3, "latest gcp compliance scan"
+        )
+
+        self._create_requirement(old_scan, "1.1", StatusChoices.FAIL)
+        self._create_requirement(old_scan, "1.2", StatusChoices.FAIL)
+        self._create_compliance_summary(old_scan, passed=0, failed=2)
+
+        self._create_requirement(
+            latest_scan1, "1.1", StatusChoices.PASS, region="eu-west-1"
+        )
+        self._create_requirement(
+            latest_scan1, "1.2", StatusChoices.PASS, region="eu-west-1"
+        )
+        self._create_compliance_summary(latest_scan1, passed=2, failed=0)
+
+        self._create_requirement(
+            latest_scan2, "1.1", StatusChoices.FAIL, region="us-east-1"
+        )
+        self._create_requirement(
+            latest_scan2, "1.2", StatusChoices.PASS, region="us-east-1"
+        )
+        self._create_compliance_summary(latest_scan2, passed=1, failed=1)
+
+        self._create_requirement(
+            latest_gcp_scan,
+            "gcp-1.1",
+            StatusChoices.FAIL,
+            region="europe-west1",
+            compliance_id="cis_1.3_gcp",
+        )
+        self._create_compliance_summary(
+            latest_gcp_scan,
+            passed=0,
+            failed=1,
+            compliance_id="cis_1.3_gcp",
+        )
+
+        return old_scan, latest_scan1, latest_scan2, latest_gcp_scan
+
     def test_compliance_overview_list_none(
         self,
         authenticated_client,
@@ -9572,6 +9682,154 @@ class TestComplianceOverviewViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) >= 1
         mock_backfill_task.assert_not_called()
+
+    def test_compliance_overview_provider_id_filter_uses_latest_scan(
+        self,
+        authenticated_client,
+        providers_fixture,
+        mock_backfill_task,
+    ):
+        _, latest_scan, *_ = self._prepare_latest_compliance_data(providers_fixture)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[provider_id]": str(latest_scan.provider_id)},
+        )
+
+        attrs_by_id = self._overview_attrs_by_id(response)
+        assert attrs_by_id["cis_1.4_aws"]["requirements_passed"] == 2
+        assert attrs_by_id["cis_1.4_aws"]["requirements_failed"] == 0
+        assert "cis_1.3_gcp" not in attrs_by_id
+        mock_backfill_task.assert_not_called()
+
+    def test_compliance_overview_provider_id_in_filter_aggregates_latest_scans(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        _, latest_scan1, latest_scan2, *_ = self._prepare_latest_compliance_data(
+            providers_fixture
+        )
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {
+                "filter[provider_id__in]": (
+                    f"{latest_scan1.provider_id},{latest_scan2.provider_id}"
+                )
+            },
+        )
+
+        attrs_by_id = self._overview_attrs_by_id(response)
+        assert attrs_by_id["cis_1.4_aws"]["requirements_passed"] == 1
+        assert attrs_by_id["cis_1.4_aws"]["requirements_failed"] == 1
+        assert attrs_by_id["cis_1.4_aws"]["total_requirements"] == 2
+        assert "cis_1.3_gcp" not in attrs_by_id
+
+    def test_compliance_overview_provider_type_filter_uses_latest_scans(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        self._prepare_latest_compliance_data(providers_fixture)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[provider_type]": Provider.ProviderChoices.AWS.value},
+        )
+
+        attrs_by_id = self._overview_attrs_by_id(response)
+        assert attrs_by_id["cis_1.4_aws"]["requirements_passed"] == 1
+        assert attrs_by_id["cis_1.4_aws"]["requirements_failed"] == 1
+        assert attrs_by_id["cis_1.4_aws"]["total_requirements"] == 2
+        assert "cis_1.3_gcp" not in attrs_by_id
+
+    def test_compliance_overview_provider_groups_filters_use_latest_scans(
+        self,
+        authenticated_client,
+        providers_fixture,
+        provider_groups_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+        group1, group2, *_ = provider_groups_fixture
+        _, latest_scan1, latest_scan2, *_ = self._prepare_latest_compliance_data(
+            providers_fixture
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            provider_group=group1,
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            provider_group=group2,
+        )
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[provider_groups]": str(group1.id)},
+        )
+
+        attrs_by_id = self._overview_attrs_by_id(response)
+        assert latest_scan1.provider_id == provider1.id
+        assert attrs_by_id["cis_1.4_aws"]["requirements_passed"] == 2
+        assert attrs_by_id["cis_1.4_aws"]["requirements_failed"] == 0
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[provider_groups__in]": f"{group1.id},{group2.id}"},
+        )
+
+        attrs_by_id = self._overview_attrs_by_id(response)
+        assert latest_scan2.provider_id == provider2.id
+        assert attrs_by_id["cis_1.4_aws"]["requirements_passed"] == 1
+        assert attrs_by_id["cis_1.4_aws"]["requirements_failed"] == 1
+        assert attrs_by_id["cis_1.4_aws"]["total_requirements"] == 2
+
+    def test_compliance_overview_metadata_accepts_provider_filters(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        _, latest_scan, *_ = self._prepare_latest_compliance_data(providers_fixture)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-metadata"),
+            {"filter[provider_id]": str(latest_scan.provider_id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        regions = response.json()["data"]["attributes"]["regions"]
+        assert regions == ["eu-west-1"]
+
+    def test_compliance_overview_requirements_accepts_provider_filters(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        _, latest_scan1, latest_scan2, *_ = self._prepare_latest_compliance_data(
+            providers_fixture
+        )
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-requirements"),
+            {
+                "filter[provider_id__in]": (
+                    f"{latest_scan1.provider_id},{latest_scan2.provider_id}"
+                ),
+                "filter[compliance_id]": "cis_1.4_aws",
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        requirements_by_id = {
+            item["id"]: item["attributes"] for item in response.json()["data"]
+        }
+        assert requirements_by_id["1.1"]["status"] == "FAIL"
+        assert requirements_by_id["1.2"]["status"] == "PASS"
 
     def test_compliance_overview_metadata(
         self, authenticated_client, compliance_requirements_overviews_fixture

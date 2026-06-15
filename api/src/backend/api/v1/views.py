@@ -4546,15 +4546,19 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance overviews for a scan",
-        description="Retrieve an overview of all the compliance in a given scan.",
+        summary="List compliance overviews",
+        description=(
+            "Retrieve compliance overview data for a scan. When provider filters "
+            "are provided, the endpoint uses the latest completed scan for each "
+            "matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
         ],
         responses={
@@ -4569,19 +4573,23 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews generation task failed"
             ),
         },
+        filters=True,
     ),
     metadata=extend_schema(
         tags=["Compliance Overview"],
         summary="Retrieve metadata values from compliance overviews",
-        description="Fetch unique metadata values from a set of compliance overviews. This is useful for dynamic "
-        "filtering.",
+        description=(
+            "Fetch unique metadata values from compliance overviews. This is useful "
+            "for dynamic filtering. When provider filters are provided, metadata is "
+            "computed from the latest completed scan for each matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
         ],
         responses={
@@ -4596,19 +4604,24 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews generation task failed"
             ),
         },
+        filters=True,
     ),
     requirements=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance requirements overview for a scan",
-        description="Retrieve a detailed overview of compliance requirements in a given scan, grouped by compliance "
-        "framework. This endpoint provides requirement-level details and aggregates status across regions.",
+        summary="List compliance requirements overview",
+        description=(
+            "Retrieve a detailed overview of compliance requirements, grouped by "
+            "compliance framework. This endpoint provides requirement-level details "
+            "and aggregates status across regions. When provider filters are provided, "
+            "the endpoint uses the latest completed scan for each matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
             OpenApiParameter(
                 name="filter[compliance_id]",
@@ -4668,6 +4681,23 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @method_decorator(CACHE_DECORATOR, name="requirements")
 @method_decorator(CACHE_DECORATOR, name="attributes")
 class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
+    PROVIDER_FILTER_KEYS = frozenset(
+        {
+            "provider_id",
+            "provider_id__in",
+            "provider_type",
+            "provider_type__in",
+            "provider_groups",
+            "provider_groups__in",
+        }
+    )
+    PROVIDER_FILTER_QUERY_KEYS = PROVIDER_FILTER_KEYS | frozenset(
+        {
+            "provider_id.in",
+            "provider_type.in",
+            "provider_groups.in",
+        }
+    )
     pagination_class = ComplianceOverviewPagination
     queryset = ComplianceRequirementOverview.objects.all()
     serializer_class = ComplianceOverviewSerializer
@@ -4681,28 +4711,22 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     required_permissions = []
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return ComplianceRequirementOverview.objects.none()
+
         role = get_role(self.request.user, self.request.tenant_id)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
 
-        if unlimited_visibility:
-            base_queryset = self.filter_queryset(
-                ComplianceRequirementOverview.objects.filter(
-                    tenant_id=self.request.tenant_id
-                )
-            )
-        else:
-            providers = Provider.objects.filter(
-                provider_groups__in=role.provider_groups.all()
-            ).distinct()
-            base_queryset = self.filter_queryset(
-                ComplianceRequirementOverview.objects.filter(
-                    tenant_id=self.request.tenant_id, scan__provider__in=providers
-                )
-            )
+        base_queryset = ComplianceRequirementOverview.objects.filter(
+            tenant_id=self.request.tenant_id
+        )
 
-        return base_queryset
+        if unlimited_visibility:
+            return base_queryset
+
+        return base_queryset.filter(scan__provider__in=get_providers(role))
 
     def get_serializer_class(self):
         if hasattr(self, "response_serializer_class"):
@@ -4739,6 +4763,160 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             summaries = summaries.filter(scan__provider__in=providers)
 
         return summaries
+
+    def _normalize_jsonapi_params(self, query_params, exclude_keys=None):
+        """Convert JSON:API filter params into django-filter keys."""
+        exclude_keys = exclude_keys or set()
+        normalized = QueryDict(mutable=True)
+        for key, values in query_params.lists():
+            normalized_key = (
+                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
+            )
+            normalized_key = normalized_key.replace(".", "__")
+            if normalized_key not in exclude_keys:
+                normalized.setlist(normalized_key, values)
+        return normalized
+
+    def _apply_compliance_filterset(self, queryset, exclude_keys=None):
+        normalized_params = self._normalize_jsonapi_params(
+            self.request.query_params,
+            exclude_keys=set(exclude_keys or []),
+        )
+        filterset = self.filterset_class(normalized_params, queryset=queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+        return filterset.qs
+
+    def _csv_filter_values(self, value):
+        return [item.strip() for item in value.split(",") if item.strip()]
+
+    def _validate_uuid_filter_values(self, field_name, values):
+        try:
+            for value in values:
+                uuid.UUID(str(value))
+        except (TypeError, ValueError, AttributeError):
+            raise ValidationError({field_name: ["Enter a valid UUID."]})
+
+    def _has_provider_filters(self):
+        return any(
+            self.request.query_params.get(f"filter[{key}]")
+            for key in self.PROVIDER_FILTER_QUERY_KEYS
+        )
+
+    def _validate_scan_selection(self, scan_id, has_provider_filters):
+        if scan_id and has_provider_filters:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "Use either filter[scan_id] or provider filters.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        if scan_id:
+            self._validate_uuid_filter_values("scan_id", [scan_id])
+            return
+
+        if has_provider_filters:
+            return
+
+        raise ValidationError(
+            [
+                {
+                    "detail": "This query parameter is required unless a provider filter is provided.",
+                    "status": 400,
+                    "source": {"pointer": "filter[scan_id]"},
+                    "code": "required",
+                }
+            ]
+        )
+
+    def _extract_provider_filters_from_params(self):
+        """Extract provider filters for the Scan queryset."""
+        params = self.request.query_params
+        filters = {}
+        valid_provider_types = {
+            choice[0] for choice in Provider.ProviderChoices.choices
+        }
+
+        provider_id = params.get("filter[provider_id]")
+        if provider_id:
+            self._validate_uuid_filter_values("provider_id", [provider_id])
+            filters["provider_id"] = provider_id
+
+        provider_id_in = params.get("filter[provider_id__in]") or params.get(
+            "filter[provider_id.in]"
+        )
+        if provider_id_in:
+            values = self._csv_filter_values(provider_id_in)
+            self._validate_uuid_filter_values("provider_id__in", values)
+            filters["provider_id__in"] = values
+
+        provider_type = params.get("filter[provider_type]")
+        if provider_type:
+            if provider_type not in valid_provider_types:
+                raise ValidationError(
+                    {"provider_type": f"Invalid choice: {provider_type}"}
+                )
+            filters["provider__provider"] = provider_type
+
+        provider_type_in = params.get("filter[provider_type__in]") or params.get(
+            "filter[provider_type.in]"
+        )
+        if provider_type_in:
+            values = self._csv_filter_values(provider_type_in)
+            invalid = [value for value in values if value not in valid_provider_types]
+            if invalid:
+                raise ValidationError(
+                    {"provider_type__in": f"Invalid choices: {', '.join(invalid)}"}
+                )
+            filters["provider__provider__in"] = values
+
+        provider_groups = params.get("filter[provider_groups]")
+        if provider_groups:
+            self._validate_uuid_filter_values("provider_groups", [provider_groups])
+            filters["provider__provider_groups__id"] = provider_groups
+
+        provider_groups_in = params.get("filter[provider_groups__in]") or params.get(
+            "filter[provider_groups.in]"
+        )
+        if provider_groups_in:
+            values = self._csv_filter_values(provider_groups_in)
+            self._validate_uuid_filter_values("provider_groups__in", values)
+            filters["provider__provider_groups__id__in"] = values
+
+        return filters
+
+    def _latest_scan_ids_for_provider_filters(self):
+        role = get_role(self.request.user, self.request.tenant_id)
+        scans = Scan.all_objects.filter(
+            tenant_id=self.request.tenant_id,
+            state=StateChoices.COMPLETED,
+        )
+
+        if not getattr(role, Permissions.UNLIMITED_VISIBILITY.value, False):
+            scans = scans.filter(provider__in=get_providers(role))
+
+        provider_filters = self._extract_provider_filters_from_params()
+        if provider_filters:
+            scans = scans.filter(**provider_filters)
+
+        return (
+            scans.order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+    def _filtered_queryset_for_latest_provider_scans(self):
+        latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+        queryset = self.get_queryset().filter(scan_id__in=latest_scan_ids)
+        return self._apply_compliance_filterset(
+            queryset,
+            exclude_keys=self.PROVIDER_FILTER_KEYS | {"scan_id"},
+        )
 
     def _get_compliance_template(self, *, provider=None, scan_id=None):
         """Return the compliance template for the given provider or scan."""
@@ -4895,8 +5073,18 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
         return Response(data)
 
+    def _list_with_latest_provider_filters(self):
+        queryset = self._filtered_queryset_for_latest_provider_scans()
+        data = self._aggregate_compliance_overview(queryset)
+        return Response(data)
+
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
+        has_provider_filters = self._has_provider_filters()
+        self._validate_scan_selection(scan_id, has_provider_filters)
+
+        if has_provider_filters:
+            return self._list_with_latest_provider_filters()
 
         # Specific scan requested - use optimized summaries with region support
         region_filter = request.query_params.get(
@@ -4942,27 +5130,21 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
-            )
+        has_provider_filters = self._has_provider_filters()
+        self._validate_scan_selection(scan_id, has_provider_filters)
+
+        queryset = (
+            self._filtered_queryset_for_latest_provider_scans()
+            if has_provider_filters
+            else self._apply_compliance_filterset(self.get_queryset())
+        )
+
         regions = list(
-            self.get_queryset()
-            .filter(scan_id=scan_id)
-            .values_list("region", flat=True)
-            .order_by("region")
-            .distinct()
+            queryset.values_list("region", flat=True).order_by("region").distinct()
         )
         result = {"regions": regions}
 
-        if regions:
+        if regions or has_provider_filters:
             serializer = self.get_serializer(data=result)
             serializer.is_valid(raise_exception=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -4978,19 +5160,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     @action(detail=False, methods=["get"], url_name="requirements")
     def requirements(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
+        has_provider_filters = self._has_provider_filters()
         compliance_id = request.query_params.get("filter[compliance_id]")
 
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
-            )
+        self._validate_scan_selection(scan_id, has_provider_filters)
 
         if not compliance_id:
             raise ValidationError(
@@ -5003,7 +5176,11 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     }
                 ]
             )
-        filtered_queryset = self.filter_queryset(self.get_queryset())
+        filtered_queryset = (
+            self._filtered_queryset_for_latest_provider_scans()
+            if has_provider_filters
+            else self._apply_compliance_filterset(self.get_queryset())
+        )
 
         all_requirements = filtered_queryset.values(
             "requirement_id",
