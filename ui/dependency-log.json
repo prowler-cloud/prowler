@@ -409,6 +409,14 @@
   },
   {
     "section": "dependencies",
+    "name": "driver.js",
+    "from": "1.4.0",
+    "to": "1.4.0",
+    "strategy": "installed",
+    "generatedAt": "2026-05-26T13:05:09.776Z"
+  },
+  {
+    "section": "dependencies",
     "name": "framer-motion",
     "from": "11.18.2",
     "to": "11.18.2",

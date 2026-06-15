@@ -15,6 +15,7 @@ import {
 } from "@/lib/provider-filters";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import { SCAN_STATES } from "@/types/attack-paths";
 
 const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
 export const getScans = async ({
@@ -64,6 +65,10 @@ export const getScansByState = async () => {
     "filter[provider_type__in]",
     sanitizeProviderTypesCsv(),
   );
+  // Only need to know whether at least one completed scan exists; filter server-side
+  // and cap to a single row so the answer is correct regardless of total scan count.
+  url.searchParams.append("filter[state]", SCAN_STATES.COMPLETED);
+  url.searchParams.append("page[size]", "1");
 
   try {
     const response = await fetch(url.toString(), {
