@@ -1452,8 +1452,9 @@ def _aggregate_findings_by_region(
 
     Reads only the consumed columns as tuples via ``values_list`` and streams
     them with ``.iterator()``, using the denormalized ``resource_regions`` array
-    instead of ``prefetch_related("resources")``. The finding↔resource relation
-    is 1:1, so the denormalized array yields the same per-region tally.
+    instead of ``prefetch_related("resources")``. ``resource_regions`` mirrors the
+    regions of a finding's related resources, so it yields the same per-region
+    tally without joining the resource table.
 
     Args:
         tenant_id: Tenant UUID
