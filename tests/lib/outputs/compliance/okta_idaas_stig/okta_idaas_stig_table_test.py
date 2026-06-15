@@ -28,7 +28,7 @@ def _make_compliance(provider, sections):
 class TestOktaIDaaSSTIGTable:
     def test_multi_section_fail_not_undercounted(self, capsys):
         """A single FAIL check mapped to several sections must show FAIL(1) in
-        every section, not just the first one seen (PROWLER-1963)."""
+        every section, not just the first one seen."""
         bulk_metadata = {
             # check_a belongs to two sections at once.
             "check_a": SimpleNamespace(
@@ -57,7 +57,7 @@ class TestOktaIDaaSSTIGTable:
 
     def test_provider_column_uses_framework_provider(self, capsys):
         """The Provider column must come from the matched framework, never
-        from a leaked loop variable (PROWLER-1963)."""
+        from a leaked loop variable."""
         bulk_metadata = {
             "check_a": SimpleNamespace(Compliance=[_make_compliance("okta", ["IAM"])]),
         }
