@@ -41,7 +41,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
           <ComplianceBadge
             label="Profile"
             value={requirement.profile as string}
-            color="purple"
+            variant="secondary"
           />
         )}
 
@@ -49,7 +49,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
           <ComplianceBadge
             label="Assessment"
             value={requirement.assessment_status as string}
-            color="blue"
+            variant="info"
           />
         )}
       </ComplianceBadgeContainer>

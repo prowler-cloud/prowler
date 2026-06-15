@@ -307,6 +307,18 @@ ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
 )  # 48h
 
+# Orphan task recovery feature flags. The master switch is OFF by default, so task
+# recovery is opt-in; enable it with DJANGO_TASK_RECOVERY_ENABLED=true. The per-group
+# toggles default to enabled, so once the master is on every group recovers unless a
+# group is explicitly turned off.
+TASK_RECOVERY_ENABLED = env.bool("DJANGO_TASK_RECOVERY_ENABLED", False)
+TASK_RECOVERY_SUMMARIES_ENABLED = env.bool(
+    "DJANGO_TASK_RECOVERY_SUMMARIES_ENABLED", True
+)
+TASK_RECOVERY_DELETIONS_ENABLED = env.bool(
+    "DJANGO_TASK_RECOVERY_DELETIONS_ENABLED", True
+)
+
 
 def label_postgres_connections(databases):
     """Tag each Postgres connection with ``application_name="<component>:<alias>"``

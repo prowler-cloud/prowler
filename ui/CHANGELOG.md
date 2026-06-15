@@ -2,11 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.30.0] (Prowler UNRELEASED)
+## [1.30.1] (Prowler v5.30.1)
 
-### 🚀 Added
+### 🐞 Fixed
 
-- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- Threat Map no longer shows an empty map for accounts that only have Okta or Google Workspace scans [(#11542)](https://github.com/prowler-cloud/prowler/pull/11542)
+- Compliance attributes requests now pass the selected scan, so multi-provider universal frameworks (e.g. CSA CCM) load the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
 
 ### 🔄 Changed
 
@@ -18,7 +19,25 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.29.3] (Prowler UNRELEASED)
+## [1.30.0] (Prowler v5.30.0)
+
+### 🚀 Added
+
+- DISA Okta IDaaS STIG V1R2 compliance framework support with its dedicated mapper, details panel, and icon [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+
+### 🔄 Changed
+
+- Renamed "Customer Support" to "Support Desk" in the side menu, showing it only in Prowler Cloud/Enterprise, while "Community Support" now shows only in Prowler OSS [(#11508)](https://github.com/prowler-cloud/prowler/pull/11508)
+- Compliance detail page now shows a "still loading" retry state while the API warms its compliance catalog, instead of rendering an empty page [(#11530)](https://github.com/prowler-cloud/prowler/pull/11530)
+
+### 🐞 Fixed
+
+- Risk Pipeline Sankey chart now adapts height and node spacing for dense provider datasets, keeping provider and severity labels readable [(#11527)](https://github.com/prowler-cloud/prowler/pull/11527)
+
+---
+
+## [1.29.3] (Prowler v5.29.3)
 
 ### 🐞 Fixed
 
@@ -58,6 +77,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Compliance page now loads the most recent scan when opened from the sidebar instead of showing the "no compliance data available" alert [(#11374)](https://github.com/prowler-cloud/prowler/pull/11374)
 - Invitation links now show specific expired, no-longer-valid, and invalid-token messages based on API error responses [(#11376)](https://github.com/prowler-cloud/prowler/pull/11376)
+- Jira dispatch and provider connection-test polling no longer show a false timeout for longer-running tasks; both poll windows now extend to 60 seconds [(#11519)](https://github.com/prowler-cloud/prowler/pull/11519)
 
 ### 🔐 Security
 

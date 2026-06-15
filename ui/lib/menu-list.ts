@@ -177,18 +177,23 @@ export const getMenuList = ({
               label: "API reference",
               icon: APIdocIcon,
             },
-            {
-              href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
-              target: "_blank",
-              label: "Customer Support",
-              icon: MessageCircleQuestion,
-            },
-            {
-              href: "https://github.com/prowler-cloud/prowler/issues",
-              target: "_blank",
-              label: "Community Support",
-              icon: GithubIcon,
-            },
+            ...(isCloudEnv
+              ? [
+                  {
+                    href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
+                    target: "_blank",
+                    label: "Support Desk",
+                    icon: MessageCircleQuestion,
+                  },
+                ]
+              : [
+                  {
+                    href: "https://github.com/prowler-cloud/prowler/issues",
+                    target: "_blank",
+                    label: "Community Support",
+                    icon: GithubIcon,
+                  },
+                ]),
           ],
           defaultOpen: false,
         },

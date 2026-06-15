@@ -1,10 +1,11 @@
 # Orphan Celery task recovery
 
 When a worker is terminated mid-task (a deploy, an OOM kill, a node eviction), the
-task it was running can be left non-terminal forever: the `Scan` stays `EXECUTING`,
-the `TaskResult` stays `STARTED`, and nothing re-runs it. This page describes the
-mechanisms that detect and recover allowlisted idempotent orphans so users never
-see a stuck scan and pending-task alerts do not fire.
+task it was running can be left non-terminal forever: the `TaskResult` stays
+`STARTED` and nothing re-runs it. This page describes the mechanisms that detect and
+recover allowlisted idempotent orphans so pending-task alerts do not fire. Scan tasks
+are not auto-recovered (re-running a scan is not safe to do automatically); the
+watchdog covers the summary/aggregation and deletion tasks.
 
 ## How recovery works
 
@@ -13,29 +14,35 @@ see a stuck scan and pending-task alerts do not fire.
    (`worker_prefetch_multiplier = 1`), and an abruptly-lost worker re-queues its task
    (`task_reject_on_worker_lost`). On `SIGTERM` the worker is given a soft-shutdown
    window (`worker_soft_shutdown_timeout`) to finish or re-queue in-flight work
-   before it is force-killed.
+   before it is force-killed. `scan-perform`, `scan-perform-scheduled` and
+   `integration-jira` opt out of redelivery with `acks_late=False`, so a crash drops
+   them rather than re-running and duplicating findings or Jira issues. Other
+   non-recovered side-effect tasks keep `acks_late=True`, so the broker can still
+   re-deliver them after a worker loss: the S3 upload rebuilds from worker-local files
+   that did not survive the crash and so no-ops, but Security Hub re-reads findings from
+   the DB and re-sends them to AWS.
 
 2. **Periodic watchdog.** A Beat task, `reconcile-orphan-tasks`, runs every couple of
    minutes (a `django_celery_beat` periodic task created by migration). For each
    in-flight task result with an allowlisted idempotent task name, it pings the
    worker recorded on the task's `TaskResult`:
    - worker responds -> the task is still running, leave it alone;
-   - worker is gone (and the scan started before a short grace window) -> it is a
+   - worker is gone (and the task started before a short grace window) -> it is a
      real orphan: the stale task is revoked and marked terminal (clearing the
-     pending/started alert), and the scan is re-enqueued from scratch.
+     pending/started alert), and the task is re-enqueued from its stored name and
+     kwargs.
 
-   The re-run is safe because only tasks with proven idempotency are allowlisted.
-   Scan persistence, for example, clears the scan's prior findings and materialized
-   summary/compliance rows before re-writing them. Jira sends are allowlisted too:
-   each finding is reserved in a dispatch table before the external call, so a re-run
-   skips already-ticketed findings (the worst case is one finding missed if a worker
-   is hard-killed mid-send, never a duplicate issue). Other external side effects stay
-   terminal: the S3 upload rebuilds from worker-local files that do not survive a
-   crash, and report/Security Hub recovery is out of scope.
+   The re-run is safe because only tasks with proven idempotency are allowlisted: the
+   summary/aggregation tasks clear and re-write their own rows, and deletions are
+   idempotent. Scan tasks and external side effects are excluded: re-running a scan is
+   not safe to do automatically, Jira sends would create duplicate issues, the S3
+   upload rebuilds from worker-local files that do not survive a crash, and
+   report/Security Hub recovery is out of scope.
 
-3. **Recovery cap.** Each automatic re-enqueue increments `Scan.recovery_count`.
-   After `--max-attempts` recoveries (default 3) the scan is marked `FAILED` instead
-   of re-enqueued, so a task that repeatedly kills its worker cannot loop forever.
+3. **Recovery cap.** A per-task Valkey counter limits how often the same task is
+   re-enqueued. After `--max-attempts` recoveries (default 3) the orphan is marked
+   terminal instead of re-enqueued, so a task that repeatedly kills its worker cannot
+   loop forever.
 
 A Postgres advisory lock ensures that, even with multiple API/worker replicas, only
 one reconciliation runs at a time; the others no-op.
@@ -63,6 +70,18 @@ All settings have safe defaults; override via environment variables.
 | `DJANGO_CELERY_TASK_SOFT_TIME_LIMIT` | hard - 600 | Soft limit; raises `SoftTimeLimitExceeded` for cleanup. |
 | `DJANGO_CELERY_LONG_TASK_TIME_LIMIT` | `172800` (48h) | Hard limit for scans and provider/tenant deletions, which can legitimately run for more than a day. |
 | `DJANGO_CELERY_LONG_TASK_SOFT_TIME_LIMIT` | long hard - 600 | Soft limit for the long-running tasks above. |
+| `DJANGO_TASK_RECOVERY_ENABLED` | `false` | Master switch for orphan-task recovery, disabled by default (opt-in); set to `true` to enable. When off, no orphan is detected, marked terminal, or re-enqueued (attack-paths stale cleanup still runs). |
+| `DJANGO_TASK_RECOVERY_SUMMARIES_ENABLED` | `true` | Auto re-enqueue orphaned scan summary/aggregation tasks. |
+| `DJANGO_TASK_RECOVERY_DELETIONS_ENABLED` | `true` | Auto re-enqueue orphaned provider/tenant deletion tasks. |
+
+Recovery is opt-in: with the master flag off (the default) the sweep does nothing.
+Once enabled, the per-group flags default to on, so every group recovers unless you
+turn one off; a task whose group flag is off is marked terminal instead of
+re-enqueued.
+
+Turning recovery off only disables this watchdog sweep; it does not change Celery's
+broker-level redelivery (`task_acks_late`/`task_reject_on_worker_lost`), which still
+re-delivers tasks that keep `acks_late=True` on worker loss, independently of this flag.
 
 `task_acks_late` and `task_reject_on_worker_lost` are enabled in `config/celery.py`.
 
