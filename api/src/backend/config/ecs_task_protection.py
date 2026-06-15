@@ -100,6 +100,21 @@ def set_task_protection(enabled, expires_minutes):
         return False
 
 
+def _env_int(name, default, minimum):
+    """Read an integer environment variable, tolerating malformed values.
+
+    A non-numeric value must not crash worker startup, so it is logged and the
+    ``default`` is used instead. The result is clamped to at least ``minimum``.
+    """
+    raw = os.environ.get(name, str(default))
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        logger.warning("Invalid %s=%r; using default %s", name, raw, default)
+        value = default
+    return max(minimum, value)
+
+
 class ECSTaskProtectionStep(bootsteps.StartStopStep):
     """Worker bootstep that protects the ECS task while protected work runs.
 
@@ -112,14 +127,13 @@ class ECSTaskProtectionStep(bootsteps.StartStopStep):
     requires = {"celery.worker.components:Pool"}
 
     def __init__(self, parent, **kwargs):
+        """Read poll interval and protection expiry from the environment."""
         super().__init__(parent, **kwargs)
-        self._poll_seconds = max(
-            5,
-            int(os.environ.get("DJANGO_ECS_TASK_PROTECTION_POLL_SECONDS", "60")),
+        self._poll_seconds = _env_int(
+            "DJANGO_ECS_TASK_PROTECTION_POLL_SECONDS", default=60, minimum=5
         )
-        self._expires_minutes = max(
-            1,
-            int(os.environ.get("DJANGO_ECS_TASK_PROTECTION_EXPIRES_MINUTES", "120")),
+        self._expires_minutes = _env_int(
+            "DJANGO_ECS_TASK_PROTECTION_EXPIRES_MINUTES", default=120, minimum=1
         )
         self._timer = None
         self._stop = threading.Event()
@@ -127,6 +141,7 @@ class ECSTaskProtectionStep(bootsteps.StartStopStep):
         self._protected_at = 0.0
 
     def start(self, parent):
+        """Start polling for protected tasks; no-op unless enabled on ECS."""
         if not is_enabled():
             return
         logger.info(
@@ -138,6 +153,7 @@ class ECSTaskProtectionStep(bootsteps.StartStopStep):
         self._tick()
 
     def stop(self, parent):
+        """Stop polling and release any held protection on worker shutdown."""
         self._stop.set()
         if self._timer is not None:
             self._timer.cancel()
@@ -148,6 +164,7 @@ class ECSTaskProtectionStep(bootsteps.StartStopStep):
 
     @staticmethod
     def _protected_task_in_flight():
+        """Return whether any active request is a protected long-running task."""
         # Imported lazily so the module stays importable outside a worker.
         from celery.worker import state
 
@@ -157,6 +174,7 @@ class ECSTaskProtectionStep(bootsteps.StartStopStep):
         )
 
     def _tick(self):
+        """Acquire, refresh, or release protection, then reschedule the poll."""
         if self._stop.is_set():
             return
         try:
