@@ -1,9 +1,12 @@
+import re
+
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
+from prowler.providers.gcp.services.monitoring.monitoring_service import Monitoring
 
 
 class Logging(GCPService):
@@ -121,30 +124,86 @@ class Metric(BaseModel):
     bucket_name: str = ""
 
 
-def _sink_delivers_activity_logs(sink_filter: str) -> bool:
-    """True when a sink's filter exports the Admin Activity audit stream (or
-    everything).
+# A positive selector of the Admin Activity stream: a ``logName`` predicate
+# (``:`` has-substring or ``=`` equals) or a ``log_id()`` call. Written verbose
+# so each fragment stays legible; ``(?![a-z_])`` keeps a longer stream name
+# (``.../activity_v2``) from impersonating Admin Activity.
+_ACTIVITY_SELECTOR = re.compile(
+    r"""
+    (?: logName \s* [:=] \s* | log_id \s* \( \s* )   # logName: / logName= / log_id(
+    ["']? [^"'\s)]*                                  # optional quote, then path prefix
+    cloudaudit\.googleapis\.com/activity (?![a-z_])  # the Admin Activity stream itself
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 
-    The CIS logging-metric filters all match Admin Activity audit entries
-    (``protoPayload.methodName=...`` on audited resource types), so an
-    aggregated sink restricted to the cloudaudit streams still delivers every
-    log entry those metrics can match. Centralized topologies deliberately
-    filter their aggregated sink to the audit streams (an unfiltered org-wide
-    sink would duplicate every operational log entry into the central bucket),
-    so requiring ``filter == "all"`` rejects exactly the deployments this
-    crediting exists for. Sink filters reference the stream either URL-encoded
-    (``cloudaudit.googleapis.com%2Factivity``) or as a plain path — normalize
-    before matching.
+# The same selector for *any* Cloud Audit stream (activity, data_access,
+# system_event, policy, access_transparency, …). Used to strip the OR-combined
+# audit clauses so we can prove nothing restrictive is left over.
+_CLOUDAUDIT_SELECTOR = re.compile(
+    r"""
+    (?: logName \s* [:=] \s* | log_id \s* \( \s* )   # logName: / logName= / log_id(
+    ["']? [^"'\s)]*                                  # optional quote, then path prefix
+    cloudaudit\.googleapis\.com/[a-z_]+              # any cloudaudit stream
+    ["']? \s* \)?                                    # optional closing quote / paren
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Operators that exclude or narrow coverage. Any of these means we cannot prove
+# the sink delivers the *whole* Admin Activity stream, so it is not credited.
+_NEGATION_OR_RESTRICTION = re.compile(
+    r"""
+      \bNOT\b                       # NOT exclusion
+    | \bAND\b                       # AND conjunction (restriction)
+    | != | !:                       # "!=" / "!:" inequality
+    | (?:^|[\s(]) -\s* [A-Za-z_]    # leading "-" exclusion operator
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _sink_delivers_activity_logs(sink_filter: str) -> bool:
+    """True only when a sink's filter *provably* exports the full Admin Activity
+    audit stream (or everything).
+
+    Crediting flips a child project to PASS on a CIS security control, so the
+    match is deliberately conservative: a false FAIL is safe, a false PASS is
+    not. A non-``"all"`` filter is credited only when
+
+      1. it positively selects the Admin Activity stream
+         (``logName:.../activity``, ``logName="...activity"`` or
+         ``log_id("...activity")``);
+      2. it carries no operator that excludes or narrows the stream — ``NOT`` /
+         ``-`` / ``!=`` (negation) or ``AND`` (restriction); and
+      3. nothing but ``OR``-combined Cloud Audit selectors remains once those are
+         stripped — an ``OR`` only widens coverage, but any leftover predicate
+         (``severity>=ERROR``, ``resource.type=...``) could narrow it.
+
+    Sink filters encode the stream URL-encoded (``...%2Factivity``) or as a path
+    — normalize before matching.
     """
-    if not sink_filter or sink_filter == "all":
+    if not sink_filter or sink_filter.strip().lower() == "all":
         return True
     normalized = sink_filter.replace("%2F", "/").replace("%2f", "/")
-    return "cloudaudit.googleapis.com/activity" in normalized
+    # 1. The Admin Activity stream must be positively selected.
+    if not _ACTIVITY_SELECTOR.search(normalized):
+        return False
+    # 2. No operator may exclude or narrow that coverage.
+    if _NEGATION_OR_RESTRICTION.search(normalized):
+        return False
+    # 3. Only OR-combined audit selectors may remain — strip them and the OR
+    #    glue; anything left is a predicate we cannot prove is full-coverage.
+    remainder = _CLOUDAUDIT_SELECTOR.sub(" ", normalized)
+    remainder = re.sub(r"\bOR\b|[()\s]", " ", remainder, flags=re.IGNORECASE)
+    return remainder.strip() == ""
 
 
 def get_projects_covered_by_aggregated_metric(
-    logging_client, monitoring_client, metric_filter
-):
+    logging_client: Logging,
+    monitoring_client: Monitoring,
+    metric_filter: str,
+) -> dict[str, str]:
     """Return {project_id: metric_name} for scanned projects whose logs are routed,
     via an organization-level sink with includeChildren=True, to a bucket that holds
     a bucket-scoped log metric matching ``metric_filter`` that has an alert policy.
