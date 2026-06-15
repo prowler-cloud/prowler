@@ -2,19 +2,19 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.2] (Prowler UNRELEASED)
-
-### 🔄 Changed
-
-- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes (reading the denormalized `resource_regions` instead of prefetching resources, and batching rows into COPY instead of building the full list first), so it runs faster and its peak memory no longer grows with the number of regions and frameworks — a previous worker OOM risk on large scans — with no change to the compliance overview output [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
-
----
-
 ## [1.32.0] (Prowler UNRELEASED)
 
 ### 🔐 Security
 
 - `trivy` binary bumped to 0.71.0 patching embedded `golang.org/x/crypto`, `golang.org/x/net`, and Go `stdlib` CVEs [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
+---
+
+## [1.31.2] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes (reading the denormalized `resource_regions` instead of prefetching resources, and batching rows into COPY instead of building the full list first), so it runs faster and its peak memory no longer grows with the number of regions and frameworks — a previous worker OOM risk on large scans — with no change to the compliance overview output [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
 
 ---
 
