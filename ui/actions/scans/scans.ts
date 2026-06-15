@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import {
+  apiBaseUrl,
+  GENERIC_SERVER_ERROR_MESSAGE,
+  getAuthHeaders,
+  getErrorMessage,
+} from "@/lib";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
@@ -246,6 +251,27 @@ export const launchOrganizationScans = async (
   return summary;
 };
 
+async function getScanReportErrorMessage(
+  response: Response,
+  fallbackMessage: string,
+): Promise<string> {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+
+  if (contentType.includes("text/html")) {
+    return GENERIC_SERVER_ERROR_MESSAGE;
+  }
+
+  const errorData = await response.json().catch(() => null);
+
+  return (
+    errorData?.errors?.[0]?.detail ||
+    errorData?.errors?.detail ||
+    errorData?.error ||
+    errorData?.message ||
+    (response.status >= 500 ? GENERIC_SERVER_ERROR_MESSAGE : fallbackMessage)
+  );
+}
+
 export const updateScan = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
 
@@ -297,11 +323,11 @@ export const getExportsZip = async (scanId: string) => {
     }
 
     if (!response.ok) {
-      const errorData = await response.json();
-
       throw new Error(
-        errorData?.errors?.detail ||
+        await getScanReportErrorMessage(
+          response,
           "Unable to fetch scan report. Contact support if the issue continues.",
+        ),
       );
     }
 
@@ -372,10 +398,11 @@ const _fetchScanBinary = async (
     }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData?.errors?.detail ||
+        await getScanReportErrorMessage(
+          response,
           `Unable to retrieve ${errorLabel}. Contact support if the issue continues.`,
+        ),
       );
     }
 
