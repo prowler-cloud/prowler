@@ -8,6 +8,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Provider group filters for API endpoints that support cloud provider filtering, including exact and `__in` variants [(#11573)](https://github.com/prowler-cloud/prowler/pull/11573)
 
+### 🔐 Security
+
+- `trivy` binary bumped to 0.71.0 patching embedded `golang.org/x/crypto`, `golang.org/x/net`, and Go `stdlib` CVEs [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
 ---
 
 ## [1.31.1] (Prowler v5.30.1)
