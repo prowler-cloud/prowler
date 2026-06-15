@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.azure.services.postgresql.postgresql_service import (
     EntraIdAdmin,
@@ -161,3 +161,89 @@ class Test_SqlServer_Service:
             postgesql.flexible_servers[AZURE_SUBSCRIPTION_ID][0].firewall[0].end_ip
             == "end_ip"
         )
+
+
+def _make_server(name):
+    server = MagicMock()
+    server.id = (
+        f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/rg/providers/"
+        f"Microsoft.DBforPostgreSQL/flexibleServers/{name}"
+    )
+    server.name = name
+    return server
+
+
+class Test_PostgreSQL_Service_Resilience:
+    """Collecting one flexible server must never abort collection of the rest of
+    the subscription (regression: a missing/failing per-server configuration
+    lookup silently dropped every remaining server)."""
+
+    def _build_service_with_client(self, mock_client):
+        # Skip the real network call during construction, then run the real
+        # collection against the mocked management client.
+        with patch.object(PostgreSQL, "_get_flexible_servers", return_value={}):
+            postgresql = PostgreSQL(set_mocked_azure_provider())
+        postgresql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        return postgresql
+
+    def test_missing_connection_throttle_config_still_collects_server(self):
+        # The "connection_throttle.enable" parameter was removed in PostgreSQL
+        # 16+, so the lookup raises ConfigurationNotExists on newer servers.
+        dev = _make_server("dev")
+        prd = _make_server("prd")
+
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = [dev, prd]
+        server_details = MagicMock()
+        server_details.location = "westeurope"
+        mock_client.servers.get.return_value = server_details
+        mock_client.administrators.list_by_server.return_value = []
+        mock_client.firewall_rules.list_by_server.return_value = []
+
+        def configurations_get(resource_group, server_name, key):
+            if key == "connection_throttle.enable" and server_name == "prd":
+                raise Exception(
+                    "(ConfigurationNotExists) The configuration "
+                    "'connection_throttle.enable' does not exist for prd server "
+                    "version 18."
+                )
+            return MagicMock(value="ON")
+
+        mock_client.configurations.get.side_effect = configurations_get
+
+        postgresql = self._build_service_with_client(mock_client)
+        servers = postgresql._get_flexible_servers()
+
+        names = sorted(server.name for server in servers[AZURE_SUBSCRIPTION_ID])
+        assert names == ["dev", "prd"]
+        prd_server = next(s for s in servers[AZURE_SUBSCRIPTION_ID] if s.name == "prd")
+        assert prd_server.connection_throttling is None
+        dev_server = next(s for s in servers[AZURE_SUBSCRIPTION_ID] if s.name == "dev")
+        assert dev_server.connection_throttling == "ON"
+
+    def test_one_server_hard_failure_does_not_drop_others(self):
+        # A failure unrelated to a guarded getter (here, fetching the server
+        # details) must isolate to that server, not the whole subscription.
+        ok = _make_server("ok")
+        broken = _make_server("broken")
+
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = [broken, ok]
+        mock_client.administrators.list_by_server.return_value = []
+        mock_client.firewall_rules.list_by_server.return_value = []
+        mock_client.configurations.get.return_value = MagicMock(value="ON")
+
+        def servers_get(resource_group, server_name):
+            if server_name == "broken":
+                raise Exception("boom: transient failure fetching server details")
+            details = MagicMock()
+            details.location = "westeurope"
+            return details
+
+        mock_client.servers.get.side_effect = servers_get
+
+        postgresql = self._build_service_with_client(mock_client)
+        servers = postgresql._get_flexible_servers()
+
+        names = [server.name for server in servers[AZURE_SUBSCRIPTION_ID]]
+        assert names == ["ok"]
