@@ -11,6 +11,7 @@ import {
   saveScheduleWithInitialScan,
 } from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
+import { Checkbox } from "@/components/shadcn";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
@@ -243,9 +244,18 @@ export function LaunchStep({
             <CloudFeatureBadge label="Available after onboarding" size="sm" />
           </div>
           <p className="text-text-neutral-secondary text-sm">
-            Scheduled scans are not available yet. For now you can launch a
-            manual scan to get immediate findings.
+            Scheduled scans are not available during onboarding. This provider
+            will run a one-time manual scan now so you can get immediate
+            findings.
           </p>
+          <label className="flex items-center gap-3 text-sm font-medium">
+            <Checkbox
+              checked
+              disabled
+              aria-label="Launch a scan now for immediate findings"
+            />
+            <span>Launch a scan now for immediate findings</span>
+          </label>
           {isScanLimitReached && (
             <p className="text-text-error-primary text-sm">
               You have reached your scan limit, so additional scans are not

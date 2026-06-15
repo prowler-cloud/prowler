@@ -300,6 +300,16 @@ describe("LaunchStep", () => {
       expect(
         screen.queryByRole("combobox", { name: /repeats/i }),
       ).not.toBeInTheDocument();
+      const manualScanCheckbox = screen.getByRole("checkbox", {
+        name: /launch a scan now/i,
+      });
+      expect(manualScanCheckbox).toBeChecked();
+      expect(manualScanCheckbox).toBeDisabled();
+      expect(
+        screen.getByText(
+          /scheduled scans are not available during onboarding/i,
+        ),
+      ).toBeInTheDocument();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
       expect(lastFooterConfig(onFooterChange)?.actionDisabled).toBe(false);
       // The action launches a scan here, so it must not be labeled "Save".
