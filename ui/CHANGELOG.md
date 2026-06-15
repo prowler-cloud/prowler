@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.31.0] (Prowler UNRELEASED)
+
+### 🔐 Security
+
+- UI dependencies upgraded and transitive overrides updated to clear `pnpm audit --prod` and OSV scanner vulnerabilities [(#11581)](https://github.com/prowler-cloud/prowler/pull/11581)
+
+---
+
 ## [1.30.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed

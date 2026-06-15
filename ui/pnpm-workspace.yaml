@@ -29,6 +29,7 @@ overrides:
   "fast-xml-parser": "5.8.0"
   "serialize-javascript": "7.0.5"
   "postcss": "8.5.14"
+  "esbuild": "0.28.1"
   "rollup@>=4": "4.59.0"
   "minimatch@<4": "3.1.4"
   "minimatch@>=9 <10": "9.0.7"
