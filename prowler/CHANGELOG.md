@@ -21,6 +21,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔐 Security
 
 - `microsoft-kiota-*` to 1.9.9 and `aiohttp` to 3.14.0, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- Container base image bumped to `python:3.12.13-slim-bookworm` (patches `libgnutls30` CVE-2026-33845 and CVE-2026-42010) and `trivy` bumped to 0.71.0 (patches embedded `golang.org/x/crypto` and Go stdlib CVEs); `.trivyignore` documents remaining bookworm criticals with no-fix or not-affected rationale [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
 
 ---
 
