@@ -1,3 +1,5 @@
+import logging
+import threading
 from collections.abc import Iterable, Mapping
 
 from api.models import Provider
@@ -6,7 +8,18 @@ from prowler.lib.check.compliance_models import (
 )
 from prowler.lib.check.models import CheckMetadata
 
+logger = logging.getLogger(__name__)
+
 AVAILABLE_COMPLIANCE_FRAMEWORKS = {}
+
+# Per-process readiness flags for the background compliance warm-up.
+# `STARTED` is set as soon as warming begins (only happens under Gunicorn via
+# the post_fork hook); `WARMED` is set when it finishes. The attributes
+# endpoint checks both: it returns 503 only while warming is in progress.
+# Under `runserver` warming never runs, so `STARTED` stays clear and the
+# endpoint keeps lazy-loading as before.
+COMPLIANCE_WARMING_STARTED = threading.Event()
+COMPLIANCE_WARMED = threading.Event()
 
 
 class LazyComplianceTemplate(Mapping):
@@ -172,6 +185,56 @@ def _ensure_provider_loaded(provider_type: Provider.ProviderChoices) -> None:
         PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE._cache[provider_type] = template
     if checks_cached is None:
         PROWLER_CHECKS._cache[provider_type] = checks
+
+
+def warm_compliance_caches(
+    provider_types: Iterable[str] | None = None,
+) -> list[str]:
+    """
+    Eagerly populate the per-process compliance caches at server startup.
+
+    Moves the cold-cache catalog load off the request thread so the first
+    request does not trip the Gunicorn worker timeout. Reads only on-disk
+    metadata (no database access). Each provider is warmed in isolation;
+    failures are logged and fall back to lazy loading.
+
+    Args:
+        provider_types (Iterable[str] | None): Subset to warm. Defaults to all.
+
+    Returns:
+        list[str]: Provider types that could not be warmed.
+    """
+    if provider_types is None:
+        provider_types = Provider.ProviderChoices.values
+    provider_types = list(provider_types)
+
+    COMPLIANCE_WARMING_STARTED.set()
+    logger.info("Compliance cache warm-up started for providers: %s", provider_types)
+
+    failed = []
+    for provider_type in provider_types:
+        try:
+            get_compliance_frameworks(provider_type)
+            _ensure_provider_loaded(provider_type)
+        # Prowler check loading may sys.exit (SystemExit, not Exception).
+        except (Exception, SystemExit):
+            logger.warning(
+                "Failed to warm compliance caches for provider '%s'; "
+                "loading lazily on first request",
+                provider_type,
+                exc_info=True,
+            )
+            failed.append(provider_type)
+
+    # Mark as warmed even when some providers failed: a failed provider falls
+    # back to a single-provider lazy load, which stays under the worker timeout.
+    COMPLIANCE_WARMED.set()
+    logger.info(
+        "Compliance cache warm-up finished (providers warmed: %d, failed: %s)",
+        len(provider_types) - len(failed),
+        failed,
+    )
+    return failed
 
 
 def load_prowler_checks(

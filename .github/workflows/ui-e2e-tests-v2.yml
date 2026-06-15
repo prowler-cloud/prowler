@@ -134,7 +134,17 @@ jobs:
         # docker-compose.yml references prowlercloud/prowler-api:latest from the registry,
         # which lags behind PR changes; build locally so E2E exercises the API image
         # produced by this PR.
-        run: docker build -t prowlercloud/prowler-api:latest ./api
+        #
+        # The image installs the SDK from git@master (api/uv.lock), so a PR changing BOTH the SDK
+        # and the API would run against the OLD SDK and crash on startup. Overlay the checkout's
+        # SDK source so both run together. New SDK dependencies still need an api/uv.lock bump.
+        run: |
+          docker build -t prowlercloud/prowler-api:pr-base ./api
+          docker build -t prowlercloud/prowler-api:latest -f - prowler <<'DOCKERFILE'
+          FROM prowlercloud/prowler-api:pr-base
+          RUN rm -rf /home/prowler/.venv/lib/python3.12/site-packages/prowler
+          COPY --chown=prowler:prowler . /home/prowler/.venv/lib/python3.12/site-packages/prowler
+          DOCKERFILE
 
       - name: Start API services
         run: |

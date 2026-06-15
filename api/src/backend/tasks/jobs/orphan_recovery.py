@@ -37,35 +37,52 @@ ORPHAN_RECOVERY_LOCK_KEY = 0x70726F77  # "prow"
 # Non-terminal states that mean "a worker had this and may have died with it".
 IN_FLIGHT_STATES = (states.STARTED, states.RECEIVED)
 
-# Scan tasks are recovered by re-running scan-perform on the EXISTING scan row,
-# not by re-enqueuing the original task: re-enqueuing scan-perform-scheduled would
-# hit its "a scan is already executing" guard and no-op, leaving the scan stuck.
-_SCAN_TASKS = ("scan-perform", "scan-perform-scheduled")
-
-# Tasks with proven idempotency are auto re-enqueued. Scans/summaries clear and
-# rewrite their own rows. integration-jira is safe too: each finding is reserved in
-# JiraIssueDispatch before the external call, so a re-run skips already-ticketed
-# findings (worst case one finding missed on a mid-send crash, never a duplicate).
-# Other external side effects stay terminal: integration-s3 rebuilds its upload from
-# worker-local files that do not survive a crash, and report/Security Hub recovery is
-# out of scope.
-REENQUEUEABLE_TASKS = {
-    *_SCAN_TASKS,
-    "provider-deletion",
-    "tenant-deletion",
-    "scan-summary",
-    "scan-compliance-overviews",
-    "scan-provider-compliance-scores",
-    "scan-daily-severity",
-    "scan-finding-group-summaries",
-    "scan-reset-ephemeral-resources",
-    "integration-jira",
+# Tasks with proven idempotency are eligible for auto re-enqueue, grouped so each
+# group can be toggled independently by a feature flag (see config.django.base).
+# Summaries clear and rewrite their own rows and deletions are idempotent. Tasks with
+# external side effects are never eligible: integration-jira would create duplicate
+# issues, integration-s3 rebuilds its upload from worker-local files that do not
+# survive a crash, and report/Security Hub recovery is out of scope.
+RECOVERY_TASK_GROUPS = {
+    "summaries": {
+        "scan-summary",
+        "scan-compliance-overviews",
+        "scan-provider-compliance-scores",
+        "scan-daily-severity",
+        "scan-finding-group-summaries",
+        "scan-reset-ephemeral-resources",
+    },
+    "deletions": {"provider-deletion", "tenant-deletion"},
 }
 
-# Tasks excluded from generic recovery: attack-paths scans are handled by their own
-# stale-cleanup (which also drops the temp Neo4j db), and the maintenance tasks must
-# not self-recover (they run again on their own schedule).
+
+def reenqueueable_tasks() -> set[str]:
+    """Task names eligible for auto re-enqueue, honoring the per-group feature flags.
+
+    A group whose flag is disabled is dropped, so its orphaned tasks are marked
+    terminal instead of re-enqueued.
+    """
+    from django.conf import settings
+
+    group_enabled = {
+        "summaries": settings.TASK_RECOVERY_SUMMARIES_ENABLED,
+        "deletions": settings.TASK_RECOVERY_DELETIONS_ENABLED,
+    }
+    return {
+        task
+        for group, tasks in RECOVERY_TASK_GROUPS.items()
+        if group_enabled[group]
+        for task in tasks
+    }
+
+
+# Tasks the watchdog ignores entirely (not even marked terminal): scan tasks are not
+# auto-recovered, since re-running a scan is not safe to do automatically; attack-paths
+# scans are handled by their own stale-cleanup (which also drops the temp Neo4j db);
+# and the maintenance tasks must not self-recover (they run again on their own schedule).
 _SKIP_RECOVERY = {
+    "scan-perform",
+    "scan-perform-scheduled",
     "attack-paths-scan-perform",
     "attack-paths-cleanup-stale-scans",
     "reconcile-orphan-tasks",
@@ -166,15 +183,22 @@ def reconcile_orphans(
             logger.info("Orphan reconcile skipped: another run holds the lock")
             return {"acquired": False}
 
-        # Populate the task registry so we can re-enqueue any task by name.
-        import tasks.tasks  # noqa: F401
+        from django.conf import settings
 
-        result = _reconcile_task_results(
-            grace_minutes=grace_minutes,
-            max_attempts=max_attempts,
-            window_hours=window_hours,
-            dry_run=dry_run,
-        )
+        if settings.TASK_RECOVERY_ENABLED:
+            # Populate the task registry so we can re-enqueue any task by name.
+            import tasks.tasks  # noqa: F401
+
+            result = _reconcile_task_results(
+                grace_minutes=grace_minutes,
+                max_attempts=max_attempts,
+                window_hours=window_hours,
+                dry_run=dry_run,
+            )
+            result["enabled"] = True
+        else:
+            logger.info("Orphan task recovery disabled by feature flag")
+            result = {"recovered": [], "failed": [], "skipped": [], "enabled": False}
 
         if not dry_run:
             from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
@@ -264,34 +288,27 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
     task_result.date_done = now
     task_result.save(update_fields=["status", "date_done"])
 
-    attempt = _recovery_attempt_count(name, kwargs_repr, window_hours)
-    if name not in REENQUEUEABLE_TASKS or attempt > max_attempts:
-        reason = (
-            f"{name} is not allowlisted for auto recovery"
-            if name not in REENQUEUEABLE_TASKS
-            else f"recovery cap reached ({attempt}/{max_attempts})"
-        )
-        _fail_domain_row(task_result.task_id, name, now)
+    if name not in reenqueueable_tasks():
         logger.warning(
-            "Orphan %s (%s) not re-enqueued: %s", task_result.task_id, name, reason
+            "Orphan %s (%s) not re-enqueued: not allowlisted for auto recovery",
+            task_result.task_id,
+            name,
         )
         return "failed"
 
-    # Scan tasks: re-run the EXISTING scan row directly via scan-perform, so the
-    # scheduled-scan "already executing" guard cannot turn recovery into a no-op.
-    # Falls through to the generic path only if no scan is linked yet (e.g. a
-    # scheduled task that died before creating one), where re-running it creates one.
-    if name in _SCAN_TASKS:
-        scan = _scan_for_task(task_result.task_id)
-        if scan is not None:
-            if not _reenqueue_scan(task_result.task_id, scan):
-                return "failed"
-            logger.info(
-                "Re-enqueued orphaned scan %s (was task %s)",
-                scan.id,
-                task_result.task_id,
-            )
-            return "recovered"
+    # Count the attempt only once the task is allowlisted, so a task sitting in a
+    # disabled group does not burn its recovery budget while the flag is off (and is
+    # not already over the cap the moment the group is re-enabled).
+    attempt = _recovery_attempt_count(name, kwargs_repr, window_hours)
+    if attempt > max_attempts:
+        logger.warning(
+            "Orphan %s (%s) not re-enqueued: recovery cap reached (%d/%d)",
+            task_result.task_id,
+            name,
+            attempt,
+            max_attempts,
+        )
+        return "failed"
 
     task_obj = current_app.tasks.get(name)
     if task_obj is None:
@@ -311,7 +328,6 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
             task_result.task_id,
             name,
         )
-        _fail_domain_row(task_result.task_id, name, now)
         return "failed"
     new_task_id = str(uuid4())
     task_obj.apply_async(
@@ -323,75 +339,3 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
         "Re-enqueued orphan %s (%s) as %s", task_result.task_id, name, new_task_id
     )
     return "recovered"
-
-
-def _scan_for_task(task_id: str):
-    """Return the Scan linked to a Celery task id, or None (read across tenants)."""
-    from api.db_router import MainRouter
-    from api.models import Scan
-
-    return Scan.all_objects.using(MainRouter.admin_db).filter(task_id=task_id).first()
-
-
-def _reenqueue_scan(old_task_id: str, scan) -> bool:
-    """Re-run an orphaned scan via scan-perform on the existing row.
-
-    Pre-provisions the new task linkage (TaskResult + api.Task) and relinks the
-    Scan before enqueuing, so the FK is valid and a worker can never outrun the DB.
-    The relink is conditional on the scan still pointing at the old task, so a stale
-    orphan can never clobber a newer linkage.
-    """
-    from django_celery_results.models import TaskResult
-
-    from api.db_utils import rls_transaction
-    from api.models import Scan
-    from api.models import Task as APITask
-    from tasks.tasks import perform_scan_task
-
-    tenant_id = str(scan.tenant_id)
-    new_task_id = str(uuid4())
-    with rls_transaction(tenant_id):
-        locked_scan = Scan.all_objects.select_for_update().filter(id=scan.id).first()
-        if locked_scan is None or str(locked_scan.task_id) != old_task_id:
-            logger.info(
-                "Scan %s no longer points at task %s; skipping recovery re-enqueue",
-                scan.id,
-                old_task_id,
-            )
-            return False
-        task_result_new, _ = TaskResult.objects.get_or_create(
-            task_id=new_task_id,
-            defaults={"status": states.PENDING, "task_name": "scan-perform"},
-        )
-        APITask.objects.update_or_create(
-            id=new_task_id,
-            tenant_id=tenant_id,
-            defaults={"task_runner_task": task_result_new},
-        )
-        locked_scan.task_id = new_task_id
-        locked_scan.recovery_count = (locked_scan.recovery_count or 0) + 1
-        locked_scan.save(update_fields=["task_id", "recovery_count", "updated_at"])
-
-    perform_scan_task.apply_async(
-        kwargs={
-            "tenant_id": tenant_id,
-            "scan_id": str(scan.id),
-            "provider_id": str(scan.provider_id),
-        },
-        task_id=new_task_id,
-    )
-    return True
-
-
-def _fail_domain_row(old_task_id: str, name: str, now: datetime) -> None:
-    """Mark a scan terminal when its task is capped/denylisted instead of re-run."""
-    from api.db_utils import rls_transaction
-    from api.models import Scan, StateChoices
-
-    if name in _SCAN_TASKS:
-        scan = _scan_for_task(old_task_id)
-        if scan is not None:
-            with rls_transaction(str(scan.tenant_id)):
-                Scan.all_objects.filter(id=scan.id, task_id=old_task_id).update(
-                    state=StateChoices.FAILED, completed_at=now
-                )

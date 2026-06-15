@@ -121,6 +121,9 @@ def display_summary_table(
         elif provider.type == "scaleway":
             entity_type = "Organization"
             audited_entities = provider.identity.organization_id
+        else:
+            # Dynamic fallback: any external/custom provider
+            entity_type, audited_entities = provider.get_summary_entity()
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

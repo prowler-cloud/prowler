@@ -40,7 +40,7 @@ def delete_periodic_task(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0094_scan_recovery_count"),
+        ("api", "0093_okta_provider"),
         ("django_celery_beat", "0019_alter_periodictasks_options"),
     ]
 

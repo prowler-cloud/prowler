@@ -10,6 +10,7 @@ from api.compliance import (
     get_prowler_provider_checks,
     get_prowler_provider_compliance,
     load_prowler_checks,
+    warm_compliance_caches,
 )
 from api.models import Provider
 from prowler.lib.check.compliance_models import (
@@ -267,11 +268,17 @@ def reset_compliance_cache():
     """Reset the module-level cache so each test starts cold."""
     previous = dict(compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS)
     compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
+    # The warming flags are module-global; clear them so they do not leak
+    # between tests that call warm_compliance_caches.
+    compliance_module.COMPLIANCE_WARMING_STARTED.clear()
+    compliance_module.COMPLIANCE_WARMED.clear()
     try:
         yield
     finally:
         compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
         compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.update(previous)
+        compliance_module.COMPLIANCE_WARMING_STARTED.clear()
+        compliance_module.COMPLIANCE_WARMED.clear()
 
 
 class TestGetComplianceFrameworks:
@@ -321,3 +328,89 @@ class TestGetComplianceFrameworks:
             f"loadable by get_bulk_compliance_frameworks_universal: "
             f"{sorted(missing)}"
         )
+
+
+class TestWarmComplianceCaches:
+    def test_warms_all_provider_types_by_default(self, reset_compliance_cache):
+        provider_types = list(Provider.ProviderChoices.values)
+        with (
+            patch("api.compliance.get_compliance_frameworks") as mock_frameworks,
+            patch("api.compliance._ensure_provider_loaded") as mock_ensure,
+        ):
+            warm_compliance_caches()
+
+        warmed = {call.args[0] for call in mock_frameworks.call_args_list}
+        assert warmed == set(provider_types)
+        assert mock_frameworks.call_count == len(provider_types)
+        assert mock_ensure.call_count == len(provider_types)
+
+    def test_warms_only_requested_provider_types(self, reset_compliance_cache):
+        with (
+            patch("api.compliance.get_compliance_frameworks") as mock_frameworks,
+            patch("api.compliance._ensure_provider_loaded") as mock_ensure,
+        ):
+            warm_compliance_caches([Provider.ProviderChoices.AWS])
+
+        mock_frameworks.assert_called_once_with(Provider.ProviderChoices.AWS)
+        mock_ensure.assert_called_once_with(Provider.ProviderChoices.AWS)
+
+    def test_populates_module_cache(self, reset_compliance_cache):
+        with (
+            patch(
+                "api.compliance.get_bulk_compliance_frameworks_universal"
+            ) as mock_get_bulk,
+            patch("api.compliance._ensure_provider_loaded"),
+        ):
+            mock_get_bulk.return_value = {"cis_1.4_aws": MagicMock()}
+            warm_compliance_caches([Provider.ProviderChoices.AWS])
+
+        assert (
+            Provider.ProviderChoices.AWS
+            in compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS
+        )
+
+    def test_failing_provider_does_not_abort_the_rest(self, reset_compliance_cache):
+        """A failing provider (even on SystemExit) is isolated; others warm."""
+        providers = [Provider.ProviderChoices.AWS, Provider.ProviderChoices.OKTA]
+
+        def fake_frameworks(provider_type):
+            if provider_type == Provider.ProviderChoices.OKTA:
+                raise SystemExit(1)
+            return []
+
+        with (
+            patch(
+                "api.compliance.get_compliance_frameworks", side_effect=fake_frameworks
+            ),
+            patch("api.compliance._ensure_provider_loaded") as mock_ensure,
+        ):
+            failed = warm_compliance_caches(providers)
+
+        assert failed == [Provider.ProviderChoices.OKTA]
+        mock_ensure.assert_called_once_with(Provider.ProviderChoices.AWS)
+
+    def test_sets_readiness_flags(self, reset_compliance_cache):
+        assert not compliance_module.COMPLIANCE_WARMING_STARTED.is_set()
+        assert not compliance_module.COMPLIANCE_WARMED.is_set()
+
+        with (
+            patch("api.compliance.get_compliance_frameworks"),
+            patch("api.compliance._ensure_provider_loaded"),
+        ):
+            warm_compliance_caches([Provider.ProviderChoices.AWS])
+
+        assert compliance_module.COMPLIANCE_WARMING_STARTED.is_set()
+        assert compliance_module.COMPLIANCE_WARMED.is_set()
+
+    def test_marks_warmed_even_when_a_provider_fails(self, reset_compliance_cache):
+        """A failed provider still leaves the caches flagged as warmed."""
+        with (
+            patch(
+                "api.compliance.get_compliance_frameworks",
+                side_effect=SystemExit(1),
+            ),
+            patch("api.compliance._ensure_provider_loaded"),
+        ):
+            warm_compliance_caches([Provider.ProviderChoices.AWS])
+
+        assert compliance_module.COMPLIANCE_WARMED.is_set()

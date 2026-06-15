@@ -229,7 +229,9 @@ class MarkdownToADFConverter:
         return node
 
     def _paragraph_with_text(self, text: str) -> Dict:
-        return {"type": "paragraph", "content": [self._create_text_node(text, None)]}
+        # ADF forbids empty text nodes; emit an empty paragraph instead.
+        content = [self._create_text_node(text, None)] if text else []
+        return {"type": "paragraph", "content": content}
 
     @staticmethod
     def _pop_mark(marks_stack: List[Dict], mark_type: str) -> None:
@@ -1117,6 +1119,18 @@ class Jira:
         finding_url: str = "",
         tenant_info: str = "",
     ) -> dict:
+
+        # ADF forbids empty text nodes, so Jira rejects them with 400 INVALID_INPUT.
+        def _safe(value: str) -> str:
+            return value if (value and value.strip()) else "-"
+
+        check_id = _safe(check_id)
+        check_title = _safe(check_title)
+        status_extended = _safe(status_extended)
+        provider = _safe(provider)
+        region = _safe(region)
+        resource_uid = _safe(resource_uid)
+        resource_name = _safe(resource_name)
 
         table_rows = [
             {
