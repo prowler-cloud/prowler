@@ -156,7 +156,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     # While creating the Cartography configuration, attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     tmp_cartography_config = CartographyConfig(
-        neo4j_uri=graph_database.get_uri(),
+        # The temp ingest database is always Neo4j, so use the ingest URI here
+        # rather than the sink URI (which points at Neptune when configured).
+        neo4j_uri=graph_database.get_ingest_uri(),
         neo4j_database=tmp_database_name,
         update_tag=int(time.time()),
     )
@@ -312,6 +314,12 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"(nodes={sync_result['nodes']}, relationships={sync_result['relationships']})"
         )
         sync_completed = True
+        # TODO: drop after Neptune cutover
+        # Flip is_migrated only now: the new schema is live in the active sink,
+        # so reads can switch to the current catalog/backend. The reader gate is
+        # already closed (set_provider_graph_data_ready(False) above), so the
+        # switch is atomic from the API's view.
+        db_utils.set_scan_migrated(attack_paths_scan, True)
         db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
 

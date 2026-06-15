@@ -43,7 +43,8 @@ def _neo4j_config() -> dict:
     return settings.DATABASES["neo4j"]
 
 
-def _uri() -> str:
+def get_uri() -> str:
+    """Bolt URI for the Neo4j temp (ingest) database. Always Neo4j."""
     config = _neo4j_config()
     host = config["HOST"]
     port = config["PORT"]
@@ -66,7 +67,7 @@ def init_driver() -> neo4j.Driver:
         if _driver is None:
             config = _neo4j_config()
             _driver = neo4j.GraphDatabase.driver(
-                _uri(),
+                get_uri(),
                 auth=(config["USER"], config["PASSWORD"]),
                 keep_alive=True,
                 max_connection_lifetime=MAX_CONNECTION_LIFETIME,

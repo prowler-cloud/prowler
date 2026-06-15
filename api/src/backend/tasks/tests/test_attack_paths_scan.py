@@ -33,6 +33,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
+    @patch("tasks.jobs.attack_paths.scan.db_utils.set_scan_migrated")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
@@ -53,7 +54,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
-        "tasks.jobs.attack_paths.scan.graph_database.get_uri",
+        "tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri",
         return_value="bolt://neo4j",
     )
     @patch(
@@ -67,7 +68,7 @@ class TestAttackPathsRun:
     def test_run_success_flow(
         self,
         mock_init_provider,
-        mock_get_uri,
+        mock_get_ingest_uri,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -84,6 +85,7 @@ class TestAttackPathsRun:
         mock_finish,
         mock_set_provider_graph_data_ready,
         mock_set_graph_data_ready,
+        mock_set_scan_migrated,
         mock_event_loop,
         mock_drop_db,
         tenants_fixture,
@@ -177,6 +179,9 @@ class TestAttackPathsRun:
             attack_paths_scan, False
         )
         mock_set_graph_data_ready.assert_called_once_with(attack_paths_scan, True)
+        # is_migrated is flipped to True only after the sync succeeds, so reads
+        # don't switch to the new catalog/sink before the graph is live.
+        mock_set_scan_migrated.assert_called_once_with(attack_paths_scan, True)
 
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
@@ -202,7 +207,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
         return_value="db-scan-id",
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.get_uri")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri")
     @patch(
         "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
         return_value=MagicMock(_enabled_regions=["us-east-1"]),
@@ -214,7 +219,7 @@ class TestAttackPathsRun:
     def test_run_failure_marks_scan_failed(
         self,
         mock_init_provider,
-        mock_get_uri,
+        mock_get_ingest_uri,
         mock_get_db_name,
         mock_create_db,
         mock_cartography_indexes,
@@ -301,7 +306,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
         return_value="db-scan-id",
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.get_uri")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri")
     @patch(
         "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
         return_value=MagicMock(_enabled_regions=["us-east-1"]),
@@ -313,7 +318,7 @@ class TestAttackPathsRun:
     def test_failure_before_gate_does_not_flip_graph_data_ready_true(
         self,
         mock_init_provider,
-        mock_get_uri,
+        mock_get_ingest_uri,
         mock_get_db_name,
         mock_create_db,
         mock_cartography_indexes,
@@ -404,7 +409,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
         return_value="db-scan-id",
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.get_uri")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri")
     @patch(
         "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
         return_value=MagicMock(_enabled_regions=["us-east-1"]),
@@ -416,7 +421,7 @@ class TestAttackPathsRun:
     def test_run_failure_marks_scan_failed_even_when_drop_database_fails(
         self,
         mock_init_provider,
-        mock_get_uri,
+        mock_get_ingest_uri,
         mock_get_db_name,
         mock_create_db,
         mock_cartography_indexes,
@@ -511,7 +516,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
-        "tasks.jobs.attack_paths.scan.graph_database.get_uri",
+        "tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri",
         return_value="bolt://neo4j",
     )
     @patch(
@@ -525,7 +530,7 @@ class TestAttackPathsRun:
     def test_failure_after_gate_before_drop_restores_graph_data_ready(
         self,
         mock_init_provider,
-        mock_get_uri,
+        mock_get_ingest_uri,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -624,7 +629,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
-        "tasks.jobs.attack_paths.scan.graph_database.get_uri",
+        "tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri",
         return_value="bolt://neo4j",
     )
     @patch(
@@ -638,7 +643,7 @@ class TestAttackPathsRun:
     def test_failure_after_drop_before_sync_leaves_graph_data_ready_false(
         self,
         mock_init_provider,
-        mock_get_uri,
+        mock_get_ingest_uri,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -718,6 +723,7 @@ class TestAttackPathsRun:
     )
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.set_scan_migrated")
     @patch(
         "tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready",
         side_effect=[RuntimeError("flag failed"), None],
@@ -740,7 +746,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
-        "tasks.jobs.attack_paths.scan.graph_database.get_uri",
+        "tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri",
         return_value="bolt://neo4j",
     )
     @patch(
@@ -754,7 +760,7 @@ class TestAttackPathsRun:
     def test_failure_after_sync_restores_graph_data_ready(
         self,
         mock_init_provider,
-        mock_get_uri,
+        mock_get_ingest_uri,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -770,6 +776,7 @@ class TestAttackPathsRun:
         mock_update_progress,
         mock_set_provider_graph_data_ready,
         mock_set_graph_data_ready,
+        mock_set_scan_migrated,
         mock_finish,
         mock_drop_db,
         mock_event_loop,
@@ -828,6 +835,9 @@ class TestAttackPathsRun:
         mock_set_provider_graph_data_ready.assert_called_once_with(
             attack_paths_scan, False
         )
+        # is_migrated is flipped once after the sync and is not touched again by
+        # the failure-recovery branch
+        mock_set_scan_migrated.assert_called_once_with(attack_paths_scan, True)
 
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
@@ -861,7 +871,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
-        "tasks.jobs.attack_paths.scan.graph_database.get_uri",
+        "tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri",
         return_value="bolt://neo4j",
     )
     @patch(
@@ -875,7 +885,7 @@ class TestAttackPathsRun:
     def test_recovery_failure_does_not_suppress_original_exception(
         self,
         mock_init_provider,
-        mock_get_uri,
+        mock_get_ingest_uri,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -2098,6 +2108,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         assert attack_paths_scan is not None
         assert attack_paths_scan.graph_data_ready is False
+        assert attack_paths_scan.is_migrated is False
 
     def test_create_attack_paths_scan_inherits_true_from_previous(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -2118,6 +2129,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
             scan=scan,
             state=StateChoices.COMPLETED,
             graph_data_ready=True,
+            is_migrated=True,
         )
 
         new_scan = Scan.objects.create(
@@ -2138,6 +2150,52 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         assert attack_paths_scan is not None
         assert attack_paths_scan.graph_data_ready is True
+        # is_migrated tracks the data being served: inherited from the ready scan
+        assert attack_paths_scan.is_migrated is True
+
+    def test_create_attack_paths_scan_inherits_is_migrated_false_from_legacy_ready(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        # Previous scan is ready but pre-cutover (legacy Neo4j graph shape)
+        AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            is_migrated=False,
+        )
+
+        new_scan = Scan.objects.create(
+            name="New Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            tenant_id=tenant.id,
+        )
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            attack_paths_scan = create_attack_paths_scan(
+                str(tenant.id), str(new_scan.id), provider.id
+            )
+
+        assert attack_paths_scan is not None
+        assert attack_paths_scan.graph_data_ready is True
+        # Reads stay on the legacy catalog/backend until this scan's own sync
+        assert attack_paths_scan.is_migrated is False
 
     def test_create_attack_paths_scan_inherits_false_when_no_previous_ready(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -2178,6 +2236,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         assert attack_paths_scan is not None
         assert attack_paths_scan.graph_data_ready is False
+        assert attack_paths_scan.is_migrated is False
 
     def test_set_graph_data_ready_updates_field(
         self, tenants_fixture, providers_fixture, scans_fixture

@@ -118,6 +118,12 @@ def get_uri() -> str:
     return f"bolt://{cfg['HOST']}:{cfg['PORT']}"
 
 
+def get_ingest_uri() -> str:
+    """Neo4j URI for the cartography temp (ingest) database, which is always
+    Neo4j regardless of the configured sink."""
+    return ingest.get_uri()
+
+
 # Session API
 
 

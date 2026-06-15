@@ -157,6 +157,14 @@ class TestRoutingByDatabasePrefix:
         assert result is sentinel
         sink_backend_stub.get_session.assert_not_called()
 
+    def test_get_ingest_uri_delegates_to_ingest(self, sink_backend_stub):
+        with patch("api.attack_paths.database.ingest") as mock_ingest:
+            mock_ingest.get_uri.return_value = "bolt://neo4j:7687"
+
+            assert db_module.get_ingest_uri() == "bolt://neo4j:7687"
+
+        mock_ingest.get_uri.assert_called_once_with()
+
     def test_get_session_routes_tenant_to_sink(self, sink_backend_stub):
         sentinel = MagicMock()
         sink_backend_stub.get_session.return_value = sentinel
