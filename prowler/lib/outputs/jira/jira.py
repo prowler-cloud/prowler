@@ -341,8 +341,6 @@ class Jira:
     }
     TOKEN_URL = "https://auth.atlassian.com/oauth/token"
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
-    # Timeout in seconds for every outbound HTTP request to Jira. Without it,
-    # an unresponsive Jira endpoint would hang the worker indefinitely.
     REQUEST_TIMEOUT = 30
     HEADER_TEMPLATE = {
         "Content-Type": "application/json",
