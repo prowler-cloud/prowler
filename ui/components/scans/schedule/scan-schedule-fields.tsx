@@ -104,6 +104,27 @@ function NumberSelect({
   );
 }
 
+function getScheduleSummary({
+  frequency,
+  intervalHours,
+  dayOfWeek,
+  dayOfMonth,
+}: Pick<
+  ScheduleFormValues,
+  "frequency" | "intervalHours" | "dayOfWeek" | "dayOfMonth"
+>) {
+  switch (frequency) {
+    case SCHEDULE_FREQUENCY.INTERVAL:
+      return `Every ${intervalHours} hours`;
+    case SCHEDULE_FREQUENCY.WEEKLY:
+      return `Weekly on ${SCHEDULE_WEEKDAY_LABELS[dayOfWeek] ?? SCHEDULE_WEEKDAY_LABELS[0]}`;
+    case SCHEDULE_FREQUENCY.MONTHLY:
+      return `Monthly on day ${dayOfMonth}`;
+    default:
+      return "Daily";
+  }
+}
+
 export function ScanScheduleFields({
   form,
   disabled = false,
@@ -121,6 +142,12 @@ export function ScanScheduleFields({
   const dayOfMonth = useWatch({ control, name: "dayOfMonth" });
   const intervalHours = useWatch({ control, name: "intervalHours" });
   const timezone = getBrowserTimezone();
+  const scheduleSummary = getScheduleSummary({
+    frequency,
+    intervalHours,
+    dayOfWeek,
+    dayOfMonth,
+  });
   const frequencyLabel = (option: (typeof FREQUENCY_OPTIONS)[number]) =>
     option.label ?? `Every ${intervalHours} hours`;
   // In OSS (non-Cloud) the advanced cadence and time are locked: `/schedules/daily`
@@ -230,7 +257,7 @@ export function ScanScheduleFields({
       {showNextScheduledCopy &&
         (canUseAdvancedSchedule ? (
           <p className="text-text-neutral-secondary text-sm">
-            The next scheduled scan will start on:{" "}
+            {scheduleSummary}. The next scheduled scan will start on:{" "}
             {format(
               getNextScheduledRun(
                 {
