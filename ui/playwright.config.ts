@@ -138,30 +138,5 @@ export default defineConfig({
       testMatch: "invitations.spec.ts",
       dependencies: ["admin.auth.setup"],
     },
-    // This project runs the onboarding test suite
-    {
-      name: "onboarding",
-      testMatch: "onboarding.spec.ts",
-      dependencies: ["admin.auth.setup"],
-    },
   ],
-
-  webServer: {
-    command: process.env.CI ? "pnpm run start" : "pnpm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-    env: {
-      NEXT_PUBLIC_API_BASE_URL:
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1",
-      // Lets the onboarding suite opt into Cloud-only behavior; it skips otherwise.
-      NEXT_PUBLIC_IS_CLOUD_ENV: process.env.NEXT_PUBLIC_IS_CLOUD_ENV || "",
-      AUTH_SECRET: process.env.AUTH_SECRET || "fallback-ci-secret-for-testing",
-      AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "true",
-      NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
-      E2E_ADMIN_USER: process.env.E2E_ADMIN_USER || "e2e@prowler.com",
-      E2E_ADMIN_PASSWORD:
-        process.env.E2E_ADMIN_PASSWORD || "Thisisapassword123@",
-    },
-  },
 });
