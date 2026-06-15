@@ -31,7 +31,9 @@ def _make_compliance(provider, attributes, version="1.4", framework="CIS"):
 
 
 class TestCISTable:
-    def test_muted_multi_section_not_undercounted(self, capsys):
+    """Verify multi-section counting and provider-column attribution for the CIS compliance table."""
+
+    def test_muted_multi_section_not_undercounted(self, capsys, tmp_path):
         """A single MUTED finding mapped to several sections must increment the
         per-section Muted column for every section, not only the first seen.
 
@@ -60,7 +62,7 @@ class TestCISTable:
             bulk_metadata,
             "cis_1.4_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -71,7 +73,7 @@ class TestCISTable:
         muted_one_rows = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
         assert len(muted_one_rows) == 2
 
-    def test_provider_column_not_leaked_from_other_framework(self, capsys):
+    def test_provider_column_not_leaked_from_other_framework(self, capsys, tmp_path):
         """The Provider column must come from the matched CIS compliance, not
         from a different framework that trails it in the compliance list."""
         bulk_metadata = {
@@ -102,7 +104,7 @@ class TestCISTable:
             bulk_metadata,
             "cis_1.4_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 

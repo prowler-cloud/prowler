@@ -44,6 +44,8 @@ def _make_framework(requirements, table_config, provider="AWS"):
 
 
 class TestBuildRequirementCheckMap:
+    """Test cases for building the requirement-to-check map of a framework."""
+
     def test_basic(self):
         reqs = [
             UniversalComplianceRequirement(
@@ -108,6 +110,8 @@ class TestBuildRequirementCheckMap:
 
 
 class TestGetGroupKey:
+    """Test cases for resolving the group key of a requirement."""
+
     def test_normal_field(self):
         req = UniversalComplianceRequirement(
             id="1.1",
@@ -129,7 +133,9 @@ class TestGetGroupKey:
 
 
 class TestGroupedMode:
-    def test_grouped_rendering(self, capsys):
+    """Test cases for grouped-mode universal compliance table rendering."""
+
+    def test_grouped_rendering(self, capsys, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
                 id="1.1",
@@ -161,7 +167,7 @@ class TestGroupedMode:
             bulk_metadata,
             "test_fw",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
         )
@@ -172,7 +178,7 @@ class TestGroupedMode:
         assert "PASS" in captured.out
         assert "FAIL" in captured.out
 
-    def test_grouped_multi_section_no_undercount(self, capsys):
+    def test_grouped_multi_section_no_undercount(self, capsys, tmp_path):
         """A single check mapped to several sections must be counted in
         every section it belongs to, not only the first one seen."""
         reqs = [
@@ -209,7 +215,7 @@ class TestGroupedMode:
             bulk_metadata,
             "test_fw",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
         )
@@ -231,7 +237,7 @@ class TestGroupedMode:
         assert len(iam_row) == 1
         assert len(logging_row) == 1
 
-    def test_grouped_multi_section_muted_not_undercounted(self, capsys):
+    def test_grouped_multi_section_muted_not_undercounted(self, capsys, tmp_path):
         """A single MUTED finding mapped to several groups must be counted in
         the per-group Muted column of every group it belongs to."""
         reqs = [
@@ -267,7 +273,7 @@ class TestGroupedMode:
             bulk_metadata,
             "test_fw",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
         )
@@ -281,7 +287,9 @@ class TestGroupedMode:
 
 
 class TestSplitMode:
-    def test_split_rendering(self, capsys):
+    """Test cases for split-mode universal compliance table rendering."""
+
+    def test_split_rendering(self, capsys, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
                 id="1.1",
@@ -316,7 +324,7 @@ class TestSplitMode:
             bulk_metadata,
             "test_fw",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
         )
@@ -326,7 +334,7 @@ class TestSplitMode:
         assert "Level 1" in captured.out
         assert "Level 2" in captured.out
 
-    def test_split_muted_multi_section_not_undercounted(self, capsys):
+    def test_split_muted_multi_section_not_undercounted(self, capsys, tmp_path):
         """In split mode a single MUTED finding mapped to several groups must
         be counted in the Muted column of every group it belongs to."""
         reqs = [
@@ -365,7 +373,7 @@ class TestSplitMode:
             bulk_metadata,
             "test_fw",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
         )
@@ -379,7 +387,9 @@ class TestSplitMode:
 
 
 class TestScoredMode:
-    def test_scored_rendering(self, capsys):
+    """Test cases for scored-mode universal compliance table rendering."""
+
+    def test_scored_rendering(self, capsys, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
                 id="1.1",
@@ -414,7 +424,7 @@ class TestScoredMode:
             bulk_metadata,
             "test_fw",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
         )
@@ -424,7 +434,7 @@ class TestScoredMode:
         assert "Score" in captured.out
         assert "Threat Score" in captured.out
 
-    def test_scored_multi_section_fail_not_undercounted(self, capsys):
+    def test_scored_multi_section_fail_not_undercounted(self, capsys, tmp_path):
         """In scored mode a single FAIL finding mapped to several groups must
         show FAIL(1) in every group it belongs to, not only the first one."""
         reqs = [
@@ -463,7 +473,7 @@ class TestScoredMode:
             bulk_metadata,
             "test_fw",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
         )
@@ -483,7 +493,9 @@ class TestScoredMode:
 
 
 class TestCustomLabels:
-    def test_ens_spanish_labels(self, capsys):
+    """Test cases for custom-label universal compliance table rendering."""
+
+    def test_ens_spanish_labels(self, capsys, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
                 id="1.1",
@@ -520,7 +532,7 @@ class TestCustomLabels:
             bulk_metadata,
             "test_fw",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
         )
@@ -531,7 +543,9 @@ class TestCustomLabels:
 
 
 class TestMultiProviderDictChecks:
-    def test_only_aws_checks_matched(self, capsys):
+    """Test cases for multi-provider dict checks in the universal table."""
+
+    def test_only_aws_checks_matched(self, capsys, tmp_path):
         """With dict checks and provider='aws', only AWS checks match findings."""
         reqs = [
             UniversalComplianceRequirement(
@@ -572,7 +586,7 @@ class TestMultiProviderDictChecks:
             bulk_metadata,
             "multi_cloud",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
             framework=fw,
             provider="aws",
@@ -586,7 +600,9 @@ class TestMultiProviderDictChecks:
 
 
 class TestNoTableConfig:
-    def test_returns_early_without_table_config(self, capsys):
+    """Test cases for the universal table when no table config is present."""
+
+    def test_returns_early_without_table_config(self, capsys, tmp_path):
         fw = ComplianceFramework(
             framework="TestFW",
             name="Test",
@@ -594,11 +610,11 @@ class TestNoTableConfig:
             description="Test",
             requirements=[],
         )
-        get_universal_table([], {}, "test", "out", "/tmp", False, framework=fw)
+        get_universal_table([], {}, "test", "out", str(tmp_path), False, framework=fw)
         captured = capsys.readouterr()
         assert captured.out == ""
 
-    def test_returns_early_without_framework(self, capsys):
-        get_universal_table([], {}, "test", "out", "/tmp", False, framework=None)
+    def test_returns_early_without_framework(self, capsys, tmp_path):
+        get_universal_table([], {}, "test", "out", str(tmp_path), False, framework=None)
         captured = capsys.readouterr()
         assert captured.out == ""

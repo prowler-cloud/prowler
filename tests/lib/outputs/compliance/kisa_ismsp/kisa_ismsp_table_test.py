@@ -32,7 +32,9 @@ def _make_compliance(
 
 
 class TestKISAISMSPTable:
-    def test_multi_section_fail_not_undercounted(self, capsys):
+    """Verify multi-section counting and provider-column attribution for the KISA ISMS-P compliance table."""
+
+    def test_multi_section_fail_not_undercounted(self, capsys, tmp_path):
         """A single FAIL check mapped to several sections must show FAIL(1) in
         every section, not just the first one seen."""
         bulk_metadata = {
@@ -51,7 +53,7 @@ class TestKISAISMSPTable:
             bulk_metadata,
             COMPLIANCE_FRAMEWORK,
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -61,7 +63,7 @@ class TestKISAISMSPTable:
         # dedup list.
         assert captured.out.count("FAIL(1)") == 2
 
-    def test_multi_section_muted_not_undercounted(self, capsys):
+    def test_multi_section_muted_not_undercounted(self, capsys, tmp_path):
         """A single MUTED check mapped to several sections must increase the
         per-section Muted count in every section, not only the first one."""
         bulk_metadata = {
@@ -81,7 +83,7 @@ class TestKISAISMSPTable:
             bulk_metadata,
             COMPLIANCE_FRAMEWORK,
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -92,7 +94,7 @@ class TestKISAISMSPTable:
         muted_cells = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
         assert len(muted_cells) == 2
 
-    def test_provider_column_not_leaked_from_other_framework(self, capsys):
+    def test_provider_column_not_leaked_from_other_framework(self, capsys, tmp_path):
         """The Provider column must come from the matched KISA compliance, never
         from a different framework that happens to be the last entry in the
         check's compliance list."""
@@ -124,7 +126,7 @@ class TestKISAISMSPTable:
             bulk_metadata,
             COMPLIANCE_FRAMEWORK,
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 

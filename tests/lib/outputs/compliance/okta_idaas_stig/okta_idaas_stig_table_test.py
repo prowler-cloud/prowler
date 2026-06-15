@@ -26,7 +26,9 @@ def _make_compliance(provider, sections, framework="Okta-IDaaS-STIG"):
 
 
 class TestOktaIDaaSSTIGTable:
-    def test_multi_section_fail_not_undercounted(self, capsys):
+    """Test cases for Okta IDaaS STIG compliance table rendering."""
+
+    def test_multi_section_fail_not_undercounted(self, capsys, tmp_path):
         """A single FAIL check mapped to several sections must show FAIL(1) in
         every section, not just the first one seen."""
         bulk_metadata = {
@@ -46,7 +48,7 @@ class TestOktaIDaaSSTIGTable:
             bulk_metadata,
             "okta_idaas_stig_1r2",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -55,7 +57,7 @@ class TestOktaIDaaSSTIGTable:
         # was undercounted and rendered as plain PASS.
         assert captured.out.count("FAIL(1)") == 2
 
-    def test_multi_section_muted_not_undercounted(self, capsys):
+    def test_multi_section_muted_not_undercounted(self, capsys, tmp_path):
         """A single MUTED check mapped to several sections must increase the
         per-section Muted count in every section, not only the first one."""
         bulk_metadata = {
@@ -75,7 +77,7 @@ class TestOktaIDaaSSTIGTable:
             bulk_metadata,
             "okta_idaas_stig_1r2",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -92,7 +94,7 @@ class TestOktaIDaaSSTIGTable:
         muted_cells = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
         assert len(muted_cells) == 2
 
-    def test_provider_column_not_leaked_from_other_framework(self, capsys):
+    def test_provider_column_not_leaked_from_other_framework(self, capsys, tmp_path):
         """The Provider column must come from the matched Okta-IDaaS-STIG
         compliance, never from a different framework that happens to be the
         last entry in the check's compliance list."""
@@ -123,7 +125,7 @@ class TestOktaIDaaSSTIGTable:
             bulk_metadata,
             "okta_idaas_stig_1r2",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 

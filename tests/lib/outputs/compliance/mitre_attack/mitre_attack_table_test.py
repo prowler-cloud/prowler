@@ -31,7 +31,9 @@ def _make_compliance(
 
 
 class TestMitreAttackTable:
-    def test_multi_tactic_fail_not_undercounted(self, capsys):
+    """Test multi-section counting and provider-column attribution for the compliance table."""
+
+    def test_multi_tactic_fail_not_undercounted(self, capsys, tmp_path):
         """A single FAIL check mapped to several tactics must show FAIL(1) in
         every tactic, not just the first one seen."""
         bulk_metadata = {
@@ -52,7 +54,7 @@ class TestMitreAttackTable:
             bulk_metadata,
             COMPLIANCE_FRAMEWORK,
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -62,7 +64,7 @@ class TestMitreAttackTable:
         # the global dedup list.
         assert captured.out.count("FAIL(1)") == 2
 
-    def test_multi_tactic_muted_not_undercounted(self, capsys):
+    def test_multi_tactic_muted_not_undercounted(self, capsys, tmp_path):
         """A single MUTED check mapped to several tactics must increase the
         per-tactic Muted count in every tactic, not only the first one."""
         bulk_metadata = {
@@ -84,7 +86,7 @@ class TestMitreAttackTable:
             bulk_metadata,
             COMPLIANCE_FRAMEWORK,
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -95,7 +97,7 @@ class TestMitreAttackTable:
         muted_cells = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
         assert len(muted_cells) == 2
 
-    def test_provider_column_not_leaked_from_other_framework(self, capsys):
+    def test_provider_column_not_leaked_from_other_framework(self, capsys, tmp_path):
         """The Provider column must come from the matched MITRE-ATTACK
         compliance, never from a different framework that happens to be the last
         entry in the check's compliance list."""
@@ -127,7 +129,7 @@ class TestMitreAttackTable:
             bulk_metadata,
             COMPLIANCE_FRAMEWORK,
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 

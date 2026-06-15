@@ -30,7 +30,13 @@ def _make_compliance(provider, attributes, framework="ENS"):
 
 
 class TestENSTable:
-    def test_no_cumple_marked_in_every_marco(self, capsys):
+    """Test cases for ENS compliance table rendering.
+
+    Verify multi-marco counting and provider-column attribution for the
+    compliance table.
+    """
+
+    def test_no_cumple_marked_in_every_marco(self, capsys, tmp_path):
         """A single failing finding mapped to several marcos must mark every
         one of them as NO CUMPLE, not only the first marco seen."""
         bulk_metadata = {
@@ -63,7 +69,7 @@ class TestENSTable:
             bulk_metadata,
             "ens_rd2022_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -86,7 +92,7 @@ class TestENSTable:
         assert len(op_row) == 1 and "NO CUMPLE" in op_row[0]
         assert len(org_row) == 1 and "NO CUMPLE" in org_row[0]
 
-    def test_recomendacion_does_not_set_no_cumple(self, capsys):
+    def test_recomendacion_does_not_set_no_cumple(self, capsys, tmp_path):
         """A FAIL on a 'recomendacion' attribute must not flip a marco to
         NO CUMPLE (this path is intentionally excluded from the fix)."""
         bulk_metadata = {
@@ -107,10 +113,18 @@ class TestENSTable:
                     _make_compliance("aws", [_attr("organizativo", "politica")])
                 ]
             ),
+            # A regular (non-recomendacion) check so the results table renders
+            # at least one marco row and the assertion below is not vacuous.
+            "check_c": SimpleNamespace(
+                Compliance=[
+                    _make_compliance("aws", [_attr("operacional", "continuidad")])
+                ]
+            ),
         }
         findings = [
             _make_finding("check_a", "FAIL"),
             _make_finding("check_b", "PASS"),
+            _make_finding("check_c", "PASS"),
         ]
 
         get_ens_table(
@@ -118,7 +132,7 @@ class TestENSTable:
             bulk_metadata,
             "ens_rd2022_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -131,9 +145,11 @@ class TestENSTable:
             for line in plain.splitlines()
             if "operacional" in line or "organizativo" in line
         ]
+        # Guard against a vacuous pass: the table must actually render rows.
+        assert marco_rows
         assert all("NO CUMPLE" not in line for line in marco_rows)
 
-    def test_muted_multi_marco_not_undercounted(self, capsys):
+    def test_muted_multi_marco_not_undercounted(self, capsys, tmp_path):
         """A single MUTED finding mapped to several marcos must increment the
         per-marco Muted column for every marco, not only the first seen."""
         bulk_metadata = {
@@ -164,7 +180,7 @@ class TestENSTable:
             bulk_metadata,
             "ens_rd2022_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -175,7 +191,7 @@ class TestENSTable:
         muted_one_rows = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
         assert len(muted_one_rows) == 2
 
-    def test_provider_column_not_leaked_from_other_framework(self, capsys):
+    def test_provider_column_not_leaked_from_other_framework(self, capsys, tmp_path):
         """The Proveedor column must come from the matched ENS compliance, not
         from a different framework that trails it in the compliance list."""
         bulk_metadata = {
@@ -210,7 +226,7 @@ class TestENSTable:
             bulk_metadata,
             "ens_rd2022_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 

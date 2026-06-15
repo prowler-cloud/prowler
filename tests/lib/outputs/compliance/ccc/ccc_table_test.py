@@ -25,7 +25,9 @@ def _make_compliance(provider, sections, framework="CCC"):
 
 
 class TestCCCTable:
-    def test_multi_section_fail_not_undercounted(self, capsys):
+    """Test cases verifying multi-section counting and provider-column attribution for the compliance table."""
+
+    def test_multi_section_fail_not_undercounted(self, capsys, tmp_path):
         """A single FAIL check mapped to several sections must show FAIL(1) in
         every section, not just the first one seen."""
         bulk_metadata = {
@@ -44,7 +46,7 @@ class TestCCCTable:
             bulk_metadata,
             "ccc_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -54,7 +56,7 @@ class TestCCCTable:
         # dedup list.
         assert captured.out.count("FAIL(1)") == 2
 
-    def test_multi_section_muted_not_undercounted(self, capsys):
+    def test_multi_section_muted_not_undercounted(self, capsys, tmp_path):
         """A single MUTED check mapped to several sections must increase the
         per-section Muted count in every section, not only the first one."""
         bulk_metadata = {
@@ -74,7 +76,7 @@ class TestCCCTable:
             bulk_metadata,
             "ccc_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
@@ -85,7 +87,7 @@ class TestCCCTable:
         muted_cells = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
         assert len(muted_cells) == 2
 
-    def test_provider_column_not_leaked_from_other_framework(self, capsys):
+    def test_provider_column_not_leaked_from_other_framework(self, capsys, tmp_path):
         """The Provider column must come from the matched CCC compliance, never
         from a different framework that happens to be the last entry in the
         check's compliance list."""
@@ -117,7 +119,7 @@ class TestCCCTable:
             bulk_metadata,
             "ccc_aws",
             "output",
-            "/tmp",
+            str(tmp_path),
             False,
         )
 
