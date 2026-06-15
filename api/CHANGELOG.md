@@ -2,6 +2,16 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.32.0] (Prowler UNRELEASED)
+
+### 🔐 Security
+
+- `aiohttp` to 3.14.0 and `idna` to 3.15, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- Container base image to `python:3.12.13-slim-bookworm` and `trivy` to 0.71.0, patching OS and Go module CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- `trivy` binary bumped to 0.71.0 patching embedded `golang.org/x/crypto`, `golang.org/x/net`, and Go `stdlib` CVEs [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
+---
+
 ## [1.31.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed

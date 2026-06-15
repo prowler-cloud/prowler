@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "cosmosdb_account_backup_policy_continuous",
+  "CheckTitle": "Cosmos DB account uses continuous backup policy",
+  "CheckType": [],
+  "ServiceName": "cosmosdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
+  "ResourceGroup": "database",
+  "Description": "**Azure Cosmos DB accounts** are evaluated for **continuous backup** policy. Continuous backup provides **point-in-time restore (PITR)** enabling recovery to any point within the retention window, unlike periodic backup which only supports full restores at fixed intervals.",
+  "Risk": "**Periodic backup** limits recovery to the last backup snapshot. Data changes between snapshots are lost during restore. **Continuous backup** enables **granular recovery** from accidental deletes, corruption, or ransomware.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/continuous-backup-restore-introduction",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/migrate-continuous-backup",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/restore-account-continuous-backup"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az cosmosdb update --name <COSMOS_ACCOUNT_NAME> --resource-group <RESOURCE_GROUP> --backup-policy-type Continuous --continuous-tier Continuous30Days",
+      "NativeIaC": "```bicep\n// Bicep: Switch a Cosmos DB account to Continuous backup (irreversible)\nresource account 'Microsoft.DocumentDB/databaseAccounts@2025-10-15' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  kind: 'GlobalDocumentDB'\n  properties: {\n    databaseAccountOfferType: 'Standard'\n    locations: [{ locationName: resourceGroup().location }]\n    backupPolicy: {\n      type: 'Continuous' // Critical: Enables point-in-time restore. Migration from Periodic is one-way.\n      continuousModeProperties: {\n        tier: 'Continuous30Days' // or 'Continuous7Days' for the lower-cost tier\n      }\n    }\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and open your Cosmos DB account\n2. In the left menu, select Backup & Restore\n3. Click Switch to Continuous backup\n4. Select the retention tier (Continuous30Days or Continuous7Days)\n5. Acknowledge that the migration from Periodic to Continuous is irreversible\n6. Click Save",
+      "Terraform": "```hcl\n# Terraform: Configure Cosmos DB account with Continuous backup (irreversible)\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_resource_name>\"\n  offer_type          = \"Standard\"\n  kind                = \"GlobalDocumentDB\"\n\n  geo_location {\n    location          = \"<example_resource_name>\"\n    failover_priority = 0\n  }\n\n  backup {\n    type = \"Continuous\"          # Critical: Enables point-in-time restore. One-way migration from Periodic.\n    tier = \"Continuous30Days\"    # or \"Continuous7Days\" for the lower-cost tier\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use **Continuous backup** for Cosmos DB accounts that require **point-in-time restore (PITR)**. Pick the retention tier (`Continuous7Days` or `Continuous30Days`) based on recovery objectives, and validate restore procedures with periodic drills. Note that switching from **Periodic** to **Continuous** is a **one-way** migration; plan the change and review pricing before applying.",
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_backup_policy_continuous"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
