@@ -118,6 +118,11 @@ declare global {
       E2E_GOOGLEWORKSPACE_CUSTOMER_ID?: string;
       E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON?: string;
       E2E_GOOGLEWORKSPACE_DELEGATED_USER?: string;
+
+      // E2E Okta
+      E2E_OKTA_DOMAIN?: string;
+      E2E_OKTA_CLIENT_ID?: string;
+      E2E_OKTA_BASE64_PRIVATE_KEY?: string;
     }
   }
 }

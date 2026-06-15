@@ -1012,3 +1012,63 @@
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid Google Workspace account with Service Account having domain-wide delegation enabled
 - Service Account must have appropriate Google Workspace API scopes for security scanning
+
+---
+
+## Test Case: `PROVIDER-E2E-018` - Add Okta Provider with OAuth 2.0 Private Key JWT Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @okta
+
+**Description/Objective:** Validates the complete flow of adding a new Okta provider using OAuth 2.0 Private Key JWT authentication (Client ID and PEM-encoded private key) tied to an Okta Org Domain.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_OKTA_DOMAIN, E2E_OKTA_CLIENT_ID, E2E_OKTA_BASE64_PRIVATE_KEY
+- Remove any existing provider with the same Org Domain before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Org Domain not to be already registered beforehand.
+
+### Flow Steps
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select Okta provider type
+4. Fill provider details (org domain and alias)
+5. Verify Okta credentials page is loaded
+6. Fill Okta credentials (client ID and PEM-encoded private key)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result
+
+- Okta provider successfully added with OAuth 2.0 Private Key JWT credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points
+
+- Provider page loads correctly
+- Connect account page displays Okta option
+- Provider details form accepts org domain (Okta-managed domain, e.g. acme.okta.com) and alias
+- Credentials page loads with Client ID input and Private Key textarea
+- Credentials are properly filled in the correct fields
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by org domain)
+- Scan name field contains "scheduled scan"
+
+### Notes
+
+- Test uses environment variables for Okta credentials
+- Org Domain is lowercased by the form; cleanup and scan verification use the normalized value
+- Private Key is provided as base64-encoded PEM content and decoded before use (multi-line content)
+- Provider cleanup performed before each test to ensure clean state
+- Requires a valid Okta API Services app with a registered public key (JWK) matching the provided private key
