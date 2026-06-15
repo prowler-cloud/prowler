@@ -1293,7 +1293,8 @@
         "storage_ensure_private_endpoints_in_storage_accounts",
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_using_managed_disks",
-        "vm_trusted_launch_enabled"
+        "vm_trusted_launch_enabled",
+        "cosmosdb_account_automatic_failover_enabled"
       ]
     },
     {

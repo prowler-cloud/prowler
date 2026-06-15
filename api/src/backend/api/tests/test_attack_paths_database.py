@@ -542,3 +542,84 @@ class TestHasProviderData:
         ):
             with pytest.raises(db_module.GraphDatabaseQueryException):
                 db_module.has_provider_data("db-tenant-abc", "provider-123")
+
+
+class TestDropSubgraph:
+    """Test drop_subgraph two-phase batched deletion of a provider's graph."""
+
+    @staticmethod
+    def _result(count):
+        result = MagicMock()
+        result.single.return_value.get.return_value = count
+        return result
+
+    @staticmethod
+    def _session_ctx(session):
+        ctx = MagicMock()
+        ctx.__enter__.return_value = session
+        ctx.__exit__.return_value = False
+        return ctx
+
+    def test_deletes_relationships_then_nodes_in_batches(self):
+        session = MagicMock()
+        # Phase 1 (relationships): one full batch then empty.
+        # Phase 2 (nodes): one full batch then empty.
+        session.run.side_effect = [
+            self._result(1000),
+            self._result(0),
+            self._result(1000),
+            self._result(0),
+        ]
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=self._session_ctx(session),
+        ):
+            deleted = db_module.drop_subgraph("db-tenant-abc", "provider-123")
+
+        # Only phase-2 node counts contribute to the return value.
+        assert deleted == 1000
+        assert session.run.call_count == 4
+
+        queries = [call.args[0] for call in session.run.call_args_list]
+
+        # Regression guard: the memory blow-up was caused by DETACH DELETE.
+        assert all("DETACH DELETE" not in query for query in queries)
+
+        rel_queries = [query for query in queries if "DELETE r" in query]
+        node_queries = [query for query in queries if "DELETE n" in query]
+        assert rel_queries and node_queries
+        # DISTINCT avoids double-counting relationships matched from both ends.
+        assert all("DISTINCT r" in query for query in rel_queries)
+
+        # Relationships must be fully drained before nodes are deleted.
+        first_node = next(i for i, q in enumerate(queries) if "DELETE n" in q)
+        last_rel = max(i for i, q in enumerate(queries) if "DELETE r" in q)
+        assert last_rel < first_node
+
+    def test_returns_zero_when_database_not_found(self):
+        session_ctx = MagicMock()
+        session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
+            message="Database does not exist",
+            code="Neo.ClientError.Database.DatabaseNotFound",
+        )
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            assert db_module.drop_subgraph("db-tenant-gone", "provider-123") == 0
+
+    def test_raises_on_other_errors(self):
+        session_ctx = MagicMock()
+        session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
+            message="Connection refused",
+            code="Neo.TransientError.General.UnknownError",
+        )
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            with pytest.raises(db_module.GraphDatabaseQueryException):
+                db_module.drop_subgraph("db-tenant-abc", "provider-123")
