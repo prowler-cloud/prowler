@@ -18,6 +18,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
 
+### 🔐 Security
+
+- Container base image bumped to `python:3.12.13-slim-bookworm` (patches `libgnutls30` CVE-2026-33845 and CVE-2026-42010) and `trivy` bumped to 0.71.0 (patches embedded `golang.org/x/crypto` and Go stdlib CVEs); `.trivyignore` documents remaining bookworm criticals with no-fix or not-affected rationale [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
 ---
 
 ## [5.30.0] (Prowler v5.30.0)
