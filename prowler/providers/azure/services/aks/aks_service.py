@@ -100,8 +100,10 @@ class AKS(AzureService):
                                         )
                                         else False
                                     ),
-                                    local_accounts_disabled=getattr(
-                                        cluster, "disable_local_accounts", False
+                                    local_accounts_disabled=bool(
+                                        getattr(
+                                            cluster, "disable_local_accounts", False
+                                        )
                                     ),
                                 )
                             }
