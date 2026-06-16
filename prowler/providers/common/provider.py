@@ -222,12 +222,18 @@ class Provider(ABC):
     ) -> dict:
         """Build the provider constructor kwargs from a stored uid and secret.
 
-        This is the programmatic construction interface used by callers that
-        persist a provider as a single ``uid`` plus a ``secret`` dict (e.g. the
-        API), as opposed to the CLI which passes explicit per-provider flags.
-        The base implementation passes the secret through and adds the mutelist;
-        providers whose constructor needs the uid (e.g. as a subscription id) or
-        that rename/filter secret keys override this.
+        This is the programmatic construction interface intended for callers
+        that will persist a provider as a single ``uid`` plus a ``secret`` dict
+        (e.g. the API), as opposed to the CLI which passes explicit per-provider
+        flags.
+
+        The base implementation is a default: it passes the secret through, adds
+        the mutelist, and intentionally drops ``provider_uid``. Providers for
+        which the uid is part of the scan scope (e.g. the Azure subscription, GCP
+        project or M365 tenant), or whose constructor renames/filters secret
+        keys, must override this to inject the uid into the right kwarg. Until a
+        provider overrides it, this base default is not the final shape the API
+        will consume for that provider.
         """
         kwargs = {**secret}
         if mutelist_content:
@@ -240,8 +246,10 @@ class Provider(ABC):
 
         Companion to :meth:`get_scan_arguments` for the connection check, which
         often needs a different shape than the constructor. The base passes the
-        secret through; providers add their identity kwarg (and ``provider_id``
-        where their ``test_connection`` expects it).
+        secret through and intentionally drops ``provider_uid``. Providers for
+        which the uid is part of the scope must override this to add their
+        identity kwarg (and ``provider_id`` where their ``test_connection``
+        expects it) before the API will consume this for that provider.
         """
         return {**secret}
 
