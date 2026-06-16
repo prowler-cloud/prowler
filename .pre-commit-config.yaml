@@ -167,7 +167,7 @@ repos:
         # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'
         language: system
         pass_filenames: false
-        stages: ["pre-commit", "pre-push"]
+        stages: ["pre-commit"]
         priority: 40
 
       - id: bandit
