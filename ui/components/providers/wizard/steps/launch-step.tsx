@@ -15,6 +15,7 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { ToastAction, useToast } from "@/components/ui";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import { SCAN_JOBS_TAB } from "@/types";
 import { TREE_ITEM_STATUS } from "@/types/tree";
 
 import {
@@ -81,7 +82,7 @@ export function LaunchStep({
           : "Single scan launched successfully.",
       action: (
         <ToastAction altText="Go to scans" asChild>
-          <Link href="/scans">Go to scans</Link>
+          <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>Go to scans</Link>
         </ToastAction>
       ),
     });

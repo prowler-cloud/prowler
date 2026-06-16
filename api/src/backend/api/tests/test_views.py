@@ -24,9 +24,11 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
+from django.db import connection
 from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
@@ -64,6 +66,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceTag,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -1625,6 +1628,21 @@ class TestProviderViewSet:
                     "uid": "C12",
                     "alias": "Google Workspace Minimum Length",
                 },
+                {
+                    "provider": "okta",
+                    "uid": "acme.okta.com",
+                    "alias": "Okta Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta-gov.com",
+                    "alias": "Okta Gov Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta.mil",
+                    "alias": "Okta Mil Org",
+                },
             ]
         ),
     )
@@ -2143,6 +2161,24 @@ class TestProviderViewSet:
                     "googleworkspace-uid",
                     "uid",
                 ),
+                (
+                    {
+                        "provider": "okta",
+                        "uid": "https://acme.okta.com",
+                        "alias": "test",
+                    },
+                    "okta-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "okta",
+                        "uid": "acme.example.com",
+                        "alias": "test",
+                    },
+                    "okta-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -2162,6 +2198,25 @@ class TestProviderViewSet:
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
         )
+
+    @pytest.mark.parametrize(
+        "input_uid,stored_uid",
+        [
+            ("Acme.okta.com", "acme.okta.com"),
+            ("  ACME.OKTA.COM  ", "acme.okta.com"),
+            ("Agency.Okta-Gov.com", "agency.okta-gov.com"),
+        ],
+    )
+    def test_providers_create_okta_uid_normalized(
+        self, authenticated_client, input_uid, stored_uid
+    ):
+        response = authenticated_client.post(
+            reverse("provider-list"),
+            data={"provider": "okta", "uid": input_uid, "alias": "Okta"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.get().uid == stored_uid
 
     def test_providers_partial_update(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -2320,17 +2375,17 @@ class TestProviderViewSet:
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 13),
+                ("inserted_at", TODAY, 14),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    13,
+                    14,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    13,
+                    14,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2963,6 +3018,19 @@ class TestProviderSecretViewSet:
                     "api_token": "fake-vercel-api-token-for-testing",
                 },
             ),
+            # Okta with inline private key credentials
+            (
+                Provider.ProviderChoices.OKTA.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "okta_client_id": "0oa123456789abcdef",
+                    "okta_private_key": "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+                    "okta_scopes": [
+                        "okta.policies.read",
+                        "okta.groups.read",
+                    ],
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -3073,6 +3141,46 @@ class TestProviderSecretViewSet:
         assert (
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
+        )
+
+    def test_provider_secrets_invalid_create_okta_missing_private_key(
+        self,
+        providers_fixture,
+        authenticated_client,
+    ):
+        okta_provider = next(
+            provider
+            for provider in providers_fixture
+            if provider.provider == Provider.ProviderChoices.OKTA.value
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "Okta Secret",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        "okta_client_id": "0oa123456789abcdef",
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(okta_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/okta_private_key"
         )
 
     def test_provider_secrets_partial_update(
@@ -3751,16 +3859,20 @@ class TestScanViewSet:
         scan.output_location = "dummy"
         scan.save()
 
-        dummy_task = Task.objects.create(tenant_id=scan.tenant_id)
-        dummy_task.id = "dummy-task-id"
-        dummy_task_data = {"id": dummy_task.id, "state": StateChoices.EXECUTING}
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
+            task_name="scan-report",
+            task_kwargs={"scan_id": str(scan.id)},
+        )
+        task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=task_result,
+        )
+        dummy_task_data = {"id": str(task.id), "state": StateChoices.EXECUTING}
 
-        with (
-            patch("api.v1.views.Task.objects.get", return_value=dummy_task),
-            patch(
-                "api.v1.views.TaskSerializer",
-                return_value=type("DummySerializer", (), {"data": dummy_task_data}),
-            ),
+        with patch(
+            "api.v1.views.TaskSerializer",
+            return_value=type("DummySerializer", (), {"data": dummy_task_data}),
         ):
             url = reverse("scan-report", kwargs={"pk": scan.id})
             response = authenticated_client.get(url)
@@ -4081,6 +4193,88 @@ class TestScanViewSet:
         assert resp.status_code == status.HTTP_302_FOUND
         assert resp["Location"] == presigned_url
 
+    def test_compliance_s3_returns_latest_match(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """When several files match, the most recently modified one is served."""
+        scan = scans_fixture[0]
+        bucket = "bucket"
+        scan.output_location = f"s3://{bucket}/path/scan.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+        )
+
+        old_key = "path/compliance/prowler-output-aws-20240101000000_cis_1.4_aws.csv"
+        latest_key = "path/compliance/prowler-output-aws-20240202000000_cis_1.4_aws.csv"
+
+        class FakeS3Client:
+            def list_objects_v2(self, Bucket, Prefix):
+                return {
+                    "Contents": [
+                        {
+                            "Key": old_key,
+                            "LastModified": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                        },
+                        {
+                            "Key": latest_key,
+                            "LastModified": datetime(2024, 2, 2, tzinfo=timezone.utc),
+                        },
+                    ]
+                }
+
+            def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
+                assert Params["Key"] == latest_key
+                return "https://test-bucket.s3.amazonaws.com/latest"
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
+
+        url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_302_FOUND
+        assert resp["Location"].endswith("/latest")
+
+    def test_compliance_local_returns_latest_match(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """The local branch serves the most recently modified matching file."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            comp_dir = Path(tmp) / "reports" / "compliance"
+            comp_dir.mkdir(parents=True, exist_ok=True)
+
+            old_file = comp_dir / "prowler-output-aws-20240101000000_cis_1.4_aws.csv"
+            old_file.write_bytes(b"old")
+            latest_file = comp_dir / "prowler-output-aws-20240202000000_cis_1.4_aws.csv"
+            latest_file.write_bytes(b"latest")
+            # Make `latest_file` newer regardless of creation order.
+            os.utime(old_file, (1_700_000_000, 1_700_000_000))
+            os.utime(latest_file, (1_700_000_100, 1_700_000_100))
+
+            scan.output_location = str(Path(tmp) / "reports" / "scan.zip")
+            scan.save()
+
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: [str(old_file), str(latest_file)],
+            )
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp.content == b"latest"
+            assert resp["Content-Disposition"].endswith(
+                f'filename="{latest_file.name}"'
+            )
+
     def test_compliance_s3_not_found(
         self, authenticated_client, scans_fixture, monkeypatch
     ):
@@ -4189,18 +4383,24 @@ class TestScanViewSet:
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
 
-    @patch("api.v1.views.Task.objects.get")
     @patch("api.v1.views.TaskSerializer")
     def test__get_task_status_returns_none_if_task_not_executing(
-        self, mock_task_serializer, mock_task_get, authenticated_client, scans_fixture
+        self, mock_task_serializer, authenticated_client, scans_fixture
     ):
         scan = scans_fixture[0]
         scan.state = StateChoices.COMPLETED
         scan.output_location = "dummy"
         scan.save()
 
-        task = Task.objects.create(tenant_id=scan.tenant_id)
-        mock_task_get.return_value = task
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
+            task_name="scan-report",
+            task_kwargs={"scan_id": str(scan.id)},
+        )
+        task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=task_result,
+        )
         mock_task_serializer.return_value.data = {
             "id": str(task.id),
             "state": StateChoices.COMPLETED,
@@ -4221,6 +4421,7 @@ class TestScanViewSet:
         scan.save()
 
         task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
             task_name="scan-report",
             task_kwargs={"scan_id": str(scan.id)},
         )
@@ -4240,6 +4441,51 @@ class TestScanViewSet:
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.data["id"] == str(task.id)
+
+    @patch("api.v1.views.TaskSerializer")
+    def test__get_task_status_returns_latest_task(
+        self, mock_task_serializer, authenticated_client, scans_fixture
+    ):
+        """With several scan-report tasks for the scan, the most recent is used."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        old_task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=TaskResult.objects.create(
+                task_id=str(uuid4()),
+                task_name="scan-report",
+                task_kwargs={"scan_id": str(scan.id)},
+            ),
+        )
+        new_task = Task.objects.create(
+            tenant_id=scan.tenant_id,
+            task_runner_task=TaskResult.objects.create(
+                task_id=str(uuid4()),
+                task_name="scan-report",
+                task_kwargs={"scan_id": str(scan.id)},
+            ),
+        )
+        # `inserted_at` is `auto_now_add`, and within the test transaction the DB
+        # `now()` is constant, so force distinct timestamps to make order_by stable.
+        base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        Task.objects.filter(pk=old_task.pk).update(inserted_at=base)
+        Task.objects.filter(pk=new_task.pk).update(
+            inserted_at=base + timedelta(hours=1)
+        )
+
+        mock_task_serializer.side_effect = lambda instance, *a, **k: SimpleNamespace(
+            data={"id": str(instance.id), "state": StateChoices.EXECUTING}
+        )
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert str(new_task.id) in response["Content-Location"]
+        assert str(old_task.id) not in response["Content-Location"]
 
     @patch("api.v1.views.get_s3_client")
     @patch("api.v1.views.sentry_sdk.capture_exception")
@@ -6811,6 +7057,80 @@ class TestFindingViewSet:
             == findings_fixture[0].status
         )
 
+    def test_findings_list_resource_tags_no_n_plus_one(
+        self, authenticated_client, findings_fixture
+    ):
+        """Listing findings must load every resource's tags in a constant
+        number of queries, no matter how many findings/resources are returned.
+
+        This guards ``FindingViewSet._optimize_tags_loading`` against
+        regressions that would reintroduce one extra query per resource (the
+        N+1 the prefetch was added to remove).
+        """
+        scan = findings_fixture[0].scan
+        tenant_id = findings_fixture[0].tenant_id
+        provider = scan.provider
+
+        def _create_finding_with_tagged_resource(index):
+            resource = Resource.objects.create(
+                tenant_id=tenant_id,
+                provider=provider,
+                uid=f"arn:aws:ec2:us-east-1:123456789012:instance/n-plus-one-{index}",
+                name=f"N+1 Instance {index}",
+                region="us-east-1",
+                service="ec2",
+                type="prowler-test",
+            )
+            resource.upsert_or_delete_tags(
+                [
+                    ResourceTag.objects.create(
+                        tenant_id=tenant_id,
+                        key=f"key-{index}",
+                        value=f"value-{index}",
+                    )
+                ]
+            )
+            finding = Finding.objects.create(
+                tenant_id=tenant_id,
+                uid=f"n_plus_one_finding_{index}",
+                scan=scan,
+                status=Status.FAIL,
+                status_extended="n+1 status",
+                impact=Severity.medium,
+                severity=Severity.medium,
+                check_id="test_check_id",
+                check_metadata={"CheckId": "test_check_id", "servicename": "ec2"},
+                first_seen_at="2024-01-02T00:00:00Z",
+            )
+            finding.add_resources([resource])
+            return finding
+
+        params = {"filter[inserted_at]": TODAY, "include": "resources"}
+
+        # Baseline: the two findings provided by the fixture.
+        with CaptureQueriesContext(connection) as baseline:
+            response = authenticated_client.get(reverse("finding-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+
+        # Add more findings, each with its own resource carrying tags.
+        extra_findings = 5
+        for index in range(extra_findings):
+            _create_finding_with_tagged_resource(index)
+
+        with CaptureQueriesContext(connection) as scaled:
+            response = authenticated_client.get(reverse("finding-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(findings_fixture) + extra_findings
+
+        # The query count must not grow with the number of findings/resources.
+        assert len(scaled.captured_queries) == len(baseline.captured_queries), (
+            "Resource tags are not being prefetched: "
+            f"{len(baseline.captured_queries)} queries for {len(findings_fixture)} "
+            f"findings vs {len(scaled.captured_queries)} for "
+            f"{len(findings_fixture) + extra_findings}. Likely an N+1 regression "
+            "in FindingViewSet._optimize_tags_loading."
+        )
+
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
@@ -7052,6 +7372,32 @@ class TestFindingViewSet:
         assert response.json()["data"]["relationships"]["resources"]["data"][0][
             "id"
         ] == str(finding_1.resources.first().id)
+
+    def test_findings_retrieve_include_resource_metadata(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        resource = finding_1.resources.first()
+        resource.metadata = '{"VulnerabilityID": "CVE-2026-0001"}'
+        resource.details = "Python 3.12 base image"
+        resource.save()
+
+        response = authenticated_client.get(
+            reverse("finding-detail", kwargs={"pk": finding_1.id}),
+            {"include": "resources"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        included_resource = next(
+            item
+            for item in response.json()["included"]
+            if item["type"] == "resources" and item["id"] == str(resource.id)
+        )
+        assert (
+            included_resource["attributes"]["metadata"]
+            == '{"VulnerabilityID": "CVE-2026-0001"}'
+        )
+        assert included_resource["attributes"]["details"] == "Python 3.12 base image"
 
     def test_findings_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
@@ -9214,6 +9560,198 @@ class TestComplianceOverviewViewSet:
             assert "platforms" in attributes["attributes"]["technique_details"]
             assert "technique_url" in attributes["attributes"]["technique_details"]
 
+            # Guard against the `_raw_attributes` wrapper leaking through —
+            # the UI reads metadata[i].Category / .AWSService directly.
+            metadata = attributes["attributes"]["metadata"]
+            assert isinstance(metadata, list) and len(metadata) > 0
+            first_attr = metadata[0]
+            assert isinstance(first_attr, dict)
+            assert "_raw_attributes" not in first_attr
+            assert "Category" in first_attr
+            assert "AWSService" in first_attr
+
+    def test_compliance_overview_attributes_resolves_provider_from_scan(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        # csa_ccm_4.0 is a multi-provider universal framework: a single
+        # compliance_id whose requirements expose different checks per provider.
+        # Passing a scan must return the check IDs for that scan's provider,
+        # otherwise the endpoint defaults to the first provider that declares the
+        # framework and azure/gcp requirements end up with check IDs that match
+        # no findings.
+        tenant = tenants_fixture[0]
+        gcp_provider = providers_fixture[2]
+        azure_provider = providers_fixture[4]
+        assert gcp_provider.provider == Provider.ProviderChoices.GCP.value
+        assert azure_provider.provider == Provider.ProviderChoices.AZURE.value
+
+        now = datetime.now(timezone.utc)
+        gcp_scan = Scan.objects.create(
+            name="gcp scan",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+        azure_scan = Scan.objects.create(
+            name="azure scan",
+            provider=azure_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+
+        def request_attributes(scan_id=None):
+            params = {"filter[compliance_id]": "csa_ccm_4.0"}
+            if scan_id is not None:
+                params["filter[scan_id]"] = str(scan_id)
+            return authenticated_client.get(
+                reverse("complianceoverview-attributes"), params
+            )
+
+        def collect_check_ids(scan_id=None):
+            response = request_attributes(scan_id)
+            assert response.status_code == status.HTTP_200_OK
+            check_ids = set()
+            for item in response.json()["data"]:
+                check_ids.update(item["attributes"]["attributes"]["check_ids"])
+            return check_ids
+
+        gcp_check_ids = collect_check_ids(gcp_scan.id)
+        azure_check_ids = collect_check_ids(azure_scan.id)
+
+        # Each scan resolves to its own provider's checks, and they differ.
+        assert gcp_check_ids
+        assert azure_check_ids
+        assert gcp_check_ids != azure_check_ids
+
+        # The returned check IDs belong to the SDK's per-provider definition.
+        from api.compliance import get_prowler_provider_compliance
+
+        def expected_check_ids(provider_type):
+            framework = get_prowler_provider_compliance(provider_type)["csa_ccm_4.0"]
+            expected = set()
+            for requirement in framework.requirements:
+                expected.update(requirement.checks.get(provider_type, []))
+            return expected
+
+        assert gcp_check_ids <= expected_check_ids(Provider.ProviderChoices.GCP.value)
+        assert azure_check_ids <= expected_check_ids(
+            Provider.ProviderChoices.AZURE.value
+        )
+
+        # An explicit scan_id is authoritative: a non-existent scan must fail
+        # closed with 404 instead of silently falling back to another provider.
+        missing_response = request_attributes("00000000-0000-0000-0000-000000000000")
+        assert missing_response.status_code == status.HTTP_404_NOT_FOUND
+
+        # A malformed scan_id is rejected with 404 as well.
+        malformed_response = request_attributes("not-a-uuid")
+        assert malformed_response.status_code == status.HTTP_404_NOT_FOUND
+
+        # An empty value (filter[scan_id]=) must not fall back to the legacy
+        # provider picker: the explicit (if blank) selector fails closed.
+        empty_response = request_attributes("")
+        assert empty_response.status_code == status.HTTP_404_NOT_FOUND
+
+        # A scan belonging to another tenant is not visible (RLS), so it must
+        # return 404 rather than leaking the fallback provider's check IDs.
+        other_tenant = Tenant.objects.create(name="Other Compliance Tenant")
+        foreign_provider = Provider.objects.create(
+            provider="gcp",
+            uid="foreign-gcp-test",
+            alias="foreign_gcp",
+            tenant_id=other_tenant.id,
+        )
+        foreign_scan = Scan.objects.create(
+            name="foreign scan",
+            provider=foreign_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=other_tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+        foreign_response = request_attributes(foreign_scan.id)
+        assert foreign_response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_compliance_overview_attributes_scan_scoped_by_provider_group(
+        self,
+        authenticated_client_no_permissions_rbac,
+        providers_fixture,
+    ):
+        # A user with limited visibility (no UNLIMITED_VISIBILITY) must only be
+        # able to resolve scans for providers in its provider groups. Tenant RLS
+        # alone is not enough here: both scans belong to the same tenant, so the
+        # endpoint has to scope the scan lookup by provider group, otherwise a
+        # restricted user could read another provider's compliance metadata.
+        client = authenticated_client_no_permissions_rbac
+        limited_user = client.user
+        membership = Membership.objects.filter(user=limited_user).first()
+        tenant = membership.tenant
+
+        allowed_provider = providers_fixture[2]
+        denied_provider = providers_fixture[4]
+        assert allowed_provider.provider == Provider.ProviderChoices.GCP.value
+        assert denied_provider.provider == Provider.ProviderChoices.AZURE.value
+
+        provider_group = ProviderGroup.objects.create(
+            name="limited-compliance-group",
+            tenant_id=tenant.id,
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider_group=provider_group,
+            provider=allowed_provider,
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=limited_user.roles.first(),
+            provider_group=provider_group,
+        )
+
+        now = datetime.now(timezone.utc)
+        allowed_scan = Scan.objects.create(
+            name="allowed scan",
+            provider=allowed_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+        denied_scan = Scan.objects.create(
+            name="denied scan",
+            provider=denied_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=now,
+            completed_at=now,
+        )
+
+        def request_attributes(scan_id):
+            return client.get(
+                reverse("complianceoverview-attributes"),
+                {
+                    "filter[compliance_id]": "csa_ccm_4.0",
+                    "filter[scan_id]": str(scan_id),
+                },
+            )
+
+        # The scan in the user's provider group resolves normally.
+        assert request_attributes(allowed_scan.id).status_code == status.HTTP_200_OK
+
+        # The scan outside the user's provider group is invisible, so it fails
+        # closed with 404 instead of leaking the other provider's check IDs.
+        assert (
+            request_attributes(denied_scan.id).status_code == status.HTTP_404_NOT_FOUND
+        )
+
     def test_compliance_overview_attributes_missing_compliance_id(
         self, authenticated_client
     ):
@@ -9221,6 +9759,39 @@ class TestComplianceOverviewViewSet:
             reverse("complianceoverview-attributes"),
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_compliance_overview_attributes_503_while_warming(
+        self, authenticated_client
+    ):
+        from api.compliance import COMPLIANCE_WARMED, COMPLIANCE_WARMING_STARTED
+
+        COMPLIANCE_WARMING_STARTED.set()
+        COMPLIANCE_WARMED.clear()
+        try:
+            response = authenticated_client.get(
+                reverse("complianceoverview-attributes"),
+                {"filter[compliance_id]": "aws_account_security_onboarding_aws"},
+            )
+        finally:
+            COMPLIANCE_WARMING_STARTED.clear()
+
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert response.json()["errors"][0]["code"] == "compliance_warming"
+
+    def test_compliance_overview_attributes_serves_when_warming_not_started(
+        self, authenticated_client
+    ):
+        # Dev fallback: under runserver warming never runs, so the guard must
+        # not refuse — the endpoint lazily loads and serves as before.
+        from api.compliance import COMPLIANCE_WARMED, COMPLIANCE_WARMING_STARTED
+
+        COMPLIANCE_WARMING_STARTED.clear()
+        COMPLIANCE_WARMED.clear()
+        response = authenticated_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "aws_account_security_onboarding_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
 
     def test_compliance_overview_task_management_integration(
         self, authenticated_client, compliance_requirements_overviews_fixture
@@ -15790,6 +16361,12 @@ class TestFindingGroupViewSet:
         assert attrs["fail_count"] == 0
         assert attrs["resources_total"] == 1
         assert attrs["resources_fail"] == 0
+        # check_title / check_description are resolved post-pagination from the
+        # summary table, not from the finding's check_metadata.
+        assert attrs["check_title"] == "Ensure EC2 instances do not have public IPs"
+        assert (
+            attrs["check_description"] == "EC2 instances should use private IPs only."
+        )
 
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture
@@ -17031,6 +17608,12 @@ class TestFindingGroupViewSet:
         assert attrs["fail_count"] == 0
         assert attrs["resources_total"] == 1
         assert attrs["resources_fail"] == 0
+        # check_title / check_description are resolved post-pagination from the
+        # summary table, not from the finding's check_metadata.
+        assert attrs["check_title"] == "Ensure EC2 instances do not have public IPs"
+        assert (
+            attrs["check_description"] == "EC2 instances should use private IPs only."
+        )
 
     def test_finding_groups_latest_status_in_filter(
         self, authenticated_client, finding_groups_fixture
@@ -17288,18 +17871,20 @@ class TestFindingGroupViewSet:
         check_ids = [item["id"] for item in data]
         assert check_ids == sorted(check_ids)
 
-    def test_finding_groups_latest_sort_by_check_title(
+    def test_finding_groups_latest_sort_by_check_title_not_supported(
         self, authenticated_client, finding_groups_fixture
     ):
-        """Test /latest supports sorting by check_title."""
+        """check_title is not a sortable field for finding groups.
+
+        Titles live in the TOASTed check_metadata blob and are resolved after
+        pagination from the summary table, so they cannot drive DB-level
+        ordering. Requesting that sort is rejected.
+        """
         response = authenticated_client.get(
             reverse("finding-group-latest"),
             {"sort": "check_title"},
         )
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        check_titles = [item["attributes"]["check_title"] for item in data]
-        assert check_titles == sorted(check_titles)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.parametrize(
         "endpoint_name", ["finding-group-list", "finding-group-latest"]

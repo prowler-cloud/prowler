@@ -341,7 +341,10 @@ export class ProvidersPage extends BasePage {
       name: /Adding A Provider|Update Provider Credentials/i,
     });
 
-    // Button to add a new provider
+    // Button to add a new provider. When providers exist this is the filter-bar
+    // "Add Provider" control; with zero providers the page renders the empty
+    // state whose CTA is labelled "Open Add Provider modal" (button on
+    // /providers, link on /scans). Only one of these is ever in the DOM at once.
     this.addProviderButton = page
       .getByRole("button", {
         name: "Add Provider",
@@ -352,7 +355,9 @@ export class ProvidersPage extends BasePage {
           name: "Add Provider",
           exact: true,
         }),
-      );
+      )
+      .or(page.getByRole("button", { name: "Open Add Provider modal" }))
+      .or(page.getByRole("link", { name: "Open Add Provider modal" }));
 
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
@@ -944,9 +949,7 @@ export class ProvidersPage extends BasePage {
     const secretAccessKey =
       credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
 
-    const shouldFillStaticKeys = Boolean(
-      accessKeyId || secretAccessKey,
-    );
+    const shouldFillStaticKeys = Boolean(accessKeyId || secretAccessKey);
     if (shouldFillStaticKeys) {
       const accessKeyIsVisible = await accessKeyInputInWizard
         .isVisible()

@@ -70,7 +70,10 @@ export const FilterSummaryStrip = ({
           <Tooltip key={`${chip.key}-${chip.values?.join("|") ?? chip.value}`}>
             <Badge
               variant="tag"
-              className="flex max-w-[280px] min-w-0 items-center gap-1 overflow-hidden pr-1"
+              className={cn(
+                "flex max-w-[280px] min-w-0 items-center gap-1 overflow-hidden",
+                onRemove && "pr-1",
+              )}
             >
               <TooltipTrigger asChild>
                 <span className="text-text-neutral-primary min-w-0 flex-1 truncate text-xs">

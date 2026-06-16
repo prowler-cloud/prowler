@@ -7,21 +7,25 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
   "ResourceGroup": "database",
-  "Description": "**Azure Cosmos DB** accounts are evaluated for **automatic failover** configuration. When enabled, Cosmos DB automatically promotes a secondary region to primary during a regional outage, ensuring continuous availability without manual intervention.",
-  "Risk": "Without automatic failover, a regional outage requires **manual failover** which delays recovery and risks data unavailability. Applications dependent on the primary region experience downtime until an operator intervenes.",
+  "Description": "**Azure Cosmos DB accounts** are evaluated for **automatic failover** configuration. When enabled, Cosmos DB automatically promotes a secondary region to primary during a regional outage, ensuring continuous availability without manual intervention.",
+  "Risk": "Without **automatic failover**, a regional outage requires **manual failover** which delays recovery and risks data unavailability. Applications dependent on the primary region experience downtime until an operator intervenes.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-manage-database-account#automatic-failover",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/high-availability",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/distribute-data-globally"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az cosmosdb update --name <COSMOS_ACCOUNT_NAME> --resource-group <RESOURCE_GROUP> --enable-automatic-failover true",
+      "NativeIaC": "```bicep\n// Bicep: Enable automatic failover on a Cosmos DB account\nresource account 'Microsoft.DocumentDB/databaseAccounts@2025-10-15' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  kind: 'GlobalDocumentDB'\n  properties: {\n    databaseAccountOfferType: 'Standard'\n    locations: [\n      { locationName: '<primary_region>', failoverPriority: 0 }\n      { locationName: '<secondary_region>', failoverPriority: 1 }\n    ]\n    enableAutomaticFailover: true // Critical: Promotes a secondary region during a primary region outage\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and open your Cosmos DB account\n2. In the left menu, select Replicate data globally\n3. Click Automatic Failover\n4. Toggle Enable Automatic Failover to On\n5. Set failover priorities for each region\n6. Click Save",
+      "Terraform": "```hcl\n# Terraform: Enable automatic failover on a Cosmos DB account\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<primary_region>\"\n  offer_type          = \"Standard\"\n  kind                = \"GlobalDocumentDB\"\n\n  geo_location {\n    location          = \"<primary_region>\"\n    failover_priority = 0\n  }\n\n  geo_location {\n    location          = \"<secondary_region>\"\n    failover_priority = 1\n  }\n\n  enable_automatic_failover = true # Critical: Promotes a secondary region during a primary region outage\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **automatic failover** on Cosmos DB accounts with **multi-region** deployments so a secondary region is promoted automatically when the primary region becomes unavailable. Configure **failover priorities** to reflect your recovery strategy, validate **RTO/RPO** expectations with periodic failover drills, and combine with **multi-region writes** where active-active is required.",
       "Url": "https://hub.prowler.com/check/cosmosdb_account_automatic_failover_enabled"
     }
   },

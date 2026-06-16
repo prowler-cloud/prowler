@@ -3,21 +3,30 @@ orphan: true
 repos:
   - repo: local
     hooks:
+      # P0 - Formatters: write fixes on staged files; prek re-stages.
+      - id: ui-prettier
+        name: UI - Prettier (write, staged)
+        entry: pnpm exec prettier --write --ignore-unknown
+        language: system
+        pass_filenames: true
+        priority: 0
+
+      - id: ui-lint
+        name: UI - ESLint (fix, staged)
+        entry: pnpm exec eslint --fix --max-warnings 40 --no-warn-ignored
+        language: system
+        files: '\.(ts|tsx|js|jsx)$'
+        pass_filenames: true
+        priority: 1
+
+      # P10 - Project-wide validators (TypeScript is fundamentally project-wide).
       - id: ui-typecheck
         name: UI - TypeScript Check
         entry: pnpm run typecheck
         language: system
         files: '\.(ts|tsx|js|jsx)$'
         pass_filenames: false
-        priority: 0
-
-      - id: ui-lint
-        name: UI - ESLint
-        entry: pnpm run lint:check
-        language: system
-        files: '\.(ts|tsx|js|jsx)$'
-        pass_filenames: false
-        priority: 0
+        priority: 10
 
       - id: ui-tests
         name: UI - Unit Tests
@@ -26,12 +35,4 @@ repos:
         files: '\.(ts|tsx|js|jsx)$'
         exclude: '\.test\.|\.spec\.|vitest\.config|vitest\.setup'
         pass_filenames: true
-        priority: 1
-
-      - id: ui-build
-        name: UI - Build
-        entry: pnpm run build
-        language: system
-        files: '\.(ts|tsx|js|jsx|json|css)$'
-        pass_filenames: false
-        priority: 2
+        priority: 10

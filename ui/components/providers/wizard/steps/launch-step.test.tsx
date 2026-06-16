@@ -3,6 +3,7 @@ import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import { SCAN_JOBS_TAB } from "@/types";
 
 import { LaunchStep } from "./launch-step";
 
@@ -80,6 +81,10 @@ describe("LaunchStep", () => {
       expect.objectContaining({
         title: "Scan Launched",
       }),
+    );
+    const toastPayload = toastMock.mock.calls[0]?.[0];
+    expect(toastPayload.action.props.children.props.href).toBe(
+      `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
     );
   });
 });

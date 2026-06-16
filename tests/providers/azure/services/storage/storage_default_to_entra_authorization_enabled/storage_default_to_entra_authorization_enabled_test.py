@@ -6,7 +6,9 @@ from prowler.providers.azure.services.storage.storage_service import (
     NetworkRuleSet,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -14,6 +16,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_storage_default_to_entra_authorization_enabled:
     def test_no_storage_accounts(self):
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {}
 
         with (
@@ -38,6 +41,7 @@ class Test_storage_default_to_entra_authorization_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account Entra Auth Enabled"
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -80,7 +84,7 @@ class Test_storage_default_to_entra_authorization_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Default to Microsoft Entra authorization is enabled for storage account {storage_account_name}."
+                == f"Default to Microsoft Entra authorization is enabled for storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -91,6 +95,7 @@ class Test_storage_default_to_entra_authorization_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account Entra Auth Disabled"
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -133,7 +138,7 @@ class Test_storage_default_to_entra_authorization_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Default to Microsoft Entra authorization is not enabled for storage account {storage_account_name}."
+                == f"Default to Microsoft Entra authorization is not enabled for storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name

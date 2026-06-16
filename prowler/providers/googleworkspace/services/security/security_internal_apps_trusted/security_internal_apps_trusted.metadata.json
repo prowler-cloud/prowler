@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_internal_apps_trusted",
+  "CheckTitle": "Internal apps can access Google Workspace APIs",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level API controls configuration **trusts internal domain-owned apps** to access restricted Google Workspace APIs. This avoids the need to individually trust each internal app.",
+  "Risk": "When internal apps are not trusted, legitimate **organization-built applications** cannot access restricted Google Workspace API scopes, potentially **breaking internal workflows** and forcing administrators to trust each app individually, which increases administrative overhead.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/apps/control-which-apps-access-google-workspace-data",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Access and Data Control** > **API Controls**\n3. Click **App access control** > **Settings**\n4. Check **Trust internal, domain-owned apps**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **trust for internal domain-owned apps** so organization-built applications can access restricted Google Workspace APIs without individual trust configuration.",
+      "Url": "https://hub.prowler.com/check/security_internal_apps_trusted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_app_access_restricted"
+  ],
+  "Notes": ""
+}

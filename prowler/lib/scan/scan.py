@@ -4,8 +4,8 @@ from types import SimpleNamespace
 from typing import Generator
 
 from prowler.lib.check.check import (
+    _resolve_check_module,
     execute,
-    import_check,
     list_services,
     update_audit_metadata,
 )
@@ -426,9 +426,14 @@ class Scan:
                     # Recover service from check name
                     service = get_service_name_from_check_name(check_name)
                     try:
-                        # Import check module
-                        check_module_path = f"prowler.providers.{self._provider.type}.services.{service}.{check_name}.{check_name}"
-                        lib = import_check(check_module_path)
+                        # Import check module (built-in or entry point) —
+                        # delegates to `_resolve_check_module` so external
+                        # providers registered via entry points are resolved
+                        # correctly (their checks do not live under
+                        # `prowler.providers.{type}.services...`).
+                        lib = _resolve_check_module(
+                            self._provider.type, service, check_name
+                        )
                         # Recover functions from check
                         check_to_execute = getattr(lib, check_name)
                         check = check_to_execute()
