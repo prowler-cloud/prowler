@@ -56,6 +56,36 @@ class Test_Parser:
         # Init parser
         self.parser = ProwlerArgumentParser()
 
+    def test_top_level_parser_has_no_value_consuming_flags(self):
+        """Invariant: the top-level ProwlerArgumentParser has no flags that
+        consume a value (only --version/-v as of today).
+
+        This invariant is what makes
+        `prowler.providers.common.arguments._invoked_provider_from_argv` safe:
+        it sniffs sys.argv looking for the first non-flag token that matches
+        a known provider, assuming no flag-with-value can come before the
+        provider name. If a global flag-with-value is added here, the
+        heuristic could misidentify the flag's value as a provider name —
+        update `_invoked_provider_from_argv` to also skip the flag's value.
+        """
+        # argparse uses nargs=0 internally for store_true/false/const, count,
+        # help, version — anything that does not consume a value from argv.
+        # nargs != 0 (None, '?', '*', '+', or an integer) means the action
+        # consumes at least one value from argv.
+        offending = []
+        for action in self.parser.parser._actions:
+            if not action.option_strings:
+                continue  # positional
+            if action.nargs == 0:
+                continue
+            offending.append(action.option_strings)
+
+        assert not offending, (
+            f"Top-level parser gained value-consuming flag(s): {offending}. "
+            "Update prowler.providers.common.arguments._invoked_provider_from_argv "
+            "to skip the flag's value when scanning sys.argv for the invoked provider."
+        )
+
     def test_default_parser_no_arguments_aws(self):
         provider = "aws"
         command = [prowler_command]

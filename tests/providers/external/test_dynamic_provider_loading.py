@@ -420,8 +420,14 @@ class TestInitProvidersParserBuiltinDependencyFailure:
     """Tests the critical behavior fix: when a built-in provider's arguments
     module exists but its imports fail (e.g. boto3 not installed), we must
     fail loudly with a clear message — not silently fall through to entry
-    points as if the provider were external."""
+    points as if the provider were external.
 
+    Fail-loud is selective: it triggers only when the failing provider is the
+    one the user actually invoked. Unrelated built-in failures degrade to a
+    warning so a broken optional dependency in provider X cannot tear down
+    the CLI for an invocation of provider Y."""
+
+    @patch("sys.argv", ["prowler", "aws"])
     @patch("prowler.providers.common.arguments.Provider.is_builtin")
     @patch("prowler.providers.common.arguments.import_module")
     def test_builtin_with_missing_transitive_dep_fails_loudly(
@@ -465,6 +471,63 @@ class TestInitProvidersParserBuiltinDependencyFailure:
             init_providers_parser(parser)
 
         ext_cls.init_parser.assert_called_once_with(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_unrelated_builtin_failure_does_not_abort_when_other_provider_invoked(
+        self, mock_import, mock_is_builtin
+    ):
+        """A broken built-in (stackit) must NOT abort the CLI when the user
+        invoked a different, sane built-in (aws). The failure degrades to a
+        warning and aws's init_parser still runs."""
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            # Must NOT raise SystemExit — only stackit is broken; aws is the
+            # invoked provider and loads fine.
+            init_providers_parser(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
+
+    @patch("sys.argv", ["prowler", "-h"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_no_provider_invoked_failure_does_not_abort(
+        self, mock_import, mock_is_builtin
+    ):
+        """When no provider is invoked (e.g. `prowler -h`), a broken built-in
+        must NOT abort the CLI — `--help` must still render the available
+        providers."""
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'stackit.objectstorage'")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["stackit"],
+        ):
+            # Must NOT raise SystemExit — no provider invoked, broken built-in
+            # is irrelevant to the current invocation.
+            init_providers_parser(parser)
 
 
 class TestInitGlobalProviderBuiltinDependencyFailure:

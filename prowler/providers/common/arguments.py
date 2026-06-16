@@ -11,11 +11,40 @@ validate_provider_arguments_function = "validate_arguments"
 init_provider_arguments_function = "init_parser"
 
 
+def _invoked_provider_from_argv(available_providers: Sequence[str]) -> Optional[str]:
+    """Return the provider name the user invoked on the CLI, or None.
+
+    Scans sys.argv left-to-right, skipping flag-like tokens, and returns the
+    first non-flag token that matches a known provider name. Returns None if
+    no provider is being invoked (e.g. `prowler -h`, `prowler dashboard`, or
+    empty argv).
+
+    Assumes the top-level parser has no flags that consume a value (only
+    --version/-v as of today). If that ever changes, the invariant test
+    `test_top_level_parser_has_no_value_consuming_flags` in
+    tests/lib/cli/parser_test.py fails and this function must be updated to
+    also skip the flag's value when scanning for the invoked provider.
+    """
+    available = set(available_providers)
+    for token in sys.argv[1:]:
+        if token.startswith("-"):
+            continue
+        if token in available:
+            return token
+    return None
+
+
 def init_providers_parser(self):
     """init_providers_parser calls the provider init_parser function to load all the arguments and flags. Receives a ProwlerArgumentParser object"""
     # We need to call the arguments parser for each provider
     providers = Provider.get_available_providers()
+    # A built-in provider with a broken optional dependency should not tear
+    # down the whole CLI when the user invoked a different, sane provider.
+    # Only fail-loud on the invoked provider; otherwise warn and continue so
+    # the rest of the parser still builds.
+    invoked = _invoked_provider_from_argv(providers)
     for provider in providers:
+        is_invoked = provider == invoked
         # Discriminate built-in vs external upfront via find_spec, so an
         # ImportError from a transitive dependency missing inside a built-in
         # arguments module surfaces clearly instead of being silently
@@ -29,18 +58,29 @@ def init_providers_parser(self):
                     init_provider_arguments_function,
                 )(self)
             except ImportError as e:
-                logger.critical(
-                    f"Failed to load arguments for built-in provider '{provider}'. "
-                    f"Missing dependency: {e}. "
-                    f"Ensure all required dependencies are installed."
+                if is_invoked:
+                    logger.critical(
+                        f"Failed to load arguments for built-in provider '{provider}'. "
+                        f"Missing dependency: {e}. "
+                        f"Ensure all required dependencies are installed."
+                    )
+                    logger.debug("Full traceback:", exc_info=True)
+                    sys.exit(1)
+                logger.warning(
+                    f"Skipping built-in provider '{provider}' due to missing "
+                    f"dependency: {e}. It will be unavailable in this invocation, "
+                    f"but the CLI continues because you invoked a different provider."
                 )
-                logger.debug("Full traceback:", exc_info=True)
-                sys.exit(1)
             except Exception as error:
-                logger.critical(
+                if is_invoked:
+                    logger.critical(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    sys.exit(1)
+                logger.warning(
+                    f"Skipping built-in provider '{provider}': "
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                sys.exit(1)
         else:
             # External provider — init_parser classmethod via entry point
             cls = Provider._load_ep_provider(provider)
