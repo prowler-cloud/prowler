@@ -18,6 +18,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `sdk_only` provider property (default `true`) and `Provider.get_app_providers()`, so a provider (built-in or external) stays CLI/SDK-only and hidden from the app unless it declares `sdk_only = False` [(#11427)](https://github.com/prowler-cloud/prowler/pull/11427)
 - Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
 - `Provider.get_scan_arguments()`, `Provider.get_connection_arguments()` and `Provider.get_credentials_schema()` contract methods, so a provider persisted as a stored uid plus a secret dict can be constructed and validated programmatically (to be consumed by the API in a later change) [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
+- Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
+- TLS certificate verification in the `codepipeline_project_repo_private` check, which previously used an unverified SSL context, leaving the repository-visibility probe open to MITM tampering [(#11603)](https://github.com/prowler-cloud/prowler/pull/11603)
 
 ### 🔄 Changed
 
@@ -27,6 +29,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `microsoft-kiota-*` to 1.9.9 and `aiohttp` to 3.14.0, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
 - Container base image bumped to `python:3.12.13-slim-bookworm` (patches `libgnutls30` CVE-2026-33845 and CVE-2026-42010) and `trivy` bumped to 0.71.0 (patches embedded `golang.org/x/crypto` and Go stdlib CVEs); `.trivyignore` documents remaining bookworm criticals with no-fix or not-affected rationale [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
+---
+
+## [5.30.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- GCP `logging_log_metric_filter_and_alert_*` checks now credit org-level aggregated sinks filtered to the Admin Activity audit stream [(#11575)](https://github.com/prowler-cloud/prowler/pull/11575)
 
 ---
 
