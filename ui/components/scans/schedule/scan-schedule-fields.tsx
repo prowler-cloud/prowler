@@ -136,11 +136,10 @@ export function ScanScheduleFields({
 }: ScanScheduleFieldsProps) {
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const control = form.control;
-  const frequency = useWatch({ control, name: "frequency" });
-  const hour = useWatch({ control, name: "hour" });
-  const dayOfWeek = useWatch({ control, name: "dayOfWeek" });
-  const dayOfMonth = useWatch({ control, name: "dayOfMonth" });
-  const intervalHours = useWatch({ control, name: "intervalHours" });
+  const [frequency, hour, dayOfWeek, dayOfMonth, intervalHours] = useWatch({
+    control,
+    name: ["frequency", "hour", "dayOfWeek", "dayOfMonth", "intervalHours"],
+  });
   const timezone = getBrowserTimezone();
   const scheduleSummary = getScheduleSummary({
     frequency,

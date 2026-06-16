@@ -7,7 +7,8 @@ import { getSchedules } from "@/actions/schedules";
 import { auth } from "@/auth.config";
 import { PageReady } from "@/components/onboarding";
 import {
-  buildPendingScheduleRows,
+  appendPendingScheduleRowsToPage,
+  getProviderIdsFromScans,
   getScanJobsTab,
   getScanJobsTabFilters,
   getScanJobsUserFilters,
@@ -34,6 +35,29 @@ import {
 } from "@/types";
 
 const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
+// Pending schedule rows are derived from provider schedules, but must honor the
+// same provider filters as real scan rows. Keep these filter keys typed locally
+// without narrowing the global SearchParamsProps shape used by Next pages.
+const PENDING_ROW_PROVIDER_FILTER = {
+  PROVIDER_UID_IN: "provider_uid__in",
+  PROVIDER_UID: "provider_uid",
+  PROVIDER_TYPE_IN: "provider_type__in",
+  PROVIDER_TYPE: "provider_type",
+} as const;
+
+type PendingRowProviderFilter =
+  (typeof PENDING_ROW_PROVIDER_FILTER)[keyof typeof PENDING_ROW_PROVIDER_FILTER];
+type PendingRowProviderFilterParam = `filter[${PendingRowProviderFilter}]`;
+
+const PROVIDER_UID_FILTER_KEYS = [
+  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_UID_IN}]`,
+  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_UID}]`,
+] as const satisfies ReadonlyArray<PendingRowProviderFilterParam>;
+
+const PROVIDER_TYPE_FILTER_KEYS = [
+  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_TYPE_IN}]`,
+  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_TYPE}]`,
+] as const satisfies ReadonlyArray<PendingRowProviderFilterParam>;
 
 const getFilterSearchQuery = (
   filters: Record<string, string | string[]>,
@@ -54,18 +78,28 @@ const parseCsvParam = (value?: string | string[]): string[] => {
     .filter(Boolean);
 };
 
+const getFirstSearchParam = (
+  searchParams: SearchParamsProps,
+  keys: ReadonlyArray<PendingRowProviderFilterParam>,
+): string | string[] | undefined => {
+  for (const key of keys) {
+    const value = searchParams[key];
+    if (value !== undefined) return value;
+  }
+
+  return undefined;
+};
+
 /** Applies the table's provider filters to synthetic pending-schedule rows. */
 const filterProvidersForPendingRows = (
   providers: ProviderProps[],
   searchParams: SearchParamsProps,
 ): ProviderProps[] => {
   const uids = parseCsvParam(
-    searchParams["filter[provider_uid__in]"] ??
-      searchParams["filter[provider_uid]"],
+    getFirstSearchParam(searchParams, PROVIDER_UID_FILTER_KEYS),
   );
   const types = parseCsvParam(
-    searchParams["filter[provider_type__in]"] ??
-      searchParams["filter[provider_type]"],
+    getFirstSearchParam(searchParams, PROVIDER_TYPE_FILTER_KEYS),
   );
 
   return providers.filter(
@@ -93,6 +127,40 @@ const getActiveScanCount = async (
   });
 
   return scansData && "meta" in scansData ? scansData.meta.pagination.count : 0;
+};
+
+/**
+ * A provider can already have a real scheduled scan on a different page.
+ * Current-page rows are not enough to decide whether a schedule needs a
+ * synthetic Pending row, so fetch all scheduled scan provider ids when the
+ * backend paginated result is larger than the current slice.
+ */
+const getCoveredScheduledProviderIds = async ({
+  currentScans,
+  realScanCount,
+  query,
+  filters,
+}: {
+  currentScans: ScanProps[];
+  realScanCount: number;
+  query: string;
+  filters: Record<string, string | string[]>;
+}): Promise<Set<string>> => {
+  if (realScanCount === 0 || currentScans.length === realScanCount) {
+    return getProviderIdsFromScans(currentScans);
+  }
+
+  const allScheduledScansData = await getScans({
+    query,
+    page: 1,
+    pageSize: realScanCount,
+    filters,
+    include: "provider",
+  });
+
+  return getProviderIdsFromScans(
+    (allScheduledScansData?.data ?? []) as ScanProps[],
+  );
 };
 
 export default async function Scans({
@@ -245,6 +313,8 @@ const SSRDataTableScans = async ({
     );
   const schedulesResult = needsSchedules ? await getSchedules() : null;
 
+  // Schedules are keyed by provider id so real scheduled scan rows can display
+  // cadence/next-run info, and schedule-only providers can become Pending rows.
   const schedulesByProviderId: Record<string, ScheduleAttributes> = {};
   if (schedulesResult && !schedulesResult.error) {
     for (const schedule of (schedulesResult.data ?? []) as ScheduleProps[]) {
@@ -278,32 +348,35 @@ const SSRDataTableScans = async ({
   });
 
   let tableData = scansWithSchedule;
+  let tableMeta = meta;
   if (tab === SCAN_JOBS_TAB.SCHEDULED) {
-    // Append pending rows only after the last page of real rows.
-    const totalPages = meta?.pagination?.pages ?? 0;
-    if (page >= totalPages) {
-      const coveredProviderIds = new Set(
-        scansWithSchedule
-          .map((scan) => scan.relationships?.provider?.data?.id)
-          .filter((id): id is string => Boolean(id)),
-      );
+    // The backend paginates real scans only. Pending schedule rows are generated
+    // client-side, so reconcile both sources before passing data/meta to the table.
+    const coveredProviderIds = await getCoveredScheduledProviderIds({
+      currentScans: scansWithSchedule,
+      realScanCount: meta?.pagination?.count ?? scansWithSchedule.length,
+      query,
+      filters,
+    });
+    const scheduledTable = appendPendingScheduleRowsToPage({
+      scans: scansWithSchedule,
+      meta,
+      page,
+      pageSize,
+      providers: filterProvidersForPendingRows(providers, searchParams),
+      schedulesByProviderId,
+      coveredProviderIds,
+      now: new Date(),
+    });
 
-      tableData = [
-        ...scansWithSchedule,
-        ...buildPendingScheduleRows({
-          providers: filterProvidersForPendingRows(providers, searchParams),
-          schedulesByProviderId,
-          coveredProviderIds,
-          now: new Date(),
-        }),
-      ];
-    }
+    tableData = scheduledTable.data;
+    tableMeta = scheduledTable.meta;
   }
 
   return (
     <ScanJobsTable
       data={tableData}
-      meta={meta}
+      meta={tableMeta}
       tab={tab}
       hasFilters={hasUserFilters}
     />

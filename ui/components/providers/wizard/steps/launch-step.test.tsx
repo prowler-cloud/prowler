@@ -217,6 +217,10 @@ describe("LaunchStep", () => {
       await waitFor(() => expect(updateScheduleMock).toHaveBeenCalledTimes(1));
       expect(scanOnDemandMock).toHaveBeenCalledTimes(1);
       expect(scheduleDailyMock).not.toHaveBeenCalled();
+      const toastPayload = toastMock.mock.calls[0]?.[0];
+      expect(toastPayload.action.props.children.props.href).toBe(
+        `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
+      );
     });
 
     it("launches only an on-demand scan when run now is selected", async () => {

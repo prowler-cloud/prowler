@@ -175,9 +175,11 @@ export function LaunchStep({
 
     onClose();
 
+    const launched = result.status === SAVE_SCHEDULE_STATUS.SAVED_AND_LAUNCHED;
+    const targetTab = launched ? SCAN_JOBS_TAB.ACTIVE : SCAN_JOBS_TAB.SCHEDULED;
     const goToScans = (
       <ToastAction altText="Go to scans" asChild>
-        <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>Go to scans</Link>
+        <Link href={`/scans?tab=${targetTab}`}>Go to scans</Link>
       </ToastAction>
     );
 
@@ -190,7 +192,6 @@ export function LaunchStep({
       return;
     }
 
-    const launched = result.status === SAVE_SCHEDULE_STATUS.SAVED_AND_LAUNCHED;
     toast({
       title: launched
         ? "Scan schedule saved and initial scan launched"

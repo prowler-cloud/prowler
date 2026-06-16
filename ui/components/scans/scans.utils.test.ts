@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  type MetaDataProps,
+  type ProviderProps,
   SCAN_JOBS_TAB,
   type ScanAttributes,
   type ScanProps,
@@ -8,6 +10,7 @@ import {
 } from "@/types";
 
 import {
+  appendPendingScheduleRowsToPage,
   buildPendingScheduleRows,
   formatScanDuration,
   getScanAlias,
@@ -166,17 +169,63 @@ describe("scans.utils", () => {
 describe("buildPendingScheduleRows", () => {
   const now = new Date("2026-06-10T10:30:00Z");
 
-  const makeProvider = (id: string) =>
-    ({
-      id,
-      type: "providers",
-      attributes: {
-        provider: "aws",
-        uid: `uid-${id}`,
-        alias: `alias-${id}`,
+  const makeProvider = (id: string): ProviderProps => ({
+    id,
+    type: "providers",
+    attributes: {
+      provider: "aws",
+      uid: `uid-${id}`,
+      alias: `alias-${id}`,
+      status: "completed",
+      resources: 0,
+      connection: {
+        connected: true,
+        last_checked_at: "2026-06-10T10:00:00Z",
       },
-      relationships: {},
-    }) as never;
+      scanner_args: {
+        only_logs: false,
+        excluded_checks: [],
+        aws_retries_max_attempts: 3,
+      },
+      inserted_at: "2026-06-10T10:00:00Z",
+      updated_at: "2026-06-10T10:00:00Z",
+      created_by: {
+        object: "users",
+        id: "user-1",
+      },
+    },
+    relationships: {
+      secret: { data: null },
+      provider_groups: { meta: { count: 0 }, data: [] },
+    },
+  });
+
+  const makeScheduledScan = (id: string, providerId: string): ScanProps => ({
+    ...makeScan("Scheduled Scan", "scheduled"),
+    id,
+    relationships: {
+      provider: { data: { type: "providers", id: providerId } },
+      task: { data: { type: "tasks", id: `task-${id}` } },
+    },
+  });
+
+  const makeMeta = ({
+    page,
+    pages,
+    count,
+  }: {
+    page: number;
+    pages: number;
+    count: number;
+  }): MetaDataProps => ({
+    pagination: {
+      page,
+      pages,
+      count,
+      itemsPerPage: [1, 2, 10],
+    },
+    version: "v1",
+  });
 
   const weeklySchedule = {
     scan_enabled: true,
@@ -205,6 +254,89 @@ describe("buildPendingScheduleRows", () => {
     );
     expect(rows[0].pendingSchedule?.cadence).toBe("Weekly on Monday");
     expect(rows[0].providerInfo?.uid).toBe("uid-p1");
+  });
+
+  it("uses global covered providers when appending pending rows", () => {
+    // Given - p1 has a real scheduled scan on a previous page, p2 only has a configured schedule.
+    const result = appendPendingScheduleRowsToPage({
+      scans: [],
+      meta: makeMeta({ page: 2, pages: 1, count: 1 }),
+      page: 2,
+      pageSize: 1,
+      providers: [makeProvider("p1"), makeProvider("p2")],
+      schedulesByProviderId: {
+        p1: weeklySchedule,
+        p2: weeklySchedule,
+      },
+      coveredProviderIds: new Set(["p1"]),
+      now,
+    });
+
+    // Then - p1 is not duplicated as a synthetic pending row.
+    expect(result.data.map((scan) => scan.id)).toEqual(["pending-schedule-p2"]);
+    expect(result.meta?.pagination.count).toBe(2);
+    expect(result.meta?.pagination.pages).toBe(2);
+  });
+
+  it("keeps the last real page within page size and carries pending rows to the next page", () => {
+    // Given - three real scheduled scans and two pending schedules at page size 2.
+    const providers = ["p1", "p2", "p3", "p4", "p5"].map(makeProvider);
+    const schedulesByProviderId = Object.fromEntries(
+      providers.map((provider) => [provider.id, weeklySchedule]),
+    );
+
+    const lastRealPage = appendPendingScheduleRowsToPage({
+      scans: [makeScheduledScan("scan-3", "p3")],
+      meta: makeMeta({ page: 2, pages: 2, count: 3 }),
+      page: 2,
+      pageSize: 2,
+      providers,
+      schedulesByProviderId,
+      coveredProviderIds: new Set(["p1", "p2", "p3"]),
+      now,
+    });
+
+    const firstPendingOnlyPage = appendPendingScheduleRowsToPage({
+      scans: [],
+      meta: makeMeta({ page: 3, pages: 2, count: 3 }),
+      page: 3,
+      pageSize: 2,
+      providers,
+      schedulesByProviderId,
+      coveredProviderIds: new Set(["p1", "p2", "p3"]),
+      now,
+    });
+
+    // Then - page 2 gets one pending row, page 3 gets the remaining pending row.
+    expect(lastRealPage.data.map((scan) => scan.id)).toEqual([
+      "scan-3",
+      "pending-schedule-p4",
+    ]);
+    expect(lastRealPage.meta?.pagination.count).toBe(5);
+    expect(lastRealPage.meta?.pagination.pages).toBe(3);
+    expect(firstPendingOnlyPage.data.map((scan) => scan.id)).toEqual([
+      "pending-schedule-p5",
+    ]);
+  });
+
+  it("shows pending rows on an otherwise empty scheduled tab with coherent metadata", () => {
+    // Given
+    const result = appendPendingScheduleRowsToPage({
+      scans: [],
+      meta: makeMeta({ page: 1, pages: 0, count: 0 }),
+      page: 1,
+      pageSize: 10,
+      providers: [makeProvider("p1")],
+      schedulesByProviderId: { p1: weeklySchedule },
+      coveredProviderIds: new Set(),
+      now,
+    });
+
+    // Then
+    expect(result.data.map((scan) => scan.id)).toEqual(["pending-schedule-p1"]);
+    expect(result.meta?.pagination.count).toBe(1);
+    expect(result.meta?.pagination.pages).toBe(1);
+    expect(result.meta?.pagination.page).toBe(1);
   });
 
   it("prefers the server-computed next_scan_at and carries last_scan_at", () => {

@@ -6,6 +6,7 @@ import {
 } from "@/lib/schedules";
 import {
   DEFAULT_SCAN_JOBS_TAB,
+  type MetaDataProps,
   type ProviderProps,
   SCAN_JOBS_TAB,
   SCAN_STATE,
@@ -195,6 +196,14 @@ export interface BuildPendingScheduleRowsParams {
   now: Date;
 }
 
+interface AppendPendingScheduleRowsToPageParams
+  extends BuildPendingScheduleRowsParams {
+  scans: ScanProps[];
+  meta?: MetaDataProps;
+  page: number;
+  pageSize: number;
+}
+
 /**
  * Synthesizes Scheduled-tab rows for configured schedules without a Scan row
  * yet (the backend only creates one after each run).
@@ -255,6 +264,64 @@ export function buildPendingScheduleRows({
       },
     ];
   });
+}
+
+export function getProviderIdsFromScans(scans: ScanProps[]): Set<string> {
+  return new Set(
+    scans
+      .map((scan) => scan.relationships?.provider?.data?.id)
+      .filter((id): id is string => Boolean(id)),
+  );
+}
+
+export function appendPendingScheduleRowsToPage({
+  scans,
+  meta,
+  page,
+  pageSize,
+  providers,
+  schedulesByProviderId,
+  coveredProviderIds,
+  now,
+}: AppendPendingScheduleRowsToPageParams): {
+  data: ScanProps[];
+  meta?: MetaDataProps;
+} {
+  // The API paginates real scheduled scans, while pending rows come from
+  // configured schedules without a scan yet. Reconcile both sources here so the
+  // rendered rows and pagination metadata describe the same combined list.
+  const pendingRows = buildPendingScheduleRows({
+    providers,
+    schedulesByProviderId,
+    coveredProviderIds,
+    now,
+  });
+  const safePageSize = Math.max(1, pageSize);
+  const realCount = meta?.pagination.count ?? scans.length;
+  const pendingStart = Math.max(0, (page - 1) * safePageSize - realCount);
+  const pendingSlots = Math.max(0, safePageSize - scans.length);
+  const pagePendingRows = pendingRows.slice(
+    pendingStart,
+    pendingStart + pendingSlots,
+  );
+  const combinedCount = realCount + pendingRows.length;
+  const combinedPages =
+    combinedCount === 0 ? 0 : Math.ceil(combinedCount / safePageSize);
+
+  return {
+    data: [...scans, ...pagePendingRows],
+    meta: meta
+      ? {
+          ...meta,
+          pagination: {
+            ...meta.pagination,
+            page,
+            count: combinedCount,
+            pages: combinedPages,
+          },
+        }
+      : undefined,
+  };
 }
 
 function getNumericValue(

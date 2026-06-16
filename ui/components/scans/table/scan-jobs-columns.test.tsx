@@ -1,20 +1,19 @@
 import type { CellContext, HeaderContext } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ScanProps } from "@/types";
 
 vi.mock("@/components/shadcn", () => ({
-  Badge: ({ children }: { children: React.ReactNode }) => (
-    <span>{children}</span>
-  ),
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Progress: () => <div />,
   StackedCell: ({
     primary,
     secondary,
   }: {
-    primary: React.ReactNode;
-    secondary?: React.ReactNode;
+    primary: ReactNode;
+    secondary?: ReactNode;
   }) => (
     <div>
       <span>{primary}</span>
