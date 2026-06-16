@@ -64,7 +64,11 @@ class AKS(AzureService):
                                         getattr(
                                             getattr(
                                                 getattr(
-                                                    getattr(cluster, "security_profile", None),
+                                                    getattr(
+                                                        cluster,
+                                                        "security_profile",
+                                                        None,
+                                                    ),
                                                     "defender",
                                                     None,
                                                 ),
@@ -75,19 +79,27 @@ class AKS(AzureService):
                                             False,
                                         )
                                     ),
-                                    azure_monitor_enabled=bool(
-                                        getattr(
+                                    azure_monitor_enabled=(
+                                        bool(
                                             getattr(
-                                                getattr(cluster, "azure_monitor_profile", None),
-                                                "metrics",
-                                                None,
-                                            ),
-                                            "enabled",
-                                            False,
+                                                getattr(
+                                                    getattr(
+                                                        cluster,
+                                                        "azure_monitor_profile",
+                                                        None,
+                                                    ),
+                                                    "metrics",
+                                                    None,
+                                                ),
+                                                "enabled",
+                                                False,
+                                            )
                                         )
-                                    )
-                                    if getattr(cluster, "azure_monitor_profile", None)
-                                    else False,
+                                        if getattr(
+                                            cluster, "azure_monitor_profile", None
+                                        )
+                                        else False
+                                    ),
                                     local_accounts_disabled=getattr(
                                         cluster, "disable_local_accounts", False
                                     ),
