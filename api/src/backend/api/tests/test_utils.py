@@ -274,6 +274,33 @@ class TestProwlerProviderConnectionTest:
             raise_on_exception=False,
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_uses_direct_credentials_without_region(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            user="ocid1.user.oc1..aaaaaaaexample",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+            region="us-ashburn-1",
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
     @pytest.mark.django_db
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_without_secret(

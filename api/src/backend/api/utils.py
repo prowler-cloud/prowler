@@ -312,6 +312,19 @@ def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
         if regions:
             prowler_provider_kwargs["region"] = sorted(regions)[0]
 
+    if (
+        "region" not in prowler_provider_kwargs
+        and prowler_provider_kwargs.get("user")
+        and prowler_provider_kwargs.get("fingerprint")
+        and prowler_provider_kwargs.get("tenancy")
+        and (
+            prowler_provider_kwargs.get("key_content")
+            or prowler_provider_kwargs.get("key_file")
+        )
+    ):
+        # Connection validation needs one OCI endpoint, but scans remain unfiltered.
+        prowler_provider_kwargs["region"] = "us-ashburn-1"
+
     return prowler_provider_kwargs
 
 
