@@ -1,5 +1,9 @@
 orphan: true
 
+# Hooks run on commit only; pre-push is opt-in for TruffleHog (root config).
+# These are all repo: local (no manifest stages), so default_stages is honored.
+default_stages: [pre-commit]
+
 repos:
   - repo: local
     hooks:

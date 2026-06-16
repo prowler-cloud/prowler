@@ -7,7 +7,10 @@
 #   P50 — dependency validation
 
 default_install_hook_types: [pre-commit]
-# Hooks run on commit only
+# Hooks run on commit only by default; pre-push is opt-in for TruffleHog (prek install --hook-type pre-push).
+# NOTE: default_stages does NOT override a hook's manifest stages, so fixers shipping pre-push in their
+# manifest (end-of-file-fixer, trailing-whitespace, pretty-format-json, isort) need an explicit
+# stages: ["pre-commit"] below to stay off push.
 default_stages: [pre-commit]
 
 repos:
@@ -23,13 +26,16 @@ repos:
       - id: check-json
         priority: 10
       - id: end-of-file-fixer
+        stages: ["pre-commit"]
         priority: 0
       - id: trailing-whitespace
+        stages: ["pre-commit"]
         priority: 0
       - id: no-commit-to-branch
         priority: 10
       - id: pretty-format-json
         args: ["--autofix", --no-sort-keys, --no-ensure-ascii]
+        stages: ["pre-commit"]
         priority: 10
 
   ## TOML
@@ -84,6 +90,7 @@ repos:
         name: "SDK - isort"
         files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
         args: ["--profile", "black"]
+        stages: ["pre-commit"]
         priority: 20
 
   - repo: https://github.com/psf/black
@@ -169,6 +176,7 @@ repos:
         # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'
         language: system
         pass_filenames: false
+        stages: ["pre-commit", "pre-push"]
         priority: 40
 
       - id: bandit

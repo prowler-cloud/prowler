@@ -43,15 +43,11 @@ if command -v uv &>/dev/null && [ -f "pyproject.toml" ]; then
   fi
   echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
   uv run prek install --overwrite
-  # Drop any stale pre-push shim from older setups; hooks run on pre-commit only
-  uv run prek uninstall --hook-type pre-push >/dev/null 2>&1 || true
 elif command -v prek &>/dev/null; then
   # prek is available system-wide but without uv dev deps
   echo -e "${GREEN}✓${NC} prek found in PATH"
   echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
   prek install --overwrite
-  # Drop any stale pre-push shim from older setups; hooks run on pre-commit only
-  prek uninstall --hook-type pre-push >/dev/null 2>&1 || true
   echo ""
   echo -e "${YELLOW}⚠️  Warning: Some hooks require Python tools installed via uv:${NC}"
   echo -e "   pylint, bandit, vulture, trufflehog"
