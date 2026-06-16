@@ -2280,6 +2280,31 @@ class TestGetClass:
         mock_load_ep.assert_not_called()
 
     # -----------------------------------------------------------------------
+    # T4c: Entry point resolving to a non-Provider class raises ImportError
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_get_class_external_ep_not_provider_subclass_raises_importerror(
+        self, mock_is_builtin, mock_ep
+    ):
+        """When an entry point resolves to an object that is not a Provider
+        subclass, get_class raises ImportError instead of returning it, so the
+        public contract (a Provider subclass) is enforced rather than trusted."""
+
+        class NotAProvider:
+            pass
+
+        mock_is_builtin.return_value = False
+        mock_ep.return_value = [
+            _make_entry_point("rogue", "pkg:NotAProvider", "prowler.providers"),
+        ]
+        mock_ep.return_value[0].load.return_value = NotAProvider
+
+        with pytest.raises(ImportError):
+            Provider.get_class("rogue")
+
+    # -----------------------------------------------------------------------
     # T5: Regression — init_global_provider still resolves external correctly
     # -----------------------------------------------------------------------
 
