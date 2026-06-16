@@ -1266,7 +1266,9 @@
           "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cosmosdb_account_backup_policy_continuous"
+      ]
     },
     {
       "Id": "A.8.14",

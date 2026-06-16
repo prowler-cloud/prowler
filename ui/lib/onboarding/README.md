@@ -72,5 +72,3 @@ the sequence automatically.
   `target` must resolve to a real `data-tour-id` anchor within its `coversFiles`.
 - `pnpm exec vitest run --project unit` — pure logic (slice, helpers, registry,
   tour shapes). The driver primitive short-circuits in `NODE_ENV==="test"`.
-- `pnpm run test:e2e tests/onboarding/` — full-system behavior (sequence,
-  checkpoint, replay, single-fire, refresh). Requires the Prowler stack.
