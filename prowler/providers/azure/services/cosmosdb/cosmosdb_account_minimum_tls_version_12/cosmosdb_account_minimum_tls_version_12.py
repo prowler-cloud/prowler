@@ -3,27 +3,28 @@ from prowler.providers.azure.services.cosmosdb.cosmosdb_client import cosmosdb_c
 
 
 class cosmosdb_account_minimum_tls_version_12(Check):
-    def execute(self) -> Check_Report_Azure:
-        findings = []
+    """Ensure that Cosmos DB accounts enforce TLS 1.2 or higher."""
 
+    def execute(self) -> Check_Report_Azure:
+        """Execute the Cosmos DB minimum TLS version check.
+
+        Iterates over every Cosmos DB account fetched by the service and reports
+        PASS when `minimalTlsVersion` is `Tls12` or higher, FAIL otherwise
+        (including when the property is missing or set to a legacy value).
+
+        Returns:
+            A list of Check_Report_Azure with one report per Cosmos DB account.
+        """
+        findings = []
         for subscription, accounts in cosmosdb_client.accounts.items():
             for account in accounts:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=account
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=account)
                 report.subscription = subscription
-
-                if account.minimal_tls_version == "Tls12":
+                report.status = "FAIL"
+                report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} does not enforce TLS 1.2 or higher."
+                if account.minimal_tls_version in {"Tls12", "Tls13"}:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"CosmosDB account {account.name} enforces TLS 1.2 or higher."
-                    )
-                else:
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"CosmosDB account {account.name} does not enforce TLS 1.2."
-                    )
-
+                    report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} enforces TLS 1.2 or higher."
                 findings.append(report)
 
         return findings
