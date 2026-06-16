@@ -32,16 +32,16 @@ export const scheduleFormSchema = z.object({
  *
  * Pure function (no side effects) so it is trivial to unit-test. Prowler OSS has
  * no billing, so the only distinction it can make is Cloud vs non-Cloud:
- * non-Cloud → legacy daily-only, Cloud → full scheduling. The prowler-cloud
- * overlay computes its own (billing-aware) capability and passes it down via the
- * optional `capability` prop, overriding this default — no billing concept ever
- * leaks into OSS.
+ * non-Cloud → legacy daily-only, Cloud → manual-only unless the prowler-cloud
+ * overlay computes and injects a billing-aware capability. This keeps schedules
+ * opt-in for paid Cloud tenants instead of accidentally exposing them to trial
+ * users when the overlay forgets to pass billing state.
  */
 export function getScanScheduleCapability(
   isCloud: boolean,
 ): ScanScheduleCapability {
   return isCloud
-    ? SCAN_SCHEDULE_CAPABILITY.ADVANCED
+    ? SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY
     : SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY;
 }
 

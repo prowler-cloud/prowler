@@ -176,6 +176,7 @@ describe("LaunchStep", () => {
           onBack={vi.fn()}
           onClose={onClose}
           onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
         />,
       );
 
@@ -224,6 +225,7 @@ describe("LaunchStep", () => {
           onBack={vi.fn()}
           onClose={vi.fn()}
           onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
         />,
       );
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
@@ -254,6 +256,7 @@ describe("LaunchStep", () => {
           onBack={vi.fn()}
           onClose={vi.fn()}
           onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
         />,
       );
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
@@ -281,7 +284,7 @@ describe("LaunchStep", () => {
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
-    it("hides scheduling and only launches a manual scan", async () => {
+    it("defaults to manual-only scheduling and only launches a manual scan", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -292,7 +295,6 @@ describe("LaunchStep", () => {
           onBack={vi.fn()}
           onClose={onClose}
           onFooterChange={onFooterChange}
-          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
         />,
       );
 
