@@ -51,3 +51,35 @@ CVE-2026-43185 pkg:linux-libc-dev exp:2026-07-15
 # Ref: https://security-tracker.debian.org/tracker/CVE-2023-45853
 CVE-2023-45853 pkg:zlib1g exp:2026-07-15
 CVE-2023-45853 pkg:zlib1g-dev exp:2026-07-15
+
+# --- API container image (api/Dockerfile) ---
+# The entries below are specific to the Prowler API image, which ships
+# PowerShell and additional build tooling on top of the same bookworm base.
+
+# CVE-2026-7210 — CPython/Expat hash-flooding denial of service in
+# `xml.parsers.expat` and `xml.etree.ElementTree`.
+# Packages: the Debian system Python 3.11 (python3.11*, libpython3.11*).
+# Why ignored: the API runs under the Python 3.12 interpreter shipped in its
+# `.venv`; the system `python3.11` is only present because `python3-dev` is
+# pulled in to compile native extensions (xmlsec, lxml) and is never executed
+# at runtime. The vulnerable path requires parsing attacker-controlled XML with
+# the affected interpreter, which Prowler does not do with the system Python.
+# Full mitigation also needs libexpat >= 2.8.0; no Debian bookworm fix yet.
+CVE-2026-7210 pkg:python3.11 exp:2026-07-15
+CVE-2026-7210 pkg:python3.11-dev exp:2026-07-15
+CVE-2026-7210 pkg:python3.11-minimal exp:2026-07-15
+CVE-2026-7210 pkg:libpython3.11 exp:2026-07-15
+CVE-2026-7210 pkg:libpython3.11-dev exp:2026-07-15
+CVE-2026-7210 pkg:libpython3.11-minimal exp:2026-07-15
+CVE-2026-7210 pkg:libpython3.11-stdlib exp:2026-07-15
+
+# CVE-2026-33278 — Unbound DNSSEC validator use-after-free (DoS, possible RCE).
+# CVE-2026-42960 — Unbound DNS cache poisoning via promiscuous additional records.
+# Package: libunbound8.
+# Why ignored: libunbound8 is a transitive apt dependency of the TLS/networking
+# stack (GnuTLS DANE support); only the shared library ships in the image. Both
+# vulnerabilities require operating a live Unbound recursive DNSSEC validator
+# that processes attacker-influenced DNS responses. Prowler never starts an
+# Unbound resolver, so neither code path is reachable. No Debian bookworm fix yet.
+CVE-2026-33278 pkg:libunbound8 exp:2026-07-15
+CVE-2026-42960 pkg:libunbound8 exp:2026-07-15

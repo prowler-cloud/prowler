@@ -341,6 +341,7 @@ class Jira:
     }
     TOKEN_URL = "https://auth.atlassian.com/oauth/token"
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
+    REQUEST_TIMEOUT = 30
     HEADER_TEMPLATE = {
         "Content-Type": "application/json",
         "X-Force-Accept-Language": "true",
@@ -578,7 +579,12 @@ class Jira:
             }
 
             headers = self.get_headers(content_type_json=True)
-            response = requests.post(self.TOKEN_URL, json=body, headers=headers)
+            response = requests.post(
+                self.TOKEN_URL,
+                json=body,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
+            )
 
             if response.status_code == 200:
                 tokens = response.json()
@@ -630,12 +636,17 @@ class Jira:
                 response = requests.get(
                     f"https://{domain}.atlassian.net/_edge/tenant_info",
                     headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
                 )
                 response = response.json()
                 return response.get("cloudId")
             else:
                 headers = self.get_headers(access_token)
-                response = requests.get(self.API_TOKEN_URL, headers=headers)
+                response = requests.get(
+                    self.API_TOKEN_URL,
+                    headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
+                )
 
             if response.status_code == 200:
                 resources = response.json()
@@ -717,7 +728,12 @@ class Jira:
             }
 
             headers = self.get_headers(content_type_json=True)
-            response = requests.post(url, json=body, headers=headers)
+            response = requests.post(
+                url,
+                json=body,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
+            )
 
             if response.status_code == 200:
                 tokens = response.json()
@@ -874,6 +890,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code == 200:
@@ -941,6 +958,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project_key}&expand=projects.issuetypes.fields",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code == 200:
@@ -986,6 +1004,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
             if response.status_code == 200:
                 projects_data = {}
@@ -1001,6 +1020,7 @@ class Jira:
                         project_response = requests.get(
                             f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project['key']}&expand=projects.issuetypes.fields",
                             headers=headers,
+                            timeout=self.REQUEST_TIMEOUT,
                         )
                         if project_response.status_code == 200:
                             project_metadata = project_response.json()
@@ -1923,6 +1943,7 @@ class Jira:
                     f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
                     json=payload,
                     headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
                 )
 
                 if response.status_code != 201:
@@ -2127,6 +2148,7 @@ class Jira:
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
                 json=payload,
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code != 201:
