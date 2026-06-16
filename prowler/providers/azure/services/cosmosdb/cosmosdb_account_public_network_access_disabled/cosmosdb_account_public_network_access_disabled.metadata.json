@@ -7,26 +7,30 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
-  "ResourceGroup": "network",
-  "Description": "**Azure Cosmos DB** accounts are evaluated for **public network access**. Disabling public access ensures the account is only reachable through private endpoints or VNet service endpoints, reducing the attack surface.",
-  "Risk": "Public network access exposes the database endpoint to the internet. Combined with weak authentication, this enables **unauthorized data access**, **enumeration**, and **brute force** attacks from any source.",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
+  "ResourceGroup": "database",
+  "Description": "**Azure Cosmos DB accounts** are evaluated for **public network access**. Disabling public network access ensures the account is only reachable through **private endpoints** or **VNet service endpoints**, reducing the attack surface and preventing direct exposure of the data plane to the internet.",
+  "Risk": "Allowing **public network access** exposes the Cosmos DB data plane to the internet. Combined with leaked **connection strings**, weak **firewall rules**, or compromised **AAD tokens**, this enables **unauthorized data access**, **enumeration**, **brute force**, and **data exfiltration** from any source on the internet.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.documentdb/databaseaccounts"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az cosmosdb update --name <COSMOS_ACCOUNT_NAME> --resource-group <RESOURCE_GROUP> --public-network-access Disabled",
+      "NativeIaC": "```bicep\n// Bicep: Disable public network access on a Cosmos DB account\nresource account 'Microsoft.DocumentDB/databaseAccounts@2025-10-15' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  kind: 'GlobalDocumentDB'\n  properties: {\n    databaseAccountOfferType: 'Standard'\n    locations: [{ locationName: resourceGroup().location }]\n    publicNetworkAccess: 'Disabled' // Critical: Blocks all public-internet traffic to the data plane\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and open your Cosmos DB account\n2. In the left menu, select Networking\n3. Under Public network access, select Disabled\n4. Configure private endpoints or VNet service endpoints before saving so clients retain connectivity\n5. Click Save",
+      "Terraform": "```hcl\n# Terraform: Disable public network access on a Cosmos DB account\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_location>\"\n  offer_type          = \"Standard\"\n  kind                = \"GlobalDocumentDB\"\n\n  geo_location {\n    location          = \"<example_location>\"\n    failover_priority = 0\n  }\n\n  public_network_access_enabled = false # Critical: Blocks all public-internet traffic to the data plane\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Disable **public network access** on Cosmos DB accounts and require connectivity via **private endpoints** or **VNet service endpoints**. Before enforcement, validate that all application workloads have private-network connectivity, and pair this control with **AAD/RBAC authentication**, **TLS 1.2+**, and **firewall rules** restricted to the minimum trusted ranges to uphold **defense in depth**.",
       "Url": "https://hub.prowler.com/check/cosmosdb_account_public_network_access_disabled"
     }
   },
   "Categories": [
-    "threat-detection"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],
