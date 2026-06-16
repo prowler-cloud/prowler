@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "Instance",
   "ResourceGroup": "compute",
-  "Description": "Linode instances are assessed for disk encryption status. Disk encryption protects data at rest on the instance's disks from unauthorized physical access to the underlying hardware. Without encryption, data on disks could be exposed if physical security is compromised.",
+  "Description": "Linode instances are assessed for disk encryption status. Disk encryption protects data at rest on the instance's disks from unauthorized access.",
   "Risk": "Without disk encryption, sensitive data stored on the instance's disks is unprotected at rest. This increases the risk of data exposure in the event of physical access to storage media or through certain hypervisor-level vulnerabilities.",
   "RelatedUrl": "",
   "AdditionalURLs": [

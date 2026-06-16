@@ -32,7 +32,7 @@ class AccountService(LinodeService):
                 try:
                     self.users.append(
                         User(
-                            username=user.username,
+                            username=getattr(user, "username", ""),
                             email=getattr(user, "email", ""),
                             tfa_enabled=getattr(user, "tfa_enabled", False),
                             restricted=getattr(user, "restricted", False),
