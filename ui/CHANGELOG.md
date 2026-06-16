@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.31.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Radio button no longer shifts vertically when selected [(#11608)](https://github.com/prowler-cloud/prowler/pull/11608)
+
+### 🔐 Security
+
+- Bump vulnerable `Next.js`, React, AI SDK, `postcss`, `hono`, `qs`, `esbuild`, and Alpine OpenSSL packages (`libcrypto3` and `libssl3`) [(#11581)](https://github.com/prowler-cloud/prowler/pull/11581)
+
+---
+
 ## [1.30.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed
