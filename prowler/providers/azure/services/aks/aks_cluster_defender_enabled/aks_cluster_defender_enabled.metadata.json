@@ -1,34 +1,39 @@
 {
   "Provider": "azure",
   "CheckID": "aks_cluster_defender_enabled",
-  "CheckTitle": "AKS cluster has Microsoft Defender for Containers enabled",
+  "CheckTitle": "AKS cluster has Microsoft Defender security profile enabled",
   "CheckType": [],
   "ServiceName": "aks",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.containerservice/managedclusters",
   "ResourceGroup": "container",
-  "Description": "**Azure Kubernetes Service** clusters are evaluated for **Microsoft Defender for Containers** security monitoring. Defender provides runtime threat detection, vulnerability assessment, and security alerts for containerized workloads.",
-  "Risk": "Without Defender, container runtime threats such as **cryptomining**, **container escape**, and **malicious image execution** go undetected. Compromised containers can pivot to cluster resources and cloud APIs.",
+  "Description": "**AKS clusters** are evaluated for the **Microsoft Defender security profile** (`securityProfile.defender.securityMonitoring.enabled=true`). Defender for Containers extends security monitoring, threat detection, vulnerability assessment, and security posture insights to Azure Kubernetes Service workloads.",
+  "Risk": "Without the Microsoft Defender security profile, AKS runtime threats such as **cryptomining**, suspicious Kubernetes API activity, vulnerable container images, and malicious workload behavior may go undetected. Compromised containers can pivot to cluster resources and cloud APIs, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-containers-deployment-overview",
+    "https://learn.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az-aks-update",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/managedclusters"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az aks update --resource-group <RESOURCE_GROUP> --name <CLUSTER_NAME> --enable-defender",
+      "NativeIaC": "```bicep\n// AKS cluster with Microsoft Defender security monitoring enabled\nresource aks 'Microsoft.ContainerService/managedClusters@2024-05-01' = {\n  name: '<CLUSTER_NAME>'\n  location: '<LOCATION>'\n  identity: {\n    type: 'SystemAssigned'\n  }\n  properties: {\n    dnsPrefix: '<DNS_PREFIX>'\n    securityProfile: {\n      defender: {\n        logAnalyticsWorkspaceResourceId: '<LOG_ANALYTICS_WORKSPACE_RESOURCE_ID>'\n        securityMonitoring: {\n          enabled: true // Critical: enables Defender security monitoring for AKS\n        }\n      }\n    }\n    agentPoolProfiles: [\n      {\n        name: 'system'\n        count: 1\n        vmSize: 'Standard_DS2_v2'\n        mode: 'System'\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Microsoft Defender for Cloud, enable the Containers plan for the subscription that contains the AKS cluster\n2. In the AKS cluster configuration, enable the Microsoft Defender security profile\n3. Verify that Defender security monitoring is enabled for the managed cluster",
+      "Terraform": "```hcl\nresource \"azurerm_log_analytics_workspace\" \"example\" {\n  name                = \"<workspace-name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<resource-group>\"\n  sku                 = \"PerGB2018\"\n}\n\nresource \"azurerm_kubernetes_cluster\" \"example\" {\n  name                = \"<cluster-name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<resource-group>\"\n  dns_prefix          = \"<dns-prefix>\"\n\n  default_node_pool {\n    name       = \"system\"\n    node_count = 1\n    vm_size    = \"Standard_DS2_v2\"\n  }\n\n  identity {\n    type = \"SystemAssigned\"\n  }\n\n  microsoft_defender {\n    log_analytics_workspace_id = azurerm_log_analytics_workspace.example.id\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable the Microsoft Defender security profile for AKS clusters and ensure the subscription has Defender for Containers enabled. Route security monitoring data to the appropriate workspace and review Defender alerts and recommendations as part of the cluster operations process.",
       "Url": "https://hub.prowler.com/check/aks_cluster_defender_enabled"
     }
   },
   "Categories": [
-    "threat-detection"
+    "threat-detection",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "This check evaluates the AKS managed cluster Defender security monitoring flag. Defender for Containers plan availability, billing, workspace routing, and alert response processes should be validated separately at the subscription and security operations levels."
 }
