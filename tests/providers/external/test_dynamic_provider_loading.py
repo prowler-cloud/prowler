@@ -532,14 +532,13 @@ class TestInitProvidersParserBuiltinDependencyFailure:
     @patch("sys.argv", ["prowler", "microsoft365"])
     @patch("prowler.providers.common.arguments.Provider.is_builtin")
     @patch("prowler.providers.common.arguments.import_module")
-    def test_invoked_provider_alias_still_triggers_fail_loud(
+    def test_invoked_microsoft365_alias_still_triggers_fail_loud(
         self, mock_import, mock_is_builtin
     ):
-        """CLI aliases (microsoft365 → m365, oci → oraclecloud) are rewritten
-        by parser.py AFTER init_providers_parser runs, so the helper must
-        normalise them itself. Otherwise `prowler microsoft365 ...` with a
-        broken m365 would silently downgrade to a warning instead of
-        fail-loud."""
+        """CLI alias `microsoft365 → m365` is rewritten by parser.py AFTER
+        init_providers_parser runs, so the helper must normalise it itself.
+        Otherwise `prowler microsoft365 ...` with a broken m365 would silently
+        downgrade to a warning instead of fail-loud."""
         from prowler.providers.common.arguments import init_providers_parser
 
         mock_is_builtin.return_value = True
@@ -555,6 +554,65 @@ class TestInitProvidersParserBuiltinDependencyFailure:
             pytest.raises(SystemExit),
         ):
             init_providers_parser(parser)
+
+    @patch("sys.argv", ["prowler", "oci"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_oci_alias_still_triggers_fail_loud(
+        self, mock_import, mock_is_builtin
+    ):
+        """CLI alias `oci → oraclecloud` is rewritten by parser.py AFTER
+        init_providers_parser runs, so the helper must normalise it itself.
+        Otherwise `prowler oci ...` with a broken oraclecloud would silently
+        downgrade to a warning instead of fail-loud."""
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'oci'")
+
+        parser = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.arguments.Provider.get_available_providers",
+                return_value=["oraclecloud"],
+            ),
+            pytest.raises(SystemExit),
+        ):
+            init_providers_parser(parser)
+
+    @patch("sys.argv", ["prowler", "--output-directory", "stackit"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_flag_value_matching_provider_name_not_treated_as_invoked(
+        self, mock_import, mock_is_builtin
+    ):
+        """When argv[1] is a flag, parser.py injects 'aws' as the default
+        provider — so the invoked provider is 'aws', NOT the token that
+        happens to follow the flag. A broken `stackit` here must therefore
+        degrade to a warning, not fail-loud."""
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            # Must NOT raise — 'aws' is the invoked default, stackit unrelated.
+            init_providers_parser(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
 
     @patch("sys.argv", ["prowler", "aws"])
     @patch("prowler.providers.common.arguments.Provider.is_builtin")

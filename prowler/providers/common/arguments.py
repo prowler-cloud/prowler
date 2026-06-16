@@ -22,25 +22,39 @@ PROVIDER_ALIASES = {
 def _invoked_provider_from_argv(available_providers: Sequence[str]) -> Optional[str]:
     """Return the provider name the user invoked on the CLI, or None.
 
-    Scans sys.argv left-to-right, skipping flag-like tokens, and returns the
-    first non-flag token that matches a known provider name (after alias
-    normalisation). Returns None if no provider is being invoked (e.g.
-    `prowler -h`, `prowler dashboard`, or empty argv).
+    Mirrors the provider-resolution rules of `ProwlerArgumentParser.parse()`
+    so this helper agrees with what argparse will actually do later:
 
-    Assumes the top-level parser has no flags that consume a value (only
-    --version/-v as of today). If that ever changes, the invariant test
-    `test_top_level_parser_has_no_value_consuming_flags` in
-    tests/lib/cli/parser_test.py fails and this function must be updated to
-    also skip the flag's value when scanning for the invoked provider.
+    - `prowler -h` / `--help` / `-v` / `--version` → no provider invoked
+    - `prowler` (no args) → defaults to 'aws' (parser injects it)
+    - `prowler --any-flag ...` (first token is a flag) → defaults to 'aws'
+      (parser injects 'aws' before the flag)
+    - `prowler <name> ...` → `<name>`, normalised through PROVIDER_ALIASES
+
+    Deliberately looks only at `sys.argv[1]` rather than scanning the whole
+    argv: doing the latter would misclassify invocations like
+    `prowler --output-directory stackit` as `stackit` even though the real
+    parser would default to `aws`.
     """
     available = set(available_providers)
-    for token in sys.argv[1:]:
-        if token.startswith("-"):
-            continue
-        normalized = PROVIDER_ALIASES.get(token, token)
-        if normalized in available:
-            return normalized
-    return None
+
+    # `prowler` with no args → parser injects 'aws' as default
+    if len(sys.argv) < 2:
+        return "aws" if "aws" in available else None
+
+    first = sys.argv[1]
+
+    # Help / version → no provider invoked
+    if first in ("-h", "--help", "-v", "--version"):
+        return None
+
+    # Any other flag → parser injects 'aws' as default
+    if first.startswith("-"):
+        return "aws" if "aws" in available else None
+
+    # Positional → it IS the provider name, after alias normalisation
+    normalized = PROVIDER_ALIASES.get(first, first)
+    return normalized if normalized in available else None
 
 
 def init_providers_parser(self):
