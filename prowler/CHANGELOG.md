@@ -21,6 +21,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
 
+### 🐞 Fixed
+
+- Kubernetes core container checks now evaluate regular, init, and ephemeral containers separately and cover CPU, memory, image tag, liveness probe, and readiness probe hardening [(#9353)](https://github.com/prowler-cloud/prowler/pull/9353)
+
 ### 🔐 Security
 
 - `microsoft-kiota-*` to 1.9.9 and `aiohttp` to 3.14.0, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
