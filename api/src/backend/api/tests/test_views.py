@@ -9860,6 +9860,35 @@ class TestComplianceOverviewViewSet:
             },
         )
 
+    def test_compliance_overview_provider_filter_empty_response_uses_scan_data_presence(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        scan = self._create_completed_scan(
+            providers_fixture[0], "latest scan with filtered compliance data"
+        )
+        self._create_requirement(scan, "1.1", StatusChoices.PASS, region="eu-west-1")
+
+        with patch.object(
+            ComplianceOverviewViewSet, "get_task_response_if_running"
+        ) as mock_task_response:
+            mock_task_response.return_value = Response(
+                {"detail": "Task is running"}, status=status.HTTP_202_ACCEPTED
+            )
+
+            response = authenticated_client.get(
+                reverse("complianceoverview-list"),
+                {
+                    "filter[provider_id]": str(scan.provider_id),
+                    "filter[region]": "us-east-1",
+                },
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+        mock_task_response.assert_not_called()
+
     def test_compliance_overview_metadata_provider_filter_returns_running_task_without_data(
         self,
         authenticated_client,
@@ -10538,6 +10567,40 @@ class TestOverviewViewSet:
         assert aggregated == expected
         for entry in grouped_data:
             assert "findings" not in entry["attributes"]
+
+    def test_overview_providers_count_applies_limited_visibility(
+        self,
+        authenticated_client_no_permissions_rbac,
+        providers_fixture,
+        provider_groups_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        client = authenticated_client_no_permissions_rbac
+        allowed_provider = providers_fixture[2]
+        denied_provider = providers_fixture[4]
+        provider_group = provider_groups_fixture[0]
+
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider_group=provider_group,
+            provider=allowed_provider,
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=client.user.roles.first(),
+            provider_group=provider_group,
+        )
+
+        response = client.get(reverse("overview-providers-count"))
+
+        assert response.status_code == status.HTTP_200_OK
+        aggregated = {
+            entry["id"]: entry["attributes"]["count"]
+            for entry in response.json()["data"]
+        }
+        assert aggregated == {allowed_provider.provider: 1}
+        assert denied_provider.provider not in aggregated
 
     def _create_scan(self, tenant, provider, name, started_at=None):
         scan_started = started_at or datetime.now(timezone.utc) - timedelta(hours=1)

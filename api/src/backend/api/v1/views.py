@@ -4944,10 +4944,13 @@ class ComplianceOverviewViewSet(
                 return task_response
         return None
 
-    def _latest_provider_scan_ids_without_data(self, queryset, latest_scan_ids):
+    def _latest_provider_scan_ids_without_data(self, latest_scan_ids):
+        data_presence_queryset = self.get_queryset().filter(scan_id__in=latest_scan_ids)
         scan_ids_with_data = {
             str(scan_id)
-            for scan_id in queryset.values_list("scan_id", flat=True).distinct()
+            for scan_id in data_presence_queryset.values_list(
+                "scan_id", flat=True
+            ).distinct()
         }
         return [
             scan_id
@@ -4957,16 +4960,11 @@ class ComplianceOverviewViewSet(
 
     def _task_response_for_latest_provider_scans_without_data(
         self,
-        queryset,
         latest_scan_ids,
-        has_data,
     ):
-        scan_ids_to_check = latest_scan_ids
-        if has_data:
-            scan_ids_to_check = self._latest_provider_scan_ids_without_data(
-                queryset,
-                latest_scan_ids,
-            )
+        scan_ids_to_check = self._latest_provider_scan_ids_without_data(
+            latest_scan_ids,
+        )
         return self._task_response_for_latest_provider_scans(scan_ids_to_check)
 
     def _list_with_region_filter(self, scan_id, region_filter):
@@ -5014,9 +5012,7 @@ class ComplianceOverviewViewSet(
         queryset = self._filtered_queryset_for_latest_provider_scans(latest_scan_ids)
         data = self._aggregate_compliance_overview(queryset)
         task_response = self._task_response_for_latest_provider_scans_without_data(
-            queryset,
             latest_scan_ids,
-            bool(data),
         )
         if task_response:
             return task_response
@@ -5095,9 +5091,7 @@ class ComplianceOverviewViewSet(
         task_response = None
         if has_provider_filters:
             task_response = self._task_response_for_latest_provider_scans_without_data(
-                queryset,
                 latest_scan_ids,
-                bool(regions),
             )
         elif not regions:
             task_response = self._task_response_if_running(scan_id)
@@ -5201,9 +5195,7 @@ class ComplianceOverviewViewSet(
         task_response = None
         if has_provider_filters:
             task_response = self._task_response_for_latest_provider_scans_without_data(
-                filtered_queryset,
                 latest_scan_ids,
-                bool(requirements_summary),
             )
         elif not requirements_summary:
             task_response = self._task_response_if_running(scan_id)
@@ -5673,15 +5665,11 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         providers_qs = Provider.objects.filter(tenant_id=tenant_id)
 
+        self._ensure_allowed_providers()
         if hasattr(self, "allowed_providers"):
-            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
-            if not allowed_ids:
-                overview = []
-                return Response(
-                    self.get_serializer(overview, many=True).data,
-                    status=status.HTTP_200_OK,
-                )
-            providers_qs = providers_qs.filter(id__in=allowed_ids)
+            providers_qs = providers_qs.filter(
+                id__in=self.allowed_providers.values("id")
+            )
 
         overview = (
             providers_qs.values("provider")
