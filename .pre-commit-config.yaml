@@ -7,6 +7,8 @@
 #   P50 — dependency validation
 
 default_install_hook_types: [pre-commit]
+# Hooks run on commit only; pre-push would re-run the full suite for no gain.
+default_stages: [pre-commit]
 
 repos:
   ## GENERAL (prek built-in — no external repo needed)
@@ -167,7 +169,6 @@ repos:
         # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'
         language: system
         pass_filenames: false
-        stages: ["pre-commit"]
         priority: 40
 
       - id: bandit
