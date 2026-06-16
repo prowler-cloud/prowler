@@ -34,11 +34,17 @@ class GCPBaseException(ProwlerException):
             "message": "Error loading Service Account Private Key credentials from dictionary",
             "remediation": "Check the dictionary and ensure it contains a Service Account Private Key.",
         },
+        (3011, "GCPGetOrganizationProjectsError"): {
+            "message": "Error retrieving projects under the organization via the Cloud Asset API",
+            "remediation": "Ensure the Cloud Asset API is enabled in the credentials' project and that the principal has 'roles/cloudasset.viewer' bound at the organization level. See https://cloud.google.com/asset-inventory/docs/access-control.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         provider = "GCP"
-        error_info = self.GCP_ERROR_CODES.get((code, self.__class__.__name__))
+        # Copy the catalog entry so a custom message does not mutate the
+        # class-level GCP_ERROR_CODES shared across exception instances.
+        error_info = dict(self.GCP_ERROR_CODES.get((code, self.__class__.__name__)))
         if message:
             error_info["message"] = message
         super().__init__(
@@ -103,4 +109,11 @@ class GCPLoadServiceAccountKeyFromDictError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3010, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPGetOrganizationProjectsError(GCPBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            3011, file=file, original_exception=original_exception, message=message
         )

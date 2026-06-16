@@ -33,6 +33,9 @@ import {
   OktaProviderData,
   OktaProviderCredential,
   OKTA_CREDENTIAL_OPTIONS,
+  VercelProviderData,
+  VercelProviderCredential,
+  VERCEL_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
@@ -1439,6 +1442,85 @@ test.describe("Add Provider", () => {
     );
   });
 
+  test.describe.serial("Add Vercel Provider", () => {
+    let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
+
+    // Test data from environment variables
+    const teamId = process.env.E2E_VERCEL_TEAM_ID ?? "";
+    const apiToken = process.env.E2E_VERCEL_API_TOKEN ?? "";
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      test.skip(!teamId || !apiToken, "Vercel E2E env vars are not set");
+      providersPage = new ProvidersPage(page);
+      await deleteProviderIfExists(providersPage, teamId!);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new Vercel provider with API token",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@vercel",
+          "@serial",
+          "@PROVIDER-E2E-018",
+        ],
+      },
+      async ({ page }) => {
+        // Prepare test data for Vercel provider (Team ID is the provider UID)
+        const vercelProviderData: VercelProviderData = {
+          teamId: teamId,
+          alias: "Test E2E Vercel Account - API Token",
+        };
+
+        // Prepare API token credentials
+        const vercelCredentials: VercelProviderCredential = {
+          type: VERCEL_CREDENTIAL_OPTIONS.VERCEL_API_TOKEN,
+          apiToken: apiToken,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select Vercel provider
+        await providersPage.selectVercelProvider();
+
+        // Fill provider details (team ID and alias)
+        await providersPage.fillVercelProviderDetails(vercelProviderData);
+        await providersPage.clickNext();
+
+        // Verify credentials page is loaded
+        await providersPage.verifyVercelCredentialsPageLoaded();
+
+        // Fill credentials (API token)
+        await providersPage.fillVercelCredentials(vercelCredentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(teamId);
+      },
+    );
+  });
+
   test.describe.serial("Add Okta Provider", () => {
     let providersPage: ProvidersPage;
     let scansPage: ScansPage;
@@ -1472,7 +1554,7 @@ test.describe("Add Provider", () => {
           "@providers",
           "@okta",
           "@serial",
-          "@PROVIDER-E2E-018",
+          "@PROVIDER-E2E-019",
         ],
       },
       async ({ page }) => {

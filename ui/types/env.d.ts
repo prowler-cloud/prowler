@@ -123,6 +123,10 @@ declare global {
       E2E_OKTA_DOMAIN?: string;
       E2E_OKTA_CLIENT_ID?: string;
       E2E_OKTA_BASE64_PRIVATE_KEY?: string;
+
+      // E2E Vercel
+      E2E_VERCEL_TEAM_ID?: string;
+      E2E_VERCEL_API_TOKEN?: string;
     }
   }
 }
