@@ -3,7 +3,7 @@ from prowler.providers.azure.services.aks.aks_client import aks_client
 
 
 class aks_cluster_auto_upgrade_enabled(Check):
-    def execute(self) -> Check_Report_Azure:
+    def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
         for subscription_name, clusters in aks_client.clusters.items():

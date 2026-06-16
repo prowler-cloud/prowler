@@ -15,13 +15,13 @@
   "AdditionalURLs": [],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az aks update --resource-group <RESOURCE_GROUP> --name <CLUSTER_NAME> --auto-upgrade-channel patch",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Configure an AKS automatic upgrade channel so clusters receive Kubernetes version updates and security patches without relying only on manual upgrade processes. Use `patch` or `stable` for conservative production upgrades, reserve faster channels such as `rapid` for environments that can absorb quicker version changes, and avoid `none` unless a documented exception and manual patching process exists.",
       "Url": "https://hub.prowler.com/check/aks_cluster_auto_upgrade_enabled"
     }
   },
