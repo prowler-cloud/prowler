@@ -228,7 +228,13 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
+from api.v1.mixins import (
+    DisablePaginationMixin,
+    JsonApiFilterMixin,
+    PaginateByPkMixin,
+    ProviderFilterParamsMixin,
+    TaskManagementMixin,
+)
 from api.v1.serializers import (
     AttackPathsCartographySchemaSerializer,
     AttackPathsCustomQueryRunRequestSerializer,
@@ -4680,24 +4686,10 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="requirements")
 @method_decorator(CACHE_DECORATOR, name="attributes")
-class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
-    PROVIDER_FILTER_KEYS = frozenset(
-        {
-            "provider_id",
-            "provider_id__in",
-            "provider_type",
-            "provider_type__in",
-            "provider_groups",
-            "provider_groups__in",
-        }
-    )
-    PROVIDER_FILTER_QUERY_KEYS = PROVIDER_FILTER_KEYS | frozenset(
-        {
-            "provider_id.in",
-            "provider_type.in",
-            "provider_groups.in",
-        }
-    )
+class ComplianceOverviewViewSet(
+    ProviderFilterParamsMixin, BaseRLSViewSet, TaskManagementMixin
+):
+    jsonapi_filter_replace_dots = True
     pagination_class = ComplianceOverviewPagination
     queryset = ComplianceRequirementOverview.objects.all()
     serializer_class = ComplianceOverviewSerializer
@@ -4764,45 +4756,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
         return summaries
 
-    def _normalize_jsonapi_params(self, query_params, exclude_keys=None):
-        """Convert JSON:API filter params into django-filter keys."""
-        exclude_keys = exclude_keys or set()
-        normalized = QueryDict(mutable=True)
-        for key, values in query_params.lists():
-            normalized_key = (
-                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
-            )
-            normalized_key = normalized_key.replace(".", "__")
-            if normalized_key not in exclude_keys:
-                normalized.setlist(normalized_key, values)
-        return normalized
-
-    def _apply_compliance_filterset(self, queryset, exclude_keys=None):
-        normalized_params = self._normalize_jsonapi_params(
-            self.request.query_params,
-            exclude_keys=set(exclude_keys or []),
-        )
-        filterset = self.filterset_class(normalized_params, queryset=queryset)
-        if not filterset.is_valid():
-            raise ValidationError(filterset.errors)
-        return filterset.qs
-
-    def _csv_filter_values(self, value):
-        return [item.strip() for item in value.split(",") if item.strip()]
-
-    def _validate_uuid_filter_values(self, field_name, values):
-        try:
-            for value in values:
-                uuid.UUID(str(value))
-        except (TypeError, ValueError, AttributeError):
-            raise ValidationError({field_name: ["Enter a valid UUID."]})
-
-    def _has_provider_filters(self):
-        return any(
-            self.request.query_params.get(f"filter[{key}]")
-            for key in self.PROVIDER_FILTER_QUERY_KEYS
-        )
-
     def _validate_scan_selection(self, scan_id, has_provider_filters):
         if scan_id and has_provider_filters:
             raise ValidationError(
@@ -4834,62 +4787,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             ]
         )
 
-    def _extract_provider_filters_from_params(self):
-        """Extract provider filters for the Scan queryset."""
-        params = self.request.query_params
-        filters = {}
-        valid_provider_types = {
-            choice[0] for choice in Provider.ProviderChoices.choices
-        }
-
-        provider_id = params.get("filter[provider_id]")
-        if provider_id:
-            self._validate_uuid_filter_values("provider_id", [provider_id])
-            filters["provider_id"] = provider_id
-
-        provider_id_in = params.get("filter[provider_id__in]") or params.get(
-            "filter[provider_id.in]"
-        )
-        if provider_id_in:
-            values = self._csv_filter_values(provider_id_in)
-            self._validate_uuid_filter_values("provider_id__in", values)
-            filters["provider_id__in"] = values
-
-        provider_type = params.get("filter[provider_type]")
-        if provider_type:
-            if provider_type not in valid_provider_types:
-                raise ValidationError(
-                    {"provider_type": f"Invalid choice: {provider_type}"}
-                )
-            filters["provider__provider"] = provider_type
-
-        provider_type_in = params.get("filter[provider_type__in]") or params.get(
-            "filter[provider_type.in]"
-        )
-        if provider_type_in:
-            values = self._csv_filter_values(provider_type_in)
-            invalid = [value for value in values if value not in valid_provider_types]
-            if invalid:
-                raise ValidationError(
-                    {"provider_type__in": f"Invalid choices: {', '.join(invalid)}"}
-                )
-            filters["provider__provider__in"] = values
-
-        provider_groups = params.get("filter[provider_groups]")
-        if provider_groups:
-            self._validate_uuid_filter_values("provider_groups", [provider_groups])
-            filters["provider__provider_groups__id"] = provider_groups
-
-        provider_groups_in = params.get("filter[provider_groups__in]") or params.get(
-            "filter[provider_groups.in]"
-        )
-        if provider_groups_in:
-            values = self._csv_filter_values(provider_groups_in)
-            self._validate_uuid_filter_values("provider_groups__in", values)
-            filters["provider__provider_groups__id__in"] = values
-
-        return filters
-
     def _latest_scan_ids_for_provider_filters(self):
         role = get_role(self.request.user, self.request.tenant_id)
         scans = Scan.all_objects.filter(
@@ -4900,7 +4797,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         if not getattr(role, Permissions.UNLIMITED_VISIBILITY.value, False):
             scans = scans.filter(provider__in=get_providers(role))
 
-        provider_filters = self._extract_provider_filters_from_params()
+        provider_filters = self._extract_provider_filters_from_params(
+            validate_uuids=True,
+            include_dot_aliases=True,
+        )
         if provider_filters:
             scans = scans.filter(**provider_filters)
 
@@ -4913,8 +4813,11 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     def _filtered_queryset_for_latest_provider_scans(self):
         latest_scan_ids = self._latest_scan_ids_for_provider_filters()
         queryset = self.get_queryset().filter(scan_id__in=latest_scan_ids)
-        return self._apply_compliance_filterset(
+        # Provider filters stay on the filterset for OpenAPI docs, but runtime
+        # filtering happens on Scan first so compliance queries use scan IDs.
+        return self._apply_filterset(
             queryset,
+            self.filterset_class,
             exclude_keys=self.PROVIDER_FILTER_KEYS | {"scan_id"},
         )
 
@@ -5080,7 +4983,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
-        has_provider_filters = self._has_provider_filters()
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
         self._validate_scan_selection(scan_id, has_provider_filters)
 
         if has_provider_filters:
@@ -5130,13 +5033,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
-        has_provider_filters = self._has_provider_filters()
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
         self._validate_scan_selection(scan_id, has_provider_filters)
 
         queryset = (
             self._filtered_queryset_for_latest_provider_scans()
             if has_provider_filters
-            else self._apply_compliance_filterset(self.get_queryset())
+            else self._apply_filterset(self.get_queryset(), self.filterset_class)
         )
 
         regions = list(
@@ -5160,7 +5063,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     @action(detail=False, methods=["get"], url_name="requirements")
     def requirements(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
-        has_provider_filters = self._has_provider_filters()
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
         compliance_id = request.query_params.get("filter[compliance_id]")
 
         self._validate_scan_selection(scan_id, has_provider_filters)
@@ -5179,7 +5082,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         filtered_queryset = (
             self._filtered_queryset_for_latest_provider_scans()
             if has_provider_filters
-            else self._apply_compliance_filterset(self.get_queryset())
+            else self._apply_filterset(self.get_queryset(), self.filterset_class)
         )
 
         all_requirements = filtered_queryset.values(
@@ -5484,7 +5387,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
-class OverviewViewSet(BaseRLSViewSet):
+class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
     queryset = ScanSummary.objects.all()
     http_method_names = ["get"]
     ordering = ["-inserted_at"]
@@ -5601,18 +5504,6 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
-    def _normalize_jsonapi_params(self, query_params, exclude_keys=None):
-        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
-        exclude_keys = exclude_keys or set()
-        normalized = QueryDict(mutable=True)
-        for key, values in query_params.lists():
-            normalized_key = (
-                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
-            )
-            if normalized_key not in exclude_keys:
-                normalized.setlist(normalized_key, values)
-        return normalized
-
     def _ensure_allowed_providers(self):
         """Populate allowed providers for RBAC-aware queries once per request."""
         if getattr(self, "_providers_initialized", False):
@@ -5632,15 +5523,6 @@ class OverviewViewSet(BaseRLSViewSet):
             return queryset.filter(**provider_filter)
         return queryset
 
-    def _apply_filterset(self, queryset, filterset_class, exclude_keys=None):
-        normalized_params = self._normalize_jsonapi_params(
-            self.request.query_params, exclude_keys=set(exclude_keys or [])
-        )
-        filterset = filterset_class(normalized_params, queryset=queryset)
-        if not filterset.is_valid():
-            raise ValidationError(filterset.errors)
-        return filterset.qs
-
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
         provider_filter = self._get_provider_filter()
         queryset = Scan.all_objects.filter(
@@ -5653,48 +5535,6 @@ class OverviewViewSet(BaseRLSViewSet):
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
-
-    def _extract_provider_filters_from_params(self):
-        """Extract and validate provider filters from query params."""
-        params = self.request.query_params
-        filters = {}
-        valid_provider_types = {c[0] for c in Provider.ProviderChoices.choices}
-
-        provider_id = params.get("filter[provider_id]")
-        if provider_id:
-            filters["provider_id"] = provider_id
-
-        provider_id_in = params.get("filter[provider_id__in]")
-        if provider_id_in:
-            filters["provider_id__in"] = provider_id_in.split(",")
-
-        provider_type = params.get("filter[provider_type]")
-        if provider_type:
-            if provider_type not in valid_provider_types:
-                raise ValidationError(
-                    {"provider_type": f"Invalid choice: {provider_type}"}
-                )
-            filters["provider__provider"] = provider_type
-
-        provider_type_in = params.get("filter[provider_type__in]")
-        if provider_type_in:
-            types = provider_type_in.split(",")
-            invalid = [t for t in types if t not in valid_provider_types]
-            if invalid:
-                raise ValidationError(
-                    {"provider_type__in": f"Invalid choices: {', '.join(invalid)}"}
-                )
-            filters["provider__provider__in"] = types
-
-        provider_groups = params.get("filter[provider_groups]")
-        if provider_groups:
-            filters["provider__provider_groups__id"] = provider_groups
-
-        provider_groups_in = params.get("filter[provider_groups__in]")
-        if provider_groups_in:
-            filters["provider__provider_groups__id__in"] = provider_groups_in.split(",")
-
-        return filters
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -7489,7 +7329,7 @@ SEVERITY_ORDER_REVERSE = {v: k for k, v in SEVERITY_ORDER.items()}
     ),
     retrieve=extend_schema(exclude=True),
 )
-class FindingGroupViewSet(BaseRLSViewSet):
+class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
     """
     ViewSet for Finding Groups - aggregates findings by check_id.
 
@@ -7505,6 +7345,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
     queryset = FindingGroupDailySummary.objects.all()
     serializer_class = FindingGroupSerializer
     filterset_class = FindingGroupFilter
+    jsonapi_filter_replace_dots = True
     filter_backends = [
         jsonapi_filters.QueryParameterValidationFilter,
         jsonapi_filters.OrderingFilter,
@@ -7554,18 +7395,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
             queryset = queryset.filter(scan__provider_id__in=providers)
 
         return queryset
-
-    def _normalize_jsonapi_params(self, query_params):
-        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
-        normalized = QueryDict(mutable=True)
-        for key, values in query_params.lists():
-            normalized_key = (
-                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
-            )
-            # Convert JSON:API dot notation to Django double underscore
-            normalized_key = normalized_key.replace(".", "__")
-            normalized.setlist(normalized_key, values)
-        return normalized
 
     @extend_schema(exclude=True)
     def retrieve(self, request, *args, **kwargs):

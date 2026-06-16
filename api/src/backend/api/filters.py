@@ -1347,6 +1347,13 @@ class RoleFilter(FilterSet):
 
 
 class ComplianceOverviewFilter(BaseScanProviderFilter):
+    """
+    Keep provider filters in the schema while runtime filtering resolves scans first.
+
+    Compliance overview provider filters are applied to the latest completed scans
+    in the viewset, then this filterset handles the remaining compliance fields.
+    """
+
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     scan_id = UUIDFilter(field_name="scan_id")
     region = CharFilter(field_name="region")
