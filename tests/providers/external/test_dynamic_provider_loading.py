@@ -2305,6 +2305,30 @@ class TestGetClass:
             Provider.get_class("rogue")
 
     # -----------------------------------------------------------------------
+    # T4d: Contract — every built-in provider stays resolvable via get_class
+    # -----------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        "provider",
+        [
+            name
+            for name in Provider.get_available_providers()
+            if Provider.is_builtin(name)
+        ],
+    )
+    def test_get_class_resolves_every_builtin_provider(self, provider):
+        """Contract test over all built-in providers: each one must remain
+        resolvable through get_class and return a Provider subclass whose name
+        follows the `{Capitalized}Provider` convention. This pins the naming
+        convention as the built-in resolution contract, so a future provider
+        that breaks it fails here instead of silently at runtime in a caller
+        (e.g. the API)."""
+        cls = Provider.get_class(provider)
+
+        assert isinstance(cls, type) and issubclass(cls, Provider)
+        assert cls.__name__ == f"{provider.capitalize()}Provider"
+
+    # -----------------------------------------------------------------------
     # T5: Regression — init_global_provider still resolves external correctly
     # -----------------------------------------------------------------------
 
