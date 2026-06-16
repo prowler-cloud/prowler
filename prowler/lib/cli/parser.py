@@ -16,6 +16,7 @@ from prowler.lib.cli.redact import warn_sensitive_argument_values
 from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     PROVIDER_ALIASES,
+    enforce_invoked_provider_loaded,
     init_providers_parser,
     validate_asff_usage,
     validate_provider_arguments,
@@ -170,6 +171,10 @@ Detailed documentation at https://docs.prowler.com
             # Provider aliases mapping (single source: arguments.PROVIDER_ALIASES)
             elif sys.argv[1] in PROVIDER_ALIASES:
                 sys.argv[1] = PROVIDER_ALIASES[sys.argv[1]]
+
+        # Selective fail-loud here (post argv-normalisation, pre parse_args)
+        # so the invoked-provider check stays correct under parse(args=...).
+        enforce_invoked_provider_loaded(self)
 
         # Warn about sensitive flags passed with explicit values
         # Snapshot argv before parse_args() which may exit on errors
