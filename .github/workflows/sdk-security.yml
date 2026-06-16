@@ -19,16 +19,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'prowler/**'
-      - 'tests/**'
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - '.github/workflows/sdk-tests.yml'
-      - '.github/workflows/sdk-security.yml'
-      - '.github/actions/setup-python-uv/**'
-      - '.github/actions/osv-scanner/**'
-      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -71,27 +61,18 @@ jobs:
         id: check-changes
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files:
-            ./**
+          files: |
+            prowler/**
+            tests/**
+            pyproject.toml
+            uv.lock
+            .github/workflows/sdk-tests.yml
             .github/workflows/sdk-security.yml
+            .github/actions/setup-python-uv/**
+            .github/actions/osv-scanner/**
+            .github/scripts/osv-scan.sh
           files_ignore: |
-            .github/**
             prowler/CHANGELOG.md
-            docs/**
-            permissions/**
-            api/**
-            ui/**
-            dashboard/**
-            mcp_server/**
-            skills/**
-            README.md
-            mkdocs.yml
-            .backportrc.json
-            .env
-            docker-compose*
-            examples/**
-            .gitignore
-            contrib/**
             **/AGENTS.md
 
       - name: Setup Python with uv
