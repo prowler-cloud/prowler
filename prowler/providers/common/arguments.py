@@ -10,14 +10,22 @@ provider_arguments_lib_path = "lib.arguments.arguments"
 validate_provider_arguments_function = "validate_arguments"
 init_provider_arguments_function = "init_parser"
 
+# User-facing provider names that map to a different canonical built-in name.
+# Single source of truth: parser.py imports this so the alias is recognised
+# both when sniffing argv pre-parse and when rewriting argv pre-argparse.
+PROVIDER_ALIASES = {
+    "microsoft365": "m365",
+    "oci": "oraclecloud",
+}
+
 
 def _invoked_provider_from_argv(available_providers: Sequence[str]) -> Optional[str]:
     """Return the provider name the user invoked on the CLI, or None.
 
     Scans sys.argv left-to-right, skipping flag-like tokens, and returns the
-    first non-flag token that matches a known provider name. Returns None if
-    no provider is being invoked (e.g. `prowler -h`, `prowler dashboard`, or
-    empty argv).
+    first non-flag token that matches a known provider name (after alias
+    normalisation). Returns None if no provider is being invoked (e.g.
+    `prowler -h`, `prowler dashboard`, or empty argv).
 
     Assumes the top-level parser has no flags that consume a value (only
     --version/-v as of today). If that ever changes, the invariant test
@@ -29,8 +37,9 @@ def _invoked_provider_from_argv(available_providers: Sequence[str]) -> Optional[
     for token in sys.argv[1:]:
         if token.startswith("-"):
             continue
-        if token in available:
-            return token
+        normalized = PROVIDER_ALIASES.get(token, token)
+        if normalized in available:
+            return normalized
     return None
 
 

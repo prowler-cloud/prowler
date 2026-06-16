@@ -529,6 +529,88 @@ class TestInitProvidersParserBuiltinDependencyFailure:
             # is irrelevant to the current invocation.
             init_providers_parser(parser)
 
+    @patch("sys.argv", ["prowler", "microsoft365"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_provider_alias_still_triggers_fail_loud(
+        self, mock_import, mock_is_builtin
+    ):
+        """CLI aliases (microsoft365 → m365, oci → oraclecloud) are rewritten
+        by parser.py AFTER init_providers_parser runs, so the helper must
+        normalise them itself. Otherwise `prowler microsoft365 ...` with a
+        broken m365 would silently downgrade to a warning instead of
+        fail-loud."""
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'msgraph'")
+
+        parser = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.arguments.Provider.get_available_providers",
+                return_value=["m365"],
+            ),
+            pytest.raises(SystemExit),
+        ):
+            init_providers_parser(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_builtin_non_import_error_fails_loudly(
+        self, mock_import, mock_is_builtin
+    ):
+        """Non-ImportError exceptions in the invoked provider's arguments
+        module must also fail-loud (covers the generic except branch)."""
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = RuntimeError("Unexpected error in aws init_parser")
+
+        parser = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.arguments.Provider.get_available_providers",
+                return_value=["aws"],
+            ),
+            pytest.raises(SystemExit),
+        ):
+            init_providers_parser(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_unrelated_builtin_non_import_error_does_not_abort(
+        self, mock_import, mock_is_builtin
+    ):
+        """Non-ImportError exceptions in an unrelated built-in must NOT abort
+        the CLI when a different provider is invoked (covers the generic
+        except branch's warning path)."""
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise RuntimeError("Unexpected error in stackit init_parser")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            init_providers_parser(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
+
 
 class TestInitGlobalProviderBuiltinDependencyFailure:
     """Same contract as TestInitProvidersParserBuiltinDependencyFailure but
