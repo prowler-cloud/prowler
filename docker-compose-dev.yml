@@ -185,7 +185,7 @@ services:
         soft: 65536
         hard: 65536
     entrypoint:
-      - "../docker-entrypoint.sh"
+      - "/home/prowler/docker-entrypoint.sh"
       - "beat"
 
   mcp-server:
