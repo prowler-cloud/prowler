@@ -32,10 +32,10 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12"
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
-  "awsipranges==0.3.3",
   "alive-progress==3.3.0",
   "azure-identity==1.21.0",
   "azure-keyvault-keys==4.10.0",
@@ -79,9 +79,9 @@ dependencies = [
   "jsonschema==4.23.0",
   "kubernetes==32.0.1",
   "markdown==3.10.2",
-  "microsoft-kiota-abstractions==1.9.2",
+  "microsoft-kiota-abstractions==1.9.9",
+  "numpy==2.2.6",
   "msgraph-sdk==1.55.0",
-  "numpy==2.0.2",
   "okta==3.4.2",
   "openstacksdk==4.2.0",
   "pandas==2.2.3",
@@ -100,7 +100,7 @@ dependencies = [
   "tabulate==0.9.0",
   "tzlocal==5.3.1",
   "uuid6==2024.7.10",
-  "py-iam-expand==0.1.0",
+  "py-iam-expand==0.3.0",
   "h2==4.3.0",
   "oci==2.169.0",
   "alibabacloud_credentials==1.0.3",
@@ -123,7 +123,7 @@ license = "Apache-2.0"
 maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}]
 name = "prowler"
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.14"
 version = "5.31.0"
 
 [project.scripts]
@@ -162,7 +162,7 @@ constraint-dependencies = [
   "aenum==3.1.17",
   "aiofiles==24.1.0",
   "aiohappyeyeballs==2.6.1",
-  "aiohttp==3.13.5",
+  "aiohttp==3.14.0",
   "aiosignal==1.4.0",
   "alibabacloud-actiontrail20200706==2.4.1",
   "alibabacloud-credentials==1.0.3",
@@ -267,12 +267,12 @@ constraint-dependencies = [
   "markupsafe==3.0.3",
   "mccabe==0.7.0",
   "mdurl==0.1.2",
-  "microsoft-kiota-authentication-azure==1.9.2",
-  "microsoft-kiota-http==1.9.2",
-  "microsoft-kiota-serialization-form==1.9.2",
-  "microsoft-kiota-serialization-json==1.9.2",
-  "microsoft-kiota-serialization-multipart==1.9.2",
-  "microsoft-kiota-serialization-text==1.9.2",
+  "microsoft-kiota-authentication-azure==1.9.9",
+  "microsoft-kiota-http==1.9.9",
+  "microsoft-kiota-serialization-form==1.9.9",
+  "microsoft-kiota-serialization-json==1.9.9",
+  "microsoft-kiota-serialization-multipart==1.9.9",
+  "microsoft-kiota-serialization-text==1.9.9",
   "mock==5.2.0",
   "moto==5.1.11",
   "mpmath==1.3.0",
@@ -364,3 +364,13 @@ constraint-dependencies = [
   "zstd==1.5.7.3"
 ]
 override-dependencies = ["okta==3.4.2"]
+
+[tool.vulture]
+# Suppress known false positives. The CI command only passes --exclude and
+# --min-confidence on the CLI, so ignore_names from here still applies (vulture
+# only overrides the keys set on the CLI).
+# - mock_* : pytest fixtures injected as test params but unused in the body
+# (e.g. mock_sensitive_args in tests/lib/cli/redact_test.py)
+# - view   : DRF BasePermission.has_object_permission(self, request, view, obj)
+# framework-required signature param in skills/django-drf template assets
+ignore_names = ["mock_*", "view"]

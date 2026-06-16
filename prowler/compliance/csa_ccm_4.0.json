@@ -1088,7 +1088,8 @@
           "storage_geo_redundant_enabled",
           "vm_scaleset_associated_with_load_balancer",
           "vm_scaleset_not_empty",
-          "cosmosdb_account_automatic_failover_enabled"
+          "cosmosdb_account_automatic_failover_enabled",
+          "cosmosdb_account_backup_policy_continuous"
         ],
         "gcp": [
           "compute_instance_automatic_restart_enabled",

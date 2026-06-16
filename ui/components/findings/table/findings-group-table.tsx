@@ -2,12 +2,15 @@
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
+import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/ui/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
+import { getFlowById } from "@/lib/onboarding";
+import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
@@ -18,6 +21,8 @@ import {
   InlineResourceContainer,
   InlineResourceContainerHandle,
 } from "./inline-resource-container";
+
+const exploreFindingsFlow = getFlowById("explore-findings")!;
 
 function buildMuteLabel(groupCount: number, resourceCount: number): string {
   const parts: string[] = [];
@@ -52,23 +57,17 @@ export function FindingsGroupTable({
   const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
     null,
   );
-  // Separate display state (updates on keystroke) from committed search (updates on Enter only).
-  // This prevents InlineResourceContainer from remounting on every keystroke.
+  // Separate input (keystroke) from committed search (Enter) to avoid remounting InlineResourceContainer.
   const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
 
-  // State resets (selection, drill-down) are handled by the parent via
-  // key={groupKey} — when data changes, the component remounts with fresh state.
-
   const safeData = data ?? [];
   const hasResourceSelection = resourceSelection.length > 0;
   const filters = resolvedFilters;
 
-  // Get selected group check IDs. When the expanded group has individual resource
-  // selections, exclude it from group-level mute targets — the resource-level
-  // FloatingMuteButton handles those.
+  // Exclude expanded group from group-level mutes when it has resource selections.
   const selectedCheckIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
     .map((idx) => safeData[parseInt(idx)]?.checkId)
@@ -82,7 +81,6 @@ export function FindingsGroupTable({
     .map((idx) => safeData[parseInt(idx)])
     .filter(Boolean);
 
-  // Count of selectable rows (groups where not ALL findings are muted)
   const selectableRowCount = safeData.filter((g) =>
     canMuteFindingGroup({
       resourcesFail: g.resourcesFail,
@@ -128,7 +126,6 @@ export function FindingsGroupTable({
     return Array.from(new Set(results.flat()));
   };
 
-  /** Shared resolver for group row action dropdowns (via context). */
   const resolveMuteIds = async (checkIds: string[]) =>
     resolveGroupMuteIds(checkIds);
 
@@ -141,10 +138,9 @@ export function FindingsGroupTable({
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
-    // No resources in the group → nothing to show, skip drill-down
     if (!canDrillDownFindingGroup(group)) return;
 
-    // Toggle: same group = collapse, different = switch
+    // Toggle: same group collapses, different group switches
     if (expandedCheckId === checkId) {
       handleCollapse();
       return;
@@ -162,6 +158,19 @@ export function FindingsGroupTable({
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
+  };
+
+  // Drives the onboarding "Open a finding group" step: opens the first row when
+  // drillable, otherwise the first drillable group. Returns false when none can
+  // open so the tour skips the resources step instead of hanging.
+  const openFirstFindingGroup = (): boolean => {
+    const target =
+      safeData[0] && canDrillDownFindingGroup(safeData[0])
+        ? safeData[0]
+        : safeData.find((group) => canDrillDownFindingGroup(group));
+    if (!target) return false;
+    handleDrillDown(target.checkId, target);
+    return true;
   };
 
   const columns = getColumnFindingGroups({
@@ -201,29 +210,49 @@ export function FindingsGroupTable({
         resolveMuteIds,
       }}
     >
-      <DataTable
-        columns={columns}
-        data={safeData}
-        metadata={metadata}
-        enableRowSelection
-        rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
-        getRowCanSelect={getRowCanSelect}
-        showSearch
-        searchPlaceholder={
-          expandedCheckId ? "Search resources..." : "Search by name"
-        }
-        controlledSearch={expandedCheckId ? resourceSearchInput : undefined}
-        onSearchChange={expandedCheckId ? setResourceSearchInput : undefined}
-        onSearchCommit={expandedCheckId ? setResourceSearch : undefined}
-        searchBadge={
-          expandedGroup
-            ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }
-            : undefined
-        }
-        toolbarRightContent={<CustomCheckboxMutedFindings />}
-        renderAfterRow={renderAfterRow}
-      />
+      {/* Gate the tour on having at least one finding group */}
+      <div>
+        <Suspense fallback={null}>
+          {safeData.length > 0 && (
+            <OnboardingTrigger
+              flow={exploreFindingsFlow}
+              stepHandlers={createExploreFindingsTourStepHandlers(
+                openFirstFindingGroup,
+              )}
+            />
+          )}
+        </Suspense>
+        {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
+        <PageReady />
+        <DataTable
+          columns={columns}
+          data={safeData}
+          metadata={metadata}
+          enableRowSelection
+          rowSelection={rowSelection}
+          onRowSelectionChange={setRowSelection}
+          getRowCanSelect={getRowCanSelect}
+          showSearch
+          searchPlaceholder={
+            expandedCheckId ? "Search resources..." : "Search by name"
+          }
+          controlledSearch={expandedCheckId ? resourceSearchInput : undefined}
+          onSearchChange={expandedCheckId ? setResourceSearchInput : undefined}
+          onSearchCommit={expandedCheckId ? setResourceSearch : undefined}
+          searchBadge={
+            expandedGroup
+              ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }
+              : undefined
+          }
+          toolbarRightContent={<CustomCheckboxMutedFindings />}
+          renderAfterRow={renderAfterRow}
+          // Anchor the "Open a finding group" tour step to the first group row
+          // (there may be only one); driver.js resolves to the first match.
+          getRowAttributes={(row) =>
+            row.index === 0 ? { "data-tour-id": "explore-findings-group" } : {}
+          }
+        />
+      </div>
 
       {(selectedCheckIds.length > 0 || hasResourceSelection) && (
         <FloatingMuteButton
@@ -238,7 +267,6 @@ export function FindingsGroupTable({
               selectedCheckIds.length > 0
                 ? resolveGroupMuteIds(selectedCheckIds)
                 : Promise.resolve([]),
-              // resourceSelection already contains real finding UUIDs
               Promise.resolve(hasResourceSelection ? resourceSelection : []),
             ]);
             return [...groupIds, ...resourceIds];
