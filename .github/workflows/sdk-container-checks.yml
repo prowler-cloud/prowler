@@ -15,12 +15,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'prowler/**'
-      - 'Dockerfile*'
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - '.github/workflows/sdk-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

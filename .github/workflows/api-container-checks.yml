@@ -12,9 +12,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
