@@ -631,7 +631,10 @@ class GcpProvider(Provider):
                 try:
                     # Initialize Cloud Asset Inventory API for recursive project retrieval
                     asset_service = discovery.build(
-                        "cloudasset", "v1", credentials=credentials
+                        "cloudasset",
+                        "v1",
+                        credentials=credentials,
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
                     )
                     # Set the scope to the specified organization and filter for projects
                     scope = f"organizations/{organization_id}"
@@ -642,7 +645,7 @@ class GcpProvider(Provider):
                     )
 
                     while request is not None:
-                        response = request.execute()
+                        response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                         for asset in response.get("assets", []):
                             # Extract labels and other project details

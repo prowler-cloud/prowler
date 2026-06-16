@@ -42,7 +42,9 @@ class GCPBaseException(ProwlerException):
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         provider = "GCP"
-        error_info = self.GCP_ERROR_CODES.get((code, self.__class__.__name__))
+        # Copy the catalog entry so a custom message does not mutate the
+        # class-level GCP_ERROR_CODES shared across exception instances.
+        error_info = dict(self.GCP_ERROR_CODES.get((code, self.__class__.__name__)))
         if message:
             error_info["message"] = message
         super().__init__(
