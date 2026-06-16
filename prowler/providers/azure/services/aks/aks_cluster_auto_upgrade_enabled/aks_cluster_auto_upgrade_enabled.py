@@ -8,21 +8,20 @@ class aks_cluster_auto_upgrade_enabled(Check):
 
         for subscription_name, clusters in aks_client.clusters.items():
             for cluster in clusters.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=cluster
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=cluster)
                 report.subscription = subscription_name
 
-                if cluster.auto_upgrade_channel is not None:
+                auto_upgrade_channel = (
+                    (cluster.auto_upgrade_channel or "").strip().lower()
+                )
+                if auto_upgrade_channel and auto_upgrade_channel != "none":
                     report.status = "PASS"
                     report.status_extended = (
                         f"Cluster '{cluster.name}' has auto-upgrade channel."
                     )
                 else:
                     report.status = "FAIL"
-                    report.status_extended = (
-                        f"Cluster '{cluster.name}' does not have auto-upgrade configured."
-                    )
+                    report.status_extended = f"Cluster '{cluster.name}' does not have auto-upgrade configured."
 
                 findings.append(report)
 
