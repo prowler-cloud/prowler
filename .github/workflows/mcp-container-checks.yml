@@ -12,9 +12,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'mcp_server/**'
-      - '.github/workflows/mcp-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

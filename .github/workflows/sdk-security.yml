@@ -19,16 +19,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'prowler/**'
-      - 'tests/**'
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - '.github/workflows/sdk-tests.yml'
-      - '.github/workflows/sdk-security.yml'
-      - '.github/actions/setup-python-uv/**'
-      - '.github/actions/osv-scanner/**'
-      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
