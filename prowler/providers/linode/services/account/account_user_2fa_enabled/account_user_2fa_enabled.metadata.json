@@ -28,7 +28,7 @@
     }
   },
   "Categories": [
-    "trust-boundaries"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],
