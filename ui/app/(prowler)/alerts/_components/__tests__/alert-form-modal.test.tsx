@@ -701,6 +701,29 @@ describe("AlertFormModal", () => {
     expect(errorMessage).toHaveClass("text-text-error-primary");
   });
 
+  it("should clear the preview error when save shows the form error", async () => {
+    // Given
+    const user = userEvent.setup();
+    alertsActionMocks.seedAlertRule.mockResolvedValue({
+      error: "No alert-compatible filters",
+    });
+    mockRecipientsList();
+    renderCreateModal({ editingAlert: createEditingAlert() });
+
+    // When
+    await user.click(screen.getByRole("button", { name: /^test$/i }));
+    expect(await screen.findByText("Test result")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    // Then
+    await waitFor(() =>
+      expect(screen.queryByText("Test result")).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getAllByText("Apply at least one alert-compatible Findings filter."),
+    ).toHaveLength(1);
+  });
+
   it("should hydrate advanced edit mode filters and normalize them on save", async () => {
     // Given
     const user = userEvent.setup();
