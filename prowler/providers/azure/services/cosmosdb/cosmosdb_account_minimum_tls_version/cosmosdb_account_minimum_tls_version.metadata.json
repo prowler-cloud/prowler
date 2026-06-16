@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "cosmosdb_account_minimum_tls_version_12",
+  "CheckID": "cosmosdb_account_minimum_tls_version",
   "CheckTitle": "Cosmos DB account enforces TLS 1.2 or higher",
   "CheckType": [],
   "ServiceName": "cosmosdb",
@@ -26,7 +26,7 @@
     },
     "Recommendation": {
       "Text": "Set the Cosmos DB account **minimum TLS version** to at least **1.2** to block legacy protocols (`TLS 1.0`/`1.1`) vulnerable to known downgrade and cipher attacks. Inventory and update **client SDKs** and **drivers** to support TLS 1.2 prior to enforcement, and pair this control with **private endpoints**, **AAD/RBAC authentication**, and **handshake failure monitoring** to identify outdated clients.",
-      "Url": "https://hub.prowler.com/check/cosmosdb_account_minimum_tls_version_12"
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_minimum_tls_version"
     }
   },
   "Categories": [

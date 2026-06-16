@@ -6,7 +6,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_cosmosdb_account_minimum_tls_version_12:
+class Test_cosmosdb_account_minimum_tls_version:
     def test_no_subscriptions(self):
         cosmosdb_client = mock.MagicMock()
 
@@ -16,17 +16,17 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12.cosmosdb_client",
+                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version.cosmosdb_client",
                 new=cosmosdb_client,
             ),
         ):
-            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12 import (
-                cosmosdb_account_minimum_tls_version_12,
+            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version import (
+                cosmosdb_account_minimum_tls_version,
             )
 
             cosmosdb_client.accounts = {}
 
-            check = cosmosdb_account_minimum_tls_version_12()
+            check = cosmosdb_account_minimum_tls_version()
             result = check.execute()
             assert len(result) == 0
 
@@ -39,12 +39,12 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12.cosmosdb_client",
+                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version.cosmosdb_client",
                 new=cosmosdb_client,
             ),
         ):
-            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12 import (
-                cosmosdb_account_minimum_tls_version_12,
+            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version import (
+                cosmosdb_account_minimum_tls_version,
             )
             from prowler.providers.azure.services.cosmosdb.cosmosdb_service import (
                 Account,
@@ -67,7 +67,7 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 ]
             }
 
-            check = cosmosdb_account_minimum_tls_version_12()
+            check = cosmosdb_account_minimum_tls_version()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -86,12 +86,12 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12.cosmosdb_client",
+                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version.cosmosdb_client",
                 new=cosmosdb_client,
             ),
         ):
-            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12 import (
-                cosmosdb_account_minimum_tls_version_12,
+            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version import (
+                cosmosdb_account_minimum_tls_version,
             )
             from prowler.providers.azure.services.cosmosdb.cosmosdb_service import (
                 Account,
@@ -114,7 +114,7 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 ]
             }
 
-            check = cosmosdb_account_minimum_tls_version_12()
+            check = cosmosdb_account_minimum_tls_version()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -128,12 +128,12 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12.cosmosdb_client",
+                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version.cosmosdb_client",
                 new=cosmosdb_client,
             ),
         ):
-            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12 import (
-                cosmosdb_account_minimum_tls_version_12,
+            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version import (
+                cosmosdb_account_minimum_tls_version,
             )
             from prowler.providers.azure.services.cosmosdb.cosmosdb_service import (
                 Account,
@@ -156,7 +156,7 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 ]
             }
 
-            check = cosmosdb_account_minimum_tls_version_12()
+            check = cosmosdb_account_minimum_tls_version()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -175,12 +175,12 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12.cosmosdb_client",
+                "prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version.cosmosdb_client",
                 new=cosmosdb_client,
             ),
         ):
-            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version_12.cosmosdb_account_minimum_tls_version_12 import (
-                cosmosdb_account_minimum_tls_version_12,
+            from prowler.providers.azure.services.cosmosdb.cosmosdb_account_minimum_tls_version.cosmosdb_account_minimum_tls_version import (
+                cosmosdb_account_minimum_tls_version,
             )
             from prowler.providers.azure.services.cosmosdb.cosmosdb_service import (
                 Account,
@@ -203,7 +203,7 @@ class Test_cosmosdb_account_minimum_tls_version_12:
                 ]
             }
 
-            check = cosmosdb_account_minimum_tls_version_12()
+            check = cosmosdb_account_minimum_tls_version()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

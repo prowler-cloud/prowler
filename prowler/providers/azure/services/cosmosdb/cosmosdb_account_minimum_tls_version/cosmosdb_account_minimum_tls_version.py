@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.cosmosdb.cosmosdb_client import cosmosdb_client
 
 
-class cosmosdb_account_minimum_tls_version_12(Check):
+class cosmosdb_account_minimum_tls_version(Check):
     """Ensure that Cosmos DB accounts enforce TLS 1.2 or higher."""
 
     def execute(self) -> Check_Report_Azure:
