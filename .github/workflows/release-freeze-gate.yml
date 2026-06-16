@@ -1,0 +1,40 @@
+name: 'Tools: Release Freeze Gate'
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  merge_group:
+    branches:
+      - 'master'
+    types:
+      - checks_requested
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release-freeze-gate:
+    name: Release Freeze Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check release freeze status
+        env:
+          RELEASE_FREEZE: ${{ vars.RELEASE_FREEZE }}
+        run: |
+          case "${RELEASE_FREEZE}" in
+            true|TRUE|True)
+              echo "::error::Release freeze is active. Merges to master are temporarily blocked."
+              echo "Set the RELEASE_FREEZE repository variable to false when the release is complete."
+              exit 1
+              ;;
+            *)
+              echo "Release freeze is not active."
+              ;;
+          esac
