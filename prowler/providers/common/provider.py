@@ -767,8 +767,9 @@ class Provider(ABC):
             The provider class (a subclass of :class:`Provider`).
 
         Raises:
-            ImportError: If not found as built-in or entry point, or a
-                built-in's transitive dependency is missing.
+            ImportError: If not found as built-in or entry point, a built-in's
+                transitive dependency is missing, or an entry point resolves to
+                an object that is not a subclass of :class:`Provider`.
         """
         if Provider.is_builtin(provider):
             provider_class_path = f"{providers_path}.{provider}.{provider}_provider"
@@ -794,6 +795,14 @@ class Provider(ABC):
         if cls is None:
             raise ImportError(
                 f"Provider '{provider}' not found as built-in or entry point"
+            )
+        # ep.load() can return any object; enforce the public contract that
+        # get_class returns a Provider subclass. isinstance(cls, type) guards
+        # issubclass against a TypeError when cls is not a class at all.
+        if not (isinstance(cls, type) and issubclass(cls, Provider)):
+            raise ImportError(
+                f"Entry-point provider '{provider}' resolved to {cls!r}, "
+                f"which is not a subclass of Provider"
             )
         return cls
 

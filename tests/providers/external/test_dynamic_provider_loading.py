@@ -2382,6 +2382,55 @@ class TestGetClass:
         mock_load_ep.assert_not_called()
 
     # -----------------------------------------------------------------------
+    # T4c: Entry point resolving to a non-Provider class raises ImportError
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_get_class_external_ep_not_provider_subclass_raises_importerror(
+        self, mock_is_builtin, mock_ep
+    ):
+        """When an entry point resolves to an object that is not a Provider
+        subclass, get_class raises ImportError instead of returning it, so the
+        public contract (a Provider subclass) is enforced rather than trusted."""
+
+        class NotAProvider:
+            pass
+
+        mock_is_builtin.return_value = False
+        mock_ep.return_value = [
+            _make_entry_point("rogue", "pkg:NotAProvider", "prowler.providers"),
+        ]
+        mock_ep.return_value[0].load.return_value = NotAProvider
+
+        with pytest.raises(ImportError):
+            Provider.get_class("rogue")
+
+    # -----------------------------------------------------------------------
+    # T4d: Contract — every built-in provider stays resolvable via get_class
+    # -----------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        "provider",
+        [
+            name
+            for name in Provider.get_available_providers()
+            if Provider.is_builtin(name)
+        ],
+    )
+    def test_get_class_resolves_every_builtin_provider(self, provider):
+        """Contract test over all built-in providers: each one must remain
+        resolvable through get_class and return a Provider subclass whose name
+        follows the `{Capitalized}Provider` convention. This pins the naming
+        convention as the built-in resolution contract, so a future provider
+        that breaks it fails here instead of silently at runtime in a caller
+        (e.g. the API)."""
+        cls = Provider.get_class(provider)
+
+        assert isinstance(cls, type) and issubclass(cls, Provider)
+        assert cls.__name__ == f"{provider.capitalize()}Provider"
+
+    # -----------------------------------------------------------------------
     # T5: Regression — init_global_provider still resolves external correctly
     # -----------------------------------------------------------------------
 
