@@ -21,12 +21,23 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { ToastAction, useToast } from "@/components/ui";
 import { useOrgSetupStore } from "@/store/organizations/store";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+} from "@/types/schedules";
 import { TREE_ITEM_STATUS } from "@/types/tree";
 
 interface OrgLaunchScanProps {
   onClose: () => void;
   onBack: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
+  /**
+   * Schedule capability override. Prowler Cloud passes MANUAL_ONLY for trial
+   * tenants so organization onboarding cannot create recurring schedules.
+   */
+  capability?: ScanScheduleCapability;
+  /** Cloud-only manual scan quota signal. */
+  isScanLimitReached?: boolean;
 }
 
 const SCAN_SCHEDULE = {
@@ -40,6 +51,8 @@ export function OrgLaunchScan({
   onClose,
   onBack,
   onFooterChange,
+  capability,
+  isScanLimitReached = false,
 }: OrgLaunchScanProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -51,13 +64,21 @@ export function OrgLaunchScan({
     SCAN_SCHEDULE.DAILY,
   );
   const launchActionRef = useRef<() => void>(() => {});
+  const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
+  const effectiveScheduleOption = isManualOnly
+    ? SCAN_SCHEDULE.SINGLE
+    : scheduleOption;
 
   const handleLaunchScan = async () => {
+    if (isManualOnly && isScanLimitReached) {
+      return;
+    }
+
     setIsLaunching(true);
 
     const result = await launchOrganizationScans(
       createdProviderIds,
-      scheduleOption,
+      effectiveScheduleOption,
     );
     const successCount = result.successCount;
 
@@ -69,7 +90,7 @@ export function OrgLaunchScan({
     toast({
       title: "Scan Launched",
       description:
-        scheduleOption === SCAN_SCHEDULE.DAILY
+        effectiveScheduleOption === SCAN_SCHEDULE.DAILY
           ? `Daily scan scheduled for ${successCount} account${successCount !== 1 ? "s" : ""}.`
           : `Single scan launched for ${successCount} account${successCount !== 1 ? "s" : ""}.`,
       action: (
@@ -92,13 +113,23 @@ export function OrgLaunchScan({
       onBack,
       showAction: true,
       actionLabel: "Launch scan",
-      actionDisabled: isLaunching || createdProviderIds.length === 0,
+      actionDisabled:
+        isLaunching ||
+        createdProviderIds.length === 0 ||
+        (isManualOnly && isScanLimitReached),
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
       onAction: () => {
         launchActionRef.current();
       },
     });
-  }, [createdProviderIds.length, isLaunching, onBack, onFooterChange]);
+  }, [
+    createdProviderIds.length,
+    isLaunching,
+    isManualOnly,
+    isScanLimitReached,
+    onBack,
+    onFooterChange,
+  ]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-8">
@@ -146,30 +177,45 @@ export function OrgLaunchScan({
             </p>
           )}
 
-          <div className="flex flex-col gap-4">
-            <p className="text-text-neutral-secondary text-sm">
-              Select a Prowler scan schedule for these accounts.
-            </p>
-            <Select
-              value={scheduleOption}
-              onValueChange={(value) =>
-                setScheduleOption(value as ScanScheduleOption)
-              }
-              disabled={isLaunching}
-            >
-              <SelectTrigger className="w-full max-w-[376px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SCAN_SCHEDULE.DAILY}>
-                  Scan Daily (every 24 hours)
-                </SelectItem>
-                <SelectItem value={SCAN_SCHEDULE.SINGLE}>
-                  Run a single scan (no recurring schedule)
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {isManualOnly ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-text-neutral-secondary text-sm">
+                Scheduled scans are not available for trial accounts. These
+                accounts will run a one-time manual scan now.
+              </p>
+              {isScanLimitReached && (
+                <p className="text-text-error-primary text-sm">
+                  You have reached your scan limit, so additional scans are not
+                  available right now.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <p className="text-text-neutral-secondary text-sm">
+                Select a Prowler scan schedule for these accounts.
+              </p>
+              <Select
+                value={scheduleOption}
+                onValueChange={(value) =>
+                  setScheduleOption(value as ScanScheduleOption)
+                }
+                disabled={isLaunching}
+              >
+                <SelectTrigger className="w-full max-w-[376px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SCAN_SCHEDULE.DAILY}>
+                    Scan Daily (every 24 hours)
+                  </SelectItem>
+                  <SelectItem value={SCAN_SCHEDULE.SINGLE}>
+                    Run a single scan (no recurring schedule)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       )}
     </div>

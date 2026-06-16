@@ -241,10 +241,10 @@ export function LaunchStep({
             <h3 className="text-text-neutral-primary text-sm font-medium">
               Scan Schedule
             </h3>
-            <CloudFeatureBadge label="Available after onboarding" size="sm" />
+            <CloudFeatureBadge label="Requires subscription" size="sm" />
           </div>
           <p className="text-text-neutral-secondary text-sm">
-            Scheduled scans are not available during onboarding. This provider
+            Scheduled scans are not available for trial accounts. This provider
             will run a one-time manual scan now so you can get immediate
             findings.
           </p>

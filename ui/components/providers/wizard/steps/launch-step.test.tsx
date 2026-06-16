@@ -307,7 +307,7 @@ describe("LaunchStep", () => {
       expect(manualScanCheckbox).toBeDisabled();
       expect(
         screen.getByText(
-          /scheduled scans are not available during onboarding/i,
+          /scheduled scans are not available for trial accounts/i,
         ),
       ).toBeInTheDocument();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());

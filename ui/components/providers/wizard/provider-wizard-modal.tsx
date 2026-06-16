@@ -15,6 +15,7 @@ import {
   PROVIDER_WIZARD_MODE,
   PROVIDER_WIZARD_STEP,
 } from "@/types/provider-wizard";
+import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
 import {
@@ -40,6 +41,10 @@ interface ProviderWizardModalProps {
   initialData?: ProviderWizardInitialData;
   orgInitialData?: OrgWizardInitialData;
   refreshOnClose?: boolean;
+  /** Cloud overlay seam; defaults to the environment-resolved capability. */
+  scanScheduleCapability?: ScanScheduleCapability;
+  /** Cloud-only manual scan quota signal. */
+  isScanLimitReached?: boolean;
 }
 
 export function ProviderWizardModal({
@@ -48,6 +53,8 @@ export function ProviderWizardModal({
   initialData,
   orgInitialData,
   refreshOnClose,
+  scanScheduleCapability,
+  isScanLimitReached,
 }: ProviderWizardModalProps) {
   const {
     backToProviderFlow,
@@ -193,6 +200,8 @@ export function ProviderWizardModal({
                       onBack={() => setCurrentStep(PROVIDER_WIZARD_STEP.TEST)}
                       onClose={handleClose}
                       onFooterChange={setFooterConfig}
+                      capability={scanScheduleCapability}
+                      isScanLimitReached={isScanLimitReached}
                     />
                   )}
 
@@ -246,6 +255,8 @@ export function ProviderWizardModal({
                         setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
                       }}
                       onFooterChange={setFooterConfig}
+                      capability={scanScheduleCapability}
+                      isScanLimitReached={isScanLimitReached}
                     />
                   )}
 
