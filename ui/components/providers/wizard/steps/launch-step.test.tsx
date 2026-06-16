@@ -71,10 +71,10 @@ describe("LaunchStep", () => {
   describe("Prowler OSS (non-Cloud)", () => {
     beforeEach(() => {
       vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
-      scheduleDailyMock.mockResolvedValue({ data: { id: "schedule-1" } });
+      scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
-    it("renders the schedule UI with advanced cadences locked and no timezone field", async () => {
+    it("defaults to run now and locks schedule mode outside Cloud", async () => {
       // Given
       const onFooterChange = vi.fn();
       seedConnectedProvider();
@@ -89,17 +89,19 @@ describe("LaunchStep", () => {
 
       // Then
       expect(screen.getByText("Account Connected!")).toBeInTheDocument();
+      expect(screen.getByRole("radio", { name: "Run now" })).toBeChecked();
       expect(
-        screen.queryByRole("combobox", { name: /timezone/i }),
+        screen.getByRole("radio", { name: "On a schedule" }),
+      ).toBeDisabled();
+      expect(
+        screen.queryByRole("combobox", { name: /repeats/i }),
       ).not.toBeInTheDocument();
-      // Daily is shown but the "Repeats" selector is locked for OSS.
-      expect(screen.getByRole("combobox", { name: /repeats/i })).toBeDisabled();
 
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
-      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Save");
+      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Launch scan");
     });
 
-    it("saves via the legacy daily endpoint and never the new schedule API", async () => {
+    it("launches only an on-demand scan and never creates a legacy daily schedule", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -120,42 +122,12 @@ describe("LaunchStep", () => {
       });
 
       // Then
-      await waitFor(() => expect(scheduleDailyMock).toHaveBeenCalledTimes(1));
-      const sentFormData = scheduleDailyMock.mock.calls[0]?.[0] as FormData;
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
+      const sentFormData = scanOnDemandMock.mock.calls[0]?.[0] as FormData;
       expect(sentFormData.get("providerId")).toBe("provider-1");
+      expect(scheduleDailyMock).not.toHaveBeenCalled();
       expect(updateScheduleMock).not.toHaveBeenCalled();
-      expect(scanOnDemandMock).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalledTimes(1);
-    });
-
-    it("also launches an on-demand scan when the checkbox is checked", async () => {
-      // Given
-      const user = userEvent.setup();
-      const onFooterChange = vi.fn();
-      seedConnectedProvider();
-      scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
-
-      render(
-        <LaunchStep
-          onBack={vi.fn()}
-          onClose={vi.fn()}
-          onFooterChange={onFooterChange}
-        />,
-      );
-      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
-
-      // When
-      await user.click(
-        screen.getByRole("checkbox", { name: /launch an initial scan now/i }),
-      );
-      await act(async () => {
-        lastFooterConfig(onFooterChange)?.onAction?.();
-      });
-
-      // Then
-      await waitFor(() => expect(scheduleDailyMock).toHaveBeenCalledTimes(1));
-      expect(scanOnDemandMock).toHaveBeenCalledTimes(1);
-      expect(updateScheduleMock).not.toHaveBeenCalled();
     });
   });
 
@@ -165,7 +137,7 @@ describe("LaunchStep", () => {
       updateScheduleMock.mockResolvedValue({ data: { id: "provider-1" } });
     });
 
-    it("enables advanced cadences and saves through the new schedule API", async () => {
+    it("defaults to schedule mode and saves through the new schedule API", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -181,6 +153,9 @@ describe("LaunchStep", () => {
       );
 
       // Then advanced cadence selector is enabled
+      expect(
+        screen.getByRole("radio", { name: "On a schedule" }),
+      ).toBeChecked();
       expect(
         screen.getByRole("combobox", { name: /repeats/i }),
       ).not.toBeDisabled();
@@ -209,7 +184,7 @@ describe("LaunchStep", () => {
       expect(onClose).toHaveBeenCalledTimes(1);
       const toastPayload = toastMock.mock.calls[0]?.[0];
       expect(toastPayload.action.props.children.props.href).toBe(
-        `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
+        `/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`,
       );
     });
 
@@ -242,6 +217,46 @@ describe("LaunchStep", () => {
       await waitFor(() => expect(updateScheduleMock).toHaveBeenCalledTimes(1));
       expect(scanOnDemandMock).toHaveBeenCalledTimes(1);
       expect(scheduleDailyMock).not.toHaveBeenCalled();
+    });
+
+    it("launches only an on-demand scan when run now is selected", async () => {
+      // Given
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      const onFooterChange = vi.fn();
+      seedConnectedProvider();
+      scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
+
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={onClose}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+        />,
+      );
+      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+
+      // When
+      await user.click(
+        screen.getByRole("radio", {
+          name: "Run now",
+        }),
+      );
+      await waitFor(() =>
+        expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe(
+          "Launch scan",
+        ),
+      );
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
+      expect(updateScheduleMock).not.toHaveBeenCalled();
+      expect(scheduleDailyMock).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     it("does not launch an initial scan when the schedule save fails", async () => {
@@ -284,7 +299,7 @@ describe("LaunchStep", () => {
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
-    it("uses the manual-only override and only launches a manual scan", async () => {
+    it("defaults to run now, locks schedule mode, and only launches a manual scan", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -303,15 +318,12 @@ describe("LaunchStep", () => {
       expect(
         screen.queryByRole("combobox", { name: /repeats/i }),
       ).not.toBeInTheDocument();
-      const manualScanCheckbox = screen.getByRole("checkbox", {
-        name: /launch a scan now/i,
-      });
-      expect(manualScanCheckbox).toBeChecked();
-      expect(manualScanCheckbox).toBeDisabled();
+      expect(screen.getByRole("radio", { name: "Run now" })).toBeChecked();
       expect(
-        screen.getByText(
-          /scheduled scans are not available for trial accounts/i,
-        ),
+        screen.getByRole("radio", { name: "On a schedule" }),
+      ).toBeDisabled();
+      expect(
+        screen.getByText(/scheduled scans are not available/i),
       ).toBeInTheDocument();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
       expect(lastFooterConfig(onFooterChange)?.actionDisabled).toBe(false);

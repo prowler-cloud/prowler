@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { scanOnDemand } from "@/actions/scans";
 import {
@@ -11,10 +11,17 @@ import {
   saveScheduleWithInitialScan,
 } from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
-import { Checkbox } from "@/components/shadcn";
+import { Field, FieldLabel } from "@/components/shadcn";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/shadcn/radio-group/radio-group";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import {
+  CloudFeatureBadge,
+  CloudFeatureBadgeLink,
+} from "@/components/shared/cloud-feature-badge";
 import { ToastAction, useToast } from "@/components/ui";
 import { EntityInfo } from "@/components/ui/entities";
 import {
@@ -36,6 +43,13 @@ import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "./footer-controls";
+
+const LAUNCH_MODE = {
+  NOW: "now",
+  SCHEDULE: "schedule",
+} as const;
+
+type LaunchMode = (typeof LAUNCH_MODE)[keyof typeof LAUNCH_MODE];
 
 interface LaunchStepProps {
   onBack: () => void;
@@ -65,17 +79,37 @@ export function LaunchStep({
   const { toast } = useToast();
   const { providerAlias, providerId, providerType, providerUid } =
     useProviderWizardStore();
+  const capability = capabilityProp ?? getScanScheduleCapability(isCloud());
+  const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
+  const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
   const [isLaunching, setIsLaunching] = useState(false);
+  const [mode, setMode] = useState<LaunchMode>(
+    isAdvanced ? LAUNCH_MODE.SCHEDULE : LAUNCH_MODE.NOW,
+  );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: getScheduleFormDefaults(),
   });
 
-  const capability = capabilityProp ?? getScanScheduleCapability(isCloud());
-  const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
-  const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
-  const isActionBlocked =
-    isLaunching || !providerId || (isManualOnly && isScanLimitReached);
+  const isScheduleMode = isAdvanced && mode === LAUNCH_MODE.SCHEDULE;
+  const isLimitBlocked = mode === LAUNCH_MODE.NOW && isScanLimitReached;
+  const isActionBlocked = isLaunching || !providerId || isLimitBlocked;
+  const launchInitialScan = useWatch({
+    control: form.control,
+    name: "launchInitialScan",
+  });
+
+  const actionLabel = (() => {
+    if (!isScheduleMode) {
+      return isLaunching ? "Launching scan..." : "Launch scan";
+    }
+
+    if (isLaunching) {
+      return launchInitialScan ? "Saving and launching..." : "Saving...";
+    }
+
+    return launchInitialScan ? "Save and launch scan" : "Save";
+  })();
 
   const launchOnDemandScan = async (): Promise<{ error?: unknown } | null> => {
     if (!providerId) return null;
@@ -85,6 +119,10 @@ export function LaunchStep({
   };
 
   const handleManualScan = async () => {
+    if (isScanLimitReached) {
+      return;
+    }
+
     setIsLaunching(true);
     const scanResult = await launchOnDemandScan();
 
@@ -139,7 +177,7 @@ export function LaunchStep({
 
     const goToScans = (
       <ToastAction altText="Go to scans" asChild>
-        <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>Go to scans</Link>
+        <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>Go to scans</Link>
       </ToastAction>
     );
 
@@ -168,7 +206,7 @@ export function LaunchStep({
   // always invokes the current closure without re-running on every render.
   const actionRef = useRef<() => void>(() => {});
   actionRef.current = () => {
-    if (isManualOnly) {
+    if (!isScheduleMode) {
       void handleManualScan();
       return;
     }
@@ -176,14 +214,6 @@ export function LaunchStep({
   };
 
   useEffect(() => {
-    const actionLabel = isManualOnly
-      ? isLaunching
-        ? "Launching scan..."
-        : "Launch scan"
-      : isLaunching
-        ? "Saving..."
-        : "Save";
-
     onFooterChange({
       showBack: true,
       backLabel: "Back",
@@ -195,7 +225,16 @@ export function LaunchStep({
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
       onAction: () => actionRef.current(),
     });
-  }, [isActionBlocked, isLaunching, isManualOnly, onBack, onFooterChange]);
+  }, [
+    isActionBlocked,
+    isLaunching,
+    actionLabel,
+    isScheduleMode,
+    launchInitialScan,
+    mode,
+    onBack,
+    onFooterChange,
+  ]);
 
   if (isLaunching) {
     return (
@@ -203,7 +242,7 @@ export function LaunchStep({
         <div className="flex items-center gap-3 py-2">
           <Spinner className="size-6" />
           <p className="text-sm font-medium">
-            {isManualOnly ? "Launching scan..." : "Saving scan schedule..."}
+            {!isScheduleMode ? "Launching scan..." : "Saving scan schedule..."}
           </p>
         </div>
       </div>
@@ -235,42 +274,55 @@ export function LaunchStep({
         </p>
       )}
 
-      {isManualOnly ? (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <h3 className="text-text-neutral-primary text-sm font-medium">
-              Scan Schedule
-            </h3>
-            <CloudFeatureBadge label="Requires subscription" size="sm" />
-          </div>
-          <p className="text-text-neutral-secondary text-sm">
-            Scheduled scans are not available for trial accounts. This provider
-            will run a one-time manual scan now so you can get immediate
-            findings.
-          </p>
-          <label className="flex items-center gap-3 text-sm font-medium">
-            <Checkbox
-              checked
-              disabled
-              aria-label="Launch a scan now for immediate findings"
-            />
-            <span>Launch a scan now for immediate findings</span>
+      <Field>
+        <FieldLabel>Mode</FieldLabel>
+        <RadioGroup
+          value={mode}
+          onValueChange={(value) => setMode(value as LaunchMode)}
+          className="flex flex-row flex-wrap gap-6"
+          aria-label="Scan mode"
+        >
+          <label className="flex items-center gap-2 text-sm">
+            <RadioGroupItem value={LAUNCH_MODE.NOW} aria-label="Run now" />
+            Run now
           </label>
-          {isScanLimitReached && (
-            <p className="text-text-error-primary text-sm">
-              You have reached your scan limit, so additional scans are not
-              available right now.
-            </p>
-          )}
-        </div>
-      ) : (
+          <label className="flex items-center gap-2 text-sm">
+            <RadioGroupItem
+              value={LAUNCH_MODE.SCHEDULE}
+              aria-label="On a schedule"
+              disabled={!isAdvanced}
+            />
+            On a schedule
+            {!isAdvanced &&
+              (isManualOnly ? (
+                <CloudFeatureBadge label="Requires subscription" size="sm" />
+              ) : (
+                <CloudFeatureBadgeLink size="sm" />
+              ))}
+          </label>
+        </RadioGroup>
+      </Field>
+
+      {!isAdvanced && (
+        <p className="text-text-neutral-secondary text-sm">
+          Scheduled scans are not available for this account. Run now to get
+          immediate findings.
+        </p>
+      )}
+
+      {isLimitBlocked && (
+        <p className="text-text-error-primary text-sm">
+          You have reached your scan limit, so additional scans are not
+          available right now.
+        </p>
+      )}
+
+      {isScheduleMode && (
         <ScanScheduleFields
           form={form}
           disabled={isLaunching || !providerId}
           showLaunchInitialScan
           showNextScheduledCopy
-          canUseAdvancedSchedule={isAdvanced}
-          showCloudUpgradeBadge={!isAdvanced}
         />
       )}
     </div>
