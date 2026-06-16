@@ -28,6 +28,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.30.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- GCP `logging_log_metric_filter_and_alert_*` checks now credit org-level aggregated sinks filtered to the Admin Activity audit stream [(#11575)](https://github.com/prowler-cloud/prowler/pull/11575)
+
+---
+
 ## [5.30.0] (Prowler v5.30.0)
 
 ### 🚀 Added
