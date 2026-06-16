@@ -2,10 +2,12 @@
 
 This repository hosts the UI component for Prowler, providing a user-friendly web interface to interact seamlessly with Prowler's features.
 
-
 ## 🚀 Production deployment
+
 ### Docker deployment
+
 #### Clone the repository
+
 ```console
 # HTTPS
 git clone https://github.com/prowler-cloud/ui.git
@@ -14,16 +16,21 @@ git clone https://github.com/prowler-cloud/ui.git
 git clone git@github.com:prowler-cloud/ui.git
 
 ```
+
 #### Build the Docker image
+
 ```bash
 docker build -t prowler-cloud/ui . --target prod
 ```
+
 #### Run the Docker container
+
 ```bash
 docker run -p 3000:3000 prowler-cloud/ui
 ```
 
 ### Local deployment
+
 #### Clone the repository
 
 ```console
@@ -48,8 +55,11 @@ pnpm start
 ```
 
 ## 🧪 Development deployment
+
 ### Docker deployment
+
 #### Clone the repository
+
 ```console
 # HTTPS
 git clone https://github.com/prowler-cloud/ui.git
@@ -58,16 +68,21 @@ git clone https://github.com/prowler-cloud/ui.git
 git clone git@github.com:prowler-cloud/ui.git
 
 ```
+
 #### Build the Docker image
+
 ```bash
 docker build -t prowler-cloud/ui . --target dev
 ```
+
 #### Run the Docker container
+
 ```bash
 docker run -p 3000:3000 prowler-cloud/ui
 ```
 
 ### Local deployment
+
 #### Clone the repository
 
 ```console
@@ -107,47 +122,12 @@ pnpm run dev
 - [Framer Motion](https://www.framer.com/motion/)
 - [next-themes](https://github.com/pacocoursey/next-themes)
 
-## Git Hooks & Code Review
+## Git Hooks
 
-This project uses Git hooks to maintain code quality. When you commit changes to TypeScript/JavaScript files, the pre-commit hook can optionally validate them against our coding standards using Claude Code.
-
-### Enabling Code Review
-
-To enable automatic code review on commits, add this to your `.env` file in the project root:
+The UI uses [prek](https://github.com/j178/prek) for pre-commit checks, configured in [`.pre-commit-config.yaml`](.pre-commit-config.yaml). `pnpm install` runs the postinstall script that installs hooks automatically. To re-install manually:
 
 ```bash
-CODE_REVIEW_ENABLED=true
-```
-
-When enabled, the hook will:
-- ✅ Validate your staged changes against `AGENTS.md` standards
-- ✅ Check for common issues (any types, incorrect imports, styling violations, etc.)
-- ✅ Block commits that don't comply with the standards
-- ✅ Provide helpful feedback on how to fix issues
-
-### Disabling Code Review
-
-To disable code review (faster commits, useful for quick iterations):
-
-```bash
-CODE_REVIEW_ENABLED=false
-```
-
-Or remove the variable from your `.env` file.
-
-### Requirements
-
-- [Claude Code CLI](https://github.com/anthropics/claude-code) installed and authenticated
-- `.env` file in the project root with `CODE_REVIEW_ENABLED` set
-
-### Troubleshooting
-
-If hooks aren't running after commits, verify prek is installed and hooks are set up:
-
-```bash
-# Check prek is available
-prek --version
-
-# Re-install hooks if needed
 prek install --overwrite
 ```
+
+On each commit, prek runs Prettier and ESLint against the staged files, plus a project-wide TypeScript check and the unit tests related to the staged changes. The full Next.js build runs in CI, not on commit.

@@ -414,8 +414,7 @@ def main():
     # Summary with nuclear explosion art if successful
     if successes > 0 and failures == 0:
         # Nuclear explosion ASCII art
-        print(
-            r"""
+        print(r"""
                 _.-^^---....,,--
             _--                  --_
             <                        >)
@@ -427,8 +426,7 @@ def main():
                 `-=#$%&%$#=-'
                     | ;  :|
             _____.,-#%&$@%#&#~,._____
-        """
-        )
+        """)
         print(f"\n{'=' * 60}")
         print("💥 NUCLEAR DELETION COMPLETE 💥")
         print(f"{'=' * 60}")

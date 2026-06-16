@@ -6,7 +6,11 @@ export default function AttackPathsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ContentLayout title="Attack Paths" icon="lucide:git-branch">
+    <ContentLayout
+      title="Attack Paths"
+      icon="lucide:git-branch"
+      onboardingAction={{ flowId: "attack-paths" }}
+    >
       {children}
     </ContentLayout>
   );

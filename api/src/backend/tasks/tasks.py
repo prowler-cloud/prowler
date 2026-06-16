@@ -46,6 +46,7 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
+from tasks.jobs.orphan_recovery import reconcile_orphans
 from tasks.jobs.report import (
     STALE_TMP_OUTPUT_MAX_AGE_HOURS,
     _cleanup_stale_tmp_output_directories,
@@ -67,14 +68,20 @@ from tasks.utils import (
     get_next_execution_datetime,
 )
 
-from api.compliance import get_compliance_frameworks
+from api.compliance import (
+    get_compliance_frameworks,
+    get_prowler_provider_compliance,
+)
 from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
+from api.db_utils import delete_related_daily_task, rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.compliance import (
+    process_universal_compliance_frameworks,
+)
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
@@ -253,7 +260,9 @@ def delete_provider_task(provider_id: str, tenant_id: str):
     return delete_provider(tenant_id=tenant_id, pk=provider_id)
 
 
-@shared_task(base=RLSTask, name="scan-perform", queue="scans")
+# acks_late=False: a re-run would duplicate findings and the task is not auto-recovered,
+# so a crashed scan is dropped rather than redelivered by the broker (as before #11416).
+@shared_task(base=RLSTask, name="scan-perform", queue="scans", acks_late=False)
 @handle_provider_deletion
 def perform_scan_task(
     tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
@@ -274,6 +283,17 @@ def perform_scan_task(
     Returns:
         dict: The result of the scan execution, typically including the status and results of the performed checks.
     """
+    with rls_transaction(tenant_id):
+        if not Provider.objects.filter(pk=provider_id).exists():
+            logger.warning(
+                "scan-perform skipped: provider %s no longer exists "
+                "(tenant=%s, scan=%s)",
+                provider_id,
+                tenant_id,
+                scan_id,
+            )
+            return None
+
     result = perform_prowler_scan(
         tenant_id=tenant_id,
         scan_id=scan_id,
@@ -286,7 +306,14 @@ def perform_scan_task(
     return result
 
 
-@shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
+# acks_late=False: like scan-perform; a dropped run is re-fired by Beat on the next tick.
+@shared_task(
+    base=RLSTask,
+    bind=True,
+    name="scan-perform-scheduled",
+    queue="scans",
+    acks_late=False,
+)
 @handle_provider_deletion
 def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
@@ -310,6 +337,16 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     task_id = self.request.id
 
     with rls_transaction(tenant_id):
+        if not Provider.objects.filter(pk=provider_id).exists():
+            logger.warning(
+                "scheduled scan-perform skipped: provider %s no longer exists "
+                "(tenant=%s)",
+                provider_id,
+                tenant_id,
+            )
+            delete_related_daily_task(provider_id)
+            return None
+
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
@@ -441,13 +478,42 @@ def cleanup_stale_attack_paths_scans_task():
     return cleanup_stale_attack_paths_scans()
 
 
+@shared_task(name="reconcile-orphan-tasks", queue="celery")
+def reconcile_orphan_tasks_task():
+    """Periodic watchdog: recover tasks whose worker is gone (deploys, crashes)."""
+    return reconcile_orphans()
+
+
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
 def delete_tenant_task(tenant_id: str):
     return delete_tenant(pk=tenant_id)
 
 
+def _scan_tmp_output_directory(tenant_id: str, scan_id: str) -> Path:
+    """Root tmp output directory for a scan ({tmp}/{tenant_id}/{scan_id})."""
+    return Path(DJANGO_TMP_OUTPUT_DIRECTORY) / str(tenant_id) / str(scan_id)
+
+
+class ScanReportRLSTask(RLSTask):
+    """
+    RLS task that removes the scan's tmp output directory when the task fails.
+
+    Covers failures both inside and outside the task body (e.g. ENOSPC mid-write,
+    or setup errors) so partial artifacts do not accumulate on the worker disk.
+    """
+
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):  # noqa: ARG002
+        del args  # Required by Celery's Task.on_failure signature; not used.
+        tenant_id = kwargs.get("tenant_id")
+        scan_id = kwargs.get("scan_id")
+
+        if tenant_id and scan_id:
+            logger.error(f"Scan report task {task_id} failed: {exc}")
+            rmtree(_scan_tmp_output_directory(tenant_id, scan_id), ignore_errors=True)
+
+
 @shared_task(
-    base=RLSTask,
+    base=ScanReportRLSTask,
     name="scan-report",
     queue="scan-reports",
 )
@@ -492,11 +558,23 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     provider_uid = provider_obj.uid
     provider_type = provider_obj.provider
 
+    # Per-framework exporters in `COMPLIANCE_CLASS_MAP` consume the legacy bulk.
     frameworks_bulk = Compliance.get_bulk(provider_type)
+    # Universal-only frameworks (top-level JSONs like `dora.json`) are emitted
+    # via `process_universal_compliance_frameworks` below.
+    universal_bulk = get_prowler_provider_compliance(provider_type)
+    universal_only_names = {
+        name
+        for name in universal_bulk
+        if name not in frameworks_bulk and universal_bulk[name].outputs
+    }
     frameworks_avail = get_compliance_frameworks(provider_type)
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
+    # Removed on success here and on failure by ScanReportRLSTask.on_failure,
+    # so partial artifacts do not accumulate and fill the disk (ENOSPC).
+    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
 
     def get_writer(writer_map, name, factory, is_last):
         """
@@ -514,6 +592,10 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     output_writers = {}
     compliance_writers = {}
+    # Shared across batches so universal writers are created once and reused.
+    universal_compliance_state: dict[str, list] = {"compliance": []}
+    universal_base_dir = os.path.dirname(out_dir)
+    universal_output_filename = os.path.basename(out_dir)
 
     scan_summary = FindingOutput._transform_findings_stats(
         ScanSummary.objects.filter(scan_id=scan_id)
@@ -568,8 +650,30 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 writer.batch_write_data_to_file(**extra)
                 writer._data.clear()
 
-            # Compliance CSVs
+            # Universal-only frameworks (e.g. `dora.json`).
+            if universal_only_names:
+                process_universal_compliance_frameworks(
+                    input_compliance_frameworks=universal_only_names,
+                    universal_frameworks=universal_bulk,
+                    finding_outputs=fos,
+                    output_directory=universal_base_dir,
+                    output_filename=universal_output_filename,
+                    provider=provider_type,
+                    generated_outputs=universal_compliance_state,
+                    from_cli=False,
+                    is_last=is_last,
+                )
+
+            # Compliance CSVs (per-framework exporters).
             for name in frameworks_avail:
+                if name in universal_only_names:
+                    continue
+                if name not in frameworks_bulk:
+                    logger.warning(
+                        "Compliance framework '%s' missing from bulk; skipping CSV export",
+                        name,
+                    )
+                    continue
                 compliance_obj = frameworks_bulk[name]
 
                 klass = GenericCompliance
@@ -645,7 +749,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         # TODO: We need to create a new periodic task to delete the output files
         # This task shouldn't be responsible for deleting the output files
         try:
-            rmtree(Path(compressed).parent, ignore_errors=True)
+            rmtree(scan_tmp_dir, ignore_errors=True)
         except Exception as e:
             logger.error(f"Error deleting output files: {e}")
         final_location, did_upload = upload_uri, True
@@ -1056,10 +1160,13 @@ def security_hub_integration_task(
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
 
 
+# acks_late=False: Jira sends are not deduplicated and the task is not auto-recovered,
+# so a crashed send is dropped rather than redelivered (avoids duplicate Jira issues).
 @shared_task(
     base=RLSTask,
     name="integration-jira",
     queue="integrations",
+    acks_late=False,
 )
 def jira_integration_task(
     tenant_id: str,

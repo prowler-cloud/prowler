@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
@@ -36,8 +36,9 @@ class CosmosDB(AzureService):
                                     name=private_endpoint_connection.name,
                                     type=private_endpoint_connection.type,
                                 )
-                                for private_endpoint_connection in getattr(
-                                    account, "private_endpoint_connections", []
+                                for private_endpoint_connection in (
+                                    getattr(account, "private_endpoint_connections", [])
+                                    or []
                                 )
                                 if private_endpoint_connection
                             ],
@@ -62,7 +63,7 @@ class CosmosDB(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return accounts
 

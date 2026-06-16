@@ -1,6 +1,5 @@
-import { Chip } from "@heroui/chip";
-
 import { SpinnerIcon } from "@/components/icons";
+import { Badge } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
 
 export type Status =
@@ -22,57 +21,62 @@ const statusDisplayMap: Record<Status, string> = {
   cancelled: "cancelled",
 };
 
-const statusColorMap: Record<
-  Status,
-  "danger" | "warning" | "success" | "default"
-> = {
-  available: "default",
-  queued: "default",
+type StatusBadgeVariant = "tag" | "warning" | "success" | "error";
+
+const statusVariantMap: Record<Status, StatusBadgeVariant> = {
+  available: "tag",
+  queued: "tag",
   scheduled: "warning",
-  executing: "default",
+  executing: "tag",
   completed: "success",
-  failed: "danger",
-  cancelled: "danger",
+  failed: "error",
+  cancelled: "error",
 };
+
+type StatusBadgeSize = "sm" | "md" | "lg";
+
+const STATUS_BADGE_SIZE_CLASS: Record<StatusBadgeSize, string> = {
+  sm: "",
+  md: "px-2.5 py-1",
+  lg: "px-3 py-1.5 text-sm",
+};
+
+interface StatusBadgeProps {
+  status: Status;
+  size?: StatusBadgeSize;
+  loadingProgress?: number;
+  className?: string;
+}
 
 export const StatusBadge = ({
   status,
   size = "sm",
   loadingProgress,
   className,
-  ...props
-}: {
-  status: Status;
-  size?: "sm" | "md" | "lg";
-  loadingProgress?: number;
-  className?: string;
-}) => {
-  const color = statusColorMap[status as keyof typeof statusColorMap];
-  const displayLabel = statusDisplayMap[status] || status;
+}: StatusBadgeProps) => {
+  const variant = statusVariantMap[status];
+  const label = statusDisplayMap[status] || status;
 
   return (
-    <Chip
+    <Badge
+      variant={variant}
       className={cn(
-        "text-default-600 relative w-full max-w-full border-none text-xs capitalize",
-        status === "executing" && "border border-solid border-transparent",
+        "max-w-full capitalize",
+        STATUS_BADGE_SIZE_CLASS[size],
         className,
       )}
-      size={size}
-      variant="flat"
-      color={color}
-      {...props}
     >
       {status === "executing" ? (
-        <div className="relative flex items-center justify-center gap-1">
-          <SpinnerIcon size={16} className="text-default-500 animate-spin" />
-          <span className="text-default-500 pointer-events-none text-[0.6rem]">
-            {loadingProgress}%
-          </span>
+        <span className="inline-flex items-center gap-1">
+          <SpinnerIcon size={12} className="animate-spin" />
+          {loadingProgress !== undefined && (
+            <span className="text-[0.6rem]">{loadingProgress}%</span>
+          )}
           <span>executing</span>
-        </div>
+        </span>
       ) : (
-        <span className="flex items-center justify-center">{displayLabel}</span>
+        label
       )}
-    </Chip>
+    </Badge>
   );
 };

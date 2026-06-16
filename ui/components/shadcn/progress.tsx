@@ -22,7 +22,7 @@ function Progress({
       data-slot="progress"
       value={normalizedValue}
       className={cn(
-        "bg-bg-neutral-tertiary relative h-2 w-full overflow-hidden rounded-full",
+        "border-border-neutral-secondary bg-bg-neutral-secondary relative h-2 w-full overflow-hidden rounded-full border",
         className,
       )}
       {...props}

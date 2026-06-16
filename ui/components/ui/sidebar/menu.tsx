@@ -4,7 +4,7 @@ import { Divider } from "@heroui/divider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { AddIcon, InfoIcon } from "@/components/icons";
+import { InfoIcon, ProwlerShort } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
@@ -16,7 +16,9 @@ import { CollapsibleMenu } from "@/components/ui/sidebar/collapsible-menu";
 import { MenuItem } from "@/components/ui/sidebar/menu-item";
 import { useAuth } from "@/hooks";
 import { getMenuList } from "@/lib/menu-list";
+import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
 import { cn } from "@/lib/utils";
+import { useScansStore } from "@/store";
 import { GroupProps } from "@/types";
 import { RolePermissionAttributes } from "@/types/users";
 
@@ -55,6 +57,10 @@ const filterMenus = (menuGroups: GroupProps[], labelsToHide: string[]) => {
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
+  const openLaunchScanModal = useScansStore(
+    (state) => state.openLaunchScanModal,
+  );
+  const isScansPage = pathname.startsWith("/scans");
 
   const menuList = getMenuList({
     pathname,
@@ -69,19 +75,32 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Launch Scan Button */}
-      <div className="shrink-0 px-2">
+      <div className="flex shrink-0 justify-center px-2">
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <Button
-              asChild
-              className={cn(isOpen ? "w-full" : "w-14")}
-              variant="default"
-              size="default"
-            >
-              <Link href="/scans" aria-label="Launch Scan">
-                {isOpen ? "Launch Scan" : <AddIcon className="size-5" />}
-              </Link>
-            </Button>
+            {isScansPage ? (
+              <Button
+                type="button"
+                aria-label="Launch Scan"
+                className={cn(isOpen ? "h-14 w-[180px] p-1" : "w-14")}
+                variant="default"
+                size="default"
+                onClick={openLaunchScanModal}
+              >
+                <LaunchScanButtonContent isOpen={isOpen} />
+              </Button>
+            ) : (
+              <Button
+                asChild
+                className={cn(isOpen ? "h-14 w-[180px] p-1" : "w-14")}
+                variant="default"
+                size="default"
+              >
+                <Link href={LAUNCH_SCAN_HREF} aria-label="Launch Scan">
+                  <LaunchScanButtonContent isOpen={isOpen} />
+                </Link>
+              </Button>
+            )}
           </TooltipTrigger>
           {!isOpen && <TooltipContent side="right">Launch Scan</TooltipContent>}
         </Tooltip>
@@ -168,3 +187,12 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
     </div>
   );
 };
+
+function LaunchScanButtonContent({ isOpen }: { isOpen: boolean }) {
+  return (
+    <span className={cn("flex items-center", isOpen && "gap-2.5")}>
+      <ProwlerShort aria-hidden="true" className="size-5 text-current" />
+      {isOpen && <span className="text-xl leading-8">Scan</span>}
+    </span>
+  );
+}
