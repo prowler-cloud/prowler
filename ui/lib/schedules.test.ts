@@ -383,9 +383,9 @@ describe("scan schedule capability", () => {
     );
   });
 
-  it("returns MANUAL_ONLY for Cloud without a billing-aware override", () => {
+  it("returns ADVANCED for Cloud", () => {
     expect(getScanScheduleCapability(true)).toBe(
-      SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+      SCAN_SCHEDULE_CAPABILITY.ADVANCED,
     );
   });
 });

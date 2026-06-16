@@ -284,7 +284,7 @@ describe("LaunchStep", () => {
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
-    it("defaults to manual-only scheduling and only launches a manual scan", async () => {
+    it("uses the manual-only override and only launches a manual scan", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -295,6 +295,7 @@ describe("LaunchStep", () => {
           onBack={vi.fn()}
           onClose={onClose}
           onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
         />,
       );
 
