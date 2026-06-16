@@ -1503,6 +1503,7 @@
       ],
       "Checks": [
         "app_minimum_tls_version_12",
+        "cosmosdb_account_minimum_tls_version",
         "monitor_storage_account_with_activity_logs_cmk_encrypted",
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled",
