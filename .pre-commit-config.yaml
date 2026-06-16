@@ -7,7 +7,7 @@
 #   P50 — dependency validation
 
 default_install_hook_types: [pre-commit]
-# Hooks run on commit only; pre-push would re-run the full suite for no gain.
+# Hooks run on commit only
 default_stages: [pre-commit]
 
 repos:
