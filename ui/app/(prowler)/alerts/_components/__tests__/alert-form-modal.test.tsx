@@ -720,7 +720,9 @@ describe("AlertFormModal", () => {
       expect(screen.queryByText("Test result")).not.toBeInTheDocument(),
     );
     expect(
-      screen.getAllByText("Apply at least one alert-compatible Findings filter."),
+      screen.getAllByText(
+        "Apply at least one alert-compatible Findings filter.",
+      ),
     ).toHaveLength(1);
   });
 

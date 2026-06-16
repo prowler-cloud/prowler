@@ -1,17 +1,17 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { isValidElement, useState, type ReactNode } from "react";
+import { isValidElement, type ReactNode, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  AlertFormSubmitResult,
-  AlertFormValues,
-} from "@/app/(prowler)/alerts/_types/alert-form";
 import {
   ALERT_AGGREGATE_OPS,
   ALERT_TRIGGER_KINDS,
   type AlertRule,
 } from "@/app/(prowler)/alerts/_types";
+import type {
+  AlertFormSubmitResult,
+  AlertFormValues,
+} from "@/app/(prowler)/alerts/_types/alert-form";
 
 import { AlertsManager } from "../alerts-manager";
 
