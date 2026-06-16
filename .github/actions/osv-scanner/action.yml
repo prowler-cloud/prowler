@@ -1,0 +1,169 @@
+name: 'OSV-Scanner'
+description: 'Install osv-scanner and scan a lockfile, failing on CRITICAL severity findings. Posts/updates a PR comment with findings on pull_request events (requires pull-requests: write).'
+author: 'Prowler'
+
+inputs:
+  lockfile:
+    description: 'Path to the lockfile to scan, relative to the repository root (e.g. uv.lock, api/uv.lock, ui/pnpm-lock.yaml).'
+    required: true
+  severity-levels:
+    description: 'Comma-separated severity levels that fail the scan. Default: CRITICAL.'
+    required: false
+    default: 'CRITICAL'
+  version:
+    description: 'osv-scanner release tag to install. When overriding, you MUST also override binary-sha256.'
+    required: false
+    default: 'v2.3.8'
+  binary-sha256:
+    description: 'Expected SHA256 of osv-scanner_linux_amd64 for the given version. Default tracks v2.3.8. See https://github.com/google/osv-scanner/releases/download/<version>/osv-scanner_SHA256SUMS.'
+    required: false
+    default: 'bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc'
+  post-pr-comment:
+    description: 'Post or update a PR comment with the scan report. Only effective on pull_request events. Requires pull-requests: write permission on the caller job.'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install osv-scanner
+      shell: bash
+      env:
+        OSV_SCANNER_VERSION: ${{ inputs.version }}
+      # Download the binary AND the published SHA256SUMS file, then verify the
+      # binary checksum against the upstream-signed manifest. Aborts on mismatch.
+      run: |
+        set -euo pipefail
+        if command -v osv-scanner >/dev/null 2>&1; then
+          INSTALLED="$(osv-scanner --version 2>&1 | awk '/scanner version/ {print $NF; exit}')"
+          if [ "v${INSTALLED}" = "${OSV_SCANNER_VERSION}" ]; then
+            echo "osv-scanner ${OSV_SCANNER_VERSION} already installed."
+            exit 0
+          fi
+        fi
+        BASE="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}"
+        BIN_NAME="osv-scanner_linux_amd64"
+        curl -fSL --retry 3 "${BASE}/${BIN_NAME}" -o "${RUNNER_TEMP}/${BIN_NAME}"
+        curl -fSL --retry 3 "${BASE}/osv-scanner_SHA256SUMS" -o "${RUNNER_TEMP}/osv-scanner_SHA256SUMS"
+        (cd "${RUNNER_TEMP}" && sha256sum --check --ignore-missing osv-scanner_SHA256SUMS)
+        chmod +x "${RUNNER_TEMP}/${BIN_NAME}"
+        sudo mv "${RUNNER_TEMP}/${BIN_NAME}" /usr/local/bin/osv-scanner
+        rm -f "${RUNNER_TEMP}/osv-scanner_SHA256SUMS"
+        osv-scanner --version
+
+    - name: Run osv-scanner
+      id: scan
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        OSV_LOCKFILE: ${{ inputs.lockfile }}
+        OSV_SEVERITY_LEVELS: ${{ inputs.severity-levels }}
+        OSV_REPORT_FILE: ${{ runner.temp }}/osv-scanner-findings.json
+      # Per-vulnerability ignores (reason + expiry) live in osv-scanner.toml at the repo root, if present.
+      # Severity filter is enforced in the wrapper via OSV_SEVERITY_LEVELS.
+      # `continue-on-error: true` lets the PR-comment step run even when findings exist;
+      # the gate step below re-fails the job from the wrapper exit code.
+      continue-on-error: true
+      run: ./.github/scripts/osv-scan.sh --lockfile="${OSV_LOCKFILE}"
+
+    - name: Post osv-scanner report on PR
+      if: >-
+        always()
+        && inputs.post-pr-comment == 'true'
+        && github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        OSV_REPORT_FILE: ${{ runner.temp }}/osv-scanner-findings.json
+        OSV_LOCKFILE: ${{ inputs.lockfile }}
+        OSV_SEVERITY_LEVELS: ${{ inputs.severity-levels }}
+      with:
+        script: |
+          const fs = require('fs');
+          const lockfile = process.env.OSV_LOCKFILE;
+          const severityLevels = process.env.OSV_SEVERITY_LEVELS;
+          const reportFile = process.env.OSV_REPORT_FILE;
+          const marker = `<!-- osv-scanner-report:${lockfile} -->`;
+          const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+          let findings = [];
+          if (fs.existsSync(reportFile)) {
+            try {
+              findings = JSON.parse(fs.readFileSync(reportFile, 'utf8'));
+            } catch (err) {
+              core.warning(`Could not parse ${reportFile}: ${err.message}`);
+              return;
+            }
+          }
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          const existing = comments.find(c => c.body?.includes(marker));
+
+          if (findings.length === 0) {
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+              });
+              core.info(`Deleted stale osv-scanner comment for ${lockfile}.`);
+            } else {
+              core.info(`No findings and no stale comment for ${lockfile}.`);
+            }
+            return;
+          }
+
+          const sevIcon = (s) => ({
+            CRITICAL: '🔴', HIGH: '🟠', MEDIUM: '🟡', LOW: '🟢', UNKNOWN: '⚪',
+          }[s] || '⚪');
+          const escape = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+          const rows = findings.map(f =>
+            `| ${sevIcon(f.severity)} ${f.severity}${f.score ? ` (${f.score})` : ''} | \`${escape(f.id)}\` | \`${escape(f.ecosystem)}/${escape(f.package)}\` | \`${escape(f.version)}\` | ${escape(f.summary || '(no summary)')} |`
+          );
+
+          const body = [
+            marker,
+            `## 🔒 osv-scanner: ${findings.length} finding(s) in \`${lockfile}\``,
+            '',
+            `Severity gate: \`${severityLevels}\``,
+            '',
+            '| Severity | ID | Package | Version | Summary |',
+            '|----------|----|---------|---------|---------|',
+            ...rows,
+            '',
+            `To accept a finding, add an \`[[IgnoredVulns]]\` entry to \`osv-scanner.toml\` at the repo root with a reason and \`ignoreUntil\`.`,
+            '',
+            `<sub>[View run](${runUrl})</sub>`,
+          ].join('\n');
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body,
+            });
+            core.info(`Updated osv-scanner comment for ${lockfile}.`);
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+            core.info(`Posted new osv-scanner comment for ${lockfile}.`);
+          }
+
+    - name: Enforce osv-scanner severity gate
+      shell: bash
+      env:
+        SCAN_OUTCOME: ${{ steps.scan.outcome }}
+      run: |
+        if [ "${SCAN_OUTCOME}" != "success" ]; then
+          echo "osv-scanner gate: scan reported findings (outcome=${SCAN_OUTCOME})" >&2
+          exit 1
+        fi

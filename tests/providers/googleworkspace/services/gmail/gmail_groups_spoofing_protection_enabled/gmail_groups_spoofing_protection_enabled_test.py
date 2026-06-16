@@ -3,7 +3,6 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.gmail.gmail_service import GmailPolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -39,7 +38,7 @@ class TestGmailGroupsSpoofingProtectionEnabled:
             assert findings[0].status == "PASS"
             assert "all groups" in findings[0].status_extended
             assert "SPAM_FOLDER" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_name == "Gmail Policies"
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_pass_private_groups_only(self):

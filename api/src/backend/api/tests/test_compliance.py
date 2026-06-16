@@ -10,9 +10,12 @@ from api.compliance import (
     get_prowler_provider_checks,
     get_prowler_provider_compliance,
     load_prowler_checks,
+    warm_compliance_caches,
 )
 from api.models import Provider
-from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.compliance_models import (
+    get_bulk_compliance_frameworks_universal,
+)
 
 
 class TestCompliance:
@@ -28,16 +31,16 @@ class TestCompliance:
         assert set(checks) == {"check1", "check2", "check3"}
         mock_check_metadata.get_bulk.assert_called_once_with(provider_type)
 
-    @patch("api.compliance.Compliance")
-    def test_get_prowler_provider_compliance(self, mock_compliance):
+    @patch("api.compliance.get_bulk_compliance_frameworks_universal")
+    def test_get_prowler_provider_compliance(self, mock_get_bulk):
         provider_type = Provider.ProviderChoices.AWS
-        mock_compliance.get_bulk.return_value = {
+        mock_get_bulk.return_value = {
             "compliance1": MagicMock(),
             "compliance2": MagicMock(),
         }
         compliance_data = get_prowler_provider_compliance(provider_type)
-        assert compliance_data == mock_compliance.get_bulk.return_value
-        mock_compliance.get_bulk.assert_called_once_with(provider_type)
+        assert compliance_data == mock_get_bulk.return_value
+        mock_get_bulk.assert_called_once_with(provider_type)
 
     @patch("api.compliance.get_prowler_provider_checks")
     @patch("api.models.Provider.ProviderChoices")
@@ -51,9 +54,9 @@ class TestCompliance:
         prowler_compliance = {
             "aws": {
                 "compliance1": MagicMock(
-                    Requirements=[
+                    requirements=[
                         MagicMock(
-                            Checks=["check1", "check2"],
+                            checks={"aws": ["check1", "check2"]},
                         ),
                     ],
                 ),
@@ -167,35 +170,38 @@ class TestCompliance:
     def test_generate_compliance_overview_template(self, mock_provider_choices):
         mock_provider_choices.values = ["aws"]
 
+        # ``name`` is a reserved MagicMock kwarg (it labels the mock for repr,
+        # it does NOT set a ``.name`` attribute), so it must be assigned
+        # explicitly after construction.
         requirement1 = MagicMock(
-            Id="requirement1",
-            Name="Requirement 1",
-            Description="Description of requirement 1",
-            Attributes=[],
-            Checks=["check1", "check2"],
-            Tactics=["tactic1"],
-            SubTechniques=["subtechnique1"],
-            Platforms=["platform1"],
-            TechniqueURL="https://example.com",
+            id="requirement1",
+            description="Description of requirement 1",
+            attributes=[],
+            checks={"aws": ["check1", "check2"]},
+            tactics=["tactic1"],
+            sub_techniques=["subtechnique1"],
+            platforms=["platform1"],
+            technique_url="https://example.com",
         )
+        requirement1.name = "Requirement 1"
         requirement2 = MagicMock(
-            Id="requirement2",
-            Name="Requirement 2",
-            Description="Description of requirement 2",
-            Attributes=[],
-            Checks=[],
-            Tactics=[],
-            SubTechniques=[],
-            Platforms=[],
-            TechniqueURL="",
+            id="requirement2",
+            description="Description of requirement 2",
+            attributes=[],
+            checks={"aws": []},
+            tactics=[],
+            sub_techniques=[],
+            platforms=[],
+            technique_url="",
         )
+        requirement2.name = "Requirement 2"
         compliance1 = MagicMock(
-            Requirements=[requirement1, requirement2],
-            Framework="Framework 1",
-            Version="1.0",
-            Description="Description of compliance1",
-            Name="Compliance 1",
+            requirements=[requirement1, requirement2],
+            framework="Framework 1",
+            version="1.0",
+            description="Description of compliance1",
         )
+        compliance1.name = "Compliance 1"
         prowler_compliance = {"aws": {"compliance1": compliance1}}
 
         template = generate_compliance_overview_template(prowler_compliance)
@@ -262,33 +268,43 @@ def reset_compliance_cache():
     """Reset the module-level cache so each test starts cold."""
     previous = dict(compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS)
     compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
+    # The warming flags are module-global; clear them so they do not leak
+    # between tests that call warm_compliance_caches.
+    compliance_module.COMPLIANCE_WARMING_STARTED.clear()
+    compliance_module.COMPLIANCE_WARMED.clear()
     try:
         yield
     finally:
         compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
         compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.update(previous)
+        compliance_module.COMPLIANCE_WARMING_STARTED.clear()
+        compliance_module.COMPLIANCE_WARMED.clear()
 
 
 class TestGetComplianceFrameworks:
     def test_returns_keys_from_compliance_get_bulk(self, reset_compliance_cache):
-        with patch("api.compliance.Compliance") as mock_compliance:
-            mock_compliance.get_bulk.return_value = {
+        with patch(
+            "api.compliance.get_bulk_compliance_frameworks_universal"
+        ) as mock_get_bulk:
+            mock_get_bulk.return_value = {
                 "cis_1.4_aws": MagicMock(),
                 "mitre_attack_aws": MagicMock(),
             }
             result = get_compliance_frameworks(Provider.ProviderChoices.AWS)
 
         assert sorted(result) == ["cis_1.4_aws", "mitre_attack_aws"]
-        mock_compliance.get_bulk.assert_called_once_with(Provider.ProviderChoices.AWS)
+        mock_get_bulk.assert_called_once_with(Provider.ProviderChoices.AWS)
 
     def test_caches_result_per_provider(self, reset_compliance_cache):
-        with patch("api.compliance.Compliance") as mock_compliance:
-            mock_compliance.get_bulk.return_value = {"cis_1.4_aws": MagicMock()}
+        with patch(
+            "api.compliance.get_bulk_compliance_frameworks_universal"
+        ) as mock_get_bulk:
+            mock_get_bulk.return_value = {"cis_1.4_aws": MagicMock()}
             get_compliance_frameworks(Provider.ProviderChoices.AWS)
             get_compliance_frameworks(Provider.ProviderChoices.AWS)
 
         # Cached after first call.
-        assert mock_compliance.get_bulk.call_count == 1
+        assert mock_get_bulk.call_count == 1
 
     @pytest.mark.parametrize(
         "provider_type",
@@ -296,17 +312,105 @@ class TestGetComplianceFrameworks:
     )
     def test_listing_is_subset_of_bulk(self, reset_compliance_cache, provider_type):
         """Regression for CLOUD-API-40S: every name returned by
-        ``get_compliance_frameworks`` must be loadable via ``Compliance.get_bulk``.
+        ``get_compliance_frameworks`` must be loadable via
+        ``get_bulk_compliance_frameworks_universal``.
 
         A divergence here is what produced ``KeyError: 'csa_ccm_4.0'`` in
         ``generate_outputs_task`` after universal/multi-provider compliance
         JSONs were introduced at the top-level ``prowler/compliance/`` path.
         """
-        bulk_keys = set(Compliance.get_bulk(provider_type).keys())
+        bulk_keys = set(get_bulk_compliance_frameworks_universal(provider_type).keys())
         listed = set(get_compliance_frameworks(provider_type))
 
         missing = listed - bulk_keys
         assert not missing, (
             f"get_compliance_frameworks({provider_type!r}) returned names not "
-            f"loadable by Compliance.get_bulk: {sorted(missing)}"
+            f"loadable by get_bulk_compliance_frameworks_universal: "
+            f"{sorted(missing)}"
         )
+
+
+class TestWarmComplianceCaches:
+    def test_warms_all_provider_types_by_default(self, reset_compliance_cache):
+        provider_types = list(Provider.ProviderChoices.values)
+        with (
+            patch("api.compliance.get_compliance_frameworks") as mock_frameworks,
+            patch("api.compliance._ensure_provider_loaded") as mock_ensure,
+        ):
+            warm_compliance_caches()
+
+        warmed = {call.args[0] for call in mock_frameworks.call_args_list}
+        assert warmed == set(provider_types)
+        assert mock_frameworks.call_count == len(provider_types)
+        assert mock_ensure.call_count == len(provider_types)
+
+    def test_warms_only_requested_provider_types(self, reset_compliance_cache):
+        with (
+            patch("api.compliance.get_compliance_frameworks") as mock_frameworks,
+            patch("api.compliance._ensure_provider_loaded") as mock_ensure,
+        ):
+            warm_compliance_caches([Provider.ProviderChoices.AWS])
+
+        mock_frameworks.assert_called_once_with(Provider.ProviderChoices.AWS)
+        mock_ensure.assert_called_once_with(Provider.ProviderChoices.AWS)
+
+    def test_populates_module_cache(self, reset_compliance_cache):
+        with (
+            patch(
+                "api.compliance.get_bulk_compliance_frameworks_universal"
+            ) as mock_get_bulk,
+            patch("api.compliance._ensure_provider_loaded"),
+        ):
+            mock_get_bulk.return_value = {"cis_1.4_aws": MagicMock()}
+            warm_compliance_caches([Provider.ProviderChoices.AWS])
+
+        assert (
+            Provider.ProviderChoices.AWS
+            in compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS
+        )
+
+    def test_failing_provider_does_not_abort_the_rest(self, reset_compliance_cache):
+        """A failing provider (even on SystemExit) is isolated; others warm."""
+        providers = [Provider.ProviderChoices.AWS, Provider.ProviderChoices.OKTA]
+
+        def fake_frameworks(provider_type):
+            if provider_type == Provider.ProviderChoices.OKTA:
+                raise SystemExit(1)
+            return []
+
+        with (
+            patch(
+                "api.compliance.get_compliance_frameworks", side_effect=fake_frameworks
+            ),
+            patch("api.compliance._ensure_provider_loaded") as mock_ensure,
+        ):
+            failed = warm_compliance_caches(providers)
+
+        assert failed == [Provider.ProviderChoices.OKTA]
+        mock_ensure.assert_called_once_with(Provider.ProviderChoices.AWS)
+
+    def test_sets_readiness_flags(self, reset_compliance_cache):
+        assert not compliance_module.COMPLIANCE_WARMING_STARTED.is_set()
+        assert not compliance_module.COMPLIANCE_WARMED.is_set()
+
+        with (
+            patch("api.compliance.get_compliance_frameworks"),
+            patch("api.compliance._ensure_provider_loaded"),
+        ):
+            warm_compliance_caches([Provider.ProviderChoices.AWS])
+
+        assert compliance_module.COMPLIANCE_WARMING_STARTED.is_set()
+        assert compliance_module.COMPLIANCE_WARMED.is_set()
+
+    def test_marks_warmed_even_when_a_provider_fails(self, reset_compliance_cache):
+        """A failed provider still leaves the caches flagged as warmed."""
+        with (
+            patch(
+                "api.compliance.get_compliance_frameworks",
+                side_effect=SystemExit(1),
+            ),
+            patch("api.compliance._ensure_provider_loaded"),
+        ):
+            warm_compliance_caches([Provider.ProviderChoices.AWS])
+
+        assert compliance_module.COMPLIANCE_WARMED.is_set()

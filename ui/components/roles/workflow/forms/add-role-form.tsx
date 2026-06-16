@@ -252,7 +252,11 @@ export const AddRoleForm = ({
             )}
           </div>
         )}
-        <FormButtons submitText="Add Role" isDisabled={isLoading} />
+        <FormButtons
+          submitText="Add Role"
+          isDisabled={isLoading}
+          onCancel={() => router.push("/roles")}
+        />
       </form>
     </Form>
   );

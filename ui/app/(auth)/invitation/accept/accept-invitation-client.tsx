@@ -3,52 +3,20 @@
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
+import {
+  getInvitationErrorDisplay,
+  INVITATION_ERROR_FLOW,
+} from "@/app/(auth)/invitation/_lib/invitation-errors";
 import { Button } from "@/components/shadcn";
 
 type AcceptState =
   | { kind: "no-token" }
   | { kind: "accepting" }
-  | { kind: "error"; message: string; canRetry: boolean; needsSignOut: boolean }
+  | { kind: "error"; message: string; canRetry: boolean }
   | { kind: "choose" };
-
-function mapApiError(status: number | undefined): {
-  message: string;
-  canRetry: boolean;
-  needsSignOut: boolean;
-} {
-  switch (status) {
-    case 410:
-      return {
-        message:
-          "This invitation has expired. Please contact your administrator for a new one.",
-        canRetry: false,
-        needsSignOut: false,
-      };
-    case 400:
-      return {
-        message: "This invitation has already been used.",
-        canRetry: false,
-        needsSignOut: false,
-      };
-    case 404:
-      return {
-        message:
-          "This invitation was sent to a different email address. Please sign in with the correct account.",
-        canRetry: false,
-        needsSignOut: true,
-      };
-    default:
-      return {
-        message: "Something went wrong while accepting the invitation.",
-        canRetry: true,
-        needsSignOut: false,
-      };
-  }
-}
 
 export function AcceptInvitationClient({
   isAuthenticated,
@@ -72,18 +40,14 @@ export function AcceptInvitationClient({
     const result = await acceptInvitation(token);
 
     if (result?.error) {
-      const { message, canRetry, needsSignOut } = mapApiError(result.status);
-      setState({ kind: "error", message, canRetry, needsSignOut });
+      const { message, canRetry } = getInvitationErrorDisplay(
+        result,
+        INVITATION_ERROR_FLOW.ACCEPT,
+      );
+      setState({ kind: "error", message, canRetry });
     } else {
       router.push("/");
     }
-  }
-
-  async function handleSignOutAndRedirect() {
-    if (!token) return;
-    const callbackPath = `/invitation/accept?invitation_token=${encodeURIComponent(token)}`;
-    await signOut({ redirect: false });
-    router.push(`/sign-in?callbackUrl=${encodeURIComponent(callbackPath)}`);
   }
 
   useEffect(() => {
@@ -153,15 +117,9 @@ export function AcceptInvitationClient({
             <p className="text-default-500">{state.message}</p>
             <div className="flex gap-3">
               {state.canRetry && <Button onClick={doAccept}>Retry</Button>}
-              {state.needsSignOut ? (
-                <Button variant="outline" onClick={handleSignOutAndRedirect}>
-                  Sign in with a different account
-                </Button>
-              ) : (
-                <Button asChild variant="outline">
-                  <Link href="/sign-in">Go to Sign In</Link>
-                </Button>
-              )}
+              <Button asChild variant="outline">
+                <Link href="/sign-in">Go to Sign In</Link>
+              </Button>
             </div>
           </div>
         )}

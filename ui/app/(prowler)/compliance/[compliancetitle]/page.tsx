@@ -13,6 +13,7 @@ import {
   ClientAccordionWrapper,
   ComplianceDownloadContainer,
   ComplianceHeader,
+  ComplianceWarming,
   RequirementsStatusCard,
   RequirementsStatusCardSkeleton,
   // SectionsFailureRateCard,
@@ -42,6 +43,7 @@ interface ComplianceDetailSearchParams {
   complianceId: string;
   version?: string;
   scanId?: string;
+  section?: string;
   "filter[region__in]"?: string;
   "filter[cis_profile_level]"?: string;
   page?: string;
@@ -57,7 +59,7 @@ export default async function ComplianceDetail({
 }) {
   const { compliancetitle } = await params;
   const resolvedSearchParams = await searchParams;
-  const { complianceId, version, scanId } = resolvedSearchParams;
+  const { complianceId, version, scanId, section } = resolvedSearchParams;
   const regionFilter = resolvedSearchParams["filter[region__in]"];
   const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
@@ -85,11 +87,21 @@ export default async function ComplianceDetail({
           "filter[scan_id]": selectedScanId ?? undefined,
         },
       }),
-      getComplianceAttributes(complianceId),
+      getComplianceAttributes(complianceId, selectedScanId ?? undefined),
       selectedScanId
         ? getScan(selectedScanId, { include: "provider" })
         : Promise.resolve(null),
     ]);
+
+  // The compliance catalog is still warming after a deploy/restart. Show the
+  // "still loading" state with a Try Again instead of rendering an empty page.
+  if (attributesData?.warming) {
+    return (
+      <ContentLayout title={pageTitle}>
+        <ComplianceWarming />
+      </ContentLayout>
+    );
+  }
 
   if (selectedScanResponse?.data) {
     const scan = selectedScanResponse.data;
@@ -225,6 +237,7 @@ export default async function ComplianceDetail({
           filter={cisProfileFilter}
           attributesData={attributesData}
           threatScoreData={threatScoreData}
+          targetSection={section}
         />
       </Suspense>
     </ContentLayout>
@@ -238,6 +251,7 @@ const SSRComplianceContent = async ({
   filter,
   attributesData,
   threatScoreData,
+  targetSection,
 }: {
   complianceId: string;
   scanId: string;
@@ -248,6 +262,7 @@ const SSRComplianceContent = async ({
     overallScore: number;
     sectionScores: Record<string, number>;
   } | null;
+  targetSection?: string;
 }) => {
   const requirementsData = await getComplianceRequirements({
     complianceId,
@@ -288,6 +303,21 @@ const SSRComplianceContent = async ({
   const accordionItems = mapper.toAccordionItems(data, scanId);
   const topFailedResult = mapper.getTopFailedSections(data);
 
+  // Resolve which accordion key matches the requested ?section= so we can
+  // auto-expand it on first render. Each mapper builds keys as
+  // `${framework.name}-${category.name}`; rebuild the exact candidates here
+  // to avoid suffix collisions across frameworks or category names.
+  const initialExpandedKeys: string[] = [];
+  if (targetSection) {
+    const candidates = new Set(
+      data.map((f: Framework) => `${f.name}-${targetSection}`),
+    );
+    const match = accordionItems.find((item) => candidates.has(item.key));
+    if (match) {
+      initialExpandedKeys.push(match.key);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-8">
       {/* Charts section */}
@@ -315,6 +345,7 @@ const SSRComplianceContent = async ({
         <TopFailedSectionsCard
           sections={topFailedResult.items}
           dataType={topFailedResult.type}
+          prepopulated={topFailedResult.prepopulated}
         />
         {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
       </div>
@@ -323,7 +354,8 @@ const SSRComplianceContent = async ({
       <ClientAccordionWrapper
         hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}
-        defaultExpandedKeys={[]}
+        defaultExpandedKeys={initialExpandedKeys}
+        scrollToKey={initialExpandedKeys[0]}
       />
     </div>
   );

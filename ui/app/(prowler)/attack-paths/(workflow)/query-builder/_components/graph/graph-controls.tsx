@@ -14,7 +14,7 @@ interface GraphControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitToScreen: () => void;
-  onExport: () => void;
+  onExport?: () => void;
 }
 
 /**
@@ -38,6 +38,7 @@ export const GraphControls = ({
                 size="sm"
                 onClick={onZoomIn}
                 className="h-8 w-8 p-0"
+                aria-label="Zoom in"
               >
                 <ZoomIn size={18} />
               </Button>
@@ -52,6 +53,7 @@ export const GraphControls = ({
                 size="sm"
                 onClick={onZoomOut}
                 className="h-8 w-8 p-0"
+                aria-label="Zoom out"
               >
                 <ZoomOut size={18} />
               </Button>
@@ -66,6 +68,7 @@ export const GraphControls = ({
                 size="sm"
                 onClick={onFitToScreen}
                 className="h-8 w-8 p-0"
+                aria-label="Fit graph to view"
               >
                 <Minimize2 size={18} />
               </Button>
@@ -79,12 +82,16 @@ export const GraphControls = ({
                 variant="ghost"
                 size="sm"
                 onClick={onExport}
+                disabled={!onExport}
                 className="h-8 w-8 p-0"
+                aria-label={onExport ? "Export graph" : "Export available soon"}
               >
                 <Download size={18} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Export graph</TooltipContent>
+            <TooltipContent>
+              {onExport ? "Export graph" : "Export available soon"}
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>

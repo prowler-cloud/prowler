@@ -18,7 +18,10 @@ class gmail_pop_imap_access_disabled(Check):
         if gmail_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=gmail_client.provider.domain_resource,
+                resource=gmail_client.policies,
+                resource_id="gmailPolicies",
+                resource_name="Gmail Policies",
+                customer_id=gmail_client.provider.identity.customer_id,
             )
 
             pop_enabled = gmail_client.policies.enable_pop_access

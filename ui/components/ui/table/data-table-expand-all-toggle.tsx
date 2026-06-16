@@ -45,7 +45,7 @@ export function DataTableExpandAllToggle<TData>({
   const canExpand = table.getCanSomeRowsExpand();
 
   if (!canExpand) {
-    return null;
+    return <div className="w-4" />;
   }
 
   return (
