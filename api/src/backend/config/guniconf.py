@@ -25,6 +25,15 @@ bind = f"{BIND_ADDRESS}:{PORT}"
 workers = env.int("DJANGO_WORKERS", default=multiprocessing.cpu_count() * 2 + 1)
 reload = DEBUG
 
+# Native ASGI worker (gunicorn 24+). Required so SSE endpoints can keep the
+# event loop alive while waiting for events.
+worker_class = env("DJANGO_WORKER_CLASS", default="asgi")
+
+# Preload the application before forking workers in production: the app is
+# imported once in the master and workers fork from it. In development, disable
+# preload so the server restarts on code changes.
+preload_app = not DEBUG
+
 # Logging
 logconfig_dict = DJANGO_LOGGERS
 gunicorn_logger = logging.getLogger(BackendLogger.GUNICORN)

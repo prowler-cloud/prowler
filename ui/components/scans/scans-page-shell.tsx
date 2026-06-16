@@ -1,8 +1,9 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { type ReactNode, Suspense, useState } from "react";
 
+import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import {
   Button,
@@ -11,13 +12,17 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
+import { getFlowById } from "@/lib/onboarding";
 import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
+import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderProps } from "@/types/providers";
+
+const viewFirstScanFlow = getFlowById("view-first-scan")!;
 
 import { CliImportBanner } from "./cli-import-banner";
 import { LaunchScanModal } from "./launch-scan-modal";
@@ -37,7 +42,6 @@ export function ScansPageShell({
   activeScanCount = 0,
   children,
 }: ScansPageShellProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [urlLaunchOpen, setUrlLaunchOpen] = useState(
@@ -57,6 +61,9 @@ export function ScansPageShell({
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
+  // When a scan is already running, the tour highlights its row (anchored in
+  // ScanJobsTable); otherwise it falls back to the Launch Scan button + tabs.
+  const hasInProgressScan = activeScanCount > 0;
 
   const getTabLabel = (tab: ScanJobsTab) => {
     const label = SCAN_TAB_LABELS[tab];
@@ -69,17 +76,33 @@ export function ScansPageShell({
     setLaunchScanModalOpen(open);
     if (open) return;
     setUrlLaunchOpen(false);
+    // Remove ?launchScan via History API (not router.replace) to avoid an RSC
+    // refetch that reloads the page; revalidatePath in scanOnDemand already
+    // refreshes the scans list when a scan is launched.
     if (!searchParams.has(LAUNCH_SCAN_SEARCH_PARAM)) return;
     const params = new URLSearchParams(searchParams.toString());
     params.delete(LAUNCH_SCAN_SEARCH_PARAM);
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, {
-      scroll: false,
-    });
+    window.history.replaceState(
+      null,
+      "",
+      query ? `${pathname}?${query}` : pathname,
+    );
   };
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
+      <Suspense fallback={null}>
+        <OnboardingTrigger
+          flow={{
+            ...viewFirstScanFlow,
+            tour: buildViewFirstScanTour(hasInProgressScan),
+          }}
+        />
+      </Suspense>
+      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
+      <PageReady />
       <div
         role="group"
         aria-label="Scan filters and actions"
@@ -101,6 +124,7 @@ export function ScansPageShell({
           onClick={() => handleLaunchOpenChange(true)}
           disabled={launchDisabled}
           className="w-full md:w-auto"
+          data-tour-id="view-first-scan-launch"
         >
           Launch Scan
         </Button>
@@ -118,7 +142,10 @@ export function ScansPageShell({
           aria-label="Scan tabs"
           className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
-          <TabsList className="overflow-x-auto">
+          <TabsList
+            className="overflow-x-auto"
+            data-tour-id="view-first-scan-tabs"
+          >
             {Object.values(SCAN_JOBS_TAB).map((tab) => (
               <TabsTrigger key={tab} value={tab}>
                 {getTabLabel(tab as ScanJobsTab)}
