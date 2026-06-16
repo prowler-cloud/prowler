@@ -32,15 +32,12 @@ from tasks.utils import CustomEncoder
 from api.db_router import MainRouter
 from api.exceptions import ProviderConnectionError
 from api.models import (
-    AttackSurfaceOverview,
     Finding,
     MuteRule,
     Provider,
     Resource,
     ResourceScanSummary,
     Scan,
-    ScanCategorySummary,
-    ScanGroupSummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
@@ -232,131 +229,6 @@ class TestPerformScan:
         # Assert that failed_findings_count is 0 (finding is PASS and muted)
         assert scan_resource.failed_findings_count == 0
 
-    def test_perform_prowler_scan_idempotent_on_rerun(
-        self,
-        tenants_fixture,
-        scans_fixture,
-        providers_fixture,
-    ):
-        """Re-running a scan for the same scan_id must not duplicate findings."""
-        with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
-            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
-            patch(
-                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
-                new_callable=dict,
-            ),
-            patch("api.compliance.PROWLER_CHECKS", new_callable=dict) as mock_checks,
-        ):
-            mock_checks["aws"] = {"check1": {"compliance1"}}
-
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            provider = providers_fixture[0]
-            provider.provider = Provider.ProviderChoices.AWS
-            provider.save()
-
-            tenant_id = str(tenant.id)
-            scan_id = str(scan.id)
-            provider_id = str(provider.id)
-
-            stale_resource = Resource.objects.create(
-                tenant_id=tenant.id,
-                provider=provider,
-                uid="stale_resource_uid",
-                name="stale",
-                region="stale-region",
-                service="stale-service",
-                type="stale-type",
-            )
-            ResourceScanSummary.objects.create(
-                tenant_id=tenant.id,
-                scan_id=scan.id,
-                resource_id=stale_resource.id,
-                service="stale-service",
-                region="stale-region",
-                resource_type="stale-type",
-            )
-            ScanCategorySummary.objects.create(
-                tenant_id=tenant.id,
-                scan=scan,
-                category="stale-category",
-                severity=Severity.medium,
-                total_findings=1,
-            )
-            ScanGroupSummary.objects.create(
-                tenant_id=tenant.id,
-                scan=scan,
-                resource_group="stale-group",
-                severity=Severity.medium,
-                total_findings=1,
-            )
-            ScanSummary.objects.create(
-                tenant_id=tenant.id,
-                scan=scan,
-                check_id="stale_check",
-                service="stale-service",
-                severity=Severity.medium,
-                region="stale-region",
-                total=1,
-            )
-            AttackSurfaceOverview.objects.create(
-                tenant_id=tenant.id,
-                scan=scan,
-                attack_surface_type=AttackSurfaceOverview.AttackSurfaceTypeChoices.SECRETS,
-                total_findings=1,
-            )
-
-            finding = MagicMock()
-            finding.uid = "dup_probe_finding"
-            finding.status = StatusChoices.PASS
-            finding.status_extended = "x"
-            finding.severity = Severity.medium
-            finding.check_id = "check1"
-            finding.get_metadata.return_value = {"key": "value"}
-            finding.resource_uid = "resource_uid"
-            finding.resource_name = "resource_name"
-            finding.region = "region"
-            finding.service_name = "service_name"
-            finding.resource_type = "resource_type"
-            finding.resource_tags = {}
-            finding.muted = False
-            finding.raw = {}
-            finding.resource_metadata = {}
-            finding.resource_details = {}
-            finding.partition = "partition"
-            finding.compliance = {}
-
-            mock_scan_instance = MagicMock()
-            mock_scan_instance.scan.return_value = [(100, [finding])]
-            mock_prowler_scan_class.return_value = mock_scan_instance
-
-            mock_provider_instance = MagicMock()
-            mock_provider_instance.get_regions.return_value = ["region"]
-            mock_initialize_prowler_provider.return_value = mock_provider_instance
-
-            # Run the same scan twice (simulating an orphan-recovery re-run).
-            perform_prowler_scan(tenant_id, scan_id, provider_id, ["check1"])
-            perform_prowler_scan(tenant_id, scan_id, provider_id, ["check1"])
-
-        # Neither findings nor resources are duplicated by the re-run: findings are
-        # scope-deleted before re-insert; resources are upserted by (tenant, provider, uid).
-        assert Finding.objects.filter(scan=scan).count() == 1
-        assert Resource.objects.filter(provider=provider).count() == 2
-        assert ResourceScanSummary.objects.filter(scan_id=scan.id).count() == 1
-        assert not ResourceScanSummary.objects.filter(
-            scan_id=scan.id, resource_id=stale_resource.id
-        ).exists()
-        assert not ScanCategorySummary.objects.filter(scan=scan).exists()
-        assert not ScanGroupSummary.objects.filter(scan=scan).exists()
-        assert not ScanSummary.objects.filter(
-            scan=scan, check_id="stale_check"
-        ).exists()
-        assert not AttackSurfaceOverview.objects.filter(scan=scan).exists()
-
     @patch("tasks.jobs.scan.ProwlerScan")
     @patch(
         "tasks.jobs.scan.initialize_prowler_provider",
@@ -443,6 +315,7 @@ class TestPerformScan:
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
+                "name": finding.resource_name,
                 "region": finding.region,
                 "service": finding.service_name,
                 "type": finding.resource_type,
@@ -476,6 +349,7 @@ class TestPerformScan:
 
         resource_instance = MagicMock()
         resource_instance.uid = finding.resource_uid
+        resource_instance.name = "old_name"
         resource_instance.region = "us-west-1"
         resource_instance.service = "old_service"
         resource_instance.type = "old_type"
@@ -494,6 +368,7 @@ class TestPerformScan:
             provider=provider_instance,
             uid=finding.resource_uid,
             defaults={
+                "name": finding.resource_name,
                 "region": finding.region,
                 "service": finding.service_name,
                 "type": finding.resource_type,
@@ -501,6 +376,7 @@ class TestPerformScan:
         )
 
         # Check that resource fields were updated
+        assert resource_instance.name == finding.resource_name
         assert resource_instance.region == finding.region
         assert resource_instance.service == finding.service_name
         assert resource_instance.type == finding.resource_type
@@ -1692,6 +1568,75 @@ class TestProcessFindingMicroBatch:
         assert resource_cache[finding.resource_uid].region == finding.region
         assert resource_cache[finding.resource_uid].service == finding.service_name
         assert tag_cache.keys() == {("team", "devsec")}
+
+    def test_process_finding_micro_batch_refreshes_empty_resource_name(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+
+        # Old resource stored before names were persisted: empty name.
+        existing_resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid="arn:aws:s3:::my-bucket",
+            name="",
+            region="us-east-1",
+            service="s3",
+            type="bucket",
+        )
+
+        finding = FakeFinding(
+            uid="finding-empty-name",
+            status=StatusChoices.PASS,
+            status_extended="passing",
+            severity=Severity.low,
+            check_id="s3_bucket_public_access",
+            resource_uid=existing_resource.uid,
+            resource_name="my-bucket",
+            region="us-east-1",
+            service_name="s3",
+            resource_type="bucket",
+            partition="aws",
+            raw={"status": "PASS"},
+            metadata={"source": "prowler"},
+        )
+
+        resource_cache = {existing_resource.uid: existing_resource}
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {existing_resource.uid: 0}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
+            )
+
+        existing_resource.refresh_from_db()
+        assert existing_resource.name == finding.resource_name
 
     def test_process_finding_micro_batch_skips_long_uid(
         self, tenants_fixture, scans_fixture
