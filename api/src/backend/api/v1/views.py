@@ -4804,14 +4804,15 @@ class ComplianceOverviewViewSet(
         if provider_filters:
             scans = scans.filter(**provider_filters)
 
-        return (
+        return list(
             scans.order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
 
-    def _filtered_queryset_for_latest_provider_scans(self):
-        latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+    def _filtered_queryset_for_latest_provider_scans(self, latest_scan_ids=None):
+        if latest_scan_ids is None:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
         queryset = self.get_queryset().filter(scan_id__in=latest_scan_ids)
         # Provider filters stay on the filterset for OpenAPI docs, but runtime
         # filtering happens on Scan first so compliance queries use scan IDs.
@@ -4936,6 +4937,38 @@ class ComplianceOverviewViewSet(
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def _task_response_for_latest_provider_scans(self, latest_scan_ids):
+        for scan_id in latest_scan_ids:
+            task_response = self._task_response_if_running(str(scan_id))
+            if task_response:
+                return task_response
+        return None
+
+    def _latest_provider_scan_ids_without_data(self, queryset, latest_scan_ids):
+        scan_ids_with_data = {
+            str(scan_id)
+            for scan_id in queryset.values_list("scan_id", flat=True).distinct()
+        }
+        return [
+            scan_id
+            for scan_id in latest_scan_ids
+            if str(scan_id) not in scan_ids_with_data
+        ]
+
+    def _task_response_for_latest_provider_scans_without_data(
+        self,
+        queryset,
+        latest_scan_ids,
+        has_data,
+    ):
+        scan_ids_to_check = latest_scan_ids
+        if has_data:
+            scan_ids_to_check = self._latest_provider_scan_ids_without_data(
+                queryset,
+                latest_scan_ids,
+            )
+        return self._task_response_for_latest_provider_scans(scan_ids_to_check)
+
     def _list_with_region_filter(self, scan_id, region_filter):
         """
         Fall back to detailed ComplianceRequirementOverview query when region filter is applied.
@@ -4977,8 +5010,17 @@ class ComplianceOverviewViewSet(
         return Response(data)
 
     def _list_with_latest_provider_filters(self):
-        queryset = self._filtered_queryset_for_latest_provider_scans()
+        latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+        queryset = self._filtered_queryset_for_latest_provider_scans(latest_scan_ids)
         data = self._aggregate_compliance_overview(queryset)
+        task_response = self._task_response_for_latest_provider_scans_without_data(
+            queryset,
+            latest_scan_ids,
+            bool(data),
+        )
+        if task_response:
+            return task_response
+
         return Response(data)
 
     def list(self, request, *args, **kwargs):
@@ -5036,24 +5078,33 @@ class ComplianceOverviewViewSet(
         has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
         self._validate_scan_selection(scan_id, has_provider_filters)
 
-        queryset = (
-            self._filtered_queryset_for_latest_provider_scans()
-            if has_provider_filters
-            else self._apply_filterset(self.get_queryset(), self.filterset_class)
-        )
+        latest_scan_ids = None
+        if has_provider_filters:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+            queryset = self._filtered_queryset_for_latest_provider_scans(
+                latest_scan_ids
+            )
+        else:
+            queryset = self._apply_filterset(self.get_queryset(), self.filterset_class)
 
         regions = list(
             queryset.values_list("region", flat=True).order_by("region").distinct()
         )
         result = {"regions": regions}
 
-        if regions or has_provider_filters:
-            serializer = self.get_serializer(data=result)
-            serializer.is_valid(raise_exception=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        task_response = None
+        if has_provider_filters:
+            task_response = self._task_response_for_latest_provider_scans_without_data(
+                queryset,
+                latest_scan_ids,
+                bool(regions),
+            )
+        elif not regions:
+            task_response = self._task_response_if_running(scan_id)
+            if task_response:
+                return task_response
 
-        task_response = self._task_response_if_running(scan_id)
-        if task_response:
+        if has_provider_filters and task_response:
             return task_response
 
         serializer = self.get_serializer(data=result)
@@ -5079,11 +5130,16 @@ class ComplianceOverviewViewSet(
                     }
                 ]
             )
-        filtered_queryset = (
-            self._filtered_queryset_for_latest_provider_scans()
-            if has_provider_filters
-            else self._apply_filterset(self.get_queryset(), self.filterset_class)
-        )
+        latest_scan_ids = None
+        if has_provider_filters:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+            filtered_queryset = self._filtered_queryset_for_latest_provider_scans(
+                latest_scan_ids
+            )
+        else:
+            filtered_queryset = self._apply_filterset(
+                self.get_queryset(), self.filterset_class
+            )
 
         all_requirements = filtered_queryset.values(
             "requirement_id",
@@ -5142,12 +5198,23 @@ class ComplianceOverviewViewSet(
                 requirements_summary, many=True
             )
 
+        task_response = None
+        if has_provider_filters:
+            task_response = self._task_response_for_latest_provider_scans_without_data(
+                filtered_queryset,
+                latest_scan_ids,
+                bool(requirements_summary),
+            )
+        elif not requirements_summary:
+            task_response = self._task_response_if_running(scan_id)
+            if task_response:
+                return task_response
+
+        if has_provider_filters and task_response:
+            return task_response
+
         if requirements_summary:
             return Response(serializer.data, status=status.HTTP_200_OK)
-
-        task_response = self._task_response_if_running(scan_id)
-        if task_response:
-            return task_response
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -5830,37 +5897,37 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
                 description="Retrieve a specific snapshot by ID. If not provided, returns latest snapshots.",
             ),
             OpenApiParameter(
-                name="provider_id",
+                name="filter[provider_id]",
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
                 description="Filter by specific provider ID",
             ),
             OpenApiParameter(
-                name="provider_id__in",
+                name="filter[provider_id__in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider IDs (comma-separated UUIDs)",
             ),
             OpenApiParameter(
-                name="provider_type",
+                name="filter[provider_type]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by provider type (aws, azure, gcp, etc.)",
             ),
             OpenApiParameter(
-                name="provider_type__in",
+                name="filter[provider_type__in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider types (comma-separated)",
             ),
             OpenApiParameter(
-                name="provider_groups",
+                name="filter[provider_groups]",
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
                 description="Filter by provider group ID",
             ),
             OpenApiParameter(
-                name="provider_groups__in",
+                name="filter[provider_groups__in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider group IDs (comma-separated UUIDs)",
