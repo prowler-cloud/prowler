@@ -1077,6 +1077,73 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_stackit_assessment_summary(provider: Provider) -> str:
+        """
+        get_stackit_assessment_summary gets the HTML assessment summary for the StackIT provider
+
+        Args:
+            provider (Provider): the StackIT provider object
+
+        Returns:
+            str: HTML assessment summary for the StackIT provider
+        """
+        try:
+            project_id = getattr(provider.identity, "project_id", "unknown")
+            project_name = getattr(provider.identity, "project_name", "")
+            audited_regions = getattr(provider.identity, "audited_regions", set())
+
+            project_name_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Project Name:</b> {project_name}
+                            </li>"""
+                if project_name
+                else ""
+            )
+
+            regions_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Regions:</b> {", ".join(sorted(audited_regions))}
+                            </li>"""
+                if audited_regions
+                else ""
+            )
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            StackIT Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            {project_name_item}
+                            {regions_item}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            StackIT Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication Type:</b> Service Account Key
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_cloudflare_assessment_summary(provider: Provider) -> str:
         """
         get_cloudflare_assessment_summary gets the HTML assessment summary for the Cloudflare provider
@@ -1541,11 +1608,13 @@ class HTML(Output):
             # Azure_provider --> azure
             # Kubernetes_provider --> kubernetes
 
-            # Dynamically get the Provider quick inventory handler
-            provider_html_assessment_summary_function = (
-                f"get_{provider.type}_assessment_summary"
-            )
-            return getattr(HTML, provider_html_assessment_summary_function)(provider)
+            # Try static method first, fall back to provider method
+            method_name = f"get_{provider.type}_assessment_summary"
+            if hasattr(HTML, method_name):
+                return getattr(HTML, method_name)(provider)
+            else:
+                # Dynamic fallback: any external/custom provider
+                return provider.get_html_assessment_summary()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

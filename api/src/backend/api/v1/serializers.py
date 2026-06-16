@@ -1397,6 +1397,7 @@ class ResourceIncludeSerializer(RLSSerializer):
             "service",
             "type_",
             "tags",
+            "metadata",
             "details",
             "partition",
         ]
@@ -1404,6 +1405,7 @@ class ResourceIncludeSerializer(RLSSerializer):
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
         }

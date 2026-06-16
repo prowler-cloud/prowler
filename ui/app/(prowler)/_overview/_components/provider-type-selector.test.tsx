@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ProviderTypeSelector } from "./provider-type-selector";
@@ -39,7 +39,7 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
     <div>{children}</div>
   ),
   MultiSelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+    <div data-testid="trigger">{children}</div>
   ),
   MultiSelectValue: ({ placeholder }: { placeholder: string }) => (
     <span>{placeholder}</span>
@@ -114,8 +114,8 @@ describe("ProviderTypeSelector", () => {
     render(<ProviderTypeSelector providers={providers} />);
 
     expect(multiSelectContentSpy).toHaveBeenCalledWith({
-      placeholder: "Search providers...",
-      emptyMessage: "No providers found.",
+      placeholder: "Search Provider Types...",
+      emptyMessage: "No Provider Types found.",
     });
     expect(screen.getByText("Amazon Web Services")).toBeInTheDocument();
   });
@@ -141,8 +141,30 @@ describe("ProviderTypeSelector", () => {
     render(<ProviderTypeSelector providers={providers} />);
 
     expect(
-      screen.getByRole("option", { name: /select all providers/i }),
+      screen.getByRole("option", { name: /select all Provider Types/i }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("All selected")).toBeInTheDocument();
+  });
+
+  it("shows one icon per selected type and a count in the trigger", async () => {
+    const azure = {
+      ...providers[0],
+      id: "provider-2",
+      attributes: { ...providers[0].attributes, provider: "azure" as const },
+    };
+
+    render(
+      <ProviderTypeSelector
+        providers={[providers[0], azure]}
+        onBatchChange={vi.fn()}
+        selectedValues={["aws", "azure"]}
+      />,
+    );
+
+    const trigger = screen.getByTestId("trigger");
+    expect(await within(trigger).findByText("AWS")).toBeInTheDocument();
+    expect(
+      within(trigger).getByText("2 Provider Types selected"),
+    ).toBeInTheDocument();
   });
 });

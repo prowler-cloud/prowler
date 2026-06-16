@@ -1,7 +1,7 @@
 import {
   getComplianceCsv,
+  getComplianceOcsf,
   getCompliancePdfReport,
-  getExportsZip,
   type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
@@ -102,48 +102,66 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
   return url.toString();
 };
 
+const REPORT_PREPARATION_ERROR =
+  "Unable to prepare the scan report. Please try again in a few minutes.";
+
+const getPreflightErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+
+  if (contentType.includes("text/html")) {
+    return REPORT_PREPARATION_ERROR;
+  }
+
+  return (await response.text()) || "An unknown error occurred.";
+};
+
 export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ) => {
-  const result = await getExportsZip(scanId);
+  const reportUrl = `/api/scans/${encodeURIComponent(scanId)}/report`;
 
-  if (result?.pending) {
+  try {
+    const preflightResponse = await fetch(`${reportUrl}?preflight=1`, {
+      cache: "no-store",
+    });
+
+    if (preflightResponse.status === 202) {
+      toast({
+        title: "The report is still being generated",
+        description: "Please try again in a few minutes.",
+      });
+      return;
+    }
+
+    if (!preflightResponse.ok) {
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: await getPreflightErrorMessage(preflightResponse),
+      });
+      return;
+    }
+  } catch (_error) {
     toast({
-      title: "The report is still being generated",
-      description: "Please try again in a few minutes.",
+      variant: "destructive",
+      title: "Download Failed",
+      description: "Unable to start the report download. Please try again.",
     });
     return;
   }
 
-  if (result?.success && result.data) {
-    const binaryString = window.atob(result.data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
+  const a = document.createElement("a");
+  a.href = reportUrl;
+  a.download = `scan-${scanId}-report.zip`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-    const blob = new Blob([bytes], { type: "application/zip" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Download Complete",
-      description: "Your scan report has been downloaded successfully.",
-    });
-  } else {
-    toast({
-      variant: "destructive",
-      title: "Download Failed",
-      description: result?.error || "An unknown error occurred.",
-    });
-  }
+  toast({
+    title: "Download Started",
+    description: "Your browser is downloading the scan report.",
+  });
 };
 
 /**
@@ -226,6 +244,32 @@ export const downloadComplianceCsv = async (
     result,
     "text/csv",
     "The compliance report has been downloaded successfully.",
+    toast,
+  );
+};
+
+/**
+ * Download the per-framework OCSF JSON export.
+ *
+ * Only universal frameworks declaring an ``outputs`` block produce this
+ * artifact (currently DORA and CSA CCM 4.0); callers must gate the call
+ * via ``isOcsfSupported`` to avoid surfacing a broken download on
+ * frameworks the API will 404 on.
+ */
+export const downloadComplianceOcsf = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the OCSF report. This may take a moment.",
+  });
+  const result = await getComplianceOcsf(scanId, complianceId);
+  await downloadFile(
+    result,
+    "application/json",
+    "The compliance OCSF report has been downloaded successfully.",
     toast,
   );
 };

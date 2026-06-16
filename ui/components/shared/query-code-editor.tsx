@@ -1103,9 +1103,11 @@ const DARK_SELECTION_BG = "rgba(121, 192, 255, 0.18)";
 function createEditorTheme({
   isDarkMode,
   minHeight,
+  fill,
 }: {
   isDarkMode: boolean;
   minHeight: number;
+  fill?: boolean;
 }) {
   return EditorView.theme(
     {
@@ -1114,12 +1116,17 @@ function createEditorTheme({
         color: "var(--text-neutral-primary)",
         fontFamily: MONO_FONT,
         fontSize: "12px",
+        // When filling, the editor takes the full height of its (bounded)
+        // wrapper so the scroller below can scroll instead of growing.
+        ...(fill && { height: "100%" }),
       },
       "&.cm-focused": {
         outline: "none",
       },
       ".cm-scroller": {
-        minHeight: `${minHeight}px`,
+        // A fixed min-height would force the editor to overflow a smaller
+        // container; when filling we let flexbox size it instead.
+        ...(fill ? {} : { minHeight: `${minHeight}px` }),
         overflow: "auto",
         fontFamily: MONO_FONT,
         lineHeight: "1.5rem",
@@ -1174,6 +1181,12 @@ interface QueryCodeEditorProps
   requirementBadge?: string;
   editable?: boolean;
   minHeight?: number;
+  /**
+   * When true the editor fills the height of its parent (which must be a
+   * bounded flex container) and scrolls internally instead of growing with
+   * its content.
+   */
+  fill?: boolean;
   showCopyButton?: boolean;
   showLineNumbers?: boolean;
   onChange: (value: string) => void;
@@ -1193,6 +1206,7 @@ export const QueryCodeEditor = ({
   requirementBadge,
   editable = true,
   minHeight = 320,
+  fill = false,
   showCopyButton = false,
   showLineNumbers = true,
   onChange,
@@ -1202,7 +1216,7 @@ export const QueryCodeEditor = ({
   const { resolvedTheme } = useTheme();
   const [copied, setCopied] = useState(false);
   const isDarkMode = resolvedTheme === "dark";
-  const editorTheme = createEditorTheme({ isDarkMode, minHeight });
+  const editorTheme = createEditorTheme({ isDarkMode, minHeight, fill });
   const editorHighlightStyle = isDarkMode
     ? darkHighlightStyle
     : lightHighlightStyle;
@@ -1261,12 +1275,13 @@ export const QueryCodeEditor = ({
       data-show-line-numbers={String(showLineNumbers)}
       className={cn(
         "border-border-neutral-secondary bg-bg-neutral-primary overflow-hidden rounded-xl border",
+        fill && "flex min-h-0 flex-1 flex-col",
         invalid && "border-border-error-primary",
         className,
       )}
       {...props}
     >
-      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex items-center justify-between border-b px-4 py-2">
+      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex shrink-0 items-center justify-between border-b px-4 py-2">
         {visibleLabel ? (
           <span className="text-text-neutral-secondary text-xs font-medium">
             {visibleLabel}
@@ -1303,6 +1318,7 @@ export const QueryCodeEditor = ({
       <CodeMirror
         value={value}
         theme={editorTheme}
+        className={cn(fill && "min-h-0 flex-1")}
         basicSetup={{
           foldGutter: false,
           highlightActiveLine: false,

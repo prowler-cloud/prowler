@@ -1,26 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ReactNode } from "react";
+import { useState } from "react";
 
 import {
-  AlibabaCloudProviderBadge,
-  AWSProviderBadge,
-  AzureProviderBadge,
-  CloudflareProviderBadge,
-  GCPProviderBadge,
-  GitHubProviderBadge,
-  GoogleWorkspaceProviderBadge,
-  IacProviderBadge,
-  ImageProviderBadge,
-  KS8ProviderBadge,
-  M365ProviderBadge,
-  MongoDBAtlasProviderBadge,
-  OktaProviderBadge,
-  OpenStackProviderBadge,
-  OracleCloudProviderBadge,
-  VercelProviderBadge,
-} from "@/components/icons/providers-badge";
+  ProviderTypeIcon,
+  ProviderTypeIconStack,
+} from "@/components/icons/providers-badge/provider-type-icon";
+import { Badge } from "@/components/shadcn";
 import {
   MultiSelect,
   MultiSelectContent,
@@ -36,35 +23,22 @@ import {
   type ProviderType,
 } from "@/types/providers";
 
-const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
-  aws: <AWSProviderBadge width={18} height={18} />,
-  azure: <AzureProviderBadge width={18} height={18} />,
-  gcp: <GCPProviderBadge width={18} height={18} />,
-  kubernetes: <KS8ProviderBadge width={18} height={18} />,
-  m365: <M365ProviderBadge width={18} height={18} />,
-  github: <GitHubProviderBadge width={18} height={18} />,
-  googleworkspace: <GoogleWorkspaceProviderBadge width={18} height={18} />,
-  iac: <IacProviderBadge width={18} height={18} />,
-  image: <ImageProviderBadge width={18} height={18} />,
-  oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
-  mongodbatlas: <MongoDBAtlasProviderBadge width={18} height={18} />,
-  alibabacloud: <AlibabaCloudProviderBadge width={18} height={18} />,
-  cloudflare: <CloudflareProviderBadge width={18} height={18} />,
-  openstack: <OpenStackProviderBadge width={18} height={18} />,
-  vercel: <VercelProviderBadge width={18} height={18} />,
-  okta: <OktaProviderBadge width={18} height={18} />,
-};
+const ACCOUNT_SELECTOR_FILTER = {
+  PROVIDER_ID: "provider_id__in",
+  PROVIDER_UID: "provider_uid__in",
+} as const;
+
+type AccountSelectorFilter =
+  (typeof ACCOUNT_SELECTOR_FILTER)[keyof typeof ACCOUNT_SELECTOR_FILTER];
 
 /** Common props shared by both batch and instant modes. */
 interface AccountsSelectorBaseProps {
   providers: ProviderProps[];
   search?: MultiSelectSearchProp;
-  /**
-   * Currently selected provider types (from the pending ProviderTypeSelector state).
-   * Used only for contextual description/empty-state messaging — does NOT narrow
-   * the list of available accounts, which remains independent of provider selection.
-   */
-  selectedProviderTypes?: string[];
+  filterKey?: AccountSelectorFilter;
+  id?: string;
+  disabledValues?: string[];
+  closeOnSelect?: boolean;
 }
 
 /** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
@@ -98,74 +72,105 @@ export function AccountsSelector({
   providers,
   onBatchChange,
   selectedValues,
-  selectedProviderTypes,
+  filterKey = ACCOUNT_SELECTOR_FILTER.PROVIDER_ID,
+  id = "accounts-selector",
+  disabledValues = [],
   search = {
-    placeholder: "Search accounts...",
-    emptyMessage: "No accounts found.",
+    placeholder: "Search Providers...",
+    emptyMessage: "No Providers found.",
   },
+  closeOnSelect = false,
 }: AccountsSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
+  const [selectorOpen, setSelectorOpen] = useState(false);
 
-  const filterKey = "filter[provider_id__in]";
-  const current = searchParams.get(filterKey) || "";
+  const labelId = `${id}-label`;
+  const urlFilterKey = `filter[${filterKey}]`;
+  const current = searchParams.get(urlFilterKey) || "";
   const urlSelectedIds = current ? current.split(",").filter(Boolean) : [];
 
-  // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
-  const selectedIds = onBatchChange ? selectedValues : urlSelectedIds;
   const visibleProviders = providers;
-  // .filter((p) => p.attributes.connection?.connected)
+  const getProviderValue = (provider: ProviderProps) =>
+    filterKey === ACCOUNT_SELECTOR_FILTER.PROVIDER_UID
+      ? provider.attributes.uid
+      : provider.id;
+  const disabledValuesSet = new Set(disabledValues);
+
+  // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
+  const selectedIds = (onBatchChange ? selectedValues : urlSelectedIds).filter(
+    (id) => !disabledValuesSet.has(id),
+  );
 
   const handleMultiValueChange = (ids: string[]) => {
+    const enabledIds = ids.filter((id) => !disabledValuesSet.has(id));
+
     if (onBatchChange) {
-      onBatchChange("provider_id__in", ids);
+      onBatchChange(filterKey, enabledIds);
+      if (closeOnSelect) setSelectorOpen(false);
       return;
     }
     navigateWithParams((params) => {
-      params.delete(filterKey);
+      params.delete(urlFilterKey);
 
-      if (ids.length > 0) {
-        params.set(filterKey, ids.join(","));
+      if (enabledIds.length > 0) {
+        params.set(urlFilterKey, enabledIds.join(","));
       }
     });
+    if (closeOnSelect) setSelectorOpen(false);
   };
 
   const selectedLabel = () => {
     if (selectedIds.length === 0) return null;
     if (selectedIds.length === 1) {
-      const p = providers.find((pr) => pr.id === selectedIds[0]);
+      const p = providers.find((pr) => getProviderValue(pr) === selectedIds[0]);
       const name = p ? p.attributes.alias || p.attributes.uid : selectedIds[0];
-      return <span className="truncate">{name}</span>;
+      return (
+        <span className="flex min-w-0 items-center gap-2">
+          {p && (
+            <span aria-hidden="true">
+              <ProviderTypeIcon type={p.attributes.provider} />
+            </span>
+          )}
+          <span className="truncate">{name}</span>
+        </span>
+      );
     }
+    // One icon per selected account (no dedupe): two accounts of the same
+    // provider show two icons, disambiguated by the UID tooltip on hover.
+    const items = selectedIds
+      .map((selectedId) =>
+        providers.find((pr) => getProviderValue(pr) === selectedId),
+      )
+      .filter((p): p is ProviderProps => Boolean(p))
+      .map((p) => ({
+        key: p.id,
+        type: p.attributes.provider as ProviderType,
+        tooltip: p.attributes.uid,
+      }));
     return (
-      <span className="truncate">{selectedIds.length} accounts selected</span>
+      <span className="flex min-w-0 items-center gap-2">
+        <ProviderTypeIconStack items={items} />
+        <span className="truncate">
+          {selectedIds.length} Providers selected
+        </span>
+      </span>
     );
   };
 
-  // Build a contextual description based on currently selected provider types.
-  // This is purely for user guidance (aria label + empty state) and does NOT
-  // narrow the list of available accounts — all providers remain selectable.
-  const filterDescription =
-    selectedProviderTypes && selectedProviderTypes.length > 0
-      ? `Accounts for ${selectedProviderTypes.map(getProviderDisplayName).join(", ")}`
-      : "All connected provider accounts";
-
   return (
     <div className="relative">
-      <label
-        htmlFor="accounts-selector"
-        className="sr-only"
-        id="accounts-label"
-      >
-        Filter by provider account. {filterDescription}. Select one or more
-        accounts to view findings.
+      <label htmlFor={id} className="sr-only" id={labelId}>
+        Filter by Provider. Select one or more Providers to filter results.
       </label>
-      <MultiSelect values={selectedIds} onValuesChange={handleMultiValueChange}>
-        <MultiSelectTrigger
-          id="accounts-selector"
-          aria-labelledby="accounts-label"
-        >
-          {selectedLabel() || <MultiSelectValue placeholder="All accounts" />}
+      <MultiSelect
+        values={selectedIds}
+        onValuesChange={handleMultiValueChange}
+        open={closeOnSelect ? selectorOpen : undefined}
+        onOpenChange={closeOnSelect ? setSelectorOpen : undefined}
+      >
+        <MultiSelectTrigger id={id} aria-labelledby={labelId}>
+          {selectedLabel() || <MultiSelectValue placeholder="All Providers" />}
         </MultiSelectTrigger>
         <MultiSelectContent search={search}>
           {visibleProviders.length > 0 ? (
@@ -174,7 +179,7 @@ export function AccountsSelector({
                 role="option"
                 aria-selected={selectedIds.length === 0}
                 aria-disabled={selectedIds.length === 0}
-                aria-label="Select all accounts (clears current selection to show all)"
+                aria-label="Select all Providers (clears current selection to show all)"
                 tabIndex={0}
                 className="text-text-neutral-secondary flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-slate-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-slate-700/50"
                 onClick={() => {
@@ -192,10 +197,10 @@ export function AccountsSelector({
                 {selectedIds.length === 0 ? "All selected" : "Select All"}
               </div>
               {visibleProviders.map((p) => {
-                const id = p.id;
+                const value = getProviderValue(p);
+                const isDisabled = disabledValuesSet.has(value);
                 const displayName = p.attributes.alias || p.attributes.uid;
                 const providerType = p.attributes.provider as ProviderType;
-                const icon = PROVIDER_ICON[providerType];
                 const searchKeywords = [
                   displayName,
                   p.attributes.alias,
@@ -205,23 +210,30 @@ export function AccountsSelector({
                 ].filter(Boolean);
                 return (
                   <MultiSelectItem
-                    key={id}
-                    value={id}
+                    key={p.id}
+                    value={value}
                     badgeLabel={displayName}
                     keywords={searchKeywords}
-                    aria-label={`${displayName} account (${providerType.toUpperCase()})`}
+                    disabled={isDisabled}
+                    aria-label={`${displayName} Provider (${providerType.toUpperCase()})`}
+                    onSelect={() => {
+                      if (closeOnSelect) setSelectorOpen(false);
+                    }}
                   >
-                    <span aria-hidden="true">{icon}</span>
-                    <span className="truncate">{displayName}</span>
+                    <span aria-hidden="true">
+                      <ProviderTypeIcon type={providerType} />
+                    </span>
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="truncate">{displayName}</span>
+                      {isDisabled && <Badge variant="tag">Disconnected</Badge>}
+                    </span>
                   </MultiSelectItem>
                 );
               })}
             </>
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-              {selectedProviderTypes && selectedProviderTypes.length > 0
-                ? `No accounts available for ${selectedProviderTypes.map(getProviderDisplayName).join(", ")}`
-                : "No connected accounts available"}
+              No connected Providers available
             </div>
           )}
         </MultiSelectContent>

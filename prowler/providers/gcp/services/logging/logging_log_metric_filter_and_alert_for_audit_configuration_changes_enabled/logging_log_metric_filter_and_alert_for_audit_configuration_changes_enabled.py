@@ -1,5 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.logging.logging_client import logging_client
+from prowler.providers.gcp.services.logging.logging_service import (
+    get_projects_covered_by_aggregated_metric,
+)
 from prowler.providers.gcp.services.monitoring.monitoring_client import (
     monitoring_client,
 )
@@ -10,12 +13,10 @@ class logging_log_metric_filter_and_alert_for_audit_configuration_changes_enable
 ):
     def execute(self) -> Check_Report_GCP:
         findings = []
+        metric_filter = 'protoPayload.methodName="SetIamPolicy" AND protoPayload.serviceData.policyDelta.auditConfigDeltas:*'
         projects_with_metric = set()
         for metric in logging_client.metrics:
-            if (
-                'protoPayload.methodName="SetIamPolicy" AND protoPayload.serviceData.policyDelta.auditConfigDeltas:*'
-                in metric.filter
-            ):
+            if metric_filter in metric.filter:
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
                     resource=metric,
@@ -33,6 +34,11 @@ class logging_log_metric_filter_and_alert_for_audit_configuration_changes_enable
                             break
                 findings.append(report)
 
+        # Credit projects whose logs are centrally monitored via an org-level
+        # aggregated sink to a bucket-scoped metric + alert (instead of failing them).
+        centrally_covered = get_projects_covered_by_aggregated_metric(
+            logging_client, monitoring_client, metric_filter
+        )
         for project in logging_client.project_ids:
             if project not in projects_with_metric:
                 report = Check_Report_GCP(
@@ -46,8 +52,12 @@ class logging_log_metric_filter_and_alert_for_audit_configuration_changes_enable
                         else "GCP Project"
                     ),
                 )
-                report.status = "FAIL"
-                report.status_extended = f"There are no log metric filters or alerts associated in project {project}."
+                if project in centrally_covered:
+                    report.status = "PASS"
+                    report.status_extended = f"Log metric filter {centrally_covered[project]} found with an alert, covering project {project} via an organization-level aggregated sink."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"There are no log metric filters or alerts associated in project {project}."
                 findings.append(report)
 
         return findings

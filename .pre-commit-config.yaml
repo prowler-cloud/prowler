@@ -49,6 +49,14 @@ repos:
         files: ^\.github/(workflows|actions)/.+\.ya?ml$|^\.github/dependabot\.ya?ml$
         priority: 30
 
+  ## RENOVATE
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 43.150.0
+    hooks:
+      - id: renovate-config-validator
+        files: ^\.github/renovate\.json$
+        priority: 10
+
   ## BASH
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.11.0
@@ -124,6 +132,13 @@ repos:
         files: { glob: ["{pyproject.toml,uv.lock}"] }
         pass_filenames: false
         priority: 50
+
+  ## MARKDOWN
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        priority: 30
 
   ## CONTAINERS
   - repo: https://github.com/hadolint/hadolint

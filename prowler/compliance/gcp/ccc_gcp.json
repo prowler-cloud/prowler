@@ -889,7 +889,7 @@
         }
       ],
       "Checks": [
-        "kms_key_rotation_enabled"
+        "kms_key_rotation_max_90_days"
       ]
     },
     {

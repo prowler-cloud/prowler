@@ -411,6 +411,7 @@ class Test_Entra_Service:
                 id="user-1",
                 display_name="User 1",
                 on_premises_sync_enabled=True,
+                employee_hire_date=datetime(2026, 6, 10, tzinfo=timezone.utc),
             ),
             SimpleNamespace(
                 id="user-2",
@@ -535,6 +536,7 @@ class Test_Entra_Service:
             "userType",
             "accountEnabled",
             "onPremisesSyncEnabled",
+            "employeeHireDate",
         }
         with_url_mock.assert_called_once_with("next-link")
         assert users["user-1"].directory_roles_ids == ["role-template-1"]
@@ -548,6 +550,9 @@ class Test_Entra_Service:
         assert users["user-1"].authentication_methods == ["fido2SecurityKey"]
         assert users["user-6"].authentication_methods == ["mobilePhone"]
         assert users["user-2"].authentication_methods == []
+        assert users["user-1"].employee_hire_date == datetime(
+            2026, 6, 10, tzinfo=timezone.utc
+        )
 
     def test__get_users_uses_graph_account_enabled_for_disabled_guests(self):
         """Regression test for https://github.com/prowler-cloud/prowler/issues/10921.

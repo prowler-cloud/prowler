@@ -1863,7 +1863,9 @@
       "Id": "ELB.4",
       "Name": "Application load balancers should be configured to drop HTTP headers",
       "Description": "This control evaluates AWS Application Load Balancers (ALB) to ensure they are configured to drop invalid HTTP headers. The control fails if the value of routing.http.drop_invalid_header_fields.enabled is set to false. By default, ALBs are not configured to drop invalid HTTP header values. Removing these header values prevents HTTP desync attacks.",
-      "Checks": [],
+      "Checks": [
+        "elbv2_alb_drop_invalid_header_fields_enabled"
+      ],
       "Attributes": [
         {
           "ItemId": "ELB.4",
