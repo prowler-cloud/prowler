@@ -9,9 +9,15 @@ import { z } from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import {
+  Button,
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+} from "@/components/shadcn";
+import { DialogFooter } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal";
-import { FormButtons } from "@/components/ui/form";
 import { toast, ToastAction } from "@/components/ui/toast";
 import { SCAN_JOBS_TAB } from "@/types";
 import type { ProviderProps } from "@/types/providers";
@@ -93,7 +99,7 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-8">
+    <form onSubmit={onSubmit} className="flex w-full min-w-0 flex-col gap-8">
       <div className="flex items-center gap-2">
         <CloudCog className="text-text-neutral-secondary size-4" />
         <span className="text-text-neutral-secondary text-sm">
@@ -101,7 +107,7 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
         </span>
       </div>
 
-      <Field>
+      <Field className="min-w-0">
         <FieldLabel htmlFor="launch-scan-account">Providers</FieldLabel>
         <AccountsSelector
           id="launch-scan-account"
@@ -130,13 +136,26 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
 
       {rootError && <FieldError>{rootError}</FieldError>}
 
-      <FormButtons
-        onCancel={onClose}
-        submitText={isSubmitting ? "Launching..." : "Launch Scan"}
-        loadingText="Launching..."
-        isDisabled={isSubmitting || !providers.length}
-        rightIcon={<Rocket className="size-4" />}
-      />
+      <DialogFooter className="w-full min-w-0 gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={onClose}
+          className="w-full sm:w-40"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          size="lg"
+          disabled={isSubmitting || !providers.length}
+          className="w-full sm:w-40"
+        >
+          <Rocket className="size-4" />
+          {isSubmitting ? "Launching..." : "Launch Scan"}
+        </Button>
+      </DialogFooter>
     </form>
   );
 }

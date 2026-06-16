@@ -164,6 +164,18 @@ describe("LaunchScanModal", () => {
     expect(screen.getByPlaceholderText("Search Providers...")).toBeVisible();
   });
 
+  it("keeps modal form controls constrained to the dialog width", () => {
+    render(
+      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+    );
+
+    const form = screen
+      .getByRole("button", { name: /launch scan/i })
+      .closest("form");
+
+    expect(form).toHaveClass("w-full", "min-w-0");
+  });
+
   it("disables disconnected providers in the launch selector", () => {
     render(
       <LaunchScanModal
