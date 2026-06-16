@@ -127,7 +127,7 @@ Add the following to `.gitlab-ci.yml`:
 
 ```yaml
 prowler-scan:
-  image: python:3.12-slim
+  image: python:3.13-slim
   stage: test
   script:
     - pip install prowler
@@ -154,7 +154,7 @@ stages:
   - security
 
 .prowler-base:
-  image: python:3.12-slim
+  image: python:3.13-slim
   stage: security
   before_script:
     - pip install prowler

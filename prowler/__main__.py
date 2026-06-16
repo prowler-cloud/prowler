@@ -19,7 +19,7 @@ from prowler.config.config import (
     orange_color,
     sarif_file_suffix,
 )
-from prowler.lib.banner import print_banner
+from prowler.lib.banner import print_banner, print_prowler_cloud_banner
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
@@ -102,6 +102,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig_okta import (
+    OktaIDaaSSTIG,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_alibaba import (
     ProwlerThreatScoreAlibaba,
 )
@@ -199,7 +202,7 @@ def prowler():
 
     if not args.no_banner:
         legend = args.verbose or getattr(args, "fixer", None)
-        print_banner(legend)
+        print_banner(legend, provider)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
@@ -1314,6 +1317,33 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
+    elif provider == "okta":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("okta_idaas_stig"):
+                # Generate Okta IDaaS STIG Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                okta_idaas_stig = OktaIDaaSSTIG(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(okta_idaas_stig)
+                okta_idaas_stig.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
     else:
         # Dynamic fallback: any external/custom provider
         try:
@@ -1445,6 +1475,10 @@ def prowler():
                 print(
                     f"\nDetailed compliance results are in {Fore.YELLOW}{output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
+
+    # Promote Prowler Cloud as the last thing the user sees after the results
+    if not args.no_banner and not args.only_logs:
+        print_prowler_cloud_banner(provider)
 
     # If custom checks were passed, remove the modules
     if checks_folder:
