@@ -63,7 +63,6 @@ constraints = [
     { name = "attrs", specifier = "==25.4.0" },
     { name = "authlib", specifier = "==1.6.12" },
     { name = "autopep8", specifier = "==2.3.2" },
-    { name = "awsipranges", specifier = "==0.3.3" },
     { name = "azure-cli-core", specifier = "==2.83.0" },
     { name = "azure-cli-telemetry", specifier = "==1.1.0" },
     { name = "azure-common", specifier = "==1.1.28" },
@@ -200,7 +199,7 @@ constraints = [
     { name = "httpx", specifier = "==0.28.1" },
     { name = "humanfriendly", specifier = "==10.0" },
     { name = "hyperframe", specifier = "==6.1.0" },
-    { name = "iamdata", specifier = "==0.1.202602021" },
+    { name = "iamdata", specifier = "==0.1.202605131" },
     { name = "idna", specifier = "==3.15" },
     { name = "importlib-metadata", specifier = "==8.7.1" },
     { name = "inflection", specifier = "==0.5.1" },
@@ -3187,11 +3186,11 @@ wheels = [
 
 [[package]]
 name = "iamdata"
-version = "0.1.202602021"
+version = "0.1.202605131"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/93/5e/8179963b7a528c548824a8e4088150509d9fa8571dd622b7399f6d2d5680/iamdata-0.1.202602021.tar.gz", hash = "sha256:c24265fc3694076f65da91a8aa9361b60da25f7b8cfd8ba4ddd6aa1b9bb5153e", size = 771233, upload-time = "2026-02-02T05:49:56.76Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/ea/d68e25aa4392e8a9f8e6523adc95a5fb86baf98d052efa2cec4d4a00e7ce/iamdata-0.1.202605131.tar.gz", hash = "sha256:ab4e8f1ea080394157848fecd0ca643633e35b2e0cb1965c9ed9bdd673afe00c", size = 793465, upload-time = "2026-05-13T05:57:10.607Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/9e/ae7a3019aa5a27d70412b74da4f0304695efa5d9a88f0689f37ea2602ea2/iamdata-0.1.202602021-py3-none-any.whl", hash = "sha256:48419662d75dd0e1ea22b9cc98fd70201d4c72760c6897acc46ad9ab90633d18", size = 1226614, upload-time = "2026-02-02T05:49:54.735Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/93/03396b477b0faa9f1a12142209b59aa13d0fe4f64e2be47883f607789c14/iamdata-0.1.202605131-py3-none-any.whl", hash = "sha256:350e317d96fb8c8ddf30aa6da222788d302af5f13c9e357b59f9eefe50b8af5a", size = 1259166, upload-time = "2026-05-13T05:57:09.093Z" },
 ]
 
 [[package]]
@@ -4448,7 +4447,7 @@ wheels = [
 [[package]]
 name = "prowler"
 version = "5.31.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#8081d0fd0552131dfbd885f1074377eb653fc785" }
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#b5bb85c9564f6ca6a7f66c851bb56bde719205ee" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
