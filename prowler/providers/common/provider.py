@@ -228,12 +228,13 @@ class Provider(ABC):
         flags.
 
         The base implementation is a default: it passes the secret through, adds
-        the mutelist, and intentionally drops ``provider_uid``. Providers for
-        which the uid is part of the scan scope (e.g. the Azure subscription, GCP
-        project or M365 tenant), or whose constructor renames/filters secret
-        keys, must override this to inject the uid into the right kwarg. Until a
-        provider overrides it, this base default is not the final shape the API
-        will consume for that provider.
+        the mutelist, and intentionally drops ``provider_uid``. The API consumes
+        this contract for external providers, so an external provider whose uid
+        is part of the scan scope (e.g. a subscription or project id) or that
+        renames/filters secret keys overrides this to inject the uid into the
+        right kwarg; until it does, the base default is not the final shape for
+        that provider. Built-in providers whose scope derives from the uid are
+        mapped on the API side and do not go through this method.
         """
         kwargs = {**secret}
         if mutelist_content:
@@ -246,10 +247,11 @@ class Provider(ABC):
 
         Companion to :meth:`get_scan_arguments` for the connection check, which
         often needs a different shape than the constructor. The base passes the
-        secret through and intentionally drops ``provider_uid``. Providers for
-        which the uid is part of the scope must override this to add their
-        identity kwarg (and ``provider_id`` where their ``test_connection``
-        expects it) before the API will consume this for that provider.
+        secret through and intentionally drops ``provider_uid``. An external
+        provider whose uid is part of the scope overrides this to add its
+        identity kwarg (and ``provider_id`` where its ``test_connection``
+        expects it); built-in providers are mapped on the API side and do not go
+        through this method.
         """
         return {**secret}
 
