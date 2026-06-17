@@ -791,6 +791,16 @@ class Entra(M365Service):
                             features, "seamless_sso_enabled", False
                         )
                         or False,
+                        block_soft_match_enabled=getattr(
+                            features, "block_soft_match_enabled", False
+                        )
+                        or False,
+                        block_cloud_object_takeover_through_hard_match_enabled=getattr(
+                            features,
+                            "block_cloud_object_takeover_through_hard_match_enabled",
+                            False,
+                        )
+                        or False,
                     )
                 )
         except ODataError as error:
@@ -1637,6 +1647,8 @@ class DirectorySyncSettings(BaseModel):
     id: str
     password_sync_enabled: bool = False
     seamless_sso_enabled: bool = False
+    block_soft_match_enabled: bool = False
+    block_cloud_object_takeover_through_hard_match_enabled: bool = False
 
 
 class AuthenticationMethodConfiguration(BaseModel):
