@@ -13,8 +13,8 @@
   "Risk": "Without protection against employee name spoofing, users may receive **emails that appear to come from colleagues or executives** but are actually from external attackers. This enables **business email compromise (BEC)**, **wire fraud**, and **social engineering attacks** that exploit trust relationships.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/9157861",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/advanced-phishing-and-malware-protection",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

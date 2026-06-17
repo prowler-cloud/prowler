@@ -279,6 +279,12 @@ const isOneOf = <T extends string>(
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
 
+const isOptionalString = (value: unknown): value is string | undefined =>
+  value === undefined || typeof value === "string";
+
+const isOptionalStringArray = (value: unknown): value is string[] | undefined =>
+  value === undefined || isStringArray(value);
+
 const ASD_METADATA_STRING_FIELDS = [
   "Section",
   "Description",
@@ -327,6 +333,68 @@ export interface ASDEssentialEightRequirement extends Requirement {
   references: ASDEssentialEightAttributesMetadata["References"];
 }
 
+export interface OktaIDaaSStigAttributesMetadata {
+  Section: string;
+  Severity: string;
+  RuleID: string;
+  StigID: string;
+  CCI?: string[];
+  CheckText?: string;
+  FixText?: string;
+}
+
+const OKTA_IDAAS_STIG_REQUIRED_STRING_FIELDS = [
+  "Section",
+  "Severity",
+  "RuleID",
+  "StigID",
+] as const satisfies readonly (keyof OktaIDaaSStigAttributesMetadata)[];
+
+export const isOktaIDaaSStigAttributesMetadata = (
+  value: unknown,
+): value is OktaIDaaSStigAttributesMetadata =>
+  isRecord(value) &&
+  OKTA_IDAAS_STIG_REQUIRED_STRING_FIELDS.every(
+    (field) => typeof value[field] === "string",
+  ) &&
+  isOptionalStringArray(value.CCI) &&
+  isOptionalString(value.CheckText) &&
+  isOptionalString(value.FixText);
+
+export interface OktaIDaaSStigRequirement extends Requirement {
+  severity: OktaIDaaSStigAttributesMetadata["Severity"];
+  rule_id: OktaIDaaSStigAttributesMetadata["RuleID"];
+  stig_id: OktaIDaaSStigAttributesMetadata["StigID"];
+  cci: OktaIDaaSStigAttributesMetadata["CCI"];
+  check_text: OktaIDaaSStigAttributesMetadata["CheckText"];
+  fix_text: OktaIDaaSStigAttributesMetadata["FixText"];
+}
+
+// DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554).
+// Universal framework — flat attributes dict with Pillar/Article/ArticleTitle.
+// `Pillar` is the canonical grouping key for tables and PDF; the enum mirrors
+// the five DORA pillars declared in `prowler/compliance/dora.json`.
+export const DORA_PILLAR = {
+  ICT_RISK_MANAGEMENT: "ICT Risk Management",
+  INCIDENT_REPORTING: "ICT-Related Incident Reporting",
+  RESILIENCE_TESTING: "Digital Operational Resilience Testing",
+  THIRD_PARTY_RISK: "ICT Third-Party Risk Management",
+  INFORMATION_SHARING: "Information Sharing",
+} as const;
+export type DORAPillar = (typeof DORA_PILLAR)[keyof typeof DORA_PILLAR];
+
+export interface DORAAttributesMetadata {
+  Pillar: DORAPillar;
+  Article: string;
+  ArticleTitle: string;
+}
+
+export interface DORARequirement extends Requirement {
+  pillar: DORAAttributesMetadata["Pillar"];
+  article: DORAAttributesMetadata["Article"];
+  article_title: DORAAttributesMetadata["ArticleTitle"];
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -349,6 +417,8 @@ export interface AttributesItemData {
         | CCCAttributesMetadata[]
         | CSAAttributesMetadata[]
         | ASDEssentialEightAttributesMetadata[]
+        | OktaIDaaSStigAttributesMetadata[]
+        | DORAAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure

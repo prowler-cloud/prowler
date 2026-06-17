@@ -10,7 +10,7 @@ import type {
   QueryResultAttributes,
 } from "@/types/attack-paths";
 
-const API = process.env.NEXT_PUBLIC_API_BASE_URL!;
+const API = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 type JsonApiErrorBody = {
   errors: Array<{ detail: string; status: string }>;

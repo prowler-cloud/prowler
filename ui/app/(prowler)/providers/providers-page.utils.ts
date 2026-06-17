@@ -2,7 +2,7 @@ import {
   listOrganizationsSafe,
   listOrganizationUnitsSafe,
 } from "@/actions/organizations/organizations";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders, getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import {
   extractFiltersAndQuery,
@@ -467,7 +467,7 @@ export async function loadProvidersAccountsViewData({
     ),
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
     // TODO: Replace with a dedicated lightweight endpoint when available.
-    resolveActionResult(getProviders({ pageSize: 500 })),
+    resolveActionResult(getAllProviders()),
     // Fetch active scheduled scans to determine daily schedule per provider
     resolveActionResult(
       getScans({

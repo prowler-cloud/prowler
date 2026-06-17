@@ -8,7 +8,77 @@ This guide explains the AI Skills system that provides on-demand context and pat
 **What are AI Skills?** Skills are structured instructions that help AI agents (Claude Code, Cursor, Copilot, etc.) understand Prowler's conventions, patterns, and best practices.
 </Info>
 
-## Architecture Overview
+Skills live in the [`skills/`](https://github.com/prowler-cloud/prowler/tree/master/skills) directory of the Prowler OSS repository. Each skill is a folder containing a `SKILL.md` file with its patterns and metadata.
+
+## Installation
+
+To enable skills for the supported AI coding assistants, run the setup script from the repository root:
+
+```bash
+./skills/setup.sh
+```
+
+The script creates symlinks so each tool finds the skills in its expected location:
+
+| Tool | Created by setup |
+|------|------------------|
+| Claude Code | `.claude/skills/` symlink and `CLAUDE.md` |
+| Gemini CLI | `.gemini/skills/` symlink and `GEMINI.md` |
+| Codex (OpenAI) | `.codex/skills/` symlink (uses `AGENTS.md` natively) |
+| GitHub Copilot | `.github/copilot-instructions.md` symlink to `AGENTS.md` |
+
+After running the setup, restart the AI coding assistant to load the skills.
+
+## Using Skills
+
+AI agents discover skills automatically and load them when a request matches a skill trigger. To load a skill manually during a session, point the agent to the skill's `SKILL.md` file:
+
+```text
+Read skills/{skill-name}/SKILL.md
+```
+
+For the full list of available skills, their triggers, and the Auto-invoke mappings, see the [`skills/README.md`](https://github.com/prowler-cloud/prowler/blob/master/skills/README.md) and [`AGENTS.md`](https://github.com/prowler-cloud/prowler/blob/master/AGENTS.md) in the repository.
+
+## Available Skills
+
+| Type | Skills |
+|------|--------|
+| **Generic** | typescript, react-19, nextjs-16, tailwind-4, pytest, playwright, django-drf, zod-4, zustand-5, ai-sdk-5, vitest, tdd |
+| **Prowler** | prowler, prowler-sdk-check, prowler-api, prowler-ui, prowler-mcp, prowler-provider, prowler-compliance, prowler-compliance-review, prowler-docs, prowler-pr, prowler-ci, prowler-attack-paths-query |
+| **Testing** | prowler-test-sdk, prowler-test-api, prowler-test-ui |
+| **Meta** | skill-creator, skill-sync |
+
+<Note>
+This table is a snapshot. The repository is the source of truth: see [`skills/README.md`](https://github.com/prowler-cloud/prowler/blob/master/skills/README.md) for the current, complete list.
+</Note>
+
+## Skill Structure
+
+Each skill follows the [Agent Skills spec](https://agentskills.io):
+
+```text
+skills/{skill-name}/
+├── SKILL.md          # Patterns, rules, decision trees
+├── assets/           # Code templates, schemas
+└── references/       # Links to local docs (single source of truth)
+```
+
+## Key Design Decisions
+
+1. **Self-contained skills** - Critical patterns inline for fast loading
+2. **Local doc references** - No web URLs, points to `docs/developer-guide/*.mdx`
+3. **Single source of truth** - Skills reference docs, no duplication
+4. **On-demand loading** - AI loads only what's needed for the task
+
+## Creating New Skills
+
+Use the `skill-creator` meta-skill to create new skills that follow the Agent Skills spec. See [`AGENTS.md`](https://github.com/prowler-cloud/prowler/blob/master/AGENTS.md) for the full list of available skills and their triggers.
+
+## How Skills Work
+
+The diagrams below explain the internals of the skill system. They are useful for understanding the design, but are not required to install or use skills.
+
+### Architecture Overview
 
 ```mermaid
 graph LR
@@ -28,7 +98,7 @@ graph LR
     style F fill:#1a4d2e,stroke:#66bb6a,color:#fff
 ```
 
-## How It Works
+### Request Lifecycle
 
 ```mermaid
 sequenceDiagram
@@ -68,7 +138,7 @@ sequenceDiagram
     A->>U: Creates check with correct patterns
 ```
 
-## Before vs After
+### With and Without Skills
 
 ```mermaid
 graph TD
@@ -96,7 +166,7 @@ graph TD
     style AFTER fill:#1a4d1a,stroke:#66bb6a,color:#fff
 ```
 
-## Complete Architecture
+### Full Component Map
 
 ```mermaid
 flowchart TB
@@ -110,7 +180,7 @@ flowchart TB
         subgraph GENERIC["Generic Skills"]
             G1["typescript"]
             G2["react-19"]
-            G3["nextjs-15"]
+            G3["nextjs-16"]
             G4["tailwind-4"]
             G5["pytest"]
             G6["playwright"]
@@ -186,34 +256,3 @@ flowchart TB
     style STRUCTURE fill:#5c3d1a,stroke:#ffb74d,color:#fff
     style DOCS fill:#1a3d4d,stroke:#4dd0e1,color:#fff
 ```
-
-## Skills Included
-
-| Type | Skills |
-|------|--------|
-| **Generic** | typescript, react-19, nextjs-15, tailwind-4, pytest, playwright, django-drf, zod-4, zustand-5, ai-sdk-5 |
-| **Prowler** | prowler, prowler-sdk-check, prowler-api, prowler-ui, prowler-mcp, prowler-provider, prowler-compliance, prowler-compliance-review, prowler-docs, prowler-pr, prowler-ci |
-| **Testing** | prowler-test-sdk, prowler-test-api, prowler-test-ui |
-| **Meta** | skill-creator, skill-sync |
-
-## Skill Structure
-
-Each skill follows the [Agent Skills spec](https://agentskills.io):
-
-```
-skills/{skill-name}/
-├── SKILL.md          # Patterns, rules, decision trees
-├── assets/           # Code templates, schemas
-└── references/       # Links to local docs (single source of truth)
-```
-
-## Key Design Decisions
-
-1. **Self-contained skills** - Critical patterns inline for fast loading
-2. **Local doc references** - No web URLs, points to `docs/developer-guide/*.mdx`
-3. **Single source of truth** - Skills reference docs, no duplication
-4. **On-demand loading** - AI loads only what's needed for the task
-
-## Creating New Skills
-
-Use the `skill-creator` meta-skill to create new skills that follow the Agent Skills spec. See `AGENTS.md` for the full list of available skills and their triggers.

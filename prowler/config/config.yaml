@@ -669,3 +669,9 @@ okta:
   # 15 per DISA STIG V-273186 (OKTA-APP-000020); raise it only with an
   # explicit risk acceptance.
   okta_max_session_idle_minutes: 15
+  # Okta Applications
+  # okta.application_admin_console_session_idle_timeout_15min
+  # Maximum acceptable Okta Admin Console app idle timeout, in minutes.
+  # Defaults to 15 per DISA STIG V-273187 (OKTA-APP-000025); raise it only
+  # with an explicit risk acceptance.
+  okta_admin_console_idle_timeout_max_minutes: 15

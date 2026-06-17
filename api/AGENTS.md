@@ -10,7 +10,7 @@
 > - [`jsonapi`](../skills/jsonapi/SKILL.md) - Strict JSON:API v1.1 spec compliance
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
 
-### Auto-invoke Skills
+## Auto-invoke Skills
 
 When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
@@ -81,7 +81,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 ## DECISION TREES
 
 ### Serializer Selection
-```
+```text
 Read → <Model>Serializer
 Create → <Model>CreateSerializer
 Update → <Model>UpdateSerializer
@@ -89,7 +89,7 @@ Nested read → <Model>IncludeSerializer
 ```
 
 ### Task vs View
-```
+```text
 < 100ms → View
 > 100ms or external API → Celery task
 Needs retry → Celery task
@@ -105,7 +105,7 @@ Django 5.1.x | DRF 3.15.x | djangorestframework-jsonapi 7.x | Celery 5.4.x | Pos
 
 ## PROJECT STRUCTURE
 
-```
+```text
 api/src/backend/
 ├── api/                    # Main Django app
 │   ├── v1/                # API version 1 (views, serializers, urls)

@@ -1,5 +1,6 @@
 import {
   getComplianceCsv,
+  getComplianceOcsf,
   getCompliancePdfReport,
   type ScanBinaryResult,
 } from "@/actions/scans";
@@ -243,6 +244,32 @@ export const downloadComplianceCsv = async (
     result,
     "text/csv",
     "The compliance report has been downloaded successfully.",
+    toast,
+  );
+};
+
+/**
+ * Download the per-framework OCSF JSON export.
+ *
+ * Only universal frameworks declaring an ``outputs`` block produce this
+ * artifact (currently DORA and CSA CCM 4.0); callers must gate the call
+ * via ``isOcsfSupported`` to avoid surfacing a broken download on
+ * frameworks the API will 404 on.
+ */
+export const downloadComplianceOcsf = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the OCSF report. This may take a moment.",
+  });
+  const result = await getComplianceOcsf(scanId, complianceId);
+  await downloadFile(
+    result,
+    "application/json",
+    "The compliance OCSF report has been downloaded successfully.",
     toast,
   );
 };

@@ -1,0 +1,38 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "rules_suspicious_programmatic_login_alert_configured",
+  "CheckTitle": "Suspicious programmatic login alert rule is configured",
+  "CheckType": [],
+  "ServiceName": "rules",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "monitoring",
+  "Description": "The **Suspicious programmatic login** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google detects suspicious login attempts from applications or programs.",
+  "Risk": "Without this alert enabled, administrators will not be notified of **suspicious programmatic login attempts**. This could indicate automated credential stuffing or unauthorized API access using compromised credentials.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/3230421",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Select **Rules**\n3. Under **Google protects you by default** select **View list**\n4. Scroll to **Suspicious programmatic login** and select it\n5. Within the Actions pane, click the edit pencil\n6. Select **Send to alert center** to set the alert to ON\n7. Set the alert severity to **Low**\n8. Select **Send email notifications**\n9. Ensure **All super administrators** is selected as recipients\n10. Click **Review** to confirm the values\n11. Click **Update Rule**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the **Suspicious programmatic login** alert rule with alert center ON, email notifications ON, and recipients set to **all super administrators**.",
+      "Url": "https://hub.prowler.com/check/rules_suspicious_programmatic_login_alert_configured"
+    }
+  },
+  "Categories": [
+    "logging",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

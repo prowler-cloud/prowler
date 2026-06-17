@@ -518,7 +518,7 @@ describe("AlertFormModal", () => {
     expect(alertEditGrid).toHaveClass("xl:grid-cols-3", "2xl:grid-cols-3");
     expect(alertEditGrid).not.toHaveClass("xl:grid-cols-4", "2xl:grid-cols-5");
     expect(screen.getAllByText("Amazon Web Services")[0]).toBeVisible();
-    expect(screen.getByText("All accounts")).toBeVisible();
+    expect(screen.getByText("All Providers")).toBeVisible();
     expect(within(filterControls).getByText("All Delta")).toBeVisible();
     expect(within(filterControls).getByText("All Resource Type")).toBeVisible();
     expect(
@@ -547,7 +547,9 @@ describe("AlertFormModal", () => {
     });
 
     // When
-    await user.click(screen.getByLabelText(/provider type/i));
+    await user.click(
+      screen.getByRole("combobox", { name: /filter by Provider Type/i }),
+    );
     const providerOptions = await screen.findAllByText("Google Cloud Platform");
     const visibleProviderOption = providerOptions.at(-1);
     expect(visibleProviderOption).toBeDefined();
@@ -597,7 +599,9 @@ describe("AlertFormModal", () => {
     });
 
     // When
-    await user.click(screen.getByLabelText(/provider type/i));
+    await user.click(
+      screen.getByRole("combobox", { name: /filter by Provider Type/i }),
+    );
     const providerOptions = await screen.findAllByText("Google Cloud Platform");
     const visibleProviderOption = providerOptions.at(-1);
     expect(visibleProviderOption).toBeDefined();
@@ -695,6 +699,31 @@ describe("AlertFormModal", () => {
     const errorMessage = await screen.findByText(/invalid condition/i);
     expect(errorMessage).toBeVisible();
     expect(errorMessage).toHaveClass("text-text-error-primary");
+  });
+
+  it("should clear the preview error when save shows the form error", async () => {
+    // Given
+    const user = userEvent.setup();
+    alertsActionMocks.seedAlertRule.mockResolvedValue({
+      error: "No alert-compatible filters",
+    });
+    mockRecipientsList();
+    renderCreateModal({ editingAlert: createEditingAlert() });
+
+    // When
+    await user.click(screen.getByRole("button", { name: /^test$/i }));
+    expect(await screen.findByText("Test result")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    // Then
+    await waitFor(() =>
+      expect(screen.queryByText("Test result")).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getAllByText(
+        "Apply at least one alert-compatible Findings filter.",
+      ),
+    ).toHaveLength(1);
   });
 
   it("should hydrate advanced edit mode filters and normalize them on save", async () => {
