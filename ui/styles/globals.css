@@ -9,7 +9,7 @@
  * emitting a circular --font-sans: var(--font-sans) declaration on :root. */
 @theme inline {
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
 }
 
 /* ===== LIGHT THEME (ROOT) ===== */
@@ -454,11 +454,6 @@
   .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover,
   .dark .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: rgb(100 116 139 / 0.7);
-  }
-
-  .checkbox-update {
-    margin-right: 0.5rem;
-    background-color: var(--background);
   }
 
   /* Download icon animation */

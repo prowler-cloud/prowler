@@ -39,7 +39,7 @@ export function Skeleton({
           : undefined,
       }}
       className={cn(
-        "animate-pulse bg-gray-200 dark:bg-zinc-800",
+        "bg-border-neutral-tertiary animate-pulse",
         variantClasses[variant],
         !animate && "animate-none",
         className,
