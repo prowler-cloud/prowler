@@ -1,9 +1,10 @@
+# Keep in sync with ui/.nvmrc.
 FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
-# Enable corepack for pnpm
-RUN corepack enable
+# Patch Alpine OpenSSL runtime packages before all stages inherit the base image.
+RUN apk upgrade --no-cache libcrypto3 libssl3 && corepack enable
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -13,8 +14,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY scripts ./scripts
+ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN corepack install && pnpm install --frozen-lockfile
 
 

@@ -103,6 +103,9 @@ class IAM(AWSService):
         self._get_user_temporary_credentials_usage()
         self.organization_features = []
         self._list_organizations_features()
+        # ListRoles does not echo PermissionsBoundary; backfill via GetRole.
+        if self.roles:
+            self.__threading_call__(self._get_role_permissions_boundary, self.roles)
         # List missing tags
         self.__threading_call__(self._list_tags, self.users)
         self.__threading_call__(self._list_tags, self.roles)
@@ -133,6 +136,7 @@ class IAM(AWSService):
                                 arn=role["Arn"],
                                 assume_role_policy=role["AssumeRolePolicyDocument"],
                                 is_service_role=is_service_role(role),
+                                permissions_boundary=role.get("PermissionsBoundary"),
                             )
                         )
         except ClientError as error:
@@ -455,6 +459,34 @@ class IAM(AWSService):
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_role_permissions_boundary(self, role):
+        """Backfill ``role.permissions_boundary`` via ``GetRole``.
+
+        ``ListRoles`` does not return ``PermissionsBoundary`` in practice, so
+        the value is fetched per role and stored on the ``Role`` model.
+
+        Args:
+            role: The ``Role`` instance to enrich.
+        """
+        try:
+            response = self.client.get_role(RoleName=role.name)
+            role.permissions_boundary = response.get("Role", {}).get(
+                "PermissionsBoundary"
+            )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchEntity":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -1139,6 +1171,7 @@ class Role(BaseModel):
     is_service_role: bool
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
+    permissions_boundary: Optional[dict] = None
     tags: Optional[list]
 
 

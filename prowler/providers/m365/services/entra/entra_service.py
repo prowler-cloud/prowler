@@ -810,6 +810,16 @@ class Entra(M365Service):
                             features, "seamless_sso_enabled", False
                         )
                         or False,
+                        block_soft_match_enabled=getattr(
+                            features, "block_soft_match_enabled", False
+                        )
+                        or False,
+                        block_cloud_object_takeover_through_hard_match_enabled=getattr(
+                            features,
+                            "block_cloud_object_takeover_through_hard_match_enabled",
+                            False,
+                        )
+                        or False,
                     )
                 )
         except ODataError as error:
@@ -849,6 +859,7 @@ class Entra(M365Service):
                         "userType",
                         "accountEnabled",
                         "onPremisesSyncEnabled",
+                        "employeeHireDate",
                     ],
                 )
             )
@@ -909,6 +920,7 @@ class Entra(M365Service):
                             "authentication_methods", []
                         ),
                         user_type=getattr(user, "user_type", None),
+                        employee_hire_date=getattr(user, "employee_hire_date", None),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -1216,6 +1228,10 @@ OAuthAppInfo
             service_principals_by_app_id = {
                 sp.app_id: sp for sp in service_principals.values() if sp.app_id
             }
+            # Remember each SP's parent application object ID so the owner
+            # lookup below can address it directly without re-walking
+            # /applications.
+            application_object_id_by_sp_id: Dict[str, str] = {}
             app_response = await self.client.applications.get()
             while app_response:
                 for app in getattr(app_response, "value", []) or []:
@@ -1225,6 +1241,10 @@ OAuthAppInfo
                     target_sp = service_principals_by_app_id.get(app_id)
                     if target_sp is None:
                         continue
+
+                    app_object_id = getattr(app, "id", None)
+                    if app_object_id:
+                        application_object_id_by_sp_id[target_sp.id] = app_object_id
 
                     for cred in getattr(app, "password_credentials", []) or []:
                         target_sp.password_credentials.append(
@@ -1275,6 +1295,49 @@ OAuthAppInfo
                 role_assignments_response = await self.client.role_management.directory.role_assignments.with_url(
                     next_link
                 ).get()
+
+            # Resolve owners only for service principals that hold a permanent
+            # Tier 0 directory role. Owner ownership of the SP object or its
+            # parent app registration is a credential-rotation escalation path
+            # outside PIM and Conditional Access; fetching owners for every
+            # consented SP would multiply Graph traffic for no benefit.
+            for sp in service_principals.values():
+                if not sp.directory_role_template_ids:
+                    continue
+                try:
+                    sp_owners_response = (
+                        await self.client.service_principals.by_service_principal_id(
+                            sp.id
+                        ).owners.get()
+                    )
+                    sp.sp_owner_ids = [
+                        getattr(owner, "id", None)
+                        for owner in (getattr(sp_owners_response, "value", []) or [])
+                        if getattr(owner, "id", None)
+                    ]
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+                app_object_id = application_object_id_by_sp_id.get(sp.id)
+                if not app_object_id:
+                    continue
+                try:
+                    app_owners_response = (
+                        await self.client.applications.by_application_id(
+                            app_object_id
+                        ).owners.get()
+                    )
+                    sp.app_owner_ids = [
+                        getattr(owner, "id", None)
+                        for owner in (getattr(app_owners_response, "value", []) or [])
+                        if getattr(owner, "id", None)
+                    ]
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
         except Exception as error:
             logger.error(
@@ -1566,7 +1629,7 @@ class PlatformConditions(BaseModel):
 
     @validator("include_platforms", "exclude_platforms", pre=True)
     @classmethod
-    def normalize_platforms(cls, values):
+    def normalize_platforms(cls, values):  # noqa: vulture
         if not values:
             return []
 
@@ -1714,6 +1777,8 @@ class DirectorySyncSettings(BaseModel):
     id: str
     password_sync_enabled: bool = False
     seamless_sso_enabled: bool = False
+    block_soft_match_enabled: bool = False
+    block_cloud_object_takeover_through_hard_match_enabled: bool = False
 
 
 class AuthenticationMethodConfiguration(BaseModel):
@@ -1804,6 +1869,7 @@ class User(BaseModel):
         user_type: The user account type as reported by Microsoft Graph
             (typically 'Member' or 'Guest'). ``None`` when Microsoft Graph does not
             return the property; checks must not assume a default in that case.
+        employee_hire_date: The user's hire date as reported by Microsoft Graph.
     """
 
     id: str
@@ -1814,6 +1880,7 @@ class User(BaseModel):
     account_enabled: bool = True
     authentication_methods: List[str] = []
     user_type: Optional[str] = None
+    employee_hire_date: Optional[datetime] = None
 
 
 class InvitationsFrom(Enum):
@@ -1962,6 +2029,12 @@ class ServicePrincipal(BaseModel):
         key_credentials: List of key credentials (certificates).
         directory_role_template_ids: List of directory role template IDs permanently
             assigned to this service principal.
+        sp_owner_ids: Principal IDs that own the service principal object.
+            Populated only for service principals that hold a permanent Tier 0
+            directory role assignment, to keep Graph traffic bounded.
+        app_owner_ids: Principal IDs that own the parent app registration.
+            Populated only for service principals that hold a permanent Tier 0
+            directory role assignment.
     """
 
     id: str
@@ -1971,6 +2044,8 @@ class ServicePrincipal(BaseModel):
     password_credentials: List[PasswordCredential] = []
     key_credentials: List[KeyCredential] = []
     directory_role_template_ids: List[str] = []
+    sp_owner_ids: List[str] = []
+    app_owner_ids: List[str] = []
 
 
 class AppRegistration(BaseModel):

@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "elbv2_alb_drop_invalid_header_fields_enabled",
+  "CheckTitle": "Application Load Balancer should be configured to drop invalid HTTP header fields",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "elbv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
+  "Description": "Ensure that Application Load Balancers (ALB) are configured to drop invalid HTTP header fields. The check fails when `routing.http.drop_invalid_header_fields.enabled` is not set to `true`. By default, ALBs do not remove HTTP headers that do not conform to RFC 7230.",
+  "Risk": "Forwarding non-RFC-compliant HTTP headers to backend targets enables HTTP desync (request smuggling):\n- **Confidentiality**: session/token theft, data exfiltration\n- **Integrity**: cache poisoning, request routing bypass, unauthorized actions\n- **Availability**: backend exhaustion.\nDropping invalid header fields removes a primary smuggling vector.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#drop-invalid-header-fields",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-4"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <ALB_ARN> --attributes Key=routing.http.drop_invalid_header_fields.enabled,Value=true",
+      "NativeIaC": "```yaml\n# CloudFormation: enable drop invalid header fields on an ALB\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::LoadBalancer\n    Properties:\n      Type: application\n      Subnets:\n        - <example_subnet_id1>\n        - <example_subnet_id2>\n      LoadBalancerAttributes:\n        - Key: routing.http.drop_invalid_header_fields.enabled  # Critical: drop non-RFC-compliant headers\n          Value: true\n```",
+      "Other": "1. Open the Amazon EC2 console and choose Load Balancers.\n2. Select the Application Load Balancer.\n3. On the Attributes tab, choose Edit.\n4. Set 'Drop invalid header fields' to Enabled.\n5. Save changes.",
+      "Terraform": "```hcl\n# Terraform: enable drop invalid header fields on an ALB\nresource \"aws_lb\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  load_balancer_type         = \"application\"\n  subnets                    = [\"<example_subnet_id1>\", \"<example_subnet_id2>\"]\n  drop_invalid_header_fields = true # Critical: drop non-RFC-compliant headers\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable 'drop invalid header fields' on Application Load Balancers so non-RFC-compliant HTTP headers are removed before requests reach backend targets, reducing exposure to HTTP desync and request smuggling. Apply defense in depth and validate requests at the application layer as well.",
+      "Url": "https://hub.prowler.com/check/elbv2_alb_drop_invalid_header_fields_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -342,6 +342,20 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
+            elif provider.type == "stackit":
+                output_data["auth_method"] = getattr(
+                    provider, "auth_method", "api_token"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.project_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.project_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
             elif provider.type == "iac":
                 output_data["auth_method"] = provider.auth_method
                 provider_uid = getattr(provider, "provider_uid", None)
@@ -503,6 +517,11 @@ class Finding(BaseModel):
                     check_output, "fixed_version", ""
                 )
 
+            else:
+                # Dynamic fallback: any external/custom provider
+                provider_data = provider.get_finding_output_data(check_output)
+                output_data.update(provider_data)
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name
@@ -576,6 +595,8 @@ class Finding(BaseModel):
             finding.subscription = list(provider.identity.subscriptions.keys())[0]
         elif provider.type == "gcp":
             finding.project_id = list(provider.projects.keys())[0]
+        elif provider.type == "stackit":
+            finding.project_id = provider.identity.project_id
         elif provider.type == "iac":
             # For IaC, we don't have resource_line_range in the Finding model
             # It would need to be extracted from the resource metadata if needed

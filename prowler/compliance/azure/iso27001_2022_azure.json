@@ -1266,7 +1266,9 @@
           "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cosmosdb_account_backup_policy_continuous"
+      ]
     },
     {
       "Id": "A.8.14",
@@ -1293,7 +1295,8 @@
         "storage_ensure_private_endpoints_in_storage_accounts",
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_using_managed_disks",
-        "vm_trusted_launch_enabled"
+        "vm_trusted_launch_enabled",
+        "cosmosdb_account_automatic_failover_enabled"
       ]
     },
     {
@@ -1407,6 +1410,8 @@
         "aks_network_policy_enabled",
         "containerregistry_not_publicly_accessible",
         "cosmosdb_account_firewall_use_selected_networks",
+        "cosmosdb_account_public_network_access_disabled",
+        "databricks_workspace_public_network_access_disabled",
         "network_bastion_host_exists",
         "network_flow_log_captured_sent",
         "network_flow_log_more_than_90_days",
@@ -1500,6 +1505,7 @@
       ],
       "Checks": [
         "app_minimum_tls_version_12",
+        "cosmosdb_account_minimum_tls_version",
         "monitor_storage_account_with_activity_logs_cmk_encrypted",
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled",

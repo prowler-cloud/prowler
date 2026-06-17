@@ -2,10 +2,10 @@
   {
     "section": "dependencies",
     "name": "@ai-sdk/react",
-    "from": "2.0.106",
-    "to": "2.0.111",
+    "from": "2.0.111",
+    "to": "3.0.207",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T08:24:46.195Z"
+    "generatedAt": "2026-06-15T07:44:51.977Z"
   },
   {
     "section": "dependencies",
@@ -114,10 +114,10 @@
   {
     "section": "dependencies",
     "name": "@next/third-parties",
-    "from": "16.2.3",
-    "to": "16.2.6",
+    "from": "16.2.6",
+    "to": "16.2.9",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-06-15T07:49:41.143Z"
   },
   {
     "section": "dependencies",
@@ -362,10 +362,10 @@
   {
     "section": "dependencies",
     "name": "ai",
-    "from": "5.0.59",
-    "to": "5.0.109",
+    "from": "5.0.109",
+    "to": "6.0.205",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T08:24:46.195Z"
+    "generatedAt": "2026-06-15T07:44:51.977Z"
   },
   {
     "section": "dependencies",
@@ -406,6 +406,14 @@
     "to": "4.1.0",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "driver.js",
+    "from": "1.4.0",
+    "to": "1.4.0",
+    "strategy": "installed",
+    "generatedAt": "2026-05-26T13:05:09.776Z"
   },
   {
     "section": "dependencies",
@@ -482,10 +490,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.2.3",
-    "to": "16.2.6",
+    "from": "16.2.6",
+    "to": "16.2.9",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-06-15T07:49:41.143Z"
   },
   {
     "section": "dependencies",
@@ -506,10 +514,10 @@
   {
     "section": "dependencies",
     "name": "react",
-    "from": "19.2.5",
-    "to": "19.2.6",
+    "from": "19.2.6",
+    "to": "19.2.7",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:34:34.526Z"
+    "generatedAt": "2026-06-15T07:53:01.462Z"
   },
   {
     "section": "dependencies",
@@ -522,10 +530,10 @@
   {
     "section": "dependencies",
     "name": "react-dom",
-    "from": "19.2.5",
-    "to": "19.2.6",
+    "from": "19.2.6",
+    "to": "19.2.7",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:34:34.526Z"
+    "generatedAt": "2026-06-15T07:53:01.462Z"
   },
   {
     "section": "dependencies",
@@ -658,10 +666,10 @@
   {
     "section": "devDependencies",
     "name": "@next/eslint-plugin-next",
-    "from": "16.2.3",
-    "to": "16.2.6",
+    "from": "16.2.6",
+    "to": "16.2.9",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-06-15T07:49:41.143Z"
   },
   {
     "section": "devDependencies",
@@ -722,10 +730,10 @@
   {
     "section": "devDependencies",
     "name": "@types/react",
-    "from": "19.1.13",
-    "to": "19.2.8",
+    "from": "19.2.8",
+    "to": "19.2.17",
     "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
+    "generatedAt": "2026-06-15T07:53:01.462Z"
   },
   {
     "section": "devDependencies",
@@ -778,26 +786,26 @@
   {
     "section": "devDependencies",
     "name": "@vitest/browser",
-    "from": "4.1.6",
-    "to": "4.0.18",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:22:47.378Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/browser-playwright",
-    "from": "4.1.6",
-    "to": "4.0.18",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:22:47.378Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/coverage-v8",
-    "from": "4.1.6",
-    "to": "4.0.18",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:22:47.378Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",
@@ -945,6 +953,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "prettier-plugin-packagejson",
+    "from": "2.5.22",
+    "to": "2.5.22",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T14:59:45.730Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "prettier-plugin-tailwindcss",
     "from": "0.6.14",
     "to": "0.6.14",
@@ -970,10 +986,10 @@
   {
     "section": "devDependencies",
     "name": "vitest",
-    "from": "4.1.6",
-    "to": "4.0.18",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:22:47.378Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",

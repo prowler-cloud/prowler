@@ -132,6 +132,24 @@ export async function addAWSProvider(
   await scansPage.verifyPageLoaded();
 }
 
+/**
+ * Waits for the providers page to settle and reports whether the data table is
+ * present. With zero providers the page renders a full-page empty state
+ * ("No Providers Configured") instead of the table, so callers must not assume
+ * the table is always there.
+ */
+async function providersTableVisibleOrEmptyState(
+  page: ProvidersPage,
+): Promise<boolean> {
+  const emptyState = page.page.getByRole("region", {
+    name: /no providers configured/i,
+  });
+  await expect(page.providersTable.or(emptyState)).toBeVisible({
+    timeout: 10000,
+  });
+  return page.providersTable.isVisible().catch(() => false);
+}
+
 export async function deleteProviderIfExists(
   page: ProvidersPage,
   providerUID: string,
@@ -140,7 +158,11 @@ export async function deleteProviderIfExists(
 
   // Navigate to providers page
   await page.goto();
-  await expect(page.providersTable).toBeVisible({ timeout: 10000 });
+  // With zero providers the page shows the empty state, not the table, so there
+  // is nothing to delete.
+  if (!(await providersTableVisibleOrEmptyState(page))) {
+    return;
+  }
 
   const allRows = page.providersTable.locator("tbody tr");
 
@@ -180,7 +202,7 @@ export async function deleteProviderIfExists(
     // Provider not found, nothing to delete
     // Navigate back to providers page to ensure clean state
     await page.goto();
-    await expect(page.providersTable).toBeVisible({ timeout: 10000 });
+    await providersTableVisibleOrEmptyState(page);
     return;
   }
 
@@ -217,7 +239,8 @@ export async function deleteProviderIfExists(
   // Wait for modal to close (this indicates deletion was initiated)
   await expect(modal).not.toBeVisible({ timeout: 10000 });
 
-  // Navigate back to providers page to ensure clean state
+  // Navigate back to providers page to ensure clean state. Deleting the last
+  // provider reveals the empty state instead of an empty table.
   await page.goto();
-  await expect(page.providersTable).toBeVisible({ timeout: 10000 });
+  await providersTableVisibleOrEmptyState(page);
 }

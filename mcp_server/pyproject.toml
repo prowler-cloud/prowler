@@ -4,12 +4,14 @@ requires = ["setuptools>=61.0", "wheel"]
 
 [dependency-groups]
 dev = [
-  "pytest==8.3.5"
+  "bandit==1.8.3",
+  "pytest==9.0.3",
+  "vulture==2.14"
 ]
 
 [project]
 dependencies = [
-  "fastmcp==2.14.0",
+  "fastmcp==3.2.4",
   "httpx==0.28.1"
 ]
 description = "MCP server for Prowler ecosystem"

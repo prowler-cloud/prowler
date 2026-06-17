@@ -44,17 +44,14 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
-import {
-  ExternalResourceLink,
-  resolveExternalTarget,
-} from "@/components/shared/external-resource-link";
+import { resolveExternalTarget } from "@/components/shared/external-resource-link";
 import {
   QUERY_EDITOR_LANGUAGE,
   QueryCodeEditor,
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
+import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import {
@@ -441,7 +438,6 @@ export function ResourceDetailDrawerContent({
     findingUid: f?.uid,
     region: resourceRegion,
   });
-  const hasIdAction = Boolean(externalResourceTarget);
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -689,9 +685,12 @@ export function ResourceDetailDrawerContent({
             <div className="flex items-start gap-4">
               {/* Resource info grid — 4 data columns */}
               <div className="@container flex min-w-0 flex-1 flex-col gap-4">
-                {/* Row 1: Provider (cols 1-2), Resource (cols 3-5) */}
-                <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
-                  <div className="flex min-w-0 flex-col gap-1 @md:col-span-2">
+                {/* Row 1: Provider, Resource, Service, Region */}
+                <div
+                  className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)] @md:gap-x-8"
+                  data-testid="resource-detail-primary-metadata-row"
+                >
+                  <div className="col-span-2 flex min-w-0 flex-col gap-1 @md:col-span-1">
                     <span className="text-text-neutral-secondary text-[10px] whitespace-nowrap">
                       Provider
                     </span>
@@ -702,7 +701,7 @@ export function ResourceDetailDrawerContent({
                       entityId={providerUid}
                     />
                   </div>
-                  <div className="flex min-w-0 flex-col gap-1 @md:col-span-3">
+                  <div className="col-span-2 flex min-w-0 flex-col gap-1 @md:col-span-1">
                     <span className="text-text-neutral-secondary text-[10px] whitespace-nowrap">
                       Resource
                     </span>
@@ -736,44 +735,59 @@ export function ResourceDetailDrawerContent({
                           </Tooltip>
                         ) : undefined
                       }
-                      idAction={
-                        hasIdAction ? (
-                          <ExternalResourceLink
-                            providerType={providerType}
-                            resourceUid={resourceUid}
-                            providerUid={providerUid}
-                            resourceName={resourceName}
-                            findingUid={f?.uid}
-                            region={resourceRegion}
-                          />
-                        ) : undefined
-                      }
                     />
                   </div>
-                </div>
-
-                {/* Row 2: Last detected, First seen, Failing for, Service, Region */}
-                <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
-                  <InfoField label="Last detected" variant="compact">
-                    <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                  <InfoField
+                    label="Service"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <span className="block truncate whitespace-nowrap">
+                      {resourceService}
+                    </span>
                   </InfoField>
-                  <InfoField label="First seen" variant="compact">
-                    <DateWithTime inline dateTime={firstSeenAt || "-"} />
-                  </InfoField>
-                  <InfoField label="Failing for" variant="compact">
-                    {getFailingForLabel(firstSeenAt) || "-"}
-                  </InfoField>
-                  <InfoField label="Service" variant="compact">
-                    {resourceService}
-                  </InfoField>
-                  <InfoField label="Region" variant="compact">
-                    <span className="flex items-center gap-1.5">
+                  <InfoField
+                    label="Region"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
                       {getRegionFlag(resourceRegionLabel) && (
-                        <span className="translate-y-px text-base leading-none">
+                        <span className="shrink-0 translate-y-px text-base leading-none">
                           {getRegionFlag(resourceRegionLabel)}
                         </span>
                       )}
-                      {resourceRegionLabel}
+                      <span className="truncate">{resourceRegionLabel}</span>
+                    </span>
+                  </InfoField>
+                </div>
+
+                {/* Row 2: Last detected, First seen, Failing for */}
+                <div
+                  className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-3 @md:gap-x-8"
+                  data-testid="resource-detail-secondary-metadata-row"
+                >
+                  <InfoField
+                    label="Last detected"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                  </InfoField>
+                  <InfoField
+                    label="First seen"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <DateWithTime inline dateTime={firstSeenAt || "-"} />
+                  </InfoField>
+                  <InfoField
+                    label="Failing for"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <span className="block truncate whitespace-nowrap">
+                      {getFailingForLabel(firstSeenAt) || "-"}
                     </span>
                   </InfoField>
                 </div>
@@ -803,6 +817,19 @@ export function ResourceDetailDrawerContent({
                       label="Send to Jira"
                       onSelect={() => setIsJiraModalOpen(true)}
                     />
+                    {externalResourceTarget && (
+                      <ActionDropdownItem
+                        icon={<ExternalLink className="size-5" />}
+                        label={externalResourceTarget.label}
+                        onSelect={() =>
+                          window.open(
+                            externalResourceTarget.url,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      />
+                    )}
                   </ActionDropdown>
                 ) : (
                   <Skeleton className="size-8 rounded-md" />
@@ -843,17 +870,31 @@ export function ResourceDetailDrawerContent({
         >
           <div className="mb-4 flex items-center justify-between">
             <TabsList>
-              <TabsTrigger value="overview">Finding Overview</TabsTrigger>
-              <TabsTrigger value="remediation">Remediation</TabsTrigger>
-              <TabsTrigger value="other-findings">
-                Findings for this resource
+              <TabsTrigger value="overview" tooltip="Overview">
+                Overview
               </TabsTrigger>
-              <TabsTrigger value="scans">Scans</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
+              <TabsTrigger value="remediation" tooltip="Remediation">
+                Remediation
+              </TabsTrigger>
+              <TabsTrigger value="metadata" tooltip="Resource Metadata">
+                Evidence
+              </TabsTrigger>
+              <TabsTrigger
+                value="other-findings"
+                tooltip="Other Findings for this resource"
+              >
+                Other findings
+              </TabsTrigger>
+              <TabsTrigger value="scans" tooltip="Scans">
+                Scans
+              </TabsTrigger>
+              <TabsTrigger value="events" tooltip="Events">
+                Events
+              </TabsTrigger>
             </TabsList>
           </div>
 
-          {/* Finding Overview — check-level data from checkMeta (always stable) */}
+          {/* Overview — check-level data from checkMeta (always stable) */}
           <TabsContent
             value="overview"
             className="minimal-scrollbar flex flex-col gap-4 overflow-y-auto"
@@ -888,19 +929,26 @@ export function ResourceDetailDrawerContent({
                       <span className="text-text-neutral-secondary text-xs">
                         References:
                       </span>
-                      <ul className="list-inside list-disc space-y-1">
-                        {checkMeta.additionalUrls.map((link, idx) => (
-                          <li key={idx}>
-                            <CustomLink
+                      <div className="flex flex-col items-start gap-1">
+                        {checkMeta.additionalUrls.map((link) => (
+                          <Button
+                            key={link}
+                            variant="link"
+                            size="link-xs"
+                            className="h-auto justify-start p-0 text-left break-all whitespace-normal!"
+                            asChild
+                          >
+                            <Link
                               href={link}
-                              size="sm"
-                              className="break-all whitespace-normal!"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              prefetch={false}
                             >
                               {link}
-                            </CustomLink>
-                          </li>
+                            </Link>
+                          </Button>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   </Card>
                 )}
@@ -982,25 +1030,38 @@ export function ResourceDetailDrawerContent({
                   {(checkMeta.remediation.recommendation.text ||
                     recommendationLink) && (
                     <div className="flex flex-col gap-1 px-1">
-                      <span className="text-text-neutral-primary text-sm font-semibold">
-                        Remediation:
-                      </span>
-                      <div className="flex items-start gap-3">
+                      <div
+                        className="flex min-w-0 items-center justify-between gap-3"
+                        data-testid="remediation-heading-row"
+                      >
+                        <span className="text-text-neutral-primary text-sm font-semibold">
+                          Remediation:
+                        </span>
+                        {recommendationLink && (
+                          <Button
+                            variant="link"
+                            size="link-xs"
+                            className="shrink-0 whitespace-nowrap"
+                            asChild
+                          >
+                            <Link
+                              href={recommendationLink.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              prefetch={false}
+                            >
+                              {recommendationLink.label}
+                            </Link>
+                          </Button>
+                        )}
+                      </div>
+                      <div>
                         {checkMeta.remediation.recommendation.text && (
-                          <div className="text-text-neutral-primary flex-1 text-sm">
+                          <div className="text-text-neutral-primary text-sm">
                             <MarkdownContainer>
                               {checkMeta.remediation.recommendation.text}
                             </MarkdownContainer>
                           </div>
-                        )}
-                        {recommendationLink && (
-                          <CustomLink
-                            href={recommendationLink.href}
-                            size="sm"
-                            className="shrink-0"
-                          >
-                            {recommendationLink.label}
-                          </CustomLink>
                         )}
                       </div>
                     </div>
@@ -1072,7 +1133,22 @@ export function ResourceDetailDrawerContent({
             )}
           </TabsContent>
 
-          {/* Findings for this resource */}
+          {/* Metadata */}
+          <TabsContent
+            value="metadata"
+            className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
+          >
+            {isNavigating ? (
+              <MetadataNavigationSkeleton />
+            ) : (
+              <ResourceMetadataPanel
+                metadata={f?.resourceMetadata}
+                details={f?.resourceDetails}
+              />
+            )}
+          </TabsContent>
+
+          {/* Other findings — findings affecting this same resource */}
           <TabsContent
             value="other-findings"
             className="minimal-scrollbar flex flex-col gap-2 overflow-y-auto"
@@ -1396,6 +1472,21 @@ function EventsNavigationSkeleton() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function MetadataNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="metadata-navigation-skeleton"
+      aria-hidden="true"
+    >
+      <Card variant="inner">
+        <OverviewCardSkeleton lineWidths={["w-20", "w-full", "w-3/4"]} />
+      </Card>
+      <Skeleton className="h-56 w-full rounded" />
     </div>
   );
 }

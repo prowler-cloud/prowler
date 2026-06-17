@@ -1,3 +1,5 @@
+import base64
+import json
 from unittest import mock
 
 import pytest
@@ -7,6 +9,7 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
     OktaInvalidOrgDomainError,
+    OktaInvalidProviderIdError,
     OktaPrivateKeyFileError,
     OktaSetUpIdentityError,
 )
@@ -17,6 +20,54 @@ from tests.providers.okta.okta_fixtures import (
     OKTA_ORG_DOMAIN,
     OKTA_PRIVATE_KEY,
 )
+
+
+def _make_jwt(payload: dict) -> str:
+    """Build an unsigned JWT carrying the given payload dict.
+
+    The signature segment is irrelevant — `_decode_token_scopes` reads
+    the payload without verification.
+    """
+
+    def _b64u(data: bytes) -> str:
+        return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+    header = _b64u(json.dumps({"alg": "none"}).encode())
+    body = _b64u(json.dumps(payload).encode())
+    return f"{header}.{body}.sig"
+
+
+class Test_OktaProvider_decode_token_scopes:
+    def test_returns_scopes_from_list_scp_claim(self):
+        token = _make_jwt({"scp": ["okta.policies.read", "okta.brands.read"]})
+        assert OktaProvider._decode_token_scopes(token) == [
+            "okta.policies.read",
+            "okta.brands.read",
+        ]
+
+    def test_returns_scopes_from_space_separated_scp_string(self):
+        token = _make_jwt({"scp": "okta.policies.read okta.brands.read"})
+        assert OktaProvider._decode_token_scopes(token) == [
+            "okta.policies.read",
+            "okta.brands.read",
+        ]
+
+    def test_returns_empty_list_when_token_is_none(self):
+        assert OktaProvider._decode_token_scopes(None) == []
+
+    def test_returns_empty_list_when_token_is_empty_string(self):
+        assert OktaProvider._decode_token_scopes("") == []
+
+    def test_returns_empty_list_when_scp_claim_missing(self):
+        token = _make_jwt({"sub": "client-id"})
+        assert OktaProvider._decode_token_scopes(token) == []
+
+    def test_returns_empty_list_when_token_is_malformed(self):
+        assert OktaProvider._decode_token_scopes("not.a.jwt-with-bad-base64!!") == []
+
+    def test_returns_empty_list_when_payload_is_not_json(self):
+        bad = base64.urlsafe_b64encode(b"not json").rstrip(b"=").decode()
+        assert OktaProvider._decode_token_scopes(f"hdr.{bad}.sig") == []
 
 
 @pytest.fixture
@@ -271,6 +322,49 @@ class Test_OktaProvider_setup_identity:
         assert identity.org_domain == OKTA_ORG_DOMAIN
         assert identity.client_id == OKTA_CLIENT_ID
 
+    def test_populates_granted_scopes_from_access_token_scp_claim(
+        self, _clear_okta_env, tmp_path
+    ):
+        session = self._session(tmp_path)
+
+        async def fake_list_policies(*_a, **_k):
+            return ([], mock.MagicMock(headers={}), None)
+
+        with mock.patch(
+            "prowler.providers.okta.okta_provider.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = fake_list_policies
+            mocked._request_executor._oauth._access_token = _make_jwt(
+                {"scp": ["okta.policies.read", "okta.brands.read"]}
+            )
+            mocked_client_cls.return_value = mocked
+            identity = OktaProvider.setup_identity(session)
+
+        assert identity.granted_scopes == [
+            "okta.policies.read",
+            "okta.brands.read",
+        ]
+
+    def test_granted_scopes_empty_when_token_unavailable(
+        self, _clear_okta_env, tmp_path
+    ):
+        session = self._session(tmp_path)
+
+        async def fake_list_policies(*_a, **_k):
+            return ([], mock.MagicMock(headers={}), None)
+
+        with mock.patch(
+            "prowler.providers.okta.okta_provider.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = fake_list_policies
+            mocked._request_executor._oauth._access_token = None
+            mocked_client_cls.return_value = mocked
+            identity = OktaProvider.setup_identity(session)
+
+        assert identity.granted_scopes == []
+
     def test_raises_invalid_credentials_when_probe_returns_error(
         self, _clear_okta_env, tmp_path
     ):
@@ -312,6 +406,35 @@ class Test_OktaProvider_setup_identity:
 
         async def failing_list_policies(*_a, **_k):
             return ([], None, Exception("403 Forbidden"))
+
+        with mock.patch(
+            "prowler.providers.okta.okta_provider.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = failing_list_policies
+            mocked_client_cls.return_value = mocked
+            with pytest.raises(OktaInsufficientPermissionsError):
+                OktaProvider.setup_identity(session)
+
+    def test_raises_insufficient_permissions_on_consent_required(
+        self, _clear_okta_env, tmp_path
+    ):
+        # When zero requested scopes are consented on the service app, Okta
+        # rejects the token request with HTTP 400 `consent_required` rather
+        # than `invalid_scope` — must still be classified as a permission
+        # gap so the user is pointed at the Okta API Scopes tab, not at
+        # credential troubleshooting.
+        session = self._session(tmp_path)
+
+        async def failing_list_policies(*_a, **_k):
+            return (
+                [],
+                None,
+                Exception(
+                    "Okta HTTP 400 consent_required You are not allowed any "
+                    "of the requested scopes."
+                ),
+            )
 
         with mock.patch(
             "prowler.providers.okta.okta_provider.OktaSDKClient"
@@ -395,6 +518,55 @@ class Test_OktaProvider_test_connection:
     def test_raises_when_raise_enabled(self, _clear_okta_env):
         with pytest.raises(OktaEnvironmentVariableError):
             OktaProvider.test_connection()
+
+    def test_provider_id_match_succeeds(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            connection = OktaProvider.test_connection(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                provider_id=OKTA_ORG_DOMAIN,
+            )
+        assert connection.is_connected is True
+        assert connection.error is None
+
+    def test_provider_id_match_is_case_insensitive(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            connection = OktaProvider.test_connection(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                provider_id=OKTA_ORG_DOMAIN.upper(),
+            )
+        assert connection.is_connected is True
+
+    def test_provider_id_mismatch_raises(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            with pytest.raises(OktaInvalidProviderIdError):
+                OktaProvider.test_connection(
+                    okta_org_domain=OKTA_ORG_DOMAIN,
+                    okta_client_id=OKTA_CLIENT_ID,
+                    okta_private_key_file="/tmp/key.pem",
+                    provider_id="other.okta.com",
+                )
+
+    def test_provider_id_mismatch_returns_error_when_raise_disabled(
+        self, _clear_okta_env, tmp_path
+    ):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            connection = OktaProvider.test_connection(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                provider_id="other.okta.com",
+                raise_on_exception=False,
+            )
+        assert connection.is_connected is False
+        assert isinstance(connection.error, OktaInvalidProviderIdError)
 
 
 class Test_OktaProvider_print_credentials:
