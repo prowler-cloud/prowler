@@ -12,16 +12,16 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { DateWithTime } from "@/components/shadcn/entities";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { DateWithTime } from "@/components/ui/entities";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import { SeverityBadge } from "@/components/ui/table";
-import { DataTableColumnHeader } from "@/components/ui/table/data-table-column-header";
+import { SeverityBadge } from "@/components/shadcn/table";
+import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-column-header";
 import {
   type FindingStatus,
   StatusFindingBadge,
-} from "@/components/ui/table/status-finding-badge";
+} from "@/components/shadcn/table/status-finding-badge";
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
 

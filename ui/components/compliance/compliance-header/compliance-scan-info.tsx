@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
 import { ProviderType } from "@/types";
 
 interface ComplianceScanInfoProps {
@@ -36,7 +36,7 @@ export const ComplianceScanInfo = ({ scan }: ComplianceScanInfoProps) => {
       <div className="flex min-w-0 basis-1/2 flex-col items-start overflow-hidden">
         <Tooltip>
           <TooltipTrigger asChild>
-            <p className="text-default-500 truncate text-xs">
+            <p className="text-text-neutral-tertiary truncate text-xs">
               {scan.attributes.name || "- -"}
             </p>
           </TooltipTrigger>

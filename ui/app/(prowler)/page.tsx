@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { getAllProviders } from "@/actions/providers";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { SearchParamsProps } from "@/types";
 
 import {

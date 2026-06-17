@@ -7,9 +7,9 @@ import { FormEvent, useState } from "react";
 import { deleteMuteRule } from "@/actions/mute-rules";
 import { MuteRuleData } from "@/actions/mute-rules/types";
 import { CardTitle } from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
-import { FormButtons } from "@/components/ui/form";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { useMuteRuleAction } from "@/hooks/use-mute-rule-action";
 import { MetaDataProps } from "@/types";
 

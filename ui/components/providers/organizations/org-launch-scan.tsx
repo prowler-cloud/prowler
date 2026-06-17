@@ -10,6 +10,7 @@ import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "@/components/providers/wizard/steps/footer-controls";
+import { ToastAction, useToast } from "@/components/shadcn";
 import {
   Select,
   SelectContent,
@@ -19,7 +20,6 @@ import {
 } from "@/components/shadcn/select/select";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { ToastAction, useToast } from "@/components/ui";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { TREE_ITEM_STATUS } from "@/types/tree";
 

@@ -18,7 +18,8 @@ vi.mock("@/actions/scans", () => ({
   scanOnDemand: scanOnDemandMock,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),
