@@ -1,3 +1,4 @@
+@import "tailwindcss";
 /* All @import rules must precede @plugin/@source — a late @import is invalid
  * per the CSS spec and lightningcss (Tailwind v4) silently drops it. */
 @import "./tours.css";
