@@ -163,7 +163,7 @@ class TestRoutingByDatabasePrefix:
 
             assert db_module.get_ingest_uri() == "bolt://neo4j:7687"
 
-        mock_ingest.get_uri.assert_called_once_with()
+            mock_ingest.get_uri.assert_called_once_with()
 
     def test_get_session_routes_tenant_to_sink(self, sink_backend_stub):
         sentinel = MagicMock()

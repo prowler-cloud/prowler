@@ -57,7 +57,7 @@ dependencies = [
   "matplotlib (==3.10.8)",
   "reportlab (==4.4.10)",
   "neo4j (==6.1.0)",
-  "cartography (==0.136.0)",
+  "cartography (==0.137.0)",
   "gevent (==25.9.1)",
   "werkzeug (==3.1.7)",
   "sqlparse (==0.5.5)",
@@ -174,7 +174,7 @@ constraint-dependencies = [
   "blinker==1.9.0",
   "boto3==1.40.61",
   "botocore==1.40.61",
-  "cartography==0.136.0",
+  "cartography==0.137.0",
   "celery==5.6.2",
   "certifi==2026.1.4",
   "cffi==2.0.0",
@@ -437,7 +437,7 @@ constraint-dependencies = [
   "zope-interface==8.2",
   "zstd==1.5.7.3"
 ]
-# prowler@master needs okta==3.4.2; cartography 0.136.0 declares okta<1.0.0 for an
+# prowler@master needs okta==3.4.2; cartography 0.137.0 declares okta<1.0.0 for an
 # integration prowler does not import.
 #
 # prowler@master hard-pins microsoft-kiota-abstractions==1.9.2 in [project.dependencies].
