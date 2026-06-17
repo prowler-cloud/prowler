@@ -923,9 +923,10 @@ class Test_Entra_Service:
         )
 
         unresolved = set()
+        errored = set()
         asyncio.run(
             entra_service._resolve_identifiers_for_type(
-                "user", set(user_builders), unresolved
+                "user", set(user_builders), unresolved, errored
             )
         )
 
@@ -933,6 +934,9 @@ class Test_Entra_Service:
             ("user", deleted_by_status),
             ("user", deleted_by_code),
         }
+        # The transient 503 must be recorded as errored (unverified), never as
+        # deleted and never silently dropped.
+        assert errored == {("user", transient)}
 
     def test__resolve_identifiers_for_type_role_uses_role_definitions_endpoint(self):
         """A deleted role is resolved against the roleDefinitions endpoint."""
@@ -960,13 +964,15 @@ class Test_Entra_Service:
         )
 
         unresolved = set()
+        errored = set()
         asyncio.run(
             entra_service._resolve_identifiers_for_type(
-                "role", {deleted_role}, unresolved
+                "role", {deleted_role}, unresolved, errored
             )
         )
 
         assert unresolved == {("role", deleted_role)}
+        assert errored == set()
         by_role_id.assert_called_once_with(deleted_role)
 
     def test__resolve_directory_object_references_skips_sentinels_and_dedups(self):
@@ -977,6 +983,7 @@ class Test_Entra_Service:
         deleted_user = "deleted-user-id"
         live_user = "live-user-id"
         deleted_group = "deleted-group-id"
+        errored_group = "errored-group-id"
 
         def _user_conditions(**kwargs):
             base = {
@@ -999,7 +1006,7 @@ class Test_Entra_Service:
             "policy-a": _policy(
                 _user_conditions(
                     included_users=["All", deleted_user, live_user],
-                    excluded_groups=[deleted_group],
+                    excluded_groups=[deleted_group, errored_group],
                 )
             ),
             # Same deleted_user referenced again — must be resolved only once.
@@ -1019,6 +1026,10 @@ class Test_Entra_Service:
         error_404.response_status_code = 404
         error_404.error = None
 
+        error_503 = ODataError()
+        error_503.response_status_code = 503
+        error_503.error = None
+
         user_builders = {
             deleted_user: SimpleNamespace(get=AsyncMock(side_effect=error_404)),
             live_user: SimpleNamespace(
@@ -1027,6 +1038,7 @@ class Test_Entra_Service:
         }
         group_builders = {
             deleted_group: SimpleNamespace(get=AsyncMock(side_effect=error_404)),
+            errored_group: SimpleNamespace(get=AsyncMock(side_effect=error_503)),
         }
         by_user_id = MagicMock(side_effect=lambda uid: user_builders[uid])
         by_group_id = MagicMock(side_effect=lambda gid: group_builders[gid])
@@ -1037,7 +1049,7 @@ class Test_Entra_Service:
             groups=SimpleNamespace(by_group_id=by_group_id),
         )
 
-        unresolved = asyncio.run(
+        unresolved, errored = asyncio.run(
             entra_service._resolve_directory_object_references(policies)
         )
 
@@ -1045,6 +1057,8 @@ class Test_Entra_Service:
             ("user", deleted_user),
             ("group", deleted_group),
         }
+        # The 503 group is unverified, not deleted — it lands in errored.
+        assert errored == {("group", errored_group)}
         # Sentinels are filtered before any Graph call; only the two real user
         # ids are queried, and the deduped deleted_user is queried exactly once.
         queried_users = {call.args[0] for call in by_user_id.call_args_list}

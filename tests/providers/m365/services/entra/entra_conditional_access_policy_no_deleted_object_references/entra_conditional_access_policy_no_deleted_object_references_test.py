@@ -65,9 +65,12 @@ def _make_policy(
 
 
 def _entra_client_mock():
-    client = mock.MagicMock
+    client = mock.MagicMock()
     client.audited_tenant = "audited_tenant"
     client.audited_domain = DOMAIN
+    # Default to clean resolution; individual tests override as needed.
+    client.unresolved_directory_object_references = set()
+    client.errored_directory_object_references = set()
     return client
 
 
@@ -343,6 +346,79 @@ class Test_entra_conditional_access_policy_no_deleted_object_references:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "report-only mode" in result[0].status_extended
+
+    def test_unverified_reference_is_manual(self):
+        """A reference that errored (non-404) yields MANUAL, not PASS."""
+        entra_client = _entra_client_mock()
+        errored_group = str(uuid4())
+        policy_id, policy = _make_policy(
+            display_name="Throttled Lookup Policy",
+            included_users=["All"],
+            excluded_groups=[errored_group],
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_no_deleted_object_references.entra_conditional_access_policy_no_deleted_object_references import (
+                entra_conditional_access_policy_no_deleted_object_references,
+            )
+
+            entra_client.conditional_access_policies = {policy_id: policy}
+            entra_client.unresolved_directory_object_references = set()
+            entra_client.errored_directory_object_references = {
+                ("group", errored_group)
+            }
+
+            check = entra_conditional_access_policy_no_deleted_object_references()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "could not be fully evaluated" in result[0].status_extended
+            assert errored_group in result[0].status_extended
+
+    def test_orphan_takes_precedence_over_unverified(self):
+        """A confirmed deletion FAILs even when another reference is unverified."""
+        entra_client = _entra_client_mock()
+        deleted_user = str(uuid4())
+        errored_group = str(uuid4())
+        policy_id, policy = _make_policy(
+            display_name="Mixed Policy",
+            included_users=[deleted_user],
+            excluded_groups=[errored_group],
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_no_deleted_object_references.entra_conditional_access_policy_no_deleted_object_references import (
+                entra_conditional_access_policy_no_deleted_object_references,
+            )
+
+            entra_client.conditional_access_policies = {policy_id: policy}
+            entra_client.unresolved_directory_object_references = {
+                ("user", deleted_user)
+            }
+            entra_client.errored_directory_object_references = {
+                ("group", errored_group)
+            }
+
+            check = entra_conditional_access_policy_no_deleted_object_references()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "1 deleted directory object(s)" in result[0].status_extended
+            assert "could not be verified" in result[0].status_extended
 
     def test_multiple_policies_mixed(self):
         """Two policies: one clean, one with an orphan. Distinct PASS/FAIL findings."""

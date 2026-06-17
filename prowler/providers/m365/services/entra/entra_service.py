@@ -120,13 +120,17 @@ class Entra(M365Service):
         # policies. This runs as a separate phase because it depends on the
         # main gather having populated ``conditional_access_policies`` first.
         # The result is cached on the instance so sync checks can read it
-        # without issuing Graph calls of their own.
-        self.unresolved_directory_object_references: Set[Tuple[str, str]] = (
-            loop.run_until_complete(
-                self._resolve_directory_object_references(
-                    self.conditional_access_policies
-                )
-            )
+        # without issuing Graph calls of their own. ``unresolved`` holds ids
+        # confirmed deleted (HTTP 404); ``errored`` holds ids whose lookup
+        # failed for any other reason (5xx, throttling, permission) and could
+        # therefore be neither confirmed present nor confirmed deleted.
+        self.unresolved_directory_object_references: Set[Tuple[str, str]]
+        self.errored_directory_object_references: Set[Tuple[str, str]]
+        (
+            self.unresolved_directory_object_references,
+            self.errored_directory_object_references,
+        ) = loop.run_until_complete(
+            self._resolve_directory_object_references(self.conditional_access_policies)
         )
 
         if created_loop:
@@ -1401,15 +1405,16 @@ OAuthAppInfo
     async def _resolve_directory_object_references(
         self,
         policies: Dict[str, "ConditionalAccessPolicy"],
-    ) -> Set[Tuple[str, str]]:
+    ) -> Tuple[Set[Tuple[str, str]], Set[Tuple[str, str]]]:
         """Resolve every user/group/role identifier referenced by CA policies.
 
         Walks the inclusion/exclusion collections of every loaded Conditional
         Access policy, deduplicates the resulting identifiers per type, and
         queries Microsoft Graph for each one. Identifiers that return HTTP 404
-        are reported as deleted. Non-404 errors (5xx, throttling, transient
-        network failures) are logged and skipped — they must not be flagged as
-        deletions per the related check's specification.
+        are reported as deleted. Non-404 errors (5xx, throttling, permission,
+        transient network failures) are reported as unresolvable: they must not
+        be flagged as deletions, but they must also not be silently treated as
+        clean resolutions, so the downstream check surfaces them as MANUAL.
 
         The sentinel values ``All``, ``None``, and ``GuestsOrExternalUsers``
         are not directory identifiers and are excluded before any Graph call.
@@ -1418,9 +1423,11 @@ OAuthAppInfo
             policies: Conditional Access policies keyed by policy ID.
 
         Returns:
-            Set[Tuple[str, str]]: ``(type, identifier)`` pairs where ``type``
-                is one of ``user|group|role`` and ``identifier`` failed to
-                resolve via Graph with HTTP 404.
+            Tuple[Set[Tuple[str, str]], Set[Tuple[str, str]]]: A pair of
+                ``(type, identifier)`` sets. The first holds identifiers that
+                failed to resolve via Graph with HTTP 404 (deleted); the second
+                holds identifiers whose lookup failed for any other reason and
+                could be neither confirmed present nor confirmed deleted.
         """
         logger.info(
             "Entra - Resolving directory-object references in Conditional "
@@ -1456,28 +1463,36 @@ OAuthAppInfo
                     ids_by_type["role"].add(ident)
 
         unresolved: Set[Tuple[str, str]] = set()
+        errored: Set[Tuple[str, str]] = set()
 
         # Resolve types in parallel; within a type, walk identifiers serially
         # to keep concurrent Graph calls bounded and avoid throttling.
         await gather(
-            self._resolve_identifiers_for_type("user", ids_by_type["user"], unresolved),
             self._resolve_identifiers_for_type(
-                "group", ids_by_type["group"], unresolved
+                "user", ids_by_type["user"], unresolved, errored
             ),
-            self._resolve_identifiers_for_type("role", ids_by_type["role"], unresolved),
+            self._resolve_identifiers_for_type(
+                "group", ids_by_type["group"], unresolved, errored
+            ),
+            self._resolve_identifiers_for_type(
+                "role", ids_by_type["role"], unresolved, errored
+            ),
         )
-        return unresolved
+        return unresolved, errored
 
     async def _resolve_identifiers_for_type(
         self,
         type_: str,
         identifiers: Set[str],
         unresolved: Set[Tuple[str, str]],
+        errored: Set[Tuple[str, str]],
     ) -> None:
-        """Resolve a set of identifiers of a given type, mutating ``unresolved``.
+        """Resolve a set of identifiers of a given type, mutating the result sets.
 
-        Only HTTP 404 responses add to the unresolved set; every other error
-        is logged and treated as 'unknown' (the identifier is not flagged).
+        Only HTTP 404 (or ``Request_ResourceNotFound``) responses add to
+        ``unresolved``. Every other error (5xx, throttling, permission, or an
+        unexpected exception) is logged and added to ``errored`` so the check
+        can report it as unverified instead of silently treating it as clean.
         """
         for identifier in identifiers:
             try:
@@ -1497,12 +1512,14 @@ OAuthAppInfo
                 if status_code == 404 or error_code == "Request_ResourceNotFound":
                     unresolved.add((type_, identifier))
                 else:
+                    errored.add((type_, identifier))
                     logger.warning(
                         f"Entra - Could not resolve {type_} '{identifier}' for "
                         f"Conditional Access reference check: "
                         f"{error.__class__.__name__}: {error}"
                     )
             except Exception as error:
+                errored.add((type_, identifier))
                 logger.warning(
                     f"Entra - Unexpected error resolving {type_} '{identifier}' "
                     f"for Conditional Access reference check: "

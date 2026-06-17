@@ -20,13 +20,21 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
     policy whose users/groups/roles inclusion or exclusion collections name an
     identifier that no longer resolves in Microsoft Entra ID.
 
+    Identifiers whose Graph lookup failed with a non-404 error (5xx, throttling,
+    insufficient permissions) are cached separately: they could not be verified
+    as present or deleted, so the policy is reported as MANUAL rather than being
+    silently treated as clean.
+
     - PASS: The policy references no deleted users, groups, or roles.
     - FAIL: The policy references at least one deleted user, group, or role.
+    - MANUAL: At least one referenced identifier could not be resolved due to a
+      transient Graph error, so the policy could not be fully evaluated.
     """
 
     def execute(self) -> list[CheckReportM365]:
         findings = []
         unresolved = entra_client.unresolved_directory_object_references
+        errored = entra_client.errored_directory_object_references
 
         for policy_id, policy in entra_client.conditional_access_policies.items():
             report = CheckReportM365(
@@ -36,18 +44,27 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
                 resource_id=policy_id,
             )
 
-            orphans = self._collect_orphans(policy, unresolved)
+            orphans = self._collect_references_in(policy, unresolved)
+            unverified = self._collect_references_in(policy, errored)
 
-            if not orphans:
+            if orphans:
+                # A confirmed deletion takes precedence over unverified ones.
+                report.status = "FAIL"
+                report.status_extended = self._format_failure(
+                    policy.display_name, orphans, unverified, policy.state
+                )
+            elif unverified:
+                # Nothing confirmed deleted, but we could not verify every
+                # reference — do not claim the policy is clean.
+                report.status = "MANUAL"
+                report.status_extended = self._format_manual(
+                    policy.display_name, unverified
+                )
+            else:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Conditional Access policy {policy.display_name} references no "
                     f"deleted directory objects."
-                )
-            else:
-                report.status = "FAIL"
-                report.status_extended = self._format_failure(
-                    policy.display_name, orphans, policy.state
                 )
 
             findings.append(report)
@@ -55,14 +72,17 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
         return findings
 
     @staticmethod
-    def _collect_orphans(policy, unresolved):
-        """Walk the six identifier collections on a policy and return orphans.
+    def _collect_references_in(policy, id_set):
+        """Walk the six identifier collections and return references in ``id_set``.
+
+        Args:
+            policy: The Conditional Access policy to inspect.
+            id_set: Set of ``(type, id)`` pairs to match references against.
 
         Returns:
             list[tuple[str, str, str]]: ``(type, id, side)`` tuples where
                 ``type`` is one of ``user|group|role``, ``id`` is the Graph
-                identifier that failed to resolve, and ``side`` is one of
-                ``include|exclude``.
+                identifier, and ``side`` is one of ``include|exclude``.
         """
         if not policy.conditions or not policy.conditions.user_conditions:
             return []
@@ -77,20 +97,20 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
             ("role", "exclude", uc.excluded_roles),
         )
 
-        orphans = []
+        matches = []
         for type_, side, identifiers in collections:
             for identifier in identifiers:
                 if identifier in CONDITIONAL_ACCESS_SENTINEL_IDS:
                     continue
-                if (type_, identifier) in unresolved:
-                    orphans.append((type_, identifier, side))
-        return orphans
+                if (type_, identifier) in id_set:
+                    matches.append((type_, identifier, side))
+        return matches
 
     @staticmethod
-    def _format_failure(display_name, orphans, state=None):
-        # Group orphans by type for a readable, deterministic message.
+    def _group_by_type(references):
+        """Group ``(type, id, side)`` references into a deterministic message part."""
         by_type = {"user": [], "group": [], "role": []}
-        for type_, identifier, side in orphans:
+        for type_, identifier, side in references:
             by_type[type_].append(f"{identifier} ({side})")
 
         parts = []
@@ -98,7 +118,10 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
             if by_type[type_]:
                 joined = ", ".join(sorted(by_type[type_]))
                 parts.append(f"{type_}s: {joined}")
+        return "; ".join(parts)
 
+    @classmethod
+    def _format_failure(cls, display_name, orphans, unverified, state=None):
         # Surface report-only mode explicitly: the stale references are not yet
         # enforced, but become live the moment the policy is turned on.
         report_only = (
@@ -108,8 +131,27 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
             else ""
         )
 
+        # If some references also could not be resolved, say so rather than
+        # implying the rest of the policy is fully clean.
+        unverified_note = (
+            f" Additionally, {len(unverified)} reference(s) could not be verified "
+            f"due to transient Microsoft Graph errors."
+            if unverified
+            else ""
+        )
+
         return (
             f"Conditional Access policy {display_name} references "
-            f"{len(orphans)} deleted directory object(s) — {'; '.join(parts)}."
-            f"{report_only}"
+            f"{len(orphans)} deleted directory object(s) — "
+            f"{cls._group_by_type(orphans)}.{report_only}{unverified_note}"
+        )
+
+    @classmethod
+    def _format_manual(cls, display_name, unverified):
+        return (
+            f"Conditional Access policy {display_name} could not be fully evaluated: "
+            f"{len(unverified)} reference(s) could not be resolved due to transient "
+            f"Microsoft Graph errors (5xx, throttling, or insufficient permissions) — "
+            f"{cls._group_by_type(unverified)}. Re-run the scan or review the policy "
+            f"manually."
         )
