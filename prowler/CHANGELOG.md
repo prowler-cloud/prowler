@@ -22,6 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
 - TLS certificate verification in the `codepipeline_project_repo_private` check, which previously used an unverified SSL context, leaving the repository-visibility probe open to MITM tampering [(#11603)](https://github.com/prowler-cloud/prowler/pull/11603)
 - `entra_directory_sync_object_takeover_blocked` check for the M365 provider, verifying that hybrid Entra tenants block cloud object takeover through both soft-match and hard-match directory synchronization [(#11098)](https://github.com/prowler-cloud/prowler/pull/11098)
+- `entra_conditional_access_policy_no_deleted_object_references` check for M365 provider [(#11236)](https://github.com/prowler-cloud/prowler/pull/11236)
 
 ### 🔄 Changed
 
