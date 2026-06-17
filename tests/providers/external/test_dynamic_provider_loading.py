@@ -495,17 +495,19 @@ class TestIsBuiltinProvider:
 
 
 class TestInitProvidersParserBuiltinDependencyFailure:
-    """Tests the critical behavior fix: when a built-in provider's arguments
-    module exists but its imports fail (e.g. boto3 not installed), we must
-    fail loudly with a clear message — not silently fall through to entry
-    points as if the provider were external."""
+    """Selective fail-loud: init captures failures silently, enforce emits
+    warning for non-invoked and exits for the invoked broken provider."""
 
+    @patch("sys.argv", ["prowler", "aws"])
     @patch("prowler.providers.common.arguments.Provider.is_builtin")
     @patch("prowler.providers.common.arguments.import_module")
     def test_builtin_with_missing_transitive_dep_fails_loudly(
         self, mock_import, mock_is_builtin
     ):
-        from prowler.providers.common.arguments import init_providers_parser
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
 
         mock_is_builtin.return_value = True
         mock_import.side_effect = ImportError("No module named 'boto3'")
@@ -513,14 +515,14 @@ class TestInitProvidersParserBuiltinDependencyFailure:
         parser = MagicMock()
         parser._providers = ["aws"]
 
-        with (
-            patch(
-                "prowler.providers.common.arguments.Provider.get_available_providers",
-                return_value=["aws"],
-            ),
-            pytest.raises(SystemExit),
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws"],
         ):
             init_providers_parser(parser)
+            assert "aws" in parser._builtin_load_failures
+            with pytest.raises(SystemExit):
+                enforce_invoked_provider_loaded(parser)
 
     @patch("prowler.providers.common.arguments.Provider.is_builtin")
     @patch("prowler.providers.common.arguments.Provider._load_ep_provider")
@@ -543,6 +545,290 @@ class TestInitProvidersParserBuiltinDependencyFailure:
             init_providers_parser(parser)
 
         ext_cls.init_parser.assert_called_once_with(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_unrelated_builtin_failure_does_not_abort_when_other_provider_invoked(
+        self, mock_import, mock_is_builtin
+    ):
+        """Broken stackit + invoked aws → warning, no abort."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            init_providers_parser(parser)
+            assert "stackit" in parser._builtin_load_failures
+            enforce_invoked_provider_loaded(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
+
+    @patch("sys.argv", ["prowler", "-h"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_no_provider_invoked_failure_does_not_abort(
+        self, mock_import, mock_is_builtin
+    ):
+        """`prowler -h` + broken built-in → warning, help still renders."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'stackit.objectstorage'")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["stackit"],
+        ):
+            init_providers_parser(parser)
+            enforce_invoked_provider_loaded(parser)
+
+    @patch("sys.argv", ["prowler", "microsoft365"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_microsoft365_alias_still_triggers_fail_loud(
+        self, mock_import, mock_is_builtin
+    ):
+        """Alias `microsoft365 → m365` must be normalised before matching."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'msgraph'")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["m365"],
+        ):
+            init_providers_parser(parser)
+            with pytest.raises(SystemExit):
+                enforce_invoked_provider_loaded(parser)
+
+    @patch("sys.argv", ["prowler", "oci"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_oci_alias_still_triggers_fail_loud(
+        self, mock_import, mock_is_builtin
+    ):
+        """Alias `oci → oraclecloud` must be normalised before matching."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'oci'")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["oraclecloud"],
+        ):
+            init_providers_parser(parser)
+            with pytest.raises(SystemExit):
+                enforce_invoked_provider_loaded(parser)
+
+    @patch("sys.argv", ["prowler", "--output-directory", "stackit"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_flag_value_matching_provider_name_not_treated_as_invoked(
+        self, mock_import, mock_is_builtin
+    ):
+        """Flag-first invocation → invoked is 'aws' (default), not the flag's value."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            init_providers_parser(parser)
+            enforce_invoked_provider_loaded(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_builtin_non_import_error_fails_loudly(
+        self, mock_import, mock_is_builtin
+    ):
+        """Non-ImportError in invoked provider → still fail-loud."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = RuntimeError("Unexpected error in aws init_parser")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws"],
+        ):
+            init_providers_parser(parser)
+            with pytest.raises(SystemExit):
+                enforce_invoked_provider_loaded(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_unrelated_builtin_non_import_error_does_not_abort(
+        self, mock_import, mock_is_builtin
+    ):
+        """Non-ImportError in unrelated provider → warning, no abort."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise RuntimeError("Unexpected error in stackit init_parser")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            init_providers_parser(parser)
+            enforce_invoked_provider_loaded(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
+
+
+class TestParseArgsOverrideAlignment:
+    """Regression: `parse(args=...)` overrides sys.argv AFTER __init__ ran;
+    the selective fail-loud must read argv at enforce time, not init time."""
+
+    def test_enforce_reads_current_sys_argv_not_init_time_sys_argv(self):
+        """Init with argv=['prowler','-h'] (no provider) captures stackit
+        failure silently. Enforce with argv=['prowler','stackit'] must
+        fail-loud — proving alignment under parse(args=...)."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        def import_side_effect(path):
+            if "stackit" in path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return MagicMock()
+
+        parser = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.arguments.Provider.is_builtin",
+                return_value=True,
+            ),
+            patch(
+                "prowler.providers.common.arguments.Provider.get_available_providers",
+                return_value=["aws", "stackit"],
+            ),
+            patch(
+                "prowler.providers.common.arguments.import_module",
+                side_effect=import_side_effect,
+            ),
+        ):
+            # Phase 1: __init__ with ambient argv = ['prowler', '-h']
+            with patch("sys.argv", ["prowler", "-h"]):
+                init_providers_parser(parser)
+            # Failure captured silently — no SystemExit during init
+            assert "stackit" in parser._builtin_load_failures
+
+            # Phase 2: parse(args=...) overrode sys.argv → stackit invoked
+            with patch("sys.argv", ["prowler", "stackit"]):
+                with pytest.raises(SystemExit):
+                    enforce_invoked_provider_loaded(parser)
+
+    def test_enforce_reads_current_sys_argv_for_no_invocation(self):
+        """Inverse: init's argv invokes stackit, but parse(args=['prowler',
+        '-h']) overrides. Enforce must NOT fail-loud."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        def import_side_effect(path):
+            if "stackit" in path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return MagicMock()
+
+        parser = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.arguments.Provider.is_builtin",
+                return_value=True,
+            ),
+            patch(
+                "prowler.providers.common.arguments.Provider.get_available_providers",
+                return_value=["aws", "stackit"],
+            ),
+            patch(
+                "prowler.providers.common.arguments.import_module",
+                side_effect=import_side_effect,
+            ),
+        ):
+            # Phase 1: __init__ with ambient argv pretending stackit invoked
+            with patch("sys.argv", ["prowler", "stackit"]):
+                init_providers_parser(parser)
+            assert "stackit" in parser._builtin_load_failures
+
+            # Phase 2: parse(args=['prowler', '-h']) overrode sys.argv →
+            # no provider invoked anymore → enforce must NOT exit
+            with patch("sys.argv", ["prowler", "-h"]):
+                enforce_invoked_provider_loaded(parser)
 
 
 class TestInitGlobalProviderBuiltinDependencyFailure:

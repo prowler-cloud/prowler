@@ -29,6 +29,24 @@ reload = DEBUG
 # event loop alive while waiting for events.
 worker_class = env("DJANGO_WORKER_CLASS", default="asgi")
 
+# Lifespan protocol. Django's ASGIHandler (config.asgi:application) serves only
+# HTTP scopes and raises "Django can only handle ASGI/HTTP connections, not
+# lifespan." gunicorn's default ("auto") probes the app with a lifespan scope
+# to detect support, which triggers that error. We use no lifespan startup or
+# shutdown hooks, so disable the protocol entirely.
+asgi_lifespan = env("DJANGO_ASGI_LIFESPAN", default="off")
+
+# Event loop for the ASGI worker. "auto" uses uvloop when it is installed and
+# falls back to the stdlib asyncio loop otherwise; uvloop gives the SSE event
+# loop more headroom under many concurrent open streams.
+asgi_loop = env("DJANGO_ASGI_LOOP", default="uvloop")
+
+# Max concurrent connections per ASGI worker. Each open SSE stream holds one
+# connection for its whole lifetime, so this caps simultaneous SSE clients per
+# worker (gunicorn's default is 1000). The sync-only `threads` option has no
+# effect on ASGI workers.
+worker_connections = env.int("DJANGO_WORKER_CONNECTIONS", default=1000)
+
 # Preload the application before forking workers in production: the app is
 # imported once in the master and workers fork from it. In development, disable
 # preload so the server restarts on code changes.
