@@ -51,6 +51,7 @@ class ProwlerArgumentParser:
             "okta",
             "scaleway",
             "stackit",
+            "linode",
         }
         all_providers = set(Provider.get_available_providers())
         new_providers = sorted(all_providers - known_providers)
