@@ -25,6 +25,7 @@ import {
   FormField,
   FormMessage,
 } from "@/components/shadcn/form";
+import { stripPasswordManagerHighlight } from "@/lib/password-manager";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 const AUTH_ERROR_PATHS = {
@@ -152,6 +153,7 @@ export const SignUpForm = ({
     <AuthLayout title="Sign up">
       <Form {...form}>
         <form
+          ref={stripPasswordManagerHighlight}
           noValidate
           method="post"
           className="flex flex-col gap-4"

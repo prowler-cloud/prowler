@@ -476,6 +476,27 @@
   }
 }
 
+/* Neutralize the browser's native autofill highlight (Chromium/WebKit paint a
+   forced blue/yellow background on :autofill). box-shadow inset masks it; the
+   long transition stops the native color from flashing before the mask lands.
+   Kept UNLAYERED + !important: the mask is a box-shadow and collides with
+   shadcn's focus:ring (also a box-shadow, in @layer utilities) — a layered
+   rule can't win that, so this sits outside the cascade layers. */
+input:autofill,
+input:autofill:hover,
+input:autofill:focus,
+input:autofill:active,
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text-neutral-secondary) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input-primary) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg-input-primary) inset !important;
+  caret-color: var(--text-neutral-secondary);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Override vaul's injected user-select: none to allow text selection in drawers */
 @media (hover: hover) and (pointer: fine) {
   [data-vaul-drawer][data-vaul-drawer] {

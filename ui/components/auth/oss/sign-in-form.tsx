@@ -16,6 +16,7 @@ import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { Form } from "@/components/shadcn/form";
+import { stripPasswordManagerHighlight } from "@/lib/password-manager";
 import { SignInFormData, signInSchema } from "@/types";
 
 export const SignInForm = ({
@@ -146,6 +147,7 @@ export const SignInForm = ({
     <AuthLayout title={title}>
       <Form {...form}>
         <form
+          ref={stripPasswordManagerHighlight}
           noValidate
           method="post"
           className="flex flex-col gap-4"
