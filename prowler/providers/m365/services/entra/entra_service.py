@@ -18,6 +18,12 @@ from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
 from prowler.providers.m365.m365_provider import M365Provider
 
+# Sentinel identifiers used in Conditional Access ``conditions.users``
+# collections that do not correspond to real directory objects and must not be
+# resolved against Graph. Shared by the resolver below and the check that reads
+# its result.
+CONDITIONAL_ACCESS_SENTINEL_IDS = {"All", "None", "GuestsOrExternalUsers"}
+
 
 class Entra(M365Service):
     """
@@ -1358,7 +1364,6 @@ OAuthAppInfo
             "Access policies..."
         )
 
-        sentinels = {"All", "None", "GuestsOrExternalUsers"}
         ids_by_type: Dict[str, Set[str]] = {
             "user": set(),
             "group": set(),
@@ -1374,17 +1379,17 @@ OAuthAppInfo
             for ident in (user_conditions.included_users or []) + (
                 user_conditions.excluded_users or []
             ):
-                if ident and ident not in sentinels:
+                if ident and ident not in CONDITIONAL_ACCESS_SENTINEL_IDS:
                     ids_by_type["user"].add(ident)
             for ident in (user_conditions.included_groups or []) + (
                 user_conditions.excluded_groups or []
             ):
-                if ident and ident not in sentinels:
+                if ident and ident not in CONDITIONAL_ACCESS_SENTINEL_IDS:
                     ids_by_type["group"].add(ident)
             for ident in (user_conditions.included_roles or []) + (
                 user_conditions.excluded_roles or []
             ):
-                if ident and ident not in sentinels:
+                if ident and ident not in CONDITIONAL_ACCESS_SENTINEL_IDS:
                     ids_by_type["role"].add(ident)
 
         unresolved: Set[Tuple[str, str]] = set()

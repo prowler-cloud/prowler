@@ -1,9 +1,9 @@
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
-
-# Sentinel identifiers used in conditions.users collections that do not
-# correspond to real directory objects and must not be resolved against Graph.
-_SENTINEL_IDS = {"All", "None", "GuestsOrExternalUsers"}
+from prowler.providers.m365.services.entra.entra_service import (
+    CONDITIONAL_ACCESS_SENTINEL_IDS,
+    ConditionalAccessPolicyState,
+)
 
 
 class entra_conditional_access_policy_no_deleted_object_references(Check):
@@ -47,7 +47,7 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = self._format_failure(
-                    policy.display_name, orphans
+                    policy.display_name, orphans, policy.state
                 )
 
             findings.append(report)
@@ -80,14 +80,14 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
         orphans = []
         for type_, side, identifiers in collections:
             for identifier in identifiers:
-                if identifier in _SENTINEL_IDS:
+                if identifier in CONDITIONAL_ACCESS_SENTINEL_IDS:
                     continue
                 if (type_, identifier) in unresolved:
                     orphans.append((type_, identifier, side))
         return orphans
 
     @staticmethod
-    def _format_failure(display_name, orphans):
+    def _format_failure(display_name, orphans, state=None):
         # Group orphans by type for a readable, deterministic message.
         by_type = {"user": [], "group": [], "role": []}
         for type_, identifier, side in orphans:
@@ -99,7 +99,17 @@ class entra_conditional_access_policy_no_deleted_object_references(Check):
                 joined = ", ".join(sorted(by_type[type_]))
                 parts.append(f"{type_}s: {joined}")
 
+        # Surface report-only mode explicitly: the stale references are not yet
+        # enforced, but become live the moment the policy is turned on.
+        report_only = (
+            " The policy is in report-only mode, so these references are not "
+            "enforced yet but will take effect once it is enabled."
+            if state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING
+            else ""
+        )
+
         return (
             f"Conditional Access policy {display_name} references "
             f"{len(orphans)} deleted directory object(s) — {'; '.join(parts)}."
+            f"{report_only}"
         )

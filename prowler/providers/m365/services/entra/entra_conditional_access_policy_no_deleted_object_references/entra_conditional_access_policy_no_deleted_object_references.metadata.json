@@ -37,6 +37,8 @@
     "e3"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_directory_sync_account_excluded"
+  ],
   "Notes": "The check runs against all Conditional Access policies regardless of state (enabled, disabled, enabledForReportingButNotEnforced) — stale references in disabled policies are a misconfiguration that becomes live the moment the policy is re-enabled. Transient Graph errors (5xx, throttling) are not treated as deletions; only HTTP 404 responses flag an identifier as orphaned."
 }

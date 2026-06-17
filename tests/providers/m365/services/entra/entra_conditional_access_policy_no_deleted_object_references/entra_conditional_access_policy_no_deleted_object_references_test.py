@@ -311,6 +311,39 @@ class Test_entra_conditional_access_policy_no_deleted_object_references:
             assert "groups:" in result[0].status_extended
             assert "roles:" in result[0].status_extended
 
+    def test_report_only_policy_failure_notes_mode(self):
+        """A report-only policy with an orphan FAILs and flags the not-yet-enforced state."""
+        entra_client = _entra_client_mock()
+        deleted_user = str(uuid4())
+        policy_id, policy = _make_policy(
+            display_name="Report Only MFA",
+            state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
+            included_users=[deleted_user],
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_no_deleted_object_references.entra_conditional_access_policy_no_deleted_object_references import (
+                entra_conditional_access_policy_no_deleted_object_references,
+            )
+
+            entra_client.conditional_access_policies = {policy_id: policy}
+            entra_client.unresolved_directory_object_references = {
+                ("user", deleted_user)
+            }
+
+            check = entra_conditional_access_policy_no_deleted_object_references()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "report-only mode" in result[0].status_extended
+
     def test_multiple_policies_mixed(self):
         """Two policies: one clean, one with an orphan. Distinct PASS/FAIL findings."""
         entra_client = _entra_client_mock()
