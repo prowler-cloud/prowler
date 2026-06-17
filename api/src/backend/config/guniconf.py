@@ -52,6 +52,10 @@ worker_connections = env.int("DJANGO_WORKER_CONNECTIONS", default=1000)
 # preload so the server restarts on code changes.
 preload_app = not DEBUG
 
+# Worker timeout in seconds. Increased from the default 30s to handle requests
+# that may take longer, such as complex API operations.
+timeout = env.int("GUNICORN_TIMEOUT", default=120)
+
 # Logging
 logconfig_dict = DJANGO_LOGGERS
 gunicorn_logger = logging.getLogger(BackendLogger.GUNICORN)

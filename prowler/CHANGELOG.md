@@ -16,9 +16,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cosmosdb_account_backup_policy_continuous` check for Azure provider [(#11032)](https://github.com/prowler-cloud/prowler/pull/11032)
 - `cosmosdb_account_minimum_tls_version` check for Azure provider, verifying Cosmos DB accounts enforce TLS 1.2 or higher for client connections [(#11033)](https://github.com/prowler-cloud/prowler/pull/11033)
 - `cosmosdb_account_public_network_access_disabled` check for Azure provider, verifying Cosmos DB accounts have public network access disabled so connectivity is restricted to private endpoints or VNet service endpoints [(#11034)](https://github.com/prowler-cloud/prowler/pull/11034)
+- `databricks_workspace_public_network_access_disabled` check for Azure provider, verifying Databricks workspaces have public network access disabled so connectivity is restricted to Azure Private Link private endpoints [(#11035)](https://github.com/prowler-cloud/prowler/pull/11035)
 - `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
 - TLS certificate verification in the `codepipeline_project_repo_private` check, which previously used an unverified SSL context, leaving the repository-visibility probe open to MITM tampering [(#11603)](https://github.com/prowler-cloud/prowler/pull/11603)
+- `entra_directory_sync_object_takeover_blocked` check for the M365 provider, verifying that hybrid Entra tenants block cloud object takeover through both soft-match and hard-match directory synchronization [(#11098)](https://github.com/prowler-cloud/prowler/pull/11098)
 
 ### 🔄 Changed
 
