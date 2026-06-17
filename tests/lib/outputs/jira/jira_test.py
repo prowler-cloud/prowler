@@ -339,6 +339,88 @@ class TestJiraIntegration:
         with pytest.raises(JiraRefreshTokenError):
             self.jira_integration.refresh_access_token()
 
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
+    def test_get_auth_sends_timeout(self, mock_get_cloud_id, mock_post):
+        """get_auth must pass a request timeout to avoid hanging on an unresponsive Jira."""
+        # To disable vulture
+        mock_get_cloud_id = mock_get_cloud_id
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "test_access_token",
+            "refresh_token": "test_refresh_token",
+            "expires_in": 3600,
+        }
+        mock_post.return_value = mock_response
+
+        self.jira_integration.get_auth("test_auth_code")
+
+        assert mock_post.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_sends_timeout(self, mock_get):
+        """get_cloud_id (OAuth path) must pass a request timeout."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [{"id": "test_cloud_id"}]
+        mock_get.return_value = mock_response
+
+        self.jira_integration.get_cloud_id("test_access_token")
+
+        assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_basic_auth_sends_timeout(self, mock_get):
+        """get_cloud_id (basic-auth tenant_info path) must pass a request timeout."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"cloudId": "test_cloud_id"}
+        mock_get.return_value = mock_response
+
+        self.jira_integration_basic_auth.get_cloud_id(domain=self.domain)
+
+        assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_refresh_access_token_sends_timeout(self, mock_post):
+        """refresh_access_token must pass a request timeout."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "new_access_token",
+            "refresh_token": "new_refresh_token",
+            "expires_in": 3600,
+        }
+        mock_post.return_value = mock_response
+
+        self.jira_integration.refresh_access_token()
+
+        assert mock_post.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_sends_timeout(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """get_projects must pass a request timeout."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [{"key": "PROJ1", "name": "Project One"}]
+        mock_get.return_value = mock_response
+
+        self.jira_integration.get_projects()
+
+        assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
     @patch.object(Jira, "get_auth", return_value=None)
     @patch.object(
         Jira,

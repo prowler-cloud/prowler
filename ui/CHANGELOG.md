@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Attack Paths now shows distinct messages while a scan is running or its graph is being built, plus a separate "couldn't load scans" error, instead of always showing "No scans available" [(#11512)](https://github.com/prowler-cloud/prowler/pull/11512)
+- Radio button no longer shifts vertically when selected [(#11608)](https://github.com/prowler-cloud/prowler/pull/11608)
 
 ### 🔐 Security
 
