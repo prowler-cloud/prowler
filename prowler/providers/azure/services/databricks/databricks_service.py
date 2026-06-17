@@ -66,6 +66,9 @@ class Databricks(AzureService):
                         id=workspace.id,
                         name=workspace.name,
                         location=workspace.location,
+                        public_network_access=getattr(
+                            workspace, "public_network_access", None
+                        ),
                         custom_managed_vnet_id=(
                             getattr(
                                 workspace_parameters, "custom_virtual_network_id", None
@@ -107,6 +110,7 @@ class DatabricksWorkspace(BaseModel):
         id: The unique identifier of the workspace.
         name: The name of the workspace.
         location: The Azure region where the workspace is deployed.
+        public_network_access: Whether public network access is "Enabled" or "Disabled", if configured.
         custom_managed_vnet_id: The ID of the custom managed virtual network, if configured.
         managed_disk_encryption: The encryption settings for the workspace's managed disks.
     """
@@ -114,5 +118,6 @@ class DatabricksWorkspace(BaseModel):
     id: str
     name: str
     location: str
+    public_network_access: Optional[str] = None
     custom_managed_vnet_id: Optional[str] = None
     managed_disk_encryption: Optional[ManagedDiskEncryption] = None

@@ -16,6 +16,7 @@ WORKDIR /app
 # Install dependencies based on the preferred package manager
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY scripts ./scripts
+ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN corepack install && pnpm install --frozen-lockfile
 
 
