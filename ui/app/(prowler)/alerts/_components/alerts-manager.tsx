@@ -49,6 +49,8 @@ interface AlertsManagerProps {
 
 const ALERTS_FINDINGS_HREF =
   "/findings?filter[muted]=false&filter[status__in]=FAIL";
+const ALERTS_PERMISSION_ERROR =
+  "You don't have permission to manage alerts. Ask an administrator to update your role.";
 
 export const AlertsManager = ({
   alerts,
@@ -108,7 +110,12 @@ export const AlertsManager = ({
     }
     const payload = toAlertPayload(values);
     const result = await updateAlert(editingAlert.id, payload);
-    if (result?.error) return { ok: false, error: result.error };
+    if (result?.error) {
+      return {
+        ok: false,
+        error: result.status === 403 ? ALERTS_PERMISSION_ERROR : result.error,
+      };
+    }
     toast({
       title: "Alert updated",
       description: result.data.attributes.name,
