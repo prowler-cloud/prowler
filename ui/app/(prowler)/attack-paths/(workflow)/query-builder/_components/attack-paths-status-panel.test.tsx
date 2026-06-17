@@ -15,9 +15,9 @@ describe("AttackPathsStatusPanel", () => {
     ).toHaveAttribute("href", "/scans");
   });
 
-  it("renders the scan-running message", () => {
+  it("renders the scan-pending message", () => {
     render(
-      <AttackPathsStatusPanel state={ATTACK_PATHS_VIEW_STATES.SCAN_RUNNING} />,
+      <AttackPathsStatusPanel state={ATTACK_PATHS_VIEW_STATES.SCAN_PENDING} />,
     );
     expect(screen.getByText(/scan in progress/i)).toBeInTheDocument();
   });

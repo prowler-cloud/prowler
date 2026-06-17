@@ -1,11 +1,22 @@
-import type { AttackPathScan } from "@/types/attack-paths";
+import type { AttackPathScan, ScanState } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
+
+// In-flight = scan still progressing toward a graph. AVAILABLE is the default
+// state of a new scan. Shared by the deriver and polling so they can't diverge.
+const IN_FLIGHT_SCAN_STATES: ScanState[] = [
+  SCAN_STATES.AVAILABLE,
+  SCAN_STATES.SCHEDULED,
+  SCAN_STATES.EXECUTING,
+];
+
+export const isScanInFlight = (scans: AttackPathScan[]): boolean =>
+  scans.some((s) => IN_FLIGHT_SCAN_STATES.includes(s.attributes.state));
 
 export const ATTACK_PATHS_VIEW_STATES = {
   LOADING: "loading",
   ERROR: "error",
   NO_SCANS: "no-scans",
-  SCAN_RUNNING: "scan-running",
+  SCAN_PENDING: "scan-pending",
   GRAPH_BUILDING: "graph-building",
   NO_GRAPH_DATA: "no-graph-data",
   READY: "ready",
@@ -40,14 +51,9 @@ export const getAttackPathsViewState = ({
   if (scans.some((s) => s.attributes.state === SCAN_STATES.EXECUTING)) {
     return ATTACK_PATHS_VIEW_STATES.GRAPH_BUILDING;
   }
-  if (
-    scans.some(
-      (s) =>
-        s.attributes.state === SCAN_STATES.SCHEDULED ||
-        s.attributes.state === SCAN_STATES.AVAILABLE,
-    )
-  ) {
-    return ATTACK_PATHS_VIEW_STATES.SCAN_RUNNING;
+  // EXECUTING returned above; an in-flight scan here is AVAILABLE/SCHEDULED.
+  if (isScanInFlight(scans)) {
+    return ATTACK_PATHS_VIEW_STATES.SCAN_PENDING;
   }
   return ATTACK_PATHS_VIEW_STATES.NO_GRAPH_DATA;
 };

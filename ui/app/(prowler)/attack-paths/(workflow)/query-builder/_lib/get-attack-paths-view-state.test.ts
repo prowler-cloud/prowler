@@ -6,6 +6,7 @@ import {
   ATTACK_PATHS_VIEW_STATES,
   getAttackPathsViewState,
   getGraphBuildingProgress,
+  isScanInFlight,
 } from "./get-attack-paths-view-state";
 
 const scan = (
@@ -85,21 +86,21 @@ describe("getAttackPathsViewState", () => {
     ).toBe(ATTACK_PATHS_VIEW_STATES.GRAPH_BUILDING);
   });
 
-  it("returns scan-running when none ready and some scan is scheduled/available", () => {
+  it("returns scan-pending when none ready and some scan is scheduled/available", () => {
     expect(
       getAttackPathsViewState({
         scansLoading: false,
         loadError: false,
         scans: [scan("scheduled", false)],
       }),
-    ).toBe(ATTACK_PATHS_VIEW_STATES.SCAN_RUNNING);
+    ).toBe(ATTACK_PATHS_VIEW_STATES.SCAN_PENDING);
     expect(
       getAttackPathsViewState({
         scansLoading: false,
         loadError: false,
         scans: [scan("available", false)],
       }),
-    ).toBe(ATTACK_PATHS_VIEW_STATES.SCAN_RUNNING);
+    ).toBe(ATTACK_PATHS_VIEW_STATES.SCAN_PENDING);
   });
 
   it("returns no-graph-data when none ready and all scans are terminal", () => {
@@ -110,6 +111,27 @@ describe("getAttackPathsViewState", () => {
         scans: [scan("completed", false), scan("failed", false)],
       }),
     ).toBe(ATTACK_PATHS_VIEW_STATES.NO_GRAPH_DATA);
+  });
+});
+
+describe("isScanInFlight", () => {
+  it("is true for an available scan (created, not yet scheduled)", () => {
+    expect(isScanInFlight([scan("available", false)])).toBe(true);
+  });
+
+  it("is true for scheduled and executing scans", () => {
+    expect(isScanInFlight([scan("scheduled", false)])).toBe(true);
+    expect(isScanInFlight([scan("executing", false, 40)])).toBe(true);
+  });
+
+  it("is false when every scan is in a terminal state", () => {
+    expect(
+      isScanInFlight([scan("completed", true), scan("failed", false)]),
+    ).toBe(false);
+  });
+
+  it("is false for an empty list", () => {
+    expect(isScanInFlight([])).toBe(false);
   });
 });
 

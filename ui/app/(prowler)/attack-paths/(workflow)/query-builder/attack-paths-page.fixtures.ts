@@ -143,7 +143,7 @@ export const emptyScans = (): PageFixture => ({
   queryResult: null,
 });
 
-export const scanRunning = (): PageFixture => ({
+export const scanPending = (): PageFixture => ({
   scans: [
     buildScan(TYPICAL_SCAN_ID, {
       state: "scheduled",
@@ -315,7 +315,7 @@ export const edgeCases = (): PageFixture => {
 export const fixtures = {
   typical,
   emptyScans,
-  scanRunning,
+  scanPending,
   graphBuilding,
   noGraphData,
   emptyGraph,

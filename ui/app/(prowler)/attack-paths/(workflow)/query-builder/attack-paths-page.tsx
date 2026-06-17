@@ -70,7 +70,11 @@ import {
   ATTACK_PATHS_VIEW_STATES,
   getAttackPathsViewState,
   getGraphBuildingProgress,
+  isScanInFlight,
 } from "./_lib/get-attack-paths-view-state";
+
+const SCROLL_CONTAINER_CLASS =
+  "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4";
 
 export default function AttackPathsPage() {
   const searchParams = useSearchParams();
@@ -172,11 +176,8 @@ export default function AttackPathsPage() {
     graphState.resetGraph();
   }, [scanId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset on scanId change only
 
-  const hasExecutingScan = scans.some(
-    (scan) =>
-      scan.attributes.state === SCAN_STATES.EXECUTING ||
-      scan.attributes.state === SCAN_STATES.SCHEDULED,
-  );
+  // Poll while a scan is in flight so the page auto-advances when the graph is ready.
+  const hasScanInFlight = isScanInFlight(scans);
 
   const viewState = getAttackPathsViewState({ scansLoading, loadError, scans });
 
@@ -407,7 +408,7 @@ export default function AttackPathsPage() {
   return (
     <div className="flex flex-col gap-6">
       <AutoRefresh
-        hasExecutingScan={hasExecutingScan}
+        hasExecutingScan={hasScanInFlight}
         onRefresh={refreshScans}
       />
 
@@ -430,7 +431,7 @@ export default function AttackPathsPage() {
       </div>
 
       {viewState === ATTACK_PATHS_VIEW_STATES.LOADING ? (
-        <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+        <div className={SCROLL_CONTAINER_CLASS}>
           <p className="text-sm">Loading scans...</p>
         </div>
       ) : viewState === ATTACK_PATHS_VIEW_STATES.NO_SCANS ? (
@@ -467,7 +468,7 @@ export default function AttackPathsPage() {
           )}
 
           {scanId && (
-            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+            <div className={SCROLL_CONTAINER_CLASS}>
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
@@ -525,7 +526,7 @@ export default function AttackPathsPage() {
             (graphState.data &&
               graphState.data.nodes &&
               graphState.data.nodes.length > 0)) && (
-            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+            <div className={SCROLL_CONTAINER_CLASS}>
               {graphState.loading ? (
                 <GraphLoading />
               ) : graphState.data &&

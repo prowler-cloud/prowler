@@ -76,10 +76,10 @@ describe("loading the page", () => {
 });
 
 describe("waiting states", () => {
-  test("a running scan shows the scan-in-progress message", async ({
+  test("a pending scan shows the scan-in-progress message", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.scanRunning());
+    const graph = await mountWith(fixtures.scanPending());
     expect(await graph.emptyStateMessage()).toMatch(/scan in progress/i);
   });
 
