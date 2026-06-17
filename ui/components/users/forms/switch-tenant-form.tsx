@@ -4,8 +4,8 @@ import { useSession } from "next-auth/react";
 import { Dispatch, SetStateAction, useActionState, useEffect } from "react";
 
 import { switchTenant } from "@/actions/users/tenants";
-import { useToast } from "@/components/ui";
-import { FormButtons } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
 import { reloadPage } from "@/lib/navigation";
 
 export const SwitchTenantForm = ({

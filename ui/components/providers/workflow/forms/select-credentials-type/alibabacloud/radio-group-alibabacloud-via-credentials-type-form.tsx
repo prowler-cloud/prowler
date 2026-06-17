@@ -3,8 +3,8 @@
 import { Control, Controller, FieldValues, Path } from "react-hook-form";
 
 import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { FormMessage } from "@/components/shadcn/form";
 import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
-import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupAlibabaCloudViaCredentialsFormProps<T extends FieldValues> = {
   control: Control<T>;

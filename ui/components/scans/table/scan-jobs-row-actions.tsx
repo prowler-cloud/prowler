@@ -17,11 +17,11 @@ import {
   ScanErrorDetailsModal,
   type ScanErrorDetailsState,
 } from "@/components/scans/scan-error-details-modal";
+import { useToast } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
 import type { ScanProps } from "@/types";

@@ -5,6 +5,7 @@ import { Control, Controller } from "react-hook-form";
 import { z } from "zod";
 
 import { SearchInput } from "@/components/shadcn";
+import { FormMessage } from "@/components/shadcn/form";
 import { cn } from "@/lib/utils";
 import { addProviderFormSchema } from "@/types";
 
@@ -26,7 +27,6 @@ import {
   OracleCloudProviderBadge,
   VercelProviderBadge,
 } from "../icons/providers-badge";
-import { FormMessage } from "../ui/form";
 
 const PROVIDERS = [
   {

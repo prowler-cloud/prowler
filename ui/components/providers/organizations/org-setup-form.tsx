@@ -18,12 +18,12 @@ import {
   OrgWizardIntent,
 } from "@/components/providers/wizard/types";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
+import { useToast } from "@/components/shadcn";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
+import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { useToast } from "@/components/ui";
-import { Form } from "@/components/ui/form";
 import {
   getAWSCredentialsTemplateLinks,
   PROWLER_CF_TEMPLATE_URL,

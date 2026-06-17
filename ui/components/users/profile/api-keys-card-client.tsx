@@ -11,8 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { DataTable } from "@/components/ui/table";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { DataTable } from "@/components/shadcn/table";
 import { MetaDataProps } from "@/types";
 
 import { ApiKeySuccessModal } from "./api-key-success-modal";

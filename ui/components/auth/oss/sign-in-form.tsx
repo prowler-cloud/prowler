@@ -13,9 +13,9 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
 import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form } from "@/components/shadcn/form";
 import { SignInFormData, signInSchema } from "@/types";
 
 export const SignInForm = ({

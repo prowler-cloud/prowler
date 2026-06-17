@@ -16,15 +16,15 @@ import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
 import { Button, Checkbox } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   Form,
   FormControl,
   FormField,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/shadcn/form";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 const AUTH_ERROR_PATHS = {
@@ -226,6 +226,7 @@ export const SignUpForm = ({
                         Terms of Service
                       </CustomLink>
                       &nbsp;of Prowler
+                      <span className="text-text-error-primary">*</span>
                     </label>
                   </div>
                   <FormMessage className="text-text-error" />

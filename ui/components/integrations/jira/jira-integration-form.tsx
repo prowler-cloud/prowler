@@ -4,11 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form } from "@/components/ui/form";
-import { FormButtons } from "@/components/ui/form/form-buttons";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { Form } from "@/components/shadcn/form";
+import { FormButtons } from "@/components/shadcn/form/form-buttons";
 import {
   type CreateValues,
   editJiraIntegrationFormSchema,

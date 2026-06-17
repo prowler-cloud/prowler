@@ -16,7 +16,7 @@ import { ComplianceFilters } from "@/components/compliance/compliance-header/com
 import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overview-grid";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import {
   ExpandedScanData,

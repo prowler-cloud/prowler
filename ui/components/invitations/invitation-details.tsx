@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime } from "@/components/shadcn/entities";
+
 import { AddIcon } from "../icons";
 import { Button, Card, CardContent, CardHeader } from "../shadcn";
 import { Separator } from "../shadcn/separator/separator";
-import { CodeSnippet } from "../ui/code-snippet/code-snippet";
-import { DateWithTime } from "../ui/entities";
 
 interface InvitationDetailsProps {
   attributes: {

@@ -16,9 +16,9 @@ import {
   Skeleton,
   Textarea,
 } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { fontMono } from "@/config/fonts";
 import { cn } from "@/lib/utils";
 import {

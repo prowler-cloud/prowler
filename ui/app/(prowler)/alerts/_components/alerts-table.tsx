@@ -9,9 +9,9 @@ import {
   ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { DateWithTime } from "@/components/ui/entities";
-import { DataTable } from "@/components/ui/table/data-table";
-import { DataTableColumnHeader } from "@/components/ui/table/data-table-column-header";
+import { DateWithTime } from "@/components/shadcn/entities";
+import { DataTable } from "@/components/shadcn/table/data-table";
+import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-column-header";
 import type { MetaDataProps } from "@/types";
 
 interface AlertsTableProps {

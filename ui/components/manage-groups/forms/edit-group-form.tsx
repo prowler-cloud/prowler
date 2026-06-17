@@ -8,10 +8,10 @@ import * as z from "zod";
 
 import { updateProviderGroup } from "@/actions/manage-groups/manage-groups";
 import { Button, Separator } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form } from "@/components/shadcn/form";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
 const editGroupSchema = z.object({

@@ -7,7 +7,7 @@ import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { MetaDataProps } from "@/types";
 import {
   isProvidersOrganizationRow,

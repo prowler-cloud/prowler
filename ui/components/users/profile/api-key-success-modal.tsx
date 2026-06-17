@@ -1,9 +1,11 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
+
 import { Button } from "@/components/shadcn";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { Modal } from "@/components/shadcn/modal";
-import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 
 interface ApiKeySuccessModalProps {
   isOpen: boolean;
@@ -23,7 +25,8 @@ export const ApiKeySuccessModal = ({
       title="API Key Created Successfully"
     >
       <div className="flex flex-col gap-6">
-        <Alert variant="destructive">
+        <Alert variant="error">
+          <AlertTriangle />
           <AlertDescription>
             This is the only time you will see this API key. Please copy it now
             and store it securely. Once you close this dialog, the key cannot be

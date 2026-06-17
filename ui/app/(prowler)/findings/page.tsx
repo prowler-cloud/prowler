@@ -14,7 +14,7 @@ import {
   FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
   applyDefaultMutedFilter,
