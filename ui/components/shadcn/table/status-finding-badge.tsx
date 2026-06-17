@@ -1,3 +1,4 @@
+import { Badge } from "@/components/shadcn/badge/badge";
 import { cn } from "@/lib/utils";
 
 export const FindingStatusValues = {
@@ -10,38 +11,47 @@ export const FindingStatusValues = {
 export type FindingStatus =
   (typeof FindingStatusValues)[keyof typeof FindingStatusValues];
 
-const STATUS_STYLES = {
-  FAIL: "border-bg-fail text-bg-fail",
-  PASS: "border-bg-pass text-bg-pass",
-  MANUAL: "border-bg-warning text-bg-warning",
-  MUTED: "border-text-neutral-tertiary text-text-neutral-tertiary",
+type FindingStatusVariant = "error" | "success" | "warning" | "tag";
+
+const STATUS_VARIANT: Record<FindingStatus, FindingStatusVariant> = {
+  FAIL: "error",
+  PASS: "success",
+  MANUAL: "warning",
+  MUTED: "tag",
+} as const;
+
+type StatusFindingBadgeSize = "sm" | "md" | "lg";
+
+const SIZE_CLASS: Record<StatusFindingBadgeSize, string> = {
+  sm: "",
+  md: "px-2.5 py-1",
+  lg: "px-3 py-1.5 text-sm",
 } as const;
 
 interface StatusFindingBadgeProps {
   status: FindingStatus;
-  size?: "sm" | "md" | "lg";
+  size?: StatusFindingBadgeSize;
   value?: string | number;
+  className?: string;
 }
 
 export const StatusFindingBadge = ({
   status,
+  size = "sm",
   value,
+  className,
 }: StatusFindingBadgeProps) => {
-  const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.MUTED;
+  const variant = STATUS_VARIANT[status] ?? "tag";
   const displayText =
     status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center justify-center rounded px-0 py-0.5",
-        "border-x border-y-0",
-        "min-w-[38px] text-center text-xs font-bold",
-        statusStyle,
-      )}
+    <Badge
+      variant={variant}
+      className={cn("font-bold", SIZE_CLASS[size], className)}
     >
       {displayText}
       {value !== undefined && `: ${value}`}
-    </span>
+    </Badge>
   );
 };
