@@ -108,12 +108,7 @@ export const MembershipItem = ({
               </Button>
             )}
             {isActiveTenant ? (
-              <Badge
-                variant="outline"
-                className="border-emerald-600 text-emerald-600"
-              >
-                Active
-              </Badge>
+              <Badge variant="success">Active</Badge>
             ) : (
               <Button
                 type="button"
