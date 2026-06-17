@@ -44,7 +44,7 @@ export const DataTableSearch = ({
   controlledValue,
   onSearchChange,
   onSearchCommit,
-  placeholder = "Search...",
+  placeholder = "Search... (press Enter)",
   badge,
 }: DataTableSearchProps) => {
   const searchParams = useSearchParams();
