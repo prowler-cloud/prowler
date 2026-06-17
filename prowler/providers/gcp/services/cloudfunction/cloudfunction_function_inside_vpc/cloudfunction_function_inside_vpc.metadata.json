@@ -1,15 +1,15 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudfunction_function_inside_vpc",
-  "CheckTitle": "Cloud Functions are connected to a VPC network",
+  "CheckTitle": "Cloud Function is connected to a VPC network",
   "CheckType": [],
   "ServiceName": "cloudfunction",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "cloudfunctions.googleapis.com/Function",
-  "Description": "Ensures that Cloud Functions are configured with a VPC connector so that egress traffic is routed through a private VPC network rather than the public internet. Functions without a VPC connector communicate with internal resources over public routes.",
-  "Risk": "Cloud Functions without a VPC connector cannot reach internal GCP resources (e.g., Cloud SQL, Memorystore, GKE) privately and must expose those resources to the internet or use public IPs. This increases the attack surface and violates network segmentation controls required by security frameworks.",
+  "Description": "Cloud Functions are attached to a **Serverless VPC Access connector** so egress traffic is routed through a private VPC network instead of the public internet.\n\nThe evaluation reviews each function's network configuration to confirm that a connector is configured.",
+  "Risk": "Without a VPC connector, Cloud Functions cannot privately reach internal resources such as `Cloud SQL`, `Memorystore`, or `GKE`, forcing those services to be exposed over public IPs. This expands the **attack surface**, weakens **confidentiality** of internal traffic, and breaks network segmentation controls required by most security frameworks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/functions/docs/networking/connecting-vpc",
@@ -17,13 +17,13 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud functions deploy <FUNCTION_NAME> \\\n  --region=<REGION> \\\n  --vpc-connector=projects/<PROJECT_ID>/locations/<REGION>/connectors/<CONNECTOR_NAME> \\\n  --egress-settings=all-traffic",
+      "CLI": "gcloud functions deploy <FUNCTION_NAME> --region=<REGION> --vpc-connector=projects/<PROJECT_ID>/locations/<REGION>/connectors/<CONNECTOR_NAME> --egress-settings=all-traffic",
       "NativeIaC": "",
-      "Other": "1. Go to Google Cloud Console > Cloud Functions.\n2. Select the function and click Edit.\n3. Under Connections, select the VPC connector for your network.\n4. Set Egress settings to 'Route all traffic through the VPC connector'.\n5. Save and redeploy the function.",
-      "Terraform": "```hcl\nresource \"google_cloudfunctions2_function\" \"example\" {\n  name     = \"my-function\"\n  location = \"us-central1\"\n\n  service_config {\n    vpc_connector                  = google_vpc_access_connector.connector.id\n    vpc_connector_egress_settings  = \"ALL_TRAFFIC\"\n  }\n}\n```"
+      "Other": "1. In Google Cloud Console, go to Cloud Functions\n2. Select the function and click Edit\n3. Under Connections, select the VPC connector for your network\n4. Set Egress settings to route all traffic through the VPC connector\n5. Save and redeploy the function",
+      "Terraform": "```hcl\nresource \"google_cloudfunctions2_function\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"us-central1\"\n\n  service_config {\n    vpc_connector                 = \"<example_resource_id>\" # Critical: routes egress through the VPC\n    vpc_connector_egress_settings = \"ALL_TRAFFIC\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Attach a Serverless VPC Access connector to every Cloud Function that needs to reach internal GCP resources. Set egress to route all traffic through the VPC to avoid accidental public exposure of internal services.",
+      "Text": "Apply **defense in depth** by routing Cloud Function egress through a **Serverless VPC Access connector** when the function must reach internal resources.\n\nScope each connector to **least privilege** subnets so functions cannot reach unintended endpoints.",
       "Url": "https://hub.prowler.com/check/cloudfunction_function_inside_vpc"
     }
   },
