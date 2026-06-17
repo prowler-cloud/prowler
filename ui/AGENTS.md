@@ -14,40 +14,46 @@
 > - [`playwright`](../skills/playwright/SKILL.md) - Page Object Model, selectors
 > - [`vitest`](../skills/vitest/SKILL.md) - Unit testing with React Testing Library
 > - [`tdd`](../skills/tdd/SKILL.md) - TDD workflow (MANDATORY for UI tasks)
+> - [`prowler-tour`](../skills/prowler-tour/SKILL.md) - Keep product-tour definitions aligned with the UI
 
 ## Auto-invoke Skills
 
 When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
-| Action                                                         | Skill               |
-| -------------------------------------------------------------- | ------------------- |
-| Add changelog entry for a PR or feature                        | `prowler-changelog` |
-| App Router / Server Actions                                    | `nextjs-16`         |
-| Building AI chat features                                      | `ai-sdk-5`          |
-| Committing changes                                             | `prowler-commit`    |
-| Create PR that requires changelog entry                        | `prowler-changelog` |
-| Creating Zod schemas                                           | `zod-4`             |
-| Creating a git commit                                          | `prowler-commit`    |
-| Creating/modifying Prowler UI components                       | `prowler-ui`        |
-| Fixing bug                                                     | `tdd`               |
-| Implementing feature                                           | `tdd`               |
-| Modifying component                                            | `tdd`               |
-| Refactoring code                                               | `tdd`               |
-| Review changelog format and conventions                        | `prowler-changelog` |
-| Testing hooks or utilities                                     | `vitest`            |
-| Update CHANGELOG.md in any component                           | `prowler-changelog` |
-| Using Zustand stores                                           | `zustand-5`         |
-| Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui`        |
-| Working on task                                                | `tdd`               |
-| Working with Prowler UI test helpers/pages                     | `prowler-test-ui`   |
-| Working with Tailwind classes                                  | `tailwind-4`        |
-| Writing Playwright E2E tests                                   | `playwright`        |
-| Writing Prowler UI E2E tests                                   | `prowler-test-ui`   |
-| Writing React component tests                                  | `vitest`            |
-| Writing React components                                       | `react-19`          |
-| Writing TypeScript types/interfaces                            | `typescript`        |
-| Writing Vitest tests                                           | `vitest`            |
-| Writing unit tests for UI                                      | `vitest`            |
+| Action                                                            | Skill               |
+| ----------------------------------------------------------------- | ------------------- |
+| Add changelog entry for a PR or feature                           | `prowler-changelog` |
+| Adding, updating, or removing a tour definition (\*.tour.ts)      | `prowler-tour`      |
+| App Router / Server Actions                                       | `nextjs-16`         |
+| Building AI chat features                                         | `ai-sdk-5`          |
+| Changing button labels or section headings on a tour-covered page | `prowler-tour`      |
+| Committing changes                                                | `prowler-commit`    |
+| Create PR that requires changelog entry                           | `prowler-changelog` |
+| Creating Zod schemas                                              | `zod-4`             |
+| Creating a git commit                                             | `prowler-commit`    |
+| Creating/modifying Prowler UI components                          | `prowler-ui`        |
+| Editing a UI file containing data-tour-id attributes              | `prowler-tour`      |
+| Fixing bug                                                        | `tdd`               |
+| Implementing feature                                              | `tdd`               |
+| Modifying component                                               | `tdd`               |
+| Refactoring code                                                  | `tdd`               |
+| Renaming or removing a data-tour-id attribute value               | `prowler-tour`      |
+| Restructuring routes or layouts covered by a tour                 | `prowler-tour`      |
+| Review changelog format and conventions                           | `prowler-changelog` |
+| Testing hooks or utilities                                        | `vitest`            |
+| Update CHANGELOG.md in any component                              | `prowler-changelog` |
+| Using Zustand stores                                              | `zustand-5`         |
+| Working on Prowler UI structure (actions/adapters/types/hooks)    | `prowler-ui`        |
+| Working on task                                                   | `tdd`               |
+| Working with Prowler UI test helpers/pages                        | `prowler-test-ui`   |
+| Working with Tailwind classes                                     | `tailwind-4`        |
+| Writing Playwright E2E tests                                      | `playwright`        |
+| Writing Prowler UI E2E tests                                      | `prowler-test-ui`   |
+| Writing React component tests                                     | `vitest`            |
+| Writing React components                                          | `react-19`          |
+| Writing TypeScript types/interfaces                               | `typescript`        |
+| Writing Vitest tests                                              | `vitest`            |
+| Writing unit tests for UI                                         | `vitest`            |
 
 ---
 

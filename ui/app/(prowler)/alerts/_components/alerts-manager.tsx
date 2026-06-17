@@ -24,6 +24,7 @@ import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import { toAlertPayload } from "../_lib/alert-adapter";
+import { getAlertMutationError } from "../_lib/alert-errors";
 import type {
   AlertFormSubmitResult,
   AlertFormValues,
@@ -108,7 +109,12 @@ export const AlertsManager = ({
     }
     const payload = toAlertPayload(values);
     const result = await updateAlert(editingAlert.id, payload);
-    if (result?.error) return { ok: false, error: result.error };
+    if (result?.error) {
+      return {
+        ok: false,
+        error: getAlertMutationError(result),
+      };
+    }
     toast({
       title: "Alert updated",
       description: result.data.attributes.name,
@@ -127,7 +133,7 @@ export const AlertsManager = ({
       toast({
         variant: "destructive",
         title: "Alert update failed",
-        description: result.error,
+        description: getAlertMutationError(result),
       });
       return;
     }
@@ -147,7 +153,7 @@ export const AlertsManager = ({
       toast({
         variant: "destructive",
         title: "Alert delete failed",
-        description: result.error,
+        description: getAlertMutationError(result),
       });
       return;
     }

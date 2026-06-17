@@ -21,6 +21,7 @@ interface BreadcrumbNavigationProps {
   mode?: "auto" | "custom" | "hybrid";
   title?: string;
   icon?: string | ReactNode;
+  titleAction?: ReactNode;
   customItems?: CustomBreadcrumbItem[];
   className?: string;
   paramToPreserve?: string;
@@ -31,6 +32,7 @@ export function BreadcrumbNavigation({
   mode = "auto",
   title,
   icon,
+  titleAction,
   customItems = [],
   className = "",
   paramToPreserve = "scanId",
@@ -73,7 +75,6 @@ export function BreadcrumbNavigation({
       const isLast = index === pathSegments.length - 1;
       let displayName = segment.charAt(0).toUpperCase() + segment.slice(1);
 
-      // Special cases:
       if (segment.includes("-")) {
         displayName = segment
           .split("-")
@@ -125,10 +126,10 @@ export function BreadcrumbNavigation({
       >
         {titleText}
       </h1>
+      {titleAction}
     </div>
   );
 
-  // Determine which breadcrumbs to use
   let breadcrumbItems: CustomBreadcrumbItem[] = [];
 
   switch (mode) {
