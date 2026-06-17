@@ -47,7 +47,7 @@ export const NodeOverview = ({ node }: NodeOverviewProps) => {
 
       {/* Display all properties */}
       <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-        <h4 className="dark:text-prowler-theme-pale/90 mb-3 text-sm font-semibold">
+        <h4 className="dark:text-text-neutral-primary/90 mb-3 text-sm font-semibold">
           Properties
         </h4>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

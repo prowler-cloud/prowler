@@ -11,9 +11,9 @@ import { cn } from "@/lib/utils";
 
 const COLOR_STYLES = {
   success: {
-    card: "border-system-success-medium",
-    iconWrapper: "bg-system-success-lighter border-system-success",
-    icon: "text-system-success",
+    card: "border-bg-pass",
+    iconWrapper: "bg-bg-pass-secondary border-bg-pass",
+    icon: "text-text-success-primary",
   },
   secondary: {
     card: "border-violet-200 dark:border-violet-950",

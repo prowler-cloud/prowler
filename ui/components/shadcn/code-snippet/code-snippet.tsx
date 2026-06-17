@@ -50,21 +50,6 @@ export const CodeSnippet = ({
 
   const displayValue = formatter ? formatter(value) : value;
 
-  const CopyButton = () => (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 cursor-pointer transition-colors"
-      aria-label={ariaLabel}
-    >
-      {copied ? (
-        <Check className="h-3.5 w-3.5" />
-      ) : (
-        <Copy className="h-3.5 w-3.5" />
-      )}
-    </button>
-  );
-
   // When hideCode is true, render only the copy button without container styling
   if (hideCode) {
     return (
@@ -116,7 +101,20 @@ export const CodeSnippet = ({
           <TooltipContent side="top">{value}</TooltipContent>
         </Tooltip>
       )}
-      {!hideCopyButton && <CopyButton />}
+      {!hideCopyButton && (
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 cursor-pointer transition-colors"
+          aria-label={ariaLabel}
+        >
+          {copied ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+        </button>
+      )}
     </div>
   );
 };

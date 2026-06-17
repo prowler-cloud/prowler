@@ -17,16 +17,16 @@ export const NavigationHeader = ({
 }: NavigationHeaderProps) => {
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+      <header className="border-border-neutral-secondary flex items-center gap-3 border-b px-6 py-4">
         <Button
-          className="border-gray-200 bg-transparent p-0"
+          className="border-border-neutral-secondary bg-transparent p-0"
           aria-label="Navigation button"
           variant="outline"
           size="icon"
           asChild
         >
           <Link href={href || ""}>
-            <Icon icon={icon} className="text-gray-600 dark:text-gray-400" />
+            <Icon icon={icon} className="text-text-neutral-secondary" />
           </Link>
         </Button>
         <Separator orientation="vertical" className="h-6" />
