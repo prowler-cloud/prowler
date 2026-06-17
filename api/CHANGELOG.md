@@ -2,11 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.2] (Prowler UNRELEASED)
+## [1.31.2] (Prowler v5.30.2)
 
 ### 🔄 Changed
 
-- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes (reading the denormalized `resource_regions` instead of prefetching resources, and batching rows into COPY instead of building the full list first), so it runs faster and its peak memory no longer grows with the number of regions and frameworks — a previous worker OOM risk on large scans — with no change to the compliance overview output [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
+- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes so it runs faster and its peak memory no longer grows with the number of regions and frameworks [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
 
 ---
 
