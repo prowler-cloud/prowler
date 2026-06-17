@@ -111,7 +111,7 @@ export const Accordion = ({
     <div
       data-variant={variant}
       className={cn(
-        "bg-bg-neutral-primary border-border-neutral-secondary w-full rounded-lg border",
+        "bg-bg-neutral-primary border-border-neutral-secondary w-full rounded-lg border px-2 py-1",
         className,
       )}
     >
@@ -134,8 +134,8 @@ export const Accordion = ({
                     : `Item ${item.key}`
                 }
                 className={cn(
-                  "hover:bg-bg-neutral-tertiary data-[state=open]:bg-bg-neutral-tertiary flex w-full items-center rounded-lg px-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                  isCompact ? "py-1" : "py-2",
+                  "hover:bg-bg-neutral-tertiary data-[state=open]:bg-bg-neutral-tertiary flex w-full items-center rounded-lg px-3 transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                  isCompact ? "py-2" : "py-3",
                 )}
               >
                 <div className="flex-1 text-left">
@@ -155,7 +155,7 @@ export const Accordion = ({
                 />
               </CollapsibleTrigger>
               <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-                <div className="px-0 py-1">
+                <div className="px-3 py-3">
                   <AccordionContent
                     content={item.content}
                     items={item.items}
