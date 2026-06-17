@@ -414,3 +414,38 @@ class TestWarmComplianceCaches:
             warm_compliance_caches([Provider.ProviderChoices.AWS])
 
         assert compliance_module.COMPLIANCE_WARMED.is_set()
+
+
+class TestGuniconfWarmsInMaster:
+    """The gunicorn master warms the compliance caches once in `on_starting`,
+    before any worker is forked, so preloaded workers inherit the populated
+    caches via copy-on-write instead of each re-warming post-fork."""
+
+    def _on_starting(self):
+        from config import guniconf
+
+        return guniconf.on_starting
+
+    def test_warms_once_in_production(self):
+        with (
+            patch("config.guniconf.DEBUG", False),
+            patch("config.guniconf.warm_compliance_caches") as mock_warm,
+        ):
+            mock_warm.return_value = []
+            self._on_starting()(MagicMock())
+
+        mock_warm.assert_called_once_with()
+
+    def test_does_not_warm_under_debug(self):
+        with (
+            patch("config.guniconf.DEBUG", True),
+            patch("config.guniconf.warm_compliance_caches") as mock_warm,
+        ):
+            self._on_starting()(MagicMock())
+
+        mock_warm.assert_not_called()
+
+    def test_no_post_fork_warm_hook_remains(self):
+        from config import guniconf
+
+        assert not hasattr(guniconf, "post_fork")

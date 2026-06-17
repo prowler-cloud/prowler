@@ -1,7 +1,6 @@
 import logging
 import multiprocessing
 import os
-import threading
 
 from config.env import env
 
@@ -47,6 +46,11 @@ asgi_loop = env("DJANGO_ASGI_LOOP", default="uvloop")
 # effect on ASGI workers.
 worker_connections = env.int("DJANGO_WORKER_CONNECTIONS", default=1000)
 
+# Worker timeout. Raised above the 30s default so a slow boot (e.g. a cold
+# compliance warm-up) cannot be SIGKILLed mid-startup before the worker can
+# answer the load-balancer health check.
+timeout = env.int("GUNICORN_TIMEOUT", default=120)
+
 # Preload the application before forking workers in production: the app is
 # imported once in the master and workers fork from it. In development, disable
 # preload so the server restarts on code changes.
@@ -63,6 +67,19 @@ def on_starting(_):
     if reload:
         gunicorn_logger.warning("Reload settings enabled (dev mode)")
 
+    # Warm the compliance caches once in the master, before any worker is
+    # forked. With preload_app the populated caches and readiness flags are
+    # inherited by every worker via copy-on-write, so no worker re-warms them
+    # post-fork (which previously ran the CPU-bound load N times and starved
+    # the asgi event loop past the worker timeout). Under `runserver` (DEBUG)
+    # this hook never runs, so lazy loading is preserved.
+    if not DEBUG:
+        failed = warm_compliance_caches()
+        if failed:
+            gunicorn_logger.warning("Compliance caches warmed (skipped: %s)", failed)
+        else:
+            gunicorn_logger.info("Compliance caches warmed")
+
 
 def on_reload(_):
     gunicorn_logger.warning("Gunicorn server has reloaded")
@@ -70,26 +87,3 @@ def on_reload(_):
 
 def when_ready(_):
     gunicorn_logger.info("Gunicorn server is ready")
-
-
-def _warm_compliance_caches_in_background():
-    """Warm compliance caches off the request path and log the outcome."""
-    failed = warm_compliance_caches()
-    if failed:
-        gunicorn_logger.warning("Compliance caches warmed (skipped: %s)", failed)
-    else:
-        gunicorn_logger.info("Compliance caches warmed")
-
-
-def post_fork(_server, worker):
-    """Warm compliance caches after each worker fork.
-
-    Warm compliance caches in a background thread so the worker becomes ready
-    immediately. A request for a not-yet-warmed provider lazily loads just that
-    provider, which stays well under the worker timeout.
-    """
-    threading.Thread(
-        target=_warm_compliance_caches_in_background,
-        name="warm-compliance-caches",
-        daemon=True,
-    ).start()
