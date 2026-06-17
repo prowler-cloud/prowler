@@ -1,3 +1,8 @@
+import {
+  ACTION_ERROR_STATUS,
+  getActionErrorMessage,
+} from "@/lib/action-errors";
+
 export const ALERTS_PERMISSION_ERROR =
   "You don't have permission to manage alerts. Ask an administrator to update your role.";
 
@@ -6,6 +11,9 @@ interface AlertActionErrorResult {
   status?: number;
 }
 
-export const getAlertMutationError = (
-  result: AlertActionErrorResult,
-): string => (result.status === 403 ? ALERTS_PERMISSION_ERROR : result.error);
+export const getAlertMutationError = (result: AlertActionErrorResult): string =>
+  getActionErrorMessage(result, {
+    messages: {
+      [ACTION_ERROR_STATUS.FORBIDDEN]: ALERTS_PERMISSION_ERROR,
+    },
+  });
