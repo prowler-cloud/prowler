@@ -5,7 +5,6 @@ import { getInvitations } from "@/actions/invitations/invitation";
 import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
 import { filterInvitations } from "@/components/filters/data-filters";
-import { AddIcon } from "@/components/icons";
 import {
   ColumnsInvitation,
   SkeletonTableInvitation,
@@ -32,10 +31,7 @@ export default async function Invitations({
           <DataTableFilterCustom filters={filterInvitations || []} />
 
           <Button asChild>
-            <Link href="/invitations/new">
-              Send Invitation
-              <AddIcon size={20} />
-            </Link>
+            <Link href="/invitations/new">Send Invitation</Link>
           </Button>
         </div>
 

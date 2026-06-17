@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
 import { filterRoles } from "@/components/filters/data-filters";
-import { AddIcon } from "@/components/icons";
 import { ColumnsRoles, SkeletonTableRoles } from "@/components/roles/table";
 import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/shadcn/content-layout";
@@ -27,10 +26,7 @@ export default async function Roles({
         <div className="flex flex-row items-end justify-between">
           <DataTableFilterCustom filters={filterRoles || []} />
           <Button asChild>
-            <Link href="/roles/new">
-              Add Role
-              <AddIcon size={20} />
-            </Link>
+            <Link href="/roles/new">Add Role</Link>
           </Button>
         </div>
 

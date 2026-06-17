@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { ProwlerShort } from "@/components/icons";
 import { ProwlerExtended } from "@/components/icons";
-import { Button } from "@/components/shadcn/button/button";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
@@ -29,40 +28,30 @@ export function Sidebar() {
         onMouseLeave={() => setIsHover(false)}
         className="no-scrollbar relative flex h-full flex-col overflow-x-hidden overflow-y-auto px-3 py-6"
       >
-        <Button
+        <Link
+          href="/"
           className={cn(
-            "mb-1 transition-transform duration-300 ease-in-out",
+            "mb-6 flex w-full flex-col items-center justify-center px-3 transition-transform duration-300 ease-in-out",
             !getOpenState() ? "translate-x-1" : "translate-x-0",
+            !isOpen && "gap-0",
           )}
-          variant="link"
-          asChild
         >
-          <Link
-            href="/"
-            className={clsx(
-              "mb-6 flex w-full flex-col items-center justify-center px-3",
-              {
-                "gap-0": !isOpen,
-              },
-            )}
+          <div
+            className={clsx({
+              hidden: isOpen,
+            })}
           >
-            <div
-              className={clsx({
-                hidden: isOpen,
-              })}
-            >
-              <ProwlerShort />
-            </div>
-            <div
-              className={clsx({
-                hidden: !isOpen,
-                "mt-0!": isOpen,
-              })}
-            >
-              <ProwlerExtended />
-            </div>
-          </Link>
-        </Button>
+            <ProwlerShort />
+          </div>
+          <div
+            className={clsx({
+              hidden: !isOpen,
+              "mt-0!": isOpen,
+            })}
+          >
+            <ProwlerExtended />
+          </div>
+        </Link>
 
         <Menu isOpen={getOpenState()} />
       </div>
