@@ -39,7 +39,7 @@ export const SkeletonTableRoles = () => {
       {/* Toolbar: Search + Total entries */}
       <div className="flex items-center justify-between">
         {/* Search icon button */}
-        {/* <Skeleton className="size-10 rounded-md" /> */}
+        <Skeleton className="size-10 rounded-md" />
         {/* Total entries */}
         <Skeleton className="h-4 w-28 rounded" />
       </div>

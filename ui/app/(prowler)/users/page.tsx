@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { getRoles } from "@/actions/roles/roles";
 import { getCurrentUserTenantRole, getUsers } from "@/actions/users/users";
 import { auth } from "@/auth.config";
-import { FilterControls } from "@/components/filters";
 import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { DataTable } from "@/components/shadcn/table";
@@ -22,8 +21,6 @@ export default async function Users({
 
   return (
     <ContentLayout title="Users" icon="lucide:user">
-      <FilterControls search />
-
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-end">
           <Button asChild>
@@ -117,6 +114,7 @@ const SSRDataTable = async ({
       columns={ColumnsUser}
       data={expandedUsers || []}
       metadata={usersData?.meta}
+      showSearch
     />
   );
 };
