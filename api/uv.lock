@@ -63,7 +63,6 @@ constraints = [
     { name = "attrs", specifier = "==25.4.0" },
     { name = "authlib", specifier = "==1.6.12" },
     { name = "autopep8", specifier = "==2.3.2" },
-    { name = "awsipranges", specifier = "==0.3.3" },
     { name = "azure-cli-core", specifier = "==2.83.0" },
     { name = "azure-cli-telemetry", specifier = "==1.1.0" },
     { name = "azure-common", specifier = "==1.1.28" },
@@ -200,7 +199,7 @@ constraints = [
     { name = "httpx", specifier = "==0.28.1" },
     { name = "humanfriendly", specifier = "==10.0" },
     { name = "hyperframe", specifier = "==6.1.0" },
-    { name = "iamdata", specifier = "==0.1.202602021" },
+    { name = "iamdata", specifier = "==0.1.202605131" },
     { name = "idna", specifier = "==3.15" },
     { name = "importlib-metadata", specifier = "==8.7.1" },
     { name = "inflection", specifier = "==0.5.1" },
@@ -358,6 +357,7 @@ constraints = [
     { name = "uritemplate", specifier = "==4.2.0" },
     { name = "urllib3", specifier = "==2.7.0" },
     { name = "uuid6", specifier = "==2024.7.10" },
+    { name = "uvloop", specifier = "==0.22.1" },
     { name = "vine", specifier = "==5.1.0" },
     { name = "vulture", specifier = "==2.14" },
     { name = "wcwidth", specifier = "==0.5.3" },
@@ -3187,11 +3187,11 @@ wheels = [
 
 [[package]]
 name = "iamdata"
-version = "0.1.202602021"
+version = "0.1.202605131"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/93/5e/8179963b7a528c548824a8e4088150509d9fa8571dd622b7399f6d2d5680/iamdata-0.1.202602021.tar.gz", hash = "sha256:c24265fc3694076f65da91a8aa9361b60da25f7b8cfd8ba4ddd6aa1b9bb5153e", size = 771233, upload-time = "2026-02-02T05:49:56.76Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/ea/d68e25aa4392e8a9f8e6523adc95a5fb86baf98d052efa2cec4d4a00e7ce/iamdata-0.1.202605131.tar.gz", hash = "sha256:ab4e8f1ea080394157848fecd0ca643633e35b2e0cb1965c9ed9bdd673afe00c", size = 793465, upload-time = "2026-05-13T05:57:10.607Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/9e/ae7a3019aa5a27d70412b74da4f0304695efa5d9a88f0689f37ea2602ea2/iamdata-0.1.202602021-py3-none-any.whl", hash = "sha256:48419662d75dd0e1ea22b9cc98fd70201d4c72760c6897acc46ad9ab90633d18", size = 1226614, upload-time = "2026-02-02T05:49:54.735Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/93/03396b477b0faa9f1a12142209b59aa13d0fe4f64e2be47883f607789c14/iamdata-0.1.202605131-py3-none-any.whl", hash = "sha256:350e317d96fb8c8ddf30aa6da222788d302af5f13c9e357b59f9eefe50b8af5a", size = 1259166, upload-time = "2026-05-13T05:57:09.093Z" },
 ]
 
 [[package]]
@@ -4448,7 +4448,7 @@ wheels = [
 [[package]]
 name = "prowler"
 version = "5.31.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#8081d0fd0552131dfbd885f1074377eb653fc785" }
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#b5bb85c9564f6ca6a7f66c851bb56bde719205ee" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
@@ -4575,6 +4575,7 @@ dependencies = [
     { name = "sentry-sdk", extra = ["django"] },
     { name = "sqlparse" },
     { name = "uuid6" },
+    { name = "uvloop" },
     { name = "werkzeug" },
     { name = "xmlsec" },
 ]
@@ -4640,6 +4641,7 @@ requires-dist = [
     { name = "sentry-sdk", extras = ["django"], specifier = "==2.56.0" },
     { name = "sqlparse", specifier = "==0.5.5" },
     { name = "uuid6", specifier = "==2024.7.10" },
+    { name = "uvloop", specifier = "==0.22.1" },
     { name = "werkzeug", specifier = "==3.1.7" },
     { name = "xmlsec", specifier = "==1.3.17" },
 ]
@@ -5842,6 +5844,26 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/2c/56/2560a9f1ccab9e12b1b3478a3c870796cf4d8ee5652bb19b61751cced14a/uuid6-2024.7.10.tar.gz", hash = "sha256:2d29d7f63f593caaeea0e0d0dd0ad8129c9c663b29e19bdf882e864bedf18fb0", size = 8705, upload-time = "2024-07-10T16:39:37.592Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d3/3e/4ae6af487ce5781ed71d5fe10aca72e7cbc4d4f45afc31b120287082a8dd/uuid6-2024.7.10-py3-none-any.whl", hash = "sha256:93432c00ba403751f722829ad21759ff9db051dea140bf81493271e8e4dd18b7", size = 6376, upload-time = "2024-07-10T16:39:36.148Z" },
+]
+
+[[package]]
+name = "uvloop"
+version = "0.22.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/06/f0/18d39dbd1971d6d62c4629cc7fa67f74821b0dc1f5a77af43719de7936a7/uvloop-0.22.1.tar.gz", hash = "sha256:6c84bae345b9147082b17371e3dd5d42775bddce91f885499017f4607fdaf39f", size = 2443250, upload-time = "2025-10-16T22:17:19.342Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/d5/69900f7883235562f1f50d8184bb7dd84a2fb61e9ec63f3782546fdbd057/uvloop-0.22.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:c60ebcd36f7b240b30788554b6f0782454826a0ed765d8430652621b5de674b9", size = 1352420, upload-time = "2025-10-16T22:16:21.187Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/73/c4e271b3bce59724e291465cc936c37758886a4868787da0278b3b56b905/uvloop-0.22.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:3b7f102bf3cb1995cfeaee9321105e8f5da76fdb104cdad8986f85461a1b7b77", size = 748677, upload-time = "2025-10-16T22:16:22.558Z" },
+    { url = "https://files.pythonhosted.org/packages/86/94/9fb7fad2f824d25f8ecac0d70b94d0d48107ad5ece03769a9c543444f78a/uvloop-0.22.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:53c85520781d84a4b8b230e24a5af5b0778efdb39142b424990ff1ef7c48ba21", size = 3753819, upload-time = "2025-10-16T22:16:23.903Z" },
+    { url = "https://files.pythonhosted.org/packages/74/4f/256aca690709e9b008b7108bc85fba619a2bc37c6d80743d18abad16ee09/uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:56a2d1fae65fd82197cb8c53c367310b3eabe1bbb9fb5a04d28e3e3520e4f702", size = 3804529, upload-time = "2025-10-16T22:16:25.246Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/74/03c05ae4737e871923d21a76fe28b6aad57f5c03b6e6bfcfa5ad616013e4/uvloop-0.22.1-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:40631b049d5972c6755b06d0bfe8233b1bd9a8a6392d9d1c45c10b6f9e9b2733", size = 3621267, upload-time = "2025-10-16T22:16:26.819Z" },
+    { url = "https://files.pythonhosted.org/packages/75/be/f8e590fe61d18b4a92070905497aec4c0e64ae1761498cad09023f3f4b3e/uvloop-0.22.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:535cc37b3a04f6cd2c1ef65fa1d370c9a35b6695df735fcff5427323f2cd5473", size = 3723105, upload-time = "2025-10-16T22:16:28.252Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/ff/7f72e8170be527b4977b033239a83a68d5c881cc4775fca255c677f7ac5d/uvloop-0.22.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:fe94b4564e865d968414598eea1a6de60adba0c040ba4ed05ac1300de402cd42", size = 1359936, upload-time = "2025-10-16T22:16:29.436Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/c6/e5d433f88fd54d81ef4be58b2b7b0cea13c442454a1db703a1eea0db1a59/uvloop-0.22.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:51eb9bd88391483410daad430813d982010f9c9c89512321f5b60e2cddbdddd6", size = 752769, upload-time = "2025-10-16T22:16:30.493Z" },
+    { url = "https://files.pythonhosted.org/packages/24/68/a6ac446820273e71aa762fa21cdcc09861edd3536ff47c5cd3b7afb10eeb/uvloop-0.22.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:700e674a166ca5778255e0e1dc4e9d79ab2acc57b9171b79e65feba7184b3370", size = 4317413, upload-time = "2025-10-16T22:16:31.644Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/6f/e62b4dfc7ad6518e7eff2516f680d02a0f6eb62c0c212e152ca708a0085e/uvloop-0.22.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7b5b1ac819a3f946d3b2ee07f09149578ae76066d70b44df3fa990add49a82e4", size = 4426307, upload-time = "2025-10-16T22:16:32.917Z" },
+    { url = "https://files.pythonhosted.org/packages/90/60/97362554ac21e20e81bcef1150cb2a7e4ffdaf8ea1e5b2e8bf7a053caa18/uvloop-0.22.1-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:e047cc068570bac9866237739607d1313b9253c3051ad84738cbb095be0537b2", size = 4131970, upload-time = "2025-10-16T22:16:34.015Z" },
+    { url = "https://files.pythonhosted.org/packages/99/39/6b3f7d234ba3964c428a6e40006340f53ba37993f46ed6e111c6e9141d18/uvloop-0.22.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:512fec6815e2dd45161054592441ef76c830eddaad55c8aa30952e6fe1ed07c0", size = 4296343, upload-time = "2025-10-16T22:16:35.149Z" },
 ]
 
 [[package]]

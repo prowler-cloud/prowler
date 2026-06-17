@@ -451,6 +451,7 @@ const AlertFormModalContent = ({
       ? await seedAlertRule(pendingFilters)
       : null;
     if (seedResult?.error) {
+      setPreview(null);
       setErrors({ root: ALERT_SEED_ERROR });
       return;
     }

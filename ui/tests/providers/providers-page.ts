@@ -224,6 +224,27 @@ export interface AlibabaCloudProviderCredential {
   roleSessionName?: string;
 }
 
+// Vercel provider data
+export interface VercelProviderData {
+  teamId: string;
+  alias?: string;
+}
+
+// Vercel credential options
+export const VERCEL_CREDENTIAL_OPTIONS = {
+  VERCEL_API_TOKEN: "api_token",
+} as const;
+
+// Vercel credential type
+type VercelCredentialType =
+  (typeof VERCEL_CREDENTIAL_OPTIONS)[keyof typeof VERCEL_CREDENTIAL_OPTIONS];
+
+// Vercel provider credential
+export interface VercelProviderCredential {
+  type: VercelCredentialType;
+  apiToken: string;
+}
+
 // Providers page
 export class ProvidersPage extends BasePage {
   readonly wizardModal: Locator;
@@ -251,6 +272,11 @@ export class ProvidersPage extends BasePage {
   readonly googleworkspaceCustomerIdInput: Locator;
   readonly googleworkspaceServiceAccountJsonInput: Locator;
   readonly googleworkspaceDelegatedUserInput: Locator;
+
+  // Vercel provider form elements
+  readonly vercelProviderRadio: Locator;
+  readonly vercelTeamIdInput: Locator;
+  readonly vercelApiTokenInput: Locator;
 
   // AWS provider form elements
   readonly accountIdInput: Locator;
@@ -495,6 +521,14 @@ export class ProvidersPage extends BasePage {
     this.googleworkspaceDelegatedUserInput = page.getByRole("textbox", {
       name: /Delegated User Email/i,
     });
+
+    // Vercel
+    this.vercelProviderRadio = page.getByRole("option", {
+      name: /Vercel/i,
+    });
+    this.vercelTeamIdInput = page.getByRole("textbox", { name: "Team ID" });
+    // API Token is a type="password" field (no textbox role); target by label.
+    this.vercelApiTokenInput = page.getByLabel(/API Token/i);
 
     // Alias input
     this.aliasInput = page.getByRole("textbox", {
@@ -1288,6 +1322,37 @@ export class ProvidersPage extends BasePage {
     await expect(this.googleworkspaceDelegatedUserInput).toBeVisible();
   }
 
+  async selectVercelProvider(): Promise<void> {
+    await this.selectProviderRadio(this.vercelProviderRadio);
+  }
+
+  async fillVercelProviderDetails(data: VercelProviderData): Promise<void> {
+    // Fill the Vercel provider details (Team ID is the provider UID)
+
+    await this.vercelTeamIdInput.fill(data.teamId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillVercelCredentials(
+    credentials: VercelProviderCredential,
+  ): Promise<void> {
+    // Fill the Vercel credentials form
+
+    if (credentials.apiToken) {
+      await this.vercelApiTokenInput.fill(credentials.apiToken);
+    }
+  }
+
+  async verifyVercelCredentialsPageLoaded(): Promise<void> {
+    // Verify the Vercel credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.vercelApiTokenInput).toBeVisible();
+  }
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -1309,6 +1374,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.githubProviderRadio).toBeVisible();
     await expect(this.alibabacloudProviderRadio).toBeVisible();
     await expect(this.googleworkspaceProviderRadio).toBeVisible();
+    await expect(this.vercelProviderRadio).toBeVisible();
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {
