@@ -9,12 +9,21 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 
 class CloudFunction(GCPService):
-    def __init__(self, provider: GcpProvider):
+    """Cloud Functions v2 service client.
+
+    Enumerates Cloud Functions across every accessible project and region
+    using the `cloudfunctions.googleapis.com` v2 API and exposes them through
+    the `functions` attribute.
+    """
+
+    def __init__(self, provider: GcpProvider) -> None:
+        """Initialize the service and preload Cloud Functions."""
         super().__init__("cloudfunctions", provider, api_version="v2")
         self.functions = []
         self._get_functions()
 
-    def _get_functions(self):
+    def _get_functions(self) -> None:
+        """Fetch Cloud Functions for every project and location."""
         for project_id in self.project_ids:
             try:
                 locations = self.client.projects().locations()
@@ -66,6 +75,8 @@ class CloudFunction(GCPService):
 
 
 class Function(BaseModel):
+    """Cloud Function resource consumed by GCP checks."""
+
     name: str
     project_id: str
     location: str
