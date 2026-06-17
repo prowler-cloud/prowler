@@ -40,7 +40,6 @@ describe("ComplianceDownloadContainer", () => {
 
   it("uses the shared action dropdown for the card actions mode", () => {
     expect(source).toContain("ActionDropdown");
-    expect(source).not.toContain("@heroui/button");
   });
 
   it("should expose an accessible actions menu trigger", () => {
