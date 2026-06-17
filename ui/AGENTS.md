@@ -96,7 +96,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 ### Component Placement
 
 ```text
-New/Existing UI? → shadcn/ui + Tailwind (NEVER HeroUI for new code)
+New/Existing UI? → shadcn/ui + Tailwind
 Used 1 feature? → features/{feature}/components | Used 2+? → components/{domain}/
 Needs state/hooks? → "use client" | Server component? → No directive
 ```
