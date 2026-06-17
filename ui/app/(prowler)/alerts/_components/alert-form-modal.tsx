@@ -54,6 +54,7 @@ import {
   getEmptyAlertFormDefaults,
   getFindingsFiltersFromAlertCondition,
 } from "../_lib/alert-adapter";
+import { getAlertMutationError } from "../_lib/alert-errors";
 import { alertFormSchema } from "../_lib/alert-form-schema";
 import type {
   AlertFormSubmitResult,
@@ -408,7 +409,10 @@ const AlertFormModalContent = ({
     if (seedResult?.error) {
       setPreview({
         status: "error",
-        error: ALERT_SEED_ERROR,
+        error:
+          seedResult.status === 403
+            ? getAlertMutationError(seedResult)
+            : ALERT_SEED_ERROR,
       });
       return;
     }
@@ -452,7 +456,12 @@ const AlertFormModalContent = ({
       : null;
     if (seedResult?.error) {
       setPreview(null);
-      setErrors({ root: ALERT_SEED_ERROR });
+      setErrors({
+        root:
+          seedResult.status === 403
+            ? getAlertMutationError(seedResult)
+            : ALERT_SEED_ERROR,
+      });
       return;
     }
 

@@ -726,6 +726,32 @@ describe("AlertFormModal", () => {
     ).toHaveLength(1);
   });
 
+  it("should show the manage alerts permission error when save seed is forbidden", async () => {
+    // Given
+    const user = userEvent.setup();
+    alertsActionMocks.seedAlertRule.mockResolvedValue({
+      error: "You do not have permission to perform this action.",
+      status: 403,
+    });
+    mockRecipientsList();
+    renderCreateModal({ editingAlert: createEditingAlert() });
+
+    // When
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    // Then
+    expect(
+      await screen.findByText(
+        "You don't have permission to manage alerts. Ask an administrator to update your role.",
+      ),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(
+        "Apply at least one alert-compatible Findings filter.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it("should hydrate advanced edit mode filters and normalize them on save", async () => {
     // Given
     const user = userEvent.setup();
