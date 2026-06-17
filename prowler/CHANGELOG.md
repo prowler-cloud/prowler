@@ -15,11 +15,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cosmosdb_account_automatic_failover_enabled` check for Azure provider [(#11031)](https://github.com/prowler-cloud/prowler/pull/11031)
 - `cosmosdb_account_backup_policy_continuous` check for Azure provider [(#11032)](https://github.com/prowler-cloud/prowler/pull/11032)
 - `cosmosdb_account_minimum_tls_version` check for Azure provider, verifying Cosmos DB accounts enforce TLS 1.2 or higher for client connections [(#11033)](https://github.com/prowler-cloud/prowler/pull/11033)
+- `cosmosdb_account_public_network_access_disabled` check for Azure provider, verifying Cosmos DB accounts have public network access disabled so connectivity is restricted to private endpoints or VNet service endpoints [(#11034)](https://github.com/prowler-cloud/prowler/pull/11034)
 - `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
 - TLS certificate verification in the `codepipeline_project_repo_private` check, which previously used an unverified SSL context, leaving the repository-visibility probe open to MITM tampering [(#11603)](https://github.com/prowler-cloud/prowler/pull/11603)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Azure provider, mapping existing Azure checks across the five DORA pillars [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
 - Rename DORA to DORA_2022_2554 to follow the naming <name>_<version> in compliance frameworks [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
+- `entra_directory_sync_object_takeover_blocked` check for the M365 provider, verifying that hybrid Entra tenants block cloud object takeover through both soft-match and hard-match directory synchronization [(#11098)](https://github.com/prowler-cloud/prowler/pull/11098)
 
 ### 🔄 Changed
 
@@ -34,13 +36,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [5.30.2] (Prowler UNRELEASED)
+## [5.30.2] (Prowler v5.30.2)
 
 ### 🐞 Fixed
 
 - GCP `logging_log_metric_filter_and_alert_*` checks now credit org-level aggregated sinks filtered to the Admin Activity audit stream [(#11575)](https://github.com/prowler-cloud/prowler/pull/11575)
 - A broken built-in provider no longer aborts the CLI when a different provider was invoked [(#11618)](https://github.com/prowler-cloud/prowler/pull/11618)
-- GCP organization scans with `--organization-id` no longer silently fall back to the credentials' host project when the Cloud Asset API call fails; the new `GCPGetOrganizationProjectsError` (3011) is raised instead, naming the required `roles/cloudasset.viewer` binding and Cloud Asset API enablement [(#11280)](https://github.com/prowler-cloud/prowler/pull/11280)
+- GCP organization scans with `--organization-id` no longer silently fall back to the credentials' host project when the Cloud Asset API call fails [(#11280)](https://github.com/prowler-cloud/prowler/pull/11280)
 
 ---
 
