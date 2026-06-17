@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { scanOnDemand, scheduleDaily } from "@/actions/scans";
+import { ToastAction, useToast } from "@/components/shadcn";
 import {
   Select,
   SelectContent,
@@ -13,7 +14,6 @@ import {
 } from "@/components/shadcn/select/select";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { ToastAction, useToast } from "@/components/ui";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { SCAN_JOBS_TAB } from "@/types";
 import { TREE_ITEM_STATUS } from "@/types/tree";

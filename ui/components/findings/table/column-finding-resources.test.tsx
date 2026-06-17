@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Checkbox: ({
     "aria-label": ariaLabel,
     onCheckedChange,
@@ -73,11 +74,11 @@ vi.mock("@/components/shadcn/spinner/spinner", () => ({
   Spinner: () => null,
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   DateWithTime: () => null,
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -92,17 +93,17 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>
   ),
 }));
 
-vi.mock("@/components/ui/table/data-table-column-header", () => ({
+vi.mock("@/components/shadcn/table/data-table-column-header", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
 
-vi.mock("@/components/ui/table/status-finding-badge", () => ({
+vi.mock("@/components/shadcn/table/status-finding-badge", () => ({
   StatusFindingBadge: ({ status }: { status: string }) => <span>{status}</span>,
 }));
 

@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 
 import React from "react";
 
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 interface ProviderLayoutProps {
   children: React.ReactNode;

@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { Button } from "@/components/shadcn";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 
 import { Card, CardContent, CardHeader } from "../../shadcn";
 

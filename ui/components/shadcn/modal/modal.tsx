@@ -59,7 +59,7 @@ export const Modal = ({
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description && (
-              <DialogDescription className="text-small text-gray-600 dark:text-gray-300">
+              <DialogDescription className="text-sm text-gray-600 dark:text-gray-300">
                 {description}
               </DialogDescription>
             )}

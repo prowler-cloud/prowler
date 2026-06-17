@@ -16,17 +16,20 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn";
 import {
+  BreadcrumbNavigation,
+  CustomBreadcrumbItem,
+} from "@/components/shadcn";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
+import {
   InfoField,
   InfoTooltip,
 } from "@/components/shadcn/info-field/info-field";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
+import { DataTable } from "@/components/shadcn/table";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { ExternalResourceLink } from "@/components/shared/external-resource-link";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
-import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import { DataTable } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
