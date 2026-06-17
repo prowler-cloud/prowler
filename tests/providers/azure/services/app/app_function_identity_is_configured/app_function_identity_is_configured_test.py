@@ -2,7 +2,9 @@ from unittest import mock
 from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -10,6 +12,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_app_function_identity_is_configured:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -33,6 +36,7 @@ class Test_app_function_identity_is_configured:
 
     def test_app_subscription_empty(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -56,6 +60,7 @@ class Test_app_function_identity_is_configured:
 
     def test_app_function_no_identity(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -97,7 +102,7 @@ class Test_app_function_identity_is_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function function1 does not have a managed identity enabled."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have a managed identity enabled."
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id
@@ -106,6 +111,7 @@ class Test_app_function_identity_is_configured:
 
     def test_app_function_identity_configured(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -147,7 +153,7 @@ class Test_app_function_identity_is_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function function1 has a SystemAssigned identity enabled."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} has a SystemAssigned identity enabled."
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id

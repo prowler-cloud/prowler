@@ -34,6 +34,10 @@ import { useFilterTransitionOptional } from "@/contexts";
 import { cn } from "@/lib";
 import { FilterOption, MetaDataProps } from "@/types";
 
+type DataTableRowAttributes = {
+  [key: `data-${string}`]: string | undefined;
+};
+
 /**
  * Default column size used by TanStack Table when no explicit size is set.
  * We skip applying inline width styles for columns with this default value
@@ -41,25 +45,7 @@ import { FilterOption, MetaDataProps } from "@/types";
  */
 const DEFAULT_COLUMN_SIZE = 150;
 
-/*
- * Controlled pagination: pass all three props together or none. Modeled as a
- * discriminated union so TypeScript prevents passing `onPaginationChange`
- * without `controlledPageSize`, which would otherwise silently emit a default
- * page size on every navigation.
- */
-type ControlledPaginationProps =
-  | {
-      controlledPage: number;
-      controlledPageSize: number;
-      onPaginationChange: (page: number, pageSize: number) => void;
-    }
-  | {
-      controlledPage?: undefined;
-      controlledPageSize?: undefined;
-      onPaginationChange?: undefined;
-    };
-
-type DataTableProviderProps<TData, TValue> = {
+interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   metadata?: MetaDataProps;
@@ -85,6 +71,28 @@ type DataTableProviderProps<TData, TValue> = {
   /** Prefix for URL params to avoid conflicts (e.g., "findings" -> "findingsPage") */
   paramPrefix?: string;
 
+  /*
+   * Controlled Mode Props
+   * ---------------------
+   * By default, DataTable uses URL params for pagination/search (via paramPrefix).
+   * This causes Next.js page re-renders on every interaction.
+   *
+   * For tables inside drawers/modals, use controlled mode instead:
+   * - Pass controlledPage, controlledPageSize, controlledSearch as state values
+   * - Pass onPageChange, onPageSizeChange, onSearchChange as state setters
+   * - This keeps state local, avoiding URL changes and unnecessary page re-renders
+   *
+   * Example:
+   *   const [page, setPage] = useState(1);
+   *   const [search, setSearch] = useState("");
+   *   <DataTable
+   *     controlledPage={page}
+   *     onPageChange={setPage}
+   *     controlledSearch={search}
+   *     onSearchChange={setSearch}
+   *     isLoading={isLoading}
+   *   />
+   */
   controlledSearch?: string;
   onSearchChange?: (value: string) => void;
   /**
@@ -92,6 +100,10 @@ type DataTableProviderProps<TData, TValue> = {
    * Use this alongside onSearchChange to implement "search on Enter" behavior.
    */
   onSearchCommit?: (value: string) => void;
+  controlledPage?: number;
+  controlledPageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   /** Show loading state with opacity overlay (for controlled mode) */
   isLoading?: boolean;
   /** Custom placeholder text for the search input */
@@ -102,11 +114,13 @@ type DataTableProviderProps<TData, TValue> = {
   searchBadge?: { label: string; onDismiss: () => void };
   /** Optional click handler for top-level rows. */
   onRowClick?: (row: Row<TData>) => void;
+  /** Optional data attributes applied to each top-level row. */
+  getRowAttributes?: (row: Row<TData>) => DataTableRowAttributes;
   /** Optional header rendered inside the table container, above the toolbar. */
   header?: ReactNode;
   /** Optional content rendered in the toolbar before the total entries count. */
   toolbarRightContent?: ReactNode;
-} & ControlledPaginationProps;
+}
 
 export function DataTable<TData, TValue>({
   columns,
@@ -129,12 +143,14 @@ export function DataTable<TData, TValue>({
   onSearchCommit,
   controlledPage,
   controlledPageSize,
-  onPaginationChange,
+  onPageChange,
+  onPageSizeChange,
   isLoading = false,
   searchPlaceholder,
   renderAfterRow,
   searchBadge,
   onRowClick,
+  getRowAttributes,
   header,
   toolbarRightContent,
 }: DataTableProviderProps<TData, TValue>) {
@@ -305,6 +321,7 @@ export function DataTable<TData, TValue>({
                 ) : (
                   <Fragment key={row.id}>
                     <TableRow
+                      {...getRowAttributes?.(row)}
                       data-state={row.getIsSelected() && "selected"}
                       className={cn(onRowClick && "cursor-pointer")}
                       onClick={(event) =>
@@ -344,7 +361,8 @@ export function DataTable<TData, TValue>({
           paramPrefix={paramPrefix}
           controlledPage={controlledPage}
           controlledPageSize={controlledPageSize}
-          onPaginationChange={onPaginationChange}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
       )}
     </div>

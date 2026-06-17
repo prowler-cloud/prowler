@@ -1149,6 +1149,40 @@ class TestCheck:
         )
         assert findings[0].muted is True
 
+    def test_execute_azure_mutelist_passes_subscription_id_and_name(self):
+        """Test that execute() passes Azure subscription ID and display name."""
+        subscription_id = "12345678-1234-1234-1234-123456789012"
+        subscription_name = "subscription_1"
+
+        finding = Mock()
+        finding.status = "PASS"
+        finding.muted = False
+        finding.subscription = subscription_id
+
+        check = Mock()
+        check.CheckID = "azure_test_check"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "azure"
+        provider.identity.subscriptions = {subscription_id: subscription_name}
+        provider.mutelist.mutelist = {"Accounts": {subscription_name: {}}}
+        provider.mutelist.is_finding_muted = Mock(return_value=True)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
+        provider.mutelist.is_finding_muted.assert_called_once_with(
+            subscription_id=subscription_id,
+            subscription_name=subscription_name,
+            finding=finding,
+        )
+        assert findings[0].muted is True
+
     def test_execute_check_exception_only_logs(self, caplog):
         caplog.set_level(ERROR)
 

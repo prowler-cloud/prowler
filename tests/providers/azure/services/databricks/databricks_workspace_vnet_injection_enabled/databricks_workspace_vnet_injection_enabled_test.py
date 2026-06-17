@@ -5,7 +5,9 @@ from prowler.providers.azure.services.databricks.databricks_service import (
     DatabricksWorkspace,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -13,6 +15,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_databricks_workspace_vnet_injection_enabled:
     def test_databricks_no_workspaces(self):
         databricks_client = mock.MagicMock
+        databricks_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         databricks_client.workspaces = {}
 
         with (
@@ -37,6 +42,9 @@ class Test_databricks_workspace_vnet_injection_enabled:
         workspace_id = str(uuid4())
         workspace_name = "test-workspace"
         databricks_client = mock.MagicMock
+        databricks_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         databricks_client.workspaces = {
             AZURE_SUBSCRIPTION_ID: {
                 workspace_id: DatabricksWorkspace(
@@ -68,7 +76,7 @@ class Test_databricks_workspace_vnet_injection_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Databricks workspace {workspace_name} in subscription {AZURE_SUBSCRIPTION_ID} is not deployed in a customer-managed VNet (VNet Injection is not enabled)."
+                == f"Databricks workspace {workspace_name} in subscription {AZURE_SUBSCRIPTION_DISPLAY} is not deployed in a customer-managed VNet (VNet Injection is not enabled)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == workspace_name
@@ -80,6 +88,9 @@ class Test_databricks_workspace_vnet_injection_enabled:
         workspace_name = "test-workspace"
         vnet_id = "test-vnet-id"
         databricks_client = mock.MagicMock
+        databricks_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         databricks_client.workspaces = {
             AZURE_SUBSCRIPTION_ID: {
                 workspace_id: DatabricksWorkspace(
@@ -111,7 +122,7 @@ class Test_databricks_workspace_vnet_injection_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Databricks workspace {workspace_name} in subscription {AZURE_SUBSCRIPTION_ID} is deployed in a customer-managed VNet ({vnet_id})."
+                == f"Databricks workspace {workspace_name} in subscription {AZURE_SUBSCRIPTION_DISPLAY} is deployed in a customer-managed VNet ({vnet_id})."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == workspace_name

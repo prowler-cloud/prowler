@@ -30,7 +30,10 @@ class Calendar(GoogleWorkspaceService):
                 logger.error("Failed to build Cloud Identity service")
                 return
 
-            request = service.policies().list(pageSize=100)
+            request = service.policies().list(
+                pageSize=100,
+                filter='setting.type.matches("calendar.*")',
+            )
             fetch_succeeded = True
 
             while request is not None:

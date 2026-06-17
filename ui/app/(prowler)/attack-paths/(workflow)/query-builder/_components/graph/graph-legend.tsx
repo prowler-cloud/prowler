@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
+import type { ElementType, ReactNode } from "react";
 
 import { Card, CardContent } from "@/components/shadcn";
 import {
@@ -9,513 +10,571 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import type { AttackPathGraphData } from "@/types/attack-paths";
+import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 import {
   getNodeBorderColor,
   getNodeColor,
+  GRAPH_ALERT_BORDER_COLOR,
   GRAPH_EDGE_COLOR_DARK,
   GRAPH_EDGE_COLOR_LIGHT,
+  GRAPH_EDGE_HIGHLIGHT_COLOR,
   GRAPH_NODE_BORDER_COLORS,
   GRAPH_NODE_COLORS,
 } from "../../_lib/graph-colors";
+import { resolveHiddenFindingIds } from "../../_lib/graph-utils";
+import { NODE_CATEGORY, resolveNodeVisual } from "../../_lib/node-visuals";
 
-interface LegendItem {
+const LEGEND_PREVIEW = {
+  BADGE_RADIUS: 16,
+  BADGE_CENTER: 18,
+  ICON_SIZE: 20,
+  ICON_OFFSET: 8,
+  SVG_SIZE: 36,
+} as const;
+
+const EDGE_VARIANT = {
+  NORMAL: "normal",
+  FINDING: "finding",
+  HIGHLIGHTED: "highlighted",
+} as const;
+
+type EdgeVariant = (typeof EDGE_VARIANT)[keyof typeof EDGE_VARIANT];
+
+interface LegendVisualItem {
   label: string;
-  color: string;
-  borderColor: string;
   description: string;
-  shape: "rectangle" | "hexagon" | "cloud";
+  Icon: ElementType;
+  fillColor: string;
+  borderColor: string;
+  glow?: boolean;
 }
 
-// Map node labels to human-readable names and descriptions
-const nodeTypeDescriptions: Record<
-  string,
-  { name: string; description: string }
-> = {
-  // Findings
-  ProwlerFinding: {
-    name: "Finding",
-    description: "Security findings from Prowler scans",
-  },
-  // AWS Account
-  AWSAccount: {
-    name: "AWS Account",
-    description: "AWS account root node",
-  },
-  // Compute
-  EC2Instance: {
-    name: "EC2 Instance",
-    description: "Elastic Compute Cloud instance",
-  },
-  LambdaFunction: {
-    name: "Lambda Function",
-    description: "AWS Lambda serverless function",
-  },
-  // Storage
-  S3Bucket: {
-    name: "S3 Bucket",
-    description: "Simple Storage Service bucket",
-  },
-  // IAM
-  IAMRole: {
-    name: "IAM Role",
-    description: "Identity and Access Management role",
-  },
-  IAMPolicy: {
-    name: "IAM Policy",
-    description: "Identity and Access Management policy",
-  },
-  AWSRole: {
-    name: "AWS Role",
-    description: "AWS IAM role",
-  },
-  AWSPolicy: {
-    name: "AWS Policy",
-    description: "AWS IAM policy",
-  },
-  AWSInlinePolicy: {
-    name: "AWS Inline Policy",
-    description: "AWS IAM inline policy",
-  },
-  AWSPolicyStatement: {
-    name: "AWS Policy Statement",
-    description: "AWS IAM policy statement",
-  },
-  AWSPrincipal: {
-    name: "AWS Principal",
-    description: "AWS IAM principal entity",
-  },
-  // Networking
-  SecurityGroup: {
-    name: "Security Group",
-    description: "AWS security group for network access control",
-  },
-  EC2SecurityGroup: {
-    name: "EC2 Security Group",
-    description: "EC2 security group for network access control",
-  },
-  IpPermissionInbound: {
-    name: "IP Permission Inbound",
-    description: "Inbound IP permission rule",
-  },
-  IpRule: {
-    name: "IP Rule",
-    description: "IP address rule",
-  },
-  Internet: {
-    name: "Internet",
-    description: "Internet gateway or public access",
-  },
-  // Tags
-  AWSTag: {
-    name: "AWS Tag",
-    description: "AWS resource tag",
-  },
-  Tag: {
-    name: "Tag",
-    description: "Resource tag",
-  },
-};
-
-/**
- * Extract unique node types from graph data
- */
-function extractNodeTypes(
-  nodes: AttackPathGraphData["nodes"] | undefined,
-): string[] {
-  if (!nodes) return [];
-
-  const nodeTypes = new Set<string>();
-  nodes.forEach((node) => {
-    node.labels.forEach((label) => {
-      nodeTypes.add(label);
-    });
-  });
-
-  return Array.from(nodeTypes).sort();
+interface LegendStateItem {
+  label: string;
+  description: string;
+  fillColor: string;
+  borderColor: string;
+  strokeWidth: number;
+  glowColor?: string;
 }
 
-/**
- * Severity legend items - colors work in both light and dark themes
- */
-const severityLegendItems: LegendItem[] = [
-  {
-    label: "Critical",
-    color: GRAPH_NODE_COLORS.critical,
-    borderColor: GRAPH_NODE_BORDER_COLORS.critical,
-    description: "Critical severity finding",
-    shape: "hexagon",
-  },
-  {
-    label: "High",
-    color: GRAPH_NODE_COLORS.high,
-    borderColor: GRAPH_NODE_BORDER_COLORS.high,
-    description: "High severity finding",
-    shape: "hexagon",
-  },
-  {
-    label: "Medium",
-    color: GRAPH_NODE_COLORS.medium,
-    borderColor: GRAPH_NODE_BORDER_COLORS.medium,
-    description: "Medium severity finding",
-    shape: "hexagon",
-  },
-  {
-    label: "Low",
-    color: GRAPH_NODE_COLORS.low,
-    borderColor: GRAPH_NODE_BORDER_COLORS.low,
-    description: "Low severity finding",
-    shape: "hexagon",
-  },
-];
-
-/**
- * Generate legend items from graph data
- */
-function generateLegendItems(
-  nodeTypes: string[],
-  hasFindings: boolean,
-): LegendItem[] {
-  const items: LegendItem[] = [];
-  const seenTypes = new Set<string>();
-
-  // Add severity items if there are findings
-  if (hasFindings) {
-    items.push(...severityLegendItems);
-  }
-
-  // Helper to format unknown node types (e.g., "AWSPolicyStatement" -> "AWS Policy Statement")
-  const formatNodeTypeName = (nodeType: string): string => {
-    return nodeType
-      .replace(/([A-Z])/g, " $1") // Add space before capitals
-      .replace(/^ /, "") // Remove leading space
-      .replace(/AWS /g, "AWS ") // Keep AWS together
-      .replace(/EC2 /g, "EC2 ") // Keep EC2 together
-      .replace(/S3 /g, "S3 ") // Keep S3 together
-      .replace(/IAM /g, "IAM ") // Keep IAM together
-      .replace(/IP /g, "IP ") // Keep IP together
-      .trim();
-  };
-
-  nodeTypes.forEach((nodeType) => {
-    if (seenTypes.has(nodeType)) return;
-    seenTypes.add(nodeType);
-
-    // Skip findings - we show severity colors instead
-    const isFinding = nodeType.toLowerCase().includes("finding");
-    if (isFinding) return;
-
-    const description = nodeTypeDescriptions[nodeType];
-
-    // Determine shape based on node type
-    const isInternet = nodeType.toLowerCase() === "internet";
-    const shape: "rectangle" | "hexagon" | "cloud" = isInternet
-      ? "cloud"
-      : "rectangle";
-
-    if (description) {
-      items.push({
-        label: description.name,
-        color: getNodeColor([nodeType]),
-        borderColor: getNodeBorderColor([nodeType]),
-        description: description.description,
-        shape,
-      });
-    } else {
-      // Format unknown node types nicely
-      const formattedName = formatNodeTypeName(nodeType);
-      items.push({
-        label: formattedName,
-        color: getNodeColor([nodeType]),
-        borderColor: getNodeBorderColor([nodeType]),
-        description: `${formattedName} node`,
-        shape,
-      });
-    }
-  });
-
-  return items;
+interface LegendEdgeItem {
+  label: string;
+  description: string;
+  variant: EdgeVariant;
 }
 
-/**
- * Hexagon shape component for legend
- */
-const HexagonShape = ({
-  color,
-  borderColor,
-}: {
-  color: string;
-  borderColor: string;
-}) => (
-  <svg width="32" height="22" viewBox="0 0 32 22" aria-hidden="true">
-    <defs>
-      <filter id="legendGlow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="1" result="coloredBlur" />
-        <feMerge>
-          <feMergeNode in="coloredBlur" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-    </defs>
-    <path
-      d="M5 1 L27 1 L31 11 L27 21 L5 21 L1 11 Z"
-      fill={color}
-      fillOpacity={0.85}
-      stroke={borderColor}
-      strokeWidth={1.5}
-      filter="url(#legendGlow)"
-    />
-  </svg>
-);
+interface LegendSectionProps {
+  title: string;
+  children: ReactNode;
+}
 
-/**
- * Pill shape component for legend
- */
-const PillShape = ({
-  color,
-  borderColor,
-}: {
-  color: string;
-  borderColor: string;
-}) => (
-  <svg width="36" height="20" viewBox="0 0 36 20" aria-hidden="true">
-    <defs>
-      <filter id="legendGlow2" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="1" result="coloredBlur" />
-        <feMerge>
-          <feMergeNode in="coloredBlur" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-    </defs>
-    <rect
-      x="1"
-      y="1"
-      width="34"
-      height="18"
-      rx="9"
-      ry="9"
-      fill={color}
-      fillOpacity={0.85}
-      stroke={borderColor}
-      strokeWidth={1.5}
-      filter="url(#legendGlow2)"
-    />
-  </svg>
-);
-
-/**
- * Globe shape component for legend (used for Internet nodes)
- */
-const GlobeShape = ({
-  color,
-  borderColor,
-}: {
-  color: string;
-  borderColor: string;
-}) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-    <defs>
-      <filter id="legendGlow3" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="1" result="coloredBlur" />
-        <feMerge>
-          <feMergeNode in="coloredBlur" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-    </defs>
-    {/* Globe circle */}
-    <circle
-      cx="12"
-      cy="12"
-      r="10"
-      fill={color}
-      fillOpacity={0.85}
-      stroke={borderColor}
-      strokeWidth={1.5}
-      filter="url(#legendGlow3)"
-    />
-    {/* Horizontal line */}
-    <ellipse
-      cx="12"
-      cy="12"
-      rx="10"
-      ry="4"
-      fill="none"
-      stroke={borderColor}
-      strokeWidth={1}
-      strokeOpacity={0.6}
-    />
-    {/* Vertical ellipse */}
-    <ellipse
-      cx="12"
-      cy="12"
-      rx="4"
-      ry="10"
-      fill="none"
-      stroke={borderColor}
-      strokeWidth={1}
-      strokeOpacity={0.6}
-    />
-  </svg>
-);
-
-/**
- * Edge line component for legend
- */
-const EdgeLine = ({
-  dashed,
-  edgeColor,
-}: {
-  dashed: boolean;
-  edgeColor: string;
-}) => (
-  <svg
-    width="60"
-    height="20"
-    viewBox="0 0 60 20"
-    aria-hidden="true"
-    style={{ overflow: "visible" }}
-  >
-    {/* Line */}
-    <line
-      x1="4"
-      y1="10"
-      x2="44"
-      y2="10"
-      stroke={edgeColor}
-      strokeWidth={3}
-      strokeLinecap="round"
-      strokeDasharray={dashed ? "8,6" : undefined}
-    />
-    {/* Arrow head */}
-    <polygon points="44,5 56,10 44,15" fill={edgeColor} />
-  </svg>
-);
+interface LegendItemProps {
+  label: string;
+  description: string;
+  children: ReactNode;
+}
 
 interface GraphLegendProps {
   data?: AttackPathGraphData;
+  expandedResources?: ReadonlySet<string>;
+  isFilteredView?: boolean;
 }
 
-/**
- * Legend for attack path graph node types and edge styles
- */
-export const GraphLegend = ({ data }: GraphLegendProps) => {
-  const { resolvedTheme } = useTheme();
-  const nodeTypes = extractNodeTypes(data?.nodes);
+interface GraphLegendState {
+  visibleNodes: GraphNode[];
+  visibleNodeIds: Set<string>;
+  visibleFindingIds: Set<string>;
+  visibleEdges: Array<{ source: string; target: string }>;
+  resourcesWithFindings: Set<string>;
+}
 
-  // Get edge color based on current theme
-  const edgeColor =
-    resolvedTheme === "dark" ? GRAPH_EDGE_COLOR_DARK : GRAPH_EDGE_COLOR_LIGHT;
+const buildNode = (
+  labels: string[],
+  properties: GraphNode["properties"] = {},
+): GraphNode => ({
+  id: labels[0] ?? "legend-node",
+  labels,
+  properties,
+});
 
-  // Check if there are any findings in the data
-  const hasFindings = nodeTypes.some((type) =>
-    type.toLowerCase().includes("finding"),
+const buildVisualItem = (
+  label: string,
+  description: string,
+  node: GraphNode,
+  fillColor: string,
+  borderColor: string,
+  glow = false,
+): LegendVisualItem => ({
+  label,
+  description,
+  Icon: resolveNodeVisual(node).Icon,
+  fillColor,
+  borderColor,
+  glow,
+});
+
+const providerRootItem = buildVisualItem(
+  "Provider",
+  "Cloud account, tenant, project, organization, or cluster entry point.",
+  buildNode(["AWSAccount"], { name: "Provider root" }),
+  GRAPH_NODE_COLORS.awsAccount,
+  GRAPH_NODE_BORDER_COLORS.awsAccount,
+);
+
+const findingRiskItems: LegendVisualItem[] = [
+  buildVisualItem(
+    "Critical",
+    "Highest-risk finding node with severity-colored badge and glow.",
+    buildNode(["ProwlerFinding"], { severity: "critical" }),
+    GRAPH_NODE_COLORS.critical,
+    GRAPH_NODE_BORDER_COLORS.critical,
+    true,
+  ),
+  buildVisualItem(
+    "High",
+    "High-risk finding node with severity-colored badge and glow.",
+    buildNode(["ProwlerFinding"], { severity: "high" }),
+    GRAPH_NODE_COLORS.high,
+    GRAPH_NODE_BORDER_COLORS.high,
+    true,
+  ),
+  buildVisualItem(
+    "Medium",
+    "Medium-risk finding node with severity-colored badge and glow.",
+    buildNode(["ProwlerFinding"], { severity: "medium" }),
+    GRAPH_NODE_COLORS.medium,
+    GRAPH_NODE_BORDER_COLORS.medium,
+    true,
+  ),
+  buildVisualItem(
+    "Low / Info",
+    "Lower-risk informational findings use the info-style risk icon.",
+    buildNode(["ProwlerFinding"], { severity: "info" }),
+    GRAPH_NODE_COLORS.info,
+    GRAPH_NODE_BORDER_COLORS.info,
+    true,
+  ),
+];
+
+const stateItems: LegendStateItem[] = [
+  {
+    label: "Selected node",
+    description: "Active node with a stronger animated selection ring.",
+    fillColor: GRAPH_NODE_COLORS.default,
+    borderColor: GRAPH_EDGE_HIGHLIGHT_COLOR,
+    strokeWidth: 4,
+    glowColor: GRAPH_EDGE_HIGHLIGHT_COLOR,
+  },
+  {
+    label: "Node with findings",
+    description: "Resource node linked to one or more findings.",
+    fillColor: GRAPH_NODE_COLORS.default,
+    borderColor: GRAPH_ALERT_BORDER_COLOR,
+    strokeWidth: 3,
+    glowColor: GRAPH_ALERT_BORDER_COLOR,
+  },
+];
+
+const edgeItems: LegendEdgeItem[] = [
+  {
+    label: "Normal edge",
+    description: "Relationship between resources in the attack path.",
+    variant: EDGE_VARIANT.NORMAL,
+  },
+  {
+    label: "Finding edge",
+    description: "Animated dashed edge that connects a resource to a finding.",
+    variant: EDGE_VARIANT.FINDING,
+  },
+  {
+    label: "Highlighted path",
+    description:
+      "Prowler green path shown when hovering or selecting related graph nodes.",
+    variant: EDGE_VARIANT.HIGHLIGHTED,
+  },
+];
+
+const isFindingNode = (node: GraphNode): boolean =>
+  node.labels.some((label) => label.toLowerCase().includes("finding"));
+
+const getGraphEdges = (
+  data: AttackPathGraphData,
+): Array<{ source: string; target: string }> =>
+  data.relationships ?? data.edges ?? [];
+
+const resolveLegendState = (
+  data: AttackPathGraphData,
+  expandedResources: ReadonlySet<string>,
+  isFilteredView: boolean,
+): GraphLegendState => {
+  const findingNodeIds = new Set(
+    data.nodes.filter(isFindingNode).map((node) => node.id),
+  );
+  const findingToResources = new Map<string, Set<string>>();
+  const resourcesWithFindings = new Set<string>();
+  const graphEdges = getGraphEdges(data);
+
+  for (const edge of graphEdges) {
+    const sourceIsFinding = findingNodeIds.has(edge.source);
+    const targetIsFinding = findingNodeIds.has(edge.target);
+
+    if (sourceIsFinding) {
+      resourcesWithFindings.add(edge.target);
+      const resources = findingToResources.get(edge.source) ?? new Set();
+      resources.add(edge.target);
+      findingToResources.set(edge.source, resources);
+    }
+
+    if (targetIsFinding) {
+      resourcesWithFindings.add(edge.source);
+      const resources = findingToResources.get(edge.target) ?? new Set();
+      resources.add(edge.source);
+      findingToResources.set(edge.target, resources);
+    }
+  }
+
+  const hiddenFindingIds = resolveHiddenFindingIds({
+    expandedResources,
+    findingNodeIds,
+    findingToResources,
+    isFilteredView,
+  });
+
+  const visibleNodes = data.nodes.filter(
+    (node) => !hiddenFindingIds.has(node.id),
+  );
+  const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
+  const visibleFindingIds = new Set(
+    visibleNodes.filter(isFindingNode).map((node) => node.id),
+  );
+  const visibleEdges = graphEdges.filter(
+    (edge) =>
+      visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
   );
 
-  const legendItems = generateLegendItems(nodeTypes, hasFindings);
+  return {
+    visibleNodes,
+    visibleNodeIds,
+    visibleFindingIds,
+    visibleEdges,
+    resourcesWithFindings,
+  };
+};
 
-  if (legendItems.length === 0) {
+const resolveNodeTypeItems = (
+  visibleNodes: GraphNode[],
+): LegendVisualItem[] => {
+  const itemsByType = new Map<string, LegendVisualItem>();
+
+  for (const node of visibleNodes) {
+    if (isFindingNode(node)) continue;
+
+    const visual = resolveNodeVisual(node);
+    if (visual.category === NODE_CATEGORY.ACCOUNT) continue;
+
+    const key = `${visual.category}:${visual.description}`;
+
+    if (!itemsByType.has(key)) {
+      itemsByType.set(key, {
+        label: visual.description,
+        description: `${visual.description} node`,
+        Icon: visual.Icon,
+        fillColor: getNodeColor(node.labels),
+        borderColor: getNodeBorderColor(node.labels),
+      });
+    }
+  }
+
+  return Array.from(itemsByType.values());
+};
+
+const resolveFindingRiskItems = (
+  visibleNodes: GraphNode[],
+): LegendVisualItem[] => {
+  const visibleSeverities = new Set(
+    visibleNodes
+      .filter(isFindingNode)
+      .map((node) => String(node.properties.severity ?? "").toLowerCase()),
+  );
+
+  return findingRiskItems.filter((item) => {
+    if (item.label === "Low / Info") {
+      return (
+        visibleSeverities.has("low") ||
+        visibleSeverities.has("info") ||
+        visibleSeverities.has("informational")
+      );
+    }
+
+    return visibleSeverities.has(item.label.toLowerCase());
+  });
+};
+
+const LegendSection = ({ title, children }: LegendSectionProps) => (
+  <section className="bg-bg-neutral-secondary/60 border-border-neutral-primary flex w-full min-w-0 flex-col gap-2 rounded-lg border p-3 sm:w-fit sm:max-w-full">
+    <h3 className="text-text-neutral-secondary text-[0.68rem] leading-none font-semibold tracking-wide uppercase">
+      {title}
+    </h3>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {children}
+    </div>
+  </section>
+);
+
+const LegendItem = ({ label, description, children }: LegendItemProps) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <div
+        className="hover:bg-bg-neutral-tertiary/70 inline-flex cursor-help items-center gap-2 rounded-full px-1.5 py-1 transition-colors"
+        role="img"
+        aria-label={`${label}: ${description}`}
+      >
+        {children}
+        <span className="text-text-neutral-secondary text-xs whitespace-nowrap">
+          {label}
+        </span>
+      </div>
+    </TooltipTrigger>
+    <TooltipContent>{description}</TooltipContent>
+  </Tooltip>
+);
+
+const BadgePreview = ({
+  Icon,
+  fillColor,
+  borderColor,
+  glow,
+}: LegendVisualItem) => (
+  <svg
+    width={LEGEND_PREVIEW.SVG_SIZE}
+    height={LEGEND_PREVIEW.SVG_SIZE}
+    viewBox="0 0 36 36"
+    aria-hidden="true"
+    className="overflow-visible"
+  >
+    {glow && (
+      <circle
+        cx={LEGEND_PREVIEW.BADGE_CENTER}
+        cy={LEGEND_PREVIEW.BADGE_CENTER}
+        r={LEGEND_PREVIEW.BADGE_RADIUS + 4}
+        stroke={borderColor}
+        strokeOpacity={0.28}
+        strokeWidth={6}
+        fill={borderColor}
+        fillOpacity={0.14}
+      />
+    )}
+    <circle
+      cx={LEGEND_PREVIEW.BADGE_CENTER}
+      cy={LEGEND_PREVIEW.BADGE_CENTER}
+      r={LEGEND_PREVIEW.BADGE_RADIUS}
+      fill={fillColor}
+      fillOpacity={0.94}
+      stroke={borderColor}
+      strokeWidth={glow ? 2.5 : 1.5}
+    />
+    <g
+      transform={`translate(${LEGEND_PREVIEW.ICON_OFFSET}, ${LEGEND_PREVIEW.ICON_OFFSET})`}
+    >
+      <Icon
+        aria-hidden="true"
+        color="#ffffff"
+        focusable="false"
+        height={LEGEND_PREVIEW.ICON_SIZE}
+        role="presentation"
+        size={LEGEND_PREVIEW.ICON_SIZE}
+        width={LEGEND_PREVIEW.ICON_SIZE}
+      />
+    </g>
+  </svg>
+);
+
+const StatePreview = ({
+  fillColor,
+  borderColor,
+  strokeWidth,
+  glowColor,
+}: LegendStateItem) => (
+  <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
+    {glowColor && (
+      <circle cx="18" cy="18" r="20" fill={glowColor} fillOpacity="0.18" />
+    )}
+    <circle
+      cx="18"
+      cy="18"
+      r="16"
+      fill={fillColor}
+      fillOpacity="0.92"
+      stroke={borderColor}
+      strokeWidth={strokeWidth}
+    />
+  </svg>
+);
+
+const EdgePreview = ({
+  variant,
+  edgeColor,
+}: {
+  variant: EdgeVariant;
+  edgeColor: string;
+}) => {
+  const isFindingEdge = variant === EDGE_VARIANT.FINDING;
+  const isHighlightedPath = variant === EDGE_VARIANT.HIGHLIGHTED;
+  const strokeColor = isHighlightedPath
+    ? GRAPH_EDGE_HIGHLIGHT_COLOR
+    : edgeColor;
+
+  return (
+    <svg
+      width="56"
+      height="20"
+      viewBox="0 0 56 20"
+      aria-hidden="true"
+      className="overflow-visible"
+    >
+      {isHighlightedPath && (
+        <line
+          x1="4"
+          y1="10"
+          x2="40"
+          y2="10"
+          stroke={GRAPH_EDGE_HIGHLIGHT_COLOR}
+          strokeOpacity="0.32"
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+      )}
+      <line
+        x1="4"
+        y1="10"
+        x2="40"
+        y2="10"
+        stroke={strokeColor}
+        strokeWidth={isHighlightedPath ? 3 : 2.5}
+        strokeLinecap="round"
+        strokeDasharray={isFindingEdge ? "8 6" : undefined}
+      />
+      <polygon points="40,5 52,10 40,15" fill={strokeColor} />
+    </svg>
+  );
+};
+
+/**
+ * Compact semantic legend for the Attack Paths graph visual language.
+ */
+export const GraphLegend = ({
+  data,
+  expandedResources = new Set(),
+  isFilteredView = false,
+}: GraphLegendProps) => {
+  const { resolvedTheme } = useTheme();
+
+  if (!data || data.nodes.length === 0) {
     return null;
   }
 
+  const legendState = resolveLegendState(
+    data,
+    expandedResources,
+    isFilteredView,
+  );
+  const providerItem = legendState.visibleNodes.some(
+    (node) => resolveNodeVisual(node).category === NODE_CATEGORY.ACCOUNT,
+  )
+    ? providerRootItem
+    : null;
+  const visibleNodeTypeItems = resolveNodeTypeItems(legendState.visibleNodes);
+  const visibleFindingRiskItems = resolveFindingRiskItems(
+    legendState.visibleNodes,
+  );
+  const visibleStateItems = stateItems.filter(
+    (item) =>
+      item.label === "Selected node" ||
+      Array.from(legendState.resourcesWithFindings).some((resourceId) =>
+        legendState.visibleNodeIds.has(resourceId),
+      ),
+  );
+  const visibleEdgeItems = edgeItems.filter((item) => {
+    if (item.variant === EDGE_VARIANT.FINDING) {
+      return legendState.visibleEdges.some(
+        (edge) =>
+          legendState.visibleFindingIds.has(edge.source) ||
+          legendState.visibleFindingIds.has(edge.target),
+      );
+    }
+
+    return legendState.visibleEdges.length > 0;
+  });
+
+  if (
+    !providerItem &&
+    visibleNodeTypeItems.length === 0 &&
+    visibleFindingRiskItems.length === 0 &&
+    visibleStateItems.length === 0 &&
+    visibleEdgeItems.length === 0
+  ) {
+    return null;
+  }
+
+  const edgeColor =
+    resolvedTheme === "dark" ? GRAPH_EDGE_COLOR_DARK : GRAPH_EDGE_COLOR_LIGHT;
+
   return (
-    <Card className="w-fit border-0">
-      <CardContent className="gap-3 p-4">
-        <div className="flex flex-col gap-4">
-          {/* Node types section */}
-          <div className="flex flex-col items-start gap-3 lg:flex-row lg:flex-wrap lg:items-center">
-            <TooltipProvider>
-              {legendItems.map((item) => (
-                <Tooltip key={item.label}>
-                  <TooltipTrigger asChild>
-                    <div
-                      className="flex cursor-help items-center gap-2"
-                      role="img"
-                      aria-label={`${item.label}: ${item.description}`}
-                    >
-                      {item.shape === "hexagon" ? (
-                        <HexagonShape
-                          color={item.color}
-                          borderColor={item.borderColor}
-                        />
-                      ) : item.shape === "cloud" ? (
-                        <GlobeShape
-                          color={item.color}
-                          borderColor={item.borderColor}
-                        />
-                      ) : (
-                        <PillShape
-                          color={item.color}
-                          borderColor={item.borderColor}
-                        />
-                      )}
-                      <span className="text-text-neutral-secondary text-xs">
-                        {item.label}
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>{item.description}</TooltipContent>
-                </Tooltip>
-              ))}
-            </TooltipProvider>
-          </div>
+    <Card className="w-full border-0">
+      <CardContent className="p-3">
+        <TooltipProvider>
+          <div className="flex w-full flex-wrap items-stretch gap-2">
+            {providerItem && (
+              <LegendSection title="Provider roots">
+                <LegendItem {...providerItem}>
+                  <BadgePreview {...providerItem} />
+                </LegendItem>
+              </LegendSection>
+            )}
 
-          {/* Edge types section */}
-          <div className="border-border-neutral-primary flex flex-col items-start gap-3 border-t pt-3 lg:flex-row lg:flex-wrap lg:items-center">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className="flex cursor-help items-center gap-2"
-                    role="img"
-                    aria-label="Solid line: Resource connection"
-                  >
-                    <EdgeLine dashed={false} edgeColor={edgeColor} />
-                    <span className="text-text-neutral-secondary text-xs">
-                      Resource Connection
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Connection between infrastructure resources
-                </TooltipContent>
-              </Tooltip>
+            {visibleNodeTypeItems.length > 0 && (
+              <LegendSection title="Node types">
+                {visibleNodeTypeItems.map((item) => (
+                  <LegendItem key={item.label} {...item}>
+                    <BadgePreview {...item} />
+                  </LegendItem>
+                ))}
+              </LegendSection>
+            )}
 
-              {hasFindings && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      className="flex cursor-help items-center gap-2"
-                      role="img"
-                      aria-label="Dashed line: Finding connection"
-                    >
-                      <EdgeLine dashed={true} edgeColor={edgeColor} />
-                      <span className="text-text-neutral-secondary text-xs">
-                        Finding Connection
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Connection to a security finding
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </TooltipProvider>
-          </div>
+            {visibleFindingRiskItems.length > 0 && (
+              <LegendSection title="Findings by risk">
+                {visibleFindingRiskItems.map((item) => (
+                  <LegendItem key={item.label} {...item}>
+                    <BadgePreview {...item} />
+                  </LegendItem>
+                ))}
+              </LegendSection>
+            )}
 
-          {/* Zoom control hint */}
-          <div className="border-border-neutral-primary flex items-center gap-2 border-t pt-3">
-            <kbd className="bg-bg-neutral-tertiary text-text-neutral-secondary rounded px-1.5 py-0.5 text-xs font-medium">
-              Ctrl
-            </kbd>
-            <span className="text-text-neutral-secondary text-xs">+</span>
-            <span className="text-text-neutral-secondary text-xs">
-              Scroll to zoom
-            </span>
+            {visibleStateItems.length > 0 && (
+              <LegendSection title="States">
+                {visibleStateItems.map((item) => (
+                  <LegendItem key={item.label} {...item}>
+                    <StatePreview {...item} />
+                  </LegendItem>
+                ))}
+              </LegendSection>
+            )}
+
+            {visibleEdgeItems.length > 0 && (
+              <LegendSection title="Edges">
+                {visibleEdgeItems.map((item) => (
+                  <LegendItem key={item.label} {...item}>
+                    <EdgePreview variant={item.variant} edgeColor={edgeColor} />
+                  </LegendItem>
+                ))}
+              </LegendSection>
+            )}
           </div>
-        </div>
+        </TooltipProvider>
       </CardContent>
     </Card>
   );

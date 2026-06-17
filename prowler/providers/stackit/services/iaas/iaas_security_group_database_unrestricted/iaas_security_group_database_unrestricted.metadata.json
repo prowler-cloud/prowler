@@ -1,0 +1,37 @@
+{
+  "Provider": "stackit",
+  "CheckID": "iaas_security_group_database_unrestricted",
+  "CheckTitle": "IaaS security groups do not allow unrestricted database access",
+  "CheckType": [],
+  "ServiceName": "iaas",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "Security groups should not allow unrestricted access to database ports from the public internet (`0.0.0.0/0` or `::/0`). This includes MySQL (`3306`), PostgreSQL (`5432`), MongoDB (`27017`), Redis (`6379`), SQL Server (`1433`), and CouchDB (`5984`). Unrestricted database access can lead to **data breaches** and **unauthorized access**.",
+  "Risk": "Allowing unrestricted database access from the internet exposes sensitive data to potential **breaches**, **unauthorized access**, **data exfiltration**, and malicious attacks. Databases often contain critical business data and should **never** be directly accessible from the public internet.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.stackit.cloud/products/network/core-networking/security-groups/",
+    "https://docs.stackit.cloud/products/network/core-networking/security-groups/how-tos/create-and-manage-security-groups-and-rules/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the StackIT Portal open Networking > Security Groups and select the affected security group. 2. Locate the ingress rules that allow database ports (3306, 5432, 27017, 6379, 1433, 5984) from 0.0.0.0/0 or ::/0. 3. Delete those rules or restrict their source to the specific application servers or trusted IP ranges. 4. Prefer private networking for database connectivity and do not expose database ports to the internet. 5. Re-run Prowler to confirm the finding is resolved.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "**Restrict database access** to specific application servers or trusted IP ranges. Use **private networks** for database connectivity and implement additional security layers such as VPNs, private endpoints, or application-level authentication.",
+      "Url": "https://hub.prowler.com/check/iaas_security_group_database_unrestricted"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check covers common database ports: MySQL (3306), PostgreSQL (5432), MongoDB (27017), Redis (6379), SQL Server (1433), and CouchDB (5984). Databases should always be placed in private networks and accessed through secure channels."
+}
