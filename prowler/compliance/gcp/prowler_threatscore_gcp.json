@@ -117,7 +117,7 @@
       "Id": "1.2.4",
       "Description": "Ensure KMS Encryption Keys Are Rotated Within a Period of 90 Days",
       "Checks": [
-        "kms_key_rotation_enabled"
+        "kms_key_rotation_max_90_days"
       ],
       "Attributes": [
         {

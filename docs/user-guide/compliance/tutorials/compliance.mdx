@@ -1,0 +1,267 @@
+---
+title: 'Compliance'
+description: 'Run security checks against compliance frameworks, review posture across providers, and download CSV or PDF reports from Prowler Cloud, Prowler App, and Prowler CLI.'
+---
+
+Prowler maps every security check to one or more industry-standard compliance frameworks, so a single scan produces both technical findings and framework-aligned evidence. The same evaluation runs identically whether scans are launched from Prowler Cloud, Prowler App, or Prowler CLI.
+
+Out of the box, Prowler covers frameworks such as CIS Benchmarks, NIST 800-53, NIST CSF, NIS2, ENS RD2022, ISO 27001, PCI-DSS, SOC 2, GDPR, HIPAA, AWS Well-Architected, BSI C5, CSA CCM, MITRE ATT&CK, KISA ISMS-P, FedRAMP, and Prowler ThreatScore. The full catalog is available at [Prowler Hub](https://hub.prowler.com/compliance).
+
+<Note>
+For the unified compliance score methodology used across frameworks, see [Prowler ThreatScore Documentation](/user-guide/compliance/tutorials/threatscore).
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Review compliance posture using Prowler Cloud
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Run compliance scans using Prowler CLI
+  </Card>
+</CardGroup>
+
+## Prowler Cloud
+
+The Compliance section in Prowler Cloud and Prowler App centralizes compliance posture across every connected provider. It aggregates scan results, surfaces Prowler ThreatScore, and exposes detailed requirement-level evidence for each supported framework.
+
+### Accessing the Compliance Section
+
+To open the compliance overview, follow these steps:
+
+1. Sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) or to a self-hosted Prowler App instance.
+2. Select **Compliance** from the left navigation.
+
+The page lists every framework evaluated by the most recent completed scan of the selected provider.
+
+<img src="/images/compliance/prowler-app-compliance-overview.png" alt="Compliance overview page in Prowler Cloud and App showing filters, the Prowler ThreatScore card, and the framework grid" width="900" />
+
+<Note>
+Compliance results require at least one completed scan. If no scan has finished yet, Prowler Cloud and App display a notice prompting to launch or wait for a scan to complete.
+</Note>
+
+### Filtering Compliance Results
+
+The filters bar at the top of the overview controls which scan and which regions feed every card on the page.
+
+#### Scan Selector
+
+The scan selector lists completed scans across all connected providers. Each entry includes the provider type, alias, and completion timestamp. Selecting a scan updates the entire page, including ThreatScore and every framework card.
+
+#### Region Filter
+
+The region multi-select narrows results to one or more regions detected in the selected scan. Use it to evaluate compliance posture for a specific geography or account boundary. The filter applies to:
+
+* The framework grid scores and pass/fail counts.
+* The detailed requirement view inside each framework.
+
+<Note>
+Region filters apply only to providers that report a region attribute (for example, AWS, Azure, and Google Cloud). Providers without regions ignore the filter.
+</Note>
+
+#### Clearing Filters
+
+Select **Clear filters** to reset both the region filter and any other applied filter to its default state. The scan selector is preserved.
+
+### Reviewing the Prowler ThreatScore Card
+
+When the selected scan includes Prowler ThreatScore data, a dedicated card appears at the top of the overview, showing:
+
+* The overall ThreatScore (0–100) with a color-coded indicator.
+* A progress bar reflecting current posture.
+* Per-pillar bars for IAM, Attack Surface, and Logging and Monitoring.
+
+<img src="/images/compliance/prowler-app-compliance-threatscore-card.png" alt="Prowler ThreatScore badge on the Compliance overview showing the overall score and per-pillar bars" width="900" />
+
+Selecting the card opens the ThreatScore framework detail page, covered in [Working With the Framework Detail Page](#working-with-the-framework-detail-page).
+
+For a complete explanation of the methodology, formula, and weighting, see [Prowler ThreatScore Documentation](/user-guide/compliance/tutorials/threatscore).
+
+### Exploring the Framework Grid
+
+Below ThreatScore, the framework grid shows one card per supported compliance framework. Each card includes:
+
+* **Framework logo and name:** Identifies the standard (CIS, NIST, ENS, ISO 27001, PCI-DSS, SOC 2, NIS2, CSA CCM, MITRE ATT&CK, and more).
+* **Version:** Indicates the framework version applied to the scan.
+* **Score:** The percentage of passing requirements over the total evaluated.
+* **Passing Requirements:** A `passed / total` counter for additional context.
+* **Download dropdown:** Quick access to the CSV report and, when supported, the PDF report.
+
+<img src="/images/compliance/prowler-app-compliance-card-download.png" alt="Download dropdown on a framework card showing CSV and PDF report options" width="500" />
+
+Select any card to open the framework detail page.
+
+<Note>
+Score color coding follows three thresholds: red for severely low compliance, amber for partial compliance, and green for healthy posture. Hover over the score for the exact percentage.
+</Note>
+
+### Working With the Framework Detail Page
+
+The detail page provides everything needed to evaluate a single framework: aggregate metrics, top failure sections, and a requirement-by-requirement view.
+
+#### Header, Summary Cards, and Download Actions
+
+The header shows the framework name, version, the provider scan being reviewed, and CSV / PDF download buttons. Below the header, summary cards condense the framework state at a glance:
+
+* **Requirements Status:** Donut chart with `Pass`, `Fail`, and `Manual` counts plus the total number of requirements.
+* **Top Failed Sections:** Ranks the sections or pillars with the highest number of failing requirements.
+* **ThreatScore Breakdown:** Appears only on the ThreatScore framework. It shows the overall score and per-pillar scores aligned with the ThreatScore pillars (IAM, Attack Surface, Logging and Monitoring, Encryption).
+
+The same layout applies to every compliance framework. ThreatScore is the only framework that includes the extra Breakdown card on the left; for any other framework, the Requirements Status and Top Failed Sections cards span the full row.
+
+<img src="/images/compliance/prowler-app-compliance-threatscore-detail.png" alt="Prowler ThreatScore detail page including the extra Breakdown card alongside Requirements Status and Top Failed Sections" width="900" />
+
+<img src="/images/compliance/prowler-app-compliance-detail-header.png" alt="CIS framework detail page showing only the Requirements Status donut and the Top Failed Sections card, without the ThreatScore Breakdown" width="900" />
+
+#### Requirements Accordion
+
+Below the summary cards, an accordion organizes every requirement of the framework. Expand a section to see:
+
+* **Requirement ID and title:** Reflect the official identifier from the framework.
+* **Pass / Fail / Manual badges:** Indicate the status of each requirement based on the underlying checks.
+* **Custom details panel:** Opens additional context tailored to the framework. For frameworks with custom layouts, the panel surfaces fields such as control objectives, severity, attack tactics, regulatory references, or required evidence.
+
+Select a requirement to open the detail panel and review the failing checks, the resources affected, and remediation guidance.
+
+<img src="/images/compliance/prowler-app-compliance-requirements-accordion.png" alt="Expanded CIS requirement showing description, rationale, remediation procedure, audit procedure, profile and assessment tags, references, and the underlying check" width="900" />
+
+##### Frameworks With Custom Detail Layouts
+
+Several frameworks include enriched detail panels that highlight fields specific to the standard:
+
+* ASD Essential Eight
+* AWS Well-Architected Framework
+* BSI C5
+* Cloud Controls Matrix (CSA CCM)
+* CIS Benchmarks
+* CCC (Common Cloud Controls)
+* ENS RD2022
+* ISO 27001
+* KISA ISMS-P
+* MITRE ATT&CK
+* Prowler ThreatScore
+
+Frameworks without a custom layout fall back to the generic details panel, which still exposes the official requirement metadata captured by Prowler.
+
+### Downloading Compliance Reports
+
+Prowler Cloud and App expose two formats:
+
+* **CSV report:** Every requirement, every check, and every finding for the selected scan and filters. Available for all supported frameworks.
+* **PDF report:** Curated executive-style report. Currently supported for Prowler ThreatScore, ENS RD2022, NIS2, and CSA CCM. Additional PDF reports are added in subsequent Prowler releases.
+
+<Note>
+**PDF detail section is capped at the first 100 failed findings per check.** The PDF is intended as an executive/auditor document, not a raw data dump: when a check produces more than 100 failed findings the report renders the first 100 and shows a banner pointing the reader to the CSV or JSON-OCSF export for the complete list. The compliance CSV and the scan outputs are never truncated.
+
+The cap is configurable per deployment via the `DJANGO_PDF_MAX_FINDINGS_PER_CHECK` environment variable on the Prowler API workers; set it to `0` to disable truncation entirely. The default value of `100` keeps the PDF readable and bounded in size on enterprise-scale scans (hundreds of thousands of findings) without affecting smaller scans, where the cap is rarely reached.
+
+Only **failed** findings are rendered in the detail section. PASS findings for the same check are excluded at query time. The PDF surfaces what needs attention, and the CSV/JSON exports surface everything for forensic review.
+</Note>
+
+#### Downloading From the Detail Page
+
+Inside any framework detail page, the **CSV** and **PDF** buttons in the header trigger the same downloads as the overview dropdown. The PDF button only appears for frameworks that support it.
+
+<img src="/images/compliance/prowler-app-compliance-detail-download.png" alt="Top of a framework detail page showing the CSV and PDF download buttons in the header" width="900" />
+
+<Note>
+Region filters disable the per-card download dropdown to avoid generating partial reports. Open the framework detail page when downloads scoped to a region are required, or remove the region filter to download the full report.
+</Note>
+
+#### Downloading the Full Scan Output
+
+To export every framework, finding, and resource at once, use the **Scan Jobs** section instead. The ZIP archive contains the CSV, JSON-OCSF, and HTML reports plus a `compliance/` subfolder with one CSV per framework. See [Prowler App — Getting Started](/user-guide/tutorials/prowler-app) for details.
+
+### API Access
+
+Every report available in the UI is also reachable through the Prowler API. The following endpoints are the most relevant:
+
+* [Retrieve a scan compliance report as CSV](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_compliance_retrieve)
+* [Download a complete scan output (ZIP)](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_report_retrieve)
+
+Use the API to integrate compliance evidence into ticketing systems, executive dashboards, or downstream pipelines.
+
+## Prowler CLI
+
+Prowler CLI evaluates the same compliance frameworks as Prowler Cloud and App, and produces detailed CSV outputs alongside the standard scan results. By default, it runs every supported framework and prints a status summary at the end of the scan:
+
+<img src="/images/cli/compliance/compliance.png" />
+
+Detailed compliance results are stored as CSV files under the `compliance/` subfolder of Prowler's output directory.
+
+### Scan a Specific Compliance Framework
+
+To scope a scan to a single framework and get the framework-specific summary, use the `--compliance` option:
+
+```sh
+prowler <provider> --compliance <compliance_framework>
+```
+
+Standard results plus the framework breakdown are printed to the terminal. A dedicated CSV is also generated under the `compliance/` output folder. Sample output for CIS AWS 2.0:
+
+<img src="/images/cli/compliance/compliance-cis-sample1.png" />
+
+<Note>
+If Prowler cannot find a resource related with a check from a compliance requirement, that requirement is omitted from the output.
+</Note>
+
+### List Available Compliance Frameworks
+
+To see which compliance frameworks are covered by a given provider, use the `--list-compliance` option:
+
+```sh
+prowler <provider> --list-compliance
+```
+
+The full catalog is also browsable at [Prowler Hub](https://hub.prowler.com/compliance).
+
+### List Requirements of a Compliance Framework
+
+To inspect the requirements that compose a specific framework, use the `--list-compliance-requirements` option:
+
+```sh
+prowler <provider> --list-compliance-requirements <compliance_framework(s)>
+```
+
+Sample output for the first requirements of CIS 1.5 for AWS:
+
+```
+Listing CIS 1.5 AWS Compliance Requirements:
+
+Requirement Id: 1.1
+	- Description: Maintain current contact details
+	- Checks:
+ 		account_maintain_current_contact_details
+
+Requirement Id: 1.2
+	- Description: Ensure security contact information is registered
+	- Checks:
+ 		account_security_contact_information_is_registered
+
+Requirement Id: 1.3
+	- Description: Ensure security questions are registered in the AWS account
+	- Checks:
+ 		account_security_questions_are_registered_in_the_aws_account
+
+Requirement Id: 1.4
+	- Description: Ensure no 'root' user account access key exists
+	- Checks:
+ 		iam_no_root_access_key
+
+Requirement Id: 1.5
+	- Description: Ensure MFA is enabled for the 'root' user account
+	- Checks:
+ 		iam_root_mfa_enabled
+
+[redacted]
+
+```
+
+## Contributing New Compliance Frameworks
+
+To request a new framework or contribute one, see [Creating a New Security Compliance Framework in Prowler](/developer-guide/security-compliance-framework). The developer guide covers the Pydantic schema, JSON catalog, output formatter, and PR submission steps required to ship a new framework end to end.
+
+## Related Documentation
+
+* [Prowler ThreatScore Documentation](/user-guide/compliance/tutorials/threatscore)
+* [Creating a New Security Compliance Framework in Prowler](/developer-guide/security-compliance-framework)
+* [Prowler App — Getting Started](/user-guide/tutorials/prowler-app)

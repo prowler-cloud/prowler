@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.vm.vm_service import Disk
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
     def test_vm_no_subscriptions(self):
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.disks = {}
 
         with (
@@ -33,6 +36,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
 
     def test_vm_subscription_empty(self):
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.disks = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -57,6 +61,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
         disk_id = str(uuid4())
         resource_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
                 disk_id: Disk(
@@ -93,13 +98,14 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert result[0].location == "location"
             assert (
                 result[0].status_extended
-                == f"Disk '{disk_id}' is not encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Disk '{disk_id}' is not encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_vm_one_unattached_disk_encrypt_cmk(self):
         disk_id = str(uuid4())
         resource_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
                 disk_id: Disk(
@@ -136,7 +142,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert result[0].location == "location"
             assert (
                 result[0].status_extended
-                == f"Disk '{disk_id}' is encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Disk '{disk_id}' is encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_vm_subscription_two_unattached_disk_encrypt_cmk_and_pk(self):
@@ -145,6 +151,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
         disk_id_2 = str(uuid4())
         resource_id_2 = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
                 disk_id_1: Disk(
@@ -188,7 +195,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert result[0].location == "location"
             assert (
                 result[0].status_extended
-                == f"Disk '{disk_id_1}' is not encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Disk '{disk_id_1}' is not encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[1].status == "PASS"
             assert result[1].resource_id == resource_id_2
@@ -196,13 +203,14 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert result[1].location == "location2"
             assert (
                 result[1].status_extended
-                == f"Disk '{disk_id_2}' is encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Disk '{disk_id_2}' is encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_vm_attached_disk_encrypt_cmk(self):
         disk_id = str(uuid4())
         resource_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
                 disk_id: Disk(
