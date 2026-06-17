@@ -409,10 +409,7 @@ const AlertFormModalContent = ({
     if (seedResult?.error) {
       setPreview({
         status: "error",
-        error:
-          seedResult.status === 403
-            ? getAlertMutationError(seedResult)
-            : ALERT_SEED_ERROR,
+        error: getAlertMutationError(seedResult, ALERT_SEED_ERROR),
       });
       return;
     }
@@ -457,10 +454,7 @@ const AlertFormModalContent = ({
     if (seedResult?.error) {
       setPreview(null);
       setErrors({
-        root:
-          seedResult.status === 403
-            ? getAlertMutationError(seedResult)
-            : ALERT_SEED_ERROR,
+        root: getAlertMutationError(seedResult, ALERT_SEED_ERROR),
       });
       return;
     }

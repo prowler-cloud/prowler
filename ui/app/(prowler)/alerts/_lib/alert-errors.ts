@@ -11,9 +11,15 @@ interface AlertActionErrorResult {
   status?: number;
 }
 
-export const getAlertMutationError = (result: AlertActionErrorResult): string =>
-  getActionErrorMessage(result, {
-    messages: {
-      [ACTION_ERROR_STATUS.FORBIDDEN]: ALERTS_PERMISSION_ERROR,
+export const getAlertMutationError = (
+  result: AlertActionErrorResult,
+  fallback = result.error,
+): string =>
+  getActionErrorMessage(
+    { ...result, error: fallback },
+    {
+      messages: {
+        [ACTION_ERROR_STATUS.FORBIDDEN]: ALERTS_PERMISSION_ERROR,
+      },
     },
-  });
+  );
