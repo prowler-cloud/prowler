@@ -8,6 +8,7 @@ build/
 coverage/
 dist/
 esm/
+CHANGELOG.md
 
 # Generated files
 next-env.d.ts
