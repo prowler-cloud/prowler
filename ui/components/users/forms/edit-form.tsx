@@ -8,6 +8,9 @@ import * as z from "zod";
 
 import { updateUser, updateUserRole } from "@/actions/users/users";
 import { Card } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form, FormButtons } from "@/components/shadcn/form";
 import {
   Select,
   SelectContent,
@@ -15,9 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form, FormButtons } from "@/components/ui/form";
 import { editUserFormSchema } from "@/types";
 
 export const EditForm = ({
@@ -121,12 +121,12 @@ export const EditForm = ({
           variant="inner"
           className="flex flex-row items-center justify-center gap-4"
         >
-          <div className="text-small flex items-center">
+          <div className="flex items-center text-sm">
             <UserIcon className="mr-2 h-4 w-4" />
             <span className="text-text-neutral-secondary">Name:</span>
             <span className="ml-2 font-semibold">{userName}</span>
           </div>
-          <div className="text-small flex items-center">
+          <div className="flex items-center text-sm">
             <ShieldIcon className="mr-2 h-4 w-4" />
             <span className="text-text-neutral-secondary">Role:</span>
             <span className="ml-2 font-semibold">

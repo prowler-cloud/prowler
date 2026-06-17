@@ -12,8 +12,8 @@ import { AwsMethodSelector } from "@/components/providers/organizations/aws-meth
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { Form } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { Form } from "@/components/shadcn/form";
 import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
 
 import { RadioGroupProvider } from "../../radio-group-provider";

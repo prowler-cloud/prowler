@@ -1,21 +1,24 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
-import { Divider } from "@heroui/divider";
-import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { clsx } from "clsx";
 import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
+import {
+  Checkbox,
+  Separator,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form, FormButtons } from "@/components/shadcn/form";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form, FormButtons } from "@/components/ui/form";
 import { getErrorMessage, permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
 
@@ -58,10 +61,13 @@ export const EditRoleForm = ({
     },
   });
 
-  const { watch, setValue } = form;
+  const { setValue } = form;
 
-  const manageProviders = watch("manage_providers");
-  const unlimitedVisibility = watch("unlimited_visibility");
+  // useWatch instead of form.watch: the React Compiler can't track watch()
+  // getter reads during render, leaving memoized JSX with stale values.
+  const formValues = useWatch({ control: form.control });
+  const manageProviders = formValues.manage_providers;
+  const unlimitedVisibility = formValues.unlimited_visibility;
 
   useEffect(() => {
     if (manageProviders && !unlimitedVisibility) {
@@ -184,59 +190,74 @@ export const EditRoleForm = ({
           <span className="text-lg font-semibold">Admin Permissions</span>
 
           {/* Select All Checkbox */}
-          <Checkbox
-            isSelected={visiblePermissionFormFields.every((perm) =>
-              form.watch(perm.field as keyof FormValues),
-            )}
-            onChange={(e) => onSelectAllChange(e.target.checked)}
-            classNames={{
-              label: "text-small",
-              wrapper: "checkbox-update",
-            }}
-            color="default"
-          >
-            Grant all admin permissions
-          </Checkbox>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="select-all-permissions"
+              size="sm"
+              checked={visiblePermissionFormFields.every(
+                (perm) => !!formValues[perm.field as keyof FormValues],
+              )}
+              onCheckedChange={(checked) => onSelectAllChange(checked === true)}
+            />
+            <label
+              htmlFor="select-all-permissions"
+              className="cursor-pointer text-sm"
+            >
+              Grant all admin permissions
+            </label>
+          </div>
 
           {/* Permissions Grid */}
           <div className="grid grid-cols-2 gap-4">
             {visiblePermissionFormFields.map(
               ({ field, label, description }) => (
-                <div key={field} className="flex items-center gap-2">
+                <div key={field} className="group flex items-center gap-2">
                   <Checkbox
-                    {...form.register(field as keyof FormValues)}
-                    isSelected={!!form.watch(field as keyof FormValues)}
-                    classNames={{
-                      label: "text-small",
-                      wrapper: "checkbox-update",
-                    }}
-                    color="default"
+                    id={`permission-${field}`}
+                    size="sm"
+                    checked={!!formValues[field as keyof FormValues]}
+                    onCheckedChange={(checked) =>
+                      form.setValue(
+                        field as keyof FormValues,
+                        checked === true,
+                        {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        },
+                      )
+                    }
+                  />
+                  <label
+                    htmlFor={`permission-${field}`}
+                    className="cursor-pointer text-sm"
                   >
                     {label}
-                  </Checkbox>
-                  <Tooltip content={description} placement="right">
-                    <div className="flex w-fit items-center justify-center">
-                      <InfoIcon
-                        className={clsx(
-                          "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
-                        )}
-                        aria-hidden={"true"}
-                        width={16}
-                      />
-                    </div>
+                  </label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex w-fit items-center justify-center">
+                        <InfoIcon
+                          className="text-text-neutral-tertiary group-has-[[data-state=checked]]:text-text-neutral-primary cursor-pointer"
+                          aria-hidden={"true"}
+                          width={16}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{description}</TooltipContent>
                   </Tooltip>
                 </div>
               ),
             )}
           </div>
         </div>
-        <Divider className="my-4" />
+        <Separator className="my-4" />
 
         {!unlimitedVisibility && (
           <div className="flex flex-col gap-4">
             <span className="text-lg font-semibold">Groups visibility</span>
 
-            <p className="text-small text-default-700 font-medium">
+            <p className="text-text-neutral-secondary text-sm font-medium">
               Select the groups this role will have access to. If no groups are
               selected and unlimited visibility is not enabled, the role will
               not have access to any accounts.

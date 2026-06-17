@@ -32,7 +32,8 @@ vi.mock("../forms/edit-name-form", () => ({
   EditNameForm: () => null,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: vi.fn() }),
 }));
 

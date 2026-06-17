@@ -4,8 +4,8 @@ import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
-import { NavigationProgress, Toaster } from "@/components/ui";
-import { fontSans } from "@/config/fonts";
+import { NavigationProgress, Toaster } from "@/components/shadcn";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
 
@@ -36,8 +36,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <body
         suppressHydrationWarning
         className={cn(
-          "bg-background min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>

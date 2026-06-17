@@ -72,7 +72,8 @@ vi.mock("@/components/shadcn/select/enhanced-multi-select", () => ({
   EnhancedMultiSelect: () => <div data-testid="group-select" />,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: vi.fn() }),
 }));
 
