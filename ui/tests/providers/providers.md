@@ -1012,3 +1012,62 @@
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid Google Workspace account with Service Account having domain-wide delegation enabled
 - Service Account must have appropriate Google Workspace API scopes for security scanning
+
+---
+
+## Test Case: `PROVIDER-E2E-018` - Add Vercel Provider with API Token
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @vercel
+
+**Description/Objective:** Validates the complete flow of adding a new Vercel provider using API Token authentication, with a Team ID as the provider UID.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_VERCEL_TEAM_ID, E2E_VERCEL_API_TOKEN
+- Remove any existing provider with the same Team ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Team ID not to be already registered beforehand.
+
+### Flow Steps
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select Vercel provider type
+4. Fill provider details (team ID and alias)
+5. Verify Vercel credentials page is loaded
+6. Fill Vercel credentials (API token)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result
+
+- Vercel provider successfully added with API Token credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points
+
+- Provider page loads correctly
+- Connect account page displays Vercel option
+- Provider details form accepts team ID and alias
+- Credentials page loads with the API Token field
+- API Token is properly filled in the correct (masked) field
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by team ID)
+- Scan name field contains "scheduled scan"
+
+### Notes
+
+- Test uses environment variables for the Vercel Team ID and API Token
+- API Token is a masked (password) field; the only credential required for Vercel
+- Provider cleanup performed before each test to ensure clean state
+- Requires a valid Vercel API Token with read permissions to the resources to assess
