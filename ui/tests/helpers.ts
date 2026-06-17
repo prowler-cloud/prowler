@@ -5,7 +5,6 @@ import {
   AWS_CREDENTIAL_OPTIONS,
   ProvidersPage,
 } from "./providers/providers-page";
-import { ScansPage } from "./scans/scans-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -123,13 +122,10 @@ export async function addAWSProvider(
   await providersPage.fillStaticCredentials(staticCredentials);
   await providersPage.clickNext();
 
-  // Launch scan
-  await providersPage.verifyLaunchScanPageLoaded();
-  await providersPage.clickNext();
-
-  // Wait for redirect to provider page
-  const scansPage = new ScansPage(page);
-  await scansPage.verifyPageLoaded();
+  // Scans specs launch their own scan. The setup helper should only leave a
+  // connected provider behind so the suite does not spend CI capacity on a
+  // duplicate preparatory scan.
+  await providersPage.completeProviderConnectionWithoutLaunchingScan(accountId);
 }
 
 /**
