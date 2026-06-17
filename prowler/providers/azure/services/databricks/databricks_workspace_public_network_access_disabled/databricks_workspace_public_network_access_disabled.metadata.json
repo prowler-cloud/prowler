@@ -7,21 +7,25 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
-  "ResourceGroup": "network",
-  "Description": "**Azure Databricks** workspaces are evaluated for **public network access**. Disabling public access ensures the workspace is only reachable through private connectivity, reducing exposure to internet-based attacks.",
-  "Risk": "Public network access exposes the workspace control plane and data plane to the internet. Attackers can attempt **credential stuffing**, exploit vulnerabilities, or exfiltrate data through the public endpoint.",
+  "ResourceType": "microsoft.databricks/workspaces",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure Databricks workspaces** are evaluated for **public network access**. Disabling public network access ensures the workspace is only reachable through **private endpoints**, reducing the attack surface and preventing direct exposure of the control plane and data plane to the internet.",
+  "Risk": "Allowing **public network access** exposes the Databricks workspace control plane and data plane to the internet. Combined with leaked **credentials**, **personal access tokens**, or unpatched vulnerabilities, this enables **unauthorized access**, **brute force**, and **data exfiltration** from any source on the internet.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/private-link",
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/private-link#step-4-disable-public-network-access",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.databricks/workspaces"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az databricks workspace update --name <workspace_name> --resource-group <resource_group_name> --public-network-access Disabled",
+      "NativeIaC": "```bicep\n// Bicep: Disable public network access on a Databricks workspace\nresource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  sku: {\n    name: 'premium'\n  }\n  properties: {\n    managedResourceGroupId: '/subscriptions/<example_resource_id>/resourceGroups/<example_resource_name>'\n    publicNetworkAccess: 'Disabled' // CRITICAL: Blocks all public-internet traffic to the workspace\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and open your Databricks workspace\n2. In the left menu, select Networking\n3. Under Public network access, select Disabled\n4. Configure Azure Private Link private endpoints before saving so clients retain connectivity\n5. Click Save",
+      "Terraform": "```hcl\n# Terraform: Disable public network access on a Databricks workspace\nresource \"azurerm_databricks_workspace\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<region>\"\n  sku                 = \"premium\"\n\n  public_network_access_enabled = false # CRITICAL: Blocks all public-internet traffic to the workspace\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Disable **public network access** on Databricks workspaces and require connectivity via **Azure Private Link** private endpoints. Before enforcement, validate that all application workloads have private-network connectivity, and pair this control with **VNet injection**, **secure cluster connectivity (no public IP)**, and least-privilege access to uphold **defense in depth**.",
       "Url": "https://hub.prowler.com/check/databricks_workspace_public_network_access_disabled"
     }
   },
