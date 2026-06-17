@@ -237,7 +237,7 @@ class Provider(ABC):
         mapped on the API side and do not go through this method.
         """
         kwargs = {**secret}
-        if mutelist_content:
+        if mutelist_content is not None:
             kwargs["mutelist_content"] = mutelist_content
         return kwargs
 

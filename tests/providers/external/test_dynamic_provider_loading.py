@@ -2260,6 +2260,13 @@ class TestBaseContractDefaults:
 
         assert kwargs == {"token": "x", "mutelist_content": {"Mutelist": {}}}
 
+    def test_get_scan_arguments_preserves_empty_mutelist_content(self):
+        """Base get_scan_arguments passes an explicit empty mutelist through so it
+        is not mistaken for an absent mutelist that triggers provider defaults."""
+        kwargs = FakeProviderNoHelpText.get_scan_arguments("uid", {"token": "x"}, {})
+
+        assert kwargs == {"token": "x", "mutelist_content": {}}
+
     def test_get_connection_arguments_passes_secret_through(self):
         """Base get_connection_arguments returns the secret unchanged."""
         kwargs = FakeProviderNoHelpText.get_connection_arguments("uid", {"token": "x"})
