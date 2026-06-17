@@ -14,6 +14,7 @@ import {
 } from "@/app/(prowler)/alerts/_types";
 import type { ProviderProps } from "@/types/providers";
 
+import { ALERTS_PERMISSION_ERROR } from "../../_lib/alert-errors";
 import { AlertFormModal } from "../alert-form-modal";
 
 const recipientsActionMocks = vi.hoisted(() => ({
@@ -740,11 +741,7 @@ describe("AlertFormModal", () => {
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
     // Then
-    expect(
-      await screen.findByText(
-        "You don't have permission to manage alerts. Ask an administrator to update your role.",
-      ),
-    ).toBeVisible();
+    expect(await screen.findByText(ALERTS_PERMISSION_ERROR)).toBeVisible();
     expect(
       screen.queryByText(
         "Apply at least one alert-compatible Findings filter.",

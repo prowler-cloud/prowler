@@ -13,6 +13,7 @@ import type {
   AlertFormValues,
 } from "@/app/(prowler)/alerts/_types/alert-form";
 
+import { ALERTS_PERMISSION_ERROR } from "../../_lib/alert-errors";
 import { AlertsManager } from "../alerts-manager";
 
 const actionMocks = vi.hoisted(() => ({
@@ -316,11 +317,7 @@ describe("AlertsManager", () => {
     await user.click(screen.getByRole("button", { name: /submit alert/i }));
 
     // Then
-    expect(
-      await screen.findByText(
-        "You don't have permission to manage alerts. Ask an administrator to update your role.",
-      ),
-    ).toBeVisible();
+    expect(await screen.findByText(ALERTS_PERMISSION_ERROR)).toBeVisible();
     expect(toastMock).not.toHaveBeenCalled();
   });
 
@@ -367,8 +364,7 @@ describe("AlertsManager", () => {
       expect(toastMock).toHaveBeenCalledWith({
         variant: "destructive",
         title: "Alert update failed",
-        description:
-          "You don't have permission to manage alerts. Ask an administrator to update your role.",
+        description: ALERTS_PERMISSION_ERROR,
       }),
     );
   });
