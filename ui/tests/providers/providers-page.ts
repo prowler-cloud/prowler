@@ -896,6 +896,72 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  private async waitForProviderLaunchChoice(): Promise<void> {
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+
+    try {
+      await Promise.race([
+        launchAction.waitFor({ state: "visible", timeout: 30000 }),
+        connectionError.waitFor({ state: "visible", timeout: 30000 }),
+      ]);
+    } catch {
+      // Continue and inspect visible state below.
+    }
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    await expect(launchAction).toBeVisible();
+  }
+
+  async completeProviderConnectionWithoutLaunchingScan(
+    providerUID: string,
+  ): Promise<void> {
+    await this.verifyWizardModalOpen();
+
+    const checkConnectionButton = this.page.getByRole("button", {
+      name: "Check connection",
+      exact: true,
+    });
+
+    // Provider-add E2E validates credentials and provider persistence only.
+    // Launching one scan per provider made CI noisy and overloaded the backend;
+    // scan execution itself is covered by scans.spec.ts.
+    if (await checkConnectionButton.isVisible().catch(() => false)) {
+      await checkConnectionButton.click();
+      await this.waitForProviderLaunchChoice();
+    } else {
+      const launchAction = this.page
+        .getByRole("button", { name: "Save", exact: true })
+        .or(
+          this.page.getByRole("button", { name: "Launch scan", exact: true }),
+        );
+      await expect(launchAction).toBeVisible();
+    }
+
+    await this.wizardModal
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await expect(this.wizardModal).not.toBeVisible({ timeout: 30000 });
+    await this.page.waitForURL(/\/providers/, { timeout: 30000 });
+    await this.verifyLoadProviderPageAfterNewProvider();
+
+    const providerExists =
+      await this.verifySingleRowForProviderUID(providerUID);
+    if (!providerExists) {
+      throw new Error(`Provider with UID ${providerUID} was not found.`);
+    }
+  }
+
   private async handleLaunchScanCompletion(): Promise<void> {
     const connectionError = this.page.locator(
       "div.border-border-error p.text-text-error-primary",
