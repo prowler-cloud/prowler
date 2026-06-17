@@ -12,8 +12,14 @@ class entra_directory_sync_object_takeover_blocked(Check):
     account and take it over. Both blockSoftMatchEnabled and
     blockCloudObjectTakeoverThroughHardMatchEnabled must be true to prevent this.
 
-    - PASS: Both block flags are enabled, or the tenant is cloud-only.
-    - FAIL: Either block flag is disabled.
+    The attack path only exists on hybrid tenants, so the tenant's
+    organization.onPremisesSyncEnabled is evaluated first. Microsoft Graph
+    returns an onPremisesSynchronization object (with all features disabled) even
+    for cloud-only tenants, so the directory sync features must not be evaluated
+    unless on-premises synchronization is actually enabled.
+
+    - PASS: The tenant is cloud-only, or both block flags are enabled.
+    - FAIL: On-premises sync is enabled and either block flag is disabled.
     - MANUAL: On-premises sync is enabled but the settings cannot be read
       (insufficient permissions) or were not returned by Microsoft Graph.
     """
@@ -21,26 +27,45 @@ class entra_directory_sync_object_takeover_blocked(Check):
     def execute(self) -> List[CheckReportM365]:
         findings = []
 
-        if entra_client.directory_sync_error:
-            for organization in entra_client.organizations:
+        organizations = entra_client.organizations or []
+        on_premises_sync_enabled = any(
+            organization.on_premises_sync_enabled for organization in organizations
+        )
+
+        # Cloud-only tenant: the object takeover attack path does not exist, so
+        # the directory sync features are not evaluated even if Microsoft Graph
+        # returns an (all-disabled) onPremisesSynchronization object.
+        if organizations and not on_premises_sync_enabled:
+            for organization in organizations:
                 report = CheckReportM365(
                     self.metadata(),
                     resource=organization,
                     resource_id=organization.id,
                     resource_name=organization.name,
                 )
-                if organization.on_premises_sync_enabled:
-                    report.status = "MANUAL"
-                    report.status_extended = (
-                        f"Cannot verify object takeover protection for "
-                        f"{organization.name}: {entra_client.directory_sync_error}."
-                    )
-                else:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"Entra organization {organization.name} is cloud-only "
-                        "(no on-premises sync), object takeover protection is not applicable."
-                    )
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Entra organization {organization.name} is cloud-only "
+                    "(no on-premises sync), object takeover protection is not "
+                    "applicable."
+                )
+                findings.append(report)
+            return findings
+
+        # Hybrid tenant but the directory sync settings could not be read.
+        if entra_client.directory_sync_error:
+            for organization in organizations:
+                report = CheckReportM365(
+                    self.metadata(),
+                    resource=organization,
+                    resource_id=organization.id,
+                    resource_name=organization.name,
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Cannot verify object takeover protection for "
+                    f"{organization.name}: {entra_client.directory_sync_error}."
+                )
                 findings.append(report)
             return findings
 
@@ -67,33 +92,27 @@ class entra_directory_sync_object_takeover_blocked(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Entra directory sync {sync_settings.id} does not block object takeover: "
-                    f"{', '.join(disabled_flags)} disabled."
+                    f"Entra directory sync {sync_settings.id} does not block object "
+                    f"takeover: {', '.join(disabled_flags)} disabled."
                 )
 
             findings.append(report)
 
+        # Hybrid tenant that reported on-premises sync but returned no settings.
         if not entra_client.directory_sync_settings:
-            for organization in entra_client.organizations:
+            for organization in organizations:
                 report = CheckReportM365(
                     self.metadata(),
                     resource=organization,
                     resource_id=organization.id,
                     resource_name=organization.name,
                 )
-                if organization.on_premises_sync_enabled:
-                    report.status = "MANUAL"
-                    report.status_extended = (
-                        f"Entra organization {organization.name} has on-premises sync "
-                        "enabled, but no directory sync settings were returned. Review "
-                        "the tenant configuration manually."
-                    )
-                else:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"Entra organization {organization.name} is cloud-only "
-                        "(no on-premises sync), object takeover protection is not applicable."
-                    )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Entra organization {organization.name} has on-premises sync "
+                    "enabled, but no directory sync settings were returned. Review "
+                    "the tenant configuration manually."
+                )
                 findings.append(report)
 
         return findings
