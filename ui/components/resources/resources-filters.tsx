@@ -12,8 +12,8 @@ import {
 } from "@/components/filters/filter-summary-strip";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { Button } from "@/components/shadcn";
-import { ExpandableSection } from "@/components/ui/expandable-section";
-import { DataTableFilterCustom } from "@/components/ui/table";
+import { ExpandableSection } from "@/components/shadcn/expandable-section";
+import { DataTableFilterCustom } from "@/components/shadcn/table";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getGroupLabel } from "@/lib/categories";
 import { DATA_TABLE_FILTER_MODE } from "@/types/filters";

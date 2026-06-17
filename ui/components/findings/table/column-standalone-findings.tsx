@@ -3,12 +3,12 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Container } from "lucide-react";
 
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
 import {
   DataTableColumnHeader,
   SeverityBadge,
   StatusFindingBadge,
-} from "@/components/ui/table";
+} from "@/components/shadcn/table";
 import { getRegionFlag } from "@/lib/region-flags";
 import { FindingProps, ProviderType } from "@/types";
 

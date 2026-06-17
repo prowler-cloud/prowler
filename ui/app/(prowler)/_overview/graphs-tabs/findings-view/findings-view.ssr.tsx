@@ -5,7 +5,7 @@ import { LighthouseBanner } from "@/components/lighthouse/banner";
 import { LinkToFindings } from "@/components/overview";
 import { ColumnLatestFindings } from "@/components/overview/new-findings-table/table";
 import { CardTitle } from "@/components/shadcn";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { FINDINGS_FILTERED_SORT } from "@/lib";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";

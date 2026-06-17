@@ -5,7 +5,7 @@ import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { getAlert, listAlerts } from "@/app/(prowler)/alerts/_actions";
 import { AlertsManager } from "@/app/(prowler)/alerts/_components/alerts-manager";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { createScanDetailsMapping } from "@/lib";
 import type { MetaDataProps, ScanEntity, ScanProps } from "@/types";
 

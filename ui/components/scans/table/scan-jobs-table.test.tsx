@@ -5,7 +5,7 @@ import { SCAN_JOBS_TAB, type ScanProps } from "@/types";
 
 import { ScanJobsTable } from "./scan-jobs-table";
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({ data }: { data: ScanProps[] }) => (
     <div data-testid="scan-jobs-data-table">{data.length}</div>
   ),
