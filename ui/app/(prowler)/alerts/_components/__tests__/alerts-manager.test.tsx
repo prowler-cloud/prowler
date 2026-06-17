@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { isValidElement, type ReactNode } from "react";
+import { isValidElement, type ReactNode, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -8,6 +8,10 @@ import {
   ALERT_TRIGGER_KINDS,
   type AlertRule,
 } from "@/app/(prowler)/alerts/_types";
+import type {
+  AlertFormSubmitResult,
+  AlertFormValues,
+} from "@/app/(prowler)/alerts/_types/alert-form";
 
 import { AlertsManager } from "../alerts-manager";
 
@@ -96,12 +100,32 @@ vi.mock("../alert-form-modal", () => ({
     open,
     editingAlert,
     onOpenChange,
+    onSubmit,
   }: {
     open: boolean;
     editingAlert?: AlertRule | null;
     onOpenChange: (open: boolean) => void;
-  }) =>
-    open ? (
+    onSubmit: (values: AlertFormValues) => Promise<AlertFormSubmitResult>;
+  }) => {
+    const [error, setError] = useState<string | null>(null);
+
+    const submit = async () => {
+      const result = await onSubmit({
+        name: "Updated alert",
+        description: "",
+        method: "email",
+        frequency: ALERT_TRIGGER_KINDS.AFTER_SCAN,
+        condition: {
+          op: ALERT_AGGREGATE_OPS.ANY,
+          filter: { severity: ["critical"] },
+        },
+        recipientEmails: [],
+        enabled: true,
+      });
+      setError(result.ok ? null : (result.error ?? null));
+    };
+
+    return open ? (
       <div
         role="dialog"
         aria-label={editingAlert ? "Edit Alert" : "Create Alert"}
@@ -109,9 +133,14 @@ vi.mock("../alert-form-modal", () => ({
         <button type="button" onClick={() => onOpenChange(false)}>
           Close modal
         </button>
+        <button type="button" onClick={submit}>
+          Submit alert
+        </button>
         {editingAlert?.attributes.name}
+        {error && <p>{error}</p>}
       </div>
-    ) : null,
+    ) : null;
+  },
 }));
 
 vi.mock("../alerts-empty-state", () => ({
@@ -257,6 +286,42 @@ describe("AlertsManager", () => {
     expect(routerMocks.replace).toHaveBeenCalledWith("/alerts?page=2", {
       scroll: false,
     });
+  });
+
+  it("shows a manage alerts permission message for edit 403 errors", async () => {
+    // Given
+    const user = userEvent.setup();
+    const alert = makeAlert(true);
+    actionMocks.updateAlert.mockResolvedValue({
+      error: "You do not have permission to perform this action.",
+      status: 403,
+    });
+    render(
+      <AlertsManager
+        alerts={[alert]}
+        loadError={null}
+        providers={[]}
+        completedScanIds={[]}
+        scanDetails={[]}
+        uniqueRegions={[]}
+        uniqueServices={[]}
+        uniqueResourceTypes={[]}
+        uniqueCategories={[]}
+        uniqueGroups={[]}
+        initialEditingAlert={alert}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /submit alert/i }));
+
+    // Then
+    expect(
+      await screen.findByText(
+        "You don't have permission to manage alerts. Ask an administrator to update your role.",
+      ),
+    ).toBeVisible();
+    expect(toastMock).not.toHaveBeenCalled();
   });
 
   it("shows a success toast after disabling an alert", async () => {

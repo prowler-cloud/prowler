@@ -13,6 +13,7 @@ from prowler.config.config import (
 )
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.exceptions.exceptions import (
+    GCPGetOrganizationProjectsError,
     GCPInvalidProviderIdError,
     GCPNoAccesibleProjectsError,
     GCPTestConnectionError,
@@ -1077,3 +1078,66 @@ class TestGCPProvider:
 
             assert gcp_provider.skip_api_check is True
             mocked_is_api_active.assert_not_called()
+
+    def test_get_projects_organization_id_permission_denied_raises(self):
+        """When --organization-id is set and the Cloud Asset API returns a 403,
+        get_projects must raise GCPGetOrganizationProjectsError instead of
+        silently falling back to the service account's home project.
+
+        Regression test for https://github.com/prowler-cloud/prowler/issues/11250.
+        """
+        from googleapiclient.errors import HttpError
+
+        forbidden_response = MagicMock(status=403, reason="Forbidden")
+        http_error = HttpError(
+            resp=forbidden_response,
+            content=b'{"error": {"code": 403, "message": "Permission denied on resource organization"}}',
+            uri="https://cloudasset.googleapis.com/v1/organizations/123:listAssets",
+        )
+
+        asset_service = MagicMock()
+        asset_service.assets.return_value.list.return_value.execute.side_effect = (
+            http_error
+        )
+
+        with patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=asset_service,
+        ):
+            with pytest.raises(GCPGetOrganizationProjectsError):
+                GcpProvider.get_projects(
+                    credentials=MagicMock(),
+                    organization_id="test-organization-id",
+                    credentials_file="test_credentials_file",
+                )
+
+    def test_get_projects_organization_id_cloud_asset_api_disabled_raises(self):
+        """When --organization-id is set and the Cloud Asset API is disabled,
+        get_projects must raise GCPGetOrganizationProjectsError with the
+        enable-API remediation rather than swallowing the error."""
+        from googleapiclient.errors import HttpError
+
+        disabled_response = MagicMock(status=403, reason="Forbidden")
+        http_error = HttpError(
+            resp=disabled_response,
+            content=b'{"error": {"message": "Cloud Asset API has not been used in project 123 before or it is disabled."}}',
+            uri="https://cloudasset.googleapis.com/v1/organizations/123:listAssets",
+        )
+
+        asset_service = MagicMock()
+        asset_service.assets.return_value.list.return_value.execute.side_effect = (
+            http_error
+        )
+
+        with patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=asset_service,
+        ):
+            with pytest.raises(GCPGetOrganizationProjectsError) as exc_info:
+                GcpProvider.get_projects(
+                    credentials=MagicMock(),
+                    organization_id="test-organization-id",
+                    credentials_file="test_credentials_file",
+                )
+
+        assert "Cloud Asset API" in str(exc_info.value)
