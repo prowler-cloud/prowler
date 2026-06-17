@@ -39,7 +39,7 @@ asgi_lifespan = env("DJANGO_ASGI_LIFESPAN", default="off")
 # Event loop for the ASGI worker. "auto" uses uvloop when it is installed and
 # falls back to the stdlib asyncio loop otherwise; uvloop gives the SSE event
 # loop more headroom under many concurrent open streams.
-asgi_loop = env("DJANGO_ASGI_LOOP", default="auto")
+asgi_loop = env("DJANGO_ASGI_LOOP", default="uvloop")
 
 # Max concurrent connections per ASGI worker. Each open SSE stream holds one
 # connection for its whole lifetime, so this caps simultaneous SSE clients per
