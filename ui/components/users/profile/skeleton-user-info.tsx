@@ -9,29 +9,35 @@ export const SkeletonUserInfo = () => {
           <div className="flex flex-col gap-3">
             {/* Name */}
             <div className="flex items-center justify-between">
-              <p className="text-default-600 text-sm font-semibold">Name:</p>
+              <p className="text-text-neutral-secondary text-sm font-semibold">
+                Name:
+              </p>
               <Skeleton className="h-5 w-24 rounded-lg" />
             </div>
             {/* Email */}
             <div className="flex items-center justify-between">
-              <p className="text-default-600 text-sm font-semibold">Email:</p>
+              <p className="text-text-neutral-secondary text-sm font-semibold">
+                Email:
+              </p>
               <Skeleton className="h-5 w-32 rounded-lg" />
             </div>
             {/* Company */}
             <div className="flex items-center justify-between">
-              <p className="text-default-600 text-sm font-semibold">Company:</p>
+              <p className="text-text-neutral-secondary text-sm font-semibold">
+                Company:
+              </p>
               <Skeleton className="h-5 w-28 rounded-lg" />
             </div>
             {/* Date Joined */}
             <div className="flex items-center justify-between">
-              <p className="text-default-600 text-sm font-semibold">
+              <p className="text-text-neutral-secondary text-sm font-semibold">
                 Date Joined:
               </p>
               <Skeleton className="h-5 w-36 rounded-lg" />
             </div>
             {/* Tenant ID */}
             <div className="flex items-center justify-between">
-              <p className="text-default-600 text-sm font-semibold">
+              <p className="text-text-neutral-secondary text-sm font-semibold">
                 Tenant ID:
               </p>
               <Skeleton className="h-5 w-32 rounded-lg" />

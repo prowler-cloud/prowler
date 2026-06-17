@@ -94,7 +94,7 @@ export function MuteRulesTableSkeleton() {
   return (
     <div
       data-testid="mute-rules-table-skeleton"
-      className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden border p-4"
+      className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden rounded-[14px] border p-4 shadow-sm"
     >
       <div
         data-testid="mute-rules-table-skeleton-intro"

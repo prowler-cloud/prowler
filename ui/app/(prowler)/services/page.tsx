@@ -1,5 +1,5 @@
 import { FilterControls } from "@/components/filters";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 export default async function Services() {
   // const searchParamsKey = JSON.stringify(searchParams || {});

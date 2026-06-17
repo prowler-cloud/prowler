@@ -13,8 +13,8 @@ import {
 import { DeleteLLMProviderForm } from "@/components/lighthouse/forms/delete-llm-provider-form";
 import { WorkflowConnectLLM } from "@/components/lighthouse/workflow";
 import { Button } from "@/components/shadcn";
+import { NavigationHeader } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { NavigationHeader } from "@/components/ui";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 interface ConnectLLMLayoutProps {

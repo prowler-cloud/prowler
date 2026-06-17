@@ -41,7 +41,6 @@
     "@codemirror/view": "6.40.0",
     "@dagrejs/dagre": "3.0.0",
     "@extractus/feed-extractor": "7.1.7",
-    "@heroui/react": "2.8.4",
     "@hookform/resolvers": "5.2.2",
     "@langchain/aws": "1.3.7",
     "@langchain/core": "1.1.45",

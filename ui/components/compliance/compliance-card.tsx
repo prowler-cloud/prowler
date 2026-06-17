@@ -135,7 +135,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
             <div className="flex min-w-0 flex-1 flex-col">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h4 className="text-small truncate leading-5 font-bold">
+                  <h4 className="truncate text-sm leading-5 font-bold">
                     {formatTitle(title)}
                     {version ? ` - ${version}` : ""}
                   </h4>

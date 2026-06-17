@@ -2,8 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { CustomRadio } from "@/components/shadcn/custom";
 import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
-import { CustomRadio } from "@/components/ui/custom";
 
 const BEDROCK_AUTH_METHODS = {
   API_KEY: "api_key",

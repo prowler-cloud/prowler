@@ -26,7 +26,7 @@ const comboboxTriggerVariants = cva("", {
       default:
         "w-full justify-between rounded-xl border border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary",
       ghost:
-        "border-none bg-transparent shadow-none hover:bg-accent hover:text-foreground",
+        "border-none bg-transparent shadow-none hover:bg-accent hover:text-text-neutral-primary",
     },
   },
   defaultVariants: {

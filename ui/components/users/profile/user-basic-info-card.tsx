@@ -2,9 +2,9 @@
 
 import { ProwlerShort } from "@/components/icons";
 import { Card, CardContent, Separator } from "@/components/shadcn";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime } from "@/components/shadcn/entities";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime } from "@/components/ui/entities";
 import { UserDataWithRoles } from "@/types/users";
 
 const TenantIdCopy = ({ id }: { id: string }) => {
