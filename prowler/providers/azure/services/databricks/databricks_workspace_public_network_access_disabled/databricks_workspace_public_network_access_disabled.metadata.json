@@ -7,21 +7,24 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
-  "ResourceGroup": "network",
+  "ResourceType": "microsoft.databricks/workspaces",
+  "ResourceGroup": "ai_ml",
   "Description": "**Azure Databricks** workspaces are evaluated for **public network access**. Disabling public access ensures the workspace is only reachable through private connectivity, reducing exposure to internet-based attacks.",
   "Risk": "Public network access exposes the workspace control plane and data plane to the internet. Attackers can attempt **credential stuffing**, exploit vulnerabilities, or exfiltrate data through the public endpoint.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/private-link",
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/secure-cluster-connectivity"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az databricks workspace update --name <workspace_name> --resource-group <resource_group_name> --public-network-access Disabled",
+      "NativeIaC": "```bicep\nresource databricks 'Microsoft.Databricks/workspaces@2023-02-01' = {\n  name: '<workspace_name>'\n  location: '<region>'\n  sku: { name: 'premium' }\n  properties: {\n    publicNetworkAccess: 'Disabled' // CRITICAL: disables public network access\n  }\n}\n```",
+      "Other": "1. In Azure Portal, open the Databricks workspace\n2. Select Networking\n3. Set Public network access to Disabled\n4. Configure private endpoints and DNS so authorized clients can reach the workspace privately\n5. Save the configuration",
+      "Terraform": "```hcl\nresource \"azurerm_databricks_workspace\" \"example\" {\n  name                          = \"<workspace_name>\"\n  resource_group_name           = \"<resource_group_name>\"\n  location                      = \"<region>\"\n  sku                           = \"premium\"\n  public_network_access_enabled = false # CRITICAL: disables public network access\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Disable public network access for Databricks workspaces and route access through private endpoints with private DNS. Combine this with secure cluster connectivity and least-privilege network controls.",
       "Url": "https://hub.prowler.com/check/databricks_workspace_public_network_access_disabled"
     }
   },
