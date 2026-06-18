@@ -6,7 +6,9 @@ from prowler.providers.azure.services.mysql.mysql_service import (
     FlexibleServer,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -14,6 +16,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_mysql_flexible_server_audit_log_connection_activated:
     def test_mysql_no_subscriptions(self):
         mysql_client = mock.MagicMock
+        mysql_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         mysql_client.flexible_servers = {}
 
         with (
@@ -36,6 +39,7 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
 
     def test_mysql_no_servers(self):
         mysql_client = mock.MagicMock
+        mysql_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         mysql_client.flexible_servers = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -59,6 +63,7 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
     def test_mysql_audit_log_connection_activated_lowercase(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
+        mysql_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
                 "/subscriptions/resource_id": FlexibleServer(
@@ -104,12 +109,13 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
             )
             assert (
                 result[0].status_extended
-                == f"Audit log is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Audit log is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_mysql_audit_log_connection_not_connection(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
+        mysql_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
                 "/subscriptions/resource_id": FlexibleServer(
@@ -155,12 +161,13 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
             )
             assert (
                 result[0].status_extended
-                == f"Audit log is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Audit log is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_mysql_audit_log_connection_activated(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
+        mysql_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
                 "/subscriptions/resource_id": FlexibleServer(
@@ -206,12 +213,13 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
             )
             assert (
                 result[0].status_extended
-                == f"Audit log is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Audit log is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_mysql_audit_log_connection_activated_with_other_options(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
+        mysql_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
                 "/subscriptions/resource_id": FlexibleServer(
@@ -257,5 +265,5 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
             )
             assert (
                 result[0].status_extended
-                == f"Audit log is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Audit log is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )

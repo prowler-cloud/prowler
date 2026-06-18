@@ -3,7 +3,7 @@ import {
   getFindingsBySeverity,
   SeverityByProviderType,
 } from "@/actions/overview";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import { SankeyChart } from "@/components/graphs/sankey-chart";
 import { SearchParamsProps } from "@/types";
 
@@ -20,7 +20,7 @@ export async function RiskPipelineViewSSR({
   const providerIdFilter = filters["filter[provider_id__in]"];
 
   // Fetch providers list to know account types
-  const providersListResponse = await getProviders({ pageSize: 200 });
+  const providersListResponse = await getAllProviders();
   const allProviders = providersListResponse?.data || [];
 
   // Build severityByProviderType based on filters

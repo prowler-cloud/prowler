@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.defender.defender_service import Pricing
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_defender_for_sql_servers_is_on:
     def test_defender_no_server(self):
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {}
 
         with (
@@ -34,6 +37,7 @@ class Test_defender_ensure_defender_for_sql_servers_is_on:
     def test_defender_server_pricing_tier_not_standard(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServerVirtualMachines": Pricing(
@@ -65,7 +69,7 @@ class Test_defender_ensure_defender_for_sql_servers_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for SQL Server VMs from subscription {AZURE_SUBSCRIPTION_ID} is set to OFF (pricing tier not standard)."
+                == f"Defender plan Defender for SQL Server VMs from subscription {AZURE_SUBSCRIPTION_DISPLAY} is set to OFF (pricing tier not standard)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "Defender plan SQL Server VMs"
@@ -74,6 +78,7 @@ class Test_defender_ensure_defender_for_sql_servers_is_on:
     def test_defender_server_pricing_tier_standard(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
                 "SqlServerVirtualMachines": Pricing(
@@ -105,7 +110,7 @@ class Test_defender_ensure_defender_for_sql_servers_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for SQL Server VMs from subscription {AZURE_SUBSCRIPTION_ID} is set to ON (pricing tier standard)."
+                == f"Defender plan Defender for SQL Server VMs from subscription {AZURE_SUBSCRIPTION_DISPLAY} is set to ON (pricing tier standard)."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "Defender plan SQL Server VMs"

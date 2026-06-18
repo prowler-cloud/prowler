@@ -1,11 +1,11 @@
 ### E2E Tests: Scans - On Demand
 
-**Suite ID:** `SCANS-E2E`
+**Suite ID:** `SCAN-E2E`
 **Feature:** On-demand Scans.
 
 ---
 
-## Test Case: `SCANS-E2E-001` - Execute On-Demand Scan
+## Test Case: `SCAN-E2E-001` - Execute On-Demand Scan
 
 **Priority:** `critical`
 
@@ -14,7 +14,7 @@
 - type → @e2e, @serial
 - feature → @scans
 
-**Description/Objective:** Validates the complete flow to execute an on-demand scan selecting a provider by UID and confirming success on the Scans page.
+**Description/Objective:** Validates the complete flow to execute an on-demand scan by opening the launch scan modal, selecting a provider by UID, adding an optional scan note, and confirming success on the Scans page.
 
 **Preconditions:**
 
@@ -23,33 +23,37 @@
 - Remove any existing AWS provider with the same Account ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Account ID Provider to be already registered.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to Scans page
-2. Open provider selector and choose the entry whose text contains E2E_AWS_PROVIDER_ACCOUNT_ID
-3. Optionally fill scan label (alias)
-4. Click "Start now" to launch the scan
-5. Verify the success toast appears
-6. Verify a row in the Scans table contains the provided scan label (or shows the new scan entry)
+2. Click "Launch Scan" to open the launch scan modal
+3. Open the Cloud Account selector and choose the entry whose text contains E2E_AWS_PROVIDER_ACCOUNT_ID
+4. Optionally fill Scan Note
+5. Click "Launch Scan" in the modal
+6. Verify the success toast appears
+7. Click the "View scan" action in the success toast
+8. Verify a row in the Scans table contains the provider account ID
 
-### Expected Result:
+### Expected Result
 
 - Scan is launched successfully
 - Success toast is displayed to the user
-- Scans table displays the new scan entry (including the alias when provided)
+- Toast "View scan" action navigates to the In Progress tab (`/scans?tab=active`)
+- Scans table displays a scan entry for the selected account
 
-### Key verification points:
+### Key verification points
 
 - Scans page loads correctly
-- Provider select is available and lists the configured provider UID
-- "Start now" button is rendered and enabled when form is valid
+- Launch Scan modal opens correctly
+- Cloud Account select is available and lists the configured provider UID
+- "Launch Scan" button is rendered and enabled when form is valid
 - Success toast message: "The scan was launched successfully."
-- Table contains a row with the scan label or new scan state (queued/available/executing)
+- Toast action label "View scan" links to `/scans?tab=active`
+- Table contains a row with the selected account ID or new scan state (queued/available/executing)
 
-### Notes:
+### Notes
 
-- The table may take a short time to reflect the new scan; assertions look for a row containing the alias.
+- The scans view is tabbed (In Progress / Completed / Scheduled) and `/scans` defaults to Completed. Each empty tab renders an empty-state card instead of a table, so page-loaded checks assert the tabs shell, not the table.
+- The table may take a short time to reflect the new scan; assertions look for a row containing the account ID.
 - Provider cleanup performed before each test to ensure clean state
 - Tests should run serially to avoid state conflicts.
-
-

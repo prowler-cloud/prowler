@@ -13,8 +13,8 @@
   "Risk": "When external sharing is unrestricted, users can share organizational content with **any external Google account**, including untrusted or unknown parties. Restricting sharing to allowlisted domains drastically reduces the surface area for accidental and malicious data exfiltration through Drive.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/60781",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/manage-external-sharing-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

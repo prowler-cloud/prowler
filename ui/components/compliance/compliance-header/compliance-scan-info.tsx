@@ -13,7 +13,7 @@ interface ComplianceScanInfoProps {
     };
     attributes: {
       name?: string;
-      completed_at: string;
+      completed_at: string | null;
     };
   };
 }

@@ -6,7 +6,9 @@ from prowler.providers.azure.services.databricks.databricks_service import (
     ManagedDiskEncryption,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -14,6 +16,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_databricks_workspace_cmk_encryption_enabled:
     def test_no_databricks_workspaces(self):
         databricks_client = mock.MagicMock
+        databricks_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         databricks_client.workspaces = {}
 
         with (
@@ -39,6 +44,9 @@ class Test_databricks_workspace_cmk_encryption_enabled:
         workspace_name = "test-workspace"
 
         databricks_client = mock.MagicMock
+        databricks_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         databricks_client.workspaces = {
             AZURE_SUBSCRIPTION_ID: {
                 workspace_id: DatabricksWorkspace(
@@ -71,7 +79,7 @@ class Test_databricks_workspace_cmk_encryption_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Databricks workspace {workspace_name} in subscription {AZURE_SUBSCRIPTION_ID} does not have customer-managed key (CMK) encryption enabled."
+                == f"Databricks workspace {workspace_name} in subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have customer-managed key (CMK) encryption enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == workspace_name
@@ -86,6 +94,9 @@ class Test_databricks_workspace_cmk_encryption_enabled:
         key_vault_uri = "test-vault-uri"
 
         databricks_client = mock.MagicMock
+        databricks_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         databricks_client.workspaces = {
             AZURE_SUBSCRIPTION_ID: {
                 workspace_id: DatabricksWorkspace(
@@ -122,7 +133,7 @@ class Test_databricks_workspace_cmk_encryption_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Databricks workspace {workspace_name} in subscription {AZURE_SUBSCRIPTION_ID} has customer-managed key (CMK) encryption enabled with key {key_vault_uri}/{key_name}/{key_version}."
+                == f"Databricks workspace {workspace_name} in subscription {AZURE_SUBSCRIPTION_DISPLAY} has customer-managed key (CMK) encryption enabled with key {key_vault_uri}/{key_name}/{key_version}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == workspace_name

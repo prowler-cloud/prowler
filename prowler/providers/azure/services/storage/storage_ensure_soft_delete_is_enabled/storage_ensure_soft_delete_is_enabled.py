@@ -6,6 +6,9 @@ class storage_ensure_soft_delete_is_enabled(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
+            subscription_name = storage_client.subscriptions.get(
+                subscription, subscription
+            )
             for storage_account in storage_accounts:
                 if storage_account.blob_properties:
                     report = Check_Report_Azure(
@@ -18,10 +21,10 @@ class storage_ensure_soft_delete_is_enabled(Check):
                         False,
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has soft delete enabled."
+                        report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) has soft delete enabled."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has soft delete disabled."
+                        report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) has soft delete disabled."
 
                     findings.append(report)
         return findings

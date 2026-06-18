@@ -47,7 +47,11 @@ Follow these steps to remove a user of your account:
 1. Navigate to **Users** from the side menu.
 2. Click the delete button of your current user.
 
-> **Note: Each user will be able to delete himself and not others, regardless of his permissions.**
+> **Note: Each user can only delete their own account, regardless of their permissions. For this reason, the delete button is only shown on your own row and not on other users' rows.**
+
+Deleting a user removes the **entire user account** from Prowler, not just its membership in your organization. Because a single account can belong to more than one tenant, allowing one administrator to delete it outright could affect organizations they don't manage and irreversibly remove another person's identity. To keep this destructive action under the control of the account owner, the API only permits a user to delete themselves (it rejects any other target with a `400` response), and the UI mirrors this by showing the delete button exclusively on your own row.
+
+To remove **another** user from your organization, use the [_Expel from organization_](/user-guide/tutorials/prowler-app-multi-tenant#expelling-a-user-from-an-organization) action instead. Expelling removes the user's membership, role grants, and active sessions for your tenant only, and deletes the underlying account just for that user if your organization was their last remaining membership. This action is reserved for tenant **owners**.
 
 <img src="/images/prowler-app/rbac/user_remove.png" alt="Remove User" width="700" />
 
@@ -239,7 +243,7 @@ To grant all administrative permissions, select the **Grant all admin permission
 
 The following permissions are available exclusively in **Prowler Cloud**:
 
-**Manage Ingestions:** Submit and manage findings ingestion jobs via the API. Required to upload OCSF scan results using the `--push-to-cloud` CLI flag or the ingestion endpoints. See [Import Findings](/user-guide/tutorials/prowler-app-import-findings) for details.
+**Manage Ingestions:** Submit and manage findings ingestion jobs via the API. Required to upload OCSF scan results using the `--push-to-cloud` CLI flag or the ingestion endpoints. See [Import Findings](/user-guide/tutorials/prowler-import-findings) for details.
 
 **Manage Billing:** Access and manage billing settings, subscription plans, and payment methods.
 

@@ -1,0 +1,9 @@
+{
+  "prowler": {
+    "type": "http",
+    "url": "https://mcp.prowler.com/mcp",
+    "headers": {
+      "Authorization": "Bearer ${user_config.api_key}"
+    }
+  }
+}
