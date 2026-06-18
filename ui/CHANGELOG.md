@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
+- Attack Paths now shows distinct messages while a scan is queued, running, or building its graph — plus a separate "couldn't load scans" error — instead of always showing "No scans available" [(#11512)](https://github.com/prowler-cloud/prowler/pull/11512)
 - Radio button no longer shifts vertically when selected [(#11608)](https://github.com/prowler-cloud/prowler/pull/11608)
 - Handle rename DORA to DORA_2022_2554 to follow the naming <name>_<version> in compliance frameworks [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
 
