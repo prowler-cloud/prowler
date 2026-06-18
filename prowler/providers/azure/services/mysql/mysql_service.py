@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from azure.mgmt.rdbms.mysql_flexibleservers import MySQLManagementClient
 
@@ -21,6 +22,7 @@ class MySQL(AzureService):
                 servers_list = client.servers.list()
                 servers.update({subscription_id: {}})
                 for server in servers_list:
+                    backup = getattr(server, "backup", None)
                     servers[subscription_id].update(
                         {
                             server.id: FlexibleServer(
@@ -30,6 +32,9 @@ class MySQL(AzureService):
                                 version=server.version,
                                 configurations=self._get_configurations(
                                     client, server.id.split("/")[4], server.name
+                                ),
+                                geo_redundant_backup=getattr(
+                                    backup, "geo_redundant_backup", None
                                 ),
                             )
                         }
@@ -78,3 +83,4 @@ class FlexibleServer:
     location: str
     version: str
     configurations: dict[Configuration]
+    geo_redundant_backup: Optional[str] = None
