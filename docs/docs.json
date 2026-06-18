@@ -417,6 +417,7 @@
             "group": "Miscellaneous",
             "pages": [
               "developer-guide/documentation",
+              "developer-guide/environment-variables",
               {
                 "group": "Testing",
                 "pages": [
