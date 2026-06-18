@@ -32,11 +32,14 @@ export const SCHEDULE_WEEKDAY_LABELS = [
  *   (`/schedules/daily`) plus optional on-demand scans are allowed.
  * - `MANUAL_ONLY`: Prowler Cloud trial/onboarding. No schedules at all, only a
  *   manual on-demand scan subject to the account quota.
+ * - `BLOCKED`: Prowler Cloud account over the scan limit. No scan or schedule
+ *   action is available.
  */
 export const SCAN_SCHEDULE_CAPABILITY = {
   ADVANCED: "ADVANCED",
   DAILY_LEGACY: "DAILY_LEGACY",
   MANUAL_ONLY: "MANUAL_ONLY",
+  BLOCKED: "BLOCKED",
 } as const;
 
 export type ScanScheduleCapability =
@@ -85,6 +88,31 @@ export interface ScheduleUpdatePayload {
   scan_interval_hours: number | null;
   scan_day_of_week: number | null;
   scan_day_of_month: number | null;
+}
+
+export interface SchedulesBulkFailure {
+  provider_id?: string;
+  providerId?: string;
+  error?: string;
+}
+
+export interface SchedulesBulkAttributes {
+  updated?: string[];
+  updated_provider_ids?: string[];
+  provider_ids?: string[];
+  failed?: SchedulesBulkFailure[];
+  failed_provider_ids?: string[];
+}
+
+export interface SchedulesBulkResponse {
+  data?: {
+    type: "schedules-bulk";
+    id?: string;
+    attributes?: SchedulesBulkAttributes;
+  };
+  error?: unknown;
+  errors?: unknown;
+  status?: number;
 }
 
 export interface ScheduleFormValues {

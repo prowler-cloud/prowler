@@ -8,6 +8,7 @@ import { OrgSetupForm } from "@/components/providers/organizations/org-setup-for
 import { Button } from "@/components/shadcn/button/button";
 import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal";
+import { useScanScheduleCapability } from "@/hooks/use-scan-schedule-capability";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { advanceActiveTour, endActiveTour } from "@/lib/tours/use-driver-tour";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
@@ -89,6 +90,10 @@ export function ProviderWizardModal({
     enabled: open,
     refreshToken: scrollHintRefreshToken,
   });
+  const {
+    capability: resolvedScanScheduleCapability,
+    isScheduleCapabilityLoading,
+  } = useScanScheduleCapability(scanScheduleCapability);
   const docsDestination = getProviderWizardDocsDestination(docsLink);
 
   return (
@@ -200,8 +205,9 @@ export function ProviderWizardModal({
                       onBack={() => setCurrentStep(PROVIDER_WIZARD_STEP.TEST)}
                       onClose={handleClose}
                       onFooterChange={setFooterConfig}
-                      capability={scanScheduleCapability}
+                      capability={resolvedScanScheduleCapability}
                       isScanLimitReached={isScanLimitReached}
+                      isScheduleCapabilityLoading={isScheduleCapabilityLoading}
                     />
                   )}
 
@@ -255,8 +261,9 @@ export function ProviderWizardModal({
                         setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
                       }}
                       onFooterChange={setFooterConfig}
-                      capability={scanScheduleCapability}
+                      capability={resolvedScanScheduleCapability}
                       isScanLimitReached={isScanLimitReached}
+                      isScheduleCapabilityLoading={isScheduleCapabilityLoading}
                     />
                   )}
 

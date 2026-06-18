@@ -5,7 +5,11 @@ import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
-import type { ScheduleProps, ScheduleUpdatePayload } from "@/types/schedules";
+import type {
+  ScheduleProps,
+  SchedulesBulkResponse,
+  ScheduleUpdatePayload,
+} from "@/types/schedules";
 
 // SSRF guard: the id is interpolated into the request URL, so only UUIDs pass.
 const providerIdSchema = z.uuid();
@@ -13,6 +17,13 @@ const providerIdSchema = z.uuid();
 function parseProviderId(providerId: string): string | null {
   const parsed = providerIdSchema.safeParse(providerId);
   return parsed.success ? parsed.data : null;
+}
+
+function parseProviderIds(providerIds: string[]): string[] | null {
+  if (providerIds.length === 0) return null;
+
+  const ids = providerIds.map(parseProviderId);
+  return ids.every((id): id is string => id !== null) ? ids : null;
 }
 
 function revalidateScheduleViews() {
@@ -95,6 +106,43 @@ export const updateSchedule = async (
     });
 
     const result = await handleApiResponse(response);
+    if (!result?.error) {
+      revalidateScheduleViews();
+    }
+    return result;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const updateSchedulesBulk = async (
+  providerIds: string[],
+  payload: ScheduleUpdatePayload,
+): Promise<SchedulesBulkResponse> => {
+  const ids = parseProviderIds(providerIds);
+  if (!ids) return { error: "Invalid provider ids." };
+
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/schedules/bulk`);
+
+  const body = {
+    data: {
+      type: "schedules-bulk",
+      attributes: {
+        schedule: payload,
+        provider_ids: ids,
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    const result = (await handleApiResponse(response)) as SchedulesBulkResponse;
     if (!result?.error) {
       revalidateScheduleViews();
     }
