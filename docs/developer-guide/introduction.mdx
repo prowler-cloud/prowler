@@ -110,9 +110,11 @@ source .venv/bin/activate
 
 ### Running the Local API Development Stack
 
-For API development, Prowler provides a Makefile-based local stack in addition to the manual and Docker Compose workflows documented in the API README. This method runs PostgreSQL, Valkey, and Neo4j with Docker Compose, while Django and the Celery worker run natively through `uv`.
+For API development, Prowler provides a Makefile-based local stack in addition to the manual and Docker Compose workflows documented in the API README. PostgreSQL, Valkey, and Neo4j run with Docker Compose, while Django and the Celery worker run natively through `uv`.
 
-Before using this method, ensure `docker compose` and `tmux` are installed.
+Before using this method, ensure `docker compose`, `tmux`, and `uv` are installed.
+
+This workflow is designed for macOS. On Linux, `make dev` and `make dev-attach` should work when Docker, `tmux`, and `uv` are available, and `make dev-launch` is supported from Warp or Ghostty. Windows requires script changes before it can be supported.
 
 To start the local API stack, run:
 

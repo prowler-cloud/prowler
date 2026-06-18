@@ -98,6 +98,32 @@ log()  { printf '\033[1;34m→\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m✓\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!\033[0m %s\n' "$*"; }
 
+is_macos() {
+  [ "$(uname -s)" = "Darwin" ]
+}
+
+is_linux() {
+  [ "$(uname -s)" = "Linux" ]
+}
+
+ghostty_available() {
+  command -v ghostty >/dev/null 2>&1 || [ -d /Applications/Ghostty.app ]
+}
+
+launch_terminal_supported() {
+  case "$LAUNCH_TERMINAL" in
+    Ghostty)
+      ghostty_available
+      ;;
+    Terminal|iTerm|iTerm2)
+      is_macos
+      ;;
+    *)
+      is_macos && open -Ra "$LAUNCH_TERMINAL" >/dev/null 2>&1
+      ;;
+  esac
+}
+
 require_uv() {
   if ! command -v uv >/dev/null 2>&1; then
     warn "uv not found in PATH. Install: https://docs.astral.sh/uv/getting-started/installation/"
@@ -471,8 +497,10 @@ LAUNCH_TERMINAL="${DEV_LOCAL_TERMINAL:-}"
 if [ -z "$LAUNCH_TERMINAL" ]; then
   if [ "${TERM_PROGRAM:-}" = "WarpTerminal" ]; then
     LAUNCH_TERMINAL="Warp"
-  else
+  elif ghostty_available; then
     LAUNCH_TERMINAL="Ghostty"
+  elif is_macos; then
+    LAUNCH_TERMINAL="Terminal"
   fi
 fi
 
@@ -494,6 +522,18 @@ launch_run() {
     return
   fi
 
+  if [ -z "$LAUNCH_TERMINAL" ]; then
+    warn "make dev-launch requires Warp or Ghostty on Linux, or Terminal/iTerm/Ghostty on macOS."
+    warn "Use 'make dev' plus 'make dev-attach', or set DEV_LOCAL_TERMINAL to a supported terminal."
+    exit 1
+  fi
+
+  if ! launch_terminal_supported; then
+    warn "$LAUNCH_TERMINAL launch is not supported on $(uname -s)."
+    warn "Use Warp or Ghostty, run 'make dev' plus 'make dev-attach', or set DEV_LOCAL_TERMINAL to a supported terminal."
+    exit 1
+  fi
+
   kill_tmux_session
   remove_repo_compose_containers
   clear_dev_port_conflicts
@@ -513,7 +553,7 @@ launch_run() {
       cleanup_cmd='( sleep 1; osascript -e "tell application \"iTerm\" to close (every window whose name contains \"$WINDOW_TAG\")" >/dev/null 2>&1 ) </dev/null >/dev/null 2>&1 & disown'
       ;;
     *)
-      cleanup_cmd="pkill -f '/$LAUNCH_TERMINAL.app/Contents/MacOS/' 2>/dev/null || true"
+      cleanup_cmd=":"
       ;;
   esac
 
@@ -542,15 +582,34 @@ EOF
 
   case "$LAUNCH_TERMINAL" in
     Ghostty)
-      open -na Ghostty --args --initial-command="bash '$wrapper'" --wait-after-command=false --quit-after-last-window-closed=true
+      if is_macos; then
+        open -na Ghostty --args --initial-command="bash '$wrapper'" --wait-after-command=false --quit-after-last-window-closed=true
+      elif is_linux && command -v ghostty >/dev/null 2>&1; then
+        ghostty -e bash "$wrapper" >/dev/null 2>&1 &
+      else
+        warn "Ghostty is not available. Install Ghostty, use Warp, or set DEV_LOCAL_TERMINAL to a supported terminal."
+        exit 1
+      fi
       ;;
     iTerm|iTerm2)
+      if ! is_macos; then
+        warn "$LAUNCH_TERMINAL launch is only supported on macOS."
+        exit 1
+      fi
       osascript -e "tell application \"iTerm\" to create window with default profile command \"bash '$wrapper'\""
       ;;
     Terminal)
+      if ! is_macos; then
+        warn "Terminal launch is only supported on macOS."
+        exit 1
+      fi
       open -a Terminal "$wrapper"
       ;;
     *)
+      if ! is_macos; then
+        warn "$LAUNCH_TERMINAL launch is not supported on $(uname -s). Use Warp or Ghostty, or run 'make dev' plus 'make dev-attach'."
+        exit 1
+      fi
       open -na "$LAUNCH_TERMINAL" "$wrapper"
       ;;
   esac
@@ -588,8 +647,13 @@ One-window dev (tmux inside the terminal):
   kill       Stop tmux + stop containers + remove them (full teardown)
   launch     Use fixed ports, clear conflicts, then spawn the stack
              - From Warp: runs 'all' and attaches tmux in the current pane
-             - Otherwise: opens a new Ghostty window running 'all' under tmux
+             - Otherwise: opens a supported terminal running 'all' under tmux
              (override with DEV_LOCAL_TERMINAL=<App>, e.g. Ghostty/iTerm/Terminal)
+
+Platform support:
+  macOS      Supported for make dev, attach, and launch
+  Linux      make dev and attach should work; launch is supported from Warp or Ghostty
+  Windows    Requires script changes before it can be supported
 
 State (containers postgres + valkey + neo4j):
   up         Start postgres + valkey + neo4j (waits for healthchecks)

@@ -200,9 +200,11 @@ The Celery worker does not detect and reload changes in the code, so you need to
 
 This method is an additional local development workflow. It does not replace the manual local deployment or the Docker deployment described in this guide.
 
-It runs PostgreSQL, Valkey, and Neo4j with Docker Compose, while Django and the Celery worker run natively through `uv`. It also creates a `tmux` session with panes for the API, worker, and PostgreSQL logs.
+PostgreSQL, Valkey, and Neo4j run with Docker Compose, while Django and the Celery worker run natively through `uv`. Additionally, this workflow creates a `tmux` session with panes for the API, worker, and PostgreSQL logs.
 
 Before using this method, ensure `docker compose`, `tmux`, and `uv` are installed.
+
+This workflow is designed for macOS. On Linux, `make dev` and `make dev-attach` should work when Docker, `tmux`, and `uv` are available, and `make dev-launch` is supported from Warp or Ghostty. Windows requires script changes before it can be supported.
 
 From the repository root, run:
 
