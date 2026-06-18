@@ -20,9 +20,7 @@
 # Every pane is teed ANSI-stripped to _data/logs/{api,worker,postgres}.log
 # (truncated per run), so logs are readable with tail -f, no tmux needed.
 #
-# 'attach' does not create Warp panes. It attaches to tmux inside the current
-# terminal pane. If you want native Warp panes, use 'make dev-launch'
-# from Warp instead.
+# 'attach' attaches to tmux inside the current terminal pane.
 #
 # Inside the tmux session "prowler-dev-<compose-project>" the prefix key is Ctrl+b. After it:
 #   d              detach (everything keeps running; reattach: make dev-attach)
@@ -98,32 +96,6 @@ log()  { printf '\033[1;34m→\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m✓\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!\033[0m %s\n' "$*"; }
 
-is_macos() {
-  [ "$(uname -s)" = "Darwin" ]
-}
-
-is_linux() {
-  [ "$(uname -s)" = "Linux" ]
-}
-
-ghostty_available() {
-  command -v ghostty >/dev/null 2>&1 || [ -d /Applications/Ghostty.app ]
-}
-
-launch_terminal_supported() {
-  case "$LAUNCH_TERMINAL" in
-    Ghostty)
-      ghostty_available
-      ;;
-    Terminal|iTerm|iTerm2)
-      is_macos
-      ;;
-    *)
-      is_macos && open -Ra "$LAUNCH_TERMINAL" >/dev/null 2>&1
-      ;;
-  esac
-}
-
 require_uv() {
   if ! command -v uv >/dev/null 2>&1; then
     warn "uv not found in PATH. Install: https://docs.astral.sh/uv/getting-started/installation/"
@@ -160,9 +132,9 @@ pipe_pane_log() {
   tmux pipe-pane -t "$pane" -o "perl -pe 'BEGIN{\$|=1} s/\\e\\[[0-9;?]*[A-Za-z]//g' >> '$logfile'"
 }
 
-# Stop native dev processes (api/worker/beat) launched outside tmux, e.g. inside
-# Warp panes. Scoped by cwd under REPO_ROOT so other prowler clones running their
-# own stacks are not touched.
+# Stop native dev processes (api/worker/beat) launched outside tmux. Scoped by
+# cwd under REPO_ROOT so other prowler clones running their own stacks are not
+# touched.
 kill_native_procs() {
   command -v pgrep >/dev/null 2>&1 || return 0
   command -v lsof  >/dev/null 2>&1 || return 0
@@ -493,127 +465,16 @@ kill_run() {
   ok "Dev stack stopped (tmux killed, containers stopped + removed)"
 }
 
-LAUNCH_TERMINAL="${DEV_LOCAL_TERMINAL:-}"
-if [ -z "$LAUNCH_TERMINAL" ]; then
-  if [ "${TERM_PROGRAM:-}" = "WarpTerminal" ]; then
-    LAUNCH_TERMINAL="Warp"
-  elif ghostty_available; then
-    LAUNCH_TERMINAL="Ghostty"
-  elif is_macos; then
-    LAUNCH_TERMINAL="Terminal"
-  fi
-fi
-
-warp_launch_run() {
+launch_run() {
   require_uv
   kill_tmux_session
   remove_repo_compose_containers
   clear_dev_port_conflicts
 
-  log "Launching dev stack in tmux inside the current Warp pane"
+  log "Launching dev stack in tmux inside the current terminal"
   log "  api:${DJANGO_PORT} pg:${POSTGRES_PORT} valkey:${VALKEY_PORT} neo4j:${NEO4J_PORT} neo4j-http:${NEO4J_HTTP_PORT}"
   all_run
   attach_run
-}
-
-launch_run() {
-  if [ "$LAUNCH_TERMINAL" = "Warp" ]; then
-    warp_launch_run
-    return
-  fi
-
-  if [ -z "$LAUNCH_TERMINAL" ]; then
-    warn "make dev-launch requires Warp or Ghostty on Linux, or Terminal/iTerm/Ghostty on macOS."
-    warn "Use 'make dev' plus 'make dev-attach', or set DEV_LOCAL_TERMINAL to a supported terminal."
-    exit 1
-  fi
-
-  if ! launch_terminal_supported; then
-    warn "$LAUNCH_TERMINAL launch is not supported on $(uname -s)."
-    warn "Use Warp or Ghostty, run 'make dev' plus 'make dev-attach', or set DEV_LOCAL_TERMINAL to a supported terminal."
-    exit 1
-  fi
-
-  kill_tmux_session
-  remove_repo_compose_containers
-  clear_dev_port_conflicts
-
-  log "Launching dev stack in a new terminal window"
-  log "  api:${DJANGO_PORT} pg:${POSTGRES_PORT} valkey:${VALKEY_PORT} neo4j:${NEO4J_PORT} neo4j-http:${NEO4J_HTTP_PORT}"
-  log "  tmux session: ${TMUX_SESSION}"
-
-  local cleanup_cmd
-  case "$LAUNCH_TERMINAL" in
-    Terminal)
-      # shellcheck disable=SC2016
-      cleanup_cmd='( sleep 1; osascript -e "tell application \"Terminal\" to close (every window whose name contains \"$WINDOW_TAG\") saving no" >/dev/null 2>&1 ) </dev/null >/dev/null 2>&1 & disown'
-      ;;
-    iTerm|iTerm2)
-      # shellcheck disable=SC2016
-      cleanup_cmd='( sleep 1; osascript -e "tell application \"iTerm\" to close (every window whose name contains \"$WINDOW_TAG\")" >/dev/null 2>&1 ) </dev/null >/dev/null 2>&1 & disown'
-      ;;
-    *)
-      cleanup_cmd=":"
-      ;;
-  esac
-
-  local wrapper
-  wrapper="$(mktemp -t dev-local-launch).sh"
-  cat > "$wrapper" <<EOF
-#!/usr/bin/env bash
-WINDOW_TAG="dev-local-\$\$"
-printf '\033]0;%s\007' "\$WINDOW_TAG"
-export HISTFILE=/dev/null HISTSIZE=0 SAVEHIST=0
-on_exit() {
-  printf '#!/usr/bin/env bash\nexit 0\n' > '$wrapper'
-  $cleanup_cmd
-}
-trap on_exit EXIT
-cd "${REPO_ROOT}"
-export DJANGO_PORT=${DJANGO_PORT}
-export POSTGRES_PORT=${POSTGRES_PORT}
-export VALKEY_PORT=${VALKEY_PORT}
-export NEO4J_PORT=${NEO4J_PORT}
-export NEO4J_HTTP_PORT=${NEO4J_HTTP_PORT}
-"$SCRIPT_PATH" all
-"$SCRIPT_PATH" attach
-EOF
-  chmod +x "$wrapper"
-
-  case "$LAUNCH_TERMINAL" in
-    Ghostty)
-      if is_macos; then
-        open -na Ghostty --args --initial-command="bash '$wrapper'" --wait-after-command=false --quit-after-last-window-closed=true
-      elif is_linux && command -v ghostty >/dev/null 2>&1; then
-        ghostty -e bash "$wrapper" >/dev/null 2>&1 &
-      else
-        warn "Ghostty is not available. Install Ghostty, use Warp, or set DEV_LOCAL_TERMINAL to a supported terminal."
-        exit 1
-      fi
-      ;;
-    iTerm|iTerm2)
-      if ! is_macos; then
-        warn "$LAUNCH_TERMINAL launch is only supported on macOS."
-        exit 1
-      fi
-      osascript -e "tell application \"iTerm\" to create window with default profile command \"bash '$wrapper'\""
-      ;;
-    Terminal)
-      if ! is_macos; then
-        warn "Terminal launch is only supported on macOS."
-        exit 1
-      fi
-      open -a Terminal "$wrapper"
-      ;;
-    *)
-      if ! is_macos; then
-        warn "$LAUNCH_TERMINAL launch is not supported on $(uname -s). Use Warp or Ghostty, or run 'make dev' plus 'make dev-attach'."
-        exit 1
-      fi
-      open -na "$LAUNCH_TERMINAL" "$wrapper"
-      ;;
-  esac
-  ok "Launched in $LAUNCH_TERMINAL (override with DEV_LOCAL_TERMINAL)"
 }
 
 setup() {
@@ -640,19 +501,15 @@ One-window dev (tmux inside the terminal):
              blocks until API responds,
              ends with parseable api_url= / *_log= / attach_cmd= / stop_cmd= lines)
   attach     Reattach to the existing dev session
-             Attaches tmux inside the current terminal pane; it does not create
-             native Warp panes.
+             Attaches tmux inside the current terminal pane.
              Pane output is also written to _data/logs/{api,worker,postgres}.log
              (ANSI-stripped, truncated per run) - usable without attaching
   kill       Stop tmux + stop containers + remove them (full teardown)
-  launch     Use fixed ports, clear conflicts, then spawn the stack
-             - From Warp: runs 'all' and attaches tmux in the current pane
-             - Otherwise: opens a supported terminal running 'all' under tmux
-             (override with DEV_LOCAL_TERMINAL=<App>, e.g. Ghostty/iTerm/Terminal)
+  launch     Use fixed ports, clear conflicts, then run 'all' and attach tmux
 
 Platform support:
-  macOS      Supported for make dev, attach, and launch
-  Linux      make dev and attach should work; launch is supported from Warp or Ghostty
+  macOS      Supported
+  Linux      Should work when Docker, tmux, and uv are available
   Windows    Requires script changes before it can be supported
 
 State (containers postgres + valkey + neo4j):

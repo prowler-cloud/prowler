@@ -204,7 +204,7 @@ PostgreSQL, Valkey, and Neo4j run with Docker Compose, while Django and the Cele
 
 Before using this method, ensure `docker compose`, `tmux`, and `uv` are installed.
 
-This workflow is designed for macOS. On Linux, `make dev` and `make dev-attach` should work when Docker, `tmux`, and `uv` are available, and `make dev-launch` is supported from Warp or Ghostty. Windows requires script changes before it can be supported.
+This workflow is designed for macOS and should also work on Linux when Docker, `tmux`, and `uv` are available. Windows requires script changes before it can be supported.
 
 From the repository root, run:
 
