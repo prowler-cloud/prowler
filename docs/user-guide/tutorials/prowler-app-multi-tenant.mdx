@@ -67,7 +67,14 @@ The currently active organization is indicated by an **Active** badge. Switching
 
 ## Editing an Organization Name
 
-Organization owners with the **Manage Account** permission can rename an organization:
+Renaming an organization requires **both** of the following conditions to be met:
+
+* The user's **membership role** in that organization must be `owner` (visible as the `owner` badge in the Organizations card).
+* The user must have a role that grants the **Manage Account** permission.
+
+Users who only meet one of the two conditions will not see the **Edit** button. For example, a user whose membership role is `member` will not see the **Edit** button even if their role grants `Manage Account`.
+
+To rename an organization:
 
 1. Navigate to the **Profile** page.
 
@@ -175,6 +182,6 @@ If the expelled organization was the user's **only** organization, the account i
 | View organizations | Any authenticated user |
 | Create an organization | Any authenticated user |
 | Switch organizations | Any authenticated user |
-| Edit organization name | Organization owner with **Manage Account** permission |
-| Delete an organization | Organization owner with **Manage Account** permission; must belong to more than one organization |
+| Edit organization name | Membership role `owner` **and** a role with **Manage Account** permission |
+| Delete an organization | Membership role `owner` **and** a role with **Manage Account** permission; must belong to more than one organization |
 | Expel a user from an organization | Organization owner (no additional permission required); last remaining owner cannot expel themselves |

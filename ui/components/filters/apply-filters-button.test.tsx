@@ -55,7 +55,7 @@ describe("ApplyFiltersButton", () => {
   // ── No changes ───────────────────────────────────────────────────────────
 
   describe("when hasChanges is false", () => {
-    it("should render the Apply Filters button as disabled", () => {
+    it("should render the Apply Changes button as disabled", () => {
       // Given / When
       render(
         <ApplyFiltersButton
@@ -68,7 +68,7 @@ describe("ApplyFiltersButton", () => {
 
       // Then
       const applyButton = screen.getByRole("button", {
-        name: "Apply Filters",
+        name: "Apply Changes",
       });
       expect(applyButton).toBeDisabled();
     });
@@ -92,7 +92,7 @@ describe("ApplyFiltersButton", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("should show 'Apply Filters' label without count", () => {
+    it("should show 'Apply Changes' label without count", () => {
       // Given / When
       render(
         <ApplyFiltersButton
@@ -105,7 +105,7 @@ describe("ApplyFiltersButton", () => {
 
       // Then
       expect(
-        screen.getByRole("button", { name: "Apply Filters" }),
+        screen.getByRole("button", { name: "Apply Changes" }),
       ).toBeInTheDocument();
     });
   });
@@ -113,7 +113,7 @@ describe("ApplyFiltersButton", () => {
   // ── Has changes ──────────────────────────────────────────────────────────
 
   describe("when hasChanges is true", () => {
-    it("should render the Apply Filters button as enabled", () => {
+    it("should render the Apply Changes button as enabled", () => {
       // Given / When
       render(
         <ApplyFiltersButton
@@ -126,7 +126,7 @@ describe("ApplyFiltersButton", () => {
 
       // Then
       const applyButton = screen.getByRole("button", {
-        name: "Apply Filters (2)",
+        name: "Apply Changes (2)",
       });
       expect(applyButton).not.toBeDisabled();
     });
@@ -144,11 +144,11 @@ describe("ApplyFiltersButton", () => {
 
       // Then
       expect(
-        screen.getByRole("button", { name: "Apply Filters (3)" }),
+        screen.getByRole("button", { name: "Apply Changes (3)" }),
       ).toBeInTheDocument();
     });
 
-    it("should show 'Apply Filters' (without count) when changeCount is 0 but hasChanges is true", () => {
+    it("should show 'Apply Changes' (without count) when changeCount is 0 but hasChanges is true", () => {
       // Given — hasChanges=true but changeCount=0 (edge case)
       render(
         <ApplyFiltersButton
@@ -161,7 +161,7 @@ describe("ApplyFiltersButton", () => {
 
       // Then
       expect(
-        screen.getByRole("button", { name: "Apply Filters" }),
+        screen.getByRole("button", { name: "Apply Changes" }),
       ).toBeInTheDocument();
     });
 
@@ -186,7 +186,7 @@ describe("ApplyFiltersButton", () => {
   // ── onApply interaction ──────────────────────────────────────────────────
 
   describe("onApply", () => {
-    it("should call onApply when the Apply Filters button is clicked", async () => {
+    it("should call onApply when the Apply Changes button is clicked", async () => {
       // Given
       const user = userEvent.setup();
       const onApply = vi.fn();
@@ -203,7 +203,7 @@ describe("ApplyFiltersButton", () => {
 
       // When
       await user.click(
-        screen.getByRole("button", { name: "Apply Filters (1)" }),
+        screen.getByRole("button", { name: "Apply Changes (1)" }),
       );
 
       // Then
@@ -226,7 +226,7 @@ describe("ApplyFiltersButton", () => {
       );
 
       // When
-      await user.click(screen.getByRole("button", { name: "Apply Filters" }));
+      await user.click(screen.getByRole("button", { name: "Apply Changes" }));
 
       // Then — disabled button should not fire
       expect(onApply).not.toHaveBeenCalled();

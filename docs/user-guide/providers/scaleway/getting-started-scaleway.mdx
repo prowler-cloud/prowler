@@ -1,0 +1,37 @@
+---
+title: "Getting Started With Scaleway on Prowler"
+---
+
+Prowler for Scaleway scans IAM resources in your Scaleway organization for security misconfigurations. The current release ships one check that flags API keys still owned by the account root user.
+
+## Prerequisites
+
+1. A Scaleway organization with IAM access.
+2. A Scaleway API key with at least the `IAMReadOnly` policy bound to a dedicated IAM user (do not use the account root user).
+3. Your organization ID (visible at the top right of the Scaleway console).
+
+## Authentication
+
+Prowler authenticates to Scaleway with a Scaleway API key. See [Scaleway Authentication in Prowler](./authentication) for the full setup, environment variables, CLI flags, and required permissions.
+
+## Run a scan
+
+```bash
+export SCW_ACCESS_KEY="SCW..."
+export SCW_SECRET_KEY="..."
+export SCW_DEFAULT_ORGANIZATION_ID="..."
+
+prowler scaleway
+```
+
+To run only the IAM root-key check:
+
+```bash
+prowler scaleway --check iam_api_keys_no_root_owned
+```
+
+## Checks shipped
+
+| Check ID | Severity | Description |
+|---|---|---|
+| `iam_api_keys_no_root_owned` | Critical | Fails when any Scaleway IAM API key is still owned by the account root user. |

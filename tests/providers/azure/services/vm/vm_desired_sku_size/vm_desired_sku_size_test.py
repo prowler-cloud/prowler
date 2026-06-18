@@ -8,7 +8,9 @@ from prowler.providers.azure.services.vm.vm_service import (
     VirtualMachine,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -17,6 +19,7 @@ class Test_vm_desired_sku_size:
     def test_vm_no_subscriptions(self):
         """Test when there are no subscriptions."""
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {}
         vm_client.audit_config = {}
 
@@ -41,6 +44,7 @@ class Test_vm_desired_sku_size:
     def test_vm_subscriptions_empty(self):
         """Test when subscriptions exist but have no VMs."""
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {}}
         vm_client.audit_config = {}
 
@@ -66,6 +70,7 @@ class Test_vm_desired_sku_size:
         """Test VM using a SKU size that is in the default configuration."""
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -113,13 +118,14 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is using desired SKU size Standard_A8_v2 in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using desired SKU size Standard_A8_v2 in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_vm_using_desired_sku_size_custom_config(self):
         """Test VM using a SKU size that is in the custom configuration."""
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -169,13 +175,14 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is using desired SKU size Standard_B1s in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using desired SKU size Standard_B1s in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_vm_using_non_desired_sku_size_default_config(self):
         """Test VM using a SKU size that is not in the default configuration."""
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -223,13 +230,14 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is using Standard_B1s which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using Standard_B1s which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_vm_using_non_desired_sku_size_custom_config(self):
         """Test VM using a SKU size that is not in the custom configuration."""
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -279,13 +287,14 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is using Standard_A8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using Standard_A8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_vm_with_none_vm_size(self):
         """Test VM with None vm_size."""
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -333,7 +342,7 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is using None which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using None which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_multiple_vms_different_statuses(self):
@@ -343,6 +352,7 @@ class Test_vm_desired_sku_size:
         vm_id_3 = str(uuid4())
 
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id_1: VirtualMachine(
@@ -433,7 +443,7 @@ class Test_vm_desired_sku_size:
             assert pass_result.resource_id == vm_id_1
             assert (
                 pass_result.status_extended
-                == f"VM VMApproved is using desired SKU size Standard_A8_v2 in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMApproved is using desired SKU size Standard_A8_v2 in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
             # Find the FAIL result
@@ -446,7 +456,7 @@ class Test_vm_desired_sku_size:
             assert fail_result.resource_id == vm_id_2
             assert (
                 fail_result.status_extended
-                == f"VM VMNotApproved is using Standard_B1s which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMNotApproved is using Standard_B1s which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
             # Find the second PASS result
@@ -459,7 +469,7 @@ class Test_vm_desired_sku_size:
             assert pass_result_2.resource_id == vm_id_3
             assert (
                 pass_result_2.status_extended
-                == f"VM VMAnotherApproved is using desired SKU size Standard_DS3_v2 in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMAnotherApproved is using desired SKU size Standard_DS3_v2 in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_multiple_subscriptions(self):
@@ -469,6 +479,7 @@ class Test_vm_desired_sku_size:
         subscription_2 = "subscription-2"
 
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id_1: VirtualMachine(
@@ -553,6 +564,7 @@ class Test_vm_desired_sku_size:
         """Test when the desired SKU sizes configuration is empty."""
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -600,13 +612,14 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is using Standard_A8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using Standard_A8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_case_sensitive_sku_size_matching(self):
         """Test that SKU size matching is case sensitive."""
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -656,5 +669,5 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is using standard_a8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using standard_a8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )

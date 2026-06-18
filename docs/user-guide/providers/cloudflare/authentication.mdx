@@ -44,6 +44,15 @@ User API Tokens are the recommended authentication method because they:
 Create a **User API Token**, not an Account API Token. User API Tokens are created from the profile settings and offer finer permission control.
 </Note>
 
+**Quick Setup:** Use these pre-configured links to open the Cloudflare Dashboard with the required permissions already selected:
+
+- [Create User API Token](https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner) — creates a **User API Token** (recommended). Opens the **Create Custom Token** form prefilled with the four required read-only scopes (`Account Settings`, `Zone`, `Zone Settings`, `DNS`) and the name `Prowler Security Scanner`. Adjust **Account Resources** and **Zone Resources** to match the accounts and zones you want to scan, then click **Create Token**.
+- [Create Account-Owned API Token](https://dash.cloudflare.com/?to=/:account/api-tokens&permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&name=Prowler%20Security%20Scanner) — creates an [account-owned token](https://developers.cloudflare.com/fundamentals/api/how-to/account-owned-token-template/) instead. Use this for automation or CI/CD where the token should not depend on a specific user account remaining active. Requires the **Super Administrator** or **Administrator** role on the account.
+
+<Note>
+Template URLs only pre-fill the token creation form. Review the permissions, configure resources, and click **Create Token** to complete the process.
+</Note>
+
 ### Step 1: Create a User API Token
 
 1. Log into the [Cloudflare Dashboard](https://dash.cloudflare.com).
