@@ -104,7 +104,7 @@ Reference without articles:
 
 ## Documentation Structure
 
-```
+```text
 docs/
 ├── getting-started/
 ├── tutorials/

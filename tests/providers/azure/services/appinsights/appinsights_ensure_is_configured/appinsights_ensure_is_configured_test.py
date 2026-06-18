@@ -2,7 +2,9 @@ from unittest import mock
 
 from prowler.providers.azure.services.appinsights.appinsights_service import Component
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -10,6 +12,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_appinsights_ensure_is_configured:
     def test_appinsights_no_subscriptions(self):
         appinsights_client = mock.MagicMock
+        appinsights_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         appinsights_client.components = {}
 
         with (
@@ -34,7 +39,7 @@ class Test_appinsights_ensure_is_configured:
         appinsights_client = mock.MagicMock
         appinsights_client.components = {AZURE_SUBSCRIPTION_ID: {}}
         appinsights_client.subscriptions = {
-            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
         }
 
         with (
@@ -60,7 +65,7 @@ class Test_appinsights_ensure_is_configured:
             assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
             assert (
                 result[0].status_extended
-                == f"There are no AppInsight configured in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There are no AppInsight configured in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_appinsights_configured(self):
@@ -76,7 +81,7 @@ class Test_appinsights_ensure_is_configured:
             }
         }
         appinsights_client.subscriptions = {
-            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
         }
 
         with (
@@ -103,5 +108,5 @@ class Test_appinsights_ensure_is_configured:
             assert result[0].location == "global"
             assert (
                 result[0].status_extended
-                == f"There is at least one AppInsight configured in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is at least one AppInsight configured in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )

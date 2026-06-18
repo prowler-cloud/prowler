@@ -109,6 +109,9 @@ const SSRDataTable = async ({
       roles,
       canBeExpelled,
       currentTenantId: canBeExpelled ? currentTenantId : undefined,
+      // Users may only delete their own account; gate the delete action so the
+      // UI matches the backend rule and never offers an action that would fail.
+      isCurrentUser: user.id === currentUserId,
     };
   });
 

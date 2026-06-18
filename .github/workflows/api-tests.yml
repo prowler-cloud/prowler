@@ -5,18 +5,10 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-tests.yml'
-      - '.github/actions/setup-python-poetry/**'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-tests.yml'
-      - '.github/actions/setup-python-poetry/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -86,7 +78,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -95,6 +87,7 @@ jobs:
             files.pythonhosted.org:443
             cli.codecov.io:443
             keybase.io:443
+            raw.githubusercontent.com:443
             ingest.codecov.io:443
             storage.googleapis.com:443
             o26192.ingest.us.sentry.io:443
@@ -109,7 +102,7 @@ jobs:
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             api/**
@@ -120,17 +113,16 @@ jobs:
             api/CHANGELOG.md
             api/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
-          update-lock: 'true'
 
       - name: Run tests with pytest
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run pytest --cov=./src/backend --cov-report=xml src/backend
+        run: uv run pytest --cov=./src/backend --cov-report=xml src/backend
 
       - name: Upload coverage reports to Codecov
         if: steps.check-changes.outputs.any_changed == 'true'

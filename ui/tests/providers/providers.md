@@ -24,7 +24,7 @@
 - Remove any existing provider with the same Account ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -36,14 +36,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - AWS provider successfully added with static credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays AWS option
@@ -53,7 +53,7 @@
 - Provider exists in Scans table (verified by account ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for AWS credentials
 - Provider cleanup performed before each test to ensure clean state
@@ -80,7 +80,7 @@
 - Remove any existing provider with the same Account ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -92,14 +92,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - AWS provider successfully added with role credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays AWS option
@@ -109,7 +109,7 @@
 - Provider exists in Scans table (verified by account ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for AWS credentials and role ARN
 - Provider cleanup performed before each test to ensure clean state
@@ -137,7 +137,7 @@
 - Remove any existing provider with the same Subscription ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Subscription ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -148,14 +148,14 @@
 7. Verify redirect to Scans page
 8. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - Azure provider successfully added with static credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays Azure option
@@ -165,7 +165,7 @@
 - Provider exists in Scans table (verified by subscription ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for Azure credentials
 - Provider cleanup performed before each test to ensure clean state
@@ -193,7 +193,7 @@
 - Remove any existing provider with the same Domain ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Domain ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -205,14 +205,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - M365 provider successfully added with static credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays M365 option
@@ -222,7 +222,7 @@
 - Provider exists in Scans table (verified by domain ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for M365 credentials
 - Provider cleanup performed before each test to ensure clean state
@@ -250,7 +250,7 @@
 - Remove any existing provider with the same Domain ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Domain ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -262,14 +262,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - M365 provider successfully added with certificate credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays M365 option
@@ -279,7 +279,7 @@
 - Provider exists in Scans table (verified by domain ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for M365 certificate credentials
 - Provider cleanup performed before each test to ensure clean state
@@ -308,7 +308,7 @@
 - Remove any existing provider with the same Context before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Context not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -320,14 +320,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - Kubernetes provider successfully added with kubeconfig content
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays Kubernetes option
@@ -339,7 +339,7 @@
 - Provider exists in Scans table (verified by context)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for Kubernetes context and kubeconfig file path
 - Kubeconfig content is read from file and used for authentication
@@ -369,7 +369,7 @@
 - Remove any existing provider with the same Project ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Project ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -381,14 +381,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - GCP provider successfully added with service account key
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays GCP option
@@ -400,7 +400,7 @@
 - Provider exists in Scans table (verified by project ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for GCP project ID and service account key
 - Service account key is provided as base64 encoded JSON content
@@ -431,7 +431,7 @@
 - Remove any existing provider with the same Username before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Username not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -443,14 +443,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - GitHub provider successfully added with personal access token
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays GitHub option
@@ -462,7 +462,7 @@
 - Provider exists in Scans table (verified by username)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for GitHub username and personal access token
 - Provider cleanup performed before each test to ensure clean state
@@ -491,7 +491,7 @@
 - Remove any existing provider with the same Username before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Username not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -503,14 +503,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - GitHub provider successfully added with GitHub App credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays GitHub option
@@ -522,7 +522,7 @@
 - Provider exists in Scans table (verified by username)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for GitHub username, App ID, and base64 encoded private key
 - Private key is base64 encoded and must be decoded before use
@@ -552,7 +552,7 @@
 - Remove any existing provider with the same Organization name before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Organization name not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -564,14 +564,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - GitHub provider successfully added with organization personal access token
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays GitHub option
@@ -583,7 +583,7 @@
 - Provider exists in Scans table (verified by organization name)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for GitHub organization name and organization access token
 - Provider cleanup performed before each test to ensure clean state
@@ -612,7 +612,7 @@
 - Remove any existing provider with the same Account ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -625,14 +625,14 @@
 9. Verify redirect to Scans page
 10. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - AWS provider successfully added using AWS SDK default credentials to assume the role
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays AWS option
@@ -643,7 +643,7 @@
 - Provider exists in Scans table (verified by account ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test leverages AWS SDK default credential chain (environment-configured keys) for Access Key and Secret Key
 - Environment variable `E2E_AWS_PROVIDER_ROLE_ARN` must reference a valid assumable role
@@ -671,7 +671,7 @@
 - Remove any existing provider with the same Tenancy ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Tenancy ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -683,14 +683,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - OCI provider successfully added with API Key credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays OCI option
@@ -702,7 +702,7 @@
 - Provider exists in Scans table (verified by tenancy ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for OCI credentials
 - Provider cleanup performed before each test to ensure clean state
@@ -730,7 +730,7 @@
 - An OCI provider with the specified Tenancy ID must already exist (run PROVIDER-E2E-012 first)
 - This test must be run serially and never in parallel with other tests
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Verify OCI provider exists in the table
@@ -742,7 +742,7 @@
 8. Click Next to submit
 9. Verify successful navigation to test connection page
 
-### Expected Result:
+### Expected Result
 
 - Update credentials page loads successfully
 - OCI credentials form is displayed with all required fields
@@ -750,7 +750,7 @@
 - Credentials can be updated and submitted
 - User is redirected to test connection page after successful update
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - OCI provider row is visible in providers table
@@ -760,7 +760,7 @@
 - Form submission succeeds (no silent failures due to missing provider UID)
 - Successful redirect to test connection page
 
-### Notes:
+### Notes
 
 - Test uses same environment variables as PROVIDER-E2E-012 (add OCI provider)
 - Requires PROVIDER-E2E-012 to be run first to create the OCI provider
@@ -788,7 +788,7 @@
 - Remove any existing provider with the same Account ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -802,14 +802,14 @@
 10. Verify redirect to Scans page
 11. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - AlibabaCloud provider successfully added with static credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays AlibabaCloud option
@@ -822,7 +822,7 @@
 - Provider exists in Scans table (verified by account ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for AlibabaCloud credentials
 - Provider cleanup performed before each test to ensure clean state
@@ -850,7 +850,7 @@
 - Remove any existing provider with the same Account ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -864,14 +864,14 @@
 10. Verify redirect to Scans page
 11. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - AlibabaCloud provider successfully added with RAM Role credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays AlibabaCloud option
@@ -884,7 +884,7 @@
 - Provider exists in Scans table (verified by account ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for AlibabaCloud RAM Role credentials
 - Provider cleanup performed before each test to ensure clean state
@@ -914,7 +914,7 @@
 - StackSet must be deployed in AWS Organizations and expose a valid IAM Role ARN for Prowler
 - This test must be run serially and never in parallel with other tests, as it requires the Organization ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -927,14 +927,14 @@
 9. Verify organization launch step, choose single scan schedule, and launch
 10. Verify redirect to Scans page
 
-### Expected Result:
+### Expected Result
 
 - AWS Organizations flow completes successfully
 - Accounts are connected and launch step is displayed
 - Scan scheduling selection is applied
 - User is redirected to Scans page after launch
 
-### Key verification points:
+### Key verification points
 
 - Connect account page displays AWS option
 - Organizations method selector is available
@@ -943,7 +943,7 @@
 - Accounts connected launch step appears
 - Successful redirect to Scans page after launching
 
-### Notes:
+### Notes
 
 - Organization ID must follow AWS format (e.g., o-abc123def4)
 - Role ARN must belong to the StackSet deployment for Organizations flow
@@ -970,7 +970,7 @@
 - Remove any existing provider with the same Customer ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Customer ID not to be already registered beforehand.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to providers page
 2. Click "Add Provider" button
@@ -982,14 +982,14 @@
 8. Verify redirect to Scans page
 9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
-### Expected Result:
+### Expected Result
 
 - Google Workspace provider successfully added with Service Account credentials
 - Initial scan launched successfully
 - User redirected to Scans page
 - Scheduled scan appears in Scans table with correct provider and scan name
 
-### Key verification points:
+### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays Google Workspace option
@@ -1003,7 +1003,7 @@
 - Provider exists in Scans table (verified by customer ID)
 - Scan name field contains "scheduled scan"
 
-### Notes:
+### Notes
 
 - Test uses environment variables for Google Workspace credentials
 - Service Account JSON is provided as multi-line JSON string (not base64 encoded)
@@ -1012,3 +1012,122 @@
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid Google Workspace account with Service Account having domain-wide delegation enabled
 - Service Account must have appropriate Google Workspace API scopes for security scanning
+
+---
+
+## Test Case: `PROVIDER-E2E-018` - Add Vercel Provider with API Token
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @vercel
+
+**Description/Objective:** Validates the complete flow of adding a new Vercel provider using API Token authentication, with a Team ID as the provider UID.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_VERCEL_TEAM_ID, E2E_VERCEL_API_TOKEN
+- Remove any existing provider with the same Team ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Team ID not to be already registered beforehand.
+
+### Flow Steps
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select Vercel provider type
+4. Fill provider details (team ID and alias)
+5. Verify Vercel credentials page is loaded
+6. Fill Vercel credentials (API token)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result
+
+- Vercel provider successfully added with API Token credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points
+
+- Provider page loads correctly
+- Connect account page displays Vercel option
+- Provider details form accepts team ID and alias
+- Credentials page loads with the API Token field
+- API Token is properly filled in the correct (masked) field
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by team ID)
+- Scan name field contains "scheduled scan"
+
+### Notes
+
+- Test uses environment variables for the Vercel Team ID and API Token
+- API Token is a masked (password) field; the only credential required for Vercel
+- Provider cleanup performed before each test to ensure clean state
+- Requires a valid Vercel API Token with read permissions to the resources to assess
+
+---
+
+## Test Case: `PROVIDER-E2E-019` - Add Okta Provider with OAuth 2.0 Private Key JWT Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @okta
+
+**Description/Objective:** Validates the complete flow of adding a new Okta provider using OAuth 2.0 Private Key JWT authentication (Client ID and PEM-encoded private key) tied to an Okta Org Domain.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_OKTA_DOMAIN, E2E_OKTA_CLIENT_ID, E2E_OKTA_BASE64_PRIVATE_KEY
+- Remove any existing provider with the same Org Domain before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Org Domain not to be already registered beforehand.
+
+### Flow Steps
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select Okta provider type
+4. Fill provider details (org domain and alias)
+5. Verify Okta credentials page is loaded
+6. Fill Okta credentials (client ID and PEM-encoded private key)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result
+
+- Okta provider successfully added with OAuth 2.0 Private Key JWT credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points
+
+- Provider page loads correctly
+- Connect account page displays Okta option
+- Provider details form accepts org domain (Okta-managed domain, e.g. acme.okta.com) and alias
+- Credentials page loads with Client ID input and Private Key textarea
+- Credentials are properly filled in the correct fields
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by org domain)
+- Scan name field contains "scheduled scan"
+
+### Notes
+
+- Test uses environment variables for Okta credentials
+- Org Domain is lowercased by the form; cleanup and scan verification use the normalized value
+- Private Key is provided as base64-encoded PEM content and decoded before use (multi-line content)
+- Provider cleanup performed before each test to ensure clean state
+- Requires a valid Okta API Services app with a registered public key (JWK) matching the provided private key

@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
@@ -67,7 +67,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
@@ -88,7 +88,8 @@ jobs:
 
       # The MCP server version (mcp_server/pyproject.toml) is decoupled from the Prowler release
       # version: it only changes when MCP code changes. mcp-bump-version.yml normally keeps it in
-      # sync with mcp_server/CHANGELOG.md, but this publish workflow still runs on every release.
+      # sync with mcp_server/CHANGELOG.md (separate from the release bump-version.yml), but this
+      # publish workflow still runs on every release.
       # Pre-flight PyPI check covers the legitimate "no MCP changes for this release" case (and any
       # workflow_dispatch re-runs) without failing with HTTP 400 (version exists).
       - name: Check if prowler-mcp version already exists on PyPI
@@ -112,7 +113,7 @@ jobs:
 
       - name: Publish prowler-mcp package to PyPI
         if: steps.pypi-check.outputs.skip != 'true'
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           packages-dir: ${{ env.WORKING_DIRECTORY }}/dist/
           print-hash: true

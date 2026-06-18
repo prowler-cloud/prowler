@@ -296,6 +296,7 @@ class Provider(RowLevelSecurityProtectedModel):
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
         VERCEL = "vercel", _("Vercel")
+        OKTA = "okta", _("Okta")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -351,6 +352,26 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
                 code="googleworkspace-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_okta_uid(value):
+        if not re.match(
+            r"^[a-z0-9][a-z0-9-]*\.("
+            r"okta\.com|oktapreview\.com|okta-emea\.com|"
+            r"okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com"
+            r")$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail=(
+                    "Okta provider ID must be a valid Okta-managed org domain "
+                    "(e.g., acme.okta.com, also .oktapreview.com / .okta-emea.com "
+                    "/ .okta-gov.com / .okta.mil / .okta-miltest.com / "
+                    ".trex-govcloud.com), without scheme or path."
+                ),
+                code="okta-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -480,6 +501,12 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider == self.ProviderChoices.OKTA and self.uid:
+            # Mirror the SDK, which lowercases the org domain before connecting.
+            # Without this the API would reject Acme.okta.com even though the
+            # SDK would accept it, and stored uids could disagree with the
+            # authenticated org domain.
+            self.uid = self.uid.strip().lower()
         getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):
@@ -946,7 +973,6 @@ class Resource(RowLevelSecurityProtectedModel):
                 OpClass(Upper("name"), name="gin_trgm_ops"),
                 name="res_name_trgm_idx",
             ),
-            GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
             models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
             models.Index(
                 fields=["tenant_id", "provider_id"],
@@ -1151,6 +1177,15 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id", "check_id"],
                 name="find_tenant_scan_check_idx",
+            ),
+            GinIndex(
+                fields=[
+                    "categories",
+                    "resource_services",
+                    "resource_regions",
+                    "resource_types",
+                ],
+                name="gin_find_arrays_idx",
             ),
         ]
 
