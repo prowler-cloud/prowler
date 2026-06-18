@@ -50,6 +50,15 @@ const resourceNode: GraphNode = {
   },
 };
 
+const guardDutyNode: GraphNode = {
+  id: "guard-duty-node-id",
+  labels: ["GuardDutyFinding"],
+  properties: {
+    id: "guard-duty-123",
+    title: "Port probe",
+  },
+};
+
 describe("NodeDetailPanel", () => {
   it("renders the view finding button only for finding nodes", () => {
     const { rerender } = render(<NodeDetailPanel node={findingNode} />);
@@ -63,6 +72,17 @@ describe("NodeDetailPanel", () => {
     expect(
       screen.queryByRole("button", { name: /view finding/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("does not render the view finding button for cloud-provider finding resources", () => {
+    // Given/When
+    render(<NodeDetailPanel node={guardDutyNode} />);
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /view finding/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Node findings")).toBeInTheDocument();
   });
 
   it("calls onViewFinding with the node finding id", async () => {

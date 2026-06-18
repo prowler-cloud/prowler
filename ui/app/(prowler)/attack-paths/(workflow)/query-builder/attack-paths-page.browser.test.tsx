@@ -35,8 +35,8 @@ vi.mock("@/actions/findings", async () => {
 });
 
 import { useGraphStore } from "./_hooks/use-graph-state";
-import { getPathEdges } from "./_lib";
-import { isFindingNode, layoutWithDagre } from "./_lib/layout";
+import { getPathEdges, isProwlerFindingNode } from "./_lib";
+import { layoutWithDagre } from "./_lib/layout";
 import AttackPathsPage from "./attack-paths-page";
 import { fixtures, type PageFixture } from "./attack-paths-page.fixtures";
 import { AttackPathPageHarness } from "./attack-paths-page.harness";
@@ -218,7 +218,7 @@ describe("running a query", () => {
     if (!fixture.queryResult) throw new Error("Expected graph fixture data");
 
     const visibleNodes = fixture.queryResult.nodes.filter(
-      (node) => !isFindingNode(node.labels),
+      (node) => !isProwlerFindingNode(node.labels),
     );
     const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
     const visibleEdges = (fixture.queryResult.relationships ?? [])
@@ -427,7 +427,7 @@ describe("exploring the graph", () => {
 
     const findingIds = new Set(
       (fixture.queryResult?.nodes ?? [])
-        .filter((node) => isFindingNode(node.labels))
+        .filter((node) => isProwlerFindingNode(node.labels))
         .map((node) => node.id),
     );
     const visibleEdges = (fixture.queryResult?.relationships ?? [])

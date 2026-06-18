@@ -17,6 +17,18 @@ const resourceNode: GraphNode = {
   properties: { name: "bucket-1" },
 };
 
+const guardDutyNode: GraphNode = {
+  id: "guard-duty-1",
+  labels: ["GuardDutyFinding"],
+  properties: { title: "Port probe", severity: "high" },
+};
+
+const inspectorNode: GraphNode = {
+  id: "inspector-1",
+  labels: ["AWSInspectorFinding"],
+  properties: { title: "Package vulnerability", severity: "high" },
+};
+
 const internetNode: GraphNode = {
   id: "internet-1",
   labels: ["Internet"],
@@ -51,6 +63,42 @@ describe("layoutWithDagre", () => {
       type: "internet",
       width: 80,
       height: 80,
+    });
+  });
+
+  it("treats cloud-provider finding resources as resource nodes", () => {
+    const { rfNodes } = layoutWithDagre(
+      [findingNode, guardDutyNode, inspectorNode],
+      [],
+    );
+
+    const byId = new Map(rfNodes.map((n) => [n.id, n]));
+
+    expect(byId.get("finding-1")?.type).toBe("finding");
+    expect(byId.get("guard-duty-1")).toMatchObject({
+      type: "resource",
+      width: 136,
+      height: 124,
+    });
+    expect(byId.get("inspector-1")?.type).toBe("resource");
+  });
+
+  it("does not animate edges that only touch cloud-provider finding resources", () => {
+    const { rfEdges } = layoutWithDagre(
+      [resourceNode, guardDutyNode],
+      [
+        {
+          id: "e1",
+          source: "guard-duty-1",
+          target: "resource-1",
+          type: "AFFECTS",
+        },
+      ],
+    );
+
+    expect(rfEdges[0]).toMatchObject({
+      animated: false,
+      className: "resource-edge",
     });
   });
 

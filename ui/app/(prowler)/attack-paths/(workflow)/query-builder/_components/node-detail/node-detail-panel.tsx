@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet/sheet";
 import type { GraphNode } from "@/types/attack-paths";
 
+import { isProwlerFindingNode } from "../../_lib";
 import { NodeFindings } from "./node-findings";
 import { NodeOverview } from "./node-overview";
 import { NodeResources } from "./node-resources";
@@ -37,9 +38,7 @@ export const NodeDetailContent = ({
   onViewFinding?: (findingId: string) => void;
   viewFindingLoading?: boolean;
 }) => {
-  const isProwlerFinding = node?.labels.some((label) =>
-    label.toLowerCase().includes("finding"),
-  );
+  const isProwlerFinding = isProwlerFindingNode(node.labels);
 
   return (
     <div className="flex flex-col gap-6">
@@ -105,9 +104,7 @@ export const NodeDetailPanel = ({
 }: NodeDetailPanelProps) => {
   const isOpen = node !== null;
 
-  const isProwlerFinding = node?.labels.some((label) =>
-    label.toLowerCase().includes("finding"),
-  );
+  const isProwlerFinding = node ? isProwlerFindingNode(node.labels) : false;
   const findingId = node ? String(node.properties?.id || node.id) : "";
 
   return (
