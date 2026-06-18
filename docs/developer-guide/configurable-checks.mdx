@@ -48,7 +48,7 @@ For a complete list of checks that already support configuration, see the [Confi
 
 ## Adding a Parameter to the Provider Schema
 
-Every provider has a typed Pydantic schema in `prowler/config/schema/`. When a config is loaded, `validate_provider_config` checks each user-supplied key against the schema, logs a warning, and drops any field that fails validation. The consumer's `.get(key, default)` then falls back to the built-in default.
+Most providers have a typed Pydantic schema in `prowler/config/schema/`, registered in `prowler/config/schema/registry.py`. When a config is loaded and the provider has a registered schema, `validate_provider_config` checks each user-supplied key against it, logs a warning, and drops any field that fails validation. The consumer's `.get(key, default)` then falls back to the built-in default. Providers without a registered schema are passed through unchanged.
 
 This catches typos in a value (for example, `0.2` typed as `20`, or `"medium"` for an enum that expects `"MEDIUM"`). It does NOT catch typos in a key name: `disalowed_regions` (one `l` missing) is treated as an unknown key and passes through untouched, because third-party check plugins legitimately rely on unknown keys being preserved. Reviewers should still check that any new key the YAML adds is named exactly the same as the field on the schema.
 
