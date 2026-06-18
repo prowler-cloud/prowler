@@ -18,7 +18,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
 - TLS certificate verification in the `codepipeline_project_repo_private` check, which previously used an unverified SSL context, leaving the repository-visibility probe open to MITM tampering [(#11603)](https://github.com/prowler-cloud/prowler/pull/11603)
-- Add support for Linode cloud Provider [(#11633)](https://github.com/prowler-cloud/prowler/pull/11633)
+- Support for Linode cloud provider [(#11633)](https://github.com/prowler-cloud/prowler/pull/11633)
 
 ### 🔄 Changed
 

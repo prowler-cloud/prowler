@@ -61,9 +61,6 @@ class LinodeProvider(Provider):
             LinodeCredentialsError: If no token is provided.
             LinodeSessionError: If the Linode session cannot be established.
             LinodeIdentityError: If user or account identity cannot be retrieved.
-
-        Returns:
-            LinodeProvider: The LinodeProvider instance.
         """
         logger.info("Instantiating Linode provider...")
 
