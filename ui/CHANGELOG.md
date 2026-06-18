@@ -2,7 +2,24 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.30.1] (Prowler UNRELEASED)
+## [1.31.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Controlled `402` and `403` Server Action error messages for alert seed and mutation flows [(#11629)](https://github.com/prowler-cloud/prowler/pull/11629)
+
+### 🐞 Fixed
+
+- Radio button no longer shifts vertically when selected [(#11608)](https://github.com/prowler-cloud/prowler/pull/11608)
+- Handle rename DORA to DORA_2022_2554 to follow the naming <name>_<version> in compliance frameworks [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
+
+### 🔐 Security
+
+- Bump vulnerable `Next.js`, React, AI SDK, `postcss`, `hono`, `qs`, `esbuild`, and Alpine OpenSSL packages (`libcrypto3` and `libssl3`) [(#11581)](https://github.com/prowler-cloud/prowler/pull/11581)
+
+---
+
+## [1.30.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed
 
@@ -21,7 +38,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Renamed "Customer Support" to "Support Desk" in the side menu, showing it only in Prowler Cloud/Enterprise, while "Community Support" now shows only in Prowler OSS [(#11508)](https://github.com/prowler-cloud/prowler/pull/11508)
-- Compliance detail page now shows a "still loading" retry state while the API warms its compliance catalog, instead of rendering an empty page [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
+- Compliance detail page now shows a "still loading" retry state while the API warms its compliance catalog, instead of rendering an empty page [(#11530)](https://github.com/prowler-cloud/prowler/pull/11530)
 
 ### 🐞 Fixed
 
