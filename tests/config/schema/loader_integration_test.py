@@ -5,6 +5,7 @@ through a temp YAML file. Anything that breaks here would break the actual
 import logging
 import os
 import pathlib
+from typing import Callable
 
 import pytest
 
@@ -12,7 +13,7 @@ from prowler.config.config import load_and_validate_config_file
 
 
 @pytest.fixture
-def write_config(tmp_path):
+def write_config(tmp_path: pathlib.Path) -> Callable[[str], str]:
     def _write(content: str) -> str:
         path = tmp_path / "config.yaml"
         path.write_text(content)

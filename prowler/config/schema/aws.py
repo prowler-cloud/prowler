@@ -12,12 +12,16 @@ thresholds) and avoids ints that obviously break downstream maths
 (`min_kinesis_stream_retention_hours = 99999`).
 """
 
-from ipaddress import ip_network
 from typing import Annotated, Literal, Optional
 
 from pydantic import AfterValidator, Field
 
 from prowler.config.schema.base import ProviderConfigBase
+from prowler.config.schema.validators import (
+    make_dotted_version_validator,
+    validate_ip_networks,
+    validate_port_range,
+)
 
 # ---- Reusable constants -----------------------------------------------------
 
@@ -39,6 +43,7 @@ _CLOUDWATCH_RETENTION_DAYS = (
     400,
     545,
     731,
+    1096,
     1827,
     2192,
     2557,
@@ -63,6 +68,7 @@ _VALID_CW_RETENTION_LITERAL = Literal[
     400,
     545,
     731,
+    1096,
     1827,
     2192,
     2557,
@@ -75,13 +81,13 @@ _VALID_CW_RETENTION_LITERAL = Literal[
 # ---- Custom validators ------------------------------------------------------
 
 
-def _validate_port_range(v: Optional[list[int]]) -> Optional[list[int]]:
-    if v is None:
-        return v
-    for port in v:
-        if not 1 <= port <= 65535:
-            raise ValueError(f"port {port} is outside the valid range 1..65535")
-    return v
+# Reusable validators shared across providers (see schema/validators.py).
+_validate_port_range = validate_port_range
+_validate_trusted_ips = validate_ip_networks
+# "1.4.0" style strings (used by Fargate platform versions).
+_validate_semver = make_dotted_version_validator(3, 3)
+# "1.28" style strings (EKS minor versions).
+_validate_eks_minor = make_dotted_version_validator(2, 2)
 
 
 def _validate_account_ids(v: Optional[list[str]]) -> Optional[list[str]]:
@@ -92,39 +98,6 @@ def _validate_account_ids(v: Optional[list[str]]) -> Optional[list[str]]:
             raise ValueError(
                 f"trusted_account_ids entry {account_id!r} is not a 12-digit AWS account id"
             )
-    return v
-
-
-def _validate_trusted_ips(v: Optional[list[str]]) -> Optional[list[str]]:
-    if v is None:
-        return v
-    for entry in v:
-        try:
-            ip_network(entry, strict=False)
-        except ValueError as exc:
-            raise ValueError(
-                f"trusted_ips entry {entry!r} is not a valid IP or CIDR ({exc})"
-            ) from exc
-    return v
-
-
-def _validate_semver(v: Optional[str]) -> Optional[str]:
-    """Accept "1.4.0" style strings (used by Fargate platform versions)."""
-    if v is None:
-        return v
-    parts = v.split(".")
-    if len(parts) != 3 or not all(p.isdigit() for p in parts):
-        raise ValueError(f"{v!r} is not a valid semantic version (expected X.Y.Z)")
-    return v
-
-
-def _validate_eks_minor(v: Optional[str]) -> Optional[str]:
-    """Accept "1.28" style strings (EKS minor versions)."""
-    if v is None:
-        return v
-    parts = v.split(".")
-    if len(parts) != 2 or not all(p.isdigit() for p in parts):
-        raise ValueError(f"{v!r} is not a valid EKS version (expected X.Y)")
     return v
 
 

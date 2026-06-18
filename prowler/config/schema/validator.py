@@ -49,6 +49,11 @@ def validate_provider_config(
             )
 
         cleaned = {k: v for k, v in raw.items() if k not in bad_keys}
+        # Retry validation with the cleaned dict. Dropping invalid keys handles
+        # common field-level mismatches, but revalidation can still fail due to
+        # higher-level structural constraints (e.g. nested validation errors not
+        # captured in the top-level bad_keys). In that case, log and return the
+        # cleaned dict so consumers fall back to their own defaults.
         try:
             model = schema_cls.model_validate(cleaned)
             return model.model_dump(exclude_unset=True)

@@ -185,14 +185,14 @@ class Test_AWS_Booleans:
 
     def test_yaml_style_boolean_coercion(self):
         # YAML can produce Python str "true"/"yes" if the user quoted it.
-        # Pydantic v2 will refuse string booleans by default. Verify it is
-        # dropped, not silently treated as True (which would be dangerous
-        # for verify_premium_support_plans).
+        # Pydantic v2 deterministically coerces "yes"/"no"/"true"/"false" to a
+        # real bool in lax mode, so the value is normalized rather than passed
+        # through as a string (which would be dangerous for
+        # verify_premium_support_plans).
         out = _validate({"verify_premium_support_plans": "yes"})
-        # Pydantic actually DOES coerce "yes"/"no"/"true"/"false" in lax mode.
-        # We accept either outcome but require it to be a real bool.
-        if "verify_premium_support_plans" in out:
-            assert isinstance(out["verify_premium_support_plans"], bool)
+        assert "verify_premium_support_plans" in out
+        assert isinstance(out["verify_premium_support_plans"], bool)
+        assert out["verify_premium_support_plans"] is True
 
 
 class Test_AWS_Full_Default_Config_Round_Trips:

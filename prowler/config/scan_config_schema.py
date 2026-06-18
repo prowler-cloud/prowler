@@ -27,7 +27,17 @@ from prowler.config.schema.registry import SCHEMAS
 
 
 def _format_loc(loc: tuple) -> str:
-    """Render a Pydantic error location as `key[idx].nested`."""
+    """Render a Pydantic error location as a dot-separated path.
+
+    Integer elements (array indices) are formatted as `[idx]` appended to the
+    previous component. String elements are joined with dots. An empty location
+    is rendered as `<root>`.
+
+    Examples:
+        ("aws", "regions", 0) -> "aws.regions[0]"
+        ("aws", "threshold") -> "aws.threshold"
+        () -> "<root>"
+    """
     parts: list[str] = []
     for piece in loc:
         if isinstance(piece, int):

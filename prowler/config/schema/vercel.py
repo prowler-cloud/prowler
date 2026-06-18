@@ -8,6 +8,13 @@ from prowler.config.schema.base import ProviderConfigBase
 
 
 class VercelProviderConfig(ProviderConfigBase):
+    """Vercel provider configuration schema.
+
+    Defines optional configuration parameters for Vercel security checks,
+    including deployment branch policies, credential staleness thresholds,
+    RBAC ownership limits, and secret detection patterns.
+    """
+
     stable_branches: Optional[list[str]] = Field(
         default=None,
         description="Branches considered stable for production deployments.",

@@ -8,6 +8,12 @@ from prowler.config.schema.base import ProviderConfigBase
 
 
 class CloudflareProviderConfig(ProviderConfigBase):
+    """Cloudflare provider configuration schema.
+
+    Defines optional configuration parameters for Cloudflare security checks,
+    including API retry behavior.
+    """
+
     max_retries: Optional[int] = Field(
         default=None,
         ge=0,

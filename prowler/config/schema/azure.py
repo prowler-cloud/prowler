@@ -9,20 +9,12 @@ from typing import Annotated, Literal, Optional
 from pydantic import AfterValidator, Field
 
 from prowler.config.schema.base import ProviderConfigBase
+from prowler.config.schema.validators import make_dotted_version_validator
 
-
-def _validate_dotted_version(v: Optional[str]) -> Optional[str]:
-    """Accept ``"8.2"``, ``"3.12"``, ``"17"`` style version strings.
-
-    Used by App Service language version fields where the upstream APIs
-    accept either ``MAJOR`` or ``MAJOR.MINOR`` notation.
-    """
-    if v is None:
-        return v
-    parts = v.split(".")
-    if not (1 <= len(parts) <= 2) or not all(p.isdigit() for p in parts):
-        raise ValueError(f"{v!r} is not a valid version (expected 'X' or 'X.Y')")
-    return v
+# Accept "8.2", "3.12", "17" style version strings. Used by App Service
+# language version fields where the upstream APIs accept either MAJOR or
+# MAJOR.MINOR notation.
+_validate_dotted_version = make_dotted_version_validator(1, 2)
 
 
 class AzureProviderConfig(ProviderConfigBase):

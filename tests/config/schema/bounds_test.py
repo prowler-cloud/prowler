@@ -15,7 +15,7 @@ import pytest
 from prowler.config.scan_config_schema import validate_scan_config
 
 
-def _has_error_for(errors, path_substr: str) -> bool:
+def _has_error_for(errors: list[dict], path_substr: str) -> bool:
     return any(path_substr in e["path"] for e in errors)
 
 

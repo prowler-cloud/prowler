@@ -8,6 +8,12 @@ from prowler.config.schema.base import ProviderConfigBase
 
 
 class MongoDBAtlasProviderConfig(ProviderConfigBase):
+    """MongoDB Atlas provider configuration schema.
+
+    Defines optional configuration parameters for MongoDB Atlas security checks,
+    including service account secret validity constraints.
+    """
+
     max_service_account_secret_validity_hours: Optional[int] = Field(
         default=None,
         ge=1,
