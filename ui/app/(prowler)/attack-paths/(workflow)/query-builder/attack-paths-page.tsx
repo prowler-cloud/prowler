@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Info, Maximize2 } from "lucide-react";
+import { ArrowLeft, Maximize2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
@@ -16,12 +16,7 @@ import { FindingDetailDrawer } from "@/components/findings/table";
 import { PageReady } from "@/components/onboarding";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Button,
-} from "@/components/shadcn";
+import { Button } from "@/components/shadcn";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/shadcn/dialog";
+import { StatusAlert } from "@/components/shared/status-alert";
 import { useToast } from "@/components/ui";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isCloud } from "@/lib/shared/env";
@@ -454,17 +450,16 @@ export default function AttackPathsPage() {
           </Suspense>
 
           {isViewingPreviousCycleData && (
-            <Alert variant="info">
-              <Info className="size-4" />
-              <AlertTitle>Viewing data from a previous scan</AlertTitle>
-              <AlertDescription>
-                This scan is currently{" "}
-                {selectedScan.attributes.state === SCAN_STATES.EXECUTING
-                  ? `running (${selectedScan.attributes.progress}%)`
-                  : selectedScan.attributes.state}
-                . The graph data shown is from the last completed cycle.
-              </AlertDescription>
-            </Alert>
+            <StatusAlert
+              variant="info"
+              title="Viewing data from a previous scan"
+            >
+              This scan is currently{" "}
+              {selectedScan.attributes.state === SCAN_STATES.EXECUTING
+                ? `running (${selectedScan.attributes.progress}%)`
+                : selectedScan.attributes.state}
+              . The graph data shown is from the last completed cycle.
+            </StatusAlert>
           )}
 
           {scanId && (

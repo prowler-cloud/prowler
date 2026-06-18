@@ -1,13 +1,7 @@
-import { CircleAlert, Info } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Button,
-} from "@/components/shadcn";
+import { Button } from "@/components/shadcn";
+import { StatusAlert } from "@/components/shared/status-alert";
 
 import {
   ATTACK_PATHS_VIEW_STATES,
@@ -19,31 +13,6 @@ interface AttackPathsStatusPanelProps {
   progress?: number;
   onRetry?: () => void;
 }
-
-interface StatusAlertProps {
-  variant: "info" | "error";
-  title: string;
-  descriptionClassName?: string;
-  children: ReactNode;
-}
-
-const StatusAlert = ({
-  variant,
-  title,
-  descriptionClassName,
-  children,
-}: StatusAlertProps) => {
-  const Icon = variant === "error" ? CircleAlert : Info;
-  return (
-    <Alert variant={variant}>
-      <Icon className="size-4" />
-      <AlertTitle>{title}</AlertTitle>
-      <AlertDescription className={descriptionClassName}>
-        {children}
-      </AlertDescription>
-    </Alert>
-  );
-};
 
 /**
  * Full-page status message shown whenever the Attack Paths graph is not yet
