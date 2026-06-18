@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowLeft, Info, Maximize2 } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Maximize2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
@@ -17,12 +16,7 @@ import { FindingDetailDrawer } from "@/components/findings/table";
 import { PageReady } from "@/components/onboarding";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Button,
-} from "@/components/shadcn";
+import { Button } from "@/components/shadcn";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/shadcn/dialog";
+import { StatusAlert } from "@/components/shared/status-alert";
 import { useToast } from "@/components/ui";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isCloud } from "@/lib/shared/env";
@@ -61,11 +56,21 @@ import {
   QuerySelector,
   ScanListTable,
 } from "./_components";
+import { AttackPathsStatusPanel } from "./_components/attack-paths-status-panel";
 import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useAttackPathScans } from "./_hooks/use-attack-path-scans";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
 import { exportGraphAsPNG } from "./_lib";
+import {
+  ATTACK_PATHS_VIEW_STATES,
+  getAttackPathsViewState,
+  getGraphBuildingProgress,
+  isScanInFlight,
+} from "./_lib/get-attack-paths-view-state";
+
+const SCROLL_CONTAINER_CLASS =
+  "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4";
 
 export default function AttackPathsPage() {
   const searchParams = useSearchParams();
@@ -80,11 +85,12 @@ export default function AttackPathsPage() {
   const finding = useFindingDetails();
   const { toast } = useToast();
 
-  const { scans, scansLoading, refreshScans } = useAttackPathScans({
-    onNoReadyScan: isAttackPathsReplay
-      ? () => router.push("/scans?onboarding=view-first-scan")
-      : undefined,
-  });
+  const { scans, scansLoading, loadError, refreshScans, retryLoadScans } =
+    useAttackPathScans({
+      onNoReadyScan: isAttackPathsReplay
+        ? () => router.push("/scans?onboarding=view-first-scan")
+        : undefined,
+    });
 
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
@@ -103,7 +109,9 @@ export default function AttackPathsPage() {
   const hasNoScans = scans.length === 0;
 
   useDriverTour(attackPathsEmptyTour, {
-    enabled: onboardingEnabled && !scansLoading && hasNoScans,
+    // Gate on !loadError: the empty-scans CTA anchor only renders in the
+    // NO_SCANS view-state, not in the ERROR state (which also has scans === []).
+    enabled: onboardingEnabled && !scansLoading && !loadError && hasNoScans,
   });
 
   const { start: startAttackPathsTour } = useDriverTour<AttackPathsTourTarget>(
@@ -164,12 +172,12 @@ export default function AttackPathsPage() {
     graphState.resetGraph();
   }, [scanId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset on scanId change only
 
-  const hasExecutingScan = scans.some(
-    (scan) =>
-      scan.attributes.state === SCAN_STATES.EXECUTING ||
-      scan.attributes.state === SCAN_STATES.SCHEDULED,
-  );
+  // Poll while a scan is in flight so the page auto-advances when the graph is ready.
+  const hasScanInFlight = isScanInFlight(scans);
 
+  const viewState = getAttackPathsViewState({ scansLoading, loadError, scans });
+
+  // Detect if the selected scan is showing data from a previous cycle
   const selectedScan = scans.find((scan) => scan.id === scanId);
   const isViewingPreviousCycleData =
     selectedScan &&
@@ -396,7 +404,7 @@ export default function AttackPathsPage() {
   return (
     <div className="flex flex-col gap-6">
       <AutoRefresh
-        hasExecutingScan={hasExecutingScan}
+        hasExecutingScan={hasScanInFlight}
         onRefresh={refreshScans}
       />
 
@@ -418,25 +426,23 @@ export default function AttackPathsPage() {
         </p>
       </div>
 
-      {scansLoading ? (
-        <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+      {viewState === ATTACK_PATHS_VIEW_STATES.LOADING ? (
+        <div className={SCROLL_CONTAINER_CLASS}>
           <p className="text-sm">Loading scans...</p>
         </div>
-      ) : hasNoScans ? (
+      ) : viewState === ATTACK_PATHS_VIEW_STATES.NO_SCANS ? (
+        // Keep the empty-scans tour anchor: attackPathsEmptyTour targets
+        // data-tour-id="attack-paths-empty-scans-cta". The panel's NO_SCANS
+        // render is the same "No scans available" + Go to Scan Jobs CTA.
         <div data-tour-id="attack-paths-empty-scans-cta">
-          <Alert variant="info">
-            <Info className="size-4" />
-            <AlertTitle>No scans available</AlertTitle>
-            <AlertDescription>
-              <span>
-                You need to run a scan before you can analyze attack paths.{" "}
-                <Link href="/scans" className="font-medium underline">
-                  Go to Scan Jobs
-                </Link>
-              </span>
-            </AlertDescription>
-          </Alert>
+          <AttackPathsStatusPanel state={viewState} />
         </div>
+      ) : viewState !== ATTACK_PATHS_VIEW_STATES.READY ? (
+        <AttackPathsStatusPanel
+          state={viewState}
+          progress={getGraphBuildingProgress(scans)}
+          onRetry={retryLoadScans}
+        />
       ) : (
         <>
           <Suspense fallback={<div>Loading scans...</div>}>
@@ -444,21 +450,20 @@ export default function AttackPathsPage() {
           </Suspense>
 
           {isViewingPreviousCycleData && (
-            <Alert variant="info">
-              <Info className="size-4" />
-              <AlertTitle>Viewing data from a previous scan</AlertTitle>
-              <AlertDescription>
-                This scan is currently{" "}
-                {selectedScan.attributes.state === SCAN_STATES.EXECUTING
-                  ? `running (${selectedScan.attributes.progress}%)`
-                  : selectedScan.attributes.state}
-                . The graph data shown is from the last completed cycle.
-              </AlertDescription>
-            </Alert>
+            <StatusAlert
+              variant="info"
+              title="Viewing data from a previous scan"
+            >
+              This scan is currently{" "}
+              {selectedScan.attributes.state === SCAN_STATES.EXECUTING
+                ? `running (${selectedScan.attributes.progress}%)`
+                : selectedScan.attributes.state}
+              . The graph data shown is from the last completed cycle.
+            </StatusAlert>
           )}
 
           {scanId && (
-            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+            <div className={SCROLL_CONTAINER_CLASS}>
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
@@ -516,7 +521,7 @@ export default function AttackPathsPage() {
             (graphState.data &&
               graphState.data.nodes &&
               graphState.data.nodes.length > 0)) && (
-            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+            <div className={SCROLL_CONTAINER_CLASS}>
               {graphState.loading ? (
                 <GraphLoading />
               ) : graphState.data &&

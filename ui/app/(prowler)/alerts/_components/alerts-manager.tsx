@@ -24,6 +24,7 @@ import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import { toAlertPayload } from "../_lib/alert-adapter";
+import { getAlertMutationError } from "../_lib/alert-errors";
 import type {
   AlertFormSubmitResult,
   AlertFormValues,
@@ -49,8 +50,6 @@ interface AlertsManagerProps {
 
 const ALERTS_FINDINGS_HREF =
   "/findings?filter[muted]=false&filter[status__in]=FAIL";
-const ALERTS_PERMISSION_ERROR =
-  "You don't have permission to manage alerts. Ask an administrator to update your role.";
 
 export const AlertsManager = ({
   alerts,
@@ -113,7 +112,7 @@ export const AlertsManager = ({
     if (result?.error) {
       return {
         ok: false,
-        error: result.status === 403 ? ALERTS_PERMISSION_ERROR : result.error,
+        error: getAlertMutationError(result),
       };
     }
     toast({
@@ -134,7 +133,7 @@ export const AlertsManager = ({
       toast({
         variant: "destructive",
         title: "Alert update failed",
-        description: result.error,
+        description: getAlertMutationError(result),
       });
       return;
     }
@@ -154,7 +153,7 @@ export const AlertsManager = ({
       toast({
         variant: "destructive",
         title: "Alert delete failed",
-        description: result.error,
+        description: getAlertMutationError(result),
       });
       return;
     }

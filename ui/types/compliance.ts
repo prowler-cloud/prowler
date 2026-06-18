@@ -373,7 +373,7 @@ export interface OktaIDaaSStigRequirement extends Requirement {
 // DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554).
 // Universal framework — flat attributes dict with Pillar/Article/ArticleTitle.
 // `Pillar` is the canonical grouping key for tables and PDF; the enum mirrors
-// the five DORA pillars declared in `prowler/compliance/dora.json`.
+// the five DORA pillars declared in `prowler/compliance/dora_2022_2554.json`.
 export const DORA_PILLAR = {
   ICT_RISK_MANAGEMENT: "ICT Risk Management",
   INCIDENT_REPORTING: "ICT-Related Incident Reporting",

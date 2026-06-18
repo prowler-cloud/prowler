@@ -1340,6 +1340,7 @@
         }
       ],
       "Checks": [
+        "defender_ensure_defender_cspm_is_on",
         "monitor_alert_create_policy_assignment",
         "monitor_alert_create_update_nsg",
         "monitor_alert_create_update_public_ip_address_rule",
@@ -1411,6 +1412,7 @@
         "containerregistry_not_publicly_accessible",
         "cosmosdb_account_firewall_use_selected_networks",
         "cosmosdb_account_public_network_access_disabled",
+        "databricks_workspace_no_public_ip_enabled",
         "databricks_workspace_public_network_access_disabled",
         "network_bastion_host_exists",
         "network_flow_log_captured_sent",

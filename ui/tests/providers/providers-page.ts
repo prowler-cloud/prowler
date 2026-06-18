@@ -81,6 +81,28 @@ export interface GoogleWorkspaceProviderCredential {
   delegatedUser: string;
 }
 
+// Okta provider data
+export interface OktaProviderData {
+  orgDomain: string;
+  alias?: string;
+}
+
+// Okta credential options
+export const OKTA_CREDENTIAL_OPTIONS = {
+  OKTA_PRIVATE_KEY_JWT: "private_key_jwt",
+} as const;
+
+// Okta credential type
+type OktaCredentialType =
+  (typeof OKTA_CREDENTIAL_OPTIONS)[keyof typeof OKTA_CREDENTIAL_OPTIONS];
+
+// Okta provider credential (OAuth 2.0 Private Key JWT)
+export interface OktaProviderCredential {
+  type: OktaCredentialType;
+  clientId: string;
+  privateKey: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -267,11 +289,17 @@ export class ProvidersPage extends BasePage {
   readonly ociProviderRadio: Locator;
   readonly alibabacloudProviderRadio: Locator;
   readonly googleworkspaceProviderRadio: Locator;
+  readonly oktaProviderRadio: Locator;
 
   // Google Workspace provider form elements
   readonly googleworkspaceCustomerIdInput: Locator;
   readonly googleworkspaceServiceAccountJsonInput: Locator;
   readonly googleworkspaceDelegatedUserInput: Locator;
+
+  // Okta provider form elements
+  readonly oktaOrgDomainInput: Locator;
+  readonly oktaClientIdInput: Locator;
+  readonly oktaPrivateKeyInput: Locator;
 
   // Vercel provider form elements
   readonly vercelProviderRadio: Locator;
@@ -520,6 +548,18 @@ export class ProvidersPage extends BasePage {
     });
     this.googleworkspaceDelegatedUserInput = page.getByRole("textbox", {
       name: /Delegated User Email/i,
+    });
+
+    // Okta
+    this.oktaProviderRadio = page.getByRole("option", {
+      name: /Okta/i,
+    });
+    this.oktaOrgDomainInput = page.getByRole("textbox", {
+      name: "Org Domain",
+    });
+    this.oktaClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.oktaPrivateKeyInput = page.getByRole("textbox", {
+      name: "Private Key",
     });
 
     // Vercel
@@ -1400,6 +1440,41 @@ export class ProvidersPage extends BasePage {
     await expect(this.googleworkspaceDelegatedUserInput).toBeVisible();
   }
 
+  async selectOktaProvider(): Promise<void> {
+    await this.selectProviderRadio(this.oktaProviderRadio);
+  }
+
+  async fillOktaProviderDetails(data: OktaProviderData): Promise<void> {
+    // Fill the Okta provider details (org domain is lowercased by the form)
+
+    await this.oktaOrgDomainInput.fill(data.orgDomain);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillOktaCredentials(
+    credentials: OktaProviderCredential,
+  ): Promise<void> {
+    // Fill the Okta OAuth 2.0 Private Key JWT credentials form
+
+    if (credentials.clientId) {
+      await this.oktaClientIdInput.fill(credentials.clientId);
+    }
+    if (credentials.privateKey) {
+      await this.oktaPrivateKeyInput.fill(credentials.privateKey);
+    }
+  }
+
+  async verifyOktaCredentialsPageLoaded(): Promise<void> {
+    // Verify the Okta credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.oktaClientIdInput).toBeVisible();
+    await expect(this.oktaPrivateKeyInput).toBeVisible();
+  }
+
   async selectVercelProvider(): Promise<void> {
     await this.selectProviderRadio(this.vercelProviderRadio);
   }
@@ -1452,6 +1527,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.githubProviderRadio).toBeVisible();
     await expect(this.alibabacloudProviderRadio).toBeVisible();
     await expect(this.googleworkspaceProviderRadio).toBeVisible();
+    await expect(this.oktaProviderRadio).toBeVisible();
     await expect(this.vercelProviderRadio).toBeVisible();
   }
 
