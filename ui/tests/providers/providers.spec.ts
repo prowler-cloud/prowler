@@ -39,7 +39,6 @@ import {
 } from "./providers-page";
 import fs from "fs";
 import { deleteProviderIfExists } from "../helpers";
-import { ScansPage } from "../scans/scans-page";
 
 test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
@@ -1416,11 +1415,10 @@ test.describe("Add Provider", () => {
 
   test.describe.serial("Add Okta Provider", () => {
     let providersPage: ProvidersPage;
-    let scansPage: ScansPage;
 
     // Test data from environment variables
     // Org Domain is lowercased by the form, so normalize here to match the
-    // stored provider UID used for cleanup and scan verification.
+    // stored provider UID used for cleanup.
     const orgDomain = (process.env.E2E_OKTA_DOMAIN ?? "").toLowerCase();
     const clientId = process.env.E2E_OKTA_CLIENT_ID ?? "";
     const privateKeyB64 = process.env.E2E_OKTA_BASE64_PRIVATE_KEY ?? "";
@@ -1492,16 +1490,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillOktaCredentials(oktaCredentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
-        await providersPage.clickNext();
-
-        // Wait for redirect to scan page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
-
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(orgDomain);
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          orgDomain,
+        );
       },
     );
   });
