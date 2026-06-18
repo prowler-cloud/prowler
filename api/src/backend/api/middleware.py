@@ -1,7 +1,31 @@
 import logging
 import time
 
+from django.db import close_old_connections
+
 from config.custom_logging import BackendLogger
+
+
+class CloseDBConnectionsMiddleware:
+    """Release request-scoped DB connections at the request boundary.
+
+    Under the native ASGI worker, sync views run on a thread-sensitive
+    executor thread; the connections they open live in that thread's context.
+    Django's request_finished -> close_old_connections fires in a different
+    context and never frees them, so they pile up idle until Postgres runs out
+    of slots. Closing here, on the same thread-sensitive context as the view,
+    releases them. close_old_connections respects CONN_MAX_AGE, so it keeps
+    working if persistent connections are enabled later.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            return self.get_response(request)
+        finally:
+            close_old_connections()
 
 
 def extract_auth_info(request) -> dict:
