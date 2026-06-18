@@ -2,11 +2,37 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.1] (Prowler UNRELEASED)
+## [1.32.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Provider group filters for API endpoints that support cloud provider filtering, including exact and `__in` variants [(#11573)](https://github.com/prowler-cloud/prowler/pull/11573)
+- Provider filters for `GET /api/v1/compliance-overviews`, `/metadata`, and `/requirements`, using latest completed scans per matching provider [(#11587)](https://github.com/prowler-cloud/prowler/pull/11587)
+- Server-Sent Events (SSE) infrastructure for the API: a base viewset, a tenant-aware channel manager, and channel-name helpers backed by `django-eventstream` over Valkey Pub/Sub and served through the Gunicorn ASGI worker, so feature endpoints can stream events to clients over a single long-lived connection [(#11556)](https://github.com/prowler-cloud/prowler/pull/11556)
 
 ### 🔄 Changed
 
+- Gunicorn worker timeout raised from the 30s default to 120s, so long-running requests are no longer killed prematurely [(#11631)](https://github.com/prowler-cloud/prowler/pull/11631)
+- Sentry now drops ASGI's `RequestAborted` errors from health-check probe disconnects on `/health/live` [(#11632)](https://github.com/prowler-cloud/prowler/pull/11632)
 - OCI provider secrets can now omit `region` and `regions`, while legacy single-region and explicit multi-region filters remain supported [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
+
+### 🔐 Security
+
+- `aiohttp` to 3.14.0 and `idna` to 3.15, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- Container base image to `python:3.12.13-slim-bookworm` and `trivy` to 0.71.0, patching OS and Go module CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- `trivy` binary bumped to 0.71.0 patching embedded `golang.org/x/crypto`, `golang.org/x/net`, and Go `stdlib` CVEs [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
+---
+
+## [1.31.2] (Prowler v5.30.2)
+
+### 🔄 Changed
+
+- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes so it runs faster and its peak memory no longer grows with the number of regions and frameworks [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
+
+---
+
+## [1.31.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed
 
@@ -28,12 +54,13 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Allowlisted idempotent background tasks are no longer lost when a worker is stopped or crashes mid-task; tasks with external side effects are marked terminal instead of blindly re-running [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+- SAML logins no longer wipe a user's roles when the IdP does not send the `userType` attribute; existing roles are kept, and when `userType` names a role that does not exist it is now created with read-only access (visibility over all providers, no management permissions) instead of no permissions at all [(#11520)](https://github.com/prowler-cloud/prowler/pull/11520)
 
 ### 🐞 Fixed
 
 - Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
-- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
+- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#11530)](https://github.com/prowler-cloud/prowler/pull/11530)
 
 ### 🔐 Security
 
