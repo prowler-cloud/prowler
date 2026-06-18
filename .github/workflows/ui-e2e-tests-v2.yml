@@ -138,6 +138,19 @@ jobs:
           echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}" >> .env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}" >> .env
 
+      - name: Tune API gunicorn for CI capacity
+        # The runner is a 4-vCPU box. The image default DJANGO_WORKERS is
+        # cpu_count()*2+1 = 9 workers, each preloading the full SDK + a live
+        # Neo4j driver. Under the concurrent server-side fan-out of a single
+        # serial E2E test the box over-subscribes, workers exceed the timeout,
+        # get recycled mid-request, and the API drops the keep-alive pool ->
+        # "other side closed" then sustained 503s. Right-size workers to the box
+        # and add timeout headroom. Scoped to CI via .env (read by compose
+        # env_file); production gunicorn settings are untouched.
+        run: |
+          echo "DJANGO_WORKERS=4" >> .env
+          echo "GUNICORN_TIMEOUT=180" >> .env
+
       - name: Build API image from current code
         # docker-compose.yml references prowlercloud/prowler-api:latest from the registry,
         # which lags behind PR changes; build locally so E2E exercises the API image
