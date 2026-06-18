@@ -249,7 +249,8 @@ function LaunchScanForm({
   const isLimitBlocked = isManualOnly && isScanLimitReached;
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-8">
+    // min-w-0: let this dialog grid item shrink so a long provider UID truncates instead of widening the modal
+    <form onSubmit={onSubmit} className="flex min-w-0 flex-col gap-8">
       <div className="flex items-center gap-2">
         <CloudCog className="text-text-neutral-secondary size-4" />
         <span className="text-text-neutral-secondary text-sm">
