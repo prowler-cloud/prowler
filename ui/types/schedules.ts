@@ -104,12 +104,14 @@ export interface SchedulesBulkAttributes {
   failed_provider_ids?: string[];
 }
 
+export interface SchedulesBulkData {
+  type: "schedules-bulk";
+  id?: string;
+  attributes?: SchedulesBulkAttributes;
+}
+
 export interface SchedulesBulkResponse {
-  data?: {
-    type: "schedules-bulk";
-    id?: string;
-    attributes?: SchedulesBulkAttributes;
-  };
+  data?: SchedulesBulkData;
   error?: unknown;
   errors?: unknown;
   status?: number;

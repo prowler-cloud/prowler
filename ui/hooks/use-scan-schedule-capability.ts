@@ -1,5 +1,3 @@
-"use client";
-
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import type { ScanScheduleCapability } from "@/types/schedules";

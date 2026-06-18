@@ -171,6 +171,49 @@ describe("OrgLaunchScan", () => {
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
     });
 
+    it("should launch initial scans for provider_ids when the bulk response uses that key", async () => {
+      // Given
+      const user = userEvent.setup();
+      const onFooterChange = vi.fn();
+      updateSchedulesBulkMock.mockResolvedValue({
+        data: {
+          type: "schedules-bulk",
+          attributes: {
+            provider_ids: ["provider-1", "provider-2"],
+            failed: [],
+          },
+        },
+      });
+
+      render(
+        <OrgLaunchScan
+          onClose={vi.fn()}
+          onBack={vi.fn()}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+        />,
+      );
+
+      // When
+      await user.click(
+        await screen.findByRole("checkbox", {
+          name: /launch an initial scan now/i,
+        }),
+      );
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() =>
+        expect(launchOrganizationScansMock).toHaveBeenCalledTimes(1),
+      );
+      expect(launchOrganizationScansMock).toHaveBeenCalledWith(
+        ["provider-1", "provider-2"],
+        "single",
+      );
+    });
+
     it("should disable launch actions while schedule capability is loading", async () => {
       // Given
       const onFooterChange = vi.fn();

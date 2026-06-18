@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { scheduleUpdatePayloadSchema } from "@/lib/schedules";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type {
   ScheduleProps,
@@ -122,20 +123,22 @@ export const updateSchedulesBulk = async (
   const ids = parseProviderIds(providerIds);
   if (!ids) return { error: "Invalid provider ids." };
 
-  const headers = await getAuthHeaders({ contentType: true });
-  const url = new URL(`${apiBaseUrl}/schedules/bulk`);
-
-  const body = {
-    data: {
-      type: "schedules-bulk",
-      attributes: {
-        schedule: payload,
-        provider_ids: ids,
-      },
-    },
-  };
+  const parsedPayload = scheduleUpdatePayloadSchema.safeParse(payload);
+  if (!parsedPayload.success) return { error: "Invalid schedule payload." };
 
   try {
+    const headers = await getAuthHeaders({ contentType: true });
+    const url = new URL(`${apiBaseUrl}/schedules/bulk`);
+    const body = {
+      data: {
+        type: "schedules-bulk",
+        attributes: {
+          schedule: parsedPayload.data,
+          provider_ids: ids,
+        },
+      },
+    };
+
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,

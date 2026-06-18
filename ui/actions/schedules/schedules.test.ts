@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SCHEDULE_FREQUENCY } from "@/types/schedules";
+import {
+  SCHEDULE_FREQUENCY,
+  type ScheduleUpdatePayload,
+} from "@/types/schedules";
 
 const {
   fetchMock,
@@ -107,6 +110,35 @@ describe("schedule write actions revalidate only on success", () => {
     expect(await updateSchedulesBulk([], payload)).toEqual({
       error: "Invalid provider ids.",
     });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid bulk schedule payloads without issuing a request", async () => {
+    const invalidPayload = {
+      ...payload,
+      scan_hour: "12",
+    } as unknown as ScheduleUpdatePayload;
+
+    expect(
+      await updateSchedulesBulk(
+        [PROVIDER_ID, SECOND_PROVIDER_ID],
+        invalidPayload,
+      ),
+    ).toEqual({
+      error: "Invalid schedule payload.",
+    });
+    expect(getAuthHeadersMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("normalizes bulk auth header errors", async () => {
+    const authError = new Error("Session expired");
+    getAuthHeadersMock.mockRejectedValue(authError);
+
+    expect(
+      await updateSchedulesBulk([PROVIDER_ID, SECOND_PROVIDER_ID], payload),
+    ).toEqual({ error: "Failed" });
+    expect(handleApiErrorMock).toHaveBeenCalledWith(authError);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

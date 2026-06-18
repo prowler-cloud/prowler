@@ -78,7 +78,9 @@ function getUpdatedProviderIds(result: SchedulesBulkResponse): string[] {
   if (updated.length > 0) return updated;
 
   const updatedProviderIds = getStringArray(attributes?.updated_provider_ids);
-  return updatedProviderIds;
+  if (updatedProviderIds.length > 0) return updatedProviderIds;
+
+  return getStringArray(attributes?.provider_ids);
 }
 
 function getFailedCount(result: SchedulesBulkResponse): number {

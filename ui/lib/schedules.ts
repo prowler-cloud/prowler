@@ -29,6 +29,16 @@ export const scheduleFormSchema = z.object({
   launchInitialScan: z.boolean(),
 });
 
+export const scheduleUpdatePayloadSchema = z.object({
+  scan_enabled: z.boolean(),
+  scan_frequency: z.enum(SCHEDULE_FREQUENCY),
+  scan_hour: z.number().int().min(0).max(23),
+  scan_timezone: z.string().min(1),
+  scan_interval_hours: z.number().int().min(SCAN_INTERVAL_HOURS_MIN).nullable(),
+  scan_day_of_week: z.number().int().min(0).max(6).nullable(),
+  scan_day_of_month: z.number().int().min(1).max(28).nullable(),
+});
+
 /**
  * Default scan-schedule capability for the current environment.
  *
