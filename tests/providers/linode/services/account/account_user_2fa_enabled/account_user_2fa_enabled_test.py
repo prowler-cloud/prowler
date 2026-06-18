@@ -8,7 +8,7 @@ from tests.providers.linode.linode_fixtures import set_mocked_linode_provider
 
 class Test_account_user_2fa_enabled:
     def test_no_users(self):
-        account_client = mock.MagicMock
+        account_client = mock.MagicMock()
         account_client.users = []
 
         with (
@@ -31,7 +31,7 @@ class Test_account_user_2fa_enabled:
             assert len(result) == 0
 
     def test_user_with_2fa(self):
-        account_client = mock.MagicMock
+        account_client = mock.MagicMock()
         account_client.users = [
             User(
                 username="admin",
@@ -64,7 +64,7 @@ class Test_account_user_2fa_enabled:
             assert result[0].resource_id == "admin"
 
     def test_user_without_2fa(self):
-        account_client = mock.MagicMock
+        account_client = mock.MagicMock()
         account_client.users = [
             User(
                 username="dev-user",

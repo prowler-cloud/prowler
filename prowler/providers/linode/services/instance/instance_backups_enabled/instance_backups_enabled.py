@@ -6,6 +6,14 @@ class instance_backups_enabled(Check):
     """Check if Linode instances have the Backup service enabled."""
 
     def execute(self) -> list[CheckReportLinode]:
+        """Execute the instance_backups_enabled check.
+
+        Iterates over all Linode instances and checks whether the Backup
+        service is enabled.
+
+        Returns:
+            list[CheckReportLinode]: A list of findings for each instance.
+        """
         findings = []
 
         for instance in instance_client.instances:

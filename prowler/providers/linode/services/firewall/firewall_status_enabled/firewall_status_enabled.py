@@ -6,6 +6,14 @@ class firewall_status_enabled(Check):
     """Check if Linode Cloud Firewalls are enabled."""
 
     def execute(self) -> list[CheckReportLinode]:
+        """Execute the firewall_status_enabled check.
+
+        Iterates over all Cloud Firewalls and checks whether each one has
+        an enabled status.
+
+        Returns:
+            list[CheckReportLinode]: A list of findings for each firewall.
+        """
         findings = []
 
         for fw in firewall_client.firewalls:

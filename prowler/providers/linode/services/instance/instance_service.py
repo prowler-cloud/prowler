@@ -22,10 +22,9 @@ class Instance(BaseModel):
 class InstanceService(LinodeService):
     """Service to interact with Linode Instances."""
 
-    instances: List[Instance] = []
-
     def __init__(self, provider):
         super().__init__("instance", provider)
+        self.instances: List[Instance] = []
         self._describe_instances()
 
     def _describe_instances(self):

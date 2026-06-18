@@ -6,6 +6,14 @@ class firewall_assigned_to_devices(Check):
     """Check if Linode Cloud Firewalls are assigned to at least one device."""
 
     def execute(self) -> list[CheckReportLinode]:
+        """Execute the firewall_assigned_to_devices check.
+
+        Iterates over all Cloud Firewalls and checks whether each one is
+        assigned to at least one device.
+
+        Returns:
+            list[CheckReportLinode]: A list of findings for each firewall.
+        """
         findings = []
 
         for fw in firewall_client.firewalls:

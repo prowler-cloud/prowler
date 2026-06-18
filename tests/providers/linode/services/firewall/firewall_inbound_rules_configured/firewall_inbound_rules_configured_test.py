@@ -9,7 +9,7 @@ from tests.providers.linode.linode_fixtures import set_mocked_linode_provider
 
 class Test_firewall_inbound_rules_configured:
     def test_no_firewalls(self):
-        firewall_client = mock.MagicMock
+        firewall_client = mock.MagicMock()
         firewall_client.firewalls = []
 
         with (
@@ -32,7 +32,7 @@ class Test_firewall_inbound_rules_configured:
             assert len(result) == 0
 
     def test_inbound_rules_empty(self):
-        firewall_client = mock.MagicMock
+        firewall_client = mock.MagicMock()
         firewall_client.firewalls = [
             Firewall(
                 id=100,
@@ -70,7 +70,7 @@ class Test_firewall_inbound_rules_configured:
             assert result[0].resource_name == "empty-inbound-fw"
 
     def test_inbound_rules_not_empty(self):
-        firewall_client = mock.MagicMock
+        firewall_client = mock.MagicMock()
         firewall_client.firewalls = [
             Firewall(
                 id=101,

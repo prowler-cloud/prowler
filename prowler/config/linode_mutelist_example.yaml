@@ -1,5 +1,5 @@
 ### Account, Check and/or Region can be * to apply for all the cases.
-### Account == <Linode Account EUUID>
+### Account == <Linode Account UUID>
 ### Region == * (Linode is non-regional)
 ### Resources and tags are lists that can have either Regex or Keywords.
 ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
@@ -8,7 +8,7 @@
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:
   Accounts:
-    "example-account-euuid":
+    "example-account-uuid":
       Checks:
         "account_user_2fa_enabled":
           Regions:

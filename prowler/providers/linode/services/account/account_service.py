@@ -18,10 +18,9 @@ class User(BaseModel):
 class AccountService(LinodeService):
     """Service to interact with Linode Account Users."""
 
-    users: List[User] = []
-
     def __init__(self, provider):
         super().__init__("account", provider)
+        self.users: List[User] = []
         self._describe_users()
 
     def _describe_users(self):

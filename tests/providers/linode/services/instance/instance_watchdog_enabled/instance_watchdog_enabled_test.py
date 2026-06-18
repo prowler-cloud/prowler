@@ -8,7 +8,7 @@ from tests.providers.linode.linode_fixtures import set_mocked_linode_provider
 
 class Test_instance_watchdog_enabled:
     def test_no_instances(self):
-        instance_client = mock.MagicMock
+        instance_client = mock.MagicMock()
         instance_client.instances = []
 
         with (
@@ -31,7 +31,7 @@ class Test_instance_watchdog_enabled:
             assert len(result) == 0
 
     def test_instance_watchdog_enabled(self):
-        instance_client = mock.MagicMock
+        instance_client = mock.MagicMock()
         instance_client.instances = [
             Instance(
                 id=12345,
@@ -67,7 +67,7 @@ class Test_instance_watchdog_enabled:
             assert "has Watchdog (Lassie) enabled" in result[0].status_extended
 
     def test_instance_watchdog_disabled(self):
-        instance_client = mock.MagicMock
+        instance_client = mock.MagicMock()
         instance_client.instances = [
             Instance(
                 id=12345,

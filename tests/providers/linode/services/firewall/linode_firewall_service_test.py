@@ -44,9 +44,6 @@ def _build_service(
     service = object.__new__(FirewallService)
     service.firewalls = []
 
-    # Build an isolated mock hierarchy for client.networking.firewalls()
-    # Must explicitly create the firewalls callable as a fresh MagicMock
-    # because check tests contaminate MagicMock class with firewalls=[...]
     firewalls_callable = MagicMock()
     if networking_firewalls_side_effect:
         firewalls_callable.side_effect = networking_firewalls_side_effect
@@ -100,14 +97,19 @@ class TestLinodeFirewallService:
 
     def test_describe_firewalls_handles_rules_fetch_error(self):
         """Firewall is still added even if rules fail to load."""
-        fw = MagicMock()
-        fw.id = 1
-        fw.label = "broken-fw"
-        fw.status = "enabled"
-        fw.tags = []
-        type(fw).rules = property(
-            lambda _: (_ for _ in ()).throw(Exception("rules API error"))
-        )
+
+        class _BrokenFw:
+            id = 1
+            label = "broken-fw"
+            status = "enabled"
+            tags = []
+            devices = []
+
+            @property
+            def rules(self):
+                raise Exception("rules API error")
+
+        fw = _BrokenFw()
 
         service = _build_service(networking_firewalls_return=[fw])
         service._describe_firewalls()

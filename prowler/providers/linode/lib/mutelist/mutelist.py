@@ -11,6 +11,16 @@ class LinodeMutelist(Mutelist):
         finding: CheckReportLinode,
         account_id: str,
     ) -> bool:
+        """
+        Check if a Linode finding is muted.
+
+        Args:
+            finding: CheckReportLinode instance containing check metadata, region, resource info, and tags.
+            account_id: Linode account identifier.
+
+        Returns:
+            True if the finding is muted, False otherwise.
+        """
         return self.is_muted(
             account_id,
             finding.check_metadata.CheckID,

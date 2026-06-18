@@ -6,6 +6,14 @@ class account_user_2fa_enabled(Check):
     """Check if Linode account users have two-factor authentication enabled."""
 
     def execute(self) -> list[CheckReportLinode]:
+        """Execute the account_user_2fa_enabled check.
+
+        Iterates over all account users and checks whether two-factor
+        authentication is enabled.
+
+        Returns:
+            list[CheckReportLinode]: A list of findings for each user.
+        """
         findings = []
 
         for user in account_client.users:

@@ -6,7 +6,7 @@ from tests.providers.linode.linode_fixtures import set_mocked_linode_provider
 
 class Test_firewall_status_enabled:
     def test_no_firewalls(self):
-        firewall_client = mock.MagicMock
+        firewall_client = mock.MagicMock()
         firewall_client.firewalls = []
 
         with (
@@ -29,7 +29,7 @@ class Test_firewall_status_enabled:
             assert len(result) == 0
 
     def test_firewall_enabled(self):
-        firewall_client = mock.MagicMock
+        firewall_client = mock.MagicMock()
         firewall_client.firewalls = [
             Firewall(
                 id=100,
@@ -67,7 +67,7 @@ class Test_firewall_status_enabled:
             assert result[0].resource_name == "enabled-fw"
 
     def test_firewall_disabled(self):
-        firewall_client = mock.MagicMock
+        firewall_client = mock.MagicMock()
         firewall_client.firewalls = [
             Firewall(
                 id=101,

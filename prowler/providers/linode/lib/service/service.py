@@ -10,6 +10,13 @@ class LinodeService:
     """Base class for Linode services to share provider context."""
 
     def __init__(self, service: str, provider: LinodeProvider):
+        """
+        Initialize the Linode service with provider context.
+
+        Args:
+            service: The Linode service name (e.g., account, instance, firewall).
+            provider: LinodeProvider instance containing session, audit config, and fixer config.
+        """
         self.provider = provider
         self.client = provider.session.client
         self.audit_config = provider.audit_config

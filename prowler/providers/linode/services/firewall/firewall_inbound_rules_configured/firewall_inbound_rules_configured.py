@@ -6,6 +6,14 @@ class firewall_inbound_rules_configured(Check):
     """Check if Linode Cloud Firewall has inbound rules configured."""
 
     def execute(self) -> list[CheckReportLinode]:
+        """Execute the firewall_inbound_rules_configured check.
+
+        Iterates over all Cloud Firewalls and checks whether at least one
+        explicit inbound rule is configured.
+
+        Returns:
+            list[CheckReportLinode]: A list of findings for each firewall.
+        """
         findings = []
 
         for fw in firewall_client.firewalls:

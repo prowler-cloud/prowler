@@ -6,6 +6,14 @@ class instance_watchdog_enabled(Check):
     """Check if Linode instances have Watchdog (Lassie) enabled."""
 
     def execute(self) -> list[CheckReportLinode]:
+        """Execute the instance_watchdog_enabled check.
+
+        Iterates over all Linode instances and checks whether Watchdog
+        (Lassie) is enabled.
+
+        Returns:
+            list[CheckReportLinode]: A list of findings for each instance.
+        """
         findings = []
 
         for instance in instance_client.instances:

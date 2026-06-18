@@ -41,11 +41,30 @@ class LinodeProvider(Provider):
         self,
         config_path: str = None,
         config_content: dict | None = None,
-        fixer_config: dict = {},
+        fixer_config: dict | None = None,
         mutelist_path: str = None,
         mutelist_content: dict = None,
         token: str = None,
     ):
+        """
+        Initializes the LinodeProvider instance.
+
+        Args:
+            config_path (str): Path to the configuration file.
+            config_content (dict): Audit configuration content.
+            fixer_config (dict): Fixer configuration.
+            mutelist_path (str): Path to the mutelist file.
+            mutelist_content (dict): Mutelist content.
+            token (str): Linode Personal Access Token (falls back to LINODE_TOKEN env var).
+
+        Raises:
+            LinodeCredentialsError: If no token is provided.
+            LinodeSessionError: If the Linode session cannot be established.
+            LinodeIdentityError: If user or account identity cannot be retrieved.
+
+        Returns:
+            LinodeProvider: The LinodeProvider instance.
+        """
         logger.info("Instantiating Linode provider...")
 
         # Mute noisy HTTP client logs
@@ -62,7 +81,7 @@ class LinodeProvider(Provider):
 
         self._identity = LinodeProvider.setup_identity(self._session)
 
-        self._fixer_config = fixer_config
+        self._fixer_config = fixer_config if fixer_config is not None else {}
 
         if mutelist_content:
             self._mutelist = LinodeMutelist(mutelist_content=mutelist_content)

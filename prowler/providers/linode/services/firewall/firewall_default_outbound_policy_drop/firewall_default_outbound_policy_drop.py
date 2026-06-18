@@ -6,6 +6,14 @@ class firewall_default_outbound_policy_drop(Check):
     """Check if Linode Cloud Firewall default outbound policy is DROP."""
 
     def execute(self) -> list[CheckReportLinode]:
+        """Execute the firewall_default_outbound_policy_drop check.
+
+        Iterates over all Cloud Firewalls and checks whether the default
+        outbound policy is DROP.
+
+        Returns:
+            list[CheckReportLinode]: A list of findings for each firewall.
+        """
         findings = []
 
         for fw in firewall_client.firewalls:

@@ -34,10 +34,9 @@ class Firewall(BaseModel):
 class FirewallService(LinodeService):
     """Service to interact with Linode Cloud Firewalls."""
 
-    firewalls: List[Firewall] = []
-
     def __init__(self, provider):
         super().__init__("firewall", provider)
+        self.firewalls: List[Firewall] = []
         self._describe_firewalls()
 
     def _describe_firewalls(self):
@@ -53,6 +52,13 @@ class FirewallService(LinodeService):
                     entities = []
 
                     try:
+                        entities = fw.devices
+                    except Exception as error:
+                        logger.warning(
+                            f"firewall - Unable to fetch devices for firewall {fw.id}: {error}"
+                        )
+
+                    try:
                         # linode_api4 Firewall objects expose rules as a mapped object.
                         rules = fw.rules
                         inbound_policy = getattr(rules, "inbound_policy", "")
@@ -60,7 +66,6 @@ class FirewallService(LinodeService):
                         inbound = getattr(rules, "inbound", [])
                         outbound = getattr(rules, "outbound", [])
 
-                        entities = fw.devices
                         for rule in inbound:
                             addresses = getattr(rule, "addresses", None)
                             inbound_rules.append(
