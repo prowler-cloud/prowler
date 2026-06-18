@@ -1298,7 +1298,8 @@
         "vm_ensure_using_managed_disks",
         "vm_trusted_launch_enabled",
         "cosmosdb_account_automatic_failover_enabled",
-        "mysql_flexible_server_geo_redundant_backup_enabled"
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "mysql_flexible_server_high_availability_enabled"
       ]
     },
     {

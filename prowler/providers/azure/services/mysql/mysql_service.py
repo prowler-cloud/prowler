@@ -37,9 +37,6 @@ class MySQL(AzureService):
                                 geo_redundant_backup=getattr(
                                     backup, "geo_redundant_backup", None
                                 ),
-                                backup_retention_days=getattr(
-                                    backup, "backup_retention_days", None
-                                ),
                                 high_availability_mode=getattr(ha, "mode", None),
                             )
                         }
@@ -89,5 +86,4 @@ class FlexibleServer:
     version: str
     configurations: dict[Configuration]
     geo_redundant_backup: Optional[str] = None
-    backup_retention_days: Optional[int] = None
     high_availability_mode: Optional[str] = None
