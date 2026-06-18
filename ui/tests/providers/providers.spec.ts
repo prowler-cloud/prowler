@@ -277,6 +277,14 @@ test.describe("Add Provider", () => {
         ],
       },
       async ({ page }) => {
+        // AWS Organizations (multi-account onboarding) is a Cloud-only feature,
+        // so this test must never run in the OSS CI. Gate explicitly on the
+        // Cloud env flag instead of relying on the org env vars being absent.
+        test.skip(
+          process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true",
+          "AWS Organizations multi-account onboarding is a Cloud-only feature",
+        );
+
         if (!organizationId || !organizationRoleArn) {
           test.skip(
             true,
