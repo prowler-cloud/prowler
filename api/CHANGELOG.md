@@ -15,6 +15,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Gunicorn worker timeout raised from the 30s default to 120s, so long-running requests are no longer killed prematurely [(#11631)](https://github.com/prowler-cloud/prowler/pull/11631)
 - Sentry now drops ASGI's `RequestAborted` errors from health-check probe disconnects on `/health/live` [(#11632)](https://github.com/prowler-cloud/prowler/pull/11632)
 
+### 🐞 Fixed
+
+- Database connections no longer leak under the ASGI worker, which previously exhausted the read replica's connection slots and caused 500s on read endpoints [(#11640)](https://github.com/prowler-cloud/prowler/pull/11640)
+
 ### 🔐 Security
 
 - `aiohttp` to 3.14.0 and `idna` to 3.15, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
