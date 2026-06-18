@@ -41,6 +41,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.30.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- CLI compliance summary tables no longer undercount findings mapped to multiple sections nor double-count a single finding mapped to several requirements within the same group/split, and the Provider column no longer leaks a value from another framework [(#11567)](https://github.com/prowler-cloud/prowler/pull/11567)
+
+---
+
 ## [5.30.2] (Prowler v5.30.2)
 
 ### 🐞 Fixed
@@ -48,14 +56,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - GCP `logging_log_metric_filter_and_alert_*` checks now credit org-level aggregated sinks filtered to the Admin Activity audit stream [(#11575)](https://github.com/prowler-cloud/prowler/pull/11575)
 - A broken built-in provider no longer aborts the CLI when a different provider was invoked [(#11618)](https://github.com/prowler-cloud/prowler/pull/11618)
 - GCP organization scans with `--organization-id` no longer silently fall back to the credentials' host project when the Cloud Asset API call fails [(#11280)](https://github.com/prowler-cloud/prowler/pull/11280)
-
----
-
-## [5.30.2] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
-- CLI compliance summary tables no longer undercount findings mapped to multiple sections nor double-count a single finding mapped to several requirements within the same group/split, and the Provider column no longer leaks a value from another framework [(#11567)](https://github.com/prowler-cloud/prowler/pull/11567)
 
 ---
 
