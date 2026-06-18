@@ -1340,6 +1340,7 @@
         }
       ],
       "Checks": [
+        "defender_ensure_defender_cspm_is_on",
         "monitor_alert_create_policy_assignment",
         "monitor_alert_create_update_nsg",
         "monitor_alert_create_update_public_ip_address_rule",
