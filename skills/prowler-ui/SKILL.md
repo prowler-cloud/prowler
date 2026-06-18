@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke:
     - "Creating/modifying Prowler UI components"
@@ -38,11 +38,11 @@ NextAuth 5.0.0-beta.30 | Recharts 2.15.4
 ### Component Placement
 
 ```text
-New feature UI? → shadcn/ui + Tailwind
-Used 1 feature? → features/{feature}/components/
-Used 2+ features? → components/shared/
-Needs state/hooks? → "use client"
-Server component? → No directive needed
+New UI primitive?   → components/shadcn/ (shadcn/ui + Tailwind)
+Used by 1 domain?   → components/{domain}/
+Used by 2+ domains? → components/shared/
+Needs state/hooks?  → "use client"
+Server component?    → No directive needed
 ```
 
 ### Code Location
@@ -56,9 +56,15 @@ Utils (shared 2+)  → lib/
 Utils (local 1)    → {feature}/utils/
 Hooks (shared 2+)  → hooks/
 Hooks (local 1)    → {feature}/hooks.ts
-shadcn components  → components/shadcn/
-HeroUI components  → components/ui/ (LEGACY)
+UI primitive       → components/shadcn/
+Domain component   → components/{domain}/
 ```
+
+> **Deprecated:** `components/ui/` is a temporary re-export shim that maps
+> legacy import paths to `components/shadcn/` for the prowler-cloud overlay.
+> HeroUI is fully removed. Never add or import components here — use
+> `@/components/shadcn` (primitives) or `@/components/{domain}` instead.
+> Delete the shim once the cloud repo migrates to `@/components/shadcn`.
 
 ### Styling Decision
 
@@ -90,8 +96,9 @@ ui/
 │       ├── services/
 │       └── integrations/
 ├── components/
-│   ├── shadcn/              # shadcn/ui (USE THIS)
-│   ├── ui/                  # HeroUI (LEGACY)
+│   ├── shadcn/              # shadcn/ui primitives (USE THIS)
+│   ├── shared/             # Cross-domain composed components (2+ domains)
+│   ├── ui/                  # DEPRECATED shim → re-exports shadcn (do not use)
 │   ├── {domain}/            # Domain-specific (compliance, findings, providers, etc.)
 │   ├── filters/             # Filter components
 │   ├── graphs/              # Chart components
