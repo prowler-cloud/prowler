@@ -20,7 +20,7 @@ permissions: {}
 
 jobs:
   release-freeze-gate:
-    name: Release Freeze Gate
+    name: release-freeze-gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
