@@ -219,9 +219,13 @@ export async function deleteProviderIfExists(
   await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
   await deleteMenuItem.click();
 
-  // Wait for confirmation modal to appear
+  // Wait for confirmation modal to appear. Exclude the Next.js dev error
+  // overlay, which is also role="dialog" and would otherwise be matched first,
+  // making the assertion wait on the wrong (hidden) element.
   const modal = page.page
-    .locator('[role="dialog"], .modal, [data-testid*="modal"]')
+    .locator(
+      '[role="dialog"]:not([data-nextjs-dialog="true"]), .modal, [data-testid*="modal"]',
+    )
     .first();
 
   await expect(modal).toBeVisible({ timeout: 10000 });

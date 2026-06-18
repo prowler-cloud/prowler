@@ -972,6 +972,27 @@ export class ProvidersPage extends BasePage {
       name: "Check connection",
       exact: true,
     });
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+
+    // The test-connection step renders its footer action only after an async
+    // load (canSubmit gate). Wait for the footer to settle on an actionable
+    // state (or surface a connection error) instead of reading visibility on
+    // the first frame, which races the render and falls through.
+    await expect(
+      checkConnectionButton.or(launchAction).or(connectionError),
+    ).toBeVisible({ timeout: 30000 });
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
 
     // Provider-add E2E validates credentials and provider persistence only.
     // Launching one scan per provider made CI noisy and overloaded the backend;
@@ -980,11 +1001,6 @@ export class ProvidersPage extends BasePage {
       await checkConnectionButton.click();
       await this.waitForProviderLaunchChoice();
     } else {
-      const launchAction = this.page
-        .getByRole("button", { name: "Save", exact: true })
-        .or(
-          this.page.getByRole("button", { name: "Launch scan", exact: true }),
-        );
       await expect(launchAction).toBeVisible();
     }
 
@@ -1635,10 +1651,14 @@ export class ProvidersPage extends BasePage {
       hasText: providerUID,
     });
 
-    // Verify the number of matching rows is 1
-    const count = await matchingRows.count();
-    if (count !== 1) return false;
-    return true;
+    // Use an auto-retrying assertion (not an instant count()) so the check
+    // waits for the table refetch to render the newly added provider row.
+    try {
+      await expect(matchingRows).toHaveCount(1, { timeout: 15000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
