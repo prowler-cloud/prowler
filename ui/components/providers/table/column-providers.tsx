@@ -248,7 +248,12 @@ export function getColumnProviders(
           );
         }
 
-        return <LinkToScans hasSchedule={row.original.hasSchedule} />;
+        return (
+          <LinkToScans
+            hasSchedule={row.original.hasSchedule}
+            schedule={row.original.scheduleSummary}
+          />
+        );
       },
       enableSorting: false,
     },
