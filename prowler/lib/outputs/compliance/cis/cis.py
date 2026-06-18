@@ -14,6 +14,7 @@ def get_cis_table(
 ):
     sections = {}
     section_muted_seen = {}
+    section_split_seen = {}
     provider = ""
     cis_compliance_table = {
         "Provider": [],
@@ -44,6 +45,10 @@ def get_cis_table(
                                 "Muted": 0,
                             }
                             section_muted_seen[section] = set()
+                            section_split_seen[section] = {
+                                "Level 1": set(),
+                                "Level 2": set(),
+                            }
                         if finding.muted:
                             # Overview total: count each finding once per framework
                             if index not in muted_count:
@@ -59,13 +64,21 @@ def get_cis_table(
                             elif finding.status == "PASS" and index not in pass_count:
                                 pass_count.append(index)
                         if "Level 1" in attribute.Profile:
-                            if not finding.muted:
+                            if (
+                                not finding.muted
+                                and index not in section_split_seen[section]["Level 1"]
+                            ):
+                                section_split_seen[section]["Level 1"].add(index)
                                 if finding.status == "FAIL":
                                     sections[section]["Level 1"]["FAIL"] += 1
                                 else:
                                     sections[section]["Level 1"]["PASS"] += 1
                         elif "Level 2" in attribute.Profile:
-                            if not finding.muted:
+                            if (
+                                not finding.muted
+                                and index not in section_split_seen[section]["Level 2"]
+                            ):
+                                section_split_seen[section]["Level 2"].add(index)
                                 if finding.status == "FAIL":
                                     sections[section]["Level 2"]["FAIL"] += 1
                                 else:

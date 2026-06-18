@@ -385,6 +385,63 @@ class TestSplitMode:
         muted_one_rows = re.findall(r"│\s*1\s*│\s*$", plain, flags=re.MULTILINE)
         assert len(muted_one_rows) == 2
 
+    def test_split_same_group_value_not_double_counted(self, capsys, tmp_path):
+        """A single finding whose check maps to several requirements that share
+        the same group and split value must count once for that group/split,
+        not once per requirement (FAIL(1), never FAIL(2))."""
+        reqs = [
+            # check_a appears in two requirements, both Storage / Level 1.
+            UniversalComplianceRequirement(
+                id="1.1",
+                description="test",
+                attributes={"Section": "Storage", "Profile": "Level 1"},
+                checks={"aws": ["check_a"]},
+            ),
+            UniversalComplianceRequirement(
+                id="1.2",
+                description="test2",
+                attributes={"Section": "Storage", "Profile": "Level 1"},
+                checks={"aws": ["check_a"]},
+            ),
+            # A second group so the table renders with more than one finding.
+            UniversalComplianceRequirement(
+                id="2.1",
+                description="test3",
+                attributes={"Section": "Logging", "Profile": "Level 1"},
+                checks={"aws": ["check_b"]},
+            ),
+        ]
+        tc = TableConfig(
+            group_by="Section",
+            split_by=SplitByConfig(field="Profile", values=["Level 1", "Level 2"]),
+        )
+        fw = _make_framework(reqs, tc)
+
+        findings = [
+            _make_finding("check_a", "FAIL"),
+            _make_finding("check_b", "PASS"),
+        ]
+        bulk_metadata = {
+            "check_a": MagicMock(Compliance=[]),
+            "check_b": MagicMock(Compliance=[]),
+        }
+
+        get_universal_table(
+            findings,
+            bulk_metadata,
+            "test_fw",
+            "output",
+            str(tmp_path),
+            False,
+            framework=fw,
+        )
+
+        captured = capsys.readouterr()
+        plain = _strip_ansi(captured.out)
+        # The Storage row must show FAIL(1) for Level 1, never FAIL(2).
+        assert "FAIL(1)" in plain
+        assert "FAIL(2)" not in plain
+
 
 class TestScoredMode:
     """Test cases for scored-mode universal compliance table rendering."""

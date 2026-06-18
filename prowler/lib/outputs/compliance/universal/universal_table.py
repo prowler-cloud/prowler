@@ -271,6 +271,7 @@ def _render_split(
     split_values = split_by.values
     groups = {}
     group_muted_seen = {}
+    group_split_seen = {}
     pass_count = []
     fail_count = []
     muted_count = []
@@ -288,6 +289,7 @@ def _render_split(
                     }
                     groups[group_key]["Muted"] = 0
                     group_muted_seen[group_key] = set()
+                    group_split_seen[group_key] = {sv: set() for sv in split_values}
 
                 split_val = req.attributes.get(split_field, "")
 
@@ -308,7 +310,8 @@ def _render_split(
 
                     for sv in split_values:
                         if sv in str(split_val):
-                            if not finding.muted:
+                            if index not in group_split_seen[group_key][sv]:
+                                group_split_seen[group_key][sv].add(index)
                                 if finding.status == "FAIL":
                                     groups[group_key][sv]["FAIL"] += 1
                                 else:
