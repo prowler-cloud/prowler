@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import { authenticate } from "@/actions/auth";
@@ -23,11 +23,13 @@ export const SignInForm = ({
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  releaseHighlights,
 }: {
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  releaseHighlights?: ReactNode;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -143,7 +145,7 @@ export const SignInForm = ({
   const title = isSamlMode ? "Sign in with SAML SSO" : "Sign in";
 
   return (
-    <AuthLayout title={title}>
+    <AuthLayout title={title} releaseHighlights={releaseHighlights}>
       <Form {...form}>
         <form
           noValidate

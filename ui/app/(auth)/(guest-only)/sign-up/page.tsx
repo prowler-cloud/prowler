@@ -1,6 +1,13 @@
+import { Suspense } from "react";
+
 import { AuthForm } from "@/components/auth/oss";
-import { getAuthUrl, isGithubOAuthEnabled } from "@/lib/helper";
-import { isGoogleOAuthEnabled } from "@/lib/helper";
+import { AuthReleaseHighlightsServer } from "@/components/auth/oss/auth-release-highlights-server";
+import { AuthReleaseHighlightsSkeleton } from "@/components/auth/oss/auth-release-highlights-skeleton";
+import {
+  getAuthUrl,
+  isGithubOAuthEnabled,
+  isGoogleOAuthEnabled,
+} from "@/lib/helper";
 import { SearchParamsProps } from "@/types";
 
 const SignUp = async ({
@@ -25,6 +32,14 @@ const SignUp = async ({
       githubAuthUrl={GITHUB_AUTH_URL}
       isGoogleOAuthEnabled={isGoogleOAuthEnabled}
       isGithubOAuthEnabled={isGithubOAuthEnabled}
+      releaseHighlights={
+        <Suspense
+          key="auth-release-highlights"
+          fallback={<AuthReleaseHighlightsSkeleton />}
+        >
+          <AuthReleaseHighlightsServer />
+        </Suspense>
+      }
     />
   );
 };
