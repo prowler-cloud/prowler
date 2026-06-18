@@ -2,9 +2,10 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { DateWithTime } from "@/components/ui/entities";
+import { StackedCell } from "@/components/shadcn";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/table/status-badge";
+import { formatLocalDate, formatLocalTimeWithZone } from "@/lib/date-utils";
 import { SCAN_JOBS_TAB, type ScanJobsTab, type ScanProps } from "@/types";
 
 import { formatScanDuration } from "../scans.utils";
@@ -48,15 +49,59 @@ const getScanScheduleColumn = (title: string): ColumnDef<ScanProps> => ({
   cell: ({ row }) => <ScheduleCell scan={row.original} />,
 });
 
+const getScheduleSummary = (scan: ScanProps) =>
+  scan.pendingSchedule ?? scan.providerSchedule;
+
+const renderDateCell = (value: string | null) => {
+  const date = formatLocalDate(value);
+  if (!date) return <span>-</span>;
+
+  return (
+    <StackedCell primary={date} secondary={formatLocalTimeWithZone(value)} />
+  );
+};
+
 const scheduledScanScheduleColumn: ColumnDef<ScanProps> = {
   id: "scanSchedule",
   accessorFn: (row) => row.attributes.scheduled_at,
   header: ({ column }) => (
     <DataTableColumnHeader column={column} title="Schedule" />
   ),
-  cell: ({ row }) => (
-    <DateWithTime dateTime={row.original.attributes.scheduled_at} showTime />
+  // Cadence on top, local fire time underneath.
+  cell: ({ row }) => {
+    const schedule = getScheduleSummary(row.original);
+    if (!schedule) return <span>-</span>;
+
+    return (
+      <StackedCell
+        primary={schedule.cadence ?? schedule.summary}
+        secondary={formatLocalTimeWithZone(
+          row.original.attributes.scheduled_at,
+        )}
+      />
+    );
+  },
+  enableSorting: false,
+};
+
+const nextScanColumn: ColumnDef<ScanProps> = {
+  id: "nextScan",
+  header: ({ column }) => (
+    <DataTableColumnHeader column={column} title="Next Scan" />
   ),
+  // Real rows carry their fire time in scheduled_at; pending rows are
+  // synthesized with the server-computed next_scan_at in the same field.
+  cell: ({ row }) => renderDateCell(row.original.attributes.scheduled_at),
+  enableSorting: false,
+};
+
+const lastScanColumn: ColumnDef<ScanProps> = {
+  id: "lastScan",
+  header: ({ column }) => (
+    <DataTableColumnHeader column={column} title="Last Scan" />
+  ),
+  cell: ({ row }) =>
+    renderDateCell(getScheduleSummary(row.original)?.lastScanAt ?? null),
   enableSorting: false,
 };
 
@@ -104,14 +149,11 @@ const activeColumns = (): ColumnDef<ScanProps>[] => [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Launched" />
     ),
-    cell: ({ row }) => (
-      <DateWithTime
-        dateTime={
-          row.original.attributes.started_at ||
-          row.original.attributes.inserted_at
-        }
-      />
-    ),
+    cell: ({ row }) =>
+      renderDateCell(
+        row.original.attributes.started_at ||
+          row.original.attributes.inserted_at,
+      ),
     enableSorting: false,
   },
   actionsColumn,
@@ -141,9 +183,7 @@ const completedColumns = (): ColumnDef<ScanProps>[] => [
         param="updated_at"
       />
     ),
-    cell: ({ row }) => (
-      <DateWithTime dateTime={row.original.attributes.completed_at} />
-    ),
+    cell: ({ row }) => renderDateCell(row.original.attributes.completed_at),
   },
   actionsColumn,
 ];
@@ -152,19 +192,8 @@ const scheduledColumns = (): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanInfoColumn,
   scheduledScanScheduleColumn,
-  /*
-   * TODO: Restore this column when the API exposes the last completed scan date for this schedule.
-   * {
-   *   id: "lastScan",
-   *   header: ({ column }) => (
-   *     <DataTableColumnHeader column={column} title="Last Run" />
-   *   ),
-   *   cell: ({ row }) => (
-   *     <DateWithTime dateTime={row.original.attributes.completed_at} />
-   *   ),
-   *   enableSorting: false,
-   * },
-   */
+  nextScanColumn,
+  lastScanColumn,
   actionsColumn,
 ];
 
