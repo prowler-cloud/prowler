@@ -13,6 +13,7 @@ import {
   isProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { getColumnProviders } from "./table";
 
@@ -20,6 +21,7 @@ interface ProvidersAccountsTableProps {
   isCloud: boolean;
   metadata?: MetaDataProps;
   rows: ProvidersTableRow[];
+  scanScheduleCapability?: ScanScheduleCapability;
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
 }
@@ -54,6 +56,7 @@ export function ProvidersAccountsTable({
   isCloud,
   metadata,
   rows,
+  scanScheduleCapability,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
 }: ProvidersAccountsTableProps) {
@@ -75,6 +78,7 @@ export function ProvidersAccountsTable({
     clearSelection,
     onOpenProviderWizard,
     onOpenOrganizationWizard,
+    scanScheduleCapability,
   );
 
   return (

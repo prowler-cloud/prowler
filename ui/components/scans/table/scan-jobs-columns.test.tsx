@@ -59,10 +59,16 @@ vi.mock("@/components/ui/table", () => ({
 }));
 
 vi.mock("./scan-jobs-row-actions", () => ({
-  ScanJobsRowActions: () => <button type="button" />,
+  ScanJobsRowActions: ({ capability }: { capability?: string }) => (
+    <button type="button">{capability ?? "no-capability"}</button>
+  ),
 }));
 
 import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+} from "@/types/schedules";
 
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
@@ -107,9 +113,11 @@ const renderCell = (
   columnId: string,
   scan: ScanProps,
   tab: ScanJobsTab = SCAN_JOBS_TAB.COMPLETED,
+  capability?: ScanScheduleCapability,
 ) => {
   const column = getScanJobsColumns({
     tab,
+    capability,
   }).find((item) => item.id === columnId);
   const cell = column?.cell as
     | ((context: CellContext<ScanProps, unknown>) => React.ReactNode)
@@ -200,5 +208,20 @@ describe("getScanJobsColumns", () => {
 
     expect(screen.getByText("Schedule")).toBeInTheDocument();
     expect(screen.queryByText("Scheduled")).not.toBeInTheDocument();
+  });
+
+  it("passes scan schedule capability to row actions", () => {
+    renderCell(
+      "actions",
+      makeCompletedScan(),
+      SCAN_JOBS_TAB.COMPLETED,
+      SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+      }),
+    ).toBeVisible();
   });
 });

@@ -9,6 +9,7 @@ import {
   PROVIDERS_ROW_TYPE,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 const { checkConnectionProviderMock, getScheduleMock, pushMock } = vi.hoisted(
   () => ({
@@ -303,6 +304,56 @@ describe("DataTableRowActions", () => {
     expect(
       screen.getByRole("dialog", { name: /edit scan schedule/i }),
     ).toHaveTextContent("Editing schedule for provider-1");
+  });
+
+  it("hides Edit Scan Schedule for manual-only Cloud provider rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
+  });
+
+  it("hides Edit Scan Schedule for blocked Cloud provider rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.BLOCKED}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
   });
 
   it("renders Update Credentials for provider rows with credentials", async () => {
