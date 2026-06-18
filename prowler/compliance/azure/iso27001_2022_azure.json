@@ -1411,6 +1411,8 @@
         "containerregistry_not_publicly_accessible",
         "cosmosdb_account_firewall_use_selected_networks",
         "cosmosdb_account_public_network_access_disabled",
+        "databricks_workspace_no_public_ip_enabled",
+        "databricks_workspace_public_network_access_disabled",
         "network_bastion_host_exists",
         "network_flow_log_captured_sent",
         "network_flow_log_more_than_90_days",
