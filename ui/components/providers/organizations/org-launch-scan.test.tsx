@@ -5,9 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
+  SCAN_JOBS_TAB,
   SCAN_SCHEDULE_CAPABILITY,
   SCHEDULE_FREQUENCY,
-} from "@/types/schedules";
+} from "@/types";
 
 import { OrgLaunchScan } from "./org-launch-scan";
 
@@ -121,7 +122,7 @@ describe("OrgLaunchScan", () => {
       expect(pushMock).toHaveBeenCalledWith("/providers");
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
-      ).toBe("/scans");
+      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
     });
 
     it("should launch initial scans only for updated providers", async () => {
@@ -165,6 +166,9 @@ describe("OrgLaunchScan", () => {
         ["provider-2"],
         "single",
       );
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
     });
 
     it("should disable launch actions while schedule capability is loading", async () => {
@@ -226,6 +230,9 @@ describe("OrgLaunchScan", () => {
         ),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
     });
   });
 
@@ -262,6 +269,9 @@ describe("OrgLaunchScan", () => {
         ),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
     });
   });
 

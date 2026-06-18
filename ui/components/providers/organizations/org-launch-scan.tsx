@@ -33,11 +33,12 @@ import {
 import { isCloud } from "@/lib/shared/env";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
+  SCAN_JOBS_TAB,
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
   type ScheduleFormValues,
   type SchedulesBulkResponse,
-} from "@/types/schedules";
+} from "@/types";
 import { TREE_ITEM_STATUS } from "@/types/tree";
 
 interface OrgLaunchScanProps {
@@ -89,6 +90,10 @@ function getFailedCount(result: SchedulesBulkResponse): number {
 
 function formatAccountCount(count: number): string {
   return `${count} account${count === 1 ? "" : "s"}`;
+}
+
+function getScansHref(tab: (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB]) {
+  return `/scans?tab=${tab}`;
 }
 
 export function OrgLaunchScan({
@@ -179,6 +184,7 @@ export function OrgLaunchScan({
     const updatedProviderIds = getUpdatedProviderIds(result);
     const failedCount = getFailedCount(result);
     let initialScanFailureCount = 0;
+    let initialScanSuccessCount = 0;
 
     if (values.launchInitialScan && updatedProviderIds.length > 0) {
       const scanResult = await launchOrganizationScans(
@@ -186,6 +192,7 @@ export function OrgLaunchScan({
         SCAN_SCHEDULE.SINGLE,
       );
       initialScanFailureCount = scanResult.failureCount;
+      initialScanSuccessCount = scanResult.successCount;
     }
 
     setIsLaunching(false);
@@ -196,6 +203,10 @@ export function OrgLaunchScan({
       failedCount > 0
         ? `The schedule was saved for ${formatAccountCount(updatedCount)}, but ${formatAccountCount(failedCount)} could not be updated.`
         : `The scan schedule was saved for ${formatAccountCount(updatedCount)}.`;
+    const targetTab =
+      initialScanSuccessCount > 0
+        ? SCAN_JOBS_TAB.ACTIVE
+        : SCAN_JOBS_TAB.SCHEDULED;
 
     toast({
       title:
@@ -208,7 +219,7 @@ export function OrgLaunchScan({
           : description,
       action: (
         <ToastAction altText="Go to scans" asChild>
-          <Link href="/scans">Go to scans</Link>
+          <Link href={getScansHref(targetTab)}>Go to scans</Link>
         </ToastAction>
       ),
     });
@@ -226,6 +237,10 @@ export function OrgLaunchScan({
       effectiveScheduleOption,
     );
     const successCount = result.successCount;
+    const targetTab =
+      effectiveScheduleOption === SCAN_SCHEDULE.SINGLE
+        ? SCAN_JOBS_TAB.ACTIVE
+        : SCAN_JOBS_TAB.SCHEDULED;
 
     setIsLaunching(false);
     finishSuccess();
@@ -238,7 +253,7 @@ export function OrgLaunchScan({
           : `Single scan launched for ${formatAccountCount(successCount)}.`,
       action: (
         <ToastAction altText="Go to scans" asChild>
-          <Link href="/scans">Go to scans</Link>
+          <Link href={getScansHref(targetTab)}>Go to scans</Link>
         </ToastAction>
       ),
     });
