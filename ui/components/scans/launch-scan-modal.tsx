@@ -9,15 +9,9 @@ import { z } from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import {
-  Button,
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
-} from "@/components/shadcn";
-import { DialogFooter } from "@/components/shadcn/dialog";
+import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import { FormButtons } from "@/components/ui/form";
 import { toast, ToastAction } from "@/components/ui/toast";
 import { SCAN_JOBS_TAB } from "@/types";
 import type { ProviderProps } from "@/types/providers";
@@ -136,26 +130,13 @@ function LaunchScanForm({ providers, onClose }: LaunchScanFormProps) {
 
       {rootError && <FieldError>{rootError}</FieldError>}
 
-      <DialogFooter className="w-full min-w-0 gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={onClose}
-          className="w-full sm:w-40"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          size="lg"
-          disabled={isSubmitting || !providers.length}
-          className="w-full sm:w-40"
-        >
-          <Rocket className="size-4" />
-          {isSubmitting ? "Launching..." : "Launch Scan"}
-        </Button>
-      </DialogFooter>
+      <FormButtons
+        onCancel={onClose}
+        submitText={isSubmitting ? "Launching..." : "Launch Scan"}
+        loadingText="Launching..."
+        isDisabled={isSubmitting || !providers.length}
+        rightIcon={<Rocket className="size-4" />}
+      />
     </form>
   );
 }
