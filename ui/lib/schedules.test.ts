@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  buildProviderScheduleSummary,
+  buildSchedulesByProviderId,
   buildScheduleUpdatePayload,
   formatScheduleHour,
   getBrowserTimezone,
@@ -13,6 +15,7 @@ import {
   SCAN_SCHEDULE_CAPABILITY,
   SCHEDULE_FREQUENCY,
   type ScheduleAttributes,
+  type ScheduleProps,
 } from "@/types/schedules";
 
 describe("schedule payload mapping", () => {
@@ -387,5 +390,101 @@ describe("scan schedule capability", () => {
     expect(getScanScheduleCapability(true)).toBe(
       SCAN_SCHEDULE_CAPABILITY.ADVANCED,
     );
+  });
+});
+
+describe("buildSchedulesByProviderId", () => {
+  const buildSchedule = (
+    id: string,
+    overrides: Partial<ScheduleAttributes> = {},
+  ): ScheduleProps => ({
+    type: "schedules",
+    id,
+    attributes: {
+      scan_enabled: true,
+      scan_frequency: SCHEDULE_FREQUENCY.DAILY,
+      scan_hour: 9,
+      scan_timezone: "Europe/Madrid",
+      scan_interval_hours: null,
+      scan_day_of_week: null,
+      scan_day_of_month: null,
+      ...overrides,
+    },
+    relationships: {
+      provider: { data: { type: "providers", id } },
+    },
+  });
+
+  it("indexes schedule attributes by provider id (the schedule's own id)", () => {
+    const result = {
+      data: [
+        buildSchedule("provider-1", { scan_hour: 6 }),
+        buildSchedule("provider-2", { scan_hour: null }),
+      ],
+    };
+
+    expect(buildSchedulesByProviderId(result)).toEqual({
+      "provider-1": result.data[0].attributes,
+      "provider-2": result.data[1].attributes,
+    });
+  });
+
+  it("returns an empty map when the request errored (e.g. OSS without /schedules)", () => {
+    expect(buildSchedulesByProviderId({ error: "Not found" })).toEqual({});
+  });
+
+  it("returns an empty map for a null/undefined result", () => {
+    expect(buildSchedulesByProviderId(null)).toEqual({});
+    expect(buildSchedulesByProviderId(undefined)).toEqual({});
+  });
+});
+
+describe("buildProviderScheduleSummary", () => {
+  const buildAttributes = (
+    overrides: Partial<ScheduleAttributes> = {},
+  ): ScheduleAttributes => ({
+    scan_enabled: true,
+    scan_frequency: SCHEDULE_FREQUENCY.DAILY,
+    scan_hour: 9,
+    scan_timezone: "Europe/Madrid",
+    scan_interval_hours: null,
+    scan_day_of_week: null,
+    scan_day_of_month: null,
+    ...overrides,
+  });
+
+  const now = new Date(2026, 5, 10, 10, 30, 0, 0);
+
+  it.each([
+    [{ scan_frequency: SCHEDULE_FREQUENCY.DAILY }, "Daily"],
+    [
+      { scan_frequency: SCHEDULE_FREQUENCY.WEEKLY, scan_day_of_week: 1 },
+      "Weekly on Monday",
+    ],
+    [
+      { scan_frequency: SCHEDULE_FREQUENCY.MONTHLY, scan_day_of_month: 15 },
+      "Monthly on day 15",
+    ],
+    [
+      { scan_frequency: SCHEDULE_FREQUENCY.INTERVAL, scan_interval_hours: 72 },
+      "Every 72 hours",
+    ],
+  ])("exposes the %o cadence as %s", (overrides, cadence) => {
+    expect(
+      buildProviderScheduleSummary(buildAttributes(overrides), now).cadence,
+    ).toBe(cadence);
+  });
+
+  it("passes through server-computed next/last run timestamps", () => {
+    const summary = buildProviderScheduleSummary(
+      buildAttributes({
+        next_scan_at: "2026-06-15T07:00:00Z",
+        last_scan_at: "2026-06-08T07:00:00Z",
+      }),
+      now,
+    );
+
+    expect(summary.nextScanAt).toBe("2026-06-15T07:00:00Z");
+    expect(summary.lastScanAt).toBe("2026-06-08T07:00:00Z");
   });
 });

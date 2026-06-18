@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { ScanScheduleSummary } from "@/types/scans";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
@@ -7,6 +8,7 @@ import {
   SCHEDULE_WEEKDAY_LABELS,
   type ScheduleAttributes,
   type ScheduleFormValues,
+  type ScheduleProps,
   type ScheduleUpdatePayload,
 } from "@/types/schedules";
 
@@ -110,6 +112,30 @@ export function buildScheduleUpdatePayload(
         ? values.dayOfMonth
         : null,
   };
+}
+
+interface SchedulesActionResult {
+  data?: ScheduleProps[] | null;
+  error?: unknown;
+}
+
+/**
+ * Indexes a `getSchedules()` result by provider id — the schedule resource's own
+ * `id` IS the provider id. Returns an empty map on error or missing data, so
+ * callers can treat schedules as best-effort (e.g. OSS, where the `/schedules`
+ * list endpoint may not exist). Shared by the scans and providers views.
+ */
+export function buildSchedulesByProviderId(
+  result: SchedulesActionResult | null | undefined,
+): Record<string, ScheduleAttributes> {
+  const byProviderId: Record<string, ScheduleAttributes> = {};
+  if (!result || result.error) return byProviderId;
+
+  for (const schedule of result.data ?? []) {
+    byProviderId[schedule.id] = schedule.attributes;
+  }
+
+  return byProviderId;
 }
 
 /**
@@ -235,4 +261,30 @@ export function getNextScheduledRunInTimezone(
   );
 
   return new Date(now.getTime() + (target.getTime() - timezoneNow.getTime()));
+}
+
+/**
+ * Builds the display summary (cadence + next/last run) for a provider's
+ * schedule, the way the scans and providers tables render it. Shared so both
+ * views show identical cadence labels.
+ *
+ * `next_scan_at` semantics: an absent field (older API) with an enabled
+ * schedule falls back to a client estimate; an explicit null (paused) means no
+ * next run.
+ */
+export function buildProviderScheduleSummary(
+  attributes: ScheduleAttributes,
+  now: Date,
+): ScanScheduleSummary {
+  const nextScanAt =
+    attributes.next_scan_at === undefined && attributes.scan_enabled
+      ? (getNextScheduledRunInTimezone(attributes, now)?.toISOString() ?? null)
+      : (attributes.next_scan_at ?? null);
+
+  return {
+    summary: describeScheduleCadence(attributes),
+    cadence: getScheduleCadenceParts(attributes).cadence,
+    nextScanAt,
+    lastScanAt: attributes.last_scan_at ?? null,
+  };
 }

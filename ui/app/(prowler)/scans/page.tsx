@@ -19,9 +19,8 @@ import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/ui";
 import {
-  describeScheduleCadence,
-  getNextScheduledRunInTimezone,
-  getScheduleCadenceParts,
+  buildProviderScheduleSummary,
+  buildSchedulesByProviderId,
   isScheduleConfigured,
 } from "@/lib/schedules";
 import {
@@ -29,8 +28,6 @@ import {
   SCAN_JOBS_TAB,
   SCAN_TRIGGER,
   ScanProps,
-  ScheduleAttributes,
-  ScheduleProps,
   SearchParamsProps,
 } from "@/types";
 
@@ -315,12 +312,7 @@ const SSRDataTableScans = async ({
 
   // Schedules are keyed by provider id so real scheduled scan rows can display
   // cadence/next-run info, and schedule-only providers can become Pending rows.
-  const schedulesByProviderId: Record<string, ScheduleAttributes> = {};
-  if (schedulesResult && !schedulesResult.error) {
-    for (const schedule of (schedulesResult.data ?? []) as ScheduleProps[]) {
-      schedulesByProviderId[schedule.id] = schedule.attributes;
-    }
-  }
+  const schedulesByProviderId = buildSchedulesByProviderId(schedulesResult);
 
   const scansWithSchedule = expandedScansData.map((scan) => {
     if (scan.attributes.trigger !== SCAN_TRIGGER.SCHEDULED) return scan;
@@ -329,21 +321,9 @@ const SSRDataTableScans = async ({
     const schedule = providerId ? schedulesByProviderId[providerId] : undefined;
     if (!schedule || !isScheduleConfigured(schedule)) return scan;
 
-    // Absent field (older API) -> client estimate; explicit null (paused) -> no time.
-    const nextScanAt =
-      schedule.next_scan_at === undefined && schedule.scan_enabled
-        ? (getNextScheduledRunInTimezone(schedule, new Date())?.toISOString() ??
-          null)
-        : (schedule.next_scan_at ?? null);
-
     return {
       ...scan,
-      providerSchedule: {
-        summary: describeScheduleCadence(schedule),
-        cadence: getScheduleCadenceParts(schedule).cadence,
-        nextScanAt,
-        lastScanAt: schedule.last_scan_at ?? null,
-      },
+      providerSchedule: buildProviderScheduleSummary(schedule, new Date()),
     };
   });
 
