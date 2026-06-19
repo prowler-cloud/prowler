@@ -36,6 +36,8 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
+    if operation_name == "ListTagsForResource":
+        return {"tags": [{"key": "Environment", "value": "test"}]}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -60,3 +62,4 @@ class Test_RolesAnywhere_Service:
         assert ta.source_type == "AWS_ACM_PCA"
         assert ta.acm_pca_arn == PCA_ARN
         assert ta.region == AWS_REGION_US_EAST_1
+        assert ta.tags == [{"key": "Environment", "value": "test"}]

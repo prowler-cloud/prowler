@@ -28,6 +28,9 @@ class RolesAnywhere(AWSService):
                         continue
                     source = ta.get("source", {}) or {}
                     source_data = source.get("sourceData", {}) or {}
+                    tags = regional_client.list_tags_for_resource(resourceArn=arn).get(
+                        "tags", []
+                    )
                     self.trust_anchors[arn] = TrustAnchor(
                         arn=arn,
                         id=ta.get("trustAnchorId", ""),
@@ -36,7 +39,7 @@ class RolesAnywhere(AWSService):
                         enabled=ta.get("enabled", False),
                         source_type=source.get("sourceType", ""),
                         acm_pca_arn=source_data.get("acmPcaArn", ""),
-                        tags=[],
+                        tags=tags,
                     )
         except Exception as error:
             logger.error(
