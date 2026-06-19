@@ -1,24 +1,24 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 16000 to 16099 are reserved for Linode exceptions
+# Exceptions codes from 18000 to 18099 are reserved for Linode exceptions
 class LinodeBaseException(ProwlerException):
     """Base class for Linode errors."""
 
     LINODE_ERROR_CODES = {
-        (16000, "LinodeCredentialsError"): {
+        (18000, "LinodeCredentialsError"): {
             "message": "Linode credentials not found or invalid",
-            "remediation": "Provide a valid Personal Access Token for Linode via LINODE_TOKEN environment variable or --linode-token argument.",
+            "remediation": "Provide a valid Personal Access Token for Linode via the LINODE_TOKEN environment variable.",
         },
-        (16001, "LinodeAuthenticationError"): {
+        (18001, "LinodeAuthenticationError"): {
             "message": "Linode authentication failed",
             "remediation": "Verify the Linode Personal Access Token and ensure it has the required scopes (linodes:read_only, firewalls:read_only, account:read_only).",
         },
-        (16002, "LinodeSessionError"): {
+        (18002, "LinodeSessionError"): {
             "message": "Linode session setup failed",
             "remediation": "Review the Linode SDK initialization parameters and credentials.",
         },
-        (16003, "LinodeIdentityError"): {
+        (18003, "LinodeIdentityError"): {
             "message": "Unable to retrieve Linode identity or account information",
             "remediation": "Ensure the Personal Access Token allows access to the Linode account and profile APIs.",
         },
@@ -49,7 +49,7 @@ class LinodeCredentialsError(LinodeBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            16000, file=file, original_exception=original_exception, message=message
+            18000, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -58,7 +58,7 @@ class LinodeAuthenticationError(LinodeBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            16001, file=file, original_exception=original_exception, message=message
+            18001, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -67,7 +67,7 @@ class LinodeSessionError(LinodeBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            16002, file=file, original_exception=original_exception, message=message
+            18002, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -76,5 +76,5 @@ class LinodeIdentityError(LinodeBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            16003, file=file, original_exception=original_exception, message=message
+            18003, file=file, original_exception=original_exception, message=message
         )
