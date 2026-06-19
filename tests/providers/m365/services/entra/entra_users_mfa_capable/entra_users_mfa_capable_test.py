@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 from uuid import uuid4
 
@@ -325,6 +326,133 @@ class Test_entra_users_mfa_capable:
             result = check.execute()
 
             assert len(result) == 0
+
+    def test_future_hire_member_user_not_checked(self):
+        """Future-hire member user is not active yet: expected no results."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            user_id = str(uuid4())
+            entra_client.users = {
+                user_id: User(
+                    id=user_id,
+                    name="Future Hire",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=True,
+                    user_type="Member",
+                    employee_hire_date=datetime.now(timezone.utc) + timedelta(days=1),
+                )
+            }
+
+            check = entra_users_mfa_capable()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    def test_naive_future_hire_member_user_not_checked(self):
+        """Naive future-hire datetimes are treated as UTC and skipped."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            user_id = str(uuid4())
+            entra_client.users = {
+                user_id: User(
+                    id=user_id,
+                    name="Future Hire",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=True,
+                    user_type="Member",
+                    employee_hire_date=(
+                        datetime.now(timezone.utc) + timedelta(days=1)
+                    ).replace(tzinfo=None),
+                )
+            }
+
+            check = entra_users_mfa_capable()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    def test_current_hire_member_user_is_checked(self):
+        """Current-hire member user is active now: expected evaluation."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            user_id = str(uuid4())
+            entra_client.users = {
+                user_id: User(
+                    id=user_id,
+                    name="Current Hire",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=True,
+                    user_type="Member",
+                    employee_hire_date=datetime.now(timezone.utc),
+                )
+            }
+
+            check = entra_users_mfa_capable()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == "User Current Hire is not MFA capable."
+            assert result[0].resource == entra_client.users[user_id]
+            assert result[0].resource_name == "Current Hire"
+            assert result[0].resource_id == user_id
 
     def test_member_and_guest_users(self):
         """Mix of member and guest users: only member users should be checked."""

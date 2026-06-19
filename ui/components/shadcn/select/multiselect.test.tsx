@@ -214,7 +214,7 @@ describe("MultiSelect", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("uses a normalized dropdown width instead of growing with the longest item", async () => {
+  it("sizes the dropdown to its content with a capped width", async () => {
     const user = userEvent.setup();
 
     render(
@@ -233,10 +233,8 @@ describe("MultiSelect", () => {
 
     await user.click(screen.getByRole("combobox"));
 
-    expect(screen.getByRole("dialog")).toHaveClass(
-      "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))]",
-    );
-    expect(screen.getByRole("dialog")).toHaveClass("max-w-[24rem]");
+    expect(screen.getByRole("dialog")).toHaveClass("sm:w-max");
+    expect(screen.getByRole("dialog")).toHaveClass("sm:max-w-[22rem]");
   });
 
   it("keeps long option lists scrollable inside the dropdown", async () => {
@@ -352,5 +350,37 @@ describe("MultiSelect", () => {
     await user.click(screen.getByRole("button", { name: /select all/i }));
 
     expect(onValuesChange).toHaveBeenCalledWith(["aws-prod", "azure-dev"]);
+  });
+
+  it("does not select disabled options", async () => {
+    const user = userEvent.setup();
+    const onValuesChange = vi.fn();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={onValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="aws-disconnected" disabled>
+            Disconnected AWS
+          </MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+
+    const disabledOption = screen.getByRole("option", {
+      name: /disconnected aws/i,
+    });
+
+    expect(disabledOption).toHaveAttribute("data-disabled", "true");
+    expect(disabledOption).toHaveAttribute("aria-disabled", "true");
+
+    await user.click(disabledOption);
+
+    expect(onValuesChange).not.toHaveBeenCalled();
   });
 });

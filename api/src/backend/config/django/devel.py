@@ -54,6 +54,8 @@ DATABASES = {
 
 DATABASES["default"] = DATABASES["prowler_user"]
 
+label_postgres_connections(DATABASES)  # noqa: F405
+
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = tuple(  # noqa: F405
     render_class
     for render_class in REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"]  # noqa: F405

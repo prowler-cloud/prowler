@@ -28,7 +28,7 @@ containers:
     image:
       repository: prowlercloud/prowler-api
       pullPolicy: IfNotPresent
-    command: ["../docker-entrypoint.sh", "beat"]
+    command: ["/home/prowler/docker-entrypoint.sh", "beat"]
 
 secrets:
   POSTGRES_HOST:

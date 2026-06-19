@@ -13,8 +13,8 @@
   "Risk": "Exposed webhook URLs allow **unauthorized content injection** into Chat spaces. Attackers can send **fraudulent or misleading messages** that appear to come from trusted services, creating a vector for **social engineering** and **phishing** within internal communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/6089179",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/apps/manage-the-marketplace-app-allowlist-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

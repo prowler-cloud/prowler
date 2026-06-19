@@ -9,19 +9,23 @@ export function ResourceDetailSkeleton() {
   return (
     <div className="flex items-start gap-4">
       <div className="@container flex min-w-0 flex-1 flex-col gap-4">
-        {/* Row 1: Provider, Resource */}
-        <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] @md:gap-x-8">
-          <EntityInfoSkeleton hasIcon labelWidth="w-12" />
-          <EntityInfoSkeleton labelWidth="w-14" />
+        {/* Row 1: Provider, Resource, Service, Region */}
+        <div className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)] @md:gap-x-8">
+          <div className="col-span-2 @md:col-span-1">
+            <EntityInfoSkeleton hasIcon labelWidth="w-12" />
+          </div>
+          <div className="col-span-2 @md:col-span-1">
+            <EntityInfoSkeleton labelWidth="w-14" />
+          </div>
+          <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-20" />
+          <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-24" />
         </div>
 
-        {/* Row 2: Last detected, First seen, Failing for, Service, Region */}
-        <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
+        {/* Row 2: Last detected, First seen, Failing for */}
+        <div className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-3 @md:gap-x-8">
           <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-32" />
           <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-32" />
           <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-16" />
-          <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-20" />
-          <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-24" />
         </div>
       </div>
 
