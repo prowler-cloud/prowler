@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_app_access_restricted",
+  "CheckTitle": "Application access to Google services is restricted",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level API controls configuration **restricts third-party app access** to at least one Google service. This check verifies that the administrator has configured API access controls rather than leaving all services at the unrestricted default. The CIS benchmark recommends restricting access to all applicable services, particularly high-risk scopes like Drive and Gmail.",
+  "Risk": "When application access to Google services is unrestricted, **any third-party app** that users consent to can access sensitive organizational data through Google APIs. This includes apps that may request **broad OAuth scopes** for Drive, Gmail, and other services, potentially leading to **data exfiltration** through unvetted applications.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/apps/control-which-apps-access-google-workspace-data",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Access and Data Control** > **API Controls**\n3. Click **App access control** > **MANAGE GOOGLE SERVICES**\n4. Select **ALL applicable Google Services**\n5. Click **Change access**\n6. Select **Restricted: Only trusted apps can access a service**\n7. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict **application access to Google services** to trusted apps only, particularly for high-risk scopes like **Drive and Gmail**, to prevent unvetted third-party apps from accessing sensitive organizational data.",
+      "Url": "https://hub.prowler.com/check/security_app_access_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_internal_apps_trusted"
+  ],
+  "Notes": "This check verifies that at least one Google service has API access restricted, serving as a signal that the administrator has configured API access controls. The CIS benchmark recommends restricting access to all applicable services."
+}

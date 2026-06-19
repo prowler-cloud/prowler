@@ -73,12 +73,13 @@ export function DataTableExpandableCell<TData>({
           {canExpand ? (
             <DataTableExpandToggle row={row} isExpanded={isExpanded} />
           ) : !isChildRow ? (
-            <div className="w-4" />
+            // shrink-0: keep this fixed-width spacer from collapsing under wide content, which would drag the checkbox left
+            <div className="w-4 shrink-0" />
           ) : null}
         </>
       )}
       {checkboxSlot && (
-        <div className="mr-2 flex items-center">{checkboxSlot}</div>
+        <div className="mr-2 flex shrink-0 items-center">{checkboxSlot}</div>
       )}
       {children}
     </div>

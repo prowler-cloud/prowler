@@ -42,6 +42,9 @@ class Storage(AzureService):
                             enable_https_traffic_only=storage_account.enable_https_traffic_only,
                             infrastructure_encryption=storage_account.encryption.require_infrastructure_encryption,
                             allow_blob_public_access=storage_account.allow_blob_public_access,
+                            public_network_access=getattr(
+                                storage_account, "public_network_access", None
+                            ),
                             network_rule_set=NetworkRuleSet(
                                 bypass=getattr(
                                     storage_account.network_rule_set,
@@ -111,7 +114,7 @@ class Storage(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return storage_accounts
 
@@ -156,16 +159,16 @@ class Storage(AzureService):
                             in str(error).strip()
                         ):
                             logger.warning(
-                                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                             continue
                         logger.error(
-                            f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
 
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_file_share_properties(self):
@@ -247,11 +250,11 @@ class Storage(AzureService):
                 except Exception as error:
                     if "File is not supported for the account." in str(error).strip():
                         logger.warning(
-                            f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                         continue
                     logger.error(
-                        f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
 
@@ -301,6 +304,7 @@ class Account(BaseModel):
     enable_https_traffic_only: bool
     infrastructure_encryption: Optional[bool] = None
     allow_blob_public_access: bool
+    public_network_access: Optional[str] = None
     network_rule_set: NetworkRuleSet
     encryption_type: str
     minimum_tls_version: str

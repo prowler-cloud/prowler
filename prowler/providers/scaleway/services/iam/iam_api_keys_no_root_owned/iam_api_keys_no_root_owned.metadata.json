@@ -1,0 +1,37 @@
+{
+  "Provider": "scaleway",
+  "CheckID": "iam_api_keys_no_root_owned",
+  "CheckTitle": "Scaleway IAM API keys must not be owned by the account root user",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Scaleway API keys** are checked to ensure none is bound to the **account root user**. The account root user is the original Scaleway account owner; its credentials bypass IAM policies and grant unrestricted access to the entire organization.",
+  "Risk": "API keys owned by the **account root user** cannot be scoped down with IAM policies. Leaking one of these keys yields immediate full control over every project, resource and billing setting in the organization, and rotating them disrupts every automation depending on root credentials.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.scaleway.com/en/docs/identity-and-access-management/iam/concepts/#root-account",
+    "https://www.scaleway.com/en/docs/identity-and-access-management/iam/how-to/create-api-keys/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "scw iam api-key delete <ACCESS_KEY>",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Scaleway console as a user with IAM admin permissions.\n2. Create a dedicated IAM user or application scoped with the minimum required policy.\n3. Generate a new API key for that bearer and roll it out to the workloads currently using the root key.\n4. Delete the API key owned by the account root user from the IAM > API keys page.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Never use API keys owned by the **account root user** for automation. Create scoped **IAM users** or **applications**, attach **least-privilege policies**, and rotate any existing root API keys to that new bearer.",
+      "Url": "https://hub.prowler.com/check/iam_api_keys_no_root_owned"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

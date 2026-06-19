@@ -10,7 +10,10 @@ import { useEffect, useState } from "react";
 import { Control, useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
-import { PROVIDER_ICONS } from "@/components/findings/table/provider-icon-cell";
+import {
+  PROVIDER_TYPE_DATA,
+  ProviderTypeIcon,
+} from "@/components/icons/providers-badge/provider-type-icon";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
@@ -121,11 +124,14 @@ export const SecurityHubIntegrationForm = ({
         ? "Connected"
         : "Disconnected";
 
-      const Icon = PROVIDER_ICONS[provider.attributes.provider];
+      const providerType = provider.attributes.provider;
       return {
         value: provider.id,
         label: provider.attributes.alias || provider.attributes.uid,
-        icon: Icon ? <Icon width={20} height={20} /> : undefined,
+        icon:
+          providerType in PROVIDER_TYPE_DATA ? (
+            <ProviderTypeIcon type={providerType} size={20} />
+          ) : undefined,
         description: isDisabled
           ? `${connectionLabel} (Already in use)`
           : connectionLabel,

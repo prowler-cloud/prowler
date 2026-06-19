@@ -7,21 +7,24 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "**Azure PostgreSQL Flexible Server** is evaluated for **geo-redundant backup**. Geo-redundant backup stores copies in a paired Azure region, enabling cross-region disaster recovery.",
-  "Risk": "Without geo-redundant backup, a regional disaster causes **permanent data loss**. Locally redundant backups only protect against storage hardware failures within the same region.",
+  "Description": "**Azure PostgreSQL Flexible Server** is evaluated for **geo-redundant backup**. Geo-redundant backup stores backup copies in a paired Azure region, enabling restore and cross-region disaster recovery.",
+  "Risk": "Without **geo-redundant backup**, a regional disaster can cause **permanent data loss**. Locally redundant backups only protect against storage hardware failures within the same region and cannot be restored if the primary region becomes unavailable.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-backup-restore",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.dbforpostgresql/flexibleservers"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az postgres flexible-server create --name <server_name> --resource-group <resource_group_name> --location <region> --geo-redundant-backup Enabled",
+      "NativeIaC": "```bicep\n// Bicep: PostgreSQL Flexible Server with geo-redundant backup (set at creation)\nresource postgresql 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {\n  name: '<example_resource_name>'\n  location: '<region>'\n  properties: {\n    backup: {\n      geoRedundantBackup: 'Enabled' // CRITICAL: stores backups in the paired region\n    }\n  }\n}\n```",
+      "Other": "1. Geo-redundant backup must be configured when the server is created; it cannot be enabled on an existing server\n2. In the Azure portal, start creating a new Azure Database for PostgreSQL flexible server\n3. On the Basics tab, under Compute + storage, open Configure server\n4. Set Geographically redundant backup to Enabled and save\n5. Finish creating the server and migrate workloads to it",
+      "Terraform": "```hcl\n# Terraform: PostgreSQL Flexible Server with geo-redundant backup (set at creation)\nresource \"azurerm_postgresql_flexible_server\" \"<example_resource_name>\" {\n  name                         = \"<example_resource_name>\"\n  resource_group_name          = \"<example_resource_name>\"\n  location                     = \"<region>\"\n  geo_redundant_backup_enabled = true # CRITICAL: stores backups in the paired region\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **geo-redundant backup** on PostgreSQL Flexible Servers so backups are replicated to the paired Azure region and can be restored during a regional outage. Because this is set at server creation, plan a migration for existing servers, and pair it with an appropriate backup retention period and periodic restore testing.",
       "Url": "https://hub.prowler.com/check/postgresql_flexible_server_geo_redundant_backup_enabled"
     }
   },
@@ -30,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Geo-redundant backup for Azure PostgreSQL Flexible Server can only be configured at server creation time and cannot be changed afterwards."
 }

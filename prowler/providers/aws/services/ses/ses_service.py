@@ -46,9 +46,15 @@ class SES(AWSService):
                 identity_attributes = regional_client.get_email_identity(
                     EmailIdentity=identity.name
                 )
-                for _, content in identity_attributes["Policies"].items():
+                for _, content in identity_attributes.get("Policies", {}).items():
                     identity.policy = loads(content)
-                identity.tags = identity_attributes["Tags"]
+                identity.tags = identity_attributes.get("Tags", [])
+                dkim_attrs = identity_attributes.get("DkimAttributes", {}) or {}
+                identity.dkim_status = dkim_attrs.get("Status")
+                identity.dkim_signing_enabled = dkim_attrs.get("SigningEnabled", False)
+                identity.dkim_signing_attributes_origin = dkim_attrs.get(
+                    "SigningAttributesOrigin"
+                )
 
             except Exception as error:
                 logger.error(
@@ -67,3 +73,6 @@ class Identity(BaseModel):
     type: Optional[str]
     policy: Optional[dict] = None
     tags: Optional[list] = []
+    dkim_status: Optional[str] = None
+    dkim_signing_attributes_origin: Optional[str] = None
+    dkim_signing_enabled: Optional[bool] = False

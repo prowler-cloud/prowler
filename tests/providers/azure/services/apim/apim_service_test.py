@@ -8,6 +8,7 @@ from azure.monitor.query import LogsQueryResult
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -193,6 +194,9 @@ class Test_APIM_Service(TestCase):
 
                 # Properly mock the nested client structure
                 mock_client = mock.MagicMock()
+                mock_client.subscriptions = {
+                    AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+                }
                 mock_workspaces = mock.MagicMock()
                 mock_workspaces.get.return_value = mock_workspace
                 mock_client.workspaces = mock_workspaces
@@ -246,6 +250,9 @@ class Test_APIM_Service(TestCase):
 
                 # Properly mock the nested client structure
                 mock_client = mock.MagicMock()
+                mock_client.subscriptions = {
+                    AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+                }
                 mock_client.query_workspace.return_value = mock_response
                 mock_logsquery_client.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
 

@@ -64,10 +64,12 @@ class TestAzureMutelist:
         finding.status = "FAIL"
         finding.resource_name = "test_resource"
         finding.resource_tags = {}
-        finding.subscription = "subscription_1"
+        finding.subscription = "12345678-1234-1234-1234-123456789012"
 
         assert mutelist.is_finding_muted(
-            finding, "12345678-1234-1234-1234-123456789012"
+            finding,
+            "12345678-1234-1234-1234-123456789012",
+            "subscription_1",
         )
 
     def test_is_finding_muted_subscription_id(self):

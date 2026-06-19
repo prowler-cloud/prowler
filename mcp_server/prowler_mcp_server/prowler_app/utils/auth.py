@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from fastmcp.server.dependencies import get_http_headers
+
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 
@@ -68,7 +69,7 @@ class ProwlerAppAuth:
     async def authenticate(self) -> str:
         """Authenticate and return token (API key for STDIO, API key or JWT for HTTP)."""
         if self.mode == "http":
-            headers = get_http_headers()
+            headers = get_http_headers(include={"authorization"})
             authorization_header = headers.get("authorization", None)
 
             if not authorization_header:

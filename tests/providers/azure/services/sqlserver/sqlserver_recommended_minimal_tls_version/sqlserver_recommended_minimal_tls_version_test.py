@@ -8,7 +8,9 @@ from prowler.providers.azure.services.sqlserver.sqlserver_service import (
     Server,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -16,6 +18,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_sqlserver_recommended_minimal_tls_version:
     def test_no_sql_servers(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sqlserver_client.sql_servers = {}
 
         with (
@@ -42,6 +47,9 @@ class Test_sqlserver_recommended_minimal_tls_version:
 
     def test_sql_servers_deprecated_minimal_tls_version(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database_name = "Database Name"
@@ -95,7 +103,7 @@ class Test_sqlserver_recommended_minimal_tls_version:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} is using TLS version 1.0 as minimal accepted which is not recommended. Please use one of the recommended versions: {', '.join(sqlserver_client.audit_config['recommended_minimal_tls_versions'])}."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} is using TLS version 1.0 as minimal accepted which is not recommended. Please use one of the recommended versions: {', '.join(sqlserver_client.audit_config['recommended_minimal_tls_versions'])}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -104,6 +112,9 @@ class Test_sqlserver_recommended_minimal_tls_version:
 
     def test_sql_servers_no_minimal_tls_version(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database_name = "Database Name"
@@ -157,7 +168,7 @@ class Test_sqlserver_recommended_minimal_tls_version:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} is using TLS version  as minimal accepted which is not recommended. Please use one of the recommended versions: {', '.join(sqlserver_client.audit_config['recommended_minimal_tls_versions'])}."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} is using TLS version  as minimal accepted which is not recommended. Please use one of the recommended versions: {', '.join(sqlserver_client.audit_config['recommended_minimal_tls_versions'])}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -166,6 +177,9 @@ class Test_sqlserver_recommended_minimal_tls_version:
 
     def test_sql_servers_minimal_tls_version(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database_name = "Database Name"
@@ -219,7 +233,7 @@ class Test_sqlserver_recommended_minimal_tls_version:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} is using version 1.2 as minimal accepted which is recommended."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} is using version 1.2 as minimal accepted which is recommended."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
