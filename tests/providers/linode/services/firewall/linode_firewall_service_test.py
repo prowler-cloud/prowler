@@ -1,4 +1,6 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+from linode_api4.errors import ApiError
 
 from prowler.providers.linode.services.firewall.firewall_service import (
     FirewallService,
@@ -94,6 +96,22 @@ class TestLinodeFirewallService:
         service._describe_firewalls()
 
         assert len(service.firewalls) == 0
+
+    def test_describe_firewalls_missing_scope_logs_permission_error(self):
+        error = ApiError(
+            "Your OAuth token is not authorized to use this endpoint.", status=401
+        )
+        service = _build_service(networking_firewalls_side_effect=error)
+
+        with patch(
+            "prowler.providers.linode.lib.service.service.logger"
+        ) as logger_mock:
+            service._describe_firewalls()
+
+        assert len(service.firewalls) == 0
+        logged = " ".join(str(c) for c in logger_mock.error.call_args_list)
+        assert "LinodeMissingPermissionError" in logged
+        assert "firewall:read_only" in logged
 
     def test_describe_firewalls_device_fetch_error_yields_none_count(self):
         """A devices fetch failure must leave attached_devices_count as None

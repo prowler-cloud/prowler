@@ -22,6 +22,10 @@ class LinodeBaseException(ProwlerException):
             "message": "Unable to retrieve Linode identity or account information",
             "remediation": "Ensure the Personal Access Token allows access to the Linode account and profile APIs.",
         },
+        (18004, "LinodeMissingPermissionError"): {
+            "message": "Linode token is missing a required permission scope",
+            "remediation": "Grant the Personal Access Token the read-only scope required for the affected service (account:read_only, linodes:read_only, firewall:read_only).",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -77,4 +81,13 @@ class LinodeIdentityError(LinodeBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             18003, file=file, original_exception=original_exception, message=message
+        )
+
+
+class LinodeMissingPermissionError(LinodeBaseException):
+    """Exception for Linode missing permission scope errors."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            18004, file=file, original_exception=original_exception, message=message
         )

@@ -124,7 +124,4 @@ class FirewallService(LinodeService):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
-                f"firewall - Error fetching firewalls: "
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            self._log_fetch_error("firewalls", "firewall:read_only", error)

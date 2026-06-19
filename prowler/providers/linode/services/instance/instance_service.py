@@ -80,7 +80,4 @@ class InstanceService(LinodeService):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error(
-                f"instance - Error fetching instances: "
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            self._log_fetch_error("instances", "linodes:read_only", error)

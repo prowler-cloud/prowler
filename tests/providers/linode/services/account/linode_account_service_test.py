@@ -1,4 +1,6 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+from linode_api4.errors import ApiError
 
 from prowler.providers.linode.services.account.account_service import (
     AccountService,
@@ -82,3 +84,19 @@ class TestLinodeAccountService:
         assert service.users[0].email == ""
         assert service.users[0].tfa_enabled is False
         assert service.users[0].restricted is False
+
+    def test_describe_users_missing_scope_logs_permission_error(self):
+        error = ApiError(
+            "Your OAuth token is not authorized to use this endpoint.", status=401
+        )
+        service = _build_service(account_users_side_effect=error)
+
+        with patch(
+            "prowler.providers.linode.lib.service.service.logger"
+        ) as logger_mock:
+            service._describe_users()
+
+        assert len(service.users) == 0
+        logged = " ".join(str(c) for c in logger_mock.error.call_args_list)
+        assert "LinodeMissingPermissionError" in logged
+        assert "account:read_only" in logged
