@@ -255,6 +255,18 @@
           "compute_network_not_legacy",
           "compute_network_default_in_use",
           "compute_instance_single_network_interface"
+        ],
+        "cloudflare": [
+          "zone_universal_ssl_enabled",
+          "zone_ssl_strict",
+          "zone_min_tls_version_secure",
+          "zone_tls_1_3_enabled",
+          "zone_hsts_enabled",
+          "zone_https_redirect_enabled",
+          "zone_automatic_https_rewrites_enabled",
+          "zone_development_mode_disabled",
+          "zone_record_caa_exists",
+          "zone_dnssec_enabled"
         ]
       }
     },
@@ -291,6 +303,11 @@
           "apikeys_key_exists",
           "compute_instance_suspended_without_persistent_disks",
           "compute_public_address_shodan"
+        ],
+        "cloudflare": [
+          "dns_record_no_wildcard",
+          "dns_record_no_internal_ip",
+          "dns_record_cname_target_valid"
         ]
       }
     },
@@ -414,6 +431,32 @@
           "cloudsql_instance_sqlserver_trace_flag",
           "cloudsql_instance_sqlserver_user_connections_flag",
           "cloudsql_instance_sqlserver_user_options_flag"
+        ],
+        "cloudflare": [
+          "zone_universal_ssl_enabled",
+          "zone_ssl_strict",
+          "zone_min_tls_version_secure",
+          "zone_tls_1_3_enabled",
+          "zone_hsts_enabled",
+          "zone_https_redirect_enabled",
+          "zone_automatic_https_rewrites_enabled",
+          "zone_record_caa_exists",
+          "zone_dnssec_enabled",
+          "zone_waf_enabled",
+          "zone_waf_owasp_ruleset_enabled",
+          "zone_firewall_blocking_rules_configured",
+          "zone_browser_integrity_check_enabled",
+          "zone_bot_fight_mode_enabled",
+          "zone_rate_limiting_enabled",
+          "zone_challenge_passage_configured",
+          "zone_ip_geolocation_enabled",
+          "dns_record_proxied",
+          "dns_record_no_internal_ip",
+          "dns_record_no_wildcard",
+          "dns_record_cname_target_valid",
+          "zone_record_spf_exists",
+          "zone_record_dkim_exists",
+          "zone_record_dmarc_exists"
         ]
       }
     },
@@ -470,6 +513,11 @@
           "cloudstorage_bucket_logging_enabled",
           "compute_loadbalancer_logging_enabled",
           "logging_sink_created"
+        ],
+        "cloudflare": [
+          "zone_bot_fight_mode_enabled",
+          "zone_browser_integrity_check_enabled",
+          "zone_rate_limiting_enabled"
         ]
       }
     },
@@ -909,6 +957,9 @@
           "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
           "apikeys_key_rotated_in_90_days",
           "iam_sa_user_managed_key_rotate_90_days"
+        ],
+        "cloudflare": [
+          "zone_min_tls_version_secure"
         ]
       }
     },
@@ -965,6 +1016,10 @@
           "apikeys_api_restricted_with_gemini_api",
           "compute_image_not_publicly_shared",
           "iam_cloud_asset_inventory_enabled"
+        ],
+        "cloudflare": [
+          "zone_record_caa_exists",
+          "dns_record_cname_target_valid"
         ]
       }
     },
