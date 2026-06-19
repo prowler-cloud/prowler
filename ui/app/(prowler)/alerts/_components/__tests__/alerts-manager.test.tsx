@@ -13,6 +13,7 @@ import type {
   AlertFormValues,
 } from "@/app/(prowler)/alerts/_types/alert-form";
 
+import { ALERTS_PERMISSION_ERROR } from "../../_lib/alert-errors";
 import { AlertsManager } from "../alerts-manager";
 
 const actionMocks = vi.hoisted(() => ({
@@ -316,11 +317,7 @@ describe("AlertsManager", () => {
     await user.click(screen.getByRole("button", { name: /submit alert/i }));
 
     // Then
-    expect(
-      await screen.findByText(
-        "You don't have permission to manage alerts. Ask an administrator to update your role.",
-      ),
-    ).toBeVisible();
+    expect(await screen.findByText(ALERTS_PERMISSION_ERROR)).toBeVisible();
     expect(toastMock).not.toHaveBeenCalled();
   });
 
@@ -342,6 +339,32 @@ describe("AlertsManager", () => {
       expect(toastMock).toHaveBeenCalledWith({
         title: "Alert disabled",
         description: "Enabled alert",
+      }),
+    );
+  });
+
+  it("shows a manage alerts permission toast for disable 403 errors", async () => {
+    // Given
+    const user = userEvent.setup();
+    const alert = makeAlert(true);
+    actionMocks.disableAlert.mockResolvedValue({
+      error: "You do not have permission to perform this action.",
+      status: 403,
+    });
+    renderManager([alert]);
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /actions for enabled alert/i }),
+    );
+    await user.click(screen.getByRole("menuitem", { name: /disable/i }));
+
+    // Then
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        variant: "destructive",
+        title: "Alert update failed",
+        description: ALERTS_PERMISSION_ERROR,
       }),
     );
   });

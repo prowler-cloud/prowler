@@ -11,18 +11,39 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `config_delegated_admin_and_org_aggregator_all_regions` check for AWS provider, verifying that AWS Config has a delegated administrator and an organization aggregator covering all AWS regions [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
 - `sagemaker_clarify_exists` check for AWS provider [(#11211)](https://github.com/prowler-cloud/prowler/pull/11211)
 - `cloudsql_instance_high_availability_enabled` check for GCP provider, verifying Cloud SQL primary instances use `REGIONAL` availability for automatic zone failover [(#11024)](https://github.com/prowler-cloud/prowler/pull/11024)
+- `cloudfunction_function_inside_vpc` check for GCP provider, verifying Cloud Functions have a Serverless VPC Access connector for private egress [(#11021)](https://github.com/prowler-cloud/prowler/pull/11021)
 - `identity_storage_service_level_admins_scoped` check for OCI provider CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions [(#11523)](https://github.com/prowler-cloud/prowler/pull/11523)
 - `cosmosdb_account_automatic_failover_enabled` check for Azure provider [(#11031)](https://github.com/prowler-cloud/prowler/pull/11031)
 - `cosmosdb_account_backup_policy_continuous` check for Azure provider [(#11032)](https://github.com/prowler-cloud/prowler/pull/11032)
 - `cosmosdb_account_minimum_tls_version` check for Azure provider, verifying Cosmos DB accounts enforce TLS 1.2 or higher for client connections [(#11033)](https://github.com/prowler-cloud/prowler/pull/11033)
+- `cosmosdb_account_public_network_access_disabled` check for Azure provider, verifying Cosmos DB accounts have public network access disabled so connectivity is restricted to private endpoints or VNet service endpoints [(#11034)](https://github.com/prowler-cloud/prowler/pull/11034)
+- `databricks_workspace_public_network_access_disabled` check for Azure provider, verifying Databricks workspaces have public network access disabled so connectivity is restricted to Azure Private Link private endpoints [(#11035)](https://github.com/prowler-cloud/prowler/pull/11035)
+- `databricks_workspace_no_public_ip_enabled` check for Azure provider, verifying Databricks workspaces use secure cluster connectivity (no public IP) so compute nodes are not assigned public IP addresses [(#11036)](https://github.com/prowler-cloud/prowler/pull/11036)
+- `defender_ensure_defender_cspm_is_on` check for Azure provider, verifying Microsoft Defender Cloud Security Posture Management (CSPM) is enabled on the Standard tier [(#11037)](https://github.com/prowler-cloud/prowler/pull/11037)
+- `mysql_flexible_server_geo_redundant_backup_enabled` check for Azure provider, verifying MySQL Flexible Servers have geo-redundant backup enabled so backups are replicated to the paired region [(#11041)](https://github.com/prowler-cloud/prowler/pull/11041)
+- `mysql_flexible_server_high_availability_enabled` check for Azure provider, verifying MySQL Flexible Servers have high availability enabled for automatic failover to a standby replica [(#11042)](https://github.com/prowler-cloud/prowler/pull/11042)
+- `postgresql_flexible_server_geo_redundant_backup_enabled` check for Azure provider, verifying PostgreSQL Flexible Servers have geo-redundant backup enabled so backups are replicated to the paired region [(#11045)](https://github.com/prowler-cloud/prowler/pull/11045)
 - `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
+- Public `Provider.get_class()` method that resolves a provider class by name for both built-in and external (entry-point) providers [(#11398)](https://github.com/prowler-cloud/prowler/pull/11398)
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
 - TLS certificate verification in the `codepipeline_project_repo_private` check, which previously used an unverified SSL context, leaving the repository-visibility probe open to MITM tampering [(#11603)](https://github.com/prowler-cloud/prowler/pull/11603)
 - Support for Linode cloud provider [(#11633)](https://github.com/prowler-cloud/prowler/pull/11633)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Azure provider, mapping existing Azure checks across the five DORA pillars [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
+- Rename DORA to DORA_2022_2554 to follow the naming <name>_<version> in compliance frameworks [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
+- `entra_directory_sync_object_takeover_blocked` check for the M365 provider, verifying that hybrid Entra tenants block cloud object takeover through both soft-match and hard-match directory synchronization [(#11098)](https://github.com/prowler-cloud/prowler/pull/11098)
+- `entra_conditional_access_policy_no_deleted_object_references` check for M365 provider [(#11236)](https://github.com/prowler-cloud/prowler/pull/11236)
+- `aks_cluster_defender_enabled` check for Azure provider, verifying that AKS clusters have Microsoft Defender security monitoring enabled [(#11028)](https://github.com/prowler-cloud/prowler/pull/11028)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the GCP provider, mapping existing GCP checks across the five DORA pillars [(#11642)](https://github.com/prowler-cloud/prowler/pull/11642)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Cloudflare provider, mapping existing Cloudflare edge/network checks across the applicable DORA pillars [(#11645)](https://github.com/prowler-cloud/prowler/pull/11645)
+
 
 ### 🔄 Changed
 
 - Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
+
+### 🐞 Fixed
+
+- Azure PostgreSQL flexible server inventory no longer aborts the whole subscription when the `connection_throttle.enable` parameter is missing (e.g. PostgreSQL v18), and logs the expected "Entra ID authentication not enabled" case as a warning instead of an error, so servers are still scanned [(#11045)](https://github.com/prowler-cloud/prowler/pull/11045)
 
 ### 🔐 Security
 
@@ -33,13 +54,21 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [5.30.2] (Prowler UNRELEASED)
+## [5.30.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- CLI compliance summary tables no longer undercount findings mapped to multiple sections nor double-count a single finding mapped to several requirements within the same group/split, and the Provider column no longer leaks a value from another framework [(#11567)](https://github.com/prowler-cloud/prowler/pull/11567)
+
+---
+
+## [5.30.2] (Prowler v5.30.2)
 
 ### 🐞 Fixed
 
 - GCP `logging_log_metric_filter_and_alert_*` checks now credit org-level aggregated sinks filtered to the Admin Activity audit stream [(#11575)](https://github.com/prowler-cloud/prowler/pull/11575)
 - A broken built-in provider no longer aborts the CLI when a different provider was invoked [(#11618)](https://github.com/prowler-cloud/prowler/pull/11618)
-- GCP organization scans with `--organization-id` no longer silently fall back to the credentials' host project when the Cloud Asset API call fails; the new `GCPGetOrganizationProjectsError` (3011) is raised instead, naming the required `roles/cloudasset.viewer` binding and Cloud Asset API enablement [(#11280)](https://github.com/prowler-cloud/prowler/pull/11280)
+- GCP organization scans with `--organization-id` no longer silently fall back to the credentials' host project when the Cloud Asset API call fails [(#11280)](https://github.com/prowler-cloud/prowler/pull/11280)
 
 ---
 

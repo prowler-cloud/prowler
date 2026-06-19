@@ -40,6 +40,19 @@ const columns: ColumnDef<TestRow>[] = [
   },
 ];
 
+const columnsWithActions: ColumnDef<TestRow>[] = [
+  {
+    accessorKey: "name",
+    header: "Name",
+  },
+  {
+    id: "actions",
+    header: "",
+    cell: () => <button type="button">Actions</button>,
+    enableSorting: false,
+  },
+];
+
 const metadata: MetaDataProps = {
   pagination: {
     page: 1,
@@ -97,6 +110,62 @@ describe("DataTable", () => {
       expect(toolbar).toHaveClass("md:flex-row");
       expect(rightContent).toHaveClass("w-full");
       expect(rightContent).toHaveClass("md:w-auto");
+    });
+  });
+
+  describe("when an actions column is present", () => {
+    it("should keep the actions header and cells sticky on the right edge", () => {
+      // Given
+      render(
+        <DataTable
+          columns={columnsWithActions}
+          data={[{ name: "Finding A" }]}
+        />,
+      );
+
+      // When
+      const columnHeaders = screen.getAllByRole("columnheader");
+      const nameHeader = columnHeaders[0];
+      const actionsHeader = columnHeaders.at(-1);
+      expect(actionsHeader).toBeDefined();
+      const actionsHeaderElement = actionsHeader as HTMLElement;
+      const nameCell = screen.getByText("Finding A").closest("td");
+      const actionsCell = screen
+        .getByRole("button", {
+          name: "Actions",
+        })
+        .closest("td");
+
+      // Then
+      expect(nameHeader).not.toHaveClass("sticky");
+      expect(nameCell).not.toHaveClass("sticky");
+      expect(actionsHeaderElement).not.toHaveClass("sticky");
+      expect(actionsHeaderElement).not.toHaveClass("right-0");
+      expect(actionsHeaderElement).not.toHaveClass("z-20");
+      expect(actionsHeaderElement).toHaveClass("bg-bg-neutral-tertiary");
+      expect(actionsHeaderElement).toHaveClass("border-y");
+      expect(actionsHeaderElement).toHaveClass("last:border-r");
+      expect(actionsHeaderElement).toHaveClass("last:rounded-r-full");
+      expect(actionsHeaderElement).not.toHaveClass("bg-transparent");
+      expect(actionsHeaderElement).not.toHaveClass("border-y-0");
+      expect(actionsHeaderElement).not.toHaveClass("border-l-0");
+      expect(actionsHeaderElement).not.toHaveClass("border-r-0");
+      expect(actionsHeaderElement).not.toHaveClass("last:border-r-0");
+      expect(actionsHeaderElement).not.toHaveClass("backdrop-blur-none");
+      expect(actionsHeaderElement).not.toHaveClass("last:rounded-r-none");
+      expect(actionsHeaderElement).not.toHaveClass("before:bg-gradient-to-r");
+      expect(actionsHeaderElement).not.toHaveClass("before:content-['']");
+      expect(actionsHeaderElement).not.toHaveClass("after:content-['']");
+      expect(actionsHeaderElement).not.toHaveClass("after:rounded-r-full");
+      expect(actionsHeaderElement.querySelector("div")).not.toBeInTheDocument();
+      expect(actionsCell).toHaveClass("sticky");
+      expect(actionsCell).toHaveClass("right-0");
+      expect(actionsCell).toHaveClass("z-20");
+      expect(actionsCell).toHaveClass("bg-bg-neutral-secondary");
+      expect(actionsCell).not.toHaveClass("border-l");
+      expect(actionsCell).toHaveClass("before:bg-gradient-to-r");
+      expect(actionsCell).toHaveClass("before:from-transparent");
+      expect(actionsCell).toHaveClass("before:to-bg-neutral-secondary");
     });
   });
 });

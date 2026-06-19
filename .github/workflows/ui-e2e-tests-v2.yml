@@ -40,7 +40,8 @@ jobs:
       AUTH_SECRET: 'fallback-ci-secret-for-testing'
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: 'http://localhost:3000'
-      NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
+      AUTH_URL: 'http://localhost:3000'
+      UI_API_BASE_URL: 'http://localhost:8080/api/v1'
       E2E_ADMIN_USER: ${{ secrets.E2E_ADMIN_USER }}
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_AWS_PROVIDER_ACCOUNT_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCOUNT_ID }}
@@ -77,6 +78,12 @@ jobs:
       E2E_ALIBABACLOUD_ACCESS_KEY_ID: ${{ secrets.E2E_ALIBABACLOUD_ACCESS_KEY_ID }}
       E2E_ALIBABACLOUD_ACCESS_KEY_SECRET: ${{ secrets.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET }}
       E2E_ALIBABACLOUD_ROLE_ARN: ${{ secrets.E2E_ALIBABACLOUD_ROLE_ARN }}
+      E2E_OKTA_DOMAIN: ${{ secrets.E2E_OKTA_DOMAIN }}
+      E2E_OKTA_CLIENT_ID: ${{ secrets.E2E_OKTA_CLIENT_ID }}
+      E2E_OKTA_BASE64_PRIVATE_KEY: ${{ secrets.E2E_OKTA_BASE64_PRIVATE_KEY }}
+      E2E_GOOGLEWORKSPACE_CUSTOMER_ID: ${{ secrets.E2E_GOOGLEWORKSPACE_CUSTOMER_ID }}
+      E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON: ${{ secrets.E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON }}
+      E2E_GOOGLEWORKSPACE_DELEGATED_USER: ${{ secrets.E2E_GOOGLEWORKSPACE_DELEGATED_USER }}
       E2E_VERCEL_TEAM_ID: ${{ secrets.E2E_VERCEL_TEAM_ID }}
       E2E_VERCEL_API_TOKEN: ${{ secrets.E2E_VERCEL_API_TOKEN }}
       # Pass E2E paths from impact analysis
@@ -159,7 +166,7 @@ jobs:
           timeout=150
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            if curl -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
+            if curl -s ${UI_API_BASE_URL}/docs >/dev/null 2>&1; then
               echo "Prowler API is ready!"
               exit 0
             fi

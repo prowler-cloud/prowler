@@ -1,14 +1,25 @@
 import type { CellContext, HeaderContext } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ScanProps } from "@/types";
 
 vi.mock("@/components/shadcn", () => ({
-  Badge: ({ children }: { children: React.ReactNode }) => (
-    <span>{children}</span>
-  ),
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Progress: () => <div />,
+  StackedCell: ({
+    primary,
+    secondary,
+  }: {
+    primary: ReactNode;
+    secondary?: ReactNode;
+  }) => (
+    <div>
+      <span>{primary}</span>
+      {secondary ? <span>{secondary}</span> : null}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/ui/entities", () => ({
@@ -148,6 +159,8 @@ describe("getScanJobsColumns", () => {
       "account",
       "scanInfo",
       "scanSchedule",
+      "nextScan",
+      "lastScan",
       "actions",
     ]);
   });

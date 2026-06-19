@@ -10,6 +10,15 @@ All notable changes to the **Prowler API** are documented in this file.
 - Provider filters for `GET /api/v1/compliance-overviews`, `/metadata`, and `/requirements`, using latest completed scans per matching provider [(#11587)](https://github.com/prowler-cloud/prowler/pull/11587)
 - Server-Sent Events (SSE) infrastructure for the API: a base viewset, a tenant-aware channel manager, and channel-name helpers backed by `django-eventstream` over Valkey Pub/Sub and served through the Gunicorn ASGI worker, so feature endpoints can stream events to clients over a single long-lived connection [(#11556)](https://github.com/prowler-cloud/prowler/pull/11556)
 
+### 🔄 Changed
+
+- Gunicorn worker timeout raised from the 30s default to 120s, so long-running requests are no longer killed prematurely [(#11631)](https://github.com/prowler-cloud/prowler/pull/11631)
+- Sentry now drops ASGI's `RequestAborted` errors from health-check probe disconnects on `/health/live` [(#11632)](https://github.com/prowler-cloud/prowler/pull/11632)
+
+### 🐞 Fixed
+
+- Database connections no longer leak under the ASGI worker, which previously exhausted the read replica's connection slots and caused 500s on read endpoints [(#11640)](https://github.com/prowler-cloud/prowler/pull/11640)
+
 ### 🔐 Security
 
 - `aiohttp` to 3.14.0 and `idna` to 3.15, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
@@ -18,11 +27,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.31.2] (Prowler UNRELEASED)
+## [1.31.2] (Prowler v5.30.2)
 
 ### 🔄 Changed
 
-- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes (reading the denormalized `resource_regions` instead of prefetching resources, and batching rows into COPY instead of building the full list first), so it runs faster and its peak memory no longer grows with the number of regions and frameworks — a previous worker OOM risk on large scans — with no change to the compliance overview output [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
+- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes so it runs faster and its peak memory no longer grows with the number of regions and frameworks [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
 
 ---
 
