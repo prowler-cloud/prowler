@@ -2,13 +2,19 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { refreshMock, removeScheduleMock, toastMock, updateScheduleMock } =
-  vi.hoisted(() => ({
-    refreshMock: vi.fn(),
-    removeScheduleMock: vi.fn(),
-    toastMock: vi.fn(),
-    updateScheduleMock: vi.fn(),
-  }));
+const {
+  refreshMock,
+  removeScheduleMock,
+  toastMock,
+  updateScheduleMock,
+  updateSchedulesBulkMock,
+} = vi.hoisted(() => ({
+  refreshMock: vi.fn(),
+  removeScheduleMock: vi.fn(),
+  toastMock: vi.fn(),
+  updateScheduleMock: vi.fn(),
+  updateSchedulesBulkMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: refreshMock }),
@@ -17,6 +23,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/actions/schedules", () => ({
   removeSchedule: removeScheduleMock,
   updateSchedule: updateScheduleMock,
+  updateSchedulesBulk: updateSchedulesBulkMock,
 }));
 
 vi.mock("@/components/ui/toast", () => ({
@@ -58,6 +65,16 @@ const provider = {
   providerAlias: "Production",
 };
 
+const organizationProviders = [
+  provider,
+  {
+    providerId: "p2",
+    providerType: "aws" as const,
+    providerUid: "210987654321",
+    providerAlias: "Staging",
+  },
+];
+
 const schedule: ScheduleProps = {
   type: "schedules",
   id: "p1",
@@ -89,6 +106,7 @@ describe("EditScanScheduleModal remove flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     removeScheduleMock.mockResolvedValue({ success: true });
+    updateSchedulesBulkMock.mockResolvedValue({ success: true });
   });
 
   it("asks for confirmation before removing the schedule", async () => {
@@ -161,5 +179,71 @@ describe("EditScanScheduleModal remove flow", () => {
     );
 
     expect(removeScheduleMock).not.toHaveBeenCalled();
+  });
+
+  it("saves organization schedules through the bulk endpoint", async () => {
+    const user = userEvent.setup();
+    render(
+      <EditScanScheduleModal
+        open
+        onOpenChange={vi.fn()}
+        providers={organizationProviders}
+        targetName="My AWS Organization"
+        targetId="o-abc123def4"
+        state={{ kind: EDIT_SCAN_SCHEDULE_STATE.LOADED, schedule }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(updateSchedulesBulkMock).toHaveBeenCalledWith(
+        ["p1", "p2"],
+        expect.objectContaining({
+          scan_enabled: true,
+          scan_frequency: "DAILY",
+          scan_hour: 4,
+        }),
+      ),
+    );
+    expect(updateScheduleMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        description: "The scan schedule was updated for 2 providers.",
+      }),
+    );
+  });
+
+  it("uses explicit provider ids for organization bulk schedules", async () => {
+    const user = userEvent.setup();
+    render(
+      <EditScanScheduleModal
+        open
+        onOpenChange={vi.fn()}
+        providers={[organizationProviders[0]]}
+        providerIds={["p1", "p2", "p3"]}
+        targetName="My AWS Organization"
+        targetId="o-abc123def4"
+        state={{ kind: EDIT_SCAN_SCHEDULE_STATE.LOADED, schedule }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(updateSchedulesBulkMock).toHaveBeenCalledWith(
+        ["p1", "p2", "p3"],
+        expect.objectContaining({
+          scan_enabled: true,
+          scan_frequency: "DAILY",
+          scan_hour: 4,
+        }),
+      ),
+    );
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        description: "The scan schedule was updated for 3 providers.",
+      }),
+    );
   });
 });

@@ -56,13 +56,16 @@ vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
   EditScanScheduleModal: ({
     open,
     provider,
+    providers,
   }: {
     open: boolean;
     provider?: { providerId: string };
+    providers?: { providerId: string }[];
   }) =>
     open ? (
       <div role="dialog" aria-label="Edit Scan Schedule">
-        Editing schedule for {provider?.providerId}
+        Editing schedule for{" "}
+        {providers ? `${providers.length} providers` : provider?.providerId}
       </div>
     ) : null,
 }));
@@ -131,6 +134,7 @@ const createOrgRow = () =>
       parentExternalId: null,
       organizationId: "org-1",
       providerCount: 3,
+      providerIds: ["provider-child-1", "provider-child-2"],
       subRows: [
         {
           id: "provider-child-1",
@@ -163,6 +167,7 @@ const createOuRow = () =>
       parentExternalId: "o-abc123def4",
       organizationId: "org-1",
       providerCount: 2,
+      providerIds: ["provider-ou-child-1"],
       subRows: [
         {
           id: "provider-ou-child-1",
@@ -400,6 +405,29 @@ describe("DataTableRowActions", () => {
     // 1 of 2 child providers has a secret
     expect(screen.getByText("Test Connections (1)")).toBeInTheDocument();
     expect(screen.getByText("Delete Organization")).toBeInTheDocument();
+  });
+
+  it("opens Edit Scan Schedule for AWS organization rows", async () => {
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+      />,
+    );
+
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Edit Scan Schedule"));
+
+    expect(
+      screen.getByRole("dialog", { name: /edit scan schedule/i }),
+    ).toHaveTextContent("Editing schedule for 2 providers");
   });
 
   it("renders Delete Organization with destructive styling for org rows", async () => {
