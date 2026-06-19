@@ -1268,7 +1268,8 @@
       ],
       "Checks": [
         "cosmosdb_account_backup_policy_continuous",
-        "mysql_flexible_server_geo_redundant_backup_enabled"
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
       ]
     },
     {
@@ -1299,7 +1300,9 @@
         "vm_trusted_launch_enabled",
         "cosmosdb_account_automatic_failover_enabled",
         "mysql_flexible_server_geo_redundant_backup_enabled",
-        "mysql_flexible_server_high_availability_enabled"
+        "mysql_flexible_server_high_availability_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_high_availability_enabled"
       ]
     },
     {

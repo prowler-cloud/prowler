@@ -440,7 +440,8 @@
         "sqlserver_auditing_retention_90_days",
         "postgresql_flexible_server_log_retention_days_greater_3",
         "cosmosdb_account_backup_policy_continuous",
-        "mysql_flexible_server_geo_redundant_backup_enabled"
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
       ]
     },
     {
