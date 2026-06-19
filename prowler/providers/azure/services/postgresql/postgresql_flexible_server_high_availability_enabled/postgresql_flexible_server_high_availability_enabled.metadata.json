@@ -7,21 +7,24 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "**Azure PostgreSQL Flexible Server** is evaluated for **high availability** mode. Zone-redundant or same-zone HA provides automatic failover to a standby replica.",
-  "Risk": "Without HA, a server failure causes **downtime** until manual recovery. Critical databases require automated failover for business continuity.",
+  "Description": "**Azure PostgreSQL Flexible Server** is evaluated for **high availability** mode. Zone-redundant or same-zone HA provisions a standby replica and provides automatic failover during planned and unplanned outages.",
+  "Risk": "Without **high availability**, a server or zone failure causes **downtime** until manual recovery or redeployment. Critical databases experience extended unavailability and potential data loss for in-flight transactions during unplanned outages.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-high-availability",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.dbforpostgresql/flexibleservers"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az postgres flexible-server update --name <server_name> --resource-group <resource_group_name> --high-availability ZoneRedundant",
+      "NativeIaC": "```bicep\n// Bicep: PostgreSQL Flexible Server with zone-redundant high availability\nresource postgresql 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {\n  name: '<example_resource_name>'\n  location: '<region>'\n  sku: {\n    name: 'Standard_D2ds_v4'\n    tier: 'GeneralPurpose'\n  }\n  properties: {\n    highAvailability: {\n      mode: 'ZoneRedundant' // CRITICAL: provisions a standby replica with automatic failover\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open your Azure Database for PostgreSQL flexible server\n2. Under Settings, select High availability\n3. Enable High availability and choose Zone redundant (or Same zone)\n4. Save (high availability requires the General Purpose or Memory Optimized tier)",
+      "Terraform": "```hcl\n# Terraform: PostgreSQL Flexible Server with zone-redundant high availability\nresource \"azurerm_postgresql_flexible_server\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<region>\"\n  sku_name            = \"GP_Standard_D2ds_v4\"\n\n  high_availability {\n    mode = \"ZoneRedundant\" # CRITICAL: provisions a standby replica with automatic failover\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **high availability** (zone-redundant where supported, otherwise same-zone) on production PostgreSQL Flexible Servers so a standby replica provides automatic failover. High availability requires the General Purpose or Memory Optimized tier; pair it with geo-redundant backup and periodic failover testing for full resilience.",
       "Url": "https://hub.prowler.com/check/postgresql_flexible_server_high_availability_enabled"
     }
   },
@@ -30,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "High availability for Azure PostgreSQL Flexible Server requires the General Purpose or Memory Optimized compute tier and is not available on the Burstable tier."
 }

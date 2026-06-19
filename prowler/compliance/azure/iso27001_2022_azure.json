@@ -1301,7 +1301,8 @@
         "cosmosdb_account_automatic_failover_enabled",
         "mysql_flexible_server_geo_redundant_backup_enabled",
         "mysql_flexible_server_high_availability_enabled",
-        "postgresql_flexible_server_geo_redundant_backup_enabled"
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_high_availability_enabled"
       ]
     },
     {
