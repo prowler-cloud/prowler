@@ -8,6 +8,13 @@ PQC_APIGATEWAY_POLICIES_DEFAULT = [
 ]
 
 
+def _get_allowed_policies(configured_policies) -> list[str]:
+    if not isinstance(configured_policies, list):
+        return PQC_APIGATEWAY_POLICIES_DEFAULT
+
+    return configured_policies
+
+
 class apigateway_domain_name_pqc_tls_enabled(Check):
     """Verify that every API Gateway custom domain name uses a post-quantum TLS policy.
 
@@ -16,9 +23,15 @@ class apigateway_domain_name_pqc_tls_enabled(Check):
     """
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Execute the API Gateway custom domain post-quantum TLS check.
+
+        Returns:
+            A list of reports for API Gateway custom domain names and their
+            post-quantum TLS policy compliance status.
+        """
         findings = []
-        pqc_policies = apigateway_client.audit_config.get(
-            "apigateway_pqc_tls_allowed_policies", PQC_APIGATEWAY_POLICIES_DEFAULT
+        pqc_policies = _get_allowed_policies(
+            apigateway_client.audit_config.get("apigateway_pqc_tls_allowed_policies")
         )
         for domain in apigateway_client.domain_names:
             report = Check_Report_AWS(metadata=self.metadata(), resource=domain)

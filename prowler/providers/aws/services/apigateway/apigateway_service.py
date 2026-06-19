@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
@@ -21,7 +21,13 @@ class APIGateway(AWSService):
         self._get_stages()
         self._get_resources()
 
-    def _get_domain_names(self, regional_client):
+    def _get_domain_names(self, regional_client: Any) -> None:
+        """Get API Gateway custom domain names for a regional client.
+
+        Args:
+            regional_client: Regional API Gateway boto3 client used to list
+                custom domain names.
+        """
         logger.info("APIGateway - Getting custom domain names...")
         try:
             paginator = regional_client.get_paginator("get_domain_names")
@@ -279,6 +285,16 @@ class RestAPI(BaseModel):
 
 
 class DomainName(BaseModel):
+    """API Gateway custom domain name metadata.
+
+    Attributes:
+        name: Custom domain name.
+        arn: Custom domain name ARN.
+        region: AWS region where the custom domain name exists.
+        security_policy: TLS security policy configured for the custom domain.
+        tags: Custom domain tags.
+    """
+
     name: str
     arn: str
     region: str
