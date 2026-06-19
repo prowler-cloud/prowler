@@ -19,6 +19,12 @@ class cloudfront_distributions_pqc_tls_enabled(Check):
     """
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Execute the CloudFront post-quantum TLS policy check.
+
+        Returns:
+            A list of reports containing each CloudFront distribution's
+            post-quantum TLS compliance status.
+        """
         findings = []
         pqc_policies = cloudfront_client.audit_config.get(
             "cloudfront_pqc_min_protocol_versions", PQC_CLOUDFRONT_POLICIES_DEFAULT
