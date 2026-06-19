@@ -122,7 +122,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | Vercel | 26 | 6 | 0 | 8 | Official | UI, API, CLI |
 | Okta | 1 | 1 | 0 | 1 | Official | CLI |
 | Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 0 | 1 | Unofficial | CLI |
-| StackIT [Contact us](https://prowler.com/contact) | 4 | 1 | 0 | 1 | Unofficial | CLI |
+| StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 0 | 3 | Unofficial | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]
@@ -153,11 +153,23 @@ Prowler App offers flexible installation methods tailored to various environment
 
 #### Commands
 
+_macOS/Linux:_
+
 ``` console
 VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
 # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
+docker compose up -d
+```
+
+_Windows PowerShell:_
+
+``` powershell
+$VERSION = (Invoke-RestMethod -Uri "https://api.github.com/repos/prowler-cloud/prowler/releases/latest").tag_name
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/docker-compose.yml" -OutFile "docker-compose.yml"
+# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/.env" -OutFile ".env"
 docker compose up -d
 ```
 

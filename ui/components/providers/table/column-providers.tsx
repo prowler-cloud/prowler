@@ -1,18 +1,13 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import {
-  Building2,
-  FolderTree,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldOff,
-} from "lucide-react";
+import { Building2, FolderTree } from "lucide-react";
 
 import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
+import { Badge } from "@/components/shadcn";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
@@ -48,27 +43,24 @@ const OrganizationIcon = ({ groupKind }: { groupKind: string }) => {
 const ProviderStatusCell = ({ connected }: { connected: boolean | null }) => {
   if (connected === true) {
     return (
-      <div className="text-system-success flex items-center gap-2 text-sm whitespace-nowrap">
-        <ShieldCheck className="size-4 shrink-0" />
-        <span>Connected</span>
-      </div>
+      <Badge variant="success" className="text-sm">
+        Connected
+      </Badge>
     );
   }
 
   if (connected === false) {
     return (
-      <div className="text-text-error-primary flex items-center gap-2 text-sm whitespace-nowrap">
-        <ShieldAlert className="size-4 shrink-0" />
-        <span>Connection failed</span>
-      </div>
+      <Badge variant="error" className="text-sm">
+        Connection failed
+      </Badge>
     );
   }
 
   return (
-    <div className="text-text-neutral-secondary flex items-center gap-2 text-sm whitespace-nowrap">
-      <ShieldOff className="size-4 shrink-0" />
-      <span>Not connected</span>
-    </div>
+    <Badge variant="tag" className="text-text-neutral-secondary text-sm">
+      Not connected
+    </Badge>
   );
 };
 
@@ -260,7 +252,7 @@ export function getColumnProviders(
         return (
           <LinkToScans
             hasSchedule={row.original.hasSchedule}
-            providerUid={row.original.attributes.uid}
+            schedule={row.original.scheduleSummary}
           />
         );
       },
