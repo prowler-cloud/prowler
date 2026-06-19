@@ -158,6 +158,11 @@ class LinodeProvider(Provider):
     def setup_identity(session: LinodeSession) -> LinodeIdentityInfo:
         """Fetch user and account metadata for Linode.
 
+        The authenticated user's profile is retrieved first to validate the
+        token. Any valid token can read its own profile, so a failure here
+        (for example a ``401 Invalid Token``) means the credentials are invalid
+        and the scan is aborted instead of silently returning empty results.
+
         Args:
             session: The Linode session.
 
@@ -165,7 +170,8 @@ class LinodeProvider(Provider):
             LinodeIdentityInfo: The identity information.
 
         Raises:
-            LinodeIdentityError: If identity setup fails.
+            LinodeAuthenticationError: If the token is invalid.
+            LinodeIdentityError: If identity setup fails unexpectedly.
         """
         try:
             client = session.client
@@ -173,15 +179,24 @@ class LinodeProvider(Provider):
             email = None
             account_id = None
 
+            # Validate the token by reading the authenticated user's profile.
+            # A failure here means the credentials are invalid, so abort.
             try:
                 profile = client.profile()
                 username = profile.username
                 email = profile.email
             except Exception as error:
-                logger.warning(
-                    f"Unable to retrieve Linode profile info: {error}. Continuing with limited identity details."
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+                raise LinodeAuthenticationError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
                 )
 
+            # The account endpoint requires the account:read_only scope. A
+            # token without that scope is still valid, so continue without the
+            # account ID instead of failing the scan.
             try:
                 account = client.account()
                 account_id = getattr(account, "euuid", None)
@@ -195,6 +210,8 @@ class LinodeProvider(Provider):
                 email=email,
                 account_id=account_id,
             )
+        except LinodeAuthenticationError:
+            raise
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

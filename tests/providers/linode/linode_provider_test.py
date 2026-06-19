@@ -4,6 +4,7 @@ from unittest import mock
 import pytest
 
 from prowler.providers.linode.exceptions.exceptions import (
+    LinodeAuthenticationError,
     LinodeCredentialsError,
 )
 from prowler.providers.linode.linode_provider import LinodeProvider
@@ -58,19 +59,14 @@ class TestLinodeProvider_setup_identity:
         assert identity.email == EMAIL
         assert identity.account_id == ACCOUNT_ID
 
-    def test_identity_with_profile_failure_still_returns(self):
+    def test_invalid_token_raises_authentication_error(self):
+        # An invalid token fails the profile call (any valid token can read its
+        # own profile), so the scan must abort instead of returning empty data.
         session = self._build_session()
-        session.client.profile.side_effect = Exception("forbidden")
+        session.client.profile.side_effect = Exception("[401] Invalid Token")
 
-        account = mock.MagicMock()
-        account.euuid = ACCOUNT_ID
-        session.client.account.return_value = account
-
-        identity = LinodeProvider.setup_identity(session)
-
-        assert identity.username is None
-        assert identity.email is None
-        assert identity.account_id == ACCOUNT_ID
+        with pytest.raises(LinodeAuthenticationError):
+            LinodeProvider.setup_identity(session)
 
     def test_identity_with_account_failure_still_returns(self):
         session = self._build_session()
