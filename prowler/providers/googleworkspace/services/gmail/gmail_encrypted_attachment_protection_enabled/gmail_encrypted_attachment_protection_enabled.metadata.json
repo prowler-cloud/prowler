@@ -13,8 +13,8 @@
   "Risk": "Without protection against encrypted attachments from untrusted senders, users may receive **password-protected archives containing malware** that bypass standard content scanning. Attackers commonly use encrypted attachments to evade detection and deliver **ransomware, trojans, or other malicious payloads**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7676854",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/set-up-rules-to-detect-harmful-attachments",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

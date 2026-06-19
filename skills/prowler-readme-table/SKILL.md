@@ -34,7 +34,7 @@ python3 prowler-cli.py <provider> --list-<metric>
 
 The CLI output ends with a summary line like:
 
-```
+```text
 There are 572 available checks.
 There is 1 available Compliance Framework.
 ```

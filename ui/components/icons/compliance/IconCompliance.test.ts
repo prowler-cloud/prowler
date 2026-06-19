@@ -58,6 +58,12 @@ describe("getComplianceIcon", () => {
       expect(getComplianceIcon("prowler_threatscore_aws")).toBe(threatLogo);
     });
 
+    it("resolves the Okta IDaaS STIG via the `okta` keyword", () => {
+      const oktaLogo = getComplianceIcon("Okta-IDaaS-STIG");
+      expect(oktaLogo).toBeDefined();
+      expect(getComplianceIcon("okta_idaas_stig_v1r2_okta")).toBe(oktaLogo);
+    });
+
     it("resolves ASD Essential Eight by the framework keyword, not by `aws`", () => {
       const essentialLogo = getComplianceIcon("ASD-Essential-Eight");
       expect(essentialLogo).toBeDefined();

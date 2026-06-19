@@ -1,0 +1,36 @@
+{
+  "Provider": "okta",
+  "CheckID": "user_inactivity_automation_35d_enabled",
+  "CheckTitle": "Okta automation suspends or deactivates users after 35 days of inactivity",
+  "CheckType": [],
+  "ServiceName": "user",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "An Okta **Workflows Automation** must disable inactive user accounts. The automation must be `ACTIVE`, on an `ACTIVE` schedule, evaluate `User Inactivity = 35 days` (or less), apply to a group covering every user, and trigger `Suspended` / `Deactivated` / `Deprovisioned`. Threshold override: `okta_user_inactivity_max_days`. N/A when user sourcing is delegated to Active Directory or LDAP.",
+  "Risk": "Inactive Okta accounts retained indefinitely give an attacker who exploits one undetected access to downstream applications.\n\n- **Account takeover via dormant identities** that no one is monitoring\n- **Lateral movement** through SSO sessions of forgotten users\n- **Stale entitlements** that survive role and policy reorganisations",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/en-us/content/topics/automation-hooks/automations-main.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Workflow** > **Automations** and click **Add Automation**.\n3. Name the automation (e.g., `User Inactivity`).\n4. Add a condition: select **User Inactivity in Okta** and enter `35` days.\n5. Configure the schedule to run daily and activate it.\n6. Apply the automation to a group that covers every user — typically `Everyone`.\n7. Add an action: **Change User lifecycle state in Okta** and choose `Suspended` (or `Deactivated`/`Deprovisioned`).\n8. Activate the automation.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create an active Okta Workflows automation that runs daily, evaluates `User Inactivity in Okta = 35 days`, applies to a group covering every user, and changes the user lifecycle state to Suspended/Deactivated. If user sourcing is delegated to Active Directory or LDAP, document that the connected directory enforces this requirement instead.",
+      "Url": "https://hub.prowler.com/check/user_inactivity_automation_35d_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Aligns with DISA STIG V-273188 / OKTA-APP-000090."
+}

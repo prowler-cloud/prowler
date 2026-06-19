@@ -5,6 +5,7 @@ import {
   OrganizationUnitResource,
 } from "./organizations";
 import { ProviderProps } from "./providers";
+import { ScanScheduleSummary } from "./scans";
 
 export const PROVIDERS_ROW_TYPE = {
   ORGANIZATION: "organization",
@@ -52,6 +53,8 @@ export interface ProvidersProviderRow
   relationships: ProviderTableRelationships;
   groupNames: string[];
   hasSchedule: boolean;
+  /** Cadence/next-run summary when the provider has a configured schedule. */
+  scheduleSummary?: ScanScheduleSummary;
   subRows?: ProvidersTableRow[];
 }
 

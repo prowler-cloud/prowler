@@ -83,14 +83,14 @@ npm install --save-exact mcp-remote@0.1.38
 
 ### 2. Local STDIO Mode
 
-**Run the server locally on your machine**
+Run the server locally on your machine:
 
 - Runs as a subprocess of your MCP client
 - Requires Python 3.12+ or Docker
 
 ### 3. Self-Hosted HTTP Mode
 
-**Deploy your own remote MCP server**
+Deploy your own remote MCP server:
 
 - Full control over deployment
 - Requires Python 3.12+ or Docker
@@ -132,7 +132,7 @@ All tools follow a consistent naming pattern with prefixes:
 
 ## Architecture
 
-```
+```text
 prowler_mcp_server/
 ├── server.py                 # Main orchestrator (imports sub-servers with prefixes)
 ├── main.py                   # CLI entry point
@@ -154,17 +154,20 @@ prowler_mcp_server/
 
 The Prowler MCP Server enables powerful workflows through AI assistants:
 
-**Security Operations**
+### Security Operations
+
 - "Show me all critical findings from my AWS production accounts"
 - "Register my new AWS account in Prowler and run a scheduled scan every day"
 - "List all muted findings and detect what findgings are muted by a not enough good reason in relation to their severity"
 
-**Security Research**
+### Security Research
+
 - "Explain what the S3 bucket public access Prowler check does"
 - "Find all Prowler checks related to encryption at rest"
 - "What is the latest version of the CIS that Prowler is covering per provider?"
 
-**Documentation & Learning**
+### Documentation & Learning
+
 - "How do I configure Prowler to scan my GCP organization?"
 - "What authentication methods does Prowler support for Azure?"
 - "How can I contribute with a new security check to Prowler?"

@@ -3,8 +3,6 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
-import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
@@ -12,6 +10,7 @@ import {
   FilterChip,
   FilterSummaryStrip,
 } from "@/components/filters/filter-summary-strip";
+import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
@@ -170,23 +169,15 @@ export const ResourcesFilters = ({
       controlsClassName="gap-3"
       controls={
         <>
-          <div className={FILTER_CONTROL_COLUMN_CLASS}>
-            <ProviderTypeSelector
-              providers={providers}
-              onBatchChange={setPending}
-              selectedValues={getFilterValue("filter[provider_type__in]")}
-            />
-          </div>
-          <div className={FILTER_CONTROL_COLUMN_CLASS}>
-            <AccountsSelector
-              providers={providers}
-              onBatchChange={setPending}
-              selectedValues={getFilterValue("filter[provider_id__in]")}
-              selectedProviderTypes={getFilterValue(
-                "filter[provider_type__in]",
-              )}
-            />
-          </div>
+          <ProviderAccountSelectors
+            providers={providers}
+            mode="batch"
+            selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
+            selectedAccounts={getFilterValue("filter[provider_id__in]")}
+            onBatchChange={setPending}
+            providerSelectorClassName={FILTER_CONTROL_COLUMN_CLASS}
+            accountSelectorClassName={FILTER_CONTROL_COLUMN_CLASS}
+          />
           {hasCustomFilters && (
             <Button
               variant="outline"

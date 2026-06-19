@@ -429,7 +429,7 @@ This is useful for:
 
 ### Example Output
 
-```
+```text
 [1] ✅ Created provider (id=db9a8985-f9ec-4dd8-b5a0-e05ab3880bed)
 [1] ✅ Created secret (id=466f76c6-5878-4602-a4bc-13f9522c1fd2)
 [1] ✅ Connection test: Connected
@@ -454,25 +454,25 @@ python prowler_bulk_provisioning.py providers.yaml --dry-run
 ### Common Issues
 
 1. **Invalid API Key**
-   ```
+   ```text
    Error: 401 Unauthorized
    Solution: Check your PROWLER_API_KEY environment variable or --api-key parameter
    ```
 
 2. **Network Timeouts**
-   ```
+   ```text
    Error: Request timeout
    Solution: Increase --timeout value or check network connectivity
    ```
 
 3. **Invalid Provider Configuration**
-   ```
+   ```text
    Error: Each item must include 'provider' and 'uid'
    Solution: Verify all required fields are present in your config file
    ```
 
 4. **File Not Found Errors**
-   ```
+   ```text
    Error: No such file or directory
    Solution: Check file paths for credentials files (JSON keys, kubeconfig, etc.)
    ```

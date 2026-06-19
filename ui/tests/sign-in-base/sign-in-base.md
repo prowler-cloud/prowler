@@ -20,7 +20,7 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Verify page is loaded.
@@ -28,7 +28,7 @@
 4. Verify social buttons (Google, GitHub).
 5. Verify navigation links.
 
-### Expected Result:
+### Expected Result
 
 - All form elements are visible and properly labeled.
 
@@ -50,14 +50,14 @@
 - Application is running.
 - Valid test user credentials are configured via `ADMIN_USER` and `ADMIN_PASSWORD` environment variables.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Enter valid email and password.
 3. Click the login button.
 4. Verify successful redirect to home page.
 
-### Expected Result:
+### Expected Result
 
 - User is authenticated and redirected to the home page.
 
@@ -78,14 +78,14 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Enter invalid email and password.
 3. Click the login button.
 4. Verify error message is displayed.
 
-### Expected Result:
+### Expected Result
 
 - Error message "Invalid email or password" is displayed.
 - User remains on the sign-in page.
@@ -107,13 +107,13 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Click the login button without filling any fields.
 3. Verify validation errors are displayed.
 
-### Expected Result:
+### Expected Result
 
 - Form validation errors are shown.
 - User remains on the sign-in page.
@@ -135,14 +135,14 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Enter an invalid email format.
 3. Submit the form.
 4. Verify validation error is displayed.
 
-### Expected Result:
+### Expected Result
 
 - Email format validation error is shown.
 
@@ -163,14 +163,14 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Fill only the email field.
 3. Submit the form.
 4. Verify password required error is displayed.
 
-### Expected Result:
+### Expected Result
 
 - "Password is required" error is shown.
 
@@ -191,7 +191,7 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Click "Continue with SAML SSO" button.
@@ -199,7 +199,7 @@
 4. Click back button.
 5. Verify normal mode is restored.
 
-### Expected Result:
+### Expected Result
 
 - SAML mode toggles correctly.
 - Password field visibility changes accordingly.
@@ -221,14 +221,14 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Fill valid credentials.
 3. Submit the form.
 4. Verify loading state on button.
 
-### Expected Result:
+### Expected Result
 
 - Login button shows loading state (disabled with aria-disabled).
 
@@ -249,14 +249,14 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Toggle SAML mode.
 3. Enter SAML email.
 4. Submit the form.
 
-### Expected Result:
+### Expected Result
 
 - SAML flow is initiated (would redirect to IdP in real scenario).
 
@@ -278,14 +278,14 @@
 - Application is running.
 - Valid test user credentials.
 
-### Flow Steps:
+### Flow Steps
 
 1. Log in with valid credentials.
 2. Verify successful login.
 3. Refresh the page.
 4. Verify user is still logged in.
 
-### Expected Result:
+### Expected Result
 
 - Session persists after refresh.
 - User remains on the authenticated page.
@@ -308,12 +308,12 @@
 - Application is running.
 - No active session.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate directly to a protected route (e.g., /providers).
 2. Verify redirect to sign-in page.
 
-### Expected Result:
+### Expected Result
 
 - User is redirected to /sign-in.
 
@@ -335,7 +335,7 @@
 - Application is running.
 - User is logged in.
 
-### Flow Steps:
+### Flow Steps
 
 1. Log in with valid credentials.
 2. Click logout/sign out.
@@ -343,7 +343,7 @@
 4. Attempt to access protected route.
 5. Verify redirect to sign-in.
 
-### Expected Result:
+### Expected Result
 
 - User is logged out.
 - Session is invalidated.
@@ -366,7 +366,7 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Create authenticated context and log in.
 2. Verify session exists.
@@ -374,7 +374,7 @@
 4. Verify new context has no session.
 5. Verify new context is redirected to sign-in.
 
-### Expected Result:
+### Expected Result
 
 - Sessions are isolated between contexts.
 - Unauthenticated context cannot access protected routes.
@@ -396,13 +396,13 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Click the "Sign up" link.
 3. Verify redirect to sign-up page.
 
-### Expected Result:
+### Expected Result
 
 - User is navigated to /sign-up.
 
@@ -423,13 +423,13 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign up page.
 2. Click the login link.
 3. Verify redirect to sign-in page.
 
-### Expected Result:
+### Expected Result
 
 - User is navigated to /sign-in.
 
@@ -450,14 +450,14 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Navigate to the Sign up page.
 3. Click browser back button.
 4. Verify return to sign-in page.
 
-### Expected Result:
+### Expected Result
 
 - Browser history navigation works correctly.
 
@@ -478,13 +478,13 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Use Tab key to navigate through form elements.
 3. Verify focus moves correctly through elements.
 
-### Expected Result:
+### Expected Result
 
 - All interactive elements are reachable via keyboard.
 - Focus order is logical.
@@ -506,12 +506,12 @@
 
 - Application is running.
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to the Sign in page.
 2. Verify ARIA labels on form elements.
 
-### Expected Result:
+### Expected Result
 
 - Email input has proper label.
 - Password input has proper label.

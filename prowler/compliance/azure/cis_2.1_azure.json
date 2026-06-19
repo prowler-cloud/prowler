@@ -1383,7 +1383,7 @@
       "Id": "3.7",
       "Description": "Ensure that 'Public Network Access' is `Disabled' for storage accounts",
       "Checks": [
-        "storage_blob_public_access_level_is_disabled"
+        "storage_account_public_network_access_disabled"
       ],
       "Attributes": [
         {

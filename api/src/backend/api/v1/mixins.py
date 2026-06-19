@@ -1,6 +1,10 @@
+import uuid
+
+from django.http import QueryDict
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from api.exceptions import (
@@ -8,7 +12,7 @@ from api.exceptions import (
     TaskInProgressException,
     TaskNotFoundException,
 )
-from api.models import StateChoices, Task
+from api.models import Provider, StateChoices, Task
 from api.v1.serializers import TaskSerializer
 
 
@@ -72,6 +76,162 @@ class PaginateByPkMixin:
 
         serialized = self.get_serializer(queryset, many=True).data
         return self.get_paginated_response(serialized)
+
+
+class JsonApiFilterMixin:
+    """Shared helpers for manually applying django-filter to JSON:API params."""
+
+    jsonapi_filter_replace_dots = False
+
+    def _normalize_jsonapi_params(
+        self,
+        query_params,
+        exclude_keys=None,
+        replace_dots=None,
+    ):
+        exclude_keys = exclude_keys or set()
+        if replace_dots is None:
+            replace_dots = self.jsonapi_filter_replace_dots
+
+        normalized = QueryDict(mutable=True)
+        for key, values in query_params.lists():
+            normalized_key = (
+                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
+            )
+            if replace_dots:
+                normalized_key = normalized_key.replace(".", "__")
+            if normalized_key not in exclude_keys:
+                normalized.setlist(normalized_key, values)
+        return normalized
+
+    def _apply_filterset(
+        self,
+        queryset,
+        filterset_class,
+        exclude_keys=None,
+        replace_dots=None,
+    ):
+        normalized_params = self._normalize_jsonapi_params(
+            self.request.query_params,
+            exclude_keys=set(exclude_keys or []),
+            replace_dots=replace_dots,
+        )
+        filterset = filterset_class(normalized_params, queryset=queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+        return filterset.qs
+
+
+class ProviderFilterParamsMixin(JsonApiFilterMixin):
+    """Shared extraction of provider filters from JSON:API query params."""
+
+    PROVIDER_FILTER_KEYS = frozenset(
+        {
+            "provider_id",
+            "provider_id__in",
+            "provider_type",
+            "provider_type__in",
+            "provider_groups",
+            "provider_groups__in",
+        }
+    )
+    PROVIDER_FILTER_DOT_ALIAS_KEYS = frozenset(
+        {
+            "provider_id.in",
+            "provider_type.in",
+            "provider_groups.in",
+        }
+    )
+    PROVIDER_FILTER_QUERY_KEYS = PROVIDER_FILTER_KEYS | PROVIDER_FILTER_DOT_ALIAS_KEYS
+
+    def _csv_filter_values(self, value):
+        return [item.strip() for item in value.split(",") if item.strip()]
+
+    def _validate_uuid_filter_values(self, field_name, values):
+        try:
+            for value in values:
+                uuid.UUID(str(value))
+        except (TypeError, ValueError, AttributeError):
+            raise ValidationError({field_name: ["Enter a valid UUID."]})
+
+    def _has_provider_filters(self, include_dot_aliases=False):
+        provider_filter_keys = (
+            self.PROVIDER_FILTER_QUERY_KEYS
+            if include_dot_aliases
+            else self.PROVIDER_FILTER_KEYS
+        )
+        return any(
+            self.request.query_params.get(f"filter[{key}]")
+            for key in provider_filter_keys
+        )
+
+    def _extract_provider_filters_from_params(
+        self,
+        *,
+        validate_uuids=False,
+        include_dot_aliases=False,
+    ):
+        params = self.request.query_params
+        filters = {}
+        valid_provider_types = {
+            choice[0] for choice in Provider.ProviderChoices.choices
+        }
+
+        provider_id = params.get("filter[provider_id]")
+        if provider_id:
+            if validate_uuids:
+                self._validate_uuid_filter_values("provider_id", [provider_id])
+            filters["provider_id"] = provider_id
+
+        provider_id_in = params.get("filter[provider_id__in]")
+        if include_dot_aliases:
+            provider_id_in = provider_id_in or params.get("filter[provider_id.in]")
+        if provider_id_in:
+            values = self._csv_filter_values(provider_id_in)
+            if validate_uuids:
+                self._validate_uuid_filter_values("provider_id__in", values)
+            filters["provider_id__in"] = values
+
+        provider_type = params.get("filter[provider_type]")
+        if provider_type:
+            if provider_type not in valid_provider_types:
+                raise ValidationError(
+                    {"provider_type": f"Invalid choice: {provider_type}"}
+                )
+            filters["provider__provider"] = provider_type
+
+        provider_type_in = params.get("filter[provider_type__in]")
+        if include_dot_aliases:
+            provider_type_in = provider_type_in or params.get(
+                "filter[provider_type.in]"
+            )
+        if provider_type_in:
+            values = self._csv_filter_values(provider_type_in)
+            invalid = [value for value in values if value not in valid_provider_types]
+            if invalid:
+                raise ValidationError(
+                    {"provider_type__in": f"Invalid choices: {', '.join(invalid)}"}
+                )
+            filters["provider__provider__in"] = values
+
+        provider_groups = params.get("filter[provider_groups]")
+        if provider_groups:
+            if validate_uuids:
+                self._validate_uuid_filter_values("provider_groups", [provider_groups])
+            filters["provider__provider_groups__id"] = provider_groups
+
+        provider_groups_in = params.get("filter[provider_groups__in]")
+        if include_dot_aliases:
+            provider_groups_in = provider_groups_in or params.get(
+                "filter[provider_groups.in]"
+            )
+        if provider_groups_in:
+            values = self._csv_filter_values(provider_groups_in)
+            if validate_uuids:
+                self._validate_uuid_filter_values("provider_groups__in", values)
+            filters["provider__provider_groups__id__in"] = values
+
+        return filters
 
 
 class TaskManagementMixin:

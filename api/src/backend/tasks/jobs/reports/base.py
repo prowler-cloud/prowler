@@ -5,6 +5,7 @@ import time
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any
 
 from celery.utils.log import get_task_logger
@@ -26,7 +27,10 @@ from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import Provider, StatusChoices
 from api.utils import initialize_prowler_provider
-from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 from .components import (
@@ -220,6 +224,46 @@ def get_requirement_metadata(
     if meta_list:
         return meta_list[0]
     return None
+
+
+def _universal_attributes_to_list(attributes) -> list:
+    """Flatten a universal requirement's ``attributes`` into a list of objects
+    with attribute access. MITRE wraps its list under ``_raw_attributes``."""
+    if isinstance(attributes, dict) and "_raw_attributes" in attributes:
+        entries = attributes.get("_raw_attributes") or []
+        return [
+            SimpleNamespace(**entry) for entry in entries if isinstance(entry, dict)
+        ]
+    if isinstance(attributes, dict):
+        return [SimpleNamespace(**attributes)] if attributes else []
+    return list(attributes or [])
+
+
+def _adapt_universal_to_legacy(framework, provider_type: str) -> SimpleNamespace:
+    """Expose a universal ``ComplianceFramework`` under the legacy ``Compliance``
+    attribute names used by the PDF pipeline."""
+    provider_key = (provider_type or "").lower()
+    requirements = []
+    for requirement in framework.requirements:
+        checks_by_provider = (
+            requirement.checks if isinstance(requirement.checks, dict) else {}
+        )
+        requirements.append(
+            SimpleNamespace(
+                Id=requirement.id,
+                Description=requirement.description or "",
+                Checks=list(checks_by_provider.get(provider_key, [])),
+                Attributes=_universal_attributes_to_list(requirement.attributes),
+            )
+        )
+    return SimpleNamespace(
+        Framework=framework.framework,
+        Name=framework.name,
+        Version=framework.version or "",
+        Description=framework.description or "",
+        Provider=framework.provider or provider_type,
+        Requirements=requirements,
+    )
 
 
 # =============================================================================
@@ -869,9 +913,18 @@ class BaseComplianceReportGenerator(ABC):
                 prowler_provider = initialize_prowler_provider(provider_obj)
             provider_type = provider_obj.provider
 
-            # Load compliance framework
-            frameworks_bulk = Compliance.get_bulk(provider_type)
-            compliance_obj = frameworks_bulk.get(compliance_id)
+            # Load compliance framework — fall back to the universal loader
+            # for top-level JSONs (e.g. csa_ccm_4.0) that Compliance.get_bulk
+            # does not scan.
+            compliance_obj = Compliance.get_bulk(provider_type).get(compliance_id)
+            if not compliance_obj:
+                universal_framework = get_bulk_compliance_frameworks_universal(
+                    provider_type
+                ).get(compliance_id)
+                if universal_framework:
+                    compliance_obj = _adapt_universal_to_legacy(
+                        universal_framework, provider_type
+                    )
 
             if not compliance_obj:
                 raise ValueError(f"Compliance framework not found: {compliance_id}")
