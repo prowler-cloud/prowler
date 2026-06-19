@@ -29,11 +29,11 @@ class compute_instance_watchdog_enabled(Check):
             if instance.watchdog_enabled:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Instance '{instance.label}' has Watchdog (Lassie) enabled."
+                    f"Instance {instance.label} has Watchdog (Lassie) enabled."
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Instance '{instance.label}' does not have Watchdog (Lassie) enabled."
+                report.status_extended = f"Instance {instance.label} does not have Watchdog (Lassie) enabled."
 
             findings.append(report)
 

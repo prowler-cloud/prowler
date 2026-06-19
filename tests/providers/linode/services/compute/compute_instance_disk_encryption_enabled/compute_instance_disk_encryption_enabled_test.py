@@ -35,7 +35,7 @@ class Test_compute_instance_disk_encryption_enabled:
         compute_client.instances = [
             Instance(
                 id=12345,
-                label="my-linode",
+                label="ubuntu-eu-central",
                 region="us-east",
                 status="running",
                 disk_encryption="enabled",
@@ -63,15 +63,18 @@ class Test_compute_instance_disk_encryption_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == "12345"
-            assert result[0].resource_name == "my-linode"
-            assert "has disk encryption enabled" in result[0].status_extended
+            assert result[0].resource_name == "ubuntu-eu-central"
+            assert (
+                result[0].status_extended
+                == "Instance ubuntu-eu-central has disk encryption enabled."
+            )
 
     def test_instance_disk_encryption_disabled(self):
         compute_client = mock.MagicMock()
         compute_client.instances = [
             Instance(
                 id=12345,
-                label="my-linode",
+                label="ubuntu-eu-central",
                 region="us-east",
                 status="running",
                 disk_encryption="disabled",
@@ -99,5 +102,8 @@ class Test_compute_instance_disk_encryption_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == "12345"
-            assert result[0].resource_name == "my-linode"
-            assert "does not have disk encryption enabled" in result[0].status_extended
+            assert result[0].resource_name == "ubuntu-eu-central"
+            assert (
+                result[0].status_extended
+                == "Instance ubuntu-eu-central does not have disk encryption enabled."
+            )

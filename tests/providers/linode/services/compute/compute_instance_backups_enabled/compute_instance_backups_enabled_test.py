@@ -35,7 +35,7 @@ class Test_compute_instance_backups_enabled:
         compute_client.instances = [
             Instance(
                 id=12345,
-                label="my-linode",
+                label="ubuntu-eu-central",
                 region="us-east",
                 status="running",
                 backups_enabled=True,
@@ -63,15 +63,18 @@ class Test_compute_instance_backups_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == "12345"
-            assert result[0].resource_name == "my-linode"
-            assert "has the Backup service enabled" in result[0].status_extended
+            assert result[0].resource_name == "ubuntu-eu-central"
+            assert (
+                result[0].status_extended
+                == "Instance ubuntu-eu-central has the Backup service enabled."
+            )
 
     def test_instance_backups_disabled(self):
         compute_client = mock.MagicMock()
         compute_client.instances = [
             Instance(
                 id=12345,
-                label="my-linode",
+                label="ubuntu-eu-central",
                 region="us-east",
                 status="running",
                 backups_enabled=False,
@@ -99,7 +102,8 @@ class Test_compute_instance_backups_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == "12345"
-            assert result[0].resource_name == "my-linode"
+            assert result[0].resource_name == "ubuntu-eu-central"
             assert (
-                "does not have the Backup service enabled" in result[0].status_extended
+                result[0].status_extended
+                == "Instance ubuntu-eu-central does not have the Backup service enabled."
             )

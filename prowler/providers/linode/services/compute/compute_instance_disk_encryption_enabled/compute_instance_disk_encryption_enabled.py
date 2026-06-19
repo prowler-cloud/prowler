@@ -29,11 +29,13 @@ class compute_instance_disk_encryption_enabled(Check):
             if instance.disk_encryption == "enabled":
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Instance '{instance.label}' has disk encryption enabled."
+                    f"Instance {instance.label} has disk encryption enabled."
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Instance '{instance.label}' does not have disk encryption enabled."
+                report.status_extended = (
+                    f"Instance {instance.label} does not have disk encryption enabled."
+                )
 
             findings.append(report)
 

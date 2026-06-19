@@ -29,11 +29,11 @@ class compute_instance_backups_enabled(Check):
             if instance.backups_enabled:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Instance '{instance.label}' has the Backup service enabled."
+                    f"Instance {instance.label} has the Backup service enabled."
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Instance '{instance.label}' does not have the Backup service enabled."
+                report.status_extended = f"Instance {instance.label} does not have the Backup service enabled."
 
             findings.append(report)
 
