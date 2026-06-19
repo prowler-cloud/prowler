@@ -194,12 +194,7 @@
           "artifacts_container_analysis_enabled",
           "iam_organization_essential_contacts_configured"
         ],
-        "cloudflare": [
-          "zone_waf_enabled",
-          "zone_waf_owasp_ruleset_enabled",
-          "zone_firewall_blocking_rules_configured",
-          "zone_ssl_strict"
-        ]
+        "cloudflare": []
       }
     },
     {
@@ -271,7 +266,9 @@
           "zone_hsts_enabled",
           "zone_https_redirect_enabled",
           "zone_automatic_https_rewrites_enabled",
-          "zone_development_mode_disabled"
+          "zone_development_mode_disabled",
+          "zone_record_caa_exists",
+          "zone_dnssec_enabled"
         ]
       }
     },
@@ -312,9 +309,7 @@
         "cloudflare": [
           "dns_record_no_wildcard",
           "dns_record_no_internal_ip",
-          "dns_record_cname_target_valid",
-          "dns_record_proxied",
-          "zone_ip_geolocation_enabled"
+          "dns_record_cname_target_valid"
         ]
       }
     },
@@ -463,9 +458,7 @@
           "dns_record_cname_target_valid",
           "zone_record_spf_exists",
           "zone_record_dkim_exists",
-          "zone_record_dmarc_exists",
-          "zone_email_obfuscation_enabled",
-          "zone_hotlink_protection_enabled"
+          "zone_record_dmarc_exists"
         ]
       }
     },
@@ -524,11 +517,9 @@
           "logging_sink_created"
         ],
         "cloudflare": [
-          "zone_rate_limiting_enabled",
           "zone_bot_fight_mode_enabled",
           "zone_browser_integrity_check_enabled",
-          "zone_firewall_blocking_rules_configured",
-          "zone_ip_geolocation_enabled"
+          "zone_rate_limiting_enabled"
         ]
       }
     },
@@ -573,10 +564,7 @@
           "compute_instance_group_load_balancer_attached",
           "compute_instance_preemptible_vm_disabled"
         ],
-        "cloudflare": [
-          "zone_security_under_attack_disabled",
-          "zone_always_online_disabled"
-        ]
+        "cloudflare": []
       }
     },
     {
@@ -789,14 +777,7 @@
           "cloudsql_instance_postgres_log_min_error_statement_flag",
           "cloudsql_instance_postgres_log_min_duration_statement_flag"
         ],
-        "cloudflare": [
-          "zone_waf_enabled",
-          "zone_waf_owasp_ruleset_enabled",
-          "zone_firewall_blocking_rules_configured",
-          "zone_rate_limiting_enabled",
-          "zone_bot_fight_mode_enabled",
-          "zone_security_under_attack_disabled"
-        ]
+        "cloudflare": []
       }
     },
     {
@@ -932,13 +913,7 @@
           "compute_snapshot_not_outdated",
           "compute_public_address_shodan"
         ],
-        "cloudflare": [
-          "zone_waf_enabled",
-          "zone_waf_owasp_ruleset_enabled",
-          "zone_rate_limiting_enabled",
-          "zone_bot_fight_mode_enabled",
-          "zone_firewall_blocking_rules_configured"
-        ]
+        "cloudflare": []
       }
     },
     {
@@ -993,11 +968,7 @@
           "apikeys_key_rotated_in_90_days",
           "iam_sa_user_managed_key_rotate_90_days"
         ],
-        "cloudflare": [
-          "zone_waf_enabled",
-          "zone_waf_owasp_ruleset_enabled",
-          "zone_browser_integrity_check_enabled"
-        ]
+        "cloudflare": []
       }
     },
     {
@@ -1056,8 +1027,7 @@
         ],
         "cloudflare": [
           "zone_record_caa_exists",
-          "dns_record_cname_target_valid",
-          "dns_record_proxied"
+          "dns_record_cname_target_valid"
         ]
       }
     },
