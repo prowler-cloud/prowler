@@ -37,7 +37,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Cloudflare provider, mapping existing Cloudflare edge/network checks across the applicable DORA pillars [(#11645)](https://github.com/prowler-cloud/prowler/pull/11645)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the AlibabaCloud provider, mapping existing AlibabaCloud checks across the applicable DORA pillars [(#11646)](https://github.com/prowler-cloud/prowler/pull/11646)
 
-
 ### 🔄 Changed
 
 - Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
@@ -56,7 +55,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [5.30.3] (Prowler UNRELEASED)
+## [5.30.3] (Prowler v5.30.3)
 
 ### 🐞 Fixed
 
