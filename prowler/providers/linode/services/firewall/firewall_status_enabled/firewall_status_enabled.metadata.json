@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Firewall",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to verify if their status is enabled.",
   "Risk": "A disabled firewall does not enforce configured network filtering controls, increasing exposure to unwanted traffic.",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable Linode Cloud Firewalls to ensure network filtering controls are actively enforced.",
-      "Url": "https://hub.prowler.com/checks/linode/firewall_status_enabled"
+      "Url": "https://hub.prowler.com/check/firewall_status_enabled"
     }
   },
   "Categories": [

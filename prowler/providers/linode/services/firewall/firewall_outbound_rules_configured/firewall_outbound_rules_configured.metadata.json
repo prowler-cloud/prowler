@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "Firewall",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to determine whether outbound rules are explicitly configured.",
   "Risk": "When outbound rules are not configured, egress filtering behavior will not be enforced.",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure outbound rules to explicitly control allowed egress destinations and protocols.",
-      "Url": "https://hub.prowler.com/checks/linode/firewall_outbound_rules_configured"
+      "Url": "https://hub.prowler.com/check/firewall_outbound_rules_configured"
     }
   },
   "Categories": [

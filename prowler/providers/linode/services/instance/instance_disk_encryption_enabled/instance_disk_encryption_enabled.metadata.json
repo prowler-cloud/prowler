@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Instance",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
   "Description": "Linode instances are assessed for disk encryption status. Disk encryption protects data at rest on the instance's disks from unauthorized access.",
   "Risk": "Without disk encryption, sensitive data stored on the instance's disks is unprotected at rest. This increases the risk of data exposure in the event of physical access to storage media or through certain hypervisor-level vulnerabilities.",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enable disk encryption for this instance. Since disk encryption cannot be toggled on existing instances, you may need to rebuild or migrate to a new instance with encryption enabled.",
-      "Url": "https://hub.prowler.com/checks/linode/instance_disk_encryption_enabled"
+      "Url": "https://hub.prowler.com/check/instance_disk_encryption_enabled"
     }
   },
   "Categories": [

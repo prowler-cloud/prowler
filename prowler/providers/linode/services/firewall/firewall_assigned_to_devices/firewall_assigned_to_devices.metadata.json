@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Firewall",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to verify they are attached to at least one device.",
   "Risk": "Unassigned firewalls do not provide protection to running workloads and can indicate a misconfigured security control.",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Attach firewalls to applicable Linode devices to enforce intended network controls.",
-      "Url": "https://hub.prowler.com/checks/linode/firewall_assigned_to_devices"
+      "Url": "https://hub.prowler.com/check/firewall_assigned_to_devices"
     }
   },
   "Categories": [

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "Firewall",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to determine whether inbound rules are explicitly configured.",
   "Risk": "When inbound rules are not configured, ingress filtering will not be enforced.",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure inbound rules to explicitly define allowed ingress traffic and enforce expected security boundaries.",
-      "Url": "https://hub.prowler.com/checks/linode/firewall_inbound_rules_configured"
+      "Url": "https://hub.prowler.com/check/firewall_inbound_rules_configured"
     }
   },
   "Categories": [

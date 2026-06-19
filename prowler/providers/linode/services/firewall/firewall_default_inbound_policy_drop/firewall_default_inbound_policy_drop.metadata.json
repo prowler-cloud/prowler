@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Firewall",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to ensure the default inbound policy is DROP.",
   "Risk": "If the default inbound policy is not DROP, traffic not explicitly controlled by rules may be allowed, increasing exposure.",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Set default inbound policy to DROP and only allow explicitly required inbound traffic.",
-      "Url": "https://hub.prowler.com/checks/linode/firewall_default_inbound_policy_drop"
+      "Url": "https://hub.prowler.com/check/firewall_default_inbound_policy_drop"
     }
   },
   "Categories": [

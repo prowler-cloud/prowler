@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Firewall",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
   "Description": "Linode Cloud Firewalls are checked to ensure the default outbound policy is DROP.",
   "Risk": "If the default outbound policy is not DROP, unrestricted egress traffic can increase data exfiltration and command-and-control risk.",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Set default outbound policy to DROP and allow only explicit outbound destinations and services.",
-      "Url": "https://hub.prowler.com/checks/linode/firewall_default_outbound_policy_drop"
+      "Url": "https://hub.prowler.com/check/firewall_default_outbound_policy_drop"
     }
   },
   "Categories": [

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "User",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Linode account users are assessed for two-factor authentication (2FA) enablement. Users without 2FA are vulnerable to account takeover through credential theft or brute-force attacks.",
   "Risk": "Without two-factor authentication, a compromised password is sufficient for an attacker to gain full access to the user's Linode account, potentially leading to data exfiltration, resource destruction, or cryptocurrency mining abuse.",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable two-factor authentication for all Linode account users. Use an authenticator app (TOTP) for the second factor. Store backup codes securely.",
-      "Url": "https://hub.prowler.com/checks/linode/account_user_2fa_enabled"
+      "Url": "https://hub.prowler.com/check/account_user_2fa_enabled"
     }
   },
   "Categories": [

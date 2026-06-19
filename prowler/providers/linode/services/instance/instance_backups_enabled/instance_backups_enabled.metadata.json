@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Instance",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
   "Description": "Linode instances are assessed for Backup service enrollment. The Linode Backup service provides automatic daily and weekly backups of your instance's disks. Without backups, data loss from accidental deletion, disk corruption, or security incidents cannot be recovered.",
   "Risk": "Without the Backup service enabled, there is no automated recovery point for the instance. Data loss events such as accidental deletion, ransomware, or disk failure may result in permanent loss of data and extended downtime.",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enable the Linode Backup service on this instance to ensure automated recovery points are available. Consider supplementing with manual snapshots for critical changes.",
-      "Url": "https://hub.prowler.com/checks/linode/instance_backups_enabled"
+      "Url": "https://hub.prowler.com/check/instance_backups_enabled"
     }
   },
   "Categories": [
