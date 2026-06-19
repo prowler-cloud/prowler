@@ -11,7 +11,7 @@
   "Severity": "low",
   "ResourceType": "AwsTransferServer",
   "ResourceGroup": "network",
-  "Description": "**AWS Transfer Family servers** (SFTP, FTPS, AS2) are assessed for use of a **post-quantum (PQ) hybrid SSH key exchange security policy**. Servers whose `SecurityPolicyName` does not include ML-KEM key exchanges (`mlkem768x25519-sha256`, `mlkem768nistp256-sha256`, `mlkem1024nistp384-sha384`) leave file-transfer sessions exposed to **harvest-now, decrypt-later** attacks.",
+  "Description": "**AWS Transfer Family servers** (SFTP, FTPS, AS2) are assessed for use of an approved **post-quantum (PQ) hybrid SSH key exchange security policy**. Servers whose `SecurityPolicyName` is not in the configured allowlist of PQ-ready Transfer Family security policies leave file-transfer sessions exposed to **harvest-now, decrypt-later** attacks.",
   "Risk": "Without a PQ-ready security policy, SSH/SFTP traffic captured today can be stored and decrypted in the future once a **cryptographically relevant quantum computer** is available. This threatens long-term **confidentiality** of transferred files, credentials, and metadata.",
   "RelatedUrl": "",
   "AdditionalURLs": [

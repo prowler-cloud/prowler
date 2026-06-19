@@ -438,7 +438,7 @@ mainConfig:
     # Minimum number of Availability Zones that an ELBv2 must be in
     elbv2_min_azs: 2
 
-    # AWS Post-Quantum TLS Configuration
+    # AWS Post-Quantum SSH Key Exchange Configuration
     # aws.transfer_server_pqc_ssh_kex_enabled
     transfer_pqc_ssh_allowed_policies:
       - "TransferSecurityPolicy-2025-03"

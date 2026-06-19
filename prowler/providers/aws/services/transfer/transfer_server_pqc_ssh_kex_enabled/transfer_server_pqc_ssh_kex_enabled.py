@@ -16,6 +16,16 @@ class transfer_server_pqc_ssh_kex_enabled(Check):
     """
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Check whether Transfer Family servers use approved PQ SSH KEX policies.
+
+        Iterates through discovered AWS Transfer Family servers and compares each
+        server's ``SecurityPolicyName`` with the configured allowlist of
+        post-quantum hybrid SSH key exchange security policies.
+
+        Returns:
+            list[Check_Report_AWS]: A list of reports for each Transfer Family
+            server, including the evaluated security policy context.
+        """
         findings = []
         pqc_policies = transfer_client.audit_config.get(
             "transfer_pqc_ssh_allowed_policies", PQC_TRANSFER_POLICIES_DEFAULT
