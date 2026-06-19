@@ -1,0 +1,114 @@
+from unittest.mock import MagicMock, patch
+
+from linode_api4.errors import ApiError
+
+from prowler.providers.linode.services.compute.compute_service import (
+    ComputeService,
+)
+
+
+def _mock_instance(
+    id=1,
+    label="my-instance",
+    region="us-east",
+    status="running",
+    backups_enabled=True,
+    disk_encryption="enabled",
+    watchdog_enabled=True,
+    tags=None,
+):
+    inst = MagicMock()
+    inst.id = id
+    inst.label = label
+    region_mock = MagicMock()
+    region_mock.id = region
+    inst.region = region_mock
+    inst.status = status
+    backups = MagicMock()
+    backups.enabled = backups_enabled
+    inst.backups = backups
+    inst.disk_encryption = disk_encryption
+    inst.watchdog_enabled = watchdog_enabled
+    inst.tags = tags or []
+    return inst
+
+
+def _build_service(linode_instances_return=None, linode_instances_side_effect=None):
+    """Build a ComputeService with an isolated mock client."""
+    service = object.__new__(ComputeService)
+    service.instances = []
+
+    # Build isolated mock hierarchy for client.linode.instances()
+    # Must explicitly create the instances callable as a fresh MagicMock
+    # because check tests contaminate MagicMock class with instances=[...]
+    instances_callable = MagicMock()
+    if linode_instances_side_effect:
+        instances_callable.side_effect = linode_instances_side_effect
+    else:
+        instances_callable.return_value = linode_instances_return or []
+
+    linode_mock = MagicMock()
+    linode_mock.instances = instances_callable
+
+    client_mock = MagicMock()
+    client_mock.linode = linode_mock
+    service.client = client_mock
+    return service
+
+
+class TestLinodeComputeService:
+    def test_describe_instances_parses_correctly(self):
+        mock_instances = [
+            _mock_instance(id=1, label="web-1", region="us-east"),
+            _mock_instance(id=2, label="db-1", region="eu-west", backups_enabled=False),
+        ]
+
+        service = _build_service(linode_instances_return=mock_instances)
+        service._describe_instances()
+
+        assert len(service.instances) == 2
+        assert service.instances[0].label == "web-1"
+        assert service.instances[0].region == "us-east"
+        assert service.instances[0].backups_enabled is True
+        assert service.instances[1].label == "db-1"
+        assert service.instances[1].backups_enabled is False
+
+    def test_describe_instances_handles_empty_list(self):
+        service = _build_service(linode_instances_return=[])
+        service._describe_instances()
+
+        assert len(service.instances) == 0
+
+    def test_describe_instances_handles_api_error(self):
+        service = _build_service(linode_instances_side_effect=Exception("API error"))
+        service._describe_instances()
+
+        assert len(service.instances) == 0
+
+    def test_describe_instances_missing_scope_logs_permission_error(self):
+        error = ApiError(
+            "Your OAuth token is not authorized to use this endpoint.", status=401
+        )
+        service = _build_service(linode_instances_side_effect=error)
+
+        with patch(
+            "prowler.providers.linode.lib.service.service.logger"
+        ) as logger_mock:
+            service._describe_instances()
+
+        assert len(service.instances) == 0
+        logged = " ".join(str(c) for c in logger_mock.error.call_args_list)
+        assert "LinodeMissingPermissionError" in logged
+        assert "linodes:read_only" in logged
+
+    def test_describe_instances_disk_encryption(self):
+        mock_instances = [
+            _mock_instance(id=1, disk_encryption="enabled"),
+            _mock_instance(id=2, disk_encryption="disabled"),
+        ]
+
+        service = _build_service(linode_instances_return=mock_instances)
+        service._describe_instances()
+
+        assert service.instances[0].disk_encryption == "enabled"
+        assert service.instances[1].disk_encryption == "disabled"

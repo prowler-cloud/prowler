@@ -6,7 +6,7 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.31.0" />
 
-Prowler for Linode scans your Linode infrastructure for security misconfigurations, including instance settings, firewall rules, user account security, and more.
+Prowler for Linode scans your Linode infrastructure for security misconfigurations, including compute settings, networking rules, user account security, and more.
 
 <Note>
 Linode support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
@@ -33,13 +33,13 @@ prowler linode
 ### Run Specific Checks
 
 ```bash
-prowler linode --checks instance_backups_enabled instance_watchdog_enabled
+prowler linode --checks compute_instance_backups_enabled compute_instance_watchdog_enabled
 ```
 
 ### Run a Specific Service
 
 ```bash
-prowler linode --services firewall
+prowler linode --services networking
 ```
 
 ## Available Services
@@ -48,6 +48,6 @@ Prowler for Linode currently supports the following services:
 
 | Service | Description |
 |---------|-------------|
-| `account` | An account can have multiple users and specific roles can be assigned to each user to restrict access |
-| `instance` | A Linode instance is a cloud-based virtual machine, the foundational infrastructure component for most applications & workloads |
-| `firewall` | A Cloud Firewall can be used to create, configure, and add stateful network-based firewalls to resources |
+| `administration` | Account administration includes users and access controls such as two-factor authentication |
+| `compute` | Compute includes Linode instances and their workload configuration |
+| `networking` | Networking includes Cloud Firewalls and their stateful network rules |

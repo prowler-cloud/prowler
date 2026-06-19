@@ -16,7 +16,7 @@ class LinodeService:
         Initialize the Linode service with provider context.
 
         Args:
-            service: The Linode service name (e.g., account, instance, firewall).
+            service: The Linode service name (e.g., administration, compute, networking).
             provider: LinodeProvider instance containing session, audit config, and fixer config.
         """
         self.provider = provider

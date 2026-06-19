@@ -1,0 +1,38 @@
+{
+  "Provider": "linode",
+  "CheckID": "networking_firewall_status_enabled",
+  "CheckTitle": "Linode Cloud Firewall status is enabled",
+  "CheckType": [],
+  "ServiceName": "networking",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Linode Cloud Firewalls** can be in an `enabled` or `disabled` state. This check verifies the firewall status is `enabled`, because a firewall must be active for its inbound and outbound policies and rules to actually filter network traffic.",
+  "Risk": "A `disabled` firewall enforces **none** of its configured rules or default policies, leaving attached instances with no network filtering. This can unexpectedly expose management ports and services to the internet, significantly increasing the risk of **unauthorized access** and exploitation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/update-cloud-firewall-status"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Click on the Enable button from the options corresponding to the firewall whose status you would like to update",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Linode Cloud Firewalls to ensure network filtering controls are actively enforced.",
+      "Url": "https://hub.prowler.com/check/networking_firewall_status_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "networking_firewall_assigned_to_devices"
+  ],
+  "Notes": ""
+}

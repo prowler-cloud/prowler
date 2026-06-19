@@ -10,7 +10,7 @@ Mutelist:
   Accounts:
     "example-account-uuid":
       Checks:
-        "account_user_2fa_enabled":
+        "administration_user_2fa_enabled":
           Regions:
             - "*"
           Resources:

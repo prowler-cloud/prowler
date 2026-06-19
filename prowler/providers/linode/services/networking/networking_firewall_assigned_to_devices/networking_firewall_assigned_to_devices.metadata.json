@@ -1,0 +1,38 @@
+{
+  "Provider": "linode",
+  "CheckID": "networking_firewall_assigned_to_devices",
+  "CheckTitle": "Linode Cloud Firewall is assigned to devices",
+  "CheckType": [],
+  "ServiceName": "networking",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Linode Cloud Firewalls** are checked to verify each one is attached to at least one device, such as a **Linode instance** or **NodeBalancer**. A firewall only filters traffic for the resources it is assigned to, so an unassigned firewall enforces no protection at all.",
+  "Risk": "An **unassigned firewall** provides no protection to running workloads, leaving their network exposure governed only by default behavior. This commonly signals a **misconfigured control** where operators assume traffic is filtered when it is not, raising the risk of **unauthorized network access** to unprotected instances.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/apply-firewall-rules-to-a-service"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Select the associated firewall\n4. Click on either the Linodes or Nodebalancers tab and add those devices to the firewall",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach firewalls to applicable Linode devices to enforce intended network controls.",
+      "Url": "https://hub.prowler.com/check/networking_firewall_assigned_to_devices"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "networking_firewall_status_enabled"
+  ],
+  "Notes": ""
+}

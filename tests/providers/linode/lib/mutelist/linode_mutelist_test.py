@@ -44,7 +44,7 @@ class Test_linode_mutelist:
             "Accounts": {
                 "E1AF1B6C-1111-2222-3333-444455556666": {
                     "Checks": {
-                        "account_user_2fa_enabled": {
+                        "administration_user_2fa_enabled": {
                             "Regions": ["*"],
                             "Resources": ["admin"],
                         }
@@ -57,7 +57,7 @@ class Test_linode_mutelist:
 
         finding = MagicMock()
         finding.check_metadata = MagicMock()
-        finding.check_metadata.CheckID = "account_user_2fa_enabled"
+        finding.check_metadata.CheckID = "administration_user_2fa_enabled"
         finding.status = "FAIL"
         finding.region = "global"
         finding.resource_id = "admin"
@@ -73,7 +73,7 @@ class Test_linode_mutelist:
             "Accounts": {
                 "E1AF1B6C-1111-2222-3333-444455556666": {
                     "Checks": {
-                        "account_user_2fa_enabled": {
+                        "administration_user_2fa_enabled": {
                             "Regions": ["*"],
                             "Resources": ["other-user"],
                         }
@@ -86,7 +86,7 @@ class Test_linode_mutelist:
 
         finding = MagicMock()
         finding.check_metadata = MagicMock()
-        finding.check_metadata.CheckID = "account_user_2fa_enabled"
+        finding.check_metadata.CheckID = "administration_user_2fa_enabled"
         finding.status = "FAIL"
         finding.region = "global"
         finding.resource_id = "admin"

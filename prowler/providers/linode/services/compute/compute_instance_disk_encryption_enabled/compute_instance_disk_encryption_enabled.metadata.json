@@ -1,0 +1,37 @@
+{
+  "Provider": "linode",
+  "CheckID": "compute_instance_disk_encryption_enabled",
+  "CheckTitle": "Linode Instance has disk encryption enabled",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "compute",
+  "Description": "**Linode instances** are assessed for **disk encryption** status. Disk encryption protects **data at rest** on the instance's underlying disks, keeping stored data unreadable without the encryption keys even if the physical media is accessed.",
+  "Risk": "Without **disk encryption**, data at rest on the instance's disks is stored unprotected. This increases the risk of **data exposure** through physical access to decommissioned or stolen storage media, or via certain **hypervisor-level** vulnerabilities, compromising the **confidentiality** of sensitive data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/local-disk-encryption",
+    "https://techdocs.akamai.com/cloud-computing/docs/create-a-compute-instance#enable-or-disable-disk-encryption"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Disk encryption must be enabled at instance creation time or by rebuilding the instance\n2. Create a new instance with disk_encryption set to 'enabled'\n3. Migrate data from the unencrypted instance to the new encrypted instance",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable disk encryption for this instance. Since disk encryption cannot be toggled on existing instances, you may need to rebuild or migrate to a new instance with encryption enabled.",
+      "Url": "https://hub.prowler.com/check/compute_instance_disk_encryption_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
