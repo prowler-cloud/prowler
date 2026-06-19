@@ -22,6 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `defender_ensure_defender_cspm_is_on` check for Azure provider, verifying Microsoft Defender Cloud Security Posture Management (CSPM) is enabled on the Standard tier [(#11037)](https://github.com/prowler-cloud/prowler/pull/11037)
 - `mysql_flexible_server_geo_redundant_backup_enabled` check for Azure provider, verifying MySQL Flexible Servers have geo-redundant backup enabled so backups are replicated to the paired region [(#11041)](https://github.com/prowler-cloud/prowler/pull/11041)
 - `mysql_flexible_server_high_availability_enabled` check for Azure provider, verifying MySQL Flexible Servers have high availability enabled for automatic failover to a standby replica [(#11042)](https://github.com/prowler-cloud/prowler/pull/11042)
+- `postgresql_flexible_server_geo_redundant_backup_enabled` check for Azure provider, verifying PostgreSQL Flexible Servers have geo-redundant backup enabled so backups are replicated to the paired region [(#11045)](https://github.com/prowler-cloud/prowler/pull/11045)
 - `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
 - Public `Provider.get_class()` method that resolves a provider class by name for both built-in and external (entry-point) providers [(#11398)](https://github.com/prowler-cloud/prowler/pull/11398)
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
@@ -37,6 +38,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
+
+### 🐞 Fixed
+
+- Azure PostgreSQL flexible server inventory no longer aborts the whole subscription when the `connection_throttle.enable` parameter is missing (e.g. PostgreSQL v18), and logs the expected "Entra ID authentication not enabled" case as a warning instead of an error, so servers are still scanned [(#11045)](https://github.com/prowler-cloud/prowler/pull/11045)
 
 ### 🔐 Security
 
