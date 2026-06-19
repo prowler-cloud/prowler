@@ -4,6 +4,7 @@ import {
   listOrganizationUnitsSafe,
 } from "@/actions/organizations/organizations";
 import { getAllProviders, getProviders } from "@/actions/providers";
+import { PROVIDERS_FILTER_PARAM } from "@/actions/providers/providers-filters";
 import { getScans } from "@/actions/scans";
 import { getSchedules } from "@/actions/schedules";
 import {
@@ -466,13 +467,12 @@ export async function loadProvidersAccountsViewData({
 
   // Map provider_type__in (used by ProviderTypeSelector) to provider__in (API param)
   const providerTypeFilter =
-    providerFilters[`filter[${PROVIDERS_PAGE_FILTER.PROVIDER_TYPE}]`];
+    providerFilters[PROVIDERS_FILTER_PARAM.PROVIDER_TYPE];
   if (providerTypeFilter) {
-    providerFilters[`filter[${PROVIDERS_PAGE_FILTER.PROVIDER}]`] =
-      providerTypeFilter;
+    providerFilters[PROVIDERS_FILTER_PARAM.PROVIDER] = providerTypeFilter;
   }
 
-  delete providerFilters[`filter[${PROVIDERS_PAGE_FILTER.PROVIDER_TYPE}]`];
+  delete providerFilters[PROVIDERS_FILTER_PARAM.PROVIDER_TYPE];
 
   const emptyOrganizationsResponse: OrganizationListResponse = {
     data: [],

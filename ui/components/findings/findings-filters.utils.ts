@@ -1,9 +1,9 @@
+import type { FindingsFilterParam } from "@/actions/findings/findings-filters";
 import type { FilterChip } from "@/components/filters/filter-summary-strip";
 import { formatLabel, getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { getScanEntityLabel } from "@/lib/helper-filters";
 import { FINDING_STATUS_DISPLAY_NAMES } from "@/types";
 import { ProviderGroup } from "@/types/components";
-import { FilterParam } from "@/types/filters";
 import { getProviderDisplayName, ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
@@ -52,7 +52,7 @@ function getScanDisplayValue(
 }
 
 export function getFindingsFilterDisplayValue(
-  filterKey: string,
+  filterKey: FindingsFilterParam,
   value: string,
   options: GetFindingsFilterDisplayValueOptions = {},
 ): string {
@@ -108,10 +108,11 @@ export function getFindingsFilterDisplayValue(
 /**
  * Maps raw filter param keys (e.g. "filter[severity__in]") to human-readable labels.
  * Used to render chips in the FilterSummaryStrip.
- * Typed as Record<FilterParam, string> so TypeScript enforces exhaustiveness — any
- * addition to FilterParam will cause a compile error here if the label is missing.
+ * Typed as Record<FindingsFilterParam, string> so TypeScript enforces exhaustiveness
+ * — any addition to the findings filter set will cause a compile error here if the
+ * label is missing.
  */
-export const FILTER_KEY_LABELS: Record<FilterParam, string> = {
+export const FILTER_KEY_LABELS: Record<FindingsFilterParam, string> = {
   "filter[provider_type__in]": "Provider",
   "filter[provider_id__in]": "Account",
   "filter[provider_groups__in]": "Provider Group",
@@ -129,6 +130,8 @@ export const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[scan_id]": "Scan",
   "filter[scan_id__in]": "Scan",
   "filter[inserted_at]": "Date",
+  "filter[inserted_at__gte]": "Date",
+  "filter[inserted_at__lte]": "Date",
   "filter[muted]": "Muted",
 };
 
@@ -157,13 +160,13 @@ export function buildFindingsFilterChips(
   Object.entries(pendingFilters).forEach(([key, values]) => {
     if (!values || values.length === 0) return;
     if (key === "filter[muted]" && !options.includeMuted) return;
-    const label = FILTER_KEY_LABELS[key as FilterParam] ?? key;
+    const label = FILTER_KEY_LABELS[key as FindingsFilterParam] ?? key;
 
     const visibleValues = values;
     if (visibleValues.length === 0) return;
 
     const displayValues = visibleValues.map((value) =>
-      getFindingsFilterDisplayValue(key, value, options),
+      getFindingsFilterDisplayValue(key as FindingsFilterParam, value, options),
     );
 
     const chip: FilterChip = {

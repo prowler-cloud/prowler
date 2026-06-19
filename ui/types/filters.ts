@@ -29,22 +29,35 @@ export interface CustomDropdownFilterProps {
   onFilterChange: (key: string, values: string[]) => void;
 }
 
-export enum FilterType {
-  SCAN = "scan__in",
-  PROVIDER = "provider__in",
-  PROVIDER_UID = "provider_uid__in",
-  PROVIDER_TYPE = "provider_type__in",
-  REGION = "region__in",
-  SERVICE = "service__in",
-  RESOURCE_TYPE = "resource_type__in",
-  SEVERITY = "severity__in",
-  STATUS = "status__in",
+/**
+ * Filter field names — the inner part of a `filter[...]` URL param key, and the
+ * `key` values used to build `FilterOption` dropdown configs. Single source of
+ * truth for the `FilterParam` template; per-view modules compose their own field
+ * set from these plus their own extras.
+ */
+export const FILTER_FIELD = {
+  // core — provider scope + shared resource dimensions (used across views)
+  PROVIDER_TYPE: "provider_type__in",
+  PROVIDER_ID: "provider_id__in",
+  PROVIDER_UID: "provider_uid__in",
+  PROVIDER_GROUPS: "provider_groups__in",
+  REGION: "region__in",
+  SERVICE: "service__in",
+  // view dimensions — dropdown configs (mostly findings; `provider__in` is the
+  // providers-list type filter)
+  PROVIDER: "provider__in",
+  SCAN: "scan__in",
+  RESOURCE_TYPE: "resource_type__in",
+  SEVERITY: "severity__in",
+  STATUS: "status__in",
   // The API only registers `delta` (exact, singular). `delta__in` is silently
   // dropped, so the dropdown, URL, and backend must all use `delta`.
-  DELTA = "delta",
-  CATEGORY = "category__in",
-  RESOURCE_GROUPS = "resource_groups__in",
-}
+  DELTA: "delta",
+  CATEGORY: "category__in",
+  RESOURCE_GROUPS: "resource_groups__in",
+} as const;
+
+export type FilterField = (typeof FILTER_FIELD)[keyof typeof FILTER_FIELD];
 
 /**
  * Controls the filter dispatch behavior of DataTableFilterCustom.
@@ -60,26 +73,9 @@ export type DataTableFilterMode =
   (typeof DATA_TABLE_FILTER_MODE)[keyof typeof DATA_TABLE_FILTER_MODE];
 
 /**
- * Exhaustive union of all URL filter param keys used in Findings filters.
- * Use this instead of `string` to ensure FILTER_KEY_LABELS and other
- * param-keyed records stay in sync with the actual filter surface.
+ * URL filter param key template — wraps a field name in `filter[...]`.
+ * Parameterize with a view's own field union (e.g. `FilterParam<FindingsFilterField>`)
+ * so each view's param-keyed records stay in sync with the filters it supports.
  */
-export type FilterParam =
-  | "filter[provider_type__in]"
-  | "filter[provider_id__in]"
-  | "filter[provider_groups__in]"
-  | "filter[severity__in]"
-  | "filter[status__in]"
-  | "filter[delta__in]"
-  | "filter[delta]"
-  | "filter[region__in]"
-  | "filter[service__in]"
-  | "filter[resource_type__in]"
-  | "filter[category__in]"
-  | "filter[resource_groups__in]"
-  | "filter[scan]"
-  | "filter[scan__in]"
-  | "filter[scan_id]"
-  | "filter[scan_id__in]"
-  | "filter[inserted_at]"
-  | "filter[muted]";
+export type FilterParam<Field extends string = FilterField> =
+  `filter[${Field}]`;

@@ -4,6 +4,10 @@ import { Suspense } from "react";
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
+import {
+  SCANS_PROVIDER_FILTER_FIELD,
+  type ScansFilterParam,
+} from "@/actions/scans/scans-filters";
 import { getSchedules } from "@/actions/schedules";
 import { auth } from "@/auth.config";
 import { PageReady } from "@/components/onboarding";
@@ -34,28 +38,17 @@ import {
 
 const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
 // Pending schedule rows are derived from provider schedules, but must honor the
-// same provider filters as real scan rows. Keep these filter keys typed locally
-// without narrowing the global SearchParamsProps shape used by Next pages.
-const PENDING_ROW_PROVIDER_FILTER = {
-  PROVIDER_UID_IN: "provider_uid__in",
-  PROVIDER_UID: "provider_uid",
-  PROVIDER_TYPE_IN: "provider_type__in",
-  PROVIDER_TYPE: "provider_type",
-} as const;
-
-type PendingRowProviderFilter =
-  (typeof PENDING_ROW_PROVIDER_FILTER)[keyof typeof PENDING_ROW_PROVIDER_FILTER];
-type PendingRowProviderFilterParam = `filter[${PendingRowProviderFilter}]`;
-
+// same provider filters as real scan rows. The filter keys live with the scans
+// action (SCANS_PROVIDER_FILTER_FIELD) so they stay in sync with ScansFilterParam.
 const PROVIDER_UID_FILTER_KEYS = [
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_UID_IN}]`,
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_UID}]`,
-] as const satisfies ReadonlyArray<PendingRowProviderFilterParam>;
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_UID_IN}]`,
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_UID}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
 
 const PROVIDER_TYPE_FILTER_KEYS = [
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_TYPE_IN}]`,
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_TYPE}]`,
-] as const satisfies ReadonlyArray<PendingRowProviderFilterParam>;
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_TYPE_IN}]`,
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_TYPE}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
 
 const getFilterSearchQuery = (
   filters: Record<string, string | string[]>,
@@ -78,7 +71,7 @@ const parseCsvParam = (value?: string | string[]): string[] => {
 
 const getFirstSearchParam = (
   searchParams: SearchParamsProps,
-  keys: ReadonlyArray<PendingRowProviderFilterParam>,
+  keys: ReadonlyArray<ScansFilterParam>,
 ): string | string[] | undefined => {
   for (const key of keys) {
     const value = searchParams[key];
