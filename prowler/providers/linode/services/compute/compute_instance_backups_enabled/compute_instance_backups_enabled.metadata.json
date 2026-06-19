@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable the Linode Backup service on this instance to ensure automated recovery points are available. Consider supplementing with manual snapshots for critical changes.",
+      "Text": "Enable the `Linode Backup service` on this instance to ensure automated recovery points are available. Consider supplementing it with manual snapshots before critical changes.",
       "Url": "https://hub.prowler.com/check/compute_instance_backups_enabled"
     }
   },

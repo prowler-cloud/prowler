@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure inbound rules to explicitly define allowed ingress traffic and enforce expected security boundaries.",
+      "Text": "Configure explicit `inbound rules` to define allowed ingress sources, ports, and protocols and enforce expected security boundaries.",
       "Url": "https://hub.prowler.com/check/networking_firewall_inbound_rules_configured"
     }
   },

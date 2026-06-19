@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Set default outbound policy to DROP and allow only explicit outbound destinations and services.",
+      "Text": "Set the default outbound policy to `DROP` and allow only explicit outbound destinations and services.",
       "Url": "https://hub.prowler.com/check/networking_firewall_default_outbound_policy_drop"
     }
   },

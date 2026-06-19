@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable two-factor authentication for all Linode account users. Use an authenticator app (TOTP) for the second factor. Store backup codes securely.",
+      "Text": "Enable `2FA` for all Linode account users. Use an authenticator app (`TOTP`) for the second factor and store backup codes securely.",
       "Url": "https://hub.prowler.com/check/administration_user_2fa_enabled"
     }
   },

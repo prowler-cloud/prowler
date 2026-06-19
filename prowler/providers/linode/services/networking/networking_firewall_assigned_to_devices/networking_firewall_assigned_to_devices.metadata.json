@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Attach firewalls to applicable Linode devices to enforce intended network controls.",
+      "Text": "Attach each firewall to applicable Linode devices, such as `Linodes` or `NodeBalancers`, to enforce intended network controls.",
       "Url": "https://hub.prowler.com/check/networking_firewall_assigned_to_devices"
     }
   },

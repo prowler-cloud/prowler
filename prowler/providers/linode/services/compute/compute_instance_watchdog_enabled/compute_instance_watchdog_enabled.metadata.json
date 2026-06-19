@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable Watchdog (Lassie) on this instance to ensure automatic recovery from unexpected shutdowns. This provides an additional layer of availability protection.",
+      "Text": "Enable `Watchdog (Lassie)` on this instance to automatically recover from unexpected shutdowns and improve availability protection.",
       "Url": "https://hub.prowler.com/check/compute_instance_watchdog_enabled"
     }
   },

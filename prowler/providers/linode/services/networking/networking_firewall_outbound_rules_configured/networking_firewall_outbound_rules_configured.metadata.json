@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure outbound rules to explicitly control allowed egress destinations and protocols.",
+      "Text": "Configure explicit `outbound rules` to control allowed egress destinations, ports, and protocols.",
       "Url": "https://hub.prowler.com/check/networking_firewall_outbound_rules_configured"
     }
   },

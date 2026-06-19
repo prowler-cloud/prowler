@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable disk encryption for this instance. Since disk encryption cannot be toggled on existing instances, you may need to rebuild or migrate to a new instance with encryption enabled.",
+      "Text": "Enable `disk encryption` for this instance. Because it cannot be toggled on existing instances, rebuild or migrate to a new instance with encryption enabled.",
       "Url": "https://hub.prowler.com/check/compute_instance_disk_encryption_enabled"
     }
   },

@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Set default inbound policy to DROP and only allow explicitly required inbound traffic.",
+      "Text": "Set the default inbound policy to `DROP` and allow only explicitly required inbound traffic.",
       "Url": "https://hub.prowler.com/check/networking_firewall_default_inbound_policy_drop"
     }
   },

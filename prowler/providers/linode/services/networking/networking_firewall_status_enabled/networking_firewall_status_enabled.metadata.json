@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable Linode Cloud Firewalls to ensure network filtering controls are actively enforced.",
+      "Text": "Enable `Linode Cloud Firewalls` so configured network filtering controls are actively enforced.",
       "Url": "https://hub.prowler.com/check/networking_firewall_status_enabled"
     }
   },
