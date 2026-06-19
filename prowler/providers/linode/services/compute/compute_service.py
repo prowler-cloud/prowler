@@ -39,8 +39,11 @@ class ComputeService(LinodeService):
                         backups = getattr(inst, "backups", None)
                         if backups:
                             backups_enabled = getattr(backups, "enabled", False)
-                    except Exception:
-                        pass
+                    except Exception as error:
+                        logger.warning(
+                            f"instance - Unable to fetch backup status for instance "
+                            f"{inst.id}: {error}"
+                        )
 
                     # Get disk encryption status
                     disk_encryption = "disabled"
@@ -48,15 +51,21 @@ class ComputeService(LinodeService):
                         de = getattr(inst, "disk_encryption", None)
                         if de:
                             disk_encryption = str(de)
-                    except Exception:
-                        pass
+                    except Exception as error:
+                        logger.warning(
+                            f"instance - Unable to fetch disk encryption status for "
+                            f"instance {inst.id}: {error}"
+                        )
 
                     # Get watchdog status
                     watchdog_enabled = False
                     try:
                         watchdog_enabled = getattr(inst, "watchdog_enabled", False)
-                    except Exception:
-                        pass
+                    except Exception as error:
+                        logger.warning(
+                            f"instance - Unable to fetch watchdog status for instance "
+                            f"{inst.id}: {error}"
+                        )
 
                     self.instances.append(
                         Instance(
