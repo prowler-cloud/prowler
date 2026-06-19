@@ -24,7 +24,7 @@ class LinodeMutelist(Mutelist):
         return self.is_muted(
             account_id,
             finding.check_metadata.CheckID,
-            finding.region,
+            finding.region or "global",
             finding.resource_id or finding.resource_name,
             unroll_dict(unroll_tags(finding.resource_tags)),
         )

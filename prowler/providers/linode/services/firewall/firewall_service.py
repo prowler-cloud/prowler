@@ -70,11 +70,15 @@ class FirewallService(LinodeService):
                             addresses = getattr(rule, "addresses", None)
                             inbound_rules.append(
                                 FirewallRule(
-                                    protocol=getattr(rule, "protocol", "TCP").upper(),
+                                    protocol=(
+                                        getattr(rule, "protocol", None) or "TCP"
+                                    ).upper(),
                                     ports=getattr(rule, "ports", ""),
                                     addresses_ipv4=getattr(addresses, "ipv4", []),
                                     addresses_ipv6=getattr(addresses, "ipv6", []),
-                                    action=getattr(rule, "action", "ACCEPT").upper(),
+                                    action=(
+                                        getattr(rule, "action", None) or "ACCEPT"
+                                    ).upper(),
                                     label=getattr(rule, "label", ""),
                                 )
                             )
@@ -82,11 +86,15 @@ class FirewallService(LinodeService):
                             addresses = getattr(rule, "addresses", None)
                             outbound_rules.append(
                                 FirewallRule(
-                                    protocol=getattr(rule, "protocol", "TCP").upper(),
+                                    protocol=(
+                                        getattr(rule, "protocol", None) or "TCP"
+                                    ).upper(),
                                     ports=getattr(rule, "ports", ""),
                                     addresses_ipv4=getattr(addresses, "ipv4", []),
                                     addresses_ipv6=getattr(addresses, "ipv6", []),
-                                    action=getattr(rule, "action", "ACCEPT").upper(),
+                                    action=(
+                                        getattr(rule, "action", None) or "ACCEPT"
+                                    ).upper(),
                                     label=getattr(rule, "label", ""),
                                 )
                             )
