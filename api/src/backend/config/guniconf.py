@@ -56,6 +56,10 @@ preload_app = not DEBUG
 # that may take longer, such as complex API operations.
 timeout = env.int("GUNICORN_TIMEOUT", default=120)
 
+# HTTP keep-alive idle timeout. Must exceed the load balancer's idle timeout, or
+# the balancer reuses a connection gunicorn just closed and returns a 502.
+keepalive = env.int("GUNICORN_KEEPALIVE", default=315)
+
 # Logging
 logconfig_dict = DJANGO_LOGGERS
 gunicorn_logger = logging.getLogger(BackendLogger.GUNICORN)
