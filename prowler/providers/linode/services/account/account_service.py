@@ -31,10 +31,10 @@ class AccountService(LinodeService):
                 try:
                     self.users.append(
                         User(
-                            username=getattr(user, "username", ""),
-                            email=getattr(user, "email", ""),
-                            tfa_enabled=getattr(user, "tfa_enabled", False),
-                            restricted=getattr(user, "restricted", False),
+                            username=getattr(user, "username", "") or "",
+                            email=getattr(user, "email", "") or "",
+                            tfa_enabled=getattr(user, "tfa_enabled", False) or False,
+                            restricted=getattr(user, "restricted", False) or False,
                         )
                     )
                 except Exception as error:

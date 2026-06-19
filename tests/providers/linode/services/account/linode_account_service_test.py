@@ -64,3 +64,21 @@ class TestLinodeAccountService:
         service._describe_users()
 
         assert len(service.users) == 0
+
+    def test_describe_users_handles_null_fields(self):
+        """A user with null tfa_enabled/email must still be included with safe
+        defaults instead of being dropped by a ValidationError."""
+        user = MagicMock()
+        user.username = "partial"
+        user.email = None
+        user.tfa_enabled = None
+        user.restricted = None
+
+        service = _build_service(account_users_return=[user])
+        service._describe_users()
+
+        assert len(service.users) == 1
+        assert service.users[0].username == "partial"
+        assert service.users[0].email == ""
+        assert service.users[0].tfa_enabled is False
+        assert service.users[0].restricted is False
