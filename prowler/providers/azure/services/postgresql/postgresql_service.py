@@ -171,10 +171,19 @@ class PostgreSQL(AzureService):
                 resouce_group_name, server_name, "connection_throttle.enable"
             )
             return connection_throttling.value.upper()
-        except Exception:
-            # The "connection_throttle.enable" parameter does not exist on newer
-            # PostgreSQL versions (e.g. v18). Degrade gracefully instead of
-            # aborting the whole subscription's server inventory.
+        except Exception as error:
+            message = str(error).lower()
+            if "connection_throttle.enable" in message and (
+                "not exist" in message or "not found" in message
+            ):
+                # The "connection_throttle.enable" parameter does not exist on
+                # newer PostgreSQL versions (e.g. v18); this is expected.
+                return None
+            # Any other failure is a genuine problem: surface it, but still
+            # degrade gracefully instead of aborting the subscription inventory.
+            logger.error(
+                f"Error getting connection throttling for {server_name}: {error}"
+            )
             return None
 
     def _get_log_retention_days(self, subscription, resouce_group_name, server_name):
@@ -233,6 +242,6 @@ class Server:
     log_connections: str
     log_disconnections: str
     connection_throttling: Optional[str]
-    log_retention_days: str
+    log_retention_days: Optional[str]
     firewall: list[Firewall]
     geo_redundant_backup: Optional[str] = None
