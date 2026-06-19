@@ -761,7 +761,10 @@ class TenantFinishACSView(FinishACSView):
         try:
             check = SAMLDomainIndex.objects.get(email_domain=organization_slug)
             with rls_transaction(str(check.tenant_id)):
-                SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+                saml_config = SAMLConfiguration.objects.select_related("tenant").get(
+                    tenant_id=str(check.tenant_id)
+                )
+                tenant = saml_config.tenant
             social_app = SocialApp.objects.get(
                 provider="saml", client_id=organization_slug
             )
@@ -781,6 +784,15 @@ class TenantFinishACSView(FinishACSView):
             callback_url = env.str("AUTH_URL")
             return redirect(f"{callback_url}?sso_saml_failed=true")
 
+        requested_domain = organization_slug.lower()
+        configured_domain = saml_config.email_domain.lower()
+        email_domain = user.email.rsplit("@", 1)[-1].lower()
+        if configured_domain != requested_domain or email_domain != configured_domain:
+            logger.error("SAML email domain does not match requested organization")
+            self._rollback_saml_user(request)
+            callback_url = env.str("AUTH_URL")
+            return redirect(f"{callback_url}?sso_saml_failed=true")
+
         extra = social_account.extra_data
         user.first_name = (
             extra.get("firstName", [""])[0] if extra.get("firstName") else ""
@@ -793,13 +805,6 @@ class TenantFinishACSView(FinishACSView):
         if user.name == "":
             user.name = "N/A"
         user.save()
-
-        email_domain = user.email.split("@")[-1]
-        tenant = (
-            SAMLConfiguration.objects.using(MainRouter.admin_db)
-            .get(email_domain=email_domain)
-            .tenant
-        )
 
         role_name = (
             extra.get("userType", ["no_permissions"])[0].strip()

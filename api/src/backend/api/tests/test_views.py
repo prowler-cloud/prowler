@@ -12845,7 +12845,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -12865,18 +12867,23 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(
                 tenant_id=tenants_fixture[0].id
             )
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenants_fixture[0]
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -12914,6 +12921,79 @@ class TestTenantFinishACSView:
         user.name = original_name
         user.company_name = original_company
         user.save()
+
+    def test_dispatch_rejects_assertion_email_domain_that_differs_from_slug(
+        self, tenants_fixture, saml_setup, monkeypatch
+    ):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        victim_tenant = tenants_fixture[0]
+        attacker_tenant = tenants_fixture[1]
+        attacker_domain = "attacker.com"
+
+        SAMLConfiguration.objects.using(MainRouter.admin_db).create(
+            email_domain=attacker_domain,
+            metadata_xml="""<?xml version='1.0' encoding='UTF-8'?>
+                <md:EntityDescriptor entityID='ATTACKER' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+                <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+                    <md:KeyDescriptor use='signing'>
+                    <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+                        <ds:X509Data>
+                        <ds:X509Certificate>TEST</ds:X509Certificate>
+                        </ds:X509Data>
+                    </ds:KeyInfo>
+                    </md:KeyDescriptor>
+                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://ATTACKER/sso/saml'/>
+                </md:IDPSSODescriptor>
+                </md:EntityDescriptor>
+            """,
+            tenant=attacker_tenant,
+        )
+        user = User.objects.using(MainRouter.admin_db).create(
+            email=f"intruder@{saml_setup['domain']}", name="Intruder"
+        )
+        social_account = SocialAccount(
+            user=user,
+            provider="ATTACKER",
+            extra_data={
+                "firstName": ["Mallory"],
+                "lastName": ["Example"],
+            },
+        )
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": attacker_domain})
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                provider_id="ATTACKER",
+                client_id=attacker_domain,
+                name="Attacker App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug=attacker_domain)
+
+        assert response.status_code == 302
+        assert "sso_saml_failed=true" in response.url
+        assert not (
+            Membership.objects.using(MainRouter.admin_db)
+            .filter(user=user, tenant=victim_tenant)
+            .exists()
+        )
+        assert not SAMLToken.objects.using(MainRouter.admin_db).filter(user=user).exists()
 
     def test_rollback_saml_user_when_error_occurs(self, users_fixture, monkeypatch):
         """Test that a user is properly deleted when created during SAML flow and an error occurs"""
@@ -12984,7 +13064,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -13004,16 +13086,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -13071,7 +13158,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -13091,16 +13180,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -13155,7 +13249,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -13175,16 +13271,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -13238,7 +13339,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = non_admin_user
         request.session = {}
@@ -13258,16 +13361,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = non_admin_user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
