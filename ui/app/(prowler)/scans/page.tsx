@@ -3,13 +3,13 @@ import { Suspense } from "react";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
+import { ScansPageShell } from "@/components/scans/scans-page-shell";
+import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import {
   getScanJobsTab,
   getScanJobsTabFilters,
   getScanJobsUserFilters,
 } from "@/components/scans/scans.utils";
-import { ScansPageShell } from "@/components/scans/scans-page-shell";
-import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/ui";

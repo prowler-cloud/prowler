@@ -3,7 +3,7 @@
 import { Accordion as NextUIAccordion, AccordionItem } from "@heroui/accordion";
 import type { Selection } from "@react-types/shared";
 import { ChevronDown } from "lucide-react";
-import React, { ReactNode, useCallback, useMemo, useState } from "react";
+import { Children, ReactNode, useCallback, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -42,7 +42,7 @@ const AccordionContent = ({
 }) => {
   // Normalize possible array content to automatically assign stable keys
   const normalizedContent = Array.isArray(content)
-    ? React.Children.toArray(content)
+    ? Children.toArray(content)
     : content;
 
   return (

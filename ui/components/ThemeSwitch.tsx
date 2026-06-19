@@ -4,9 +4,9 @@ import type { SwitchProps } from "@heroui/switch";
 import { useSwitch } from "@heroui/switch";
 import { useIsSSR } from "@react-aria/ssr";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { useTheme } from "next-themes";
-import React, { FC } from "react";
+import { FC } from "react";
 
 import {
   Tooltip,

@@ -5,6 +5,7 @@ import type { MetaDataProps, ScanJobsTab, ScanProps } from "@/types";
 
 import { AutoRefresh } from "../auto-refresh";
 import { NoScansEmptyState } from "../no-scans-empty-state";
+
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
 interface ScanJobsTableProps {

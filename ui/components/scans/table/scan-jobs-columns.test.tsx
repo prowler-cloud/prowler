@@ -2,7 +2,7 @@ import type { CellContext, HeaderContext } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ScanProps } from "@/types";
+import { type ScanProps, SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
 
 vi.mock("@/components/shadcn", () => ({
   Badge: ({ children }: { children: React.ReactNode }) => (
@@ -50,8 +50,6 @@ vi.mock("@/components/ui/table", () => ({
 vi.mock("./scan-jobs-row-actions", () => ({
   ScanJobsRowActions: () => <button type="button" />,
 }));
-
-import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
 
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
