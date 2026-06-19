@@ -19,6 +19,7 @@ export async function RiskPlotSSR({
 
   const providerTypeFilter = filters["filter[provider_type__in]"];
   const providerIdFilter = filters["filter[provider_id__in]"];
+  const providerGroupsFilter = filters["filter[provider_groups__in]"];
 
   // Fetch all providers
   const providersListResponse = await getAllProviders();
@@ -33,6 +34,16 @@ export async function RiskPlotSSR({
       .split(",")
       .map((id) => id.trim());
     filteredProviders = allProviders.filter((p) => selectedIds.includes(p.id));
+  } else if (providerGroupsFilter) {
+    // Filter by provider group membership
+    const selectedGroupIds = String(providerGroupsFilter)
+      .split(",")
+      .map((id) => id.trim());
+    filteredProviders = allProviders.filter((p) =>
+      p.relationships.provider_groups?.data?.some((group) =>
+        selectedGroupIds.includes(group.id),
+      ),
+    );
   } else if (providerTypeFilter) {
     // Filter by provider types
     const selectedTypes = String(providerTypeFilter)

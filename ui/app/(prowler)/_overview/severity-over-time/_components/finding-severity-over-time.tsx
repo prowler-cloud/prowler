@@ -44,8 +44,10 @@ export const FindingSeverityOverTime = ({
     const filters: Record<string, string> = {};
     const providerType = searchParams.get("filter[provider_type__in]");
     const providerId = searchParams.get("filter[provider_id__in]");
+    const providerGroups = searchParams.get("filter[provider_groups__in]");
     if (providerType) filters["filter[provider_type__in]"] = providerType;
     if (providerId) filters["filter[provider_id__in]"] = providerId;
+    if (providerGroups) filters["filter[provider_groups__in]"] = providerGroups;
     return filters;
   };
 

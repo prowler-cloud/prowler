@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
+import { ProviderGroupSelector } from "./_overview/_components/provider-group-selector";
 import {
   AttackSurfaceSkeleton,
   AttackSurfaceSSR,
@@ -38,12 +40,16 @@ export default async function Home({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const providersData = await getAllProviders();
+  const [providersData, providerGroupsData] = await Promise.all([
+    getAllProviders(),
+    getAllProviderGroups(),
+  ]);
 
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <ProviderAccountSelectors providers={providersData?.data ?? []} />
+        <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
 
       <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
