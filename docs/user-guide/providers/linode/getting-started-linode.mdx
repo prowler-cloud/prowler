@@ -8,6 +8,10 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 Prowler for Linode scans your Linode infrastructure for security misconfigurations, including instance settings, firewall rules, user account security, and more.
 
+<Note>
+Linode support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
 ## Prerequisites
 
 Set up authentication for Linode with the [Linode Authentication](/user-guide/providers/linode/authentication) guide before starting:
@@ -19,24 +23,12 @@ Set up authentication for Linode with the [Linode Authentication](/user-guide/pr
 
 ### Run Prowler for Linode
 
-Once authenticated with a Personal Access Token, run Prowler for Linode using either an environment variable or CLI argument:
-
-**Option 1: Environment Variable (Recommended)**
+Once authenticated with a Personal Access Token, set the `LINODE_TOKEN` environment variable and run Prowler for Linode. Prowler reads the token exclusively from the environment variable, so the secret is never exposed in shell history or process listings:
 
 ```bash
 export LINODE_TOKEN="your-personal-access-token"
 prowler linode
 ```
-
-**Option 2: CLI Argument**
-
-```bash
-prowler linode --linode-token "your-personal-access-token"
-```
-
-<Warning>
-Passing the token directly on the command line may expose it in shell history and process listings. Using the environment variable is recommended.
-</Warning>
 
 ### Run Specific Checks
 

@@ -6,7 +6,7 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.31.0" />
 
-Prowler for Linode uses a **Personal Access Token** (PAT) for authentication. This is the only authentication method currently supported.
+Prowler for Linode uses a **Personal Access Token** (PAT) for authentication. Prowler reads the token **exclusively** from the `LINODE_TOKEN` environment variable, so the secret is never exposed in shell history or process listings. There are no credential CLI flags.
 
 ## Required Permissions
 
@@ -44,33 +44,17 @@ Ensure the token has all required scopes. Missing permissions will cause some ch
 
 ### Step 2: Configure Authentication
 
-Choose one of the following methods:
-
-#### Environment Variable (Recommended)
-
 Set the `LINODE_TOKEN` environment variable:
 
 ```bash
 export LINODE_TOKEN="your-personal-access-token"
 ```
 
-Then run Prowler without the token flag:
+Then run Prowler:
 
 ```bash
 prowler linode
 ```
-
-#### CLI Argument
-
-Pass the token directly on the command line:
-
-```bash
-prowler linode --linode-token "your-personal-access-token"
-```
-
-<Warning>
-Passing secrets directly on the command line may expose them in shell history and process listings. The environment variable method is strongly recommended for production and CI/CD use.
-</Warning>
 
 ---
 
