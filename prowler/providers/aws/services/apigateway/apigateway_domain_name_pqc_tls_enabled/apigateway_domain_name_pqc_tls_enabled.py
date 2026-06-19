@@ -8,7 +8,7 @@ PQC_APIGATEWAY_POLICIES_DEFAULT = [
 ]
 
 
-def _get_allowed_policies(configured_policies) -> list[str]:
+def _get_allowed_policies(configured_policies: object) -> list[str]:
     if not isinstance(configured_policies, list):
         return PQC_APIGATEWAY_POLICIES_DEFAULT
 

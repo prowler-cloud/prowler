@@ -13,8 +13,8 @@
   "Risk": "With POP and IMAP enabled, users can access email through **legacy clients** that rely on simple password authentication, bypassing **multifactor authentication** and other modern security controls. This significantly increases the risk of **credential-based account compromise**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/105694",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/sync/turn-pop-and-imap-on-or-off-for-users",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

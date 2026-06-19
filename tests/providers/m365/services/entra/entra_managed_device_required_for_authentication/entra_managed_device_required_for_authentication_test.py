@@ -107,7 +107,9 @@ class Test_entra_managed_device_required_for_authentication:
                             type=None,
                             interval=SignInFrequencyInterval.TIME_BASED,
                         ),
-                        application_enforced_restrictions=ApplicationEnforcedRestrictions(is_enabled=False),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.DISABLED,
                 )
@@ -186,7 +188,9 @@ class Test_entra_managed_device_required_for_authentication:
                             type=None,
                             interval=SignInFrequencyInterval.TIME_BASED,
                         ),
-                        application_enforced_restrictions=ApplicationEnforcedRestrictions(is_enabled=False),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
                 )
@@ -269,7 +273,9 @@ class Test_entra_managed_device_required_for_authentication:
                             type=None,
                             interval=SignInFrequencyInterval.TIME_BASED,
                         ),
-                        application_enforced_restrictions=ApplicationEnforcedRestrictions(is_enabled=False),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
                 )
