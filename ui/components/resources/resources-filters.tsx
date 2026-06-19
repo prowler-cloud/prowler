@@ -3,6 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+import { ProviderGroupSelector } from "@/app/(prowler)/_overview/_components/provider-group-selector";
 import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
@@ -16,6 +17,7 @@ import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getGroupLabel } from "@/lib/categories";
+import { ProviderGroup } from "@/types/components";
 import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
 
@@ -26,6 +28,7 @@ import {
 
 interface ResourcesFiltersProps {
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   uniqueRegions: string[];
   uniqueServices: string[];
   uniqueResourceTypes: string[];
@@ -40,6 +43,7 @@ const FILTER_CONTROL_COLUMN_CLASS =
 
 export const ResourcesFilters = ({
   providers,
+  providerGroups = [],
   uniqueRegions,
   uniqueServices,
   uniqueResourceTypes,
@@ -93,10 +97,12 @@ export const ResourcesFilters = ({
   const appliedFilterChips: FilterChip[] = buildResourcesFilterChips(
     appliedFilters,
     providers,
+    providerGroups,
   );
   const pendingFilterChips: FilterChip[] = buildResourcesFilterChips(
     changedFilters,
     providers,
+    providerGroups,
   );
   const appliedCount = countVisibleFilterKeys(appliedFilters);
   const showAppliedRow = appliedFilterChips.length > 0;
@@ -178,6 +184,13 @@ export const ResourcesFilters = ({
             providerSelectorClassName={FILTER_CONTROL_COLUMN_CLASS}
             accountSelectorClassName={FILTER_CONTROL_COLUMN_CLASS}
           />
+          <div className={FILTER_CONTROL_COLUMN_CLASS}>
+            <ProviderGroupSelector
+              groups={providerGroups}
+              selectedValues={getFilterValue("filter[provider_groups__in]")}
+              onBatchChange={setPending}
+            />
+          </div>
           {hasCustomFilters && (
             <Button
               variant="outline"
