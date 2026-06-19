@@ -18,6 +18,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🐞 Fixed
 
 - Database connections no longer leak under the ASGI worker, which previously exhausted the read replica's connection slots and caused 500s on read endpoints [(#11640)](https://github.com/prowler-cloud/prowler/pull/11640)
+- Gunicorn keep-alive timeout now exceeds the load balancer idle timeout, stopping 502s from reused connections [(#11647)](https://github.com/prowler-cloud/prowler/pull/11647)
 
 ### 🔐 Security
 
