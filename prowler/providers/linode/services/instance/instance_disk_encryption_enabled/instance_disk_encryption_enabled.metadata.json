@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
-  "Description": "Linode instances are assessed for disk encryption status. Disk encryption protects data at rest on the instance's disks from unauthorized access.",
-  "Risk": "Without disk encryption, sensitive data stored on the instance's disks is unprotected at rest. This increases the risk of data exposure in the event of physical access to storage media or through certain hypervisor-level vulnerabilities.",
+  "Description": "**Linode instances** are assessed for **disk encryption** status. Disk encryption protects **data at rest** on the instance's underlying disks, keeping stored data unreadable without the encryption keys even if the physical media is accessed.",
+  "Risk": "Without **disk encryption**, data at rest on the instance's disks is stored unprotected. This increases the risk of **data exposure** through physical access to decommissioned or stolen storage media, or via certain **hypervisor-level** vulnerabilities, compromising the **confidentiality** of sensitive data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://techdocs.akamai.com/cloud-computing/docs/local-disk-encryption",

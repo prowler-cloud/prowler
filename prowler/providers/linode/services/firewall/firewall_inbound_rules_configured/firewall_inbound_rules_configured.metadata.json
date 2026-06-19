@@ -9,8 +9,8 @@
   "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Linode Cloud Firewalls are checked to determine whether inbound rules are explicitly configured.",
-  "Risk": "When inbound rules are not configured, ingress filtering will not be enforced.",
+  "Description": "**Linode Cloud Firewalls** are checked to determine whether explicit **inbound rules** are configured. Defined ingress rules express the intended allow-list of sources, ports, and protocols instead of relying solely on the firewall's default policy.",
+  "Risk": "Without explicit **inbound rules**, ingress filtering depends entirely on the default policy and no intentional allow-list is documented. This makes the firewall's behavior ambiguous and harder to audit, raising the chance of **overly permissive access** or gaps in the protection operators expect.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules"

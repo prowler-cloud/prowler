@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
-  "Description": "Linode instances are assessed for Watchdog (Lassie) status. Watchdog is Linode's automatic instance recovery feature that monitors instances and automatically reboots them if they power off unexpectedly. Disabling Watchdog removes this safety net.",
-  "Risk": "Without Watchdog enabled, an instance that crashes or powers off unexpectedly will remain offline until manually restarted. This increases downtime risk and may delay detection of availability issues.",
+  "Description": "**Linode instances** are assessed for **Watchdog (Lassie)** status. Watchdog is Linode's automatic recovery feature that monitors an instance and reboots it if it powers off unexpectedly, helping maintain availability without manual intervention.",
+  "Risk": "With **Watchdog (Lassie)** disabled, an instance that crashes or shuts down unexpectedly stays offline until it is manually restarted. This prolongs **downtime**, delays detection of availability incidents, and weakens the **availability** of services running on the instance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://techdocs.akamai.com/cloud-computing/docs/recover-from-unexpected-shutdowns-with-lassie"

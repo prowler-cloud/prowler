@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Linode Cloud Firewalls are checked to verify if their status is enabled.",
-  "Risk": "A disabled firewall does not enforce configured network filtering controls, increasing exposure to unwanted traffic.",
+  "Description": "**Linode Cloud Firewalls** can be in an `enabled` or `disabled` state. This check verifies the firewall status is `enabled`, because a firewall must be active for its inbound and outbound policies and rules to actually filter network traffic.",
+  "Risk": "A `disabled` firewall enforces **none** of its configured rules or default policies, leaving attached instances with no network filtering. This can unexpectedly expose management ports and services to the internet, significantly increasing the risk of **unauthorized access** and exploitation.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://techdocs.akamai.com/cloud-computing/docs/update-cloud-firewall-status"

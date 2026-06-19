@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
-  "Description": "Linode instances are assessed for Backup service enrollment. The Linode Backup service provides automatic daily and weekly backups of your instance's disks. Without backups, data loss from accidental deletion, disk corruption, or security incidents cannot be recovered.",
-  "Risk": "Without the Backup service enabled, there is no automated recovery point for the instance. Data loss events such as accidental deletion, ransomware, or disk failure may result in permanent loss of data and extended downtime.",
+  "Description": "**Linode instances** are assessed for enrollment in the **Linode Backup service**, which performs automatic daily and weekly snapshots of an instance's disks. Without it enabled, there is no managed recovery point to restore from after a data-loss event.",
+  "Risk": "With the **Backup service** disabled, there is no automated recovery point for the instance. Accidental deletion, **ransomware**, disk corruption, or operator error can result in **permanent data loss** and extended **downtime**, directly impacting **availability** and data **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://techdocs.akamai.com/cloud-computing/docs/enable-backups",

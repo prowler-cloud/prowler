@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Linode Cloud Firewalls are checked to ensure the default inbound policy is DROP.",
-  "Risk": "If the default inbound policy is not DROP, traffic not explicitly controlled by rules may be allowed, increasing exposure.",
+  "Description": "**Linode Cloud Firewalls** apply a **default inbound policy** to ingress traffic that does not match any explicit rule. This check verifies the default is set to `DROP`, enforcing a **default-deny** posture so that only traffic intentionally permitted by a rule is allowed in.",
+  "Risk": "When the default inbound policy is `ACCEPT` instead of `DROP`, any traffic not explicitly denied by a rule is permitted. This **default-allow** posture can silently expose services, management ports, and unintended endpoints to the internet, enlarging the attack surface and increasing the risk of **unauthorized access**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules"

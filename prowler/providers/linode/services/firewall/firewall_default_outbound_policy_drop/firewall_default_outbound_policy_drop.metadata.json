@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Linode Cloud Firewalls are checked to ensure the default outbound policy is DROP.",
-  "Risk": "If the default outbound policy is not DROP, unrestricted egress traffic can increase data exfiltration and command-and-control risk.",
+  "Description": "**Linode Cloud Firewalls** apply a **default outbound policy** to egress traffic that matches no explicit rule. This check verifies the default is set to `DROP`, enforcing **default-deny egress** so that only approved outbound connections are allowed to leave the instance.",
+  "Risk": "An outbound default of `ACCEPT` permits unrestricted egress from the instance. If a host is compromised, this eases **data exfiltration** and **command-and-control (C2)** communication and lets malware reach arbitrary external endpoints, harming **confidentiality** and enabling lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules"
