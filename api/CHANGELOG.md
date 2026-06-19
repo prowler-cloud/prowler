@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.31.3] (Prowler v5.30.3)
+
+### 🔐 Security
+
+- SAML logins now link to an existing account only when the asserted email domain matches the ACS endpoint and the user is already a member of that domain's tenant, fixing a cross-tenant account takeover [(GHSA-h8m9-jgf8-vwvp)](https://github.com/prowler-cloud/prowler/security/advisories/GHSA-h8m9-jgf8-vwvp) [bf3b5c2ba713e533014927141b64948c82c8f32e](https://github.com/prowler-cloud/prowler/commit/bf3b5c2ba713e533014927141b64948c82c8f32e)
+
+---
+
 ## [1.31.2] (Prowler v5.30.2)
 
 ### 🔄 Changed
