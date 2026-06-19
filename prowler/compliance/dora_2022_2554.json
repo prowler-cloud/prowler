@@ -144,6 +144,22 @@
           "compute_instance_default_service_account_in_use",
           "compute_instance_default_service_account_in_use_with_full_api_access",
           "gke_cluster_no_default_service_account"
+        ],
+        "alibabacloud": [
+          "ram_no_root_access_key",
+          "ram_user_mfa_enabled_console_access",
+          "ram_user_console_access_unused",
+          "ram_rotate_access_key_90_days",
+          "ram_password_policy_minimum_length",
+          "ram_password_policy_lowercase",
+          "ram_password_policy_uppercase",
+          "ram_password_policy_number",
+          "ram_password_policy_symbol",
+          "ram_password_policy_password_reuse_prevention",
+          "ram_password_policy_max_password_age",
+          "ram_password_policy_max_login_attempts",
+          "ram_policy_attached_only_to_group_or_roles",
+          "ram_policy_no_administrative_privileges"
         ]
       }
     },
@@ -192,6 +208,12 @@
           "gcr_container_scanning_enabled",
           "artifacts_container_analysis_enabled",
           "iam_organization_essential_contacts_configured"
+        ],
+        "alibabacloud": [
+          "securitycenter_advanced_or_enterprise_edition",
+          "securitycenter_all_assets_agent_installed",
+          "securitycenter_vulnerability_scan_enabled",
+          "actiontrail_multi_region_enabled"
         ]
       }
     },
@@ -267,6 +289,15 @@
           "zone_development_mode_disabled",
           "zone_record_caa_exists",
           "zone_dnssec_enabled"
+        ],
+        "alibabacloud": [
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_ssl_enabled",
+          "rds_instance_tde_enabled",
+          "rds_instance_tde_key_custom",
+          "ecs_attached_disk_encrypted",
+          "ecs_unattached_disk_encrypted",
+          "ecs_instance_no_legacy_network"
         ]
       }
     },
@@ -308,6 +339,10 @@
           "dns_record_no_wildcard",
           "dns_record_no_internal_ip",
           "dns_record_cname_target_valid"
+        ],
+        "alibabacloud": [
+          "securitycenter_all_assets_agent_installed",
+          "ram_user_console_access_unused"
         ]
       }
     },
@@ -457,6 +492,25 @@
           "zone_record_spf_exists",
           "zone_record_dkim_exists",
           "zone_record_dmarc_exists"
+        ],
+        "alibabacloud": [
+          "oss_bucket_not_publicly_accessible",
+          "oss_bucket_secure_transport_enabled",
+          "actiontrail_oss_bucket_not_publicly_accessible",
+          "ecs_attached_disk_encrypted",
+          "ecs_unattached_disk_encrypted",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_instance_endpoint_protection_installed",
+          "rds_instance_no_public_access_whitelist",
+          "rds_instance_ssl_enabled",
+          "rds_instance_tde_enabled",
+          "rds_instance_tde_key_custom",
+          "cs_kubernetes_network_policy_enabled",
+          "cs_kubernetes_eni_multiple_ip_enabled",
+          "cs_kubernetes_private_cluster_enabled",
+          "cs_kubernetes_rbac_enabled",
+          "cs_kubernetes_dashboard_disabled"
         ]
       }
     },
@@ -518,6 +572,13 @@
           "zone_bot_fight_mode_enabled",
           "zone_browser_integrity_check_enabled",
           "zone_rate_limiting_enabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled",
+          "securitycenter_notification_enabled_high_risk",
+          "securitycenter_all_assets_agent_installed",
+          "ecs_instance_endpoint_protection_installed",
+          "cs_kubernetes_cloudmonitor_enabled"
         ]
       }
     },
@@ -561,6 +622,11 @@
           "compute_instance_deletion_protection_enabled",
           "compute_instance_group_load_balancer_attached",
           "compute_instance_preemptible_vm_disabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_notification_enabled_high_risk",
+          "cs_kubernetes_cluster_check_recent",
+          "cs_kubernetes_cluster_check_weekly"
         ]
       }
     },
@@ -660,6 +726,11 @@
           "artifacts_container_analysis_enabled",
           "iam_cloud_asset_inventory_enabled",
           "logging_sink_created"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled",
+          "securitycenter_all_assets_agent_installed",
+          "ecs_instance_latest_os_patches_applied"
         ]
       }
     },
@@ -695,6 +766,9 @@
           "logging_sink_created",
           "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
           "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_notification_enabled_high_risk"
         ]
       }
     },
@@ -770,6 +844,19 @@
           "cloudsql_instance_postgres_log_error_verbosity_flag",
           "cloudsql_instance_postgres_log_min_error_statement_flag",
           "cloudsql_instance_postgres_log_min_duration_statement_flag"
+        ],
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "actiontrail_oss_bucket_not_publicly_accessible",
+          "oss_bucket_logging_enabled",
+          "sls_logstore_retention_period",
+          "vpc_flow_logs_enabled",
+          "cs_kubernetes_log_service_enabled",
+          "rds_instance_sql_audit_enabled",
+          "rds_instance_sql_audit_retention",
+          "rds_instance_postgresql_log_connections_enabled",
+          "rds_instance_postgresql_log_disconnections_enabled",
+          "rds_instance_postgresql_log_duration_enabled"
         ]
       }
     },
@@ -809,6 +896,10 @@
           "compute_public_address_shodan",
           "iam_cloud_asset_inventory_enabled",
           "iam_audit_logs_enabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_notification_enabled_high_risk",
+          "securitycenter_vulnerability_scan_enabled"
         ]
       }
     },
@@ -866,6 +957,21 @@
           "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
           "iam_organization_essential_contacts_configured",
           "logging_sink_created"
+        ],
+        "alibabacloud": [
+          "sls_management_console_authentication_failures_alert_enabled",
+          "sls_management_console_signin_without_mfa_alert_enabled",
+          "sls_root_account_usage_alert_enabled",
+          "sls_unauthorized_api_calls_alert_enabled",
+          "sls_ram_role_changes_alert_enabled",
+          "sls_oss_bucket_policy_changes_alert_enabled",
+          "sls_oss_permission_changes_alert_enabled",
+          "sls_rds_instance_configuration_changes_alert_enabled",
+          "sls_security_group_changes_alert_enabled",
+          "sls_vpc_changes_alert_enabled",
+          "sls_vpc_network_route_changes_alert_enabled",
+          "sls_cloud_firewall_changes_alert_enabled",
+          "sls_customer_created_cmk_changes_alert_enabled"
         ]
       }
     },
@@ -903,6 +1009,13 @@
           "compute_instance_shielded_vm_enabled",
           "compute_snapshot_not_outdated",
           "compute_public_address_shodan"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled",
+          "securitycenter_advanced_or_enterprise_edition",
+          "ecs_instance_latest_os_patches_applied",
+          "cs_kubernetes_cluster_check_recent",
+          "cs_kubernetes_cluster_check_weekly"
         ]
       }
     },
@@ -960,6 +1073,11 @@
         ],
         "cloudflare": [
           "zone_min_tls_version_secure"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled",
+          "ecs_instance_latest_os_patches_applied",
+          "ecs_instance_no_legacy_network"
         ]
       }
     },
@@ -1020,6 +1138,11 @@
         "cloudflare": [
           "zone_record_caa_exists",
           "dns_record_cname_target_valid"
+        ],
+        "alibabacloud": [
+          "ram_policy_no_administrative_privileges",
+          "oss_bucket_not_publicly_accessible",
+          "actiontrail_oss_bucket_not_publicly_accessible"
         ]
       }
     },
@@ -1071,6 +1194,11 @@
           "gke_cluster_no_default_service_account",
           "iam_account_access_approval_enabled",
           "apikeys_api_restrictions_configured"
+        ],
+        "alibabacloud": [
+          "ram_policy_no_administrative_privileges",
+          "ram_policy_attached_only_to_group_or_roles",
+          "ram_no_root_access_key"
         ]
       }
     },
@@ -1110,6 +1238,12 @@
           "artifacts_container_analysis_enabled",
           "compute_public_address_shodan",
           "logging_sink_created"
+        ],
+        "alibabacloud": [
+          "securitycenter_advanced_or_enterprise_edition",
+          "securitycenter_notification_enabled_high_risk",
+          "actiontrail_multi_region_enabled",
+          "sls_logstore_retention_period"
         ]
       }
     }
