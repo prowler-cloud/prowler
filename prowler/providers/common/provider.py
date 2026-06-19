@@ -587,8 +587,10 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
                 elif arguments.provider == "linode":
+                    # Credentials are read from the LINODE_TOKEN env var by the
+                    # provider itself; there are no credential CLI flags to
+                    # avoid leaking secrets.
                     provider_class(
-                        token=getattr(arguments, "linode_token", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

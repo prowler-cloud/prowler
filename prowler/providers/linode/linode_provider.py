@@ -113,6 +113,10 @@ class LinodeProvider(Provider):
     def mutelist(self) -> LinodeMutelist:
         return self._mutelist
 
+    def validate_arguments(self) -> None:
+        """Linode provider has no provider-specific arguments to validate."""
+        return None
+
     @staticmethod
     def setup_session(token: str = None) -> LinodeSession:
         """Initialize Linode SDK client.
@@ -135,7 +139,7 @@ class LinodeProvider(Provider):
         if not token:
             raise LinodeCredentialsError(
                 file=os.path.basename(__file__),
-                message="Linode credentials not found. Set LINODE_TOKEN environment variable or use --linode-token argument.",
+                message="Linode credentials not found. Set the LINODE_TOKEN environment variable.",
             )
 
         try:
