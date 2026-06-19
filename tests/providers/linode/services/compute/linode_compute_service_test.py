@@ -112,3 +112,32 @@ class TestLinodeComputeService:
 
         assert service.instances[0].disk_encryption == "enabled"
         assert service.instances[1].disk_encryption == "disabled"
+
+    def test_describe_instances_region_filter_keeps_only_matching(self):
+        mock_instances = [
+            _mock_instance(id=1, label="eu", region="eu-central"),
+            _mock_instance(id=2, label="us", region="us-east"),
+            _mock_instance(id=3, label="eu-2", region="eu-central"),
+        ]
+        service = _build_service(linode_instances_return=mock_instances)
+        service.provider = MagicMock()
+        service.provider.regions = {"eu-central"}
+
+        service._describe_instances()
+
+        assert len(service.instances) == 2
+        assert {i.label for i in service.instances} == {"eu", "eu-2"}
+        assert all(i.region == "eu-central" for i in service.instances)
+
+    def test_describe_instances_no_region_filter_keeps_all(self):
+        mock_instances = [
+            _mock_instance(id=1, region="eu-central"),
+            _mock_instance(id=2, region="us-east"),
+        ]
+        service = _build_service(linode_instances_return=mock_instances)
+        service.provider = MagicMock()
+        service.provider.regions = None
+
+        service._describe_instances()
+
+        assert len(service.instances) == 2

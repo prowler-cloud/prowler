@@ -594,6 +594,7 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                        regions=getattr(arguments, "region", None),
                     )
                 else:
                     # Dynamic fallback: any external/custom provider.

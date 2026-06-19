@@ -42,6 +42,14 @@ prowler linode --checks compute_instance_backups_enabled compute_instance_watchd
 prowler linode --services networking
 ```
 
+### Scan Specific Regions
+
+Use `--region` (alias `--filter-region` / `-f`) to limit the scan to one or more Linode regions. Region-less resources (account administration and Cloud Firewalls) are always scanned; only regional resources such as instances are filtered. When the flag is omitted, all regions are scanned.
+
+```bash
+prowler linode --region eu-central us-east
+```
+
 ## Available Services
 
 Prowler for Linode currently supports the following services:

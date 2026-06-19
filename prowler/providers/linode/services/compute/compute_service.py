@@ -29,10 +29,21 @@ class ComputeService(LinodeService):
 
     def _describe_instances(self):
         """Fetch all Linode instances with firewall and IP details."""
+        # Optional --region filter. None scans all regions. Region-less services
+        # do not call this, so they are always scanned.
+        regions_filter = getattr(getattr(self, "provider", None), "regions", None)
         try:
             raw_instances = self.client.linode.instances()
             for inst in raw_instances:
                 try:
+                    region = (
+                        inst.region.id
+                        if hasattr(inst.region, "id")
+                        else str(inst.region)
+                    )
+                    if regions_filter and region not in regions_filter:
+                        continue
+
                     # Get backup status
                     backups_enabled = False
                     try:
@@ -71,11 +82,7 @@ class ComputeService(LinodeService):
                         Instance(
                             id=inst.id,
                             label=inst.label or f"linode-{inst.id}",
-                            region=(
-                                inst.region.id
-                                if hasattr(inst.region, "id")
-                                else str(inst.region)
-                            ),
+                            region=region,
                             status=inst.status or "unknown",
                             backups_enabled=backups_enabled,
                             disk_encryption=disk_encryption,

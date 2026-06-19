@@ -6,6 +6,7 @@ import pytest
 from prowler.providers.linode.exceptions.exceptions import (
     LinodeAuthenticationError,
     LinodeCredentialsError,
+    LinodeInvalidRegionError,
 )
 from prowler.providers.linode.linode_provider import LinodeProvider
 from prowler.providers.linode.models import LinodeIdentityInfo, LinodeSession
@@ -111,3 +112,35 @@ class TestLinodeProvider_test_connection:
             )
             with pytest.raises(LinodeCredentialsError):
                 LinodeProvider.test_connection(token=None, raise_on_exception=True)
+
+
+class TestLinodeProvider_validate_regions:
+    def _session_with_regions(self, region_ids):
+        client = mock.MagicMock()
+        client.regions.return_value = [mock.MagicMock(id=rid) for rid in region_ids]
+        return LinodeSession(client=client, token=TOKEN)
+
+    def test_no_regions_returns_none(self):
+        session = self._session_with_regions(["eu-central", "us-east"])
+        assert LinodeProvider.validate_regions(session, None) is None
+
+    def test_valid_regions_returns_set(self):
+        session = self._session_with_regions(["eu-central", "us-east", "ap-south"])
+        result = LinodeProvider.validate_regions(session, ["eu-central", "us-east"])
+        assert result == {"eu-central", "us-east"}
+
+    def test_invalid_region_raises(self):
+        session = self._session_with_regions(["eu-central", "us-east"])
+        with pytest.raises(LinodeInvalidRegionError):
+            LinodeProvider.validate_regions(session, ["eu-central", "nonexistent"])
+
+    def test_regions_api_failure_does_not_block(self):
+        # If the public regions list cannot be fetched, the scan proceeds with
+        # the requested regions instead of failing.
+        client = mock.MagicMock()
+        client.regions.side_effect = Exception("regions API error")
+        session = LinodeSession(client=client, token=TOKEN)
+
+        result = LinodeProvider.validate_regions(session, ["eu-central"])
+
+        assert result == {"eu-central"}

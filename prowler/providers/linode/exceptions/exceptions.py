@@ -26,6 +26,10 @@ class LinodeBaseException(ProwlerException):
             "message": "Linode token is missing a required permission scope",
             "remediation": "Grant the Personal Access Token the read-only scope required for the affected service (account:read_only, linodes:read_only, firewall:read_only).",
         },
+        (18005, "LinodeInvalidRegionError"): {
+            "message": "One or more requested Linode regions are invalid",
+            "remediation": "Pass a valid Linode region id to --region. See https://www.linode.com/global-infrastructure/ or the API /v4/regions endpoint for the current list.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -90,4 +94,13 @@ class LinodeMissingPermissionError(LinodeBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             18004, file=file, original_exception=original_exception, message=message
+        )
+
+
+class LinodeInvalidRegionError(LinodeBaseException):
+    """Exception for invalid Linode region filters."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            18005, file=file, original_exception=original_exception, message=message
         )

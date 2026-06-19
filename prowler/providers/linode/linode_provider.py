@@ -17,6 +17,7 @@ from prowler.providers.linode.exceptions.exceptions import (
     LinodeAuthenticationError,
     LinodeCredentialsError,
     LinodeIdentityError,
+    LinodeInvalidRegionError,
     LinodeSessionError,
 )
 from prowler.providers.linode.lib.mutelist.mutelist import LinodeMutelist
@@ -35,6 +36,7 @@ class LinodeProvider(Provider):
     _audit_config: dict
     _fixer_config: dict
     _mutelist: LinodeMutelist
+    _regions: set
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -45,6 +47,7 @@ class LinodeProvider(Provider):
         mutelist_path: str = None,
         mutelist_content: dict = None,
         token: str = None,
+        regions: list = None,
     ):
         """
         Initializes the LinodeProvider instance.
@@ -56,6 +59,8 @@ class LinodeProvider(Provider):
             mutelist_path (str): Path to the mutelist file.
             mutelist_content (dict): Mutelist content.
             token (str): Linode Personal Access Token (falls back to LINODE_TOKEN env var).
+            regions (list): Region(s) to scan regional resources in. Region-less
+                resources are always scanned. ``None`` scans all regions.
 
         Raises:
             LinodeCredentialsError: If no token is provided.
@@ -75,6 +80,10 @@ class LinodeProvider(Provider):
             self._audit_config = load_and_validate_config_file(self._type, config_path)
 
         self._session = LinodeProvider.setup_session(token=token)
+
+        # Region filter for regional resources, validated against the live
+        # Linode regions list. None means scan all regions.
+        self._regions = LinodeProvider.validate_regions(self._session, regions)
 
         self._identity = LinodeProvider.setup_identity(self._session)
 
@@ -112,6 +121,11 @@ class LinodeProvider(Provider):
     @property
     def mutelist(self) -> LinodeMutelist:
         return self._mutelist
+
+    @property
+    def regions(self):
+        """Set of regions to scan for regional resources, or None for all."""
+        return self._regions
 
     def validate_arguments(self) -> None:
         """Linode provider has no provider-specific arguments to validate."""
@@ -153,6 +167,49 @@ class LinodeProvider(Provider):
                 file=os.path.basename(__file__),
                 original_exception=error,
             )
+
+    @staticmethod
+    def validate_regions(session: LinodeSession, regions: list = None):
+        """Validate the requested regions against the live Linode regions list.
+
+        The ``/v4/regions`` endpoint is public, so this works regardless of the
+        token's scope. Validating against the live list (instead of a static
+        file) avoids rejecting newly added Linode regions.
+
+        Args:
+            session: The Linode session.
+            regions: The region ids requested via --region (or None).
+
+        Returns:
+            The validated set of region ids, or None when no filter is given.
+
+        Raises:
+            LinodeInvalidRegionError: If any requested region id is unknown.
+        """
+        if not regions:
+            return None
+
+        requested = set(regions)
+        try:
+            available = {region.id for region in session.client.regions()}
+        except Exception as error:
+            # Do not block a scan if the regions list cannot be fetched.
+            logger.warning(
+                f"Unable to validate Linode regions: {error}. "
+                "Proceeding with the requested regions without validation."
+            )
+            return requested
+
+        invalid = requested - available
+        if invalid:
+            raise LinodeInvalidRegionError(
+                file=os.path.basename(__file__),
+                message=(
+                    f"Invalid Linode region(s): {', '.join(sorted(invalid))}. "
+                    f"Valid regions are: {', '.join(sorted(available))}."
+                ),
+            )
+        return requested
 
     @staticmethod
     def setup_identity(session: LinodeSession) -> LinodeIdentityInfo:
