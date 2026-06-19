@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "loadbalancer_bitninja_enabled",
+  "CheckTitle": "Check if E2E Cloud load balancers have BitNinja protection enabled",
+  "CheckType": [],
+  "ServiceName": "loadbalancer",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "LoadBalancer",
+  "ResourceGroup": "network",
+  "Description": "Check if E2E Cloud load balancers have BitNinja protection enabled.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable BitNinja protection on load balancer appliances.",
+      "Url": "https://hub.prowler.com/check/loadbalancer_bitninja_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ]
+}

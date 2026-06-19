@@ -675,3 +675,8 @@ okta:
   # Defaults to 15 per DISA STIG V-273187 (OKTA-APP-000025); raise it only
   # with an explicit risk acceptance.
   okta_admin_console_idle_timeout_max_minutes: 15
+
+# E2E Cloud Configuration
+e2e:
+  # load_balancer_bitninja_enabled
+  require_bitninja_on_load_balancers: false

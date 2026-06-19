@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "securitygroup_no_all_traffic_rule",
+  "CheckTitle": "Check if E2E Cloud security groups do not allow all traffic",
+  "CheckType": [],
+  "ServiceName": "securitygroup",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Check if E2E Cloud security groups do not have an all-traffic rule enabled.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict security group rules to required ports and sources only.",
+      "Url": "https://hub.prowler.com/check/securitygroup_no_all_traffic_rule"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "securitygroup_restrictive_default",
+  "CheckTitle": "Check if E2E Cloud nodes do not rely on permissive default security groups",
+  "CheckType": [],
+  "ServiceName": "securitygroup",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Check if E2E Cloud nodes do not use only default security groups with overly permissive inbound rules.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach custom security groups with least-privilege rules to nodes.",
+      "Url": "https://hub.prowler.com/check/securitygroup_restrictive_default"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ]
+}

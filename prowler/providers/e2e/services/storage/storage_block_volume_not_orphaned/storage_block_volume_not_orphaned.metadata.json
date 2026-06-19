@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "storage_block_volume_not_orphaned",
+  "CheckTitle": "Check if E2E Cloud block volumes are not orphaned",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "BlockVolume",
+  "ResourceGroup": "storage",
+  "Description": "Check if E2E Cloud block volumes in Available state are attached to a node.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach available block volumes to nodes or delete unused volumes.",
+      "Url": "https://hub.prowler.com/check/storage_block_volume_not_orphaned"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ]
+}
