@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { getSchedules } from "@/actions/schedules";
@@ -168,8 +169,12 @@ export default async function Scans({
   const session = await auth();
   const resolvedSearchParams = await searchParams;
 
-  const providersData = await getAllProviders();
+  const [providersData, providerGroupsData] = await Promise.all([
+    getAllProviders(),
+    getAllProviderGroups(),
+  ]);
   const providers = providersData?.data ?? [];
+  const providerGroups = providerGroupsData?.data ?? [];
 
   const connectedProviders = providers.filter(
     (provider: ProviderProps) =>
@@ -220,6 +225,7 @@ export default async function Scans({
       ) : (
         <ScansPageShell
           providers={providers}
+          providerGroups={providerGroups}
           hasManageScansPermission={hasManageScansPermission}
           activeScanCount={activeScanCount}
         >
