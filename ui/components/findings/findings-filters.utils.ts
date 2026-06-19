@@ -2,6 +2,7 @@ import type { FilterChip } from "@/components/filters/filter-summary-strip";
 import { formatLabel, getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { getScanEntityLabel } from "@/lib/helper-filters";
 import { FINDING_STATUS_DISPLAY_NAMES } from "@/types";
+import { ProviderGroup } from "@/types/components";
 import { FilterParam } from "@/types/filters";
 import { getProviderDisplayName, ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
@@ -10,6 +11,7 @@ import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
 interface GetFindingsFilterDisplayValueOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
+  providerGroups?: ProviderGroup[];
 }
 
 const FINDING_DELTA_DISPLAY_NAMES: Record<string, string> = {
@@ -27,6 +29,14 @@ function getProviderAccountDisplayValue(
   }
 
   return provider.attributes.alias || provider.attributes.uid || providerId;
+}
+
+function getProviderGroupDisplayValue(
+  groupId: string,
+  groups: ProviderGroup[],
+): string {
+  const group = groups.find((item) => item.id === groupId);
+  return group?.attributes.name || groupId;
 }
 
 function getScanDisplayValue(
@@ -52,6 +62,9 @@ export function getFindingsFilterDisplayValue(
   }
   if (filterKey === "filter[provider_id__in]") {
     return getProviderAccountDisplayValue(value, options.providers || []);
+  }
+  if (filterKey === "filter[provider_groups__in]") {
+    return getProviderGroupDisplayValue(value, options.providerGroups || []);
   }
   if (filterKey === "filter[scan__in]" || filterKey === "filter[scan]") {
     return getScanDisplayValue(value, options.scans || []);
@@ -101,6 +114,7 @@ export function getFindingsFilterDisplayValue(
 export const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[provider_type__in]": "Provider",
   "filter[provider_id__in]": "Account",
+  "filter[provider_groups__in]": "Provider Group",
   "filter[severity__in]": "Severity",
   "filter[status__in]": "Status",
   "filter[delta__in]": "Delta",
@@ -121,6 +135,7 @@ export const FILTER_KEY_LABELS: Record<FilterParam, string> = {
 interface BuildFindingsFilterChipsOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
+  providerGroups?: ProviderGroup[];
   includeMuted?: boolean;
 }
 

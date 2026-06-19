@@ -1,11 +1,13 @@
 import type { FilterChip } from "@/components/filters/filter-summary-strip";
 import { formatLabel, getGroupLabel } from "@/lib/categories";
+import type { ProviderGroup } from "@/types/components";
 import type { ProviderProps } from "@/types/providers";
 import { getProviderDisplayName } from "@/types/providers";
 
 const RESOURCE_FILTER_KEY_LABELS: Record<string, string> = {
   "filter[provider_type__in]": "Provider",
   "filter[provider_id__in]": "Account",
+  "filter[provider_groups__in]": "Provider Group",
   "filter[region__in]": "Region",
   "filter[service__in]": "Service",
   "filter[type__in]": "Type",
@@ -24,10 +26,19 @@ function getProviderAccountDisplayValue(
   return provider.attributes.alias || provider.attributes.uid || providerId;
 }
 
+function getProviderGroupDisplayValue(
+  groupId: string,
+  groups: ProviderGroup[],
+): string {
+  const group = groups.find((item) => item.id === groupId);
+  return group?.attributes.name || groupId;
+}
+
 export function getResourcesFilterDisplayValue(
   filterKey: string,
   value: string,
   providers: ProviderProps[],
+  providerGroups: ProviderGroup[] = [],
 ): string {
   if (!value) return value;
 
@@ -37,6 +48,10 @@ export function getResourcesFilterDisplayValue(
 
   if (filterKey === "filter[provider_id__in]") {
     return getProviderAccountDisplayValue(value, providers);
+  }
+
+  if (filterKey === "filter[provider_groups__in]") {
+    return getProviderGroupDisplayValue(value, providerGroups);
   }
 
   if (filterKey === "filter[groups__in]") {
@@ -53,6 +68,7 @@ export function getResourcesFilterDisplayValue(
 export function buildResourcesFilterChips(
   pendingFilters: Record<string, string[]>,
   providers: ProviderProps[],
+  providerGroups: ProviderGroup[] = [],
 ): FilterChip[] {
   const chips: FilterChip[] = [];
 
@@ -61,7 +77,7 @@ export function buildResourcesFilterChips(
 
     const label = RESOURCE_FILTER_KEY_LABELS[key] ?? key;
     const displayValues = values.map((value) =>
-      getResourcesFilterDisplayValue(key, value, providers),
+      getResourcesFilterDisplayValue(key, value, providers, providerGroups),
     );
 
     const chip: FilterChip = {

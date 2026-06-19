@@ -67,6 +67,7 @@ export type DataTableFilterMode =
 export type FilterParam =
   | "filter[provider_type__in]"
   | "filter[provider_id__in]"
+  | "filter[provider_groups__in]"
   | "filter[severity__in]"
   | "filter[status__in]"
   | "filter[delta__in]"
