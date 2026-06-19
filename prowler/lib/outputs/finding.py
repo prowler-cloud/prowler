@@ -470,8 +470,14 @@ class Finding(BaseModel):
 
             elif provider.type == "linode":
                 output_data["auth_method"] = "api_token"
-                output_data["account_uid"] = get_nested_attribute(
-                    provider, "identity.account_id"
+                # account_uid is a required string, but the account ID may be
+                # unavailable when the token lacks account:read_only scope. Fall
+                # back to the username/email so findings are never dropped.
+                output_data["account_uid"] = (
+                    get_nested_attribute(provider, "identity.account_id")
+                    or get_nested_attribute(provider, "identity.username")
+                    or get_nested_attribute(provider, "identity.email")
+                    or "linode"
                 )
                 output_data["account_name"] = get_nested_attribute(
                     provider, "identity.username"
