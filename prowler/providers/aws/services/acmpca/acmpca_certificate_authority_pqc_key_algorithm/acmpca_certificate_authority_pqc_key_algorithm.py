@@ -17,6 +17,12 @@ class acmpca_certificate_authority_pqc_key_algorithm(Check):
     """
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Execute the check against AWS Private CAs.
+
+        Returns:
+            A list of reports with each non-deleted CA PQC key algorithm status.
+        """
+
         findings = []
         pqc_algorithms = acmpca_client.audit_config.get(
             "acmpca_pqc_key_algorithms", PQC_PCA_KEY_ALGORITHMS_DEFAULT

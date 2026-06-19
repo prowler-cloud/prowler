@@ -35,6 +35,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
+    if operation_name == "ListTags":
+        assert kwarg["CertificateAuthorityArn"] == CA_ARN
+        return {"Tags": [{"Key": "Environment", "Value": "test"}]}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -59,3 +62,4 @@ class Test_ACMPCA_Service:
         assert ca.type == "SUBORDINATE"
         assert ca.key_algorithm == "ML_DSA_65"
         assert ca.signing_algorithm == "ML_DSA_65"
+        assert ca.tags == [{"Key": "Environment", "Value": "test"}]
