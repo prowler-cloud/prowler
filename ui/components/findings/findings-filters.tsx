@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import { ProviderGroupSelector } from "@/app/(prowler)/_overview/_components/provider-group-selector";
 import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
@@ -20,6 +21,7 @@ import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-c
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { FilterType, ScanEntity } from "@/types";
+import { ProviderGroup } from "@/types/components";
 import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
 
@@ -31,6 +33,8 @@ import {
 interface FindingsFiltersProps {
   /** Provider data for provider/account filter controls. */
   providers: ProviderProps[];
+  /** Provider groups for the provider group filter control. */
+  providerGroups?: ProviderGroup[];
   completedScanIds: string[];
   scanDetails: { [key: string]: ScanEntity }[];
   uniqueRegions: string[];
@@ -70,6 +74,10 @@ const FILTER_GRID_ITEM_CLASS = "min-w-0";
 
 export const FindingsFilterBatchControls = ({
   providers,
+  // Undefined = caller opted out (the alert editor shares this component but
+  // loads no groups); an empty array still renders the control, so it stays
+  // visible even when a tenant has no groups yet.
+  providerGroups,
   completedScanIds,
   scanDetails,
   uniqueRegions,
@@ -167,6 +175,7 @@ export const FindingsFilterBatchControls = ({
     appliedFilters,
     {
       providers,
+      providerGroups,
       scans: scanDetails,
     },
   );
@@ -174,6 +183,7 @@ export const FindingsFilterBatchControls = ({
     changedFilters,
     {
       providers,
+      providerGroups,
       scans: scanDetails,
     },
   );
@@ -199,15 +209,26 @@ export const FindingsFilterBatchControls = ({
       : undefined;
 
   const providerAccountControls = (className: string) => (
-    <ProviderAccountSelectors
-      providers={providers}
-      mode="batch"
-      selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
-      selectedAccounts={getFilterValue("filter[provider_id__in]")}
-      onBatchChange={setPending}
-      providerSelectorClassName={className}
-      accountSelectorClassName={className}
-    />
+    <>
+      <ProviderAccountSelectors
+        providers={providers}
+        mode="batch"
+        selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
+        selectedAccounts={getFilterValue("filter[provider_id__in]")}
+        onBatchChange={setPending}
+        providerSelectorClassName={className}
+        accountSelectorClassName={className}
+      />
+      {providerGroups !== undefined && (
+        <div className={className}>
+          <ProviderGroupSelector
+            groups={providerGroups}
+            selectedValues={getFilterValue("filter[provider_groups__in]")}
+            onBatchChange={setPending}
+          />
+        </div>
+      )}
+    </>
   );
 
   const alertEditFilterGrid = hasCustomFilters ? (
