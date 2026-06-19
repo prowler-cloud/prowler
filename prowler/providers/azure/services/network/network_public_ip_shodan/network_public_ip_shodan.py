@@ -12,20 +12,21 @@ class network_public_ip_shodan(Check):
         if shodan_api_key:
             api = shodan.Shodan(shodan_api_key)
             for subscription, public_ips in network_client.public_ip_addresses.items():
+                subscription_name = network_client.subscriptions.get(
+                    subscription, subscription
+                )
                 for ip in public_ips:
                     report = Check_Report_Azure(metadata=self.metadata(), resource=ip)
                     report.subscription = subscription
                     try:
                         shodan_info = api.host(ip.ip_address)
                         report.status = "FAIL"
-                        report.status_extended = f"Public IP {ip.ip_address} listed in Shodan with open ports {str(shodan_info['ports'])} and ISP {shodan_info['isp']} in {shodan_info['country_name']}. More info at https://www.shodan.io/host/{ip.ip_address}."
+                        report.status_extended = f"Public IP {ip.ip_address} from subscription {subscription_name} ({subscription}) listed in Shodan with open ports {str(shodan_info['ports'])} and ISP {shodan_info['isp']} in {shodan_info['country_name']}. More info at https://www.shodan.io/host/{ip.ip_address}."
                         findings.append(report)
                     except shodan.APIError as error:
                         if "No information available for that IP" in error.value:
                             report.status = "PASS"
-                            report.status_extended = (
-                                f"Public IP {ip.ip_address} is not listed in Shodan."
-                            )
+                            report.status_extended = f"Public IP {ip.ip_address} from subscription {subscription_name} ({subscription}) is not listed in Shodan."
                             findings.append(report)
                             continue
                         else:

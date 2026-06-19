@@ -139,6 +139,7 @@ interface FindingGroupResourceAttributes {
   resource: ResourceInfo;
   provider: ProviderInfo;
   status: string;
+  status_extended?: string;
   muted?: boolean;
   delta?: string | null;
   severity: string;
@@ -187,6 +188,7 @@ export function adaptFindingGroupResourcesResponse(
     region: item.attributes.resource?.region || "-",
     severity: (item.attributes.severity || "informational") as Severity,
     status: item.attributes.status,
+    statusExtended: item.attributes.status_extended,
     delta: item.attributes.delta || null,
     isMuted: item.attributes.muted ?? item.attributes.status === "MUTED",
     mutedReason: item.attributes.muted_reason || undefined,

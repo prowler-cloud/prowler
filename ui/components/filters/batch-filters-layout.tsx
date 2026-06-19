@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
+
 interface BatchFiltersLayoutProps {
   controls: ReactNode;
+  controlsClassName?: string;
   expandedFilters?: ReactNode;
   expandedFiltersVisible?: boolean;
   appliedSummary?: ReactNode;
@@ -14,6 +17,7 @@ interface BatchFiltersLayoutProps {
 
 export const BatchFiltersLayout = ({
   controls,
+  controlsClassName,
   expandedFilters,
   expandedFiltersVisible = true,
   appliedSummary,
@@ -26,7 +30,7 @@ export const BatchFiltersLayout = ({
   <div className="flex flex-col gap-3">
     <div
       data-testid={`${testIdPrefix}-filter-controls`}
-      className="flex flex-wrap items-center gap-4"
+      className={cn("flex flex-wrap items-center gap-4", controlsClassName)}
     >
       {controls}
     </div>

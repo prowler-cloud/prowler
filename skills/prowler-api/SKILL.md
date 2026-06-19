@@ -61,7 +61,7 @@ Provider.objects.filter(connected=True)  # Requires rls_transaction context
 
 ### RLS Transaction Flow
 
-```
+```text
 Request → Authentication → BaseRLSViewSet.initial()
                                     │
                                     ├─ Extract tenant_id from JWT
@@ -92,7 +92,7 @@ When implementing Prowler-specific API features:
 ## Decision Trees
 
 ### Which Base Model?
-```
+```text
 Tenant-scoped data       → RowLevelSecurityProtectedModel
 Global/shared data       → models.Model + BaseSecurityConstraint (rare)
 Partitioned time-series  → PostgresPartitionedModel + RowLevelSecurityProtectedModel
@@ -100,14 +100,14 @@ Soft-deletable           → Add is_deleted + ActiveProviderManager
 ```
 
 ### Which Manager?
-```
+```text
 Normal queries           → Model.objects (excludes deleted)
 Include deleted records  → Model.all_objects
 Celery task context      → Must use rls_transaction() first
 ```
 
 ### Which Database?
-```
+```text
 Standard API queries     → default (automatic via ViewSet)
 Read-only operations     → replica (automatic for GET in BaseRLSViewSet)
 Auth/admin operations    → MainRouter.admin_db
@@ -115,7 +115,7 @@ Cross-tenant lookups     → MainRouter.admin_db (use sparingly!)
 ```
 
 ### Celery Task Decorator Order?
-```
+```python
 @shared_task(base=RLSTask, name="...", queue="...")
 @set_tenant                    # First: sets tenant context
 @handle_provider_deletion      # Second: handles deleted providers
@@ -432,7 +432,7 @@ def process_finding(tenant_id, finding_uid, data):
 Run before every production deployment:
 
 ```bash
-cd api && poetry run python src/backend/manage.py check --deploy
+cd api && uv run python src/backend/manage.py check --deploy
 ```
 
 ### Critical Settings
@@ -454,18 +454,18 @@ cd api && poetry run python src/backend/manage.py check --deploy
 
 ```bash
 # Development
-cd api && poetry run python src/backend/manage.py runserver
-cd api && poetry run python src/backend/manage.py shell
+cd api && uv run python src/backend/manage.py runserver
+cd api && uv run python src/backend/manage.py shell
 
 # Celery
-cd api && poetry run celery -A config.celery worker -l info -Q scans,overview
-cd api && poetry run celery -A config.celery beat -l info
+cd api && uv run celery -A config.celery worker -l info -Q scans,overview
+cd api && uv run celery -A config.celery beat -l info
 
 # Testing
-cd api && poetry run pytest -x --tb=short
+cd api && uv run pytest -x --tb=short
 
 # Production checks
-cd api && poetry run python src/backend/manage.py check --deploy
+cd api && uv run python src/backend/manage.py check --deploy
 ```
 
 ---
@@ -496,7 +496,7 @@ When implementing or debugging Prowler-specific patterns, query these libraries 
 | **Django** | `/websites/djangoproject_en_5_2` | Models, ORM, constraints, indexes |
 
 **Example queries:**
-```
+```text
 mcp_context7_query-docs(libraryId="/websites/celeryq_dev_en_stable", query="shared_task decorator retry patterns")
 mcp_context7_query-docs(libraryId="/celery/django-celery-beat", query="periodic task database scheduler")
 mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_2", query="model constraints CheckConstraint UniqueConstraint")

@@ -11,8 +11,12 @@ import { FormButtons } from "@/components/ui/form";
 import { Label } from "@/components/ui/form/Label";
 import { useMuteRuleAction } from "@/hooks/use-mute-rule-action";
 import {
+  enforceMuteRuleNameLimit,
   enforceMuteRuleReasonLimit,
+  getMuteRuleNameCounterText,
   getMuteRuleReasonCounterText,
+  MAX_MUTE_RULE_NAME_LENGTH,
+  MAX_MUTE_RULE_REASON_LENGTH,
 } from "@/lib/mute-rules";
 
 interface MuteFindingsModalProps {
@@ -35,6 +39,8 @@ export function MuteFindingsModal({
   preparationError = null,
 }: MuteFindingsModalProps) {
   const [state, setState] = useState<MuteRuleActionState | null>(null);
+  const [name, setName] = useState("");
+  const [nameLengthError, setNameLengthError] = useState<string>();
   const [reason, setReason] = useState("");
   const [reasonLengthError, setReasonLengthError] = useState<string>();
   const { isPending, runAction } = useMuteRuleAction();
@@ -48,8 +54,15 @@ export function MuteFindingsModal({
     isPreparing ||
     findingIds.length === 0 ||
     Boolean(preparationError);
-  const nameError = state?.errors?.name;
+  const nameError = nameLengthError || state?.errors?.name;
   const reasonError = reasonLengthError || state?.errors?.reason;
+
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextName = enforceMuteRuleNameLimit(event.target.value);
+
+    setName(nextName.value);
+    setNameLengthError(nextName.error);
+  };
 
   const handleReasonChange = (
     event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -77,7 +90,14 @@ export function MuteFindingsModal({
           }
 
           const formData = new FormData(e.currentTarget);
+          formData.set("name", name);
           formData.set("reason", reason);
+
+          const nextName = enforceMuteRuleNameLimit(name);
+          if (nextName.error) {
+            setNameLengthError(nextName.error);
+            return;
+          }
 
           const nextReason = enforceMuteRuleReasonLimit(reason);
           if (nextReason.error) {
@@ -211,6 +231,9 @@ export function MuteFindingsModal({
                     placeholder="e.g., Ignore dev environment S3 buckets"
                     required
                     disabled={isPending}
+                    value={name}
+                    onChange={handleNameChange}
+                    maxLength={MAX_MUTE_RULE_NAME_LENGTH}
                     aria-invalid={nameError ? "true" : "false"}
                     aria-describedby={
                       nameError
@@ -218,12 +241,17 @@ export function MuteFindingsModal({
                         : "mute-rule-name-description"
                     }
                   />
-                  <p
-                    id="mute-rule-name-description"
-                    className="text-text-neutral-tertiary text-xs"
-                  >
-                    A descriptive name for this mute rule
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p
+                      id="mute-rule-name-description"
+                      className="text-text-neutral-tertiary text-xs"
+                    >
+                      A descriptive name for this mute rule
+                    </p>
+                    <p className="text-text-neutral-tertiary shrink-0 text-xs">
+                      {getMuteRuleNameCounterText(name)}
+                    </p>
+                  </div>
                   {nameError ? (
                     <p
                       id="mute-rule-name-error"
@@ -250,7 +278,7 @@ export function MuteFindingsModal({
                     value={reason}
                     onChange={handleReasonChange}
                     rows={4}
-                    maxLength={500}
+                    maxLength={MAX_MUTE_RULE_REASON_LENGTH}
                     aria-invalid={reasonError ? "true" : "false"}
                     aria-describedby={
                       reasonError

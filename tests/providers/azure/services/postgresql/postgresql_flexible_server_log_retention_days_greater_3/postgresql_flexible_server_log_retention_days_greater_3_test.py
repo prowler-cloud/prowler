@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.postgresql.postgresql_service import Server
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_postgresql_flexible_server_log_retention_days_greater_3:
     def test_no_postgresql_flexible_servers(self):
         postgresql_client = mock.MagicMock
+        postgresql_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         postgresql_client.flexible_servers = {}
 
         with (
@@ -33,6 +38,9 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
 
     def test_flexible_servers_no_log_retention_days(self):
         postgresql_client = mock.MagicMock
+        postgresql_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         postgresql_server_name = "Postgres Flexible Server Name"
         postgresql_server_id = str(uuid4())
         postgresql_client.flexible_servers = {
@@ -75,7 +83,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has log_retention disabled"
+                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has log_retention disabled"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
@@ -84,6 +92,9 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
 
     def test_flexible_servers_log_retention_days_3(self):
         postgresql_client = mock.MagicMock
+        postgresql_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         postgresql_server_name = "Postgres Flexible Server Name"
         postgresql_server_id = str(uuid4())
         log_retention_days = "3"
@@ -127,7 +138,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has log_retention set to {log_retention_days}"
+                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has log_retention set to {log_retention_days}"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
@@ -136,6 +147,9 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
 
     def test_flexible_servers_log_retention_days_4(self):
         postgresql_client = mock.MagicMock
+        postgresql_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         postgresql_server_name = "Postgres Flexible Server Name"
         postgresql_server_id = str(uuid4())
         log_retention_days = "4"
@@ -179,7 +193,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has log_retention set to {log_retention_days}"
+                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has log_retention set to {log_retention_days}"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
@@ -188,6 +202,9 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
 
     def test_flexible_servers_log_retention_days_8(self):
         postgresql_client = mock.MagicMock
+        postgresql_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         postgresql_server_name = "Postgres Flexible Server Name"
         postgresql_server_id = str(uuid4())
         log_retention_days = "8"
@@ -231,7 +248,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has log_retention set to {log_retention_days}"
+                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has log_retention set to {log_retention_days}"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name

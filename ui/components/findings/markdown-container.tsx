@@ -5,7 +5,7 @@ interface MarkdownContainerProps {
 }
 
 export const MarkdownContainer = ({ children }: MarkdownContainerProps) => (
-  <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-normal">
+  <div className="prose prose-sm dark:prose-invert prose-code:before:content-none prose-code:after:content-none max-w-none break-words whitespace-normal">
     <ReactMarkdown>{children}</ReactMarkdown>
   </div>
 );

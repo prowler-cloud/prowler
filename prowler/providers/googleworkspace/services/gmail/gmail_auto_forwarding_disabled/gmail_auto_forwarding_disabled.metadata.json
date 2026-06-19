@@ -13,8 +13,8 @@
   "Risk": "With auto-forwarding enabled, an attacker who gains control of a user account can create **forwarding rules to exfiltrate** all incoming email to an external address. This can persist undetected and provide the attacker with continuous access to sensitive communications even after the account is recovered.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/2491924",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/let-users-automatically-forward-their-own-gmail-emails",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
