@@ -144,8 +144,7 @@
           "compute_instance_default_service_account_in_use",
           "compute_instance_default_service_account_in_use_with_full_api_access",
           "gke_cluster_no_default_service_account"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -193,8 +192,7 @@
           "gcr_container_scanning_enabled",
           "artifacts_container_analysis_enabled",
           "iam_organization_essential_contacts_configured"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -563,8 +561,7 @@
           "compute_instance_deletion_protection_enabled",
           "compute_instance_group_load_balancer_attached",
           "compute_instance_preemptible_vm_disabled"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -628,8 +625,7 @@
           "compute_instance_deletion_protection_enabled",
           "compute_snapshot_not_outdated",
           "compute_instance_suspended_without_persistent_disks"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -664,8 +660,7 @@
           "artifacts_container_analysis_enabled",
           "iam_cloud_asset_inventory_enabled",
           "logging_sink_created"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -700,8 +695,7 @@
           "logging_sink_created",
           "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
           "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -776,8 +770,7 @@
           "cloudsql_instance_postgres_log_error_verbosity_flag",
           "cloudsql_instance_postgres_log_min_error_statement_flag",
           "cloudsql_instance_postgres_log_min_duration_statement_flag"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -816,8 +809,7 @@
           "compute_public_address_shodan",
           "iam_cloud_asset_inventory_enabled",
           "iam_audit_logs_enabled"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -874,8 +866,7 @@
           "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
           "iam_organization_essential_contacts_configured",
           "logging_sink_created"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -912,8 +903,7 @@
           "compute_instance_shielded_vm_enabled",
           "compute_snapshot_not_outdated",
           "compute_public_address_shodan"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -967,8 +957,7 @@
           "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
           "apikeys_key_rotated_in_90_days",
           "iam_sa_user_managed_key_rotate_90_days"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -1079,8 +1068,7 @@
           "gke_cluster_no_default_service_account",
           "iam_account_access_approval_enabled",
           "apikeys_api_restrictions_configured"
-        ],
-        "cloudflare": []
+        ]
       }
     },
     {
@@ -1119,8 +1107,7 @@
           "artifacts_container_analysis_enabled",
           "compute_public_address_shodan",
           "logging_sink_created"
-        ],
-        "cloudflare": []
+        ]
       }
     }
   ]
