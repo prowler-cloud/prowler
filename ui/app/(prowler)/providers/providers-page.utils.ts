@@ -1,3 +1,4 @@
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import {
   listOrganizationsSafe,
   listOrganizationUnitsSafe,
@@ -483,6 +484,7 @@ export async function loadProvidersAccountsViewData({
   const [
     providersResponse,
     allProvidersResponse,
+    allProviderGroupsResponse,
     scansResponse,
     schedulesResponse,
     organizationsResponse,
@@ -500,6 +502,8 @@ export async function loadProvidersAccountsViewData({
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
     // TODO: Replace with a dedicated lightweight endpoint when available.
     resolveActionResult(getAllProviders()),
+    // Unfiltered fetch for the Provider Group selector dropdown.
+    resolveActionResult(getAllProviderGroups()),
     // Fetch active scheduled scans to flag providers whose schedule has fired.
     resolveActionResult(
       getScans({
@@ -545,6 +549,7 @@ export async function loadProvidersAccountsViewData({
     filters: createProvidersFilters(),
     metadata: providersResponse?.meta,
     providers: allProvidersResponse?.data ?? [],
+    providerGroups: allProviderGroupsResponse?.data ?? [],
     rows,
   };
 }

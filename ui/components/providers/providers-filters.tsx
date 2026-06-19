@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { ProviderGroupSelector } from "@/app/(prowler)/_overview/_components/provider-group-selector";
 import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import {
@@ -18,6 +19,7 @@ import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { isConnectionStatus, isGroupFilterEntity } from "@/lib/helper-filters";
 import { FilterEntity, FilterOption, ProviderEntity } from "@/types";
+import { ProviderGroup } from "@/types/components";
 import {
   GroupFilterEntity,
   ProviderConnectionStatus,
@@ -31,12 +33,14 @@ function isNonEmptyString(value: string | null | undefined): value is string {
 interface ProvidersFiltersProps {
   filters: FilterOption[];
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   actions?: ReactNode;
 }
 
 export const ProvidersFilters = ({
   filters,
   providers,
+  providerGroups = [],
   actions,
 }: ProvidersFiltersProps) => {
   const { updateFilter } = useUrlFilters();
@@ -152,6 +156,9 @@ export const ProvidersFilters = ({
     <div className="flex flex-wrap items-center gap-4">
       <div className="min-w-[200px] flex-1 md:max-w-[280px]">
         <ProviderTypeSelector providers={providers} />
+      </div>
+      <div className="max-w-[240px] min-w-[180px] flex-1">
+        <ProviderGroupSelector groups={providerGroups} />
       </div>
       {sortedFilters.map((filter) => {
         const selectedValues = getSelectedValues(filter);
