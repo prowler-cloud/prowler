@@ -1,4 +1,5 @@
 from prowler.lib.check.models import Check, CheckReportLinode
+from prowler.lib.logger import logger
 from prowler.providers.linode.services.firewall.firewall_client import firewall_client
 
 
@@ -17,6 +18,15 @@ class firewall_assigned_to_devices(Check):
         findings = []
 
         for fw in firewall_client.firewalls:
+            # When the device count could not be determined (the devices fetch
+            # failed) skip the firewall instead of reporting a false FAIL.
+            if fw.attached_devices_count is None:
+                logger.warning(
+                    f"firewall - Skipping firewall '{fw.label}' ({fw.id}): "
+                    "device assignment could not be determined."
+                )
+                continue
+
             report = CheckReportLinode(
                 metadata=self.metadata(),
                 resource=fw,

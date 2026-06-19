@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -27,7 +27,9 @@ class Firewall(BaseModel):
     outbound_rules: List[FirewallRule] = []
     inbound_policy: str
     outbound_policy: str
-    attached_devices_count: int
+    # None means the device count could not be determined (fetch failed), as
+    # opposed to 0 which means the firewall genuinely has no devices attached.
+    attached_devices_count: Optional[int] = None
     tags: List[str] = []
 
 
@@ -49,10 +51,10 @@ class FirewallService(LinodeService):
                     outbound_rules = []
                     inbound_policy = ""
                     outbound_policy = ""
-                    entities = []
+                    attached_devices_count = None
 
                     try:
-                        entities = fw.devices
+                        attached_devices_count = len(fw.devices)
                     except Exception as error:
                         logger.warning(
                             f"firewall - Unable to fetch devices for firewall {fw.id}: {error}"
@@ -73,13 +75,13 @@ class FirewallService(LinodeService):
                                     protocol=(
                                         getattr(rule, "protocol", None) or "TCP"
                                     ).upper(),
-                                    ports=getattr(rule, "ports", ""),
-                                    addresses_ipv4=getattr(addresses, "ipv4", []),
-                                    addresses_ipv6=getattr(addresses, "ipv6", []),
+                                    ports=getattr(rule, "ports", "") or "",
+                                    addresses_ipv4=getattr(addresses, "ipv4", []) or [],
+                                    addresses_ipv6=getattr(addresses, "ipv6", []) or [],
                                     action=(
                                         getattr(rule, "action", None) or "ACCEPT"
                                     ).upper(),
-                                    label=getattr(rule, "label", ""),
+                                    label=getattr(rule, "label", "") or "",
                                 )
                             )
                         for rule in outbound:
@@ -89,13 +91,13 @@ class FirewallService(LinodeService):
                                     protocol=(
                                         getattr(rule, "protocol", None) or "TCP"
                                     ).upper(),
-                                    ports=getattr(rule, "ports", ""),
-                                    addresses_ipv4=getattr(addresses, "ipv4", []),
-                                    addresses_ipv6=getattr(addresses, "ipv6", []),
+                                    ports=getattr(rule, "ports", "") or "",
+                                    addresses_ipv4=getattr(addresses, "ipv4", []) or [],
+                                    addresses_ipv6=getattr(addresses, "ipv6", []) or [],
                                     action=(
                                         getattr(rule, "action", None) or "ACCEPT"
                                     ).upper(),
-                                    label=getattr(rule, "label", ""),
+                                    label=getattr(rule, "label", "") or "",
                                 )
                             )
                     except Exception as error:
@@ -112,7 +114,7 @@ class FirewallService(LinodeService):
                             outbound_rules=outbound_rules,
                             inbound_policy=inbound_policy,
                             outbound_policy=outbound_policy,
-                            attached_devices_count=len(entities),
+                            attached_devices_count=attached_devices_count,
                             tags=fw.tags or [],
                         )
                     )

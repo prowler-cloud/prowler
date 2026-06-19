@@ -95,6 +95,62 @@ class TestLinodeFirewallService:
 
         assert len(service.firewalls) == 0
 
+    def test_describe_firewalls_device_fetch_error_yields_none_count(self):
+        """A devices fetch failure must leave attached_devices_count as None
+        (undetermined) rather than 0, to avoid a false 'not assigned' FAIL."""
+
+        class _NoDevicesFw:
+            id = 5
+            label = "no-devices-fw"
+            status = "enabled"
+            tags = []
+
+            @property
+            def devices(self):
+                raise Exception("devices API error")
+
+            @property
+            def rules(self):
+                r = MagicMock()
+                r.inbound = []
+                r.outbound = []
+                r.inbound_policy = "DROP"
+                r.outbound_policy = "DROP"
+                return r
+
+        service = _build_service(networking_firewalls_return=[_NoDevicesFw()])
+        service._describe_firewalls()
+
+        assert len(service.firewalls) == 1
+        assert service.firewalls[0].attached_devices_count is None
+
+    def test_describe_firewalls_handles_null_rule_fields(self):
+        """Rule fields returned as explicit null must fall back to defaults
+        instead of raising a ValidationError that drops the whole firewall."""
+        rule = MagicMock()
+        rule.protocol = None
+        rule.ports = None
+        rule.action = None
+        rule.label = None
+        addresses = MagicMock()
+        addresses.ipv4 = None
+        addresses.ipv6 = None
+        rule.addresses = addresses
+
+        mock_fws = [_mock_firewall(id=6, label="null-rule-fw", inbound=[rule])]
+
+        service = _build_service(networking_firewalls_return=mock_fws)
+        service._describe_firewalls()
+
+        assert len(service.firewalls) == 1
+        parsed = service.firewalls[0].inbound_rules[0]
+        assert parsed.protocol == "TCP"
+        assert parsed.action == "ACCEPT"
+        assert parsed.ports == ""
+        assert parsed.addresses_ipv4 == []
+        assert parsed.addresses_ipv6 == []
+        assert parsed.label == ""
+
     def test_describe_firewalls_handles_rules_fetch_error(self):
         """Firewall is still added even if rules fail to load."""
 
