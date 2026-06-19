@@ -55,6 +55,7 @@ class PostgreSQL(AzureService):
                     )
                     location = server_details.location
                     backup = getattr(server_details, "backup", None)
+                    ha = getattr(server_details, "high_availability", None)
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
@@ -73,6 +74,7 @@ class PostgreSQL(AzureService):
                             geo_redundant_backup=getattr(
                                 backup, "geo_redundant_backup", None
                             ),
+                            high_availability_mode=getattr(ha, "mode", None),
                         )
                     )
             except Exception as error:
@@ -245,3 +247,4 @@ class Server:
     log_retention_days: Optional[str]
     firewall: list[Firewall]
     geo_redundant_backup: Optional[str] = None
+    high_availability_mode: Optional[str] = None
