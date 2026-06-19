@@ -957,6 +957,9 @@
           "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
           "apikeys_key_rotated_in_90_days",
           "iam_sa_user_managed_key_rotate_90_days"
+        ],
+        "cloudflare": [
+          "zone_min_tls_version_secure"
         ]
       }
     },
