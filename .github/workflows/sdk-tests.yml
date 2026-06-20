@@ -590,6 +590,30 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-stackit
           files: ./stackit_coverage.xml
 
+      # E2E Cloud Provider
+      - name: Check if E2E Cloud files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-e2e
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ./prowler/**/e2e/**
+            ./tests/**/e2e/**
+            ./uv.lock
+
+      - name: Run E2E Cloud tests
+        if: steps.changed-e2e.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/e2e --cov-report=xml:e2e_coverage.xml tests/providers/e2e
+
+      - name: Upload E2E Cloud coverage to Codecov
+        if: steps.changed-e2e.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-e2e
+          files: ./e2e_coverage.xml
+
       # External Provider (dynamic loading)
       - name: Check if External Provider files changed
         if: steps.check-changes.outputs.any_changed == 'true'

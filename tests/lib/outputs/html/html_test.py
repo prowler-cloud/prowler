@@ -999,6 +999,23 @@ class TestHTML:
         assert "<b>Project ID:</b> f033ea6d-8697-40eb-a60e-acfa9128480d" in summary
         assert "<b>Project Name:</b>" not in summary
 
+    def test_e2e_get_assessment_summary(self):
+        """Test E2E Cloud HTML assessment summary shows project and locations."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "e2e"
+        provider.identity.project_id = 12345
+        provider.identity.locations = ["Delhi", "Chennai"]
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "E2E Cloud Assessment Summary" in summary
+        assert "<b>Project ID:</b> 12345" in summary
+        assert "<b>Locations:</b> Delhi, Chennai" in summary
+        assert "API Key + Bearer Token" in summary
+
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""
         test_text = "This is **bold text** and this is **also bold**"
