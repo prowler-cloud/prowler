@@ -63,7 +63,8 @@ class Nodes(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"nodes - Error fetching nodes in {location}: {error}"
+                    f"nodes - Error fetching nodes in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _get_node_detail(self, node_id: str, location: str) -> dict:
@@ -76,7 +77,10 @@ class Nodes(E2eService):
             )
             return data if isinstance(data, dict) else {}
         except Exception as error:
-            logger.error(f"nodes - Error fetching node detail {node_id}: {error}")
+            logger.error(
+                f"nodes - Error fetching node detail {node_id} -- "
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             return {}
 
 

@@ -20,6 +20,8 @@ class Network(E2eService):
         for location in self.provider.session.locations:
             try:
                 vpcs = self.client.paginate("/vpc/list/", location=location)
+                if not isinstance(vpcs, list):
+                    continue
                 for item in vpcs:
                     gateway_node = item.get("gateway_node", {}) or {}
                     self.vpcs.append(
@@ -37,7 +39,8 @@ class Network(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"network - Error fetching VPCs in {location}: {error}"
+                    f"network - Error fetching VPCs in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _fetch_reserved_ips(self):
@@ -62,7 +65,8 @@ class Network(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"network - Error fetching reserved IPs in {location}: {error}"
+                    f"network - Error fetching reserved IPs in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _fetch_vpc_tunnels(self):
@@ -93,7 +97,8 @@ class Network(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"network - Error fetching tunnels for VPC {vpc.network_id}: {error}"
+                    f"network - Error fetching tunnels for VPC {vpc.network_id} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
 

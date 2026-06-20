@@ -4,16 +4,18 @@ from prowler.providers.e2e.services.securitygroup.securitygroup_client import (
 )
 
 
-def _is_open_network(value: str) -> bool:
-    normalized = value.lower().strip()
+def _is_open_network(value: str | None) -> bool:
+    if value is None:
+        return False
+    normalized = str(value).lower().strip()
     return normalized in ("any", "0.0.0.0/0", "::/0")
 
 
 def _has_permissive_inbound(rules) -> bool:
     for rule in rules:
         if (
-            rule.rule_type.lower() == "inbound"
-            and rule.protocol_name.lower() == "all"
+            (rule.rule_type or "").lower() == "inbound"
+            and (rule.protocol_name or "").lower() == "all"
             and (
                 _is_open_network(rule.network)
                 or _is_open_network(rule.network_cidr)
@@ -24,7 +26,9 @@ def _has_permissive_inbound(rules) -> bool:
 
 
 class securitygroup_restrictive_default(Check):
-    def execute(self):
+    """Check if E2E Cloud nodes do not rely on permissive default security groups."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         node_groups: dict[str, list] = {}
         for group in securitygroup_client.node_security_groups:

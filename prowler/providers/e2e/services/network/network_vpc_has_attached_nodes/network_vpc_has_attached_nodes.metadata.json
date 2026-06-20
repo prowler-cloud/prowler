@@ -10,11 +10,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "network",
   "Description": "Check if E2E Cloud VPCs have attached nodes",
-  "Risk": "",
+  "Risk": "VPCs without attached nodes may indicate unused network segments or misconfiguration that weakens segmentation.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"vpc_id\":<VPC_ID>}'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -29,6 +29,6 @@
   "RelatedTo": [],
   "Notes": "",
   "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
   ]
 }

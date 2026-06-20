@@ -98,7 +98,8 @@ class Storage(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"storage - Error fetching EFS volumes in {location}: {error}"
+                    f"storage - Error fetching EFS volumes in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _fetch_epfs_volumes(self):
@@ -135,7 +136,8 @@ class Storage(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"storage - Error fetching EPFS volumes in {location}: {error}"
+                    f"storage - Error fetching EPFS volumes in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
 

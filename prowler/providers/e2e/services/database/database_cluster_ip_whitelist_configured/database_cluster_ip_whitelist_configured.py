@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.database.database_client import database_cli
 
 
 class database_cluster_ip_whitelist_configured(Check):
-    def execute(self):
+    """Check if E2E Cloud database clusters with public IPs have IP whitelisting configured."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for cluster in database_client.clusters:
             if not cluster.master_has_public_ip:

@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.network.network_client import network_client
 
 
 class network_reserveip_floating_ip_unattached(Check):
-    def execute(self):
+    """Check if E2E Cloud floating IPs are attached to nodes."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for ip in network_client.reserved_ips:
             if ip.reserved_type != "FloatingIP":

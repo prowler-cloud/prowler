@@ -10,11 +10,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "network",
   "Description": "Check if E2E Cloud VPC peering does not use external peers",
-  "Risk": "",
+  "Risk": "VPC peering with external peers can expand trust boundaries and expose private networks to third parties.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X DELETE -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" \"https://api.e2enetworks.com/myaccount/api/v1/vpc/tunnels/<TUNNEL_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\"",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -29,6 +29,6 @@
   "RelatedTo": [],
   "Notes": "",
   "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
   ]
 }

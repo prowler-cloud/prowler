@@ -97,7 +97,8 @@ class Database(E2eService):
                         )
             except Exception as error:
                 logger.error(
-                    f"database - Error fetching clusters in {location}: {error}"
+                    f"database - Error fetching clusters in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _get_cluster_detail(self, cluster_id: str, location: str) -> dict:
@@ -111,7 +112,8 @@ class Database(E2eService):
             return data if isinstance(data, dict) else {}
         except Exception as error:
             logger.error(
-                f"database - Error fetching cluster detail {cluster_id}: {error}"
+                f"database - Error fetching cluster detail {cluster_id} -- "
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return {}
 

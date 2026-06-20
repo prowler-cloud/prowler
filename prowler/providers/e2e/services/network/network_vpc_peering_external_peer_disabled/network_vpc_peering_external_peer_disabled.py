@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.network.network_client import network_client
 
 
 class network_vpc_peering_external_peer_disabled(Check):
-    def execute(self):
+    """Check if E2E Cloud VPC peering does not use external peers."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for tunnel in network_client.vpc_tunnels:
             report = CheckReportE2e(metadata=self.metadata(), resource=tunnel)

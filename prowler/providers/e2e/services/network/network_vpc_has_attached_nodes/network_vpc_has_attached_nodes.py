@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.network.network_client import network_client
 
 
 class network_vpc_has_attached_nodes(Check):
-    def execute(self):
+    """Check if E2E Cloud VPCs have attached nodes."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for vpc in network_client.vpcs:
             report = CheckReportE2e(metadata=self.metadata(), resource=vpc)

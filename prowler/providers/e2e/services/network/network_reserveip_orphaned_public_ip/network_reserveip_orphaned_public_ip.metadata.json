@@ -10,11 +10,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "network",
   "Description": "Check if E2E Cloud public or addon IPs are attached",
-  "Risk": "",
+  "Risk": "Orphaned public IPs remain internet-reachable resources that can be misused or reassigned without ownership controls.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X DELETE -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" \"https://api.e2enetworks.com/myaccount/api/v1/reserve_ips/<RESERVE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\"",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -29,6 +29,6 @@
   "RelatedTo": [],
   "Notes": "",
   "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+    "https://docs.e2enetworks.com/api/myaccount/network/reserve-ip/"
   ]
 }

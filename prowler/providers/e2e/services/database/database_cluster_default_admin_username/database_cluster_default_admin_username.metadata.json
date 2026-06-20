@@ -10,11 +10,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "database",
   "Description": "Check if E2E Cloud database clusters do not use the default admin username",
-  "Risk": "",
+  "Risk": "Default admin usernames increase exposure to credential guessing and brute-force attacks against database clusters.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/rds/clusters/<CLUSTER_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"username\":\"<NON_DEFAULT_USER>\"}'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -29,6 +29,6 @@
   "RelatedTo": [],
   "Notes": "",
   "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
   ]
 }

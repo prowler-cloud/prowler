@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.database.database_client import database_cli
 
 
 class database_cluster_ssl_enabled(Check):
-    def execute(self):
+    """Check if E2E Cloud database clusters have SSL enabled on the master node."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for cluster in database_client.clusters:
             report = CheckReportE2e(metadata=self.metadata(), resource=cluster)

@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.node.nodes_client import nodes_client
 
 
 class node_compliance_enabled(Check):
-    def execute(self):
+    """Check if E2E Cloud nodes have compliance mode enabled."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for node in nodes_client.nodes:
             report = CheckReportE2e(metadata=self.metadata(), resource=node)

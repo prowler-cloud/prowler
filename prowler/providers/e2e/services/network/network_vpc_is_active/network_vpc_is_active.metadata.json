@@ -10,11 +10,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "network",
   "Description": "Check if E2E Cloud VPCs are active",
-  "Risk": "",
+  "Risk": "Inactive VPCs can cause connectivity failures and may leave workloads without expected network isolation.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/vpc/<NETWORK_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"is_active\":true}'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -29,6 +29,6 @@
   "RelatedTo": [],
   "Notes": "",
   "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
   ]
 }

@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.storage.storage_client import storage_client
 
 
 class storage_efs_backup_enabled(Check):
-    def execute(self):
+    """Check if E2E Cloud EFS volumes have backup enabled."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for volume in storage_client.efs_volumes:
             report = CheckReportE2e(metadata=self.metadata(), resource=volume)

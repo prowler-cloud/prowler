@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.network.network_client import network_client
 
 
 class network_reserveip_orphaned_public_ip(Check):
-    def execute(self):
+    """Check if E2E Cloud public or addon IPs are attached."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for ip in network_client.reserved_ips:
             if ip.reserved_type not in ("PublicIP", "AddonIP"):
