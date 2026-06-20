@@ -36,9 +36,11 @@ class Database(E2eService):
 
                     master_node = merged.get("master_node", {}) or {}
                     database_info = master_node.get("database", {}) or {}
-                    software = merged.get("software", {}) or master_node.get(
-                        "plan", {}
-                    ).get("software", {}) or {}
+                    software = (
+                        merged.get("software", {})
+                        or master_node.get("plan", {}).get("software", {})
+                        or {}
+                    )
 
                     cluster = DatabaseCluster(
                         id=cluster_id,

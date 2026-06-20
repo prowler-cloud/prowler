@@ -20,8 +20,6 @@ class loadbalancer_alb_https_uses_ssl_certificate(Check):
             )
             if not lb.ssl_certificate_id:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Load balancer {lb.name} does not have an SSL certificate configured for HTTPS traffic."
-                )
+                report.status_extended = f"Load balancer {lb.name} does not have an SSL certificate configured for HTTPS traffic."
             findings.append(report)
         return findings

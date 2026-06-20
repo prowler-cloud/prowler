@@ -12,9 +12,13 @@ class network_reserveip_floating_ip_unattached(Check):
                 continue
             report = CheckReportE2e(metadata=self.metadata(), resource=ip)
             report.status = "PASS"
-            report.status_extended = f"Floating IP {ip.ip_address} is attached to node(s)."
+            report.status_extended = (
+                f"Floating IP {ip.ip_address} is attached to node(s)."
+            )
             if ip.status != "Attached" or ip.floating_ip_attached_nodes_count == 0:
                 report.status = "FAIL"
-                report.status_extended = f"Floating IP {ip.ip_address} is not attached to any node."
+                report.status_extended = (
+                    f"Floating IP {ip.ip_address} is not attached to any node."
+                )
             findings.append(report)
         return findings

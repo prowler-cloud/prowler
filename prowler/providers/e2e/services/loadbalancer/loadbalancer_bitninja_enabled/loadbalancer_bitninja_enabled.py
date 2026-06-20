@@ -17,8 +17,6 @@ class loadbalancer_bitninja_enabled(Check):
             )
             if not lb.enable_bitninja:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Load balancer {lb.name} does not have BitNinja protection enabled."
-                )
+                report.status_extended = f"Load balancer {lb.name} does not have BitNinja protection enabled."
             findings.append(report)
         return findings

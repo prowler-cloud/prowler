@@ -20,8 +20,6 @@ class loadbalancer_backend_health_check_enabled(Check):
             )
             if not lb.has_backend_health_check:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Load balancer {lb.name} does not have backend health checks configured."
-                )
+                report.status_extended = f"Load balancer {lb.name} does not have backend health checks configured."
             findings.append(report)
         return findings

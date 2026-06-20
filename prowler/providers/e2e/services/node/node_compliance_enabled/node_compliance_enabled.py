@@ -13,6 +13,8 @@ class node_compliance_enabled(Check):
             report.status_extended = f"Node {node.name} has compliance mode enabled."
             if not node.is_node_compliance:
                 report.status = "FAIL"
-                report.status_extended = f"Node {node.name} does not have compliance mode enabled."
+                report.status_extended = (
+                    f"Node {node.name} does not have compliance mode enabled."
+                )
             findings.append(report)
         return findings

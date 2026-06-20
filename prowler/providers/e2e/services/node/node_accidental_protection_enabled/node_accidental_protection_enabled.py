@@ -10,9 +10,13 @@ class node_accidental_protection_enabled(Check):
         for node in nodes_client.nodes:
             report = CheckReportE2e(metadata=self.metadata(), resource=node)
             report.status = "PASS"
-            report.status_extended = f"Node {node.name} has accidental protection enabled."
+            report.status_extended = (
+                f"Node {node.name} has accidental protection enabled."
+            )
             if not node.is_accidental_protection:
                 report.status = "FAIL"
-                report.status_extended = f"Node {node.name} does not have accidental protection enabled."
+                report.status_extended = (
+                    f"Node {node.name} does not have accidental protection enabled."
+                )
             findings.append(report)
         return findings

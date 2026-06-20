@@ -16,10 +16,7 @@ def _has_permissive_inbound(rules) -> bool:
         if (
             (rule.rule_type or "").lower() == "inbound"
             and (rule.protocol_name or "").lower() == "all"
-            and (
-                _is_open_network(rule.network)
-                or _is_open_network(rule.network_cidr)
-            )
+            and (_is_open_network(rule.network) or _is_open_network(rule.network_cidr))
         ):
             return True
     return False
@@ -38,17 +35,15 @@ class securitygroup_restrictive_default(Check):
             resource = groups[0]
             report = CheckReportE2e(metadata=self.metadata(), resource=resource)
             report.status = "PASS"
-            report.status_extended = (
-                f"Node {resource.node_name} does not rely on a permissive default security group."
-            )
+            report.status_extended = f"Node {resource.node_name} does not rely on a permissive default security group."
 
             default_groups = [group for group in groups if group.is_default]
             if default_groups and len(groups) == len(default_groups):
-                if any(_has_permissive_inbound(group.rules) for group in default_groups):
+                if any(
+                    _has_permissive_inbound(group.rules) for group in default_groups
+                ):
                     report.status = "FAIL"
-                    report.status_extended = (
-                        f"Node {resource.node_name} uses only default security groups with overly permissive inbound rules."
-                    )
+                    report.status_extended = f"Node {resource.node_name} uses only default security groups with overly permissive inbound rules."
 
             findings.append(report)
         return findings

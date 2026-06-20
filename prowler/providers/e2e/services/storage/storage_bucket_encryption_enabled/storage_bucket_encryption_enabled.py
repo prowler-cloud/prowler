@@ -15,8 +15,6 @@ class storage_bucket_encryption_enabled(Check):
             )
             if not bucket.is_encryption_enabled:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Object storage bucket {bucket.name} does not have encryption enabled."
-                )
+                report.status_extended = f"Object storage bucket {bucket.name} does not have encryption enabled."
             findings.append(report)
         return findings

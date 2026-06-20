@@ -13,6 +13,8 @@ class storage_efs_backup_enabled(Check):
             report.status_extended = f"EFS volume {volume.name} has backup enabled."
             if not volume.is_backup_enabled:
                 report.status = "FAIL"
-                report.status_extended = f"EFS volume {volume.name} does not have backup enabled."
+                report.status_extended = (
+                    f"EFS volume {volume.name} does not have backup enabled."
+                )
             findings.append(report)
         return findings

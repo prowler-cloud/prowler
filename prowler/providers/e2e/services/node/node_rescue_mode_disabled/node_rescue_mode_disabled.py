@@ -10,7 +10,9 @@ class node_rescue_mode_disabled(Check):
         for node in nodes_client.nodes:
             report = CheckReportE2e(metadata=self.metadata(), resource=node)
             report.status = "PASS"
-            report.status_extended = f"Node {node.name} does not have rescue mode enabled."
+            report.status_extended = (
+                f"Node {node.name} does not have rescue mode enabled."
+            )
             if node.rescue_mode_status != "Disabled":
                 report.status = "FAIL"
                 report.status_extended = f"Node {node.name} has rescue mode enabled."

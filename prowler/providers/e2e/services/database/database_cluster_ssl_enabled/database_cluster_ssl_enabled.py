@@ -10,7 +10,9 @@ class database_cluster_ssl_enabled(Check):
         for cluster in database_client.clusters:
             report = CheckReportE2e(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
-            report.status_extended = f"Database cluster {cluster.name} has SSL enabled on the master node."
+            report.status_extended = (
+                f"Database cluster {cluster.name} has SSL enabled on the master node."
+            )
             if not cluster.master_ssl_enabled:
                 report.status = "FAIL"
                 report.status_extended = f"Database cluster {cluster.name} does not have SSL enabled on the master node."

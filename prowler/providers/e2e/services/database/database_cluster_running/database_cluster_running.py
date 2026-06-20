@@ -13,8 +13,6 @@ class database_cluster_running(Check):
             report.status_extended = f"Database cluster {cluster.name} is running."
             if cluster.status != "RUNNING":
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Database cluster {cluster.name} is not running (status: {cluster.status})."
-                )
+                report.status_extended = f"Database cluster {cluster.name} is not running (status: {cluster.status})."
             findings.append(report)
         return findings

@@ -10,9 +10,7 @@ class database_cluster_default_admin_username(Check):
         for cluster in database_client.clusters:
             report = CheckReportE2e(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
-            report.status_extended = (
-                f"Database cluster {cluster.name} does not use the default admin username."
-            )
+            report.status_extended = f"Database cluster {cluster.name} does not use the default admin username."
             if cluster.master_username.lower() == "admin":
                 report.status = "FAIL"
                 report.status_extended = (

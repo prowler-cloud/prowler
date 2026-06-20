@@ -13,6 +13,8 @@ class network_vpc_is_active(Check):
             report.status_extended = f"VPC {vpc.name} is active."
             if not vpc.is_active or vpc.state != "Active":
                 report.status = "FAIL"
-                report.status_extended = f"VPC {vpc.name} is not active (state: {vpc.state})."
+                report.status_extended = (
+                    f"VPC {vpc.name} is not active (state: {vpc.state})."
+                )
             findings.append(report)
         return findings

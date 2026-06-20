@@ -17,8 +17,6 @@ class database_cluster_ip_whitelist_configured(Check):
             )
             if not cluster.whitelisted_ips:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Database cluster {cluster.name} has a public IP but no whitelisted IPs."
-                )
+                report.status_extended = f"Database cluster {cluster.name} has a public IP but no whitelisted IPs."
             findings.append(report)
         return findings

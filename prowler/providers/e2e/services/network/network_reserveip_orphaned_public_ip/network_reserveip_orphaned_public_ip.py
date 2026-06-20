@@ -12,9 +12,13 @@ class network_reserveip_orphaned_public_ip(Check):
                 continue
             report = CheckReportE2e(metadata=self.metadata(), resource=ip)
             report.status = "PASS"
-            report.status_extended = f"Reserved IP {ip.ip_address} is attached to a resource."
+            report.status_extended = (
+                f"Reserved IP {ip.ip_address} is attached to a resource."
+            )
             if ip.status != "Attached" or ip.vm_id is None:
                 report.status = "FAIL"
-                report.status_extended = f"Reserved IP {ip.ip_address} is orphaned (status: {ip.status})."
+                report.status_extended = (
+                    f"Reserved IP {ip.ip_address} is orphaned (status: {ip.status})."
+                )
             findings.append(report)
         return findings

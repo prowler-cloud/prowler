@@ -15,8 +15,6 @@ class storage_bucket_versioning_enabled(Check):
             )
             if bucket.versioning_status != "Enabled":
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Object storage bucket {bucket.name} does not have versioning enabled."
-                )
+                report.status_extended = f"Object storage bucket {bucket.name} does not have versioning enabled."
             findings.append(report)
         return findings

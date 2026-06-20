@@ -10,7 +10,9 @@ class storage_bucket_lock_enabled(Check):
         for bucket in storage_client.buckets:
             report = CheckReportE2e(metadata=self.metadata(), resource=bucket)
             report.status = "PASS"
-            report.status_extended = f"Object storage bucket {bucket.name} has object lock enabled."
+            report.status_extended = (
+                f"Object storage bucket {bucket.name} has object lock enabled."
+            )
             if not bucket.is_lock_enabled:
                 report.status = "FAIL"
                 report.status_extended = f"Object storage bucket {bucket.name} does not have object lock enabled."

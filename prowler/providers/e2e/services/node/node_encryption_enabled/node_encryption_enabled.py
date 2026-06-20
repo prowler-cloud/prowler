@@ -13,6 +13,8 @@ class node_encryption_enabled(Check):
             report.status_extended = f"Node {node.name} has encryption enabled."
             if not node.is_encryption_enabled:
                 report.status = "FAIL"
-                report.status_extended = f"Node {node.name} does not have encryption enabled."
+                report.status_extended = (
+                    f"Node {node.name} does not have encryption enabled."
+                )
             findings.append(report)
         return findings

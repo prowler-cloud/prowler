@@ -27,13 +27,9 @@ class securitygroup_no_inbound_any_all_ports(Check):
         for group in securitygroup_client.security_groups:
             report = CheckReportE2e(metadata=self.metadata(), resource=group)
             report.status = "PASS"
-            report.status_extended = (
-                f"Security group {group.name} does not allow inbound all-protocol traffic from any source."
-            )
+            report.status_extended = f"Security group {group.name} does not allow inbound all-protocol traffic from any source."
             if any(_is_permissive_inbound(rule) for rule in group.rules):
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Security group {group.name} allows inbound all-protocol traffic from any source."
-                )
+                report.status_extended = f"Security group {group.name} allows inbound all-protocol traffic from any source."
             findings.append(report)
         return findings
