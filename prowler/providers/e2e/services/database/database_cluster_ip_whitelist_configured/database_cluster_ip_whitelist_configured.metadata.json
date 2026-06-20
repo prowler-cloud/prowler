@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "database_cluster_ip_whitelist_configured",
+  "CheckTitle": "Check if E2E Cloud database clusters with public IPs have IP whitelisting configured",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "database",
+  "Description": "Check if E2E Cloud database clusters with public IPs have IP whitelisting configured",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud database clusters with public IPs have IP whitelisting configured",
+      "Url": "https://hub.prowler.com/check/database_cluster_ip_whitelist_configured"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+  ]
+}

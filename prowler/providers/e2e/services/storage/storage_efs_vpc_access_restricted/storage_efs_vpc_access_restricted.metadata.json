@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "storage_efs_vpc_access_restricted",
+  "CheckTitle": "Check if E2E Cloud EFS volumes restrict VPC access",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "storage",
+  "Description": "Check if E2E Cloud EFS volumes restrict VPC access",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud EFS volumes restrict VPC access",
+      "Url": "https://hub.prowler.com/check/storage_efs_vpc_access_restricted"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+  ]
+}

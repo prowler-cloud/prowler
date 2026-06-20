@@ -11,8 +11,12 @@ class Storage(E2eService):
         super().__init__("storage", provider)
         self.block_volumes: list[BlockVolume] = []
         self.buckets: list[StorageBucket] = []
+        self.efs_volumes: list[EfsVolume] = []
+        self.epfs_volumes: list[EpfsVolume] = []
         self._fetch_block_volumes()
         self._fetch_buckets()
+        self._fetch_efs_volumes()
+        self._fetch_epfs_volumes()
 
     def _fetch_block_volumes(self):
         for location in self.provider.session.locations:
@@ -60,11 +64,76 @@ class Storage(E2eService):
                                 item.get("is_encryption_enabled", False)
                             ),
                             is_lock_enabled=bool(item.get("is_lock_enabled", False)),
+                            lifecycle_configuration_status=item.get(
+                                "lifecycle_configuration_status", ""
+                            ),
                         )
                     )
             except Exception as error:
                 logger.error(
                     f"storage - Error fetching buckets in {location}: {error}"
+                )
+
+    def _fetch_efs_volumes(self):
+        for location in self.provider.session.locations:
+            try:
+                volumes = self.client.paginate("/efs/", location=location)
+                for item in volumes:
+                    self.efs_volumes.append(
+                        EfsVolume(
+                            id=str(item.get("id", "")),
+                            name=item.get("name", ""),
+                            location=location,
+                            status=item.get("status", ""),
+                            vpc_id=str(item.get("vpc_id", "")),
+                            is_backup_enabled=bool(
+                                item.get("is_backup_enabled", False)
+                            ),
+                            is_all_vpc_resources_allowed=bool(
+                                item.get("is_all_vpc_resources_allowed", False)
+                            ),
+                        )
+                    )
+            except Exception as error:
+                logger.error(
+                    f"storage - Error fetching EFS volumes in {location}: {error}"
+                )
+
+    def _fetch_epfs_volumes(self):
+        for location in self.provider.session.locations:
+            try:
+                all_items: list = []
+                page = 1
+                total_pages = 1
+                while page <= total_pages:
+                    payload = self.client.get(
+                        "/epfs/",
+                        location=location,
+                        params={"page": page, "page_size": 100},
+                    )
+                    data = payload.get("data", [])
+                    if isinstance(data, list):
+                        all_items.extend(data)
+                    total_pages = int(payload.get("total_page_number", page))
+                    if not data:
+                        break
+                    page += 1
+
+                for item in all_items:
+                    vpc = item.get("vpc", {}) or {}
+                    self.epfs_volumes.append(
+                        EpfsVolume(
+                            id=str(item.get("id", "")),
+                            name=item.get("name", ""),
+                            location=location,
+                            vpc_network_id=str(vpc.get("network_id", "")),
+                            vpc_name=vpc.get("name", ""),
+                            deleted=bool(item.get("deleted", False)),
+                        )
+                    )
+            except Exception as error:
+                logger.error(
+                    f"storage - Error fetching EPFS volumes in {location}: {error}"
                 )
 
 
@@ -94,6 +163,42 @@ class StorageBucket(BaseModel):
     is_public_access_enabled: bool = False
     is_encryption_enabled: bool = False
     is_lock_enabled: bool = False
+    lifecycle_configuration_status: str = ""
+
+    @property
+    def resource_id(self) -> str:
+        return self.id
+
+    @property
+    def resource_name(self) -> str:
+        return self.name
+
+
+class EfsVolume(BaseModel):
+    id: str
+    name: str
+    location: str
+    status: str = ""
+    vpc_id: str = ""
+    is_backup_enabled: bool = False
+    is_all_vpc_resources_allowed: bool = False
+
+    @property
+    def resource_id(self) -> str:
+        return self.id
+
+    @property
+    def resource_name(self) -> str:
+        return self.name
+
+
+class EpfsVolume(BaseModel):
+    id: str
+    name: str
+    location: str
+    vpc_network_id: str = ""
+    vpc_name: str = ""
+    deleted: bool = False
 
     @property
     def resource_id(self) -> str:

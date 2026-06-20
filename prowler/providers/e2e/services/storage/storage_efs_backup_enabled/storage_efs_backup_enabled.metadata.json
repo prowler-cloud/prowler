@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "storage_efs_backup_enabled",
+  "CheckTitle": "Check if E2E Cloud EFS volumes have backup enabled",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "storage",
+  "Description": "Check if E2E Cloud EFS volumes have backup enabled",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud EFS volumes have backup enabled",
+      "Url": "https://hub.prowler.com/check/storage_efs_backup_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+  ]
+}

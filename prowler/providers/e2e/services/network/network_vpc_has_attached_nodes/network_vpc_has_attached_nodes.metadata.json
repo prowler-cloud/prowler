@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "network_vpc_has_attached_nodes",
+  "CheckTitle": "Check if E2E Cloud VPCs have attached nodes",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "ResourceGroup": "network",
+  "Description": "Check if E2E Cloud VPCs have attached nodes",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud VPCs have attached nodes",
+      "Url": "https://hub.prowler.com/check/network_vpc_has_attached_nodes"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+  ]
+}

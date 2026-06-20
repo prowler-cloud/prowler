@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "database_cluster_public_ip_not_assigned",
+  "CheckTitle": "Check if E2E Cloud database clusters do not expose a public IP on the master node",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "database",
+  "Description": "Check if E2E Cloud database clusters do not expose a public IP on the master node",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud database clusters do not expose a public IP on the master node",
+      "Url": "https://hub.prowler.com/check/database_cluster_public_ip_not_assigned"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "database_cluster_running",
+  "CheckTitle": "Check if E2E Cloud database clusters are in RUNNING status",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "ResourceGroup": "database",
+  "Description": "Check if E2E Cloud database clusters are in RUNNING status",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud database clusters are in RUNNING status",
+      "Url": "https://hub.prowler.com/check/database_cluster_running"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+  ]
+}

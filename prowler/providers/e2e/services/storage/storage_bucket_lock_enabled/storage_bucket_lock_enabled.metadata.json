@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "storage_bucket_lock_enabled",
+  "CheckTitle": "Check if E2E Cloud object storage buckets have object lock enabled",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "storage",
+  "Description": "Check if E2E Cloud object storage buckets have object lock enabled",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud object storage buckets have object lock enabled",
+      "Url": "https://hub.prowler.com/check/storage_bucket_lock_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/openapi.yaml"
+  ]
+}
