@@ -39,7 +39,8 @@ class Storage(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"storage - Error fetching block volumes in {location}: {error}"
+                    f"storage - Error fetching block volumes in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _fetch_buckets(self):
@@ -71,7 +72,8 @@ class Storage(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"storage - Error fetching buckets in {location}: {error}"
+                    f"storage - Error fetching buckets in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _fetch_efs_volumes(self):

@@ -87,7 +87,7 @@ class E2eAPIClient:
             if isinstance(data, list):
                 all_items.extend(data)
             elif isinstance(data, dict):
-                return data
+                all_items.extend(data.values())
 
             total_pages = int(payload.get("total_page_number", page_no))
             if not data:

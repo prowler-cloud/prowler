@@ -5,7 +5,9 @@ from prowler.providers.e2e.services.securitygroup.securitygroup_client import (
 
 
 class securitygroup_no_all_traffic_rule(Check):
-    def execute(self):
+    """Ensure security groups do not allow all traffic."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for group in securitygroup_client.security_groups:
             report = CheckReportE2e(metadata=self.metadata(), resource=group)

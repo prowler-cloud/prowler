@@ -9,7 +9,7 @@ class LoadBalancers(E2eService):
 
     def __init__(self, provider):
         super().__init__("loadbalancer", provider)
-        self.loadbalancers: list[LoadBalancer] = []
+        self.load_balancers: list[LoadBalancer] = []
         self._fetch_loadbalancers()
 
     def _fetch_loadbalancers(self):
@@ -22,7 +22,7 @@ class LoadBalancers(E2eService):
                 for item in appliances:
                     context = self._extract_context(item)
                     node_detail = item.get("node_detail", {}) or {}
-                    self.loadbalancers.append(
+                    self.load_balancers.append(
                         LoadBalancer(
                             id=str(item.get("id", "")),
                             name=item.get("name", ""),
@@ -38,7 +38,8 @@ class LoadBalancers(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"loadbalancer - Error fetching appliances in {location}: {error}"
+                    f"loadbalancer - Error fetching appliances in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     @staticmethod
@@ -78,9 +79,14 @@ class LoadBalancer(BaseModel):
         return self.name
 
     @property
-    def is_alb_https(self) -> bool:
+    def is_alb(self) -> bool:
         mode = self.lb_mode.upper()
         return mode in ("HTTP", "HTTPS", "BOTH")
+
+    @property
+    def is_alb_https(self) -> bool:
+        mode = self.lb_mode.upper()
+        return mode in ("HTTPS", "BOTH")
 
     @property
     def has_backend_health_check(self) -> bool:

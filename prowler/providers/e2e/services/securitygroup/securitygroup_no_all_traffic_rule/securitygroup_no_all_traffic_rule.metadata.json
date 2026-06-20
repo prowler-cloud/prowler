@@ -10,11 +10,11 @@
   "ResourceType": "SecurityGroup",
   "ResourceGroup": "network",
   "Description": "Check if E2E Cloud security groups do not have an all-traffic rule enabled.",
-  "Risk": "",
+  "Risk": "Security groups that allow all traffic permit unrestricted network access, increasing exposure to lateral movement and data exfiltration.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/security_group/<SG_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"is_all_traffic_rule\":false}'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -29,6 +29,6 @@
   "RelatedTo": [],
   "Notes": "",
   "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+    "https://docs.e2enetworks.com/api/myaccount/network/security-group/"
   ]
 }

@@ -4,12 +4,15 @@ from prowler.providers.e2e.services.securitygroup.securitygroup_client import (
 )
 
 
+def _is_open_network(value: str) -> bool:
+    normalized = value.lower().strip()
+    return normalized in ("any", "0.0.0.0/0", "::/0")
+
+
 def _is_permissive_inbound(rule) -> bool:
-    return (
-        rule.rule_type.lower() == "inbound"
-        and rule.protocol_name.lower() == "all"
-        and rule.network.lower() == "any"
-    )
+    if rule.rule_type.lower() != "inbound" or rule.protocol_name.lower() != "all":
+        return False
+    return _is_open_network(rule.network) or _is_open_network(rule.network_cidr)
 
 
 class securitygroup_no_inbound_any_all_ports(Check):

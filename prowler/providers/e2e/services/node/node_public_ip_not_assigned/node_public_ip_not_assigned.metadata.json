@@ -10,11 +10,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "compute",
   "Description": "Check if E2E Cloud nodes do not have a public IP assigned",
-  "Risk": "",
+  "Risk": "Nodes with public IP addresses are directly reachable from the internet, expanding the attack surface and increasing exposure to unauthorized access attempts.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"public_ip_address\":null}'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

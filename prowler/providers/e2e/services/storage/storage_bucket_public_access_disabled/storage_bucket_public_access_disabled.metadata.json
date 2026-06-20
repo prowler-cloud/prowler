@@ -10,11 +10,11 @@
   "ResourceType": "ObjectStorageBucket",
   "ResourceGroup": "storage",
   "Description": "Check if E2E Cloud object storage buckets have public access disabled.",
-  "Risk": "",
+  "Risk": "Public object storage buckets can expose sensitive data to anonymous internet access, weakening confidentiality and increasing data breach risk.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/storage/buckets/<BUCKET_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"is_public_access_enabled\":false}'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -29,6 +29,6 @@
   "RelatedTo": [],
   "Notes": "",
   "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+    "https://docs.e2enetworks.com/api/myaccount/storage/object-storage/"
   ]
 }

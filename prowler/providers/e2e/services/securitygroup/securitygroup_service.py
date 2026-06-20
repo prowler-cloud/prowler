@@ -48,7 +48,8 @@ class SecurityGroups(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"securitygroup - Error fetching groups in {location}: {error}"
+                    f"securitygroup - Error fetching groups in {location} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _fetch_node_security_groups(self):
@@ -94,7 +95,8 @@ class SecurityGroups(E2eService):
                     )
             except Exception as error:
                 logger.error(
-                    f"securitygroup - Error fetching attached groups for node {node.id}: {error}"
+                    f"securitygroup - Error fetching attached groups for node {node.id} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
 

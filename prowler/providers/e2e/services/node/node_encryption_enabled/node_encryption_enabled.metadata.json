@@ -10,11 +10,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "compute",
   "Description": "Check if E2E Cloud nodes have encryption enabled",
-  "Risk": "",
+  "Risk": "Unencrypted nodes increase the risk of data exposure if disks or snapshots are accessed outside normal operating controls.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"isEncryptionEnabled\":true}'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

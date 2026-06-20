@@ -1,3 +1,5 @@
+import pytest
+
 from unittest.mock import MagicMock, patch
 
 from prowler.providers.e2e.services.node.nodes_service import Node, Nodes
@@ -67,3 +69,22 @@ class TestNodeCheckLogic:
 
         assert public_node.has_public_ip is True
         assert private_node.has_public_ip is False
+
+
+class TestHasPublicIp:
+    @pytest.mark.parametrize(
+        "public_ip_address,expected",
+        [
+            (None, False),
+            ("", False),
+            ("[]", False),
+            ("null", False),
+            ("None", False),
+            ("1.2.3.4", True),
+            ("  10.0.0.1  ", True),
+        ],
+    )
+    def test_has_public_ip_normalization(self, public_ip_address, expected):
+        from prowler.providers.e2e.services.node.nodes_service import _has_public_ip
+
+        assert _has_public_ip(public_ip_address) is expected

@@ -5,10 +5,12 @@ from prowler.providers.e2e.services.loadbalancer.loadbalancer_client import (
 
 
 class loadbalancer_backend_health_check_enabled(Check):
-    def execute(self):
+    """Ensure ALB load balancers have backend health checks configured."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for lb in loadbalancer_client.load_balancers:
-            if not lb.is_alb_https:
+            if not lb.is_alb:
                 continue
 
             report = CheckReportE2e(metadata=self.metadata(), resource=lb)

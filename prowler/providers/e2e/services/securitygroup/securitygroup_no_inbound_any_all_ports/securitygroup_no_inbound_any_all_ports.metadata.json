@@ -10,11 +10,11 @@
   "ResourceType": "SecurityGroup",
   "ResourceGroup": "network",
   "Description": "Check if E2E Cloud security groups do not allow inbound all-protocol traffic from any source.",
-  "Risk": "",
+  "Risk": "Inbound all-protocol rules from any source expose services to the entire internet and increase the likelihood of unauthorized access.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X DELETE -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" \"https://api.e2enetworks.com/myaccount/api/v1/security_group/<SG_ID>/rules/<RULE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\"",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -29,6 +29,6 @@
   "RelatedTo": [],
   "Notes": "",
   "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+    "https://docs.e2enetworks.com/api/myaccount/network/security-group/"
   ]
 }

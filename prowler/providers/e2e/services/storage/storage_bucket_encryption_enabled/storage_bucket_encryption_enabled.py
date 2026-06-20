@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.storage.storage_client import storage_client
 
 
 class storage_bucket_encryption_enabled(Check):
-    def execute(self):
+    """Ensure object storage buckets have encryption enabled."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for bucket in storage_client.buckets:
             report = CheckReportE2e(metadata=self.metadata(), resource=bucket)

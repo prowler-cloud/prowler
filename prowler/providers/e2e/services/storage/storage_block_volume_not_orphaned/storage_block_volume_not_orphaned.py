@@ -3,7 +3,9 @@ from prowler.providers.e2e.services.storage.storage_client import storage_client
 
 
 class storage_block_volume_not_orphaned(Check):
-    def execute(self):
+    """Ensure available block volumes are attached to a node."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for volume in storage_client.block_volumes:
             report = CheckReportE2e(metadata=self.metadata(), resource=volume)

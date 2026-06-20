@@ -5,7 +5,9 @@ from prowler.providers.e2e.services.loadbalancer.loadbalancer_client import (
 
 
 class loadbalancer_bitninja_enabled(Check):
-    def execute(self):
+    """Ensure load balancers have BitNinja protection enabled."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for lb in loadbalancer_client.load_balancers:
             report = CheckReportE2e(metadata=self.metadata(), resource=lb)

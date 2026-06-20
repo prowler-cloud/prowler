@@ -10,11 +10,11 @@
   "ResourceType": "Other",
   "ResourceGroup": "compute",
   "Description": "Check if E2E Cloud nodes have compliance mode enabled",
-  "Risk": "",
+  "Risk": "Nodes without compliance mode enabled may not enforce required security controls, increasing misconfiguration risk and weakening auditability of compute workloads.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"is_node_compliance\":true}'",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

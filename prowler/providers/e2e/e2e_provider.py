@@ -64,7 +64,7 @@ class E2eProvider(Provider):
             config_path = default_config_file_path
         self._audit_config = load_and_validate_config_file(self._type, config_path)
 
-        if mutelist_content:
+        if mutelist_content is not None:
             self._mutelist = E2eMutelist(mutelist_content=mutelist_content)
         else:
             if not mutelist_path:
@@ -86,6 +86,14 @@ class E2eProvider(Provider):
 
     @staticmethod
     def _resolve_locations(locations: list[str] | None) -> list[str]:
+        """Resolve scan locations from CLI args, env vars, or defaults.
+
+        Args:
+            locations: Optional list of location names from CLI arguments.
+
+        Returns:
+            The resolved list of E2E Cloud locations to scan.
+        """
         if locations:
             return locations
 
@@ -126,6 +134,20 @@ class E2eProvider(Provider):
         project_id: int,
         locations: list[str],
     ) -> E2eSession:
+        """Create an authenticated E2E Cloud API session.
+
+        Args:
+            api_key: E2E Cloud API key.
+            auth_token: Bearer auth token for the MyAccount API.
+            project_id: E2E Cloud project identifier.
+            locations: Locations included in the session scope.
+
+        Returns:
+            A configured E2eSession with an HTTP client.
+
+        Raises:
+            E2eSessionError: If session initialization fails.
+        """
         try:
             http_session = requests.Session()
             http_session.headers.update(
@@ -148,6 +170,7 @@ class E2eProvider(Provider):
             ) from error
 
     def print_credentials(self) -> None:
+        """Print masked E2E Cloud credentials and scan scope to stdout."""
         masked_key = (
             f"{self._api_key[:4]}...{self._api_key[-4:]}"
             if self._api_key and len(self._api_key) > 8
@@ -171,6 +194,23 @@ class E2eProvider(Provider):
         locations: list[str] | None = None,
         raise_on_exception: bool = True,
     ) -> Connection:
+        """Test connectivity to the E2E Cloud MyAccount API.
+
+        Args:
+            api_key: E2E Cloud API key. Falls back to E2E_API_KEY.
+            auth_token: Bearer auth token. Falls back to E2E_AUTH_TOKEN.
+            project_id: Project identifier. Falls back to E2E_PROJECT_ID.
+            locations: Optional locations to use for the probe request.
+            raise_on_exception: Whether to re-raise caught exceptions.
+
+        Returns:
+            Connection indicating success or containing the error.
+
+        Raises:
+            E2eCredentialsError: If required credentials are missing.
+            E2eSessionError: If the API returns a non-200 response.
+            Exception: Any unexpected error when raise_on_exception is True.
+        """
         try:
             api_key = api_key or os.getenv("E2E_API_KEY")
             auth_token = auth_token or os.getenv("E2E_AUTH_TOKEN")

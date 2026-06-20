@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -30,7 +30,19 @@ class E2eIdentityInfo(BaseModel):
 class E2eOutputOptions(ProviderOutputOptions):
     """Customize output filenames for E2E Cloud scans."""
 
-    def __init__(self, arguments, bulk_checks_metadata, identity: E2eIdentityInfo):
+    def __init__(
+        self,
+        arguments: object,
+        bulk_checks_metadata: dict,
+        identity: E2eIdentityInfo,
+    ) -> None:
+        """Initialize E2E Cloud output options.
+
+        Args:
+            arguments: Parsed CLI arguments for the scan.
+            bulk_checks_metadata: Loaded metadata for all checks in the scan.
+            identity: E2E Cloud identity information used in output filenames.
+        """
         super().__init__(arguments, bulk_checks_metadata)
         if (
             not hasattr(arguments, "output_filename")

@@ -5,7 +5,9 @@ from prowler.providers.e2e.services.loadbalancer.loadbalancer_client import (
 
 
 class loadbalancer_alb_https_uses_ssl_certificate(Check):
-    def execute(self):
+    """Ensure HTTPS load balancers have an SSL certificate configured."""
+
+    def execute(self) -> list[CheckReportE2e]:
         findings = []
         for lb in loadbalancer_client.load_balancers:
             if not lb.is_alb_https:
