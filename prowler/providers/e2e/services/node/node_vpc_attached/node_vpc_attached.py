@@ -9,7 +9,7 @@ class node_vpc_attached(Check):
             report = CheckReportE2e(metadata=self.metadata(), resource=node)
             report.status = "PASS"
             report.status_extended = f"Node {node.name} is attached to a VPC."
-            if getattr(node, "is_vpc_attached") != True:
+            if not node.is_vpc_attached:
                 report.status = "FAIL"
                 report.status_extended = f"Node {node.name} is not attached to a VPC."
             findings.append(report)
