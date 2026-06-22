@@ -47,6 +47,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cloudfront_distributions_pqc_tls_enabled` check for AWS provider to verify CloudFront distributions enforce a post-quantum TLS 1.3 security policy [(#11317)](https://github.com/prowler-cloud/prowler/pull/11317)
 - `apigateway_domain_name_pqc_tls_enabled` check for AWS provider to verify API Gateway custom domain names use a post-quantum TLS security policy [(#11316)](https://github.com/prowler-cloud/prowler/pull/11316)
 - `transfer_server_pqc_ssh_kex_enabled` check for AWS provider to verify Transfer Family servers use a post-quantum hybrid SSH key exchange security policy [(#11315)](https://github.com/prowler-cloud/prowler/pull/11315)
+- `acmpca_certificate_authority_pqc_key_algorithm` check and new `acmpca` service for AWS provider to verify AWS Private CA certificate authorities use a post-quantum (ML-DSA) key algorithm [(#11318)](https://github.com/prowler-cloud/prowler/pull/11318)
 
 ### 🔄 Changed
 

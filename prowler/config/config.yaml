@@ -381,6 +381,12 @@ aws:
   elbv2_min_azs: 2
 
   # AWS Post-Quantum TLS Configuration
+  # aws.acmpca_certificate_authority_pqc_key_algorithm
+  # Allowed post-quantum key algorithms for AWS Private CA certificate authorities
+  acmpca_pqc_key_algorithms:
+    - "ML_DSA_44"
+    - "ML_DSA_65"
+    - "ML_DSA_87"
   # aws.cloudfront_distributions_pqc_tls_enabled
   # Allowed CloudFront MinimumProtocolVersion values that enable post-quantum hybrid key exchange
   cloudfront_pqc_min_protocol_versions:
