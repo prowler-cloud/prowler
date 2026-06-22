@@ -6,12 +6,21 @@ STRONG_METHODS = {"microsoftAuthenticator", "fido2", "x509Certificate"}
 
 
 class entra_authentication_methods_policy_strong_auth_enforced(Check):
+    """
+    Ensure the Entra ID authentication methods policy enforces strong authentication.
+
+    This check evaluates the tenant authentication methods policy and emits two findings per tenant:
+    1. Whether the MFA registration campaign is enabled (users are prompted to register methods).
+    2. Whether at least one strong, phishing-resistant or app-based method (Microsoft Authenticator, FIDO2, or X.509 certificate) is enabled.
+
+    - PASS: Registration enforcement is enabled / at least one strong method is enabled.
+    - FAIL: Registration enforcement is not enabled / no strong methods are enabled.
+    """
+
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        for tenant_domain, policy in (
-            entra_client.authentication_methods_policy.items()
-        ):
+        for tenant_domain, policy in entra_client.authentication_methods_policy.items():
             if policy is None:
                 continue
 
@@ -42,8 +51,7 @@ class entra_authentication_methods_policy_strong_auth_enforced(Check):
             enabled_strong = [
                 config.method_name
                 for config in policy.method_configurations
-                if config.state == "enabled"
-                and config.method_name in STRONG_METHODS
+                if config.state == "enabled" and config.method_name in STRONG_METHODS
             ]
 
             report_strong = Check_Report_Azure(
