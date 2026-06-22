@@ -3,7 +3,14 @@ from prowler.providers.kubernetes.services.core.core_client import core_client
 
 
 class core_cpu_requests_set(Check):
+    """Check whether regular pod containers have CPU requests configured."""
+
     def execute(self) -> list[Check_Report_Kubernetes]:
+        """Execute the Kubernetes pod CPU requests check.
+
+        Returns:
+            List of check reports for Kubernetes pods.
+        """
         findings = []
         for pod in core_client.pods.values():
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
