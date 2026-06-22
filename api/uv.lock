@@ -4576,7 +4576,7 @@ dependencies = [
     { name = "sentry-sdk", extra = ["django"] },
     { name = "sqlparse" },
     { name = "uuid6" },
-    { name = "uvicorn" },
+    { name = "uvicorn-worker" },
     { name = "uvloop" },
     { name = "werkzeug" },
     { name = "xmlsec" },
@@ -4643,7 +4643,7 @@ requires-dist = [
     { name = "sentry-sdk", extras = ["django"], specifier = "==2.56.0" },
     { name = "sqlparse", specifier = "==0.5.5" },
     { name = "uuid6", specifier = "==2024.7.10" },
-    { name = "uvicorn", specifier = "==0.49.0" },
+    { name = "uvicorn-worker", specifier = "==0.4.0" },
     { name = "uvloop", specifier = "==0.22.1" },
     { name = "werkzeug", specifier = "==3.1.7" },
     { name = "xmlsec", specifier = "==1.3.17" },
@@ -5860,6 +5860,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c4/1f/fa18009dea8469069cca78a4e877a008ab78f08b064bfc9ab891579077ff/uvicorn-0.49.0.tar.gz", hash = "sha256:ebf4271aa580d9de97f93192d4595176df6e91f9aae919ca73e4fc07df1e66a3", size = 91284, upload-time = "2026-06-03T22:01:30.448Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/fa/e1388bbcf24ef3274f45c0c1c7b501fd14971037c1b6ee23610553307497/uvicorn-0.49.0-py3-none-any.whl", hash = "sha256:ba3d14c3ee7e41c6c654c46c9eb489d33213cdd30aa1696eab1374337c13f68f", size = 71376, upload-time = "2026-06-03T22:01:29.037Z" },
+]
+
+[[package]]
+name = "uvicorn-worker"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "gunicorn" },
+    { name = "uvicorn" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/80/59/9101b9c0680fd80e9d26c07deb822a5d18a324339fcf9cd017885ee808ad/uvicorn_worker-0.4.0.tar.gz", hash = "sha256:8ee5306070d8f38dce124adce488c3c0b50f20cf0c0222b12c66188da7214493", size = 9361, upload-time = "2025-09-20T10:47:01.218Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/25/09cd7a90c8bb7fb693be0d6704fccd5f9778d5513214b7a01cc4a94ff314/uvicorn_worker-0.4.0-py3-none-any.whl", hash = "sha256:e2ed952cef976f5e9e429d7269640bbcafbd36c80aa80f1003c8c77a6797abde", size = 5364, upload-time = "2025-09-20T10:46:59.776Z" },
 ]
 
 [[package]]
