@@ -55,14 +55,16 @@ class entra_app_registration_credential_not_expired(Check):
                             report.status = "FAIL"
                             report.status_extended = (
                                 f"App '{app.name}' has a {credential.credential_type} "
-                                f"credential expiring in {days_left} days."
+                                f"credential expiring in {days_left} days (within the "
+                                f"{EXPIRY_WARNING_DAYS}-day rotation threshold); rotate it soon."
                             )
                         else:
                             days_left = (end - now).days
                             report.status = "PASS"
                             report.status_extended = (
                                 f"App '{app.name}' has a {credential.credential_type} "
-                                f"credential valid for {days_left} more days."
+                                f"credential valid for {days_left} more days (beyond the "
+                                f"{EXPIRY_WARNING_DAYS}-day rotation threshold)."
                             )
 
                     findings.append(report)
