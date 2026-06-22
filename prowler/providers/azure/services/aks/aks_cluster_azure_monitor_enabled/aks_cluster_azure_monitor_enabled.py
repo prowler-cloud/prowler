@@ -3,14 +3,21 @@ from prowler.providers.azure.services.aks.aks_client import aks_client
 
 
 class aks_cluster_azure_monitor_enabled(Check):
-    def execute(self) -> Check_Report_Azure:
+    """
+    Ensure Azure Monitor is enabled for AKS clusters.
+
+    This check evaluates whether each Azure Kubernetes Service cluster has Azure Monitor integration enabled for metrics collection, log aggregation, and alerting.
+
+    - PASS: The cluster has Azure Monitor enabled.
+    - FAIL: The cluster does not have Azure Monitor enabled.
+    """
+
+    def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
         for subscription_name, clusters in aks_client.clusters.items():
             for cluster in clusters.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=cluster
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=cluster)
                 report.subscription = subscription_name
 
                 if cluster.azure_monitor_enabled:
