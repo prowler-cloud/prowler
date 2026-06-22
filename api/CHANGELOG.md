@@ -9,6 +9,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Provider group filters for API endpoints that support cloud provider filtering, including exact and `__in` variants [(#11573)](https://github.com/prowler-cloud/prowler/pull/11573)
 - Provider filters for `GET /api/v1/compliance-overviews`, `/metadata`, and `/requirements`, using latest completed scans per matching provider [(#11587)](https://github.com/prowler-cloud/prowler/pull/11587)
 - Server-Sent Events (SSE) infrastructure for the API: a base viewset, a tenant-aware channel manager, and channel-name helpers backed by `django-eventstream` over Valkey Pub/Sub and served through the Gunicorn ASGI worker, so feature endpoints can stream events to clients over a single long-lived connection [(#11556)](https://github.com/prowler-cloud/prowler/pull/11556)
+`DJANGO_CELERY_WORKER_CONCURRENCY` to configure Celery workers concurrency. Unset for default behaviour [(#11075)](https://github.com/prowler-cloud/prowler/pull/11075)
 
 ### 🔄 Changed
 
@@ -119,7 +120,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
-- Optional `DJANGO_CELERY_WORKER_CONCURRENCY` setting bounds the Celery worker prefork pool when explicitly configured; unset behaviour is unchanged (Celery falls back to `os.cpu_count()`) [(#11075)](https://github.com/prowler-cloud/prowler/pull/11075)
 - `resource.metadata` attribute included in `/api/v1/findings?include=resources` [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
 ---
