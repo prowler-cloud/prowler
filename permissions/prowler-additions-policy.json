@@ -62,6 +62,7 @@
       "Resource": [
         "arn:*:apigateway:*::/restapis/*",
         "arn:*:apigateway:*::/apis/*",
+        "arn:*:apigateway:*::/domainnames",
         "arn:*:apigateway:*::/domainnames/*"
       ],
       "Sid": "AllowAPIGatewayReadOnly"

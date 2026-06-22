@@ -81,6 +81,33 @@ class Test_apigateway_domain_name_pqc_tls_enabled:
                 assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
+    def test_alternate_pq_policy(self):
+        apigw_client = _build_client("SecurityPolicy_TLS13_1_2_PQ_2025_09")
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.apigateway.apigateway_domain_name_pqc_tls_enabled.apigateway_domain_name_pqc_tls_enabled.apigateway_client",
+                new=apigw_client,
+            ):
+                from prowler.providers.aws.services.apigateway.apigateway_domain_name_pqc_tls_enabled.apigateway_domain_name_pqc_tls_enabled import (
+                    apigateway_domain_name_pqc_tls_enabled,
+                )
+
+                check = apigateway_domain_name_pqc_tls_enabled()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    "SecurityPolicy_TLS13_1_2_PQ_2025_09" in result[0].status_extended
+                )
+
+    @mock_aws
     def test_legacy_tls_1_2(self):
         apigw_client = _build_client("TLS_1_2")
 

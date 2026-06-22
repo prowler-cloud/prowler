@@ -5,6 +5,9 @@ from prowler.providers.aws.services.apigateway.apigateway_client import (
 
 PQC_APIGATEWAY_POLICIES_DEFAULT = [
     "SecurityPolicy_TLS13_1_3_2025_09",
+    "SecurityPolicy_TLS13_1_2_FIPS_PFS_PQ_2025_09",
+    "SecurityPolicy_TLS13_1_2_PFS_PQ_2025_09",
+    "SecurityPolicy_TLS13_1_2_PQ_2025_09",
 ]
 
 
