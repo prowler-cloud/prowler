@@ -385,10 +385,6 @@ export const buildOracleCloudSecret = (
     [ProviderCredentialFields.OCI_TENANCY]:
       providerUid ||
       getFormValue(formData, ProviderCredentialFields.OCI_TENANCY),
-    [ProviderCredentialFields.OCI_REGION]: getFormValue(
-      formData,
-      ProviderCredentialFields.OCI_REGION,
-    ),
     [ProviderCredentialFields.OCI_PASS_PHRASE]: getFormValue(
       formData,
       ProviderCredentialFields.OCI_PASS_PHRASE,

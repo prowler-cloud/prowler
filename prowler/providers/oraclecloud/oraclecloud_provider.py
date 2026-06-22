@@ -67,12 +67,13 @@ class OraclecloudProvider(Provider):
     _mutelist: OCIMutelist
     audit_metadata: Audit_Metadata
     _home_region: str = "us-ashburn-1"
+    _bootstrap_region: str = "us-ashburn-1"
 
     def __init__(
         self,
         oci_config_file: str = None,
         profile: str = None,
-        region: set = set(),
+        region: set = None,
         compartment_ids: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -130,8 +131,11 @@ class OraclecloudProvider(Provider):
 
         # Check if the configuration is scanning a single region
         single_region = None
-        if region:
-            single_region = list(region)[0] if len(region) == 1 else None
+        if isinstance(region, str):
+            single_region = region
+        elif region:
+            single_region = sorted(region)[0]
+        bootstrap_region = single_region or self._bootstrap_region
 
         # Setup OCI Session
         logger.info("Setting up OCI session ...")
@@ -144,7 +148,7 @@ class OraclecloudProvider(Provider):
             key_file=key_file,
             key_content=key_content,
             tenancy=tenancy,
-            region=single_region,
+            region=bootstrap_region,
             pass_phrase=pass_phrase,
         )
 
@@ -154,7 +158,7 @@ class OraclecloudProvider(Provider):
         logger.info("Validating OCI credentials ...")
         self._identity = self.set_identity(
             session=self._session,
-            region=single_region,
+            region=bootstrap_region,
             compartment_ids=compartment_ids,
         )
         logger.info("OCI credentials validated")
@@ -283,7 +287,7 @@ class OraclecloudProvider(Provider):
             signer = None
 
             # If API key credentials are provided directly, create config from them
-            if user and fingerprint and tenancy and region:
+            if user and fingerprint and tenancy:
                 import base64
 
                 logger.info("Using API key credentials from direct parameters")
@@ -293,7 +297,7 @@ class OraclecloudProvider(Provider):
                     "user": user,
                     "fingerprint": fingerprint,
                     "tenancy": tenancy,
-                    "region": region,
+                    "region": region or OraclecloudProvider._bootstrap_region,
                 }
 
                 # Handle private key
@@ -854,7 +858,7 @@ class OraclecloudProvider(Provider):
             session = None
 
             # If API key credentials are provided directly, create config from them
-            if user and fingerprint and tenancy and region:
+            if user and fingerprint and tenancy:
                 import base64
 
                 logger.info("Using API key credentials from direct parameters")
@@ -864,7 +868,7 @@ class OraclecloudProvider(Provider):
                     "user": user,
                     "fingerprint": fingerprint,
                     "tenancy": tenancy,
-                    "region": region,
+                    "region": region or OraclecloudProvider._bootstrap_region,
                 }
 
                 # Handle private key
@@ -913,7 +917,7 @@ class OraclecloudProvider(Provider):
 
             identity = OraclecloudProvider.set_identity(
                 session=session,
-                region=region,
+                region=region or OraclecloudProvider._bootstrap_region,
             )
 
             # Validate provider_id if provided

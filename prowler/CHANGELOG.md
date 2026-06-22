@@ -72,6 +72,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - A broken built-in provider no longer aborts the CLI when a different provider was invoked [(#11618)](https://github.com/prowler-cloud/prowler/pull/11618)
 - GCP organization scans with `--organization-id` no longer silently fall back to the credentials' host project when the Cloud Asset API call fails [(#11280)](https://github.com/prowler-cloud/prowler/pull/11280)
 
+### 🔄 Changed
+
+- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
+
 ---
 
 ## [5.30.0] (Prowler v5.30.0)

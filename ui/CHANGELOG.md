@@ -23,6 +23,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.30.1] (Prowler v5.30.1)
 
+### 🔄 Changed
+
+- OCI provider setup no longer requires a region in the credentials form [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
+
 ### 🐞 Fixed
 
 - Threat Map no longer shows an empty map for accounts that only have Okta or Google Workspace scans [(#11542)](https://github.com/prowler-cloud/prowler/pull/11542)
