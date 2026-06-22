@@ -1,34 +1,21 @@
 "use client";
 
 import { RowSelectionState } from "@tanstack/react-table";
-import { CalendarClock } from "lucide-react";
 import { useState } from "react";
 
-import { getSchedule } from "@/actions/schedules";
 import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
-import {
-  EDIT_SCAN_SCHEDULE_STATE,
-  EditScanScheduleModal,
-  type EditScanScheduleState,
-  type ScanScheduleProvider,
-} from "@/components/scans/schedule/edit-scan-schedule-modal";
-import { Button } from "@/components/shadcn";
+import type { ScanScheduleProvider } from "@/components/scans/schedule/edit-scan-schedule-modal";
 import { DataTable } from "@/components/ui/table";
-import { getScanScheduleCapability } from "@/lib/schedules";
 import { MetaDataProps } from "@/types";
 import {
   isProvidersOrganizationRow,
   isProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
-import {
-  SCAN_SCHEDULE_CAPABILITY,
-  type ScanScheduleCapability,
-  type ScheduleApiResponse,
-} from "@/types/schedules";
+import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { getColumnProviders } from "./table";
 
@@ -165,10 +152,6 @@ export function computeSelectedScheduleProviders(
   return { providerIds, providers };
 }
 
-function getProviderCountLabel(count: number) {
-  return `${count} provider${count === 1 ? "" : "s"}`;
-}
-
 function ProvidersAccountsTableContent({
   isCloud,
   metadata,
@@ -178,10 +161,6 @@ function ProvidersAccountsTableContent({
   onOpenOrganizationWizard,
 }: ProvidersAccountsTableProps) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-  const [scheduleState, setScheduleState] = useState<EditScanScheduleState>({
-    kind: EDIT_SCAN_SCHEDULE_STATE.LOADING,
-  });
 
   const testableProviderIds = computeTestableProviderIds(rows, rowSelection);
   const selectedScheduleProviders = computeSelectedScheduleProviders(
@@ -189,39 +168,8 @@ function ProvidersAccountsTableContent({
     rowSelection,
   );
   const selectedScheduleProviderIds = selectedScheduleProviders.providerIds;
-  const canEditBulkSchedule =
-    (scanScheduleCapability ?? getScanScheduleCapability(isCloud)) ===
-    SCAN_SCHEDULE_CAPABILITY.ADVANCED;
 
   const clearSelection = () => setRowSelection({});
-
-  const openBulkScheduleEditor = async () => {
-    const targetProviderId = selectedScheduleProviderIds[0];
-    if (!targetProviderId) return;
-
-    setScheduleState({ kind: EDIT_SCAN_SCHEDULE_STATE.LOADING });
-    setIsScheduleOpen(true);
-
-    const response = (await getSchedule(targetProviderId)) as
-      | ScheduleApiResponse
-      | { error?: string };
-
-    if (!response || ("error" in response && response.error)) {
-      setScheduleState({
-        kind: EDIT_SCAN_SCHEDULE_STATE.ERROR,
-        message:
-          response && "error" in response && response.error
-            ? response.error
-            : "Failed to load scan schedule.",
-      });
-      return;
-    }
-
-    setScheduleState({
-      kind: EDIT_SCAN_SCHEDULE_STATE.LOADED,
-      schedule: "data" in response ? response.data : null,
-    });
-  };
 
   const columns = getColumnProviders(
     rowSelection,
@@ -234,45 +182,19 @@ function ProvidersAccountsTableContent({
     scanScheduleCapability,
   );
 
-  const selectedScheduleProviderCount = selectedScheduleProviderIds.length;
-  const toolbarRightContent =
-    canEditBulkSchedule && selectedScheduleProviderCount > 0 ? (
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => void openBulkScheduleEditor()}
-      >
-        <CalendarClock className="size-4" />
-        {`Edit Scan Schedule (${getProviderCountLabel(selectedScheduleProviderCount)})`}
-      </Button>
-    ) : undefined;
-
   return (
-    <>
-      <EditScanScheduleModal
-        open={isScheduleOpen}
-        onOpenChange={setIsScheduleOpen}
-        providers={selectedScheduleProviders.providers}
-        providerIds={selectedScheduleProviderIds}
-        targetName="Selected providers"
-        state={scheduleState}
-        onSaved={clearSelection}
-      />
-      <DataTable
-        columns={columns}
-        data={rows}
-        metadata={metadata}
-        getSubRows={(row) => row.subRows}
-        defaultExpanded={isCloud}
-        showSearch
-        enableRowSelection
-        rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
-        enableSubRowSelection
-        toolbarRightContent={toolbarRightContent}
-      />
-    </>
+    <DataTable
+      columns={columns}
+      data={rows}
+      metadata={metadata}
+      getSubRows={(row) => row.subRows}
+      defaultExpanded={isCloud}
+      showSearch
+      enableRowSelection
+      rowSelection={rowSelection}
+      onRowSelectionChange={setRowSelection}
+      enableSubRowSelection
+    />
   );
 }
 

@@ -10,58 +10,18 @@ import {
 } from "@/types/providers-table";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
-const { dataTableMockState, getColumnProvidersMock, getScheduleMock } =
-  vi.hoisted(() => ({
-    dataTableMockState: {
-      nextSelection: {} as Record<string, boolean>,
-    },
-    getColumnProvidersMock: vi.fn((..._args: unknown[]) => []),
-    getScheduleMock: vi.fn(),
-  }));
-
-vi.mock("@/actions/schedules", () => ({
-  getSchedule: getScheduleMock,
-}));
-
-vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
-  EDIT_SCAN_SCHEDULE_STATE: {
-    LOADING: "loading",
-    LOADED: "loaded",
-    ERROR: "error",
+const { dataTableMockState, getColumnProvidersMock } = vi.hoisted(() => ({
+  dataTableMockState: {
+    nextSelection: {} as Record<string, boolean>,
   },
-  EditScanScheduleModal: ({
-    open,
-    providers = [],
-    providerIds = [],
-    onSaved,
-  }: {
-    open: boolean;
-    providers?: Array<{ providerId: string }>;
-    providerIds?: string[];
-    onSaved?: () => void;
-  }) =>
-    open ? (
-      <div role="dialog" aria-label="Edit Scan Schedule">
-        <output data-testid="schedule-provider-ids">
-          {providerIds.join(",")}
-        </output>
-        <output data-testid="schedule-visible-providers">
-          {providers.map((provider) => provider.providerId).join(",")}
-        </output>
-        <button type="button" onClick={onSaved}>
-          Simulate save
-        </button>
-      </div>
-    ) : null,
+  getColumnProvidersMock: vi.fn((..._args: unknown[]) => []),
 }));
 
 vi.mock("@/components/ui/table", () => ({
   DataTable: ({
     onRowSelectionChange,
-    toolbarRightContent,
   }: {
     onRowSelectionChange?: (selection: Record<string, boolean>) => void;
-    toolbarRightContent?: React.ReactNode;
   }) => (
     <div data-testid="providers-data-table">
       <button
@@ -70,7 +30,6 @@ vi.mock("@/components/ui/table", () => ({
       >
         Apply selection
       </button>
-      <div data-testid="providers-toolbar">{toolbarRightContent}</div>
     </div>
   ),
 }));
@@ -87,25 +46,6 @@ import {
 const metadata: MetaDataProps = {
   pagination: { page: 1, pages: 1, count: 0, itemsPerPage: [10] },
   version: "latest",
-};
-
-const scheduleResponse = {
-  data: {
-    type: "schedules",
-    id: "provider-1",
-    attributes: {
-      scan_enabled: true,
-      scan_frequency: "DAILY",
-      scan_hour: 4,
-      scan_timezone: "UTC",
-      scan_interval_hours: null,
-      scan_day_of_week: null,
-      scan_day_of_month: null,
-    },
-    relationships: {
-      provider: { data: { type: "providers", id: "provider-1" } },
-    },
-  },
 };
 
 const createProviderRow = (
@@ -181,7 +121,6 @@ describe("ProvidersAccountsTable", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dataTableMockState.nextSelection = {};
-    getScheduleMock.mockResolvedValue(scheduleResponse);
   });
 
   it("passes scan schedule capability to provider row action columns", () => {
@@ -294,7 +233,7 @@ describe("ProvidersAccountsTable", () => {
     });
   });
 
-  it("shows the bulk schedule action for selected providers", async () => {
+  it("passes selected provider ids to provider row action columns", async () => {
     // Given
     const user = userEvent.setup();
     dataTableMockState.nextSelection = { "0": true };
@@ -313,14 +252,26 @@ describe("ProvidersAccountsTable", () => {
     await user.click(screen.getByRole("button", { name: "Apply selection" }));
 
     // Then
-    expect(
-      screen.getByRole("button", {
-        name: "Edit Scan Schedule (1 provider)",
-      }),
-    ).toBeInTheDocument();
+    expect(getColumnProvidersMock).toHaveBeenLastCalledWith(
+      expect.any(Object),
+      ["provider-1"],
+      ["provider-1"],
+      [
+        expect.objectContaining({
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+          providerAlias: "Prod",
+        }),
+      ],
+      expect.any(Function),
+      expect.any(Function),
+      expect.any(Function),
+      SCAN_SCHEDULE_CAPABILITY.ADVANCED,
+    );
   });
 
-  it("passes selected organization provider ids and visible providers to the modal", async () => {
+  it("passes selected organization provider ids and visible providers to provider row action columns", async () => {
     // Given
     const user = userEvent.setup();
     dataTableMockState.nextSelection = { "0": true };
@@ -337,99 +288,19 @@ describe("ProvidersAccountsTable", () => {
 
     await user.click(screen.getByRole("button", { name: "Apply selection" }));
 
-    // When
-    await user.click(
-      screen.getByRole("button", {
-        name: "Edit Scan Schedule (3 providers)",
-      }),
-    );
-
     // Then
-    expect(getScheduleMock).toHaveBeenCalledWith("provider-1");
-    expect(screen.getByTestId("schedule-provider-ids")).toHaveTextContent(
-      "provider-1,provider-2,provider-hidden",
+    expect(getColumnProvidersMock).toHaveBeenLastCalledWith(
+      expect.any(Object),
+      [],
+      ["provider-1", "provider-2", "provider-hidden"],
+      [
+        expect.objectContaining({ providerId: "provider-1" }),
+        expect.objectContaining({ providerId: "provider-2" }),
+      ],
+      expect.any(Function),
+      expect.any(Function),
+      expect.any(Function),
+      SCAN_SCHEDULE_CAPABILITY.ADVANCED,
     );
-    expect(screen.getByTestId("schedule-visible-providers")).toHaveTextContent(
-      "provider-1,provider-2",
-    );
-  });
-
-  it("hides the bulk schedule action when capability is manual only", async () => {
-    // Given
-    const user = userEvent.setup();
-    dataTableMockState.nextSelection = { "0": true };
-    render(
-      <ProvidersAccountsTable
-        isCloud
-        metadata={metadata}
-        rows={[providerOne]}
-        scanScheduleCapability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
-        onOpenProviderWizard={vi.fn()}
-        onOpenOrganizationWizard={vi.fn()}
-      />,
-    );
-
-    // When
-    await user.click(screen.getByRole("button", { name: "Apply selection" }));
-
-    // Then
-    expect(
-      screen.queryByRole("button", { name: /edit scan schedule/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("hides the bulk schedule action when capability is blocked", async () => {
-    // Given
-    const user = userEvent.setup();
-    dataTableMockState.nextSelection = { "0": true };
-    render(
-      <ProvidersAccountsTable
-        isCloud
-        metadata={metadata}
-        rows={[providerOne]}
-        scanScheduleCapability={SCAN_SCHEDULE_CAPABILITY.BLOCKED}
-        onOpenProviderWizard={vi.fn()}
-        onOpenOrganizationWizard={vi.fn()}
-      />,
-    );
-
-    // When
-    await user.click(screen.getByRole("button", { name: "Apply selection" }));
-
-    // Then
-    expect(
-      screen.queryByRole("button", { name: /edit scan schedule/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("clears the selection after a successful bulk schedule save", async () => {
-    // Given
-    const user = userEvent.setup();
-    dataTableMockState.nextSelection = { "0": true };
-    render(
-      <ProvidersAccountsTable
-        isCloud
-        metadata={metadata}
-        rows={[providerOne]}
-        scanScheduleCapability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
-        onOpenProviderWizard={vi.fn()}
-        onOpenOrganizationWizard={vi.fn()}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Apply selection" }));
-    await user.click(
-      screen.getByRole("button", {
-        name: "Edit Scan Schedule (1 provider)",
-      }),
-    );
-
-    // When
-    await user.click(screen.getByRole("button", { name: "Simulate save" }));
-
-    // Then
-    expect(
-      screen.queryByRole("button", { name: /edit scan schedule/i }),
-    ).not.toBeInTheDocument();
   });
 });

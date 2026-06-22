@@ -554,9 +554,7 @@ describe("DataTableRowActions", () => {
     await user.click(screen.getByRole("button"));
 
     // Then
-    expect(
-      screen.getByText("Edit Scan Schedule (3 providers)"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Edit Scan Schedule (3)")).toBeInTheDocument();
     expect(screen.getByText("Test Connection (2)")).toBeInTheDocument();
   });
 

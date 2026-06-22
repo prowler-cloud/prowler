@@ -11,6 +11,10 @@ import {
   updateSchedule,
   updateSchedulesBulk,
 } from "@/actions/schedules";
+import {
+  ProviderTypeIconStack,
+  type ProviderTypeIconStackItem,
+} from "@/components/icons/providers-badge/provider-type-icon";
 import { Button, FieldError } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { EntityInfo } from "@/components/ui/entities";
@@ -72,6 +76,25 @@ interface EditScanScheduleModalProps {
   onSaved?: () => void;
 }
 
+function getBulkProviderTypeIconItems(
+  providers: ScanScheduleProvider[],
+): ProviderTypeIconStackItem[] {
+  const seen = new Set<ProviderType>();
+  const items: ProviderTypeIconStackItem[] = [];
+
+  for (const provider of providers) {
+    if (seen.has(provider.providerType)) continue;
+    seen.add(provider.providerType);
+    items.push({
+      key: provider.providerType,
+      type: provider.providerType,
+      tooltip: provider.providerType,
+    });
+  }
+
+  return items;
+}
+
 function EditScanScheduleForm({
   provider,
   providers,
@@ -97,6 +120,9 @@ function EditScanScheduleForm({
     providerIds ?? targetProviders.map((target) => target.providerId);
   const referenceProvider = targetProviders[0];
   const isBulk = providers !== undefined || providerIds !== undefined;
+  const bulkProviderTypeIconItems = isBulk
+    ? getBulkProviderTypeIconItems(targetProviders)
+    : [];
   const providerCountLabel = `${targetProviderIds.length} provider${
     targetProviderIds.length === 1 ? "" : "s"
   }`;
@@ -157,7 +183,17 @@ function EditScanScheduleForm({
     <form onSubmit={onSubmit} className="flex flex-col gap-8">
       {referenceProvider && (
         <EntityInfo
-          cloudProvider={referenceProvider.providerType}
+          cloudProvider={isBulk ? undefined : referenceProvider.providerType}
+          icon={
+            isBulk && bulkProviderTypeIconItems.length > 0 ? (
+              <ProviderTypeIconStack
+                items={bulkProviderTypeIconItems}
+                max={bulkProviderTypeIconItems.length}
+                size={35}
+                className="flex-wrap"
+              />
+            ) : undefined
+          }
           entityAlias={
             isBulk
               ? (targetName ?? providerCountLabel)

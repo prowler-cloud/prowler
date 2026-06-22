@@ -117,10 +117,6 @@ function collectChildScheduleProviders(
   return providers;
 }
 
-function getProviderCountLabel(count: number) {
-  return `${count} provider${count === 1 ? "" : "s"}`;
-}
-
 interface OrgGroupDropdownActionsProps {
   rowData: ProvidersOrganizationRow;
   loading: boolean;
@@ -444,9 +440,7 @@ export function DataTableRowActions({
             {canEditSchedule && selectedScheduleProviderCount > 0 && (
               <ActionDropdownItem
                 icon={<CalendarClock />}
-                label={`Edit Scan Schedule (${getProviderCountLabel(
-                  selectedScheduleProviderCount,
-                )})`}
+                label={`Edit Scan Schedule (${selectedScheduleProviderCount})`}
                 onSelect={() =>
                   void openScheduleEditor(
                     selectedScheduleProviders,

@@ -30,8 +30,37 @@ vi.mock("@/components/ui/toast", () => ({
   toast: toastMock,
 }));
 
+vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
+  ProviderTypeIconStack: ({ items }: { items: Array<{ type: string }> }) => (
+    <div data-testid="provider-type-icon-stack">
+      {items.map((item) => (
+        <span key={item.type}>{item.type}</span>
+      ))}
+    </div>
+  ),
+}));
+
 vi.mock("@/components/ui/entities", () => ({
-  EntityInfo: () => null,
+  EntityInfo: ({
+    badge,
+    cloudProvider,
+    entityAlias,
+    icon,
+  }: {
+    badge?: string;
+    cloudProvider?: string;
+    entityAlias?: string;
+    icon?: React.ReactNode;
+  }) => (
+    <div data-testid="entity-info">
+      {cloudProvider && (
+        <span data-testid="single-cloud-provider">{cloudProvider}</span>
+      )}
+      {icon}
+      {entityAlias && <span>{entityAlias}</span>}
+      {badge && <span>{badge}</span>}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/shadcn/modal", () => ({
@@ -72,6 +101,22 @@ const organizationProviders = [
     providerType: "aws" as const,
     providerUid: "210987654321",
     providerAlias: "Staging",
+  },
+];
+
+const multiCloudProviders = [
+  provider,
+  {
+    providerId: "p2",
+    providerType: "azure" as const,
+    providerUid: "azure-subscription",
+    providerAlias: "Azure Prod",
+  },
+  {
+    providerId: "p3",
+    providerType: "aws" as const,
+    providerUid: "210987654321",
+    providerAlias: "AWS Staging",
   },
 ];
 
@@ -245,5 +290,24 @@ describe("EditScanScheduleModal remove flow", () => {
         description: "The scan schedule was updated for 3 providers.",
       }),
     );
+  });
+
+  it("shows one logo per selected provider type in bulk mode", () => {
+    render(
+      <EditScanScheduleModal
+        open
+        onOpenChange={vi.fn()}
+        providers={multiCloudProviders}
+        targetName="Selected providers"
+        state={{ kind: EDIT_SCAN_SCHEDULE_STATE.LOADED, schedule }}
+      />,
+    );
+
+    const stack = screen.getByTestId("provider-type-icon-stack");
+    expect(stack).toHaveTextContent("aws");
+    expect(stack).toHaveTextContent("azure");
+    expect(
+      screen.queryByTestId("single-cloud-provider"),
+    ).not.toBeInTheDocument();
   });
 });
