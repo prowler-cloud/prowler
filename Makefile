@@ -1,5 +1,34 @@
 .DEFAULT_GOAL:=help
 
+DEV_LOCAL := ./scripts/development/dev-local.sh
+
+.PHONY: dev dev-setup dev-attach dev-launch dev-stop dev-clean dev-wipe dev-status
+
+##@ Local Development
+dev: ## Start local API, worker, and database logs
+	$(DEV_LOCAL) all
+
+dev-setup: ## Bootstrap local dependencies, migrations, and fixtures
+	$(DEV_LOCAL) setup
+
+dev-attach: ## Attach to the local tmux development session
+	$(DEV_LOCAL) attach
+
+dev-launch: ## Start the local stack on fixed ports and attach
+	$(DEV_LOCAL) launch
+
+dev-stop: ## Stop the local tmux session and containers
+	$(DEV_LOCAL) kill
+
+dev-clean: ## Remove stopped local development containers
+	$(DEV_LOCAL) clean
+
+dev-wipe: ## Stop everything and delete local development data
+	$(DEV_LOCAL) wipe
+
+dev-status: ## Show local development container status
+	$(DEV_LOCAL) status
+
 ##@ Testing
 test:   ## Test with pytest
 	rm -rf .coverage && \

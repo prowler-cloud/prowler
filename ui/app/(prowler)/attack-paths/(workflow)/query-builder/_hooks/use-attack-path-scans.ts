@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { getAttackPathScans } from "@/actions/attack-paths";
 import { useMountEffect } from "@/hooks/use-mount-effect";
@@ -19,7 +19,9 @@ export interface UseAttackPathScansOptions {
 export interface UseAttackPathScansResult {
   scans: AttackPathScan[];
   scansLoading: boolean;
+  loadError: boolean;
   refreshScans: () => Promise<void>;
+  retryLoadScans: () => Promise<void>;
 }
 
 /**
@@ -35,7 +37,11 @@ export function useAttackPathScans(
 
   const [scans, setScans] = useState<AttackPathScan[]>([]);
   const [scansLoading, setScansLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const mountedRef = useRef(true);
 
+  // Silent background refresh for auto-refresh: never flips loading/error, so it
+  // can't disrupt the visible view if it fails.
   const refreshScans = async () => {
     try {
       const scansData = await getAttackPathScans();
@@ -47,35 +53,50 @@ export function useAttackPathScans(
     }
   };
 
-  useMountEffect(() => {
-    let active = true;
-
-    const loadScans = async () => {
-      setScansLoading(true);
-      try {
-        const scansData = await getAttackPathScans();
-        const nextScans = scansData?.data ?? [];
-        if (!active) return;
-        setScans(nextScans);
-        if (!nextScans.some((scan) => scan.attributes.graph_data_ready)) {
+  // Full (re)load: drives loading + error state. Runs on mount and is reused by
+  // the error view's Retry action. A successful empty result (`{ data: [] }`) is
+  // not an error; only a missing payload or a thrown request is.
+  const loadScans = async () => {
+    setScansLoading(true);
+    setLoadError(false);
+    try {
+      const scansData = await getAttackPathScans();
+      if (!mountedRef.current) return;
+      if (scansData?.data) {
+        setScans(scansData.data);
+        if (!scansData.data.some((scan) => scan.attributes.graph_data_ready)) {
           onNoReadyScan?.();
         }
-      } catch (error) {
-        if (!active) return;
-        console.error("Failed to load scans:", error);
+      } else {
         setScans([]);
+        setLoadError(true);
         onNoReadyScan?.();
-      } finally {
-        if (active) setScansLoading(false);
       }
-    };
+    } catch (error) {
+      if (!mountedRef.current) return;
+      console.error("Failed to load scans:", error);
+      setScans([]);
+      setLoadError(true);
+      onNoReadyScan?.();
+    } finally {
+      if (mountedRef.current) setScansLoading(false);
+    }
+  };
 
+  useMountEffect(() => {
+    mountedRef.current = true;
     void loadScans();
 
     return () => {
-      active = false;
+      mountedRef.current = false;
     };
   });
 
-  return { scans, scansLoading, refreshScans };
+  return {
+    scans,
+    scansLoading,
+    loadError,
+    refreshScans,
+    retryLoadScans: loadScans,
+  };
 }

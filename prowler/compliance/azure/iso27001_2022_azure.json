@@ -1267,7 +1267,9 @@
         }
       ],
       "Checks": [
-        "cosmosdb_account_backup_policy_continuous"
+        "cosmosdb_account_backup_policy_continuous",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
       ]
     },
     {
@@ -1296,7 +1298,11 @@
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_using_managed_disks",
         "vm_trusted_launch_enabled",
-        "cosmosdb_account_automatic_failover_enabled"
+        "cosmosdb_account_automatic_failover_enabled",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "mysql_flexible_server_high_availability_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_high_availability_enabled"
       ]
     },
     {
@@ -1340,6 +1346,7 @@
         }
       ],
       "Checks": [
+        "defender_ensure_defender_cspm_is_on",
         "monitor_alert_create_policy_assignment",
         "monitor_alert_create_update_nsg",
         "monitor_alert_create_update_public_ip_address_rule",
@@ -1411,6 +1418,7 @@
         "containerregistry_not_publicly_accessible",
         "cosmosdb_account_firewall_use_selected_networks",
         "cosmosdb_account_public_network_access_disabled",
+        "databricks_workspace_no_public_ip_enabled",
         "databricks_workspace_public_network_access_disabled",
         "network_bastion_host_exists",
         "network_flow_log_captured_sent",

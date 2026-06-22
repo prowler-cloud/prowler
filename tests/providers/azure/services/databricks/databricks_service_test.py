@@ -19,6 +19,7 @@ def mock_databricks_get_workspaces(_):
                 name="test-workspace",
                 location="eastus",
                 public_network_access="Disabled",
+                no_public_ip_enabled=True,
                 custom_managed_vnet_id="test-vnet-id",
                 managed_disk_encryption=ManagedDiskEncryption(
                     key_name="test-key",
@@ -55,6 +56,7 @@ class Test_Databricks_Service:
         assert workspace.name == "test-workspace"
         assert workspace.location == "eastus"
         assert workspace.public_network_access == "Disabled"
+        assert workspace.no_public_ip_enabled is True
         assert workspace.custom_managed_vnet_id == "test-vnet-id"
         assert (
             workspace.managed_disk_encryption.__class__.__name__

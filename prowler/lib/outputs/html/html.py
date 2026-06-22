@@ -1583,6 +1583,63 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_linode_assessment_summary(provider: Provider) -> str:
+        """
+        get_linode_assessment_summary gets the HTML assessment summary for the Linode provider
+
+        Args:
+            provider (Provider): the Linode provider object
+
+        Returns:
+            str: HTML assessment summary for the Linode provider
+        """
+        try:
+            username = getattr(provider.identity, "username", None) or "-"
+            email = getattr(provider.identity, "email", None) or "-"
+            account_id = getattr(provider.identity, "account_id", None) or "-"
+
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Account ID:</b> {account_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Linode Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Linode Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider
