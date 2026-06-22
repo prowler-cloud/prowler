@@ -77,6 +77,11 @@ provider/okta:
       - any-glob-to-any-file: "prowler/providers/okta/**"
       - any-glob-to-any-file: "tests/providers/okta/**"
 
+provider/linode:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/linode/**"
+      - any-glob-to-any-file: "tests/providers/linode/**"
+
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"

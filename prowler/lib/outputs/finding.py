@@ -468,6 +468,24 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "linode":
+                output_data["auth_method"] = "api_token"
+                # account_uid is a required string, but the account ID may be
+                # unavailable when the token lacks account:read_only scope. Fall
+                # back to the username/email so findings are never dropped.
+                output_data["account_uid"] = (
+                    get_nested_attribute(provider, "identity.account_id")
+                    or get_nested_attribute(provider, "identity.username")
+                    or get_nested_attribute(provider, "identity.email")
+                    or "linode"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.username"
+                ) or get_nested_attribute(provider, "identity.email")
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(
                     provider, "identity.identity_arn"
