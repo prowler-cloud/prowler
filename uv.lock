@@ -70,6 +70,7 @@ constraints = [
     { name = "coverage", specifier = "==7.6.12" },
     { name = "darabonba-core", specifier = "==1.0.5" },
     { name = "decorator", specifier = "==5.2.1" },
+    { name = "deprecated", specifier = "==1.3.1" },
     { name = "dill", specifier = "==0.4.1" },
     { name = "distro", specifier = "==1.9.0" },
     { name = "dnspython", specifier = "==2.8.0" },
@@ -152,6 +153,7 @@ constraints = [
     { name = "platformdirs", specifier = "==4.9.6" },
     { name = "plotly", specifier = "==6.7.0" },
     { name = "pluggy", specifier = "==1.6.0" },
+    { name = "polling", specifier = "==0.3.2" },
     { name = "prek", specifier = "==0.3.9" },
     { name = "propcache", specifier = "==0.5.2" },
     { name = "proto-plus", specifier = "==1.28.0" },
@@ -2530,16 +2532,16 @@ wheels = [
 
 [[package]]
 name = "linode-api4"
-version = "5.44.0"
+version = "5.45.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "deprecated" },
     { name = "polling" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/e0/b7b593a8ee0b9d353830152934016773fc14eacebf6c3e354779ad94ef45/linode_api4-5.44.0.tar.gz", hash = "sha256:f5da3d787172a3d4fea3973e17d797f1bbef0e53ec3762169c1fc277bc74e02d", size = 264427, upload-time = "2026-05-13T17:41:25.568Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/b5/fce03d9b81008dcc0fe4961ce10e140ac3ae5ab17f2cdd659763e4964c0d/linode_api4-5.45.0.tar.gz", hash = "sha256:af8a0a5638345ad467447112dcf5d58ec47e7dd192b89ce0c8537a1e5c435d04", size = 283375, upload-time = "2026-06-11T18:05:13.671Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/82/4ff17f10e16b148ea681ce19f4daf33a635a9fefda48fdada39bea9a7c86/linode_api4-5.44.0-py3-none-any.whl", hash = "sha256:891175d65341ae5218d0da331c8e9ffe007e4298c465b95fd85e43d582db8c79", size = 153144, upload-time = "2026-05-13T17:41:23.621Z" },
+    { url = "https://files.pythonhosted.org/packages/18/38/19e3c8f7b7a9dbeea2aa5af61f70162bff5131b3d39acbe73e8d0dd12972/linode_api4-5.45.0-py3-none-any.whl", hash = "sha256:3cc2650b13d8d3bc7735fa8e92a639669618f320471dc8e519db778c6020eacd", size = 158336, upload-time = "2026-06-11T18:05:11.799Z" },
 ]
 
 [[package]]
@@ -3719,7 +3721,7 @@ requires-dist = [
     { name = "h2", specifier = "==4.3.0" },
     { name = "jsonschema", specifier = "==4.23.0" },
     { name = "kubernetes", specifier = "==32.0.1" },
-    { name = "linode-api4", specifier = "==5.44.0" },
+    { name = "linode-api4", specifier = "==5.45.0" },
     { name = "markdown", specifier = "==3.10.2" },
     { name = "microsoft-kiota-abstractions", specifier = "==1.9.9" },
     { name = "msgraph-sdk", specifier = "==1.55.0" },
