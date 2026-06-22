@@ -80,6 +80,7 @@ class Provider(str, Enum):
     VERCEL = "vercel"
     OKTA = "okta"
     STACKIT = "stackit"
+    LINODE = "linode"
 
 
 # Compliance
