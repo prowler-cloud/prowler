@@ -398,6 +398,13 @@ aws:
     - "SecurityPolicy_TLS13_1_2_PFS_PQ_2025_09"
     - "SecurityPolicy_TLS13_1_2_PQ_2025_09"
 
+  # aws.rolesanywhere_trust_anchor_pqc_pki
+  # Allowed post-quantum key algorithms for AWS Private CAs backing IAM Roles Anywhere trust anchors
+  rolesanywhere_pqc_pca_key_algorithms:
+    - "ML_DSA_44"
+    - "ML_DSA_65"
+    - "ML_DSA_87"
+
   # AWS Post-Quantum SSH Key Exchange Configuration
   # aws.transfer_server_pqc_ssh_kex_enabled
   # Allowed AWS Transfer Family security policies with post-quantum SSH key exchange
