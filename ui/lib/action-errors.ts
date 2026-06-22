@@ -13,7 +13,7 @@ export const ACTION_ERROR_MESSAGES = {
     "You don't have permission to perform this action. Ask an administrator to update your role.",
 } as const satisfies Record<ActionErrorStatus, string>;
 
-interface ActionErrorResult {
+export interface ActionErrorResult {
   error?: unknown;
   status?: number;
 }
