@@ -1,6 +1,7 @@
 "use server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { hasComplianceProviderFilters } from "@/lib/compliance/compliance-provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getCompliancesOverview = async ({
@@ -27,7 +28,10 @@ export const getCompliancesOverview = async ({
 
   Object.entries(filters).forEach(([key, value]) => setParam(key, value));
 
-  setParam("filter[scan_id]", scanId);
+  // XOR: the backend rejects filter[scan_id] together with provider filters.
+  if (!hasComplianceProviderFilters(filters)) {
+    setParam("filter[scan_id]", scanId);
+  }
   setParam("filter[region__in]", region);
   try {
     const response = await fetch(url.toString(), {
@@ -111,22 +115,33 @@ export const getComplianceRequirements = async ({
   complianceId,
   scanId,
   region,
+  filters = {},
 }: {
   complianceId: string;
-  scanId: string;
+  scanId?: string;
   region?: string | string[];
+  filters?: Record<string, string | string[] | undefined>;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
     const url = new URL(`${apiBaseUrl}/compliance-overviews/requirements`);
     url.searchParams.append("filter[compliance_id]", complianceId);
-    url.searchParams.append("filter[scan_id]", scanId);
+
+    // Forward provider-scope filters (aggregated mode); XOR with scan_id.
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value === undefined) return;
+      const serialized = Array.isArray(value) ? value.join(",") : value;
+      if (serialized.trim() !== "") url.searchParams.append(key, serialized);
+    });
+
+    if (scanId && !hasComplianceProviderFilters(filters)) {
+      url.searchParams.append("filter[scan_id]", scanId);
+    }
 
     if (region) {
       const regionValue = Array.isArray(region) ? region.join(",") : region;
       url.searchParams.append("filter[region__in]", regionValue);
-      //remove page param
     }
     url.searchParams.delete("page");
 
