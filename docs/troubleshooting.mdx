@@ -2,6 +2,8 @@
 title: 'Troubleshooting'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 ## Running `prowler` I get `[File: utils.py:15] [Module: utils] CRITICAL: path/redacted: OSError[13]`
 
 That is an error related to file descriptors or opened files allowed by your operating system.
@@ -82,6 +84,8 @@ docker compose up -d
 ```
 
 ### Worker Uses Too Much Memory on Hosts with Many CPUs
+
+<VersionBadge version="5.31.0" />
 
 When Prowler App runs self-hosted on a machine or Kubernetes node with many CPUs,
 the Celery worker may create one prefork process per detected CPU if concurrency
