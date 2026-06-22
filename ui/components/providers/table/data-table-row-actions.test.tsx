@@ -515,6 +515,51 @@ describe("DataTableRowActions", () => {
     expect(screen.queryByText("Test Connections (1)")).not.toBeInTheDocument();
   });
 
+  it("shows bulk Edit Scan Schedule next to Test Connection for selected rows", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={true}
+        testableProviderIds={["provider-child-1", "provider-standalone"]}
+        selectedScheduleProviderIds={[
+          "provider-child-1",
+          "provider-child-2",
+          "provider-standalone",
+        ]}
+        selectedScheduleProviders={[
+          {
+            providerId: "provider-child-1",
+            providerType: "aws",
+            providerUid: "111",
+            providerAlias: null,
+          },
+          {
+            providerId: "provider-standalone",
+            providerType: "aws",
+            providerUid: "999",
+            providerAlias: "Standalone",
+          },
+        ]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    expect(
+      screen.getByText("Edit Scan Schedule (3 providers)"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Test Connection (2)")).toBeInTheDocument();
+  });
+
   it("does NOT render Edit Organization Name or Update Credentials for OU rows", async () => {
     const user = userEvent.setup();
     render(

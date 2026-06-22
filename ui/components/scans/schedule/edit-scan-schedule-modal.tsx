@@ -57,6 +57,7 @@ interface EditScanScheduleFormProps {
   targetId?: string;
   schedule: ScheduleProps | null;
   onClose: () => void;
+  onSaved?: () => void;
 }
 
 interface EditScanScheduleModalProps {
@@ -68,6 +69,7 @@ interface EditScanScheduleModalProps {
   targetName?: string;
   targetId?: string;
   state: EditScanScheduleState;
+  onSaved?: () => void;
 }
 
 function EditScanScheduleForm({
@@ -78,6 +80,7 @@ function EditScanScheduleForm({
   targetId,
   schedule,
   onClose,
+  onSaved,
 }: EditScanScheduleFormProps) {
   const router = useRouter();
   const [isConfirmRemoveOpen, setIsConfirmRemoveOpen] = useState(false);
@@ -115,6 +118,7 @@ function EditScanScheduleForm({
         ? `The scan schedule was updated for ${providerCountLabel}.`
         : "The scan schedule was updated successfully.",
     });
+    onSaved?.();
     onClose();
     router.refresh();
   });
@@ -141,6 +145,7 @@ function EditScanScheduleForm({
         ? `The scan schedule was removed for ${providerCountLabel}.`
         : "The scan schedule was removed successfully.",
     });
+    onSaved?.();
     onClose();
     router.refresh();
   };
@@ -238,6 +243,7 @@ export function EditScanScheduleModal({
   targetName,
   targetId,
   state,
+  onSaved,
 }: EditScanScheduleModalProps) {
   const close = () => onOpenChange(false);
   const hasTarget = Boolean(
@@ -282,6 +288,7 @@ export function EditScanScheduleModal({
           targetId={targetId}
           schedule={state.schedule}
           onClose={close}
+          onSaved={onSaved}
         />
       )}
     </Modal>

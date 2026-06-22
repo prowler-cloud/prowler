@@ -7,6 +7,7 @@ import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
+import type { ScanScheduleProvider } from "@/components/scans/schedule/edit-scan-schedule-modal";
 import { Badge } from "@/components/shadcn";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
@@ -104,6 +105,8 @@ function countSelectedLeaves(rows: Row<ProvidersTableRow>[]): number {
 export function getColumnProviders(
   rowSelection: RowSelectionState,
   testableProviderIds: string[],
+  selectedScheduleProviderIds: string[],
+  selectedScheduleProviders: ScanScheduleProvider[],
   onClearSelection: () => void,
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void,
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void,
@@ -319,6 +322,8 @@ export function getColumnProviders(
             hasSelection={hasSelection}
             isRowSelected={row.getIsSelected()}
             testableProviderIds={testableProviderIds}
+            selectedScheduleProviderIds={selectedScheduleProviderIds}
+            selectedScheduleProviders={selectedScheduleProviders}
             onClearSelection={onClearSelection}
             onOpenProviderWizard={onOpenProviderWizard}
             onOpenOrganizationWizard={onOpenOrganizationWizard}

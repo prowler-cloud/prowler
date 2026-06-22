@@ -237,16 +237,6 @@ function getProviderRowsByIds({
     .filter((provider): provider is ProvidersProviderRow => Boolean(provider));
 }
 
-function countProviderRows(rows: ProvidersTableRow[]): number {
-  return rows.reduce((total, row) => {
-    if (row.rowType === PROVIDERS_ROW_TYPE.PROVIDER) {
-      return total + 1;
-    }
-
-    return total + countProviderRows(row.subRows);
-  }, 0);
-}
-
 function dedupeIds(ids: string[]): string[] {
   return Array.from(new Set(ids));
 }

@@ -64,6 +64,10 @@ interface DataTableRowActionsProps {
   isRowSelected: boolean;
   /** IDs of all selected providers that have credentials (testable) */
   testableProviderIds: string[];
+  /** IDs of all selected providers that can receive schedule updates. */
+  selectedScheduleProviderIds?: string[];
+  /** Visible selected providers used as modal reference rows. */
+  selectedScheduleProviders?: ScanScheduleProvider[];
   /** Callback to clear the row selection after bulk operation */
   onClearSelection: () => void;
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
@@ -111,6 +115,10 @@ function collectChildScheduleProviders(
   }
 
   return providers;
+}
+
+function getProviderCountLabel(count: number) {
+  return `${count} provider${count === 1 ? "" : "s"}`;
 }
 
 interface OrgGroupDropdownActionsProps {
@@ -262,6 +270,8 @@ export function DataTableRowActions({
   hasSelection,
   isRowSelected,
   testableProviderIds,
+  selectedScheduleProviderIds = [],
+  selectedScheduleProviders = [],
   onClearSelection,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
@@ -416,21 +426,47 @@ export function DataTableRowActions({
   if (hasSelection && isRowSelected) {
     const bulkCount =
       testableProviderIds.length > 1 ? ` (${testableProviderIds.length})` : "";
+    const selectedScheduleProviderCount = selectedScheduleProviderIds.length;
 
     return (
-      <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown>
-          <ActionDropdownItem
-            icon={<Rocket />}
-            label={loading ? "Testing..." : `Test Connection${bulkCount}`}
-            onSelect={(e) => {
-              e.preventDefault();
-              handleTestConnection();
-            }}
-            disabled={testableProviderIds.length === 0 || loading}
-          />
-        </ActionDropdown>
-      </div>
+      <>
+        <EditScanScheduleModal
+          open={isScheduleOpen}
+          onOpenChange={setIsScheduleOpen}
+          providers={selectedScheduleProviders}
+          providerIds={selectedScheduleProviderIds}
+          targetName="Selected providers"
+          state={scheduleState}
+          onSaved={onClearSelection}
+        />
+        <div className="relative flex items-center justify-end gap-2">
+          <ActionDropdown>
+            {canEditSchedule && selectedScheduleProviderCount > 0 && (
+              <ActionDropdownItem
+                icon={<CalendarClock />}
+                label={`Edit Scan Schedule (${getProviderCountLabel(
+                  selectedScheduleProviderCount,
+                )})`}
+                onSelect={() =>
+                  void openScheduleEditor(
+                    selectedScheduleProviders,
+                    selectedScheduleProviderIds,
+                  )
+                }
+              />
+            )}
+            <ActionDropdownItem
+              icon={<Rocket />}
+              label={loading ? "Testing..." : `Test Connection${bulkCount}`}
+              onSelect={(e) => {
+                e.preventDefault();
+                handleTestConnection();
+              }}
+              disabled={testableProviderIds.length === 0 || loading}
+            />
+          </ActionDropdown>
+        </div>
+      </>
     );
   }
 
