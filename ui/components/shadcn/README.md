@@ -6,7 +6,7 @@ This directory contains all shadcn/ui based components for the Prowler applicati
 
 Example of a custom component:
 
-```
+```text
 shadcn/
 ├── card/
 │   ├── base-card/

@@ -7,6 +7,10 @@
 #   P50 — dependency validation
 
 default_install_hook_types: [pre-commit]
+# Hooks run on commit only by default;
+# NOTE: default_stages does NOT override a hook's manifest stages, so fixers shipping pre-push in their
+# manifest need an explicit stages: ["pre-commit"] below to stay off push.
+default_stages: [pre-commit]
 
 repos:
   ## GENERAL (prek built-in — no external repo needed)
@@ -21,13 +25,16 @@ repos:
       - id: check-json
         priority: 10
       - id: end-of-file-fixer
+        stages: ["pre-commit"]
         priority: 0
       - id: trailing-whitespace
+        stages: ["pre-commit"]
         priority: 0
       - id: no-commit-to-branch
         priority: 10
       - id: pretty-format-json
         args: ["--autofix", --no-sort-keys, --no-ensure-ascii]
+        stages: ["pre-commit"]
         priority: 10
 
   ## TOML
@@ -82,6 +89,7 @@ repos:
         name: "SDK - isort"
         files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
         args: ["--profile", "black"]
+        stages: ["pre-commit"]
         priority: 20
 
   - repo: https://github.com/psf/black
@@ -132,6 +140,13 @@ repos:
         files: { glob: ["{pyproject.toml,uv.lock}"] }
         pass_filenames: false
         priority: 50
+
+  ## MARKDOWN
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        priority: 30
 
   ## CONTAINERS
   - repo: https://github.com/hadolint/hadolint

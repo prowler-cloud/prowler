@@ -13,8 +13,8 @@
   "Risk": "When Google Sites is enabled, users can create websites that may **inadvertently expose internal information** to external parties. These sites can be difficult to track and manage, creating potential **data leakage vectors** outside the organization's standard content management controls.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/182442",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/users/advanced/turn-a-service-on-or-off-for-google-workspace-users",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

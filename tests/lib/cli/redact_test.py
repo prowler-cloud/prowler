@@ -160,6 +160,7 @@ class TestGetSensitiveArguments:
         assert "--atlas-private-key" in result
         assert "--nhn-password" in result
         assert "--os-password" in result
+        assert "--stackit-service-account-key" in result
 
     def test_does_not_include_non_sensitive_flags(self):
         """Verify non-sensitive flags are not in the set."""
@@ -168,3 +169,4 @@ class TestGetSensitiveArguments:
         assert "--region" not in result
         assert "--profile" not in result
         assert "--output-formats" not in result
+        assert "--stackit-service-account-key-path" not in result

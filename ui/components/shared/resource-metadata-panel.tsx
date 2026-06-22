@@ -20,6 +20,11 @@ interface ResourceMetadataPanelProps {
  * neither is available. Reused by the resource detail view and the finding
  * detail drawer (compliance requirement findings view) to keep the UX
  * consistent across surfaces.
+ *
+ * Layout contract: the parent must be a bounded flex column (e.g.
+ * `flex min-h-0 flex-1 flex-col overflow-hidden`). The embedded editor
+ * fills that height and scrolls internally, so JSON-heavy resources do
+ * not push the surrounding chrome (drawer, page) into a double scroll.
  */
 export function ResourceMetadataPanel({
   metadata,
@@ -57,7 +62,7 @@ export function ResourceMetadataPanel({
           value={formattedMetadata}
           copyValue={formattedMetadata}
           editable={false}
-          minHeight={220}
+          fill
           showCopyButton
           onChange={() => {}}
         />

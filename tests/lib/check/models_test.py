@@ -95,6 +95,38 @@ class TestCheckMetada:
             "/path/to/accessanalyzer_enabled/accessanalyzer_enabled.metadata.json"
         )
 
+    @mock.patch("prowler.lib.check.models.logger")
+    @mock.patch("prowler.lib.check.models.load_check_metadata")
+    @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
+    def test_get_bulk_builtin_wins_on_check_id_collision(
+        self, mock_recover_checks, mock_load_metadata, mock_logger
+    ):
+        """Regression guard: when an entry-point plug-in re-registers a
+        built-in CheckID, the BUILT-IN metadata wins (first-write-wins) and
+        the plug-in is IGNORED. The override is surfaced via a warning so
+        the user knows their plug-in duplicate is being skipped and can
+        rename it. Matches the precedence in `_resolve_check_module`. See
+        PR #10700 review (HugoPBrito)."""
+        # Built-in first, plug-in last (matches recover_checks_from_provider order)
+        mock_recover_checks.return_value = [
+            ("accessanalyzer_enabled", "/builtin/accessanalyzer_enabled"),
+            ("accessanalyzer_enabled", "/plugin/accessanalyzer_enabled"),
+        ]
+
+        builtin_metadata = mock.MagicMock(CheckID="accessanalyzer_enabled")
+        plugin_metadata = mock.MagicMock(CheckID="accessanalyzer_enabled")
+        mock_load_metadata.side_effect = [builtin_metadata, plugin_metadata]
+
+        result = CheckMetadata.get_bulk(provider="aws")
+
+        # Built-in wins (first-write-wins on CheckID), plug-in is ignored
+        assert result["accessanalyzer_enabled"] is builtin_metadata
+        # Override is surfaced via warning naming the plug-in metadata file
+        mock_logger.warning.assert_called_once()
+        warning_msg = mock_logger.warning.call_args.args[0]
+        assert "accessanalyzer_enabled" in warning_msg
+        assert "/plugin/accessanalyzer_enabled" in warning_msg
+
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
     def test_list(self, mock_recover_checks, mock_load_metadata):

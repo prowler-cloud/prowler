@@ -13,8 +13,8 @@
   "Risk": "If non-members can be added to files inside a shared drive, the **drive's membership becomes meaningless** as a security control. Sensitive content scoped to a specific team can be silently extended to users who were never granted access to the drive itself, leading to unintended information disclosure.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7662202",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/manage-shared-drives-as-an-admin",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

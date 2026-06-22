@@ -357,6 +357,30 @@ class TestGetProwlerProviderKwargs:
         expected_result = {**secret_dict, **expected_extra_kwargs}
         assert result == expected_result
 
+    def test_get_prowler_provider_kwargs_oraclecloud_converts_region_string_to_set(
+        self,
+    ):
+        secret_dict = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+            "region": "us-ashburn-1",
+            "pass_phrase": "fake-passphrase",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret = secret_mock
+        provider.uid = "ocid1.tenancy.oc1..fake"
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {**secret_dict, "region": {"us-ashburn-1"}}
+        assert result == expected_result
+
     def test_get_prowler_provider_kwargs_with_mutelist(self):
         provider_uid = "provider_uid"
         secret_dict = {"key": "value"}

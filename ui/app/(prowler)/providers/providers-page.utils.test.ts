@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const providersActionsMock = vi.hoisted(() => ({
   getProviders: vi.fn(),
+  getAllProviders: vi.fn(),
 }));
 
 const organizationsActionsMock = vi.hoisted(() => ({
@@ -13,16 +14,26 @@ const scansActionsMock = vi.hoisted(() => ({
   getScans: vi.fn(),
 }));
 
+const schedulesActionsMock = vi.hoisted(() => ({
+  getSchedules: vi.fn(),
+}));
+
 vi.mock("@/actions/providers", () => providersActionsMock);
 vi.mock(
   "@/actions/organizations/organizations",
   () => organizationsActionsMock,
 );
 vi.mock("@/actions/scans", () => scansActionsMock);
+vi.mock("@/actions/schedules", () => schedulesActionsMock);
 
 import { SearchParamsProps } from "@/types";
 import { ProvidersApiResponse } from "@/types/providers";
 import { ProvidersProviderRow } from "@/types/providers-table";
+import {
+  SCHEDULE_FREQUENCY,
+  type ScheduleAttributes,
+  type ScheduleProps,
+} from "@/types/schedules";
 
 import {
   buildProvidersTableRows,
@@ -154,6 +165,33 @@ const toProviderRow = (
     ...overrides?.relationships,
   },
 });
+
+const buildSchedule = (
+  providerId: string,
+  overrides: Partial<ScheduleAttributes> = {},
+): ScheduleProps => ({
+  type: "schedules",
+  id: providerId,
+  attributes: {
+    scan_enabled: true,
+    scan_frequency: SCHEDULE_FREQUENCY.DAILY,
+    scan_hour: 9,
+    scan_timezone: "Europe/Madrid",
+    scan_interval_hours: null,
+    scan_day_of_week: null,
+    scan_day_of_month: null,
+    ...overrides,
+  },
+  relationships: {
+    provider: { data: { type: "providers", id: providerId } },
+  },
+});
+
+const findProviderRow = (
+  rows: { id: string }[],
+  providerId: string,
+): ProvidersProviderRow | undefined =>
+  rows.find((row) => row.id === providerId) as ProvidersProviderRow | undefined;
 
 describe("buildProvidersTableRows", () => {
   it("returns a flat providers table for OSS", () => {
@@ -619,6 +657,7 @@ describe("loadProvidersAccountsViewData", () => {
   it("does not call organizations endpoints in OSS", async () => {
     // Given
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     scansActionsMock.getScans.mockResolvedValue({ data: [] });
 
     // When
@@ -662,6 +701,7 @@ describe("loadProvidersAccountsViewData", () => {
         },
       })),
     });
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
       data: [
         {
@@ -724,6 +764,7 @@ describe("loadProvidersAccountsViewData", () => {
   it("falls back to empty cloud grouping data when organizations endpoints fail", async () => {
     // Given
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
       data: [],
     });
@@ -746,5 +787,99 @@ describe("loadProvidersAccountsViewData", () => {
     expect(
       viewData.rows.every((row) => row.rowType === PROVIDERS_ROW_TYPE.PROVIDER),
     ).toBe(true);
+  });
+
+  it("surfaces the real cadence (not a hardcoded label) from a configured schedule with no materialized scan yet", async () => {
+    // Given — provider-1 has a WEEKLY schedule but the backend has not yet
+    // created a Scan row (the gap between configuring and the first fire).
+    providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
+    schedulesActionsMock.getSchedules.mockResolvedValue({
+      data: [
+        buildSchedule("provider-1", {
+          scan_frequency: SCHEDULE_FREQUENCY.WEEKLY,
+          scan_hour: 9,
+          scan_day_of_week: 1,
+        }),
+      ],
+    });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: false,
+    });
+
+    // Then — the row carries the Weekly cadence, not "Daily".
+    const providerRow = findProviderRow(viewData.rows, "provider-1");
+    expect(providerRow?.hasSchedule).toBe(true);
+    expect(providerRow?.scheduleSummary?.cadence).toBe("Weekly on Monday");
+    expect(findProviderRow(viewData.rows, "provider-2")?.hasSchedule).toBe(
+      false,
+    );
+    expect(
+      findProviderRow(viewData.rows, "provider-2")?.scheduleSummary,
+    ).toBeUndefined();
+  });
+
+  it("ignores paused or unconfigured schedules", async () => {
+    // Given — provider-1 paused (disabled), provider-2 never configured.
+    providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
+    schedulesActionsMock.getSchedules.mockResolvedValue({
+      data: [
+        buildSchedule("provider-1", { scan_enabled: false, scan_hour: 9 }),
+        buildSchedule("provider-2", { scan_enabled: true, scan_hour: null }),
+      ],
+    });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: false,
+    });
+
+    // Then
+    expect(findProviderRow(viewData.rows, "provider-1")?.hasSchedule).toBe(
+      false,
+    );
+    expect(findProviderRow(viewData.rows, "provider-2")?.hasSchedule).toBe(
+      false,
+    );
+  });
+
+  it("falls back to scan-based detection when /schedules is unavailable (OSS)", async () => {
+    // Given — /schedules errors, but provider-1 has a materialized scheduled scan.
+    providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    scansActionsMock.getScans.mockResolvedValue({
+      data: [
+        {
+          type: "scans",
+          id: "scan-1",
+          attributes: { trigger: "scheduled", state: "scheduled" },
+          relationships: {
+            provider: { data: { type: "providers", id: "provider-1" } },
+          },
+        },
+      ],
+    });
+    schedulesActionsMock.getSchedules.mockResolvedValue({ error: "Not found" });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: false,
+    });
+
+    // Then — scan-based path still flags the provider; no throw from the error.
+    expect(findProviderRow(viewData.rows, "provider-1")?.hasSchedule).toBe(
+      true,
+    );
+    expect(findProviderRow(viewData.rows, "provider-2")?.hasSchedule).toBe(
+      false,
+    );
   });
 });
