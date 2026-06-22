@@ -1,12 +1,17 @@
 export const VersionBadge = ({ version }) => {
     return (
-        <code className="version-badge-container">
-            <p className="version-badge">
-                <span className="version-badge-label">Added in:</span>&nbsp;
-                <code className="version-badge-version">{version}</code>
-            </p>
-        </code>
-
-
+        <a
+            href={`https://github.com/prowler-cloud/prowler/releases/tag/${version}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="version-badge-link"
+        >
+            <span className="version-badge-container">
+                <span className="version-badge">
+                    <span className="version-badge-label">Added in:</span>&nbsp;
+                    <span className="version-badge-version">{version}</span>
+                </span>
+            </span>
+        </a>
     );
 };

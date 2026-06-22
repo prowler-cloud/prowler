@@ -11,14 +11,17 @@ class postgresql_flexible_server_connection_throttling_on(Check):
             subscription,
             flexible_servers,
         ) in postgresql_client.flexible_servers.items():
+            subscription_name = postgresql_client.subscriptions.get(
+                subscription, subscription
+            )
             for server in flexible_servers:
                 report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription
                 report.status = "FAIL"
-                report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has connection_throttling disabled"
+                report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has connection_throttling disabled"
                 if server.connection_throttling == "ON":
                     report.status = "PASS"
-                    report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has connection_throttling enabled"
+                    report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has connection_throttling enabled"
                 findings.append(report)
 
         return findings

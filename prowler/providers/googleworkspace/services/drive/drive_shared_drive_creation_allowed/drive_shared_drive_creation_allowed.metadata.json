@@ -13,8 +13,8 @@
   "Risk": "When users cannot create shared drives, they store collaborative content in their personal **My Drive** instead. When that user account is deleted, the data is also deleted, leading to **unintentional data loss** of organizationally significant information. Allowing shared drive creation makes data survivable across account lifecycle events.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7212025",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://support.google.com/a/users/answer/7212025",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_agent_role_least_privilege",
+  "CheckTitle": "Amazon Bedrock agent execution role follows least privilege",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock Agent** execution roles (`agentResourceRoleArn`) should grant only the minimum permissions the agent needs. The evaluation FAILs when the role has an AWS-managed `*FullAccess` policy attached, has an inline statement allowing broad actions on `Resource: \"*\"`, or has no permissions boundary configured.",
+  "Risk": "An overly permissive **Bedrock Agent** execution role turns a successful **prompt injection** into AWS privilege escalation. A model coerced into calling tools can invoke any API the role allows — reading secrets, modifying IAM, exfiltrating data from S3, or pivoting laterally. **Least privilege** plus a **permissions boundary** keeps the blast radius bounded even when guardrails fail.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam put-role-permissions-boundary --role-name <execution_role_name> --permissions-boundary <boundary_policy_arn>",
+      "NativeIaC": "",
+      "Other": "1. Identify the Bedrock Agent's execution role (agentResourceRoleArn) in the IAM console\n2. Detach any AWS-managed *FullAccess policies (e.g. AmazonBedrockFullAccess, AdministratorAccess)\n3. Replace inline policies that use Resource: \"*\" with statements scoped to specific resource ARNs and minimal action sets\n4. Attach a permissions boundary that caps what the role can ever do, even if a future policy is added\n5. Re-run Prowler to confirm the check passes",
+      "Terraform": "```hcl\nresource \"aws_iam_role\" \"bedrock_agent\" {\n  name                 = \"<execution_role_name>\"\n  assume_role_policy   = data.aws_iam_policy_document.trust.json\n  permissions_boundary = aws_iam_policy.bedrock_agent_boundary.arn  # CRITICAL: caps maximum privileges\n}\n\nresource \"aws_iam_role_policy\" \"bedrock_agent_inline\" {\n  role   = aws_iam_role.bedrock_agent.name\n  policy = jsonencode({\n    Version = \"2012-10-17\",\n    Statement = [{\n      Effect   = \"Allow\",\n      Action   = [\"s3:GetObject\"],            # CRITICAL: narrow action\n      Resource = [\"arn:aws:s3:::my-rag-bucket/*\"]  # CRITICAL: narrow resource\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege** to every Bedrock Agent execution role: scope `Action` and `Resource` to exactly what the agent needs, avoid AWS-managed `*FullAccess` policies, and always attach a **permissions boundary** so that future policy edits cannot exceed an approved ceiling. Treat agent roles as high-risk because prompt injection can weaponize any granted permission.",
+      "Url": "https://hub.prowler.com/check/bedrock_agent_role_least_privilege"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 
 from reportlab.lib import colors
@@ -22,6 +23,47 @@ ALTERNATE_ROWS_MAX_SIZE = 200
 # Database query batch size for findings (matches Django settings)
 # Larger = fewer queries but more memory per batch
 FINDINGS_BATCH_SIZE = 2000
+
+# Maximum rows per findings sub-table. ReportLab resolves layout per Flowable;
+# splitting a huge findings list into multiple smaller tables keeps the peak
+# memory of doc.build() bounded. A single 15k-row LongTable would force
+# ReportLab to compute all column widths/row heights/page-breaks at once and
+# OOM the worker; 300-row chunks are rendered contiguously with negligible
+# visual impact.
+FINDINGS_TABLE_CHUNK_SIZE = 300
+
+# Maximum findings rendered per check in the detailed-findings section.
+#
+# Product behaviour: compliance PDFs render at most ``MAX_FINDINGS_PER_CHECK``
+# **failed** findings per check (PASS rows are excluded at SQL level by the
+# ``only_failed`` flag that all four list-rendering frameworks default to:
+# ThreatScore, NIS2, CSA, CIS; ENS does not render finding tables). Above
+# this cap each affected check renders an in-PDF banner
+# ("Showing first 100 of N failed findings for this check. Use the CSV
+# or JSON export for the full list") so the reader knows the table is
+# truncated and where to find the full data.
+#
+# Why a cap exists at all:
+#   * ``FindingOutput.transform_api_finding`` is O(N) per finding (Pydantic
+#     v1 validation + nested model construction).
+#   * ReportLab resolves layout per Flowable; thousands of sub-tables make
+#     ``doc.build()`` very slow and grow the PDF unboundedly.
+#   * A human-readable executive/auditor PDF does not need 12,000 rows for
+#     one check; that is forensic data and lives in the CSV/JSON exports.
+#
+# Why 100 specifically:
+#   * Covers ~99% of real scans without truncation (most checks emit far
+#     fewer than 100 findings even in enterprise estates).
+#   * Worst-case rendered rows = 100 × ~500 checks = 50k rows across all
+#     frameworks, which keeps RSS bounded and a 5-framework run completes
+#     in minutes instead of hours.
+#
+# Override at runtime via ``DJANGO_PDF_MAX_FINDINGS_PER_CHECK``:
+#   * Set to ``0`` to disable the cap entirely (load every finding; only
+#     advisable for small scans).
+#   * Set to a larger value (e.g. ``500``) for forensic detail in big runs;
+#     watch RSS in the Celery worker.
+MAX_FINDINGS_PER_CHECK = int(os.environ.get("DJANGO_PDF_MAX_FINDINGS_PER_CHECK", "100"))
 
 
 # =============================================================================

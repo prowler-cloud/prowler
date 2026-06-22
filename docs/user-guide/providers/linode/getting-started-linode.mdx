@@ -1,0 +1,61 @@
+---
+title: 'Getting Started With Linode on Prowler'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.31.0" />
+
+Prowler for Linode scans your Linode infrastructure for security misconfigurations, including compute settings, networking rules, user account security, and more.
+
+<Note>
+Linode support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
+## Prerequisites
+
+Set up authentication for Linode with the [Linode Authentication](/user-guide/providers/linode/authentication) guide before starting:
+
+- Create a Linode Personal Access Token with read-only permissions
+- The token requires at minimum: `account:read_only`, `linodes:read_only`, and `firewall:read_only` scopes
+
+## Prowler CLI
+
+### Run Prowler for Linode
+
+Once authenticated with a Personal Access Token, set the `LINODE_TOKEN` environment variable and run Prowler for Linode. Prowler reads the token exclusively from the environment variable, so the secret is never exposed in shell history or process listings:
+
+```bash
+export LINODE_TOKEN="your-personal-access-token"
+prowler linode
+```
+
+### Run Specific Checks
+
+```bash
+prowler linode --checks compute_instance_backups_enabled compute_instance_watchdog_enabled
+```
+
+### Run a Specific Service
+
+```bash
+prowler linode --services networking
+```
+
+### Scan Specific Regions
+
+Use `--region` (alias `--filter-region` / `-f`) to limit the scan to one or more Linode regions. Region-less resources (account administration and Cloud Firewalls) are always scanned; only regional resources such as instances are filtered. When the flag is omitted, all regions are scanned.
+
+```bash
+prowler linode --region eu-central us-east
+```
+
+## Available Services
+
+Prowler for Linode currently supports the following services:
+
+| Service | Description |
+|---------|-------------|
+| `administration` | Account administration includes users and access controls such as two-factor authentication |
+| `compute` | Compute includes Linode instances and their workload configuration |
+| `networking` | Networking includes Cloud Firewalls and their stateful network rules |

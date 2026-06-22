@@ -1,7 +1,7 @@
 import { Row } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
@@ -10,7 +10,17 @@ import {
   ProvidersTableRow,
 } from "@/types/providers-table";
 
-const checkConnectionProviderMock = vi.hoisted(() => vi.fn());
+const { checkConnectionProviderMock, getScheduleMock, pushMock } = vi.hoisted(
+  () => ({
+    checkConnectionProviderMock: vi.fn(),
+    getScheduleMock: vi.fn(),
+    pushMock: vi.fn(),
+  }),
+);
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock }),
+}));
 
 vi.mock("@/actions/organizations/organizations", () => ({
   updateOrganizationName: vi.fn(),
@@ -18,6 +28,10 @@ vi.mock("@/actions/organizations/organizations", () => ({
 
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
+}));
+
+vi.mock("@/actions/schedules", () => ({
+  getSchedule: getScheduleMock,
 }));
 
 vi.mock("../forms/delete-form", () => ({
@@ -30,6 +44,26 @@ vi.mock("../forms/delete-organization-form", () => ({
 
 vi.mock("../forms/edit-name-form", () => ({
   EditNameForm: () => null,
+}));
+
+vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
+  EDIT_SCAN_SCHEDULE_STATE: {
+    LOADING: "loading",
+    LOADED: "loaded",
+    ERROR: "error",
+  },
+  EditScanScheduleModal: ({
+    open,
+    provider,
+  }: {
+    open: boolean;
+    provider?: { providerId: string };
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Edit Scan Schedule">
+        Editing schedule for {provider?.providerId}
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -143,6 +177,23 @@ const createOuRow = () =>
   }) as unknown as Row<ProvidersTableRow>;
 
 describe("DataTableRowActions", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  beforeEach(() => {
+    getScheduleMock.mockResolvedValue({
+      data: {
+        type: "schedules",
+        id: "provider-1",
+        attributes: { scan_hour: null },
+        relationships: {
+          provider: { data: { type: "providers", id: "provider-1" } },
+        },
+      },
+    });
+  });
+
   it("renders Add Credentials for provider rows without credentials", async () => {
     // Given
     const user = userEvent.setup();
@@ -163,10 +214,95 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(screen.getByText("Edit Provider Alias")).toBeInTheDocument();
+    // Advanced schedule editing is gated to Prowler Cloud subscribed accounts.
+    expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
     expect(screen.getByText("Add Credentials")).toBeInTheDocument();
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("Delete Provider")).toBeInTheDocument();
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+  });
+
+  it("navigates to the provider-filtered scan jobs from View Scan Jobs", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("View Scan Jobs"));
+
+    // Then: navigates with the key the scans filter bar binds to
+    // (provider_uid__in), URL-encoded, so the provider is pre-selected.
+    expect(pushMock).toHaveBeenCalledWith(
+      "/scans?filter%5Bprovider_uid__in%5D=111111111111",
+    );
+  });
+
+  it("URL-encodes provider UIDs that contain unsafe characters (e.g. GitHub)", async () => {
+    // Given a GitHub provider whose UID is a URL.
+    const user = userEvent.setup();
+    const row = createRow(true);
+    (
+      row.original as unknown as { attributes: { uid: string } }
+    ).attributes.uid = "https://github.com/prowler-cloud/prowler";
+
+    render(
+      <DataTableRowActions
+        row={row}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("View Scan Jobs"));
+
+    // Then the ':' and '/' are encoded instead of leaking into the URL raw.
+    expect(pushMock).toHaveBeenCalledWith(
+      "/scans?filter%5Bprovider_uid__in%5D=https%3A%2F%2Fgithub.com%2Fprowler-cloud%2Fprowler",
+    );
+  });
+
+  it("opens Edit Scan Schedule for Prowler Cloud subscribed provider rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Edit Scan Schedule"));
+
+    // Then
+    expect(
+      screen.getByRole("dialog", { name: /edit scan schedule/i }),
+    ).toHaveTextContent("Editing schedule for provider-1");
   });
 
   it("renders Update Credentials for provider rows with credentials", async () => {

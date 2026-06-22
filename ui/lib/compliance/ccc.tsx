@@ -1,6 +1,7 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
+import { ComplianceBadgeVariant } from "@/components/compliance/compliance-custom-details/shared-components";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
@@ -39,7 +40,7 @@ export interface CCCTextSection {
 export interface CCCMappingSection {
   title: string;
   key: keyof Requirement;
-  colorClasses: string;
+  variant: ComplianceBadgeVariant;
 }
 
 export const CCC_TEXT_SECTIONS: CCCTextSection[] = [
@@ -71,14 +72,12 @@ export const CCC_MAPPING_SECTIONS: CCCMappingSection[] = [
   {
     title: "Threat Mappings",
     key: "section_threat_mappings",
-    colorClasses:
-      "bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20",
+    variant: "error",
   },
   {
     title: "Guideline Mappings",
     key: "section_guideline_mappings",
-    colorClasses:
-      "bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20",
+    variant: "info",
   },
 ];
 

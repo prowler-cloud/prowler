@@ -1,14 +1,11 @@
-import {
-  SidebarCollapseIcon,
-  SidebarExpandIcon,
-} from "@/components/icons/Icons";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-
-import { Button } from "../button/button";
 
 interface SidebarToggleProps {
   isOpen: boolean | undefined;
@@ -16,24 +13,25 @@ interface SidebarToggleProps {
 }
 
 export function SidebarToggle({ isOpen, setIsOpen }: SidebarToggleProps) {
+  // Closed → chevron right (will open); open/undefined → chevron left (will collapse).
+  const isClosed = isOpen === false;
+  const Chevron = isClosed ? ChevronRight : ChevronLeft;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
+          type="button"
+          variant="bare"
+          size="icon-sm"
           onClick={() => setIsOpen?.()}
-          className="h-8 w-8 rounded-md"
-          variant="outline"
-          size="icon"
+          aria-label={isClosed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {isOpen === false ? (
-            <SidebarCollapseIcon className="h-5 w-5" />
-          ) : (
-            <SidebarExpandIcon className="h-5 w-5" />
-          )}
+          <Chevron className="size-5" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>
-        {isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+      <TooltipContent side="bottom">
+        {isClosed ? "Expand Sidebar" : "Collapse Sidebar"}
       </TooltipContent>
     </Tooltip>
   );
