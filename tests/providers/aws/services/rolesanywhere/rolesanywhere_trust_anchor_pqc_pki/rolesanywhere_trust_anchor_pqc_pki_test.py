@@ -123,6 +123,25 @@ class Test_rolesanywhere_trust_anchor_pqc_pki:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert "CUSTOM_PQC" in result[0].status_extended
+            assert result[0].resource_id == TA_ID
+            assert result[0].resource_arn == TA_ARN
+
+    def test_custom_allowlist_replaces_default(self):
+        ra_client, pca_client = _build_clients(
+            {TA_ARN: _trust_anchor(source_type="AWS_ACM_PCA", acm_pca_arn=PCA_ARN)},
+            certificate_authorities={PCA_ARN: _ca("ML_DSA_65")},
+            audit_config={"rolesanywhere_pqc_pca_key_algorithms": ["ML_DSA_87"]},
+        )
+        with _enter(_patched(ra_client, pca_client)):
+            from prowler.providers.aws.services.rolesanywhere.rolesanywhere_trust_anchor_pqc_pki.rolesanywhere_trust_anchor_pqc_pki import (
+                rolesanywhere_trust_anchor_pqc_pki,
+            )
+
+            result = rolesanywhere_trust_anchor_pqc_pki().execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "ML_DSA_65" in result[0].status_extended
+            assert "not post-quantum (ML-DSA)" in result[0].status_extended
 
     def test_pca_backed_rsa(self):
         ra_client, pca_client = _build_clients(
