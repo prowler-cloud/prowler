@@ -3,7 +3,11 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.ecs.ecs_service import ECS
-from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import (
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -113,6 +117,23 @@ def mock_generate_regional_clients(provider, service):
     )
     regional_client.region = AWS_REGION_EU_WEST_1
     return {AWS_REGION_EU_WEST_1: regional_client}
+
+
+def mock_generate_multi_region_clients(provider, service):
+    eu_west_1_client = provider._session.current_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    eu_west_1_client.region = AWS_REGION_EU_WEST_1
+
+    us_east_1_client = provider._session.current_session.client(
+        service, region_name=AWS_REGION_US_EAST_1
+    )
+    us_east_1_client.region = AWS_REGION_US_EAST_1
+
+    return {
+        AWS_REGION_EU_WEST_1: eu_west_1_client,
+        AWS_REGION_US_EAST_1: us_east_1_client,
+    }
 
 
 @patch(
@@ -307,6 +328,58 @@ class Test_ECS_Service:
             assert [td.revision for td in ecs.task_definitions.values()] == ["3"]
             assert describe_calls == [
                 "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:3"
+            ]
+
+    def test_task_definition_limit_does_not_starve_later_regions(self):
+        describe_calls = []
+
+        def counting_make_api_call(self, operation_name, kwarg):
+            region = self.meta.region_name
+            if operation_name == "ListTaskDefinitions":
+                task_definition_revisions = {
+                    AWS_REGION_EU_WEST_1: (3, 2, 1),
+                    AWS_REGION_US_EAST_1: (9,),
+                }[region]
+                return {
+                    "taskDefinitionArns": [
+                        f"arn:aws:ecs:{region}:123456789012:task-definition/fam:{revision}"
+                        for revision in task_definition_revisions
+                    ]
+                }
+            if operation_name == "DescribeTaskDefinition":
+                describe_calls.append(kwarg["taskDefinition"])
+                return {
+                    "taskDefinition": {
+                        "containerDefinitions": [],
+                        "networkMode": "bridge",
+                        "pidMode": "",
+                        "tags": [],
+                    }
+                }
+            if operation_name == "ListClusters":
+                return {"clusterArns": []}
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with (
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+                new=mock_generate_multi_region_clients,
+            ),
+            patch("botocore.client.BaseClient._make_api_call", new=counting_make_api_call),
+        ):
+            aws_provider = set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                audit_config={"max_ecs_task_definitions": 2},
+            )
+            ecs = ECS(aws_provider)
+
+            assert [td.region for td in ecs.task_definitions.values()] == [
+                AWS_REGION_EU_WEST_1,
+                AWS_REGION_US_EAST_1,
+            ]
+            assert describe_calls == [
+                "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:3",
+                "arn:aws:ecs:us-east-1:123456789012:task-definition/fam:9",
             ]
 
     # Test list ECS clusters

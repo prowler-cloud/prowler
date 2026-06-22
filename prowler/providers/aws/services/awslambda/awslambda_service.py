@@ -118,8 +118,27 @@ class Lambda(AWSService):
             for function in self.functions.values():
                 if function.region != regional_client.region:
                     continue
-                for page in paginator.paginate(FunctionName=function.name):
-                    self._add_event_source_mappings(page.get("EventSourceMappings", []))
+                try:
+                    for page in paginator.paginate(FunctionName=function.name):
+                        self._add_event_source_mappings(
+                            page.get("EventSourceMappings", [])
+                        )
+                except ClientError as error:
+                    if (
+                        error.response.get("Error", {}).get("Code")
+                        == "InvalidParameterValueException"
+                    ):
+                        logger.warning(
+                            f"{function.region} --"
+                            f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                            f" {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{function.region} --"
+                            f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                            f" {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"

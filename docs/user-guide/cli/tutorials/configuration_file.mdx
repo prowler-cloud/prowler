@@ -2,6 +2,8 @@
 title: "Configuration File"
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
 
 ```
@@ -79,9 +81,11 @@ The following list includes all the AWS checks with configurable variables that 
 
 ### Resource Scan Limit
 
+<VersionBadge version="5.29.0" />
+
 Some AWS services accumulate large numbers of resources (EBS snapshots, backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages). Scanning every resource increases scan time, cost, API throttling, and finding volume. By default, Prowler scans every resource. Configure a positive resource scan limit to cap how many resources Prowler analyzes for these high-volume AWS resource paths, using the latest resources where AWS API ordering or resource timestamps support it. Otherwise, Prowler uses best-effort API order.
 
-The global default applies to the supported resources below and is overridable per resource. The default value is `0`, which disables the limit and scans every resource. `0`, negative values, and `null` are unlimited; positive values enable limits. The limit applies to resources selected for analysis, not to findings; a selected resource may produce zero, one, or many findings.
+The global default applies to the supported resources below and is overridable per resource. The default global value is `0`, which disables the limit and scans every resource. A global `null` value is also unlimited. For per-resource values, `null` means inherit the global default; set `0` or a negative value to disable that resource limit explicitly. Positive values enable limits. The limit applies to resources selected for analysis, not to findings; a selected resource may produce zero, one, or many findings.
 
 Exact list API call reduction depends on each AWS API's ordering and pagination capabilities. When Prowler must enumerate candidates locally to select the latest resources, list calls may still read candidates, but expensive per-resource enrichment calls are bounded to the selected resources for the supported paths below.
 

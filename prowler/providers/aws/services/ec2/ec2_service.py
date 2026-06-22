@@ -30,13 +30,12 @@ class EC2(AWSService):
         self.snapshots = []
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
-        # Snapshots are listed first, then limited before public status is hydrated.
+        # Snapshots are listed first, then limited after per-region snapshot
+        # presence is derived and before public status is hydrated.
         self.snapshot_limit = get_resource_scan_limit(
             self.audit_config, "max_ebs_snapshots"
         )
         self.__threading_call__(self._describe_snapshots)
-        self._select_snapshots_for_analysis()
-        self.__threading_call__(self._determine_public_snapshots, self.snapshots)
         self.network_interfaces = {}
         self.__threading_call__(self._describe_network_interfaces)
         self.images = []
@@ -45,6 +44,8 @@ class EC2(AWSService):
         self.__threading_call__(self._describe_volumes)
         self.attributes_for_regions = {}
         self.__threading_call__(self._get_resources_for_regions)
+        self._select_snapshots_for_analysis()
+        self.__threading_call__(self._determine_public_snapshots, self.snapshots)
         self.ebs_encryption_by_default = []
         self.__threading_call__(self._get_ebs_encryption_settings)
         self.elastic_ips = []

@@ -115,6 +115,7 @@ class Logs(AWSService):
             )
 
     def _select_log_groups_for_analysis(self):
+        """Select the newest log groups for bounded analysis."""
         if not self.log_groups:
             return
         self.log_groups = {
@@ -146,11 +147,18 @@ class Logs(AWSService):
 
                         log_group = None
                         for lg in (self.all_log_groups or {}).values():
-                            if lg.name == filter["logGroupName"]:
+                            if (
+                                lg.name == filter["logGroupName"]
+                                and lg.region == regional_client.region
+                            ):
                                 log_group = lg
                                 break
 
-                        if log_group and log_group.arn not in self._log_groups_hydrated:
+                        if (
+                            log_group
+                            and log_group.arn in (self.log_groups or {})
+                            and log_group.arn not in self._log_groups_hydrated
+                        ):
                             self._list_tags_for_resource(log_group)
 
                         self.metric_filters.append(
@@ -229,6 +237,11 @@ class Logs(AWSService):
             )
 
     def _get_log_events(self, log_group):
+        """Retrieve recent log events for a selected log group.
+
+        Args:
+            log_group: Log group selected for bounded analysis.
+        """
         logger.info(
             f"CloudWatch Logs - Retrieving log events for log group {log_group.name}..."
         )
@@ -280,6 +293,11 @@ class Logs(AWSService):
             )
 
     def _list_tags_for_resource(self, log_group):
+        """Hydrate tags for a selected log group once.
+
+        Args:
+            log_group: Log group selected for tag hydration.
+        """
         if log_group.arn in self._log_groups_hydrated:
             return
         logger.info(f"CloudWatch Logs - List Tags for Log Group {log_group.name}...")

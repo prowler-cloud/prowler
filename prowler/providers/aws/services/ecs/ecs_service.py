@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import zip_longest
 from re import sub
 from typing import Optional
 
@@ -43,30 +44,32 @@ class ECS(AWSService):
         if self._task_definition_arns is not None:
             return self._task_definition_arns
         logger.info("ECS - Listing Task Definitions...")
-        arns = []
+        arns_by_region = []
         for region, regional_client in self.regional_clients.items():
             try:
                 list_ecs_paginator = regional_client.get_paginator(
                     "list_task_definitions"
                 )
-                remaining_limit = None
-                if self.task_definition_limit:
-                    remaining_limit = self.task_definition_limit - len(arns)
-                    if remaining_limit <= 0:
-                        break
+                regional_arns = []
                 for task_definition in iter_limited_paginator_items(
                     list_ecs_paginator,
                     "taskDefinitionArns",
-                    remaining_limit,
+                    None,
                     item_filter=lambda task_definition: not self.audit_resources
                     or is_resource_filtered(task_definition, self.audit_resources),
                     sort="DESC",
                 ):
-                    arns.append((task_definition, region))
+                    regional_arns.append((task_definition, region))
+                arns_by_region.append(regional_arns)
             except Exception as error:
                 logger.error(
                     f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+        arns = []
+        for task_definition_batch in zip_longest(*arns_by_region):
+            for task_definition in task_definition_batch:
+                if task_definition:
+                    arns.append(task_definition)
         self._task_definition_arns = arns
         return arns
 

@@ -36,8 +36,13 @@ class Test_inspector2_is_enabled:
         ec2_client.instances = []
         ecr_client = mock.MagicMock()
         ecr_client.registries = {AWS_REGION_EU_WEST_1: SimpleNamespace(repositories=[])}
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
             mock.patch(
                 "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.inspector2_client",
                 new=inspector2_client,

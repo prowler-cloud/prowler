@@ -195,8 +195,8 @@ class Backup(AWSService):
 
     def _list_recovery_points(self):
         logger.info("Backup - Listing Recovery Points...")
-        try:
-            for backup_vault in self.backup_vaults or []:
+        for backup_vault in self.backup_vaults or []:
+            try:
                 regional_client = self.regional_clients[backup_vault.region]
                 paginator = regional_client.get_paginator(
                     "list_recovery_points_by_backup_vault"
@@ -216,21 +216,25 @@ class Backup(AWSService):
                                 tags=[],
                             )
                             self.recovery_points.append(rp)
-        except ClientError as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except ClientError as error:
+                logger.error(
+                    f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            except Exception as error:
+                logger.error(
+                    f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _select_recovery_points_for_analysis(self):
         self.recovery_points = list(
             limit_resources(
                 sorted(
                     self.recovery_points,
-                    key=lambda rp: rp.creation_date or datetime.min,
+                    key=lambda rp: (
+                        rp.creation_date.timestamp()
+                        if isinstance(rp.creation_date, datetime)
+                        else 0.0
+                    ),
                     reverse=True,
                 ),
                 self.recovery_point_limit,
