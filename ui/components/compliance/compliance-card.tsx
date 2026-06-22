@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
+import { extractComplianceProviderFilters } from "@/lib/compliance/compliance-provider-filters";
 import { getReportTypeForCompliance } from "@/lib/compliance/compliance-report-types";
 import {
   getScoreIndicatorClass,
@@ -55,6 +56,13 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   const router = useRouter();
   const hasRegionFilter = searchParams.has("filter[region__in]");
 
+  // Aggregated mode: provider filters replace the single-scan scope, so per-scan
+  // affordances (CIS PDF) are hidden and the drill-down carries provider filters.
+  const providerFilters = extractComplianceProviderFilters(
+    new URLSearchParams(searchParams.toString()),
+  );
+  const isAggregated = Object.keys(providerFilters).length > 0;
+
   const formatTitle = (title: string) => {
     return title.split("-").join(" ");
   };
@@ -75,8 +83,9 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
         title,
         complianceId: id,
         version,
-        scanId,
+        scanId: isAggregated ? null : scanId,
         regionFilter: searchParams.get("filter[region__in]"),
+        providerFilters: isAggregated ? providerFilters : undefined,
       }),
     );
   };
@@ -88,32 +97,34 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       className="relative cursor-pointer transition-shadow hover:shadow-md"
       onClick={navigateToDetail}
     >
-      <div
-        className="absolute top-2 right-2 z-10"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.stopPropagation();
-          }
-        }}
-        role="group"
-        tabIndex={0}
-      >
-        <ComplianceDownloadContainer
-          compact
-          orientation="column"
-          buttonWidth="icon"
-          presentation="dropdown"
-          scanId={scanId}
-          complianceId={complianceId}
-          reportType={getReportTypeForCompliance(
-            title,
-            complianceId,
-            isLatestCisForProvider,
-          )}
-          disabled={hasRegionFilter}
-        />
-      </div>
+      {!isAggregated && (
+        <div
+          className="absolute top-2 right-2 z-10"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation();
+            }
+          }}
+          role="group"
+          tabIndex={0}
+        >
+          <ComplianceDownloadContainer
+            compact
+            orientation="column"
+            buttonWidth="icon"
+            presentation="dropdown"
+            scanId={scanId}
+            complianceId={complianceId}
+            reportType={getReportTypeForCompliance(
+              title,
+              complianceId,
+              isLatestCisForProvider,
+            )}
+            disabled={hasRegionFilter}
+          />
+        </div>
+      )}
       <CardContent className="p-0">
         <div className="flex w-full flex-col gap-3">
           <div className="flex items-center gap-3 pr-9">
