@@ -265,7 +265,7 @@ from tests.providers.kubernetes.kubernetes_fixtures import set_mocked_kubernetes
 
 ## Test File Structure
 
-```
+```text
 tests/providers/{provider}/services/{service}/
 ├── {service}_service_test.py      # Service tests
 └── {check_name}/

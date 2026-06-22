@@ -1,7 +1,7 @@
 import React from "react";
 
 import { getIntegrations } from "@/actions/integrations";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import { SecurityHubIntegrationsManager } from "@/components/integrations/security-hub/security-hub-integrations-manager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
@@ -45,7 +45,7 @@ export default async function SecurityHubIntegrations({
 
   const [integrations, providers] = await Promise.all([
     getIntegrations(urlSearchParams),
-    getProviders({ pageSize: 100 }),
+    getAllProviders(),
   ]);
 
   const securityHubIntegrations = integrations?.data || [];

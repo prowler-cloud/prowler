@@ -3,7 +3,12 @@ import { revalidatePath } from "next/cache";
 
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
-import { getErrorMessage, parseStringify } from "./helper";
+import {
+  GENERIC_SERVER_ERROR_MESSAGE,
+  getErrorMessage,
+  parseStringify,
+  sanitizeErrorMessage,
+} from "./helper";
 
 /**
  * Helper function to handle API responses consistently
@@ -17,6 +22,7 @@ export const handleApiResponse = async (
   if (!response.ok) {
     // Read error body safely; prefer JSON, fallback to plain text
     const rawErrorText = await response.text().catch(() => "");
+    const contentType = response.headers.get("content-type")?.toLowerCase();
     let errorData: any = null;
     try {
       errorData = rawErrorText ? JSON.parse(rawErrorText) : null;
@@ -27,13 +33,20 @@ export const handleApiResponse = async (
     const errorsArray = Array.isArray(errorData?.errors)
       ? (errorData.errors as any[])
       : undefined;
-    const errorDetail =
-      errorsArray?.[0]?.detail ||
-      errorData?.error ||
-      errorData?.message ||
-      (rawErrorText && rawErrorText.trim()) ||
-      response.statusText ||
-      "Oops! Something went wrong.";
+    const parsedErrorMessage =
+      errorsArray?.[0]?.detail || errorData?.error || errorData?.message;
+    const fallbackErrorMessage =
+      response.status >= 500 || contentType?.includes("text/html")
+        ? GENERIC_SERVER_ERROR_MESSAGE
+        : response.statusText || "Oops! Something went wrong.";
+    const rawErrorMessage =
+      parsedErrorMessage ||
+      (response.status < 500 && rawErrorText.trim()) ||
+      fallbackErrorMessage;
+    const errorDetail = sanitizeErrorMessage(
+      String(rawErrorMessage),
+      fallbackErrorMessage,
+    );
 
     // Capture error context for Sentry
     const errorContext = {

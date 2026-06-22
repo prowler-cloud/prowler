@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getLatestMetadataInfo } from "@/actions/findings";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { getAlert, listAlerts } from "@/app/(prowler)/alerts/_actions";
 import { AlertsManager } from "@/app/(prowler)/alerts/_components/alerts-manager";
@@ -58,7 +58,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
   const [result, providersData, scansData, metadataInfoData, editResult] =
     await Promise.all([
       listAlerts(toAlertsSearchParams(resolvedSearchParams)),
-      getProviders({ pageSize: 50 }),
+      getAllProviders(),
       getScans({ pageSize: 50 }),
       getLatestMetadataInfo({}),
       editAlertId ? getAlert(editAlertId) : Promise.resolve(null),

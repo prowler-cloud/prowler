@@ -91,12 +91,14 @@ vi.mock("@/components/shadcn", () => {
     InfoField: ({
       children,
       label,
+      className,
     }: {
       children: ReactNode;
       label: string;
       variant?: string;
+      className?: string;
     }) => (
-      <div>
+      <div className={className}>
         <span>{label}</span>
         {children}
       </div>
@@ -277,12 +279,6 @@ vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
         {ariaLabel}
       </button>
     </div>
-  ),
-}));
-
-vi.mock("@/components/ui/custom/custom-link", () => ({
-  CustomLink: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
   ),
 }));
 
@@ -784,12 +780,19 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
     );
 
     expect(screen.getByText(statusExtendedWithFixVersions)).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "View in Prowler Hub" }),
-    ).toHaveAttribute(
+    const hubLink = screen.getByRole("link", { name: "View in Prowler Hub" });
+    expect(hubLink).toHaveAttribute(
       "href",
       "https://hub.prowler.com/check/image_vulnerability",
     );
+    expect(hubLink).toHaveAttribute("target", "_blank");
+    expect(hubLink).toHaveAttribute("rel", "noopener noreferrer");
+    const headingRow = screen.getByTestId("remediation-heading-row");
+    expect(within(headingRow).getByText("Remediation:")).toBeInTheDocument();
+    expect(hubLink).toHaveClass("shrink-0", "whitespace-nowrap");
+    expect(
+      within(headingRow).queryByText("Open the check in Hub"),
+    ).not.toBeInTheDocument();
   });
 
   it("should render the official CVE reference", () => {
@@ -836,10 +839,12 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
       "href",
       externalCveUrl,
     );
-    expect(screen.getByRole("link", { name: externalCveUrl })).toHaveAttribute(
-      "href",
-      externalCveUrl,
-    );
+    const referenceLink = screen.getByRole("link", { name: externalCveUrl });
+    expect(referenceLink).toHaveAttribute("href", externalCveUrl);
+    expect(referenceLink).toHaveAttribute("target", "_blank");
+    expect(referenceLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(referenceLink).toHaveClass("break-all", "text-left");
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
   it("should render View Advisory when the recommendation URL points to GitHub Security Advisories", () => {
@@ -1345,6 +1350,64 @@ describe("ResourceDetailDrawerContent — synthetic resource empty state", () =>
 });
 
 describe("ResourceDetailDrawerContent — current resource row display", () => {
+  it("should place service and region in the primary metadata row after provider and resource", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    const primaryMetadataRow = screen.getByTestId(
+      "resource-detail-primary-metadata-row",
+    );
+    expect(primaryMetadataRow).toHaveClass("grid-cols-2");
+    expect(primaryMetadataRow).toHaveClass(
+      "@md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)]",
+    );
+    expect(
+      within(primaryMetadataRow).getByText("Provider"),
+    ).toBeInTheDocument();
+    expect(
+      within(primaryMetadataRow).getByText("Resource"),
+    ).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("Service")).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("Region")).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("s3")).toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    );
+    expect(within(primaryMetadataRow).getByText("us-east-1")).toHaveClass(
+      "truncate",
+    );
+
+    const secondaryMetadataRow = screen.getByTestId(
+      "resource-detail-secondary-metadata-row",
+    );
+    expect(secondaryMetadataRow).toHaveClass("grid-cols-2");
+    expect(secondaryMetadataRow).toHaveClass("@md:grid-cols-3");
+    expect(
+      within(secondaryMetadataRow).queryByText("Service"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(secondaryMetadataRow).queryByText("Region"),
+    ).not.toBeInTheDocument();
+    expect(within(secondaryMetadataRow).getByText("2 days")).toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    );
+  });
+
   it("should render resource card fields from the current resource row instead of the fetched finding", () => {
     // Given
     const currentResource: FindingResourceRow = {
@@ -1481,10 +1544,10 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("ec2")).toBeInTheDocument();
     expect(screen.getByText("eu-west-1")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Finding Overview" }),
+      screen.getByRole("button", { name: "Overview" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Findings for this resource" }),
+      screen.getByRole("button", { name: "Other findings" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(screen.queryByText("Status extended")).not.toBeInTheDocument();
@@ -1594,10 +1657,10 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.queryByText("Description:")).not.toBeInTheDocument();
     expect(screen.queryByText("Remediation:")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Finding Overview" }),
+      screen.getByRole("button", { name: "Overview" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Findings for this resource" }),
+      screen.getByRole("button", { name: "Other findings" }),
     ).toBeInTheDocument();
   });
 
@@ -1796,7 +1859,7 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
 
     // Then
     expect(
-      screen.getByRole("button", { name: "Resource Metadata / Evidence" }),
+      screen.getByRole("button", { name: "Evidence" }),
     ).toBeInTheDocument();
   });
 
