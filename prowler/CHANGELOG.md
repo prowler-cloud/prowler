@@ -29,6 +29,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `aks_cluster_azure_monitor_enabled` check for Azure provider, verifying AKS clusters have Azure Monitor (Container Insights) enabled for metrics, logs, and alerting [(#11029)](https://github.com/prowler-cloud/prowler/pull/11029)
 - `aks_cluster_local_accounts_disabled` check for Azure provider, verifying AKS clusters have local accounts disabled so authentication is forced through Microsoft Entra ID [(#11030)](https://github.com/prowler-cloud/prowler/pull/11030)
 - `network_subnet_nsg_associated` check for Azure provider, verifying virtual network subnets have a network security group associated to enforce traffic filtering [(#11043)](https://github.com/prowler-cloud/prowler/pull/11043)
+- `network_vnet_ddos_protection_enabled` check for Azure provider, verifying virtual networks have Azure DDoS Network Protection enabled [(#11044)](https://github.com/prowler-cloud/prowler/pull/11044)
 - `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
 - Public `Provider.get_class()` method that resolves a provider class by name for both built-in and external (entry-point) providers [(#11398)](https://github.com/prowler-cloud/prowler/pull/11398)
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)

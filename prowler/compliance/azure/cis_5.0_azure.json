@@ -2935,7 +2935,9 @@
     {
       "Id": "8.5",
       "Description": "Ensure Azure DDoS Network Protection is enabled on virtual networks",
-      "Checks": [],
+      "Checks": [
+        "network_vnet_ddos_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",

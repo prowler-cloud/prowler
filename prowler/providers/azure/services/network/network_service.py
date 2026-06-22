@@ -227,6 +227,9 @@ class Network(AzureService):
                             id=vnet.id,
                             name=vnet.name,
                             location=vnet.location,
+                            enable_ddos_protection=getattr(
+                                vnet, "enable_ddos_protection", False
+                            ),
                             subnets=subnets,
                         )
                     )
@@ -308,6 +311,7 @@ class VirtualNetwork:
     id: str
     name: str
     location: str
+    enable_ddos_protection: bool = False
     subnets: List[VNetSubnet] = None
 
     def __post_init__(self):
