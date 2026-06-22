@@ -21,7 +21,9 @@ class core_cpu_limits_set(Check):
 
             for container in (pod.containers or {}).values():
                 resources = container.resources or {}
-                limits = resources.get("limits") if isinstance(resources, dict) else None
+                limits = (
+                    resources.get("limits") if isinstance(resources, dict) else None
+                )
                 cpu = limits.get("cpu") if limits and isinstance(limits, dict) else None
                 if not cpu:
                     report.status = "FAIL"

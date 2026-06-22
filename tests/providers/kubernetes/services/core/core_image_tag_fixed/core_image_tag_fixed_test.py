@@ -183,9 +183,7 @@ class Test_core_image_tag_fixed:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                "does not use a fixed tag" in result[0].status_extended
-            )
+            assert "does not use a fixed tag" in result[0].status_extended
 
     def test_image_tag_blank(self):
         container = Container(
@@ -238,9 +236,7 @@ class Test_core_image_tag_fixed:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                "does not use a fixed tag" in result[0].status_extended
-            )
+            assert "does not use a fixed tag" in result[0].status_extended
 
     def test_image_with_digest(self):
         container = Container(

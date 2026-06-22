@@ -70,7 +70,9 @@ class TestCoreCpuRequestsSet:
         pod = make_pod(
             containers={"app": make_container(resources={"requests": {"cpu": "100m"}})},
             init_containers={"init": make_container(name="init", resources=None)},
-            ephemeral_containers={"debug": make_container(name="debug", resources=None)},
+            ephemeral_containers={
+                "debug": make_container(name="debug", resources=None)
+            },
         )
 
         result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))

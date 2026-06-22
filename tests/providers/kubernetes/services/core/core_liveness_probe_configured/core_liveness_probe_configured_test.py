@@ -16,7 +16,9 @@ class TestCoreLivenessProbeConfigured:
         assert len(result) == 0
 
     def test_liveness_probe_configured_pass(self):
-        pod = make_pod(containers={"app": make_container(liveness_probe={"http_get": {}})})
+        pod = make_pod(
+            containers={"app": make_container(liveness_probe={"http_get": {}})}
+        )
 
         result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
 
@@ -71,7 +73,9 @@ class TestCoreLivenessProbeConfigured:
         pod = make_pod(
             containers={"app": make_container(liveness_probe={"http_get": {}})},
             init_containers={"init": make_container(name="init", liveness_probe=None)},
-            ephemeral_containers={"debug": make_container(name="debug", liveness_probe=None)},
+            ephemeral_containers={
+                "debug": make_container(name="debug", liveness_probe=None)
+            },
         )
 
         result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))

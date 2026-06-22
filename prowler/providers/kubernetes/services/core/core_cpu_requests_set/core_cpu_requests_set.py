@@ -24,7 +24,11 @@ class core_cpu_requests_set(Check):
                 requests = (
                     resources.get("requests") if isinstance(resources, dict) else None
                 )
-                cpu = requests.get("cpu") if requests and isinstance(requests, dict) else None
+                cpu = (
+                    requests.get("cpu")
+                    if requests and isinstance(requests, dict)
+                    else None
+                )
                 if not cpu:
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} container {container.name} does not have a CPU request configured."
