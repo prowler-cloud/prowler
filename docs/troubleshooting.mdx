@@ -81,6 +81,37 @@ docker compose down
 docker compose up -d
 ```
 
+### Worker Uses Too Much Memory on Hosts with Many CPUs
+
+When Prowler App runs self-hosted on a machine or Kubernetes node with many CPUs,
+the Celery worker may create one prefork process per detected CPU if concurrency
+is not configured explicitly. Each process loads the SDK runtime and cloud
+provider clients, so idle memory can be high and worker containers can be
+terminated by their memory limit.
+
+Set `DJANGO_CELERY_WORKER_CONCURRENCY` in the worker runtime environment to cap
+the number of prefork processes:
+
+```yaml
+services:
+  worker:
+    environment:
+      DJANGO_CELERY_WORKER_CONCURRENCY: "4"
+```
+
+For Kubernetes deployments, set the same variable on the worker Deployment:
+
+```yaml
+env:
+  - name: DJANGO_CELERY_WORKER_CONCURRENCY
+    value: "4"
+```
+
+Lower values reduce idle memory and the number of tasks a worker can run in
+parallel. Increase the value only when the worker has enough memory for the
+expected scan workload. Leaving the variable unset preserves Celery's default
+CPU-based concurrency.
+
 ### API Container Fails to Start with JWT Key Permission Error
 
 See [GitHub Issue #8897](https://github.com/prowler-cloud/prowler/issues/8897) for more details.
