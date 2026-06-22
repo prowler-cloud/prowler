@@ -19,6 +19,9 @@ class storage_account_key_access_disabled(Check):
         """
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
+            subscription_name = storage_client.subscriptions.get(
+                subscription, subscription
+            )
             for storage_account in storage_accounts:
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=storage_account
@@ -26,9 +29,9 @@ class storage_account_key_access_disabled(Check):
                 report.subscription = subscription
                 if not storage_account.allow_shared_key_access:
                     report.status = "PASS"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has shared key access disabled."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) has shared key access disabled."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has shared key access enabled."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) has shared key access enabled."
                 findings.append(report)
         return findings

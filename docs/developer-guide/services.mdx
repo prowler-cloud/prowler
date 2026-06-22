@@ -23,7 +23,7 @@ Within this folder the following files are also to be created:
 - `<new_service_name>_service.py` – Contains all the logic and API calls of the service.
 - `<new_service_name>_client_.py` – Contains the initialization of the freshly created service's class so that the checks can use it.
 
-Once the files are create, you can check that the service has been created by running the following command: `poetry run python prowler-cli.py <provider> --list-services | grep <new_service_name>`.
+Once the files are create, you can check that the service has been created by running the following command: `uv run python prowler-cli.py <provider> --list-services | grep <new_service_name>`.
 
 ## Service Structure and Initialisation
 

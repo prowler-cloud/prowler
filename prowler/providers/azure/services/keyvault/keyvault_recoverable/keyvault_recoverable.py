@@ -6,16 +6,19 @@ class keyvault_recoverable(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
+            subscription_name = keyvault_client.subscriptions.get(
+                subscription, subscription
+            )
             for keyvault in key_vaults:
                 report = Check_Report_Azure(metadata=self.metadata(), resource=keyvault)
                 report.subscription = subscription
                 report.status = "FAIL"
-                report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is not recoverable."
+                report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription_name} ({subscription}) is not recoverable."
                 if (
                     keyvault.properties.enable_soft_delete
                     and keyvault.properties.enable_purge_protection
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is recoverable."
+                    report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription_name} ({subscription}) is recoverable."
                 findings.append(report)
         return findings

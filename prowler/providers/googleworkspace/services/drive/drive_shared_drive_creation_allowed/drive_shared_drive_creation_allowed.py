@@ -20,7 +20,10 @@ class drive_shared_drive_creation_allowed(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.domain_resource,
+                resource=drive_client.policies,
+                resource_id="drivePolicies",
+                resource_name="Drive Policies",
+                customer_id=drive_client.provider.identity.customer_id,
             )
 
             allow_creation = drive_client.policies.allow_shared_drive_creation
