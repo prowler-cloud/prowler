@@ -5262,6 +5262,7 @@
       "Checks": [
         "apigateway_restapi_client_certificate_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -5549,6 +5550,7 @@
       ],
       "Checks": [
         "elbv2_insecure_ssl_ciphers",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elb_ssl_listeners"
       ]
     },
