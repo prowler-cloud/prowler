@@ -12,6 +12,7 @@ import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { extractComplianceProviderFilters } from "@/lib/compliance/compliance-provider-filters";
 import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
 
@@ -46,6 +47,14 @@ export const ClientAccordionContent = ({
   // so the requirement view stays consistent with every other findings
   // surface in the app (findings page, resource drawer, overview widgets).
   const mutedFilter = searchParams.get("filter[muted]") || MUTED_FILTER.EXCLUDE;
+  // Aggregated mode: the detail page carries provider filters instead of a scanId,
+  // so scope this requirement's findings by those providers rather than one scan.
+  // Stable string key keeps the effect deps free of a per-render object.
+  const providerScopeKey = new URLSearchParams(
+    extractComplianceProviderFilters(
+      new URLSearchParams(searchParams.toString()),
+    ),
+  ).toString();
 
   useEffect(() => {
     async function loadFindings() {
@@ -68,10 +77,13 @@ export const ClientAccordionContent = ({
         try {
           const checkIds = requirement.check_ids;
           const encodedSort = sort.replace(/^\+/, "");
+          const scopeFilters = providerScopeKey
+            ? Object.fromEntries(new URLSearchParams(providerScopeKey))
+            : { "filter[scan]": scanId };
           const findingsData = await getFindings({
             filters: {
               "filter[check_id__in]": checkIds.join(","),
-              "filter[scan]": scanId,
+              ...scopeFilters,
               "filter[muted]": mutedFilter,
               ...(region && { "filter[region__in]": region }),
             },
@@ -115,6 +127,7 @@ export const ClientAccordionContent = ({
   }, [
     requirement,
     scanId,
+    providerScopeKey,
     pageNumber,
     pageSize,
     sort,
