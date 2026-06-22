@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_pqc_tls_enabled",
+  "CheckTitle": "CloudFront distributions enforce a post-quantum TLS 1.3 security policy",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
+  "Description": "**CloudFront distributions** are assessed for use of a **TLS 1.3-only security policy** (`TLSv1.3_2025`). CloudFront's quantum-safe key exchanges (`X25519MLKEM768`, `SecP256r1MLKEM768`) only work with TLS 1.3. Distributions that allow TLS 1.2 (or older) fallback to classical key exchanges and are exposed to `harvest-now, decrypt-later` attacks.",
+  "Risk": "Without a TLS 1.3-only policy, viewer traffic captured today can be decrypted once a **cryptographically relevant quantum computer** is available. Distributions using the default CloudFront certificate (`*.cloudfront.net`) cannot enable a post-quantum policy because they are pinned to the legacy `TLSv1` policy.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesGeneral.html#DownloadDistValues-security-policy",
+    "https://aws.amazon.com/security/post-quantum-cryptography/",
+    "https://csrc.nist.gov/projects/post-quantum-cryptography"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudfront update-distribution --id <distribution_id> --distribution-config '{...\"ViewerCertificate\":{\"MinimumProtocolVersion\":\"TLSv1.3_2025\",...}}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        ViewerCertificate:\n          AcmCertificateArn: <example_certificate_arn>\n          SslSupportMethod: sni-only\n          MinimumProtocolVersion: TLSv1.3_2025  # FIX: enforces TLS 1.3 + post-quantum KEX\n```",
+      "Other": "1. In the AWS Console, go to CloudFront > Distributions\n2. Select the distribution and open the General tab\n3. Choose Edit on Settings\n4. Set Custom SSL certificate (do not use the default *.cloudfront.net certificate)\n5. Set Security policy to TLSv1.3_2025\n6. Save changes",
+      "Terraform": "```hcl\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  # ...\n  viewer_certificate {\n    acm_certificate_arn      = \"<example_certificate_arn>\"\n    ssl_support_method       = \"sni-only\"\n    minimum_protocol_version = \"TLSv1.3_2025\" # FIX: enforces TLS 1.3 + post-quantum KEX\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use a **custom SSL certificate** with **SNI** support and set `MinimumProtocolVersion` to `TLSv1.3_2025` so CloudFront refuses TLS 1.2 handshakes and uses the hybrid ML-KEM key exchange. Distributions still using the default CloudFront certificate must be migrated to a custom certificate to enable post-quantum TLS.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_pqc_tls_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "cloudfront_distributions_using_deprecated_ssl_protocols"
+  ],
+  "Notes": ""
+}

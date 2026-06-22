@@ -381,6 +381,10 @@ aws:
   elbv2_min_azs: 2
 
   # AWS Post-Quantum TLS Configuration
+  # aws.cloudfront_distributions_pqc_tls_enabled
+  # Allowed CloudFront MinimumProtocolVersion values that enable post-quantum hybrid key exchange
+  cloudfront_pqc_min_protocol_versions:
+    - "TLSv1.3_2025"
   # aws.apigateway_domain_name_pqc_tls_enabled
   # Allowed post-quantum TLS security policies for API Gateway custom domain names
   apigateway_pqc_tls_allowed_policies:
