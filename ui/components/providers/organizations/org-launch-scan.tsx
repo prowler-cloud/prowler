@@ -24,7 +24,7 @@ import {
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { ToastAction, useToast } from "@/components/ui";
-import { getActionErrorMessage } from "@/lib/action-errors";
+import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
   buildScheduleUpdatePayload,
   getScanScheduleCapability,
@@ -170,7 +170,7 @@ export function OrgLaunchScan({
       buildScheduleUpdatePayload(values),
     );
 
-    if (result.error) {
+    if (hasActionError(result)) {
       setIsLaunching(false);
       toast({
         variant: "destructive",

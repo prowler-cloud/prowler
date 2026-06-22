@@ -1,7 +1,7 @@
 import { scanOnDemand, scheduleDaily } from "@/actions/scans";
 import { updateSchedule } from "@/actions/schedules";
 import type { ActionErrorResult } from "@/lib/action-errors";
-import { getActionErrorMessage } from "@/lib/action-errors";
+import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import { buildScheduleUpdatePayload } from "@/lib/schedules";
 import type { ScheduleFormValues } from "@/types/schedules";
 
@@ -46,7 +46,7 @@ export async function saveScheduleWithInitialScan({
     );
   }
 
-  if (scheduleResult?.error) {
+  if (hasActionError(scheduleResult)) {
     return {
       status: SAVE_SCHEDULE_STATUS.ERROR,
       message: getActionErrorMessage(scheduleResult),
@@ -61,7 +61,7 @@ export async function saveScheduleWithInitialScan({
   formData.set("providerId", providerId);
   const scanResult = await scanOnDemand(formData);
 
-  if (scanResult?.error) {
+  if (hasActionError(scanResult)) {
     return {
       status: SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED,
       message: getActionErrorMessage(scanResult),

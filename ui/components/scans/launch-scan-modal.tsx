@@ -20,7 +20,7 @@ import {
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import { FormButtons } from "@/components/ui/form";
 import { toast, ToastAction } from "@/components/ui/toast";
-import { getActionErrorMessage } from "@/lib/action-errors";
+import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
   getScanScheduleCapability,
   getScheduleFormDefaults,
@@ -173,7 +173,7 @@ function LaunchScanForm({
 
     const result = await scanOnDemand(formData);
 
-    if (result?.error) {
+    if (hasActionError(result)) {
       form.setError("root", { message: getActionErrorMessage(result) });
       return;
     }

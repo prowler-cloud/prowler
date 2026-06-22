@@ -34,6 +34,17 @@ const isActionErrorStatus = (
   status === ACTION_ERROR_STATUS.PAYMENT_REQUIRED ||
   status === ACTION_ERROR_STATUS.FORBIDDEN;
 
+const isHttpErrorStatus = (status: number | undefined): boolean =>
+  typeof status === "number" && status >= 400;
+
+export const hasActionError = (
+  result: ActionErrorResult | null | undefined,
+): result is ActionErrorResult =>
+  result !== undefined &&
+  result !== null &&
+  ((result.error !== undefined && result.error !== null) ||
+    isHttpErrorStatus(result.status));
+
 export const getActionErrorMessage = (
   result: ActionErrorResult,
   options: GetActionErrorMessageOptions = {},

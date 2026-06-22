@@ -27,6 +27,7 @@ import { EntityInfo } from "@/components/ui/entities";
 import {
   type ActionErrorResult,
   getActionErrorMessage,
+  hasActionError,
 } from "@/lib/action-errors";
 import {
   getScanScheduleCapability,
@@ -148,7 +149,7 @@ export function LaunchStep({
     setIsLaunching(true);
     const scanResult = await launchOnDemandScan();
 
-    if (scanResult?.error) {
+    if (hasActionError(scanResult)) {
       setIsLaunching(false);
       toast({
         variant: "destructive",
