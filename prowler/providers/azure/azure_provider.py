@@ -117,7 +117,6 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         region: str = "AzureCloud",
         subscription_ids: list = [],
-        resource_groups: list = [],
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -125,6 +124,7 @@ class AzureProvider(Provider):
         mutelist_content: dict = None,
         client_id: str = None,
         client_secret: str = None,
+        resource_groups: list = [],
     ):
         """
         Initializes the Azure provider.
@@ -137,7 +137,6 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
             subscription_ids (list): List of subscription IDs.
-            resource_groups (list): List of resource group names.
             config_path (str): The path to the configuration file.
             config_content (dict): The configuration content.
             fixer_config (dict): The fixer configuration.
@@ -145,6 +144,7 @@ class AzureProvider(Provider):
             mutelist_content (dict): The mutelist content.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            resource_groups (list): List of resource group names.
 
         Returns:
             None
@@ -1100,7 +1100,7 @@ class AzureProvider(Provider):
         return set(chain.from_iterable(locations.values()))
 
     def validate_resource_groups(self, resource_groups: list) -> dict[str, list[str]]:
-        resource_groups = [r for r in resource_groups if r and r.strip()]
+        resource_groups = [r.strip() for r in resource_groups if r and r.strip()]
         if not resource_groups:
             return {}
 

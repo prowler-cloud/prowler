@@ -43,5 +43,5 @@ When `--azure-resource-group` is provided, Prowler validates each specified reso
 - Resource group names are matched case-insensitively, so `MyGroup` and `mygroup` are treated as the same group, mirroring Azure's own behavior.
 
 <Warning>
-Even if no resource groups are found, passing the --azure-resource-group flag disables subscription-only scoped scans.
+If `--azure-resource-group` is used, checks that apply to specific resources are limited to the relevant resource groups. But if checks that apply to tenant or subscription scope (identity, policy, or subscription-level configuration checks) are involved, then these checks will run in their natural scope.
 </Warning>

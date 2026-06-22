@@ -629,6 +629,21 @@ class TestAzureProviderValidateResourceGroups:
         result = provider.validate_resource_groups([])
         assert result == {}
 
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_strips_whitespace(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        mock_rg = MagicMock()
+        mock_rg.name = "rg-prod"
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [mock_rg]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
+
+        result = provider.validate_resource_groups([" rg-prod "])
+
+        assert result[sub_name] == ["rg-prod"]
+
 
 class TestAzureProviderSetupIdentitySubscriptions:
     """Regression tests ensuring identity.subscriptions preserves every
