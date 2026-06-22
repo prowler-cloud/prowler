@@ -441,7 +441,6 @@ mainConfig:
     # AWS Post-Quantum TLS Configuration
     # aws.apigateway_domain_name_pqc_tls_enabled
     apigateway_pqc_tls_allowed_policies:
-      - "SecurityPolicy_TLS13_1_3_2025_09"
       - "SecurityPolicy_TLS13_1_2_FIPS_PFS_PQ_2025_09"
       - "SecurityPolicy_TLS13_1_2_PFS_PQ_2025_09"
       - "SecurityPolicy_TLS13_1_2_PQ_2025_09"

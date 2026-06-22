@@ -53,7 +53,7 @@ class Test_apigateway_domain_name_pqc_tls_enabled:
                 assert len(result) == 0
 
     @mock_aws
-    def test_pq_policy(self):
+    def test_tls13_only_policy_fails_by_default(self):
         apigw_client = _build_client("SecurityPolicy_TLS13_1_3_2025_09")
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -74,8 +74,9 @@ class Test_apigateway_domain_name_pqc_tls_enabled:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "PASS"
+                assert result[0].status == "FAIL"
                 assert "SecurityPolicy_TLS13_1_3_2025_09" in result[0].status_extended
+                assert "not in the post-quantum allowlist" in result[0].status_extended
                 assert result[0].resource_id == DOMAIN_NAME
                 assert result[0].resource_arn == DOMAIN_ARN
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -163,7 +164,6 @@ class Test_apigateway_domain_name_pqc_tls_enabled:
         apigw_client = _build_client("TLS_1_2")
         apigw_client.audit_config = {
             "apigateway_pqc_tls_allowed_policies": [
-                "SecurityPolicy_TLS13_1_3_2025_09",
                 "TLS_1_2",
             ]
         }
@@ -190,7 +190,7 @@ class Test_apigateway_domain_name_pqc_tls_enabled:
 
     @mock_aws
     def test_null_config_uses_default_allowlist(self):
-        apigw_client = _build_client("SecurityPolicy_TLS13_1_3_2025_09")
+        apigw_client = _build_client("SecurityPolicy_TLS13_1_2_PQ_2025_09")
         apigw_client.audit_config = {
             "apigateway_pqc_tls_allowed_policies": None,
         }
@@ -217,7 +217,7 @@ class Test_apigateway_domain_name_pqc_tls_enabled:
 
     @mock_aws
     def test_non_iterable_config_uses_default_allowlist(self):
-        apigw_client = _build_client("SecurityPolicy_TLS13_1_3_2025_09")
+        apigw_client = _build_client("SecurityPolicy_TLS13_1_2_PQ_2025_09")
         apigw_client.audit_config = {
             "apigateway_pqc_tls_allowed_policies": 123,
         }
