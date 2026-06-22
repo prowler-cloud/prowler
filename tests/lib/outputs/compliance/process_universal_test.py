@@ -12,6 +12,7 @@ Also validates that print_compliance_frameworks and print_compliance_requirement
 work with universal ComplianceFramework objects (dict checks, None provider).
 """
 
+import csv
 import json
 import os
 from datetime import datetime, timezone
@@ -112,6 +113,41 @@ def _make_universal_framework(name="TestFW", version="1.0", with_table_config=Tr
     outputs = None
     if with_table_config:
         outputs = OutputsConfig(table_config=TableConfig(group_by="Section"))
+    return ComplianceFramework(
+        framework=name,
+        name=f"{name} Framework",
+        provider="AWS",
+        version=version,
+        description="Test framework",
+        requirements=reqs,
+        attributes_metadata=metadata,
+        outputs=outputs,
+    )
+
+
+def _make_framework_with_manual(name="MixedFW", version="1.0"):
+    """Framework with one aws-covered requirement and one manual one.
+
+    The manual requirement has no aws checks, so for provider ``aws`` it is
+    emitted as a manual row/event — used to assert manual requirements are
+    not duplicated when the writer is reused across streaming batches.
+    """
+    reqs = [
+        UniversalComplianceRequirement(
+            id="1.1",
+            description="Covered requirement",
+            attributes={"Section": "IAM"},
+            checks={"aws": ["check_a"]},
+        ),
+        UniversalComplianceRequirement(
+            id="2.1",
+            description="Manual requirement",
+            attributes={"Section": "GOV"},
+            checks={"aws": []},
+        ),
+    ]
+    metadata = [AttributeMetadata(key="Section", type="str")]
+    outputs = OutputsConfig(table_config=TableConfig(group_by="Section"))
     return ComplianceFramework(
         framework=name,
         name=f"{name} Framework",
@@ -728,3 +764,243 @@ class TestIdempotency:
         # FW1 writer instances unchanged
         assert second_writers[0] is first_writers[0]
         assert second_writers[1] is first_writers[1]
+
+
+class TestStreamingBatches:
+    """Streaming-aware behaviour: ``from_cli`` / ``is_last`` / ``_flush``.
+
+    Regression coverage for the API streaming path where the helper is
+    invoked once per finding batch: before the fix only the first batch
+    was written (batches 2..N silently dropped) and manual requirements
+    were re-emitted on every batch.
+    """
+
+    def _run_batches(self, tmp_path, fw, key, batches):
+        """Invoke the helper once per (findings, is_last) batch, sharing
+        ``generated_outputs`` so writers are reused like the API does."""
+        generated = {"compliance": []}
+        for findings, is_last in batches:
+            process_universal_compliance_frameworks(
+                input_compliance_frameworks={key},
+                universal_frameworks={key: fw},
+                finding_outputs=findings,
+                output_directory=str(tmp_path),
+                output_filename="out",
+                provider="aws",
+                generated_outputs=generated,
+                from_cli=False,
+                is_last=is_last,
+            )
+        return generated
+
+    def test_defaults_preserve_cli_single_call(self, tmp_path):
+        """Defaults (``from_cli=True``, ``is_last=True``): a single call
+        still finalizes a valid, closed OCSF JSON array (CLI unchanged)."""
+        fw = _make_universal_framework()
+        generated = {"compliance": []}
+        process_universal_compliance_frameworks(
+            input_compliance_frameworks={"test_fw_1.0"},
+            universal_frameworks={"test_fw_1.0": fw},
+            finding_outputs=[_make_finding("check_a")],
+            output_directory=str(tmp_path),
+            output_filename="out",
+            provider="aws",
+            generated_outputs=generated,
+        )
+        ocsf_path = tmp_path / "compliance" / "out_test_fw_1.0.ocsf.json"
+        data = json.loads(ocsf_path.read_text())
+        assert isinstance(data, list) and len(data) >= 1
+
+    def test_multibatch_csv_keeps_every_batch(self, tmp_path):
+        """Findings from batches 2..N must not be dropped (the bug)."""
+        fw = _make_universal_framework()
+        f1 = _make_finding("check_a", status="PASS")
+        f2 = _make_finding("check_a", status="FAIL")
+        generated = self._run_batches(
+            tmp_path, fw, "fw_1.0", [([f1], False), ([f2], True)]
+        )
+        content = (tmp_path / "compliance" / "out_fw_1.0.csv").read_text()
+        assert "check_a is PASS" in content  # batch 1
+        assert "check_a is FAIL" in content  # batch 2 — regression
+        # writer reused, not recreated: still just 1 CSV + 1 OCSF
+        assert len(generated["compliance"]) == 2
+
+    def test_multibatch_ocsf_valid_array_with_every_batch(self, tmp_path):
+        """OCSF is a valid (closed) JSON array holding every batch's
+        events only after the ``is_last=True`` call."""
+        fw = _make_universal_framework()
+        f1 = _make_finding("check_a", status="PASS")
+        f2 = _make_finding("check_a", status="FAIL")
+        self._run_batches(tmp_path, fw, "fw_1.0", [([f1], False), ([f2], True)])
+        data = json.loads(
+            (tmp_path / "compliance" / "out_fw_1.0.ocsf.json").read_text()
+        )
+        assert isinstance(data, list)
+        assert len(data) >= 2  # one event per batch finding
+
+    def test_manual_requirement_not_duplicated_across_batches(self, tmp_path):
+        """Manual requirement is emitted once (first batch, via __init__),
+        never re-emitted when the writer is reused (``include_manual=False``)."""
+        fw = _make_framework_with_manual()
+        f1 = _make_finding("check_a", status="PASS")
+        f2 = _make_finding("check_a", status="FAIL")
+        self._run_batches(tmp_path, fw, "fw_1.0", [([f1], False), ([f2], True)])
+        rows = list(
+            csv.DictReader(
+                (tmp_path / "compliance" / "out_fw_1.0.csv").read_text().splitlines(),
+                delimiter=";",
+            )
+        )
+        manual_rows = [r for r in rows if r["STATUS"] == "MANUAL"]
+        assert len(manual_rows) == 1
+        assert manual_rows[0]["REQUIREMENTS_ID"] == "2.1"
+
+        ocsf = json.loads(
+            (tmp_path / "compliance" / "out_fw_1.0.ocsf.json").read_text()
+        )
+        manual_events = [
+            e
+            for e in ocsf
+            if (e.get("compliance") or {}).get("requirements") == ["2.1"]
+        ]
+        assert len(manual_events) == 1
+
+    def test_writer_reused_not_recreated_across_batches(self, tmp_path):
+        """Three batches still yield exactly one CSV + one OCSF writer,
+        and the same instances are reused throughout."""
+        fw = _make_universal_framework()
+        generated = self._run_batches(
+            tmp_path,
+            fw,
+            "fw_1.0",
+            [
+                ([_make_finding("check_a")], False),
+                ([_make_finding("check_a")], False),
+                ([_make_finding("check_a")], True),
+            ],
+        )
+        assert len(generated["compliance"]) == 2
+        assert isinstance(generated["compliance"][0], UniversalComplianceOutput)
+        assert isinstance(generated["compliance"][1], OCSFComplianceOutput)
+
+    def test_label_without_version_still_outputs(self, tmp_path):
+        """Empty framework version → label is the framework name only;
+        the helper still produces both artifacts without error."""
+        fw = _make_universal_framework(version="")
+        generated = {"compliance": []}
+        processed = process_universal_compliance_frameworks(
+            input_compliance_frameworks={"fw"},
+            universal_frameworks={"fw": fw},
+            finding_outputs=[_make_finding("check_a")],
+            output_directory=str(tmp_path),
+            output_filename="out",
+            provider="aws",
+            generated_outputs=generated,
+            from_cli=False,
+            is_last=True,
+        )
+        assert processed == {"fw"}
+        assert len(generated["compliance"]) == 2
+        assert (tmp_path / "compliance" / "out_fw.csv").exists()
+        assert (tmp_path / "compliance" / "out_fw.ocsf.json").exists()
+
+
+def _csa_like_framework() -> ComplianceFramework:
+    """Build a CSA CCM-style universal framework with checks across providers."""
+    requirement = UniversalComplianceRequirement(
+        id="A&A-01",
+        description="Audit and Assurance",
+        attributes={"Section": "Audit"},
+        checks={
+            "aws": ["aws_check"],
+            "azure": ["azure_check"],
+            "gcp": ["gcp_check"],
+        },
+    )
+    return ComplianceFramework(
+        framework="CSA_CCM",
+        name="CSA Cloud Controls Matrix",
+        version="4.0",
+        description="Multi-provider framework",
+        requirements=[requirement],
+        attributes_metadata=[AttributeMetadata(key="Section", type="str")],
+        outputs=OutputsConfig(table_config=TableConfig(group_by="Section")),
+    )
+
+
+class TestMultiProviderUniversalFramework:
+    """A top-level CSA-CCM-style framework produces a CSV+OCSF pair scoped
+    to the provider it is invoked with."""
+
+    @pytest.mark.parametrize(
+        "provider,check_id",
+        [
+            ("aws", "aws_check"),
+            ("azure", "azure_check"),
+            ("gcp", "gcp_check"),
+        ],
+    )
+    def test_per_provider_outputs_isolated(self, tmp_path, provider, check_id):
+        framework = _csa_like_framework()
+        generated = {"compliance": []}
+
+        process_universal_compliance_frameworks(
+            input_compliance_frameworks={"csa_ccm_4.0"},
+            universal_frameworks={"csa_ccm_4.0": framework},
+            finding_outputs=[_make_finding(check_id, provider=provider)],
+            output_directory=str(tmp_path),
+            output_filename="prowler_output",
+            provider=provider,
+            generated_outputs=generated,
+        )
+
+        ocsf_path = tmp_path / "compliance" / "prowler_output_csa_ccm_4.0.ocsf.json"
+        events = json.loads(ocsf_path.read_text())
+        assert isinstance(events, list)
+        non_manual = [event for event in events if event.get("status_code") != "MANUAL"]
+        assert len(non_manual) == 1
+        assert non_manual[0]["compliance"]["checks"][0]["uid"] == check_id
+
+
+class TestMitreStyleOCSFOutput:
+    """MITRE attrs wrapped as `{"_raw_attributes": [...]}` must not leak
+    the marker key through the OCSF pipeline."""
+
+    def test_mitre_raw_attributes_pass_through_pipeline(self, tmp_path):
+        mitre_requirement = UniversalComplianceRequirement(
+            id="T1078",
+            description="Valid Accounts",
+            attributes={
+                "_raw_attributes": [{"AWSService": "IAM", "Category": "Initial Access"}]
+            },
+            checks={"aws": ["check_a"]},
+        )
+        framework = ComplianceFramework(
+            framework="MITRE",
+            name="MITRE ATT&CK",
+            version="14",
+            description="Mitre",
+            requirements=[mitre_requirement],
+            outputs=OutputsConfig(table_config=TableConfig(group_by="AWSService")),
+        )
+        generated = {"compliance": []}
+
+        process_universal_compliance_frameworks(
+            input_compliance_frameworks={"mitre_attack_aws"},
+            universal_frameworks={"mitre_attack_aws": framework},
+            finding_outputs=[_make_finding("check_a", "PASS")],
+            output_directory=str(tmp_path),
+            output_filename="out",
+            provider="aws",
+            generated_outputs=generated,
+        )
+
+        ocsf_path = tmp_path / "compliance" / "out_mitre_attack_aws.ocsf.json"
+        events = json.loads(ocsf_path.read_text())
+        assert isinstance(events, list) and len(events) >= 1
+        for event in events:
+            requirement_attrs = (event.get("unmapped") or {}).get(
+                "requirement_attributes", {}
+            )
+            assert "_raw_attributes" not in requirement_attrs
+            assert "raw_attributes" not in requirement_attrs

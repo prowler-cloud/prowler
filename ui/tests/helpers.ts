@@ -1,6 +1,10 @@
 import { Locator, Page, expect, request } from "@playwright/test";
-import { AWSProviderCredential, AWSProviderData, AWS_CREDENTIAL_OPTIONS, ProvidersPage } from "./providers/providers-page";
-import { ScansPage } from "./scans/scans-page";
+import {
+  AWSProviderCredential,
+  AWSProviderData,
+  AWS_CREDENTIAL_OPTIONS,
+  ProvidersPage,
+} from "./providers/providers-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -70,7 +74,6 @@ export async function verifySessionValid(page: Page) {
   return session;
 }
 
-
 export async function addAWSProvider(
   page: Page,
   accountId: string,
@@ -119,21 +122,43 @@ export async function addAWSProvider(
   await providersPage.fillStaticCredentials(staticCredentials);
   await providersPage.clickNext();
 
-  // Launch scan
-  await providersPage.verifyLaunchScanPageLoaded();
-  await providersPage.clickNext();
-
-  // Wait for redirect to provider page
-  const scansPage = new ScansPage(page);
-  await scansPage.verifyPageLoaded();
+  // Scans specs launch their own scan. The setup helper should only leave a
+  // connected provider behind so the suite does not spend CI capacity on a
+  // duplicate preparatory scan.
+  await providersPage.completeProviderConnectionWithoutLaunchingScan(accountId);
 }
 
-export async function deleteProviderIfExists(page: ProvidersPage, providerUID: string): Promise<void> {
+/**
+ * Waits for the providers page to settle and reports whether the data table is
+ * present. With zero providers the page renders a full-page empty state
+ * ("No Providers Configured") instead of the table, so callers must not assume
+ * the table is always there.
+ */
+async function providersTableVisibleOrEmptyState(
+  page: ProvidersPage,
+): Promise<boolean> {
+  const emptyState = page.page.getByRole("region", {
+    name: /no providers configured/i,
+  });
+  await expect(page.providersTable.or(emptyState)).toBeVisible({
+    timeout: 10000,
+  });
+  return page.providersTable.isVisible().catch(() => false);
+}
+
+export async function deleteProviderIfExists(
+  page: ProvidersPage,
+  providerUID: string,
+): Promise<void> {
   // Delete the provider if it exists
 
   // Navigate to providers page
   await page.goto();
-  await expect(page.providersTable).toBeVisible({ timeout: 10000 });
+  // With zero providers the page shows the empty state, not the table, so there
+  // is nothing to delete.
+  if (!(await providersTableVisibleOrEmptyState(page))) {
+    return;
+  }
 
   const allRows = page.providersTable.locator("tbody tr");
 
@@ -173,16 +198,12 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
     // Provider not found, nothing to delete
     // Navigate back to providers page to ensure clean state
     await page.goto();
-    await expect(page.providersTable).toBeVisible({ timeout: 10000 });
+    await providersTableVisibleOrEmptyState(page);
     return;
   }
 
   // Find and click the action button (last cell = actions column)
-  const actionButton = targetRow
-    .locator("td")
-    .last()
-    .locator("button")
-    .first();
+  const actionButton = targetRow.locator("td").last().locator("button").first();
 
   // Ensure the button is in view before clicking (handles horizontal scroll)
   await actionButton.scrollIntoViewIfNeeded();
@@ -198,9 +219,13 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
   await deleteMenuItem.click();
 
-  // Wait for confirmation modal to appear
+  // Wait for confirmation modal to appear. Exclude the Next.js dev error
+  // overlay, which is also role="dialog" and would otherwise be matched first,
+  // making the assertion wait on the wrong (hidden) element.
   const modal = page.page
-    .locator('[role="dialog"], .modal, [data-testid*="modal"]')
+    .locator(
+      '[role="dialog"]:not([data-nextjs-dialog="true"]), .modal, [data-testid*="modal"]',
+    )
     .first();
 
   await expect(modal).toBeVisible({ timeout: 10000 });
@@ -214,7 +239,8 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   // Wait for modal to close (this indicates deletion was initiated)
   await expect(modal).not.toBeVisible({ timeout: 10000 });
 
-  // Navigate back to providers page to ensure clean state
+  // Navigate back to providers page to ensure clean state. Deleting the last
+  // provider reveals the empty state instead of an empty table.
   await page.goto();
-  await expect(page.providersTable).toBeVisible({ timeout: 10000 });
+  await providersTableVisibleOrEmptyState(page);
 }

@@ -53,7 +53,7 @@ diff dashboard/compliance/{new_framework}.py \
 
 ## Decision Tree
 
-```
+```text
 JSON Valid?
 ├── No → FAIL: Fix JSON syntax errors
 └── Yes ↓
@@ -168,16 +168,16 @@ After validation passes, test the framework with Prowler:
 
 ```bash
 # Verify framework is detected
-poetry run python prowler-cli.py {provider} --list-compliance | grep {framework}
+uv run python prowler-cli.py {provider} --list-compliance | grep {framework}
 
 # Run a quick test with a single check from the framework
-poetry run python prowler-cli.py {provider} --compliance {framework} --check {check_name}
+uv run python prowler-cli.py {provider} --compliance {framework} --check {check_name}
 
 # Run full compliance scan (dry-run with limited checks)
-poetry run python prowler-cli.py {provider} --compliance {framework} --checks-limit 5
+uv run python prowler-cli.py {provider} --compliance {framework} --checks-limit 5
 
 # Generate compliance report in multiple formats
-poetry run python prowler-cli.py {provider} --compliance {framework} -M csv json html
+uv run python prowler-cli.py {provider} --compliance {framework} -M csv json html
 ```
 
 ---

@@ -117,6 +117,44 @@ class Test_SqlServer_Service:
             == "ON"
         )
 
+    def test_get_connection_throttling_missing_parameter_returns_none(self):
+        # PostgreSQL v18 removed the "connection_throttle.enable" parameter; the
+        # service must degrade gracefully (quiet None) instead of raising and
+        # aborting the whole subscription's server inventory.
+        postgresql = PostgreSQL(set_mocked_azure_provider())
+        mock_client = MagicMock()
+        mock_client.configurations.get.side_effect = Exception(
+            "The configuration 'connection_throttle.enable' does not exist for "
+            "server version 18."
+        )
+        postgresql.clients[AZURE_SUBSCRIPTION_ID] = mock_client
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.logger"
+        ) as mock_logger:
+            result = postgresql._get_connection_throttling(
+                AZURE_SUBSCRIPTION_ID, "resource_group", "server_name"
+            )
+        assert result is None
+        mock_logger.error.assert_not_called()
+
+    def test_get_connection_throttling_unexpected_error_logs_error(self):
+        # Any other failure (permissions, throttling, transient API errors) must
+        # still be logged as an error, while keeping the scan resilient (None).
+        postgresql = PostgreSQL(set_mocked_azure_provider())
+        mock_client = MagicMock()
+        mock_client.configurations.get.side_effect = Exception(
+            "Some unexpected failure"
+        )
+        postgresql.clients[AZURE_SUBSCRIPTION_ID] = mock_client
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.logger"
+        ) as mock_logger:
+            result = postgresql._get_connection_throttling(
+                AZURE_SUBSCRIPTION_ID, "resource_group", "server_name"
+            )
+        assert result is None
+        mock_logger.error.assert_called_once()
+
     def test_get_log_retention_days(self):
         postgesql = PostgreSQL(set_mocked_azure_provider())
         assert (
@@ -139,6 +177,45 @@ class Test_SqlServer_Service:
         assert isinstance(admins[0], EntraIdAdmin)
         assert admins[0].principal_name == "Test Admin User"
         assert admins[0].object_id == "11111111-1111-1111-1111-111111111111"
+
+    def test_get_entra_id_admins_aad_not_enabled_logs_warning(self):
+        # A server using PostgreSQL authentication only (Entra/Azure AD auth
+        # disabled) is an expected state; it should be logged as a warning, not
+        # an error, and return an empty admin list.
+        postgresql = PostgreSQL(set_mocked_azure_provider())
+        mock_client = MagicMock()
+        mock_client.administrators.list_by_server.side_effect = Exception(
+            "Azure AD authentication is not enabled for the given server"
+        )
+        postgresql.clients[AZURE_SUBSCRIPTION_ID] = mock_client
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.logger"
+        ) as mock_logger:
+            result = postgresql._get_entra_id_admins(
+                AZURE_SUBSCRIPTION_ID, "resource_group", "server_name"
+            )
+        assert result == []
+        mock_logger.warning.assert_called_once()
+        mock_logger.error.assert_not_called()
+
+    def test_get_entra_id_admins_unexpected_error_logs_error(self):
+        # Any other failure (permissions, throttling, transient API errors) is a
+        # genuine problem and must still be logged as an error.
+        postgresql = PostgreSQL(set_mocked_azure_provider())
+        mock_client = MagicMock()
+        mock_client.administrators.list_by_server.side_effect = Exception(
+            "Some unexpected failure"
+        )
+        postgresql.clients[AZURE_SUBSCRIPTION_ID] = mock_client
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.logger"
+        ) as mock_logger:
+            result = postgresql._get_entra_id_admins(
+                AZURE_SUBSCRIPTION_ID, "resource_group", "server_name"
+            )
+        assert result == []
+        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_not_called()
 
     def test_get_firewall(self):
         postgesql = PostgreSQL(set_mocked_azure_provider())

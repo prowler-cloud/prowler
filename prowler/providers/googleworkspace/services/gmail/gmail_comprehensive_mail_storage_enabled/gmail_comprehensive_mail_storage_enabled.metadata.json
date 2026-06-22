@@ -13,8 +13,8 @@
   "Risk": "Without comprehensive mail storage, messages sent through other Google services (Calendar, Drive, etc.) may not be stored in Gmail and therefore **not subject to Vault retention policies**. This creates gaps in **compliance coverage**, **eDiscovery**, and **audit trails** that could violate regulatory requirements.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/3547347",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/set-up-comprehensive-mail-storage",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
