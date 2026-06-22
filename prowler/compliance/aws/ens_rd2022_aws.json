@@ -2367,7 +2367,8 @@
       ],
       "Checks": [
         "elbv2_insecure_ssl_ciphers",
-        "cloudfront_distributions_pqc_tls_enabled"
+        "cloudfront_distributions_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled"
       ]
     },
     {
@@ -2391,7 +2392,8 @@
       ],
       "Checks": [
         "elbv2_insecure_ssl_ciphers",
-        "cloudfront_distributions_pqc_tls_enabled"
+        "cloudfront_distributions_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled"
       ]
     },
     {
