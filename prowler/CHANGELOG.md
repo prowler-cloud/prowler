@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cloudsql_instance_high_availability_enabled` check for GCP provider, verifying Cloud SQL primary instances use `REGIONAL` availability for automatic zone failover [(#11024)](https://github.com/prowler-cloud/prowler/pull/11024)
 - `cloudfunction_function_inside_vpc` check for GCP provider, verifying Cloud Functions have a Serverless VPC Access connector for private egress [(#11021)](https://github.com/prowler-cloud/prowler/pull/11021)
 - `cloudfunction_function_not_publicly_accessible` check for GCP provider, detecting Cloud Functions with `allUsers` or `allAuthenticatedUsers` IAM invocation bindings [(#11022)](https://github.com/prowler-cloud/prowler/pull/11022)
+- `secretmanager_secret_not_publicly_accessible` check for GCP provider, detecting Secret Manager secrets with public IAM bindings [(#11025)](https://github.com/prowler-cloud/prowler/pull/11025)
 - `identity_storage_service_level_admins_scoped` check for OCI provider CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions [(#11523)](https://github.com/prowler-cloud/prowler/pull/11523)
 - `cosmosdb_account_automatic_failover_enabled` check for Azure provider [(#11031)](https://github.com/prowler-cloud/prowler/pull/11031)
 - `cosmosdb_account_backup_policy_continuous` check for Azure provider [(#11032)](https://github.com/prowler-cloud/prowler/pull/11032)
