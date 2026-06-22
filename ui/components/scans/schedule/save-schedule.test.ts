@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
 import { SCHEDULE_FREQUENCY, type ScheduleFormValues } from "@/types/schedules";
 
 const { scanOnDemandMock, scheduleDailyMock, updateScheduleMock } = vi.hoisted(
@@ -88,6 +92,25 @@ describe("saveScheduleWithInitialScan", () => {
     expect(scanOnDemandMock).not.toHaveBeenCalled();
   });
 
+  it("maps subscription errors when the schedule save is blocked", async () => {
+    updateScheduleMock.mockResolvedValue({
+      error:
+        "An active subscription is required to use this API endpoint in Prowler Cloud.",
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+
+    const result = await saveScheduleWithInitialScan({
+      providerId: "p1",
+      values,
+    });
+
+    expect(result).toEqual({
+      status: SAVE_SCHEDULE_STATUS.ERROR,
+      message: ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+    });
+    expect(scanOnDemandMock).not.toHaveBeenCalled();
+  });
+
   it("launches the initial scan when requested", async () => {
     const result = await saveScheduleWithInitialScan({
       providerId: "p1",
@@ -110,6 +133,24 @@ describe("saveScheduleWithInitialScan", () => {
     expect(result).toEqual({
       status: SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED,
       message: "limit reached",
+    });
+  });
+
+  it("maps subscription errors when the initial scan is blocked", async () => {
+    scanOnDemandMock.mockResolvedValue({
+      error:
+        "An active subscription is required to use this API endpoint in Prowler Cloud.",
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+
+    const result = await saveScheduleWithInitialScan({
+      providerId: "p1",
+      values: { ...values, launchInitialScan: true },
+    });
+
+    expect(result).toEqual({
+      status: SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED,
+      message: ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
     });
   });
 });

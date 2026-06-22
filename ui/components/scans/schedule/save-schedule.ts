@@ -1,5 +1,6 @@
 import { scanOnDemand, scheduleDaily } from "@/actions/scans";
 import { updateSchedule } from "@/actions/schedules";
+import { getActionErrorMessage } from "@/lib/action-errors";
 import { buildScheduleUpdatePayload } from "@/lib/schedules";
 import type { ScheduleFormValues } from "@/types/schedules";
 
@@ -25,13 +26,18 @@ export interface SaveScheduleResult {
   message?: string;
 }
 
+interface ActionResult {
+  error?: unknown;
+  status?: number;
+}
+
 /** Saves a provider's scan schedule and optionally launches the initial scan. */
 export async function saveScheduleWithInitialScan({
   providerId,
   values,
   useLegacyDaily = false,
 }: SaveScheduleParams): Promise<SaveScheduleResult> {
-  let scheduleResult: { error?: unknown } | null;
+  let scheduleResult: ActionResult | null;
 
   if (useLegacyDaily) {
     const formData = new FormData();
@@ -47,7 +53,7 @@ export async function saveScheduleWithInitialScan({
   if (scheduleResult?.error) {
     return {
       status: SAVE_SCHEDULE_STATUS.ERROR,
-      message: String(scheduleResult.error),
+      message: getActionErrorMessage(scheduleResult),
     };
   }
 
@@ -62,7 +68,7 @@ export async function saveScheduleWithInitialScan({
   if (scanResult?.error) {
     return {
       status: SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED,
-      message: String(scanResult.error),
+      message: getActionErrorMessage(scanResult),
     };
   }
 

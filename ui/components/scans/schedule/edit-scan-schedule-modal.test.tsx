@@ -80,6 +80,10 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
+import {
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
 import type { ScheduleProps } from "@/types/schedules";
 
 import {
@@ -290,6 +294,57 @@ describe("EditScanScheduleModal remove flow", () => {
         description: "The scan schedule was updated for 3 providers.",
       }),
     );
+  });
+
+  it("uses the shared subscription error copy when saving is blocked", async () => {
+    const user = userEvent.setup();
+    updateScheduleMock.mockResolvedValue({
+      error:
+        "An active subscription is required to use this API endpoint in Prowler Cloud.",
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+
+    renderLoaded();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      await screen.findByText(
+        ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/An active subscription is required/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses the shared subscription error copy when removing is blocked", async () => {
+    const user = userEvent.setup();
+    removeScheduleMock.mockResolvedValue({
+      error:
+        "An active subscription is required to use this API endpoint in Prowler Cloud.",
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+    renderLoaded();
+
+    await user.click(
+      screen.getByRole("button", { name: /remove scan schedule/i }),
+    );
+    const confirmDialog = screen.getByRole("dialog", {
+      name: "Are you absolutely sure?",
+    });
+    await user.click(
+      within(confirmDialog).getByRole("button", { name: "Remove" }),
+    );
+
+    expect(
+      await screen.findByText(
+        ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/An active subscription is required/i),
+    ).not.toBeInTheDocument();
   });
 
   it("shows one logo per selected provider type in bulk mode", () => {

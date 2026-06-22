@@ -20,6 +20,7 @@ import { Modal } from "@/components/shadcn/modal";
 import { EntityInfo } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
+import { getActionErrorMessage } from "@/lib/action-errors";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import {
   buildScheduleUpdatePayload,
@@ -130,7 +131,7 @@ function EditScanScheduleForm({
       : await updateSchedule(targetProviderIds[0], payload);
 
     if (result?.error) {
-      form.setError("root", { message: String(result.error) });
+      form.setError("root", { message: getActionErrorMessage(result) });
       return;
     }
 
@@ -157,7 +158,7 @@ function EditScanScheduleForm({
 
     const failedResult = results.find((result) => result?.error);
     if (failedResult?.error) {
-      form.setError("root", { message: String(failedResult.error) });
+      form.setError("root", { message: getActionErrorMessage(failedResult) });
       return;
     }
 

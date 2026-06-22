@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { SCAN_JOBS_TAB } from "@/types";
 import {
@@ -374,6 +378,47 @@ describe("LaunchStep", () => {
       expect(updateScheduleMock).not.toHaveBeenCalled();
       expect(scheduleDailyMock).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("uses the shared subscription error copy when a manual scan is blocked", async () => {
+      // Given
+      const onClose = vi.fn();
+      const onFooterChange = vi.fn();
+      const rawError =
+        "An active subscription is required to use this API endpoint in Prowler Cloud.";
+      seedConnectedProvider();
+      scanOnDemandMock.mockResolvedValue({
+        error: rawError,
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={onClose}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+
+      // When
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: "destructive",
+          title: "Unable to launch scan",
+          description:
+            ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        }),
+      );
+      expect(toastMock.mock.calls[0]?.[0].description).not.toContain(rawError);
+      expect(onClose).not.toHaveBeenCalled();
     });
 
     it("disables the action and shows the limit copy when over limit", async () => {

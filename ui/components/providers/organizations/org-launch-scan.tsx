@@ -24,6 +24,7 @@ import {
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { ToastAction, useToast } from "@/components/ui";
+import { getActionErrorMessage } from "@/lib/action-errors";
 import {
   buildScheduleUpdatePayload,
   getScanScheduleCapability,
@@ -174,7 +175,7 @@ export function OrgLaunchScan({
       toast({
         variant: "destructive",
         title: "Unable to save scan schedules",
-        description: String(result.error),
+        description: getActionErrorMessage(result),
       });
       return;
     }

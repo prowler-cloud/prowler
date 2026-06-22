@@ -14,7 +14,7 @@ export const ACTION_ERROR_MESSAGES = {
 } as const satisfies Record<ActionErrorStatus, string>;
 
 interface ActionErrorResult {
-  error?: string;
+  error?: unknown;
   status?: number;
 }
 
@@ -39,5 +39,9 @@ export const getActionErrorMessage = (
     );
   }
 
-  return result.error ?? options.fallback ?? "Oops! Something went wrong.";
+  if (result.error !== undefined && result.error !== null) {
+    return String(result.error);
+  }
+
+  return options.fallback ?? "Oops! Something went wrong.";
 };
