@@ -1,3 +1,4 @@
+import sys
 from unittest import mock
 
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
@@ -15,6 +16,13 @@ DISTRIBUTION_ARN = (
     f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/{DISTRIBUTION_ID}"
 )
 REGION = "us-east-1"
+CHECK_MODULE = "prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled"
+CLIENT_MODULE = "prowler.providers.aws.services.cloudfront.cloudfront_client"
+
+
+def _clear_cloudfront_modules():
+    sys.modules.pop(CHECK_MODULE, None)
+    sys.modules.pop(CLIENT_MODULE, None)
 
 
 def _build_distribution(
@@ -47,20 +55,19 @@ def _build_client(distributions: dict, audit_config: dict | None = None):
     return cloudfront_client
 
 
-class Test_cloudfront_distributions_pqc_tls_enabled:
-    def test_no_distributions(self):
-        cloudfront_client = _build_client({})
+def _execute_check(cloudfront_client):
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+    _clear_cloudfront_modules()
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
+    try:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled.cloudfront_client",
-                new=cloudfront_client,
+                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+                return_value=cloudfront_client,
             ),
         ):
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled import (
@@ -68,9 +75,18 @@ class Test_cloudfront_distributions_pqc_tls_enabled:
             )
 
             check = cloudfront_distributions_pqc_tls_enabled()
-            result = check.execute()
+            return check.execute()
+    finally:
+        _clear_cloudfront_modules()
 
-            assert len(result) == 0
+
+class Test_cloudfront_distributions_pqc_tls_enabled:
+    def test_no_distributions(self):
+        cloudfront_client = _build_client({})
+
+        result = _execute_check(cloudfront_client)
+
+        assert len(result) == 0
 
     def test_pq_policy_tls13_2025(self):
         cloudfront_client = _build_client(
@@ -81,30 +97,13 @@ class Test_cloudfront_distributions_pqc_tls_enabled:
             }
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        result = _execute_check(cloudfront_client)
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled.cloudfront_client",
-                new=cloudfront_client,
-            ),
-        ):
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled import (
-                cloudfront_distributions_pqc_tls_enabled,
-            )
-
-            check = cloudfront_distributions_pqc_tls_enabled()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert "TLSv1.3_2025" in result[0].status_extended
-            assert result[0].resource_id == DISTRIBUTION_ID
-            assert result[0].resource_arn == DISTRIBUTION_ARN
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "TLSv1.3_2025" in result[0].status_extended
+        assert result[0].resource_id == DISTRIBUTION_ID
+        assert result[0].resource_arn == DISTRIBUTION_ARN
 
     def test_classical_tls12_2021(self):
         cloudfront_client = _build_client(
@@ -115,29 +114,12 @@ class Test_cloudfront_distributions_pqc_tls_enabled:
             }
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        result = _execute_check(cloudfront_client)
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled.cloudfront_client",
-                new=cloudfront_client,
-            ),
-        ):
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled import (
-                cloudfront_distributions_pqc_tls_enabled,
-            )
-
-            check = cloudfront_distributions_pqc_tls_enabled()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "TLSv1.2_2021" in result[0].status_extended
-            assert "not in the post-quantum allowlist" in result[0].status_extended
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "TLSv1.2_2021" in result[0].status_extended
+        assert "not in the post-quantum allowlist" in result[0].status_extended
 
     def test_default_cloudfront_certificate(self):
         cloudfront_client = _build_client(
@@ -149,28 +131,11 @@ class Test_cloudfront_distributions_pqc_tls_enabled:
             }
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        result = _execute_check(cloudfront_client)
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled.cloudfront_client",
-                new=cloudfront_client,
-            ),
-        ):
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled import (
-                cloudfront_distributions_pqc_tls_enabled,
-            )
-
-            check = cloudfront_distributions_pqc_tls_enabled()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "default CloudFront certificate" in result[0].status_extended
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "default CloudFront certificate" in result[0].status_extended
 
     def test_configurable_allowlist(self):
         cloudfront_client = _build_client(
@@ -187,24 +152,7 @@ class Test_cloudfront_distributions_pqc_tls_enabled:
             },
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        result = _execute_check(cloudfront_client)
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled.cloudfront_client",
-                new=cloudfront_client,
-            ),
-        ):
-            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_pqc_tls_enabled.cloudfront_distributions_pqc_tls_enabled import (
-                cloudfront_distributions_pqc_tls_enabled,
-            )
-
-            check = cloudfront_distributions_pqc_tls_enabled()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "PASS"
+        assert len(result) == 1
+        assert result[0].status == "PASS"

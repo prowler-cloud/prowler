@@ -109,7 +109,10 @@ function LaunchScanForm({
 
   const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
   const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
-  const isScheduleMode = mode === LAUNCH_MODE.SCHEDULE;
+  const isBlocked =
+    capability === SCAN_SCHEDULE_CAPABILITY.BLOCKED ||
+    (isManualOnly && isScanLimitReached);
+  const isScheduleMode = isAdvanced && mode === LAUNCH_MODE.SCHEDULE;
 
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const providerId = useWatch({ control: form.control, name: "providerId" });
@@ -152,11 +155,14 @@ function LaunchScanForm({
   };
 
   const handleModeChange = (nextMode: string) => {
+    if (nextMode === LAUNCH_MODE.SCHEDULE && !isAdvanced) return;
     setMode(nextMode as LaunchMode);
     if (nextMode === LAUNCH_MODE.SCHEDULE) void loadSchedule(providerId);
   };
 
   const launchNow = form.handleSubmit(async ({ providerId, scanAlias }) => {
+    if (isBlocked) return;
+
     const formData = new FormData();
     formData.set("providerId", providerId);
     const trimmedAlias = scanAlias?.trim();
@@ -192,6 +198,8 @@ function LaunchScanForm({
   });
 
   const saveSchedule = async () => {
+    if (isBlocked || !isAdvanced) return;
+
     const providerValid = await form.trigger("providerId");
     if (!providerValid) return;
 
@@ -233,6 +241,8 @@ function LaunchScanForm({
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isBlocked) return;
+
     if (isScheduleMode) {
       void saveSchedule();
       return;
@@ -246,7 +256,6 @@ function LaunchScanForm({
   const isSubmitting =
     form.formState.isSubmitting || scheduleForm.formState.isSubmitting;
   const isScheduleLoading = scheduleLoad === SCHEDULE_LOAD_STATE.LOADING;
-  const isLimitBlocked = isManualOnly && isScanLimitReached;
 
   return (
     // min-w-0: let this dialog grid item shrink so a long provider UID truncates instead of widening the modal
@@ -273,7 +282,7 @@ function LaunchScanForm({
         {providerError && <FieldError>{providerError}</FieldError>}
       </Field>
 
-      {!isManualOnly && (
+      {!isManualOnly && !isBlocked && (
         <Field>
           <FieldLabel>Mode</FieldLabel>
           <RadioGroup
@@ -299,7 +308,7 @@ function LaunchScanForm({
         </Field>
       )}
 
-      {isLimitBlocked && (
+      {isBlocked && (
         <p className="text-text-error-primary text-sm">
           You have reached your scan limit, so additional scans are not
           available right now.
@@ -355,10 +364,7 @@ function LaunchScanForm({
         }
         loadingText={isScheduleMode ? "Saving..." : "Launching..."}
         isDisabled={
-          isSubmitting ||
-          !providers.length ||
-          isScheduleLoading ||
-          isLimitBlocked
+          isSubmitting || !providers.length || isScheduleLoading || isBlocked
         }
         rightIcon={<Rocket className="size-4" />}
       />

@@ -654,6 +654,7 @@
         "ec2_ebs_volume_encryption",
         "elbv2_insecure_ssl_ciphers",
         "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_default_encryption",
