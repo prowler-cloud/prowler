@@ -139,6 +139,15 @@ class Lambda(AWSService):
                             f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                             f" {error}"
                         )
+                        raise
+        except ClientError as error:
+            if self.function_limit:
+                raise
+            logger.error(
+                f"{regional_client.region} --"
+                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                f" {error}"
+            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"

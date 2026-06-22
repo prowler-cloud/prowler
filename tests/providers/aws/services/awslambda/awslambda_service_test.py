@@ -6,7 +6,9 @@ from re import search
 from unittest.mock import patch
 
 import mock
+import pytest
 from boto3 import client, resource
+from botocore.client import ClientError
 from moto import mock_aws
 
 from prowler.providers.aws.services.awslambda.awslambda_service import (
@@ -338,6 +340,117 @@ class Test_Lambda_Service:
 
         assert regional_client.paginator.paginate_calls == [{}]
         assert len(awslambda.functions[selected_arn].event_source_mappings) == 1
+
+    def test_list_event_source_mappings_continues_after_invalid_parameter_value(self):
+        class FakePaginator:
+            def paginate(self, **kwargs):
+                function_name = kwargs["FunctionName"]
+                if function_name == "deleted":
+                    raise ClientError(
+                        {
+                            "Error": {
+                                "Code": "InvalidParameterValueException",
+                                "Message": "Function no longer exists",
+                            }
+                        },
+                        "ListEventSourceMappings",
+                    )
+                return [
+                    {
+                        "EventSourceMappings": [
+                            {
+                                "UUID": f"{function_name}-mapping",
+                                "FunctionArn": (
+                                    f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                                    f"{AWS_ACCOUNT_NUMBER}:function:{function_name}"
+                                ),
+                                "EventSourceArn": "arn:aws:sqs:queue",
+                                "State": "Enabled",
+                            }
+                        ]
+                    }
+                ]
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "list_event_source_mappings"
+                return FakePaginator()
+
+        deleted_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:deleted"
+        )
+        remaining_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:remaining"
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.function_limit = 2
+        awslambda.functions = {
+            deleted_arn: Function(
+                name="deleted",
+                arn=deleted_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            ),
+            remaining_arn: Function(
+                name="remaining",
+                arn=remaining_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            ),
+        }
+
+        awslambda._list_event_source_mappings(FakeLambdaClient())
+
+        assert not awslambda.functions[deleted_arn].event_source_mappings
+        assert len(awslambda.functions[remaining_arn].event_source_mappings) == 1
+        assert (
+            awslambda.functions[remaining_arn].event_source_mappings[0].uuid
+            == "remaining-mapping"
+        )
+
+    def test_list_event_source_mappings_raises_non_transient_client_error(self):
+        class FakePaginator:
+            def paginate(self, **kwargs):
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access denied",
+                        }
+                    },
+                    "ListEventSourceMappings",
+                )
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "list_event_source_mappings"
+                return FakePaginator()
+
+        function_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:selected"
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.function_limit = 1
+        awslambda.functions = {
+            function_arn: Function(
+                name="selected",
+                arn=function_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            )
+        }
+
+        with pytest.raises(ClientError) as error:
+            awslambda._list_event_source_mappings(FakeLambdaClient())
+
+        assert error.value.response["Error"]["Code"] == "AccessDeniedException"
 
     @mock_aws
     def test_list_functions(self):
