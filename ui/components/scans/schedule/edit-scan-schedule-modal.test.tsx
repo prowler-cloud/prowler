@@ -2,13 +2,19 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { refreshMock, removeScheduleMock, toastMock, updateScheduleMock } =
-  vi.hoisted(() => ({
-    refreshMock: vi.fn(),
-    removeScheduleMock: vi.fn(),
-    toastMock: vi.fn(),
-    updateScheduleMock: vi.fn(),
-  }));
+const {
+  refreshMock,
+  removeScheduleMock,
+  toastMock,
+  updateScheduleMock,
+  updateSchedulesBulkMock,
+} = vi.hoisted(() => ({
+  refreshMock: vi.fn(),
+  removeScheduleMock: vi.fn(),
+  toastMock: vi.fn(),
+  updateScheduleMock: vi.fn(),
+  updateSchedulesBulkMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: refreshMock }),
@@ -17,14 +23,44 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/actions/schedules", () => ({
   removeSchedule: removeScheduleMock,
   updateSchedule: updateScheduleMock,
+  updateSchedulesBulk: updateSchedulesBulkMock,
 }));
 
 vi.mock("@/components/ui/toast", () => ({
   toast: toastMock,
 }));
 
+vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
+  ProviderTypeIconStack: ({ items }: { items: Array<{ type: string }> }) => (
+    <div data-testid="provider-type-icon-stack">
+      {items.map((item) => (
+        <span key={item.type}>{item.type}</span>
+      ))}
+    </div>
+  ),
+}));
+
 vi.mock("@/components/ui/entities", () => ({
-  EntityInfo: () => null,
+  EntityInfo: ({
+    badge,
+    cloudProvider,
+    entityAlias,
+    icon,
+  }: {
+    badge?: string;
+    cloudProvider?: string;
+    entityAlias?: string;
+    icon?: React.ReactNode;
+  }) => (
+    <div data-testid="entity-info">
+      {cloudProvider && (
+        <span data-testid="single-cloud-provider">{cloudProvider}</span>
+      )}
+      {icon}
+      {entityAlias && <span>{entityAlias}</span>}
+      {badge && <span>{badge}</span>}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/shadcn/modal", () => ({
@@ -58,6 +94,32 @@ const provider = {
   providerAlias: "Production",
 };
 
+const organizationProviders = [
+  provider,
+  {
+    providerId: "p2",
+    providerType: "aws" as const,
+    providerUid: "210987654321",
+    providerAlias: "Staging",
+  },
+];
+
+const multiCloudProviders = [
+  provider,
+  {
+    providerId: "p2",
+    providerType: "azure" as const,
+    providerUid: "azure-subscription",
+    providerAlias: "Azure Prod",
+  },
+  {
+    providerId: "p3",
+    providerType: "aws" as const,
+    providerUid: "210987654321",
+    providerAlias: "AWS Staging",
+  },
+];
+
 const schedule: ScheduleProps = {
   type: "schedules",
   id: "p1",
@@ -89,6 +151,7 @@ describe("EditScanScheduleModal remove flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     removeScheduleMock.mockResolvedValue({ success: true });
+    updateSchedulesBulkMock.mockResolvedValue({ success: true });
   });
 
   it("asks for confirmation before removing the schedule", async () => {
@@ -161,5 +224,90 @@ describe("EditScanScheduleModal remove flow", () => {
     );
 
     expect(removeScheduleMock).not.toHaveBeenCalled();
+  });
+
+  it("saves organization schedules through the bulk endpoint", async () => {
+    const user = userEvent.setup();
+    render(
+      <EditScanScheduleModal
+        open
+        onOpenChange={vi.fn()}
+        providers={organizationProviders}
+        targetName="My AWS Organization"
+        targetId="o-abc123def4"
+        state={{ kind: EDIT_SCAN_SCHEDULE_STATE.LOADED, schedule }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(updateSchedulesBulkMock).toHaveBeenCalledWith(
+        ["p1", "p2"],
+        expect.objectContaining({
+          scan_enabled: true,
+          scan_frequency: "DAILY",
+          scan_hour: 4,
+        }),
+      ),
+    );
+    expect(updateScheduleMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        description: "The scan schedule was updated for 2 providers.",
+      }),
+    );
+  });
+
+  it("uses explicit provider ids for organization bulk schedules", async () => {
+    const user = userEvent.setup();
+    render(
+      <EditScanScheduleModal
+        open
+        onOpenChange={vi.fn()}
+        providers={[organizationProviders[0]]}
+        providerIds={["p1", "p2", "p3"]}
+        targetName="My AWS Organization"
+        targetId="o-abc123def4"
+        state={{ kind: EDIT_SCAN_SCHEDULE_STATE.LOADED, schedule }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(updateSchedulesBulkMock).toHaveBeenCalledWith(
+        ["p1", "p2", "p3"],
+        expect.objectContaining({
+          scan_enabled: true,
+          scan_frequency: "DAILY",
+          scan_hour: 4,
+        }),
+      ),
+    );
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        description: "The scan schedule was updated for 3 providers.",
+      }),
+    );
+  });
+
+  it("shows one logo per selected provider type in bulk mode", () => {
+    render(
+      <EditScanScheduleModal
+        open
+        onOpenChange={vi.fn()}
+        providers={multiCloudProviders}
+        targetName="Selected providers"
+        state={{ kind: EDIT_SCAN_SCHEDULE_STATE.LOADED, schedule }}
+      />,
+    );
+
+    const stack = screen.getByTestId("provider-type-icon-stack");
+    expect(stack).toHaveTextContent("aws");
+    expect(stack).toHaveTextContent("azure");
+    expect(
+      screen.queryByTestId("single-cloud-provider"),
+    ).not.toBeInTheDocument();
   });
 });

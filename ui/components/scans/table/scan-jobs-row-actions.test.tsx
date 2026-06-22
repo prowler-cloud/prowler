@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ScanProps } from "@/types";
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
@@ -175,6 +176,52 @@ describe("ScanJobsRowActions", () => {
     const user = userEvent.setup();
 
     render(<ScanJobsRowActions scan={makeScan()} />);
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("menuitem", { name: /edit scan schedule/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Edit Scan Schedule for manual-only Cloud scan rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <ScanJobsRowActions
+        scan={makeScan()}
+        capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("menuitem", { name: /edit scan schedule/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Edit Scan Schedule for blocked Cloud scan rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <ScanJobsRowActions
+        scan={makeScan()}
+        capability={SCAN_SCHEDULE_CAPABILITY.BLOCKED}
+      />,
+    );
 
     // When
     await user.click(

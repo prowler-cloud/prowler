@@ -67,6 +67,11 @@ interface LaunchStepProps {
    * Cloud-only signal; never set in OSS.
    */
   isScanLimitReached?: boolean;
+  /**
+   * Cloud-only loading state while billing is resolved into a schedule
+   * capability. OSS leaves it false.
+   */
+  isScheduleCapabilityLoading?: boolean;
 }
 
 export function LaunchStep({
@@ -75,6 +80,7 @@ export function LaunchStep({
   onFooterChange,
   capability: capabilityProp,
   isScanLimitReached = false,
+  isScheduleCapabilityLoading = false,
 }: LaunchStepProps) {
   const { toast } = useToast();
   const { providerAlias, providerId, providerType, providerUid } =
@@ -82,6 +88,7 @@ export function LaunchStep({
   const capability = capabilityProp ?? getScanScheduleCapability(isCloud());
   const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
   const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+  const isBlocked = capability === SCAN_SCHEDULE_CAPABILITY.BLOCKED;
   const [isLaunching, setIsLaunching] = useState(false);
   const [mode, setMode] = useState<LaunchMode>(
     isAdvanced ? LAUNCH_MODE.SCHEDULE : LAUNCH_MODE.NOW,
@@ -93,7 +100,12 @@ export function LaunchStep({
 
   const isScheduleMode = isAdvanced && mode === LAUNCH_MODE.SCHEDULE;
   const isLimitBlocked = mode === LAUNCH_MODE.NOW && isScanLimitReached;
-  const isActionBlocked = isLaunching || !providerId || isLimitBlocked;
+  const isActionBlocked =
+    isLaunching ||
+    isScheduleCapabilityLoading ||
+    !providerId ||
+    isBlocked ||
+    isLimitBlocked;
   const launchInitialScan = useWatch({
     control: form.control,
     name: "launchInitialScan",
@@ -111,15 +123,21 @@ export function LaunchStep({
     return launchInitialScan ? "Save and launch scan" : "Save";
   })();
 
+  useEffect(() => {
+    if (!isAdvanced && mode !== LAUNCH_MODE.NOW) {
+      setMode(LAUNCH_MODE.NOW);
+    }
+  }, [isAdvanced, mode]);
+
   const launchOnDemandScan = async (): Promise<{ error?: unknown } | null> => {
-    if (!providerId) return null;
+    if (!providerId || isBlocked) return null;
     const formData = new FormData();
     formData.set("providerId", providerId);
     return scanOnDemand(formData);
   };
 
   const handleManualScan = async () => {
-    if (isScanLimitReached) {
+    if (isActionBlocked) {
       return;
     }
 
@@ -150,7 +168,7 @@ export function LaunchStep({
   };
 
   const handleSaveSchedule = form.handleSubmit(async (values) => {
-    if (!providerId) {
+    if (!providerId || isBlocked || isScheduleCapabilityLoading) {
       return;
     }
 
@@ -207,6 +225,10 @@ export function LaunchStep({
   // always invokes the current closure without re-running on every render.
   const actionRef = useRef<() => void>(() => {});
   actionRef.current = () => {
+    if (isBlocked || isScheduleCapabilityLoading) {
+      return;
+    }
+
     if (!isScheduleMode) {
       void handleManualScan();
       return;
@@ -218,7 +240,7 @@ export function LaunchStep({
     onFooterChange({
       showBack: true,
       backLabel: "Back",
-      backDisabled: isLaunching,
+      backDisabled: isLaunching || isScheduleCapabilityLoading,
       onBack,
       showAction: true,
       actionLabel,
@@ -229,6 +251,7 @@ export function LaunchStep({
   }, [
     isActionBlocked,
     isLaunching,
+    isScheduleCapabilityLoading,
     actionLabel,
     isScheduleMode,
     launchInitialScan,
@@ -237,13 +260,17 @@ export function LaunchStep({
     onFooterChange,
   ]);
 
-  if (isLaunching) {
+  if (isLaunching || isScheduleCapabilityLoading) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
         <div className="flex items-center gap-3 py-2">
           <Spinner className="size-6" />
           <p className="text-sm font-medium">
-            {!isScheduleMode ? "Launching scan..." : "Saving scan schedule..."}
+            {isScheduleCapabilityLoading
+              ? "Loading scan options..."
+              : !isScheduleMode
+                ? "Launching scan..."
+                : "Saving scan schedule..."}
           </p>
         </div>
       </div>
@@ -284,7 +311,11 @@ export function LaunchStep({
           aria-label="Scan mode"
         >
           <label className="flex items-center gap-2 text-sm">
-            <RadioGroupItem value={LAUNCH_MODE.NOW} aria-label="Run now" />
+            <RadioGroupItem
+              value={LAUNCH_MODE.NOW}
+              aria-label="Run now"
+              disabled={isBlocked}
+            />
             Run now
           </label>
           <label className="flex items-center gap-2 text-sm">
@@ -295,6 +326,7 @@ export function LaunchStep({
             />
             On a schedule
             {!isAdvanced &&
+              !isBlocked &&
               (isManualOnly ? (
                 <CloudFeatureBadge label="Requires subscription" size="sm" />
               ) : (
@@ -304,14 +336,14 @@ export function LaunchStep({
         </RadioGroup>
       </Field>
 
-      {!isAdvanced && (
+      {!isAdvanced && !isBlocked && (
         <p className="text-text-neutral-secondary text-sm">
           Scheduled scans are not available for this account. Run now to get
           immediate findings.
         </p>
       )}
 
-      {isLimitBlocked && (
+      {(isLimitBlocked || isBlocked) && (
         <p className="text-text-error-primary text-sm">
           You have reached your scan limit, so additional scans are not
           available right now.

@@ -29,12 +29,12 @@ def _trust_anchor(*, source_type: str, acm_pca_arn: str = ""):
     )
 
 
-def _ca(key_algorithm: str):
+def _ca(key_algorithm: str, status: str = "ACTIVE"):
     return CertificateAuthority(
         arn=PCA_ARN,
         id=PCA_ID,
         region=AWS_REGION_US_EAST_1,
-        status="ACTIVE",
+        status=status,
         type="SUBORDINATE",
         usage_mode="GENERAL_PURPOSE",
         key_algorithm=key_algorithm,
@@ -122,6 +122,21 @@ class Test_rolesanywhere_trust_anchor_pqc_pki:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "RSA_2048" in result[0].status_extended
+
+    def test_pca_backed_inactive_pqc_ca(self):
+        ra_client, pca_client = _build_clients(
+            {TA_ARN: _trust_anchor(source_type="AWS_ACM_PCA", acm_pca_arn=PCA_ARN)},
+            certificate_authorities={PCA_ARN: _ca("ML_DSA_65", status="DISABLED")},
+        )
+        with _enter(_patched(ra_client, pca_client)):
+            from prowler.providers.aws.services.rolesanywhere.rolesanywhere_trust_anchor_pqc_pki.rolesanywhere_trust_anchor_pqc_pki import (
+                rolesanywhere_trust_anchor_pqc_pki,
+            )
+
+            result = rolesanywhere_trust_anchor_pqc_pki().execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "DISABLED status" in result[0].status_extended
 
     def test_pca_not_in_inventory(self):
         ra_client, pca_client = _build_clients(

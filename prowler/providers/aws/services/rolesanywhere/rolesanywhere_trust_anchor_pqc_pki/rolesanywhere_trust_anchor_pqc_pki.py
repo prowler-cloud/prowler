@@ -32,7 +32,15 @@ class rolesanywhere_trust_anchor_pqc_pki(Check):
                 linked_ca = acmpca_client.certificate_authorities.get(
                     trust_anchor.acm_pca_arn
                 )
-                if linked_ca and linked_ca.key_algorithm in pqc_algorithms:
+                if linked_ca and linked_ca.status != "ACTIVE":
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"IAM Roles Anywhere trust anchor {trust_anchor.name} is "
+                        f"backed by Private CA {linked_ca.id}, which is in "
+                        f"{linked_ca.status or '<unknown>'} status and cannot be "
+                        "used as an active post-quantum PKI trust root."
+                    )
+                elif linked_ca and linked_ca.key_algorithm in pqc_algorithms:
                     report.status = "PASS"
                     report.status_extended = (
                         f"IAM Roles Anywhere trust anchor {trust_anchor.name} is "
