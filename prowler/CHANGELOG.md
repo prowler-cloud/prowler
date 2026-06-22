@@ -42,6 +42,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_directory_sync_object_takeover_blocked` check for the M365 provider, verifying that hybrid Entra tenants block cloud object takeover through both soft-match and hard-match directory synchronization [(#11098)](https://github.com/prowler-cloud/prowler/pull/11098)
 - `entra_conditional_access_policy_no_deleted_object_references` check for M365 provider [(#11236)](https://github.com/prowler-cloud/prowler/pull/11236)
 - `aks_cluster_defender_enabled` check for Azure provider, verifying that AKS clusters have Microsoft Defender security monitoring enabled [(#11028)](https://github.com/prowler-cloud/prowler/pull/11028)
+- `recovery_vault_has_protected_items` check for Azure provider, verifying that Recovery Services vaults have at least one protected backup item [(#11048)](https://github.com/prowler-cloud/prowler/pull/11048)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the GCP provider, mapping existing GCP checks across the five DORA pillars [(#11642)](https://github.com/prowler-cloud/prowler/pull/11642)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Cloudflare provider, mapping existing Cloudflare edge/network checks across the applicable DORA pillars [(#11645)](https://github.com/prowler-cloud/prowler/pull/11645)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the AlibabaCloud provider, mapping existing AlibabaCloud checks across the applicable DORA pillars [(#11646)](https://github.com/prowler-cloud/prowler/pull/11646)
@@ -262,7 +263,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
 - 8 Gmail attachment safety and spoofing protection checks for Google Workspace provider using the Cloud Identity Policy API [(#10980)](https://github.com/prowler-cloud/prowler/pull/10980)
 - `bedrock_prompt_encrypted_with_cmk` check for AWS provider [(#10905)](https://github.com/prowler-cloud/prowler/pull/10905)
-- `recovery_vault_has_protected_items` check for Azure provider, verifying that Recovery Services vaults have at least one protected backup item [(#11048)](https://github.com/prowler-cloud/prowler/pull/11048)
 
 ### 🔄 Changed
 
