@@ -1,9 +1,26 @@
 from unittest import mock
 
+import pytest
+
+from prowler.providers.azure.services.aks.aks_service import Cluster
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
+
+
+def build_cluster(auto_upgrade_channel):
+    return Cluster(
+        id="/sub/rg/cluster1",
+        name="test-cluster",
+        public_fqdn="test.azmk8s.io",
+        private_fqdn=None,
+        network_policy=None,
+        agent_pool_profiles=[],
+        rbac_enabled=True,
+        location="eastus",
+        auto_upgrade_channel=auto_upgrade_channel,
+    )
 
 
 class Test_aks_cluster_auto_upgrade_enabled:
@@ -46,9 +63,8 @@ class Test_aks_cluster_auto_upgrade_enabled:
             from prowler.providers.azure.services.aks.aks_cluster_auto_upgrade_enabled.aks_cluster_auto_upgrade_enabled import (
                 aks_cluster_auto_upgrade_enabled,
             )
-            from prowler.providers.azure.services.aks.aks_service import Cluster
 
-            cluster = Cluster(id="/sub/rg/cluster1", name="test-cluster", public_fqdn="test.azmk8s.io", private_fqdn=None, network_policy=None, agent_pool_profiles=[], rbac_enabled=True, location="eastus", auto_upgrade_channel="stable")
+            cluster = build_cluster(auto_upgrade_channel="stable")
             aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {cluster.id: cluster}}
 
             check = aks_cluster_auto_upgrade_enabled()
@@ -56,7 +72,8 @@ class Test_aks_cluster_auto_upgrade_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
 
-    def test_fail(self):
+    @pytest.mark.parametrize("auto_upgrade_channel", [None, "", "none", "None"])
+    def test_fail(self, auto_upgrade_channel):
         aks_client = mock.MagicMock
 
         with (
@@ -72,9 +89,8 @@ class Test_aks_cluster_auto_upgrade_enabled:
             from prowler.providers.azure.services.aks.aks_cluster_auto_upgrade_enabled.aks_cluster_auto_upgrade_enabled import (
                 aks_cluster_auto_upgrade_enabled,
             )
-            from prowler.providers.azure.services.aks.aks_service import Cluster
 
-            cluster = Cluster(id="/sub/rg/cluster1", name="test-cluster", public_fqdn="test.azmk8s.io", private_fqdn=None, network_policy=None, agent_pool_profiles=[], rbac_enabled=True, location="eastus", auto_upgrade_channel=None)
+            cluster = build_cluster(auto_upgrade_channel=auto_upgrade_channel)
             aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {cluster.id: cluster}}
 
             check = aks_cluster_auto_upgrade_enabled()

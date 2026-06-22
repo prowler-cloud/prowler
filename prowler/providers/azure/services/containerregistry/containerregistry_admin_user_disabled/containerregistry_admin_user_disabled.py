@@ -9,17 +9,20 @@ class containerregistry_admin_user_disabled(Check):
         findings = []
 
         for subscription, registries in containerregistry_client.registries.items():
+            subscription_name = containerregistry_client.subscriptions.get(
+                subscription, subscription
+            )
             for container_registry_info in registries.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=container_registry_info
                 )
                 report.subscription = subscription
                 report.status = "FAIL"
-                report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} has its admin user enabled."
+                report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription_name} ({subscription}) has its admin user enabled."
 
                 if not container_registry_info.admin_user_enabled:
                     report.status = "PASS"
-                    report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription} has its admin user disabled."
+                    report.status_extended = f"Container Registry {container_registry_info.name} from subscription {subscription_name} ({subscription}) has its admin user disabled."
 
                 findings.append(report)
 

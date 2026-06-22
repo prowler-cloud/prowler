@@ -19,6 +19,9 @@ class vm_sufficient_daily_backup_retention_period(Check):
         )
 
         for subscription, vms in vm_client.virtual_machines.items():
+            subscription_name = recovery_client.subscriptions.get(
+                subscription, subscription
+            )
             vaults = recovery_client.vaults.get(subscription, {})
             for vm in vms.values():
                 backup_found = False
@@ -44,9 +47,9 @@ class vm_sufficient_daily_backup_retention_period(Check):
                     report.subscription = subscription
                     if retention_days >= min_retention_days:
                         report.status = "PASS"
-                        report.status_extended = f"VM {vm.resource_name} in subscription {subscription} has a daily backup retention period of {retention_days} days (minimum required: {min_retention_days})."
+                        report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} ({subscription}) has a daily backup retention period of {retention_days} days (minimum required: {min_retention_days})."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"VM {vm.resource_name} in subscription {subscription} has insufficient daily backup retention period of {retention_days} days (minimum required: {min_retention_days})."
+                        report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} ({subscription}) has insufficient daily backup retention period of {retention_days} days (minimum required: {min_retention_days})."
                     findings.append(report)
         return findings

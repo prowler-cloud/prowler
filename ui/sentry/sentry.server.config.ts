@@ -1,10 +1,21 @@
 import * as Sentry from "@sentry/nextjs";
 
-const SENTRY_DSN = process.env.SENTRY_DSN;
+import { readEnv } from "@/lib/runtime-env";
+
+const sentryDsn = readEnv("UI_SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN");
+const sentryEnvironment = readEnv(
+  "UI_SENTRY_ENVIRONMENT",
+  "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
+);
 
 // Only initialize Sentry if DSN is configured
-if (SENTRY_DSN) {
-  const isProduction = process.env.SENTRY_ENVIRONMENT === "pro";
+if (sentryDsn) {
+  // Default to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT never
+  // runs in dev mode (100% sampling); only an explicit "local" enables it.
+  // Mirrors the browser SDK (instrumentation-client.ts) so all runtimes resolve
+  // the env identically.
+  const environment = sentryEnvironment ?? "production";
+  const isDevelopment = environment === "local";
 
   /**
    * Server-side Sentry configuration
@@ -16,18 +27,18 @@ if (SENTRY_DSN) {
    */
   Sentry.init({
     // 📍 DSN - Data Source Name (identifies your Sentry project)
-    dsn: SENTRY_DSN,
+    dsn: sentryDsn,
 
     // 🌍 Environment configuration
-    environment: process.env.SENTRY_ENVIRONMENT || "local",
+    environment,
 
     // 📦 Release tracking
     release: process.env.SENTRY_RELEASE,
 
     // 📊 Sample Rates - Performance monitoring
     // 100% in dev (test everything), 50% in production (balance visibility with costs)
-    tracesSampleRate: isProduction ? 0.5 : 1.0,
-    profilesSampleRate: isProduction ? 0.5 : 1.0,
+    tracesSampleRate: isDevelopment ? 1.0 : 0.5,
+    profilesSampleRate: isDevelopment ? 1.0 : 0.5,
 
     // 🔌 Integrations
     integrations: [

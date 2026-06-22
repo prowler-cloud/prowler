@@ -1,7 +1,9 @@
 from unittest import mock
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
         self,
     ):
         monitor_client = mock.MagicMock
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.diagnostics_settings = {}
 
         with (
@@ -33,6 +36,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
 
     def test_no_diagnostic_settings(self):
         monitor_client = mock.MagicMock
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
         with (
             mock.patch(
@@ -54,7 +58,9 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
 
     def test_diagnostic_settings_configured(self):
         monitor_client = mock.MagicMock
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -190,7 +196,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
                 assert result[0].resource_name == "storageaccountname1"
                 assert (
                     result[0].status_extended
-                    == f"Blob public access enabled in storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][0].name} storing activity logs in subscription {AZURE_SUBSCRIPTION_ID}."
+                    == f"Blob public access enabled in storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][0].name} storing activity logs in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
                 )
                 assert result[1].subscription == AZURE_SUBSCRIPTION_ID
                 assert result[1].status == "PASS"
@@ -202,5 +208,5 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
                 assert result[1].resource_name == "storageaccountname2"
                 assert (
                     result[1].status_extended
-                    == f"Blob public access disabled in storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][1].name} storing activity logs in subscription {AZURE_SUBSCRIPTION_ID}."
+                    == f"Blob public access disabled in storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][1].name} storing activity logs in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
                 )

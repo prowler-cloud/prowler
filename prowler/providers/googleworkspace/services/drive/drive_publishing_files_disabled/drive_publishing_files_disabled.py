@@ -19,7 +19,10 @@ class drive_publishing_files_disabled(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.domain_resource,
+                resource=drive_client.policies,
+                resource_id="drivePolicies",
+                resource_name="Drive Policies",
+                customer_id=drive_client.provider.identity.customer_id,
             )
 
             allow_publishing = drive_client.policies.allow_publishing_files
