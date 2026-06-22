@@ -8,7 +8,8 @@ from tests.providers.gcp.gcp_fixtures import (
 
 _CHECK_PATH = (
     "prowler.providers.gcp.services.cloudfunction."
-    "cloudfunction_function_inside_vpc.cloudfunction_function_inside_vpc"
+    "cloudfunction_function_not_publicly_accessible."
+    "cloudfunction_function_not_publicly_accessible"
 )
 _CLIENT_PATH = f"{_CHECK_PATH}.cloudfunction_client"
 
@@ -20,7 +21,7 @@ def _function_id(name: str) -> str:
     )
 
 
-class Test_cloudfunction_function_inside_vpc:
+class Test_cloudfunction_function_not_publicly_accessible:
     def test_no_functions(self):
         cloudfunction_client = mock.MagicMock()
 
@@ -34,17 +35,17 @@ class Test_cloudfunction_function_inside_vpc:
                 new=cloudfunction_client,
             ),
         ):
-            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_inside_vpc.cloudfunction_function_inside_vpc import (
-                cloudfunction_function_inside_vpc,
+            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_not_publicly_accessible.cloudfunction_function_not_publicly_accessible import (
+                cloudfunction_function_not_publicly_accessible,
             )
 
             cloudfunction_client.functions = []
 
-            check = cloudfunction_function_inside_vpc()
+            check = cloudfunction_function_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
 
-    def test_function_with_vpc_connector(self):
+    def test_function_private(self):
         cloudfunction_client = mock.MagicMock()
 
         with (
@@ -57,42 +58,38 @@ class Test_cloudfunction_function_inside_vpc:
                 new=cloudfunction_client,
             ),
         ):
-            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_inside_vpc.cloudfunction_function_inside_vpc import (
-                cloudfunction_function_inside_vpc,
+            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_not_publicly_accessible.cloudfunction_function_not_publicly_accessible import (
+                cloudfunction_function_not_publicly_accessible,
             )
             from prowler.providers.gcp.services.cloudfunction.cloudfunction_service import (
                 Function,
             )
 
-            connector = (
-                f"projects/{GCP_PROJECT_ID}/locations/{GCP_US_CENTER1_LOCATION}"
-                f"/connectors/my-connector"
-            )
             cloudfunction_client.functions = [
                 Function(
-                    id=_function_id("fn-vpc"),
-                    name="fn-vpc",
+                    id=_function_id("fn-private"),
+                    name="fn-private",
                     project_id=GCP_PROJECT_ID,
                     location=GCP_US_CENTER1_LOCATION,
                     state="ACTIVE",
-                    vpc_connector=connector,
+                    publicly_accessible=False,
                 )
             ]
 
-            check = cloudfunction_function_inside_vpc()
+            check = cloudfunction_function_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Cloud Function fn-vpc is connected to a VPC via connector: {connector}."
+                == "Cloud Function fn-private is not publicly accessible."
             )
-            assert result[0].resource_id == "fn-vpc"
-            assert result[0].resource_name == "fn-vpc"
+            assert result[0].resource_id == "fn-private"
+            assert result[0].resource_name == "fn-private"
             assert result[0].location == GCP_US_CENTER1_LOCATION
             assert result[0].project_id == GCP_PROJECT_ID
 
-    def test_function_without_vpc_connector(self):
+    def test_function_publicly_accessible(self):
         cloudfunction_client = mock.MagicMock()
 
         with (
@@ -105,8 +102,8 @@ class Test_cloudfunction_function_inside_vpc:
                 new=cloudfunction_client,
             ),
         ):
-            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_inside_vpc.cloudfunction_function_inside_vpc import (
-                cloudfunction_function_inside_vpc,
+            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_not_publicly_accessible.cloudfunction_function_not_publicly_accessible import (
+                cloudfunction_function_not_publicly_accessible,
             )
             from prowler.providers.gcp.services.cloudfunction.cloudfunction_service import (
                 Function,
@@ -119,24 +116,24 @@ class Test_cloudfunction_function_inside_vpc:
                     project_id=GCP_PROJECT_ID,
                     location=GCP_US_CENTER1_LOCATION,
                     state="ACTIVE",
-                    vpc_connector=None,
+                    publicly_accessible=True,
                 )
             ]
 
-            check = cloudfunction_function_inside_vpc()
+            check = cloudfunction_function_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == "Cloud Function fn-public is not connected to any VPC network."
+            assert result[0].status_extended == (
+                "Cloud Function fn-public is publicly invocable "
+                "(allUsers or allAuthenticatedUsers IAM binding detected)."
             )
             assert result[0].resource_id == "fn-public"
             assert result[0].resource_name == "fn-public"
             assert result[0].location == GCP_US_CENTER1_LOCATION
             assert result[0].project_id == GCP_PROJECT_ID
 
-    def test_function_with_empty_vpc_connector(self):
+    def test_multiple_functions_mixed(self):
         cloudfunction_client = mock.MagicMock()
 
         with (
@@ -149,8 +146,8 @@ class Test_cloudfunction_function_inside_vpc:
                 new=cloudfunction_client,
             ),
         ):
-            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_inside_vpc.cloudfunction_function_inside_vpc import (
-                cloudfunction_function_inside_vpc,
+            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_not_publicly_accessible.cloudfunction_function_not_publicly_accessible import (
+                cloudfunction_function_not_publicly_accessible,
             )
             from prowler.providers.gcp.services.cloudfunction.cloudfunction_service import (
                 Function,
@@ -158,19 +155,30 @@ class Test_cloudfunction_function_inside_vpc:
 
             cloudfunction_client.functions = [
                 Function(
-                    id=_function_id("fn-empty"),
-                    name="fn-empty",
+                    id=_function_id("fn-private"),
+                    name="fn-private",
                     project_id=GCP_PROJECT_ID,
                     location=GCP_US_CENTER1_LOCATION,
                     state="ACTIVE",
-                    vpc_connector="",
-                )
+                    publicly_accessible=False,
+                ),
+                Function(
+                    id=_function_id("fn-public"),
+                    name="fn-public",
+                    project_id=GCP_PROJECT_ID,
+                    location=GCP_US_CENTER1_LOCATION,
+                    state="ACTIVE",
+                    publicly_accessible=True,
+                ),
             ]
 
-            check = cloudfunction_function_inside_vpc()
+            check = cloudfunction_function_not_publicly_accessible()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert len(result) == 2
+
+            by_id = {r.resource_id: r for r in result}
+            assert by_id["fn-private"].status == "PASS"
+            assert by_id["fn-public"].status == "FAIL"
 
     def test_inactive_function_skipped(self):
         cloudfunction_client = mock.MagicMock()
@@ -185,8 +193,8 @@ class Test_cloudfunction_function_inside_vpc:
                 new=cloudfunction_client,
             ),
         ):
-            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_inside_vpc.cloudfunction_function_inside_vpc import (
-                cloudfunction_function_inside_vpc,
+            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_not_publicly_accessible.cloudfunction_function_not_publicly_accessible import (
+                cloudfunction_function_not_publicly_accessible,
             )
             from prowler.providers.gcp.services.cloudfunction.cloudfunction_service import (
                 Function,
@@ -194,15 +202,15 @@ class Test_cloudfunction_function_inside_vpc:
 
             cloudfunction_client.functions = [
                 Function(
-                    id=_function_id("fn-deploy"),
-                    name="fn-deploy",
+                    id=_function_id("fn-deleting"),
+                    name="fn-deleting",
                     project_id=GCP_PROJECT_ID,
                     location=GCP_US_CENTER1_LOCATION,
-                    state="DEPLOYING",
-                    vpc_connector=None,
+                    state="DELETING",
+                    publicly_accessible=True,
                 )
             ]
 
-            check = cloudfunction_function_inside_vpc()
+            check = cloudfunction_function_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
