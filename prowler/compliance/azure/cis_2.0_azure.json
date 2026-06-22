@@ -3302,9 +3302,7 @@
     {
       "Id": "9.11",
       "Description": "Ensure Azure Key Vaults are Used to Store Secrets",
-      "Checks": [
-        "entra_app_registration_credential_not_expired"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9 AppService",

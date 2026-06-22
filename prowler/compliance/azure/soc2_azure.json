@@ -309,8 +309,7 @@
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
         "storage_ensure_minimum_tls_version_12",
-        "network_subnet_nsg_associated",
-        "entra_app_registration_credential_not_expired"
+        "network_subnet_nsg_associated"
       ]
     },
     {

@@ -1302,7 +1302,6 @@
       "Id": "9.2.c.i",
       "Description": "generating different keys for cryptographic systems and applications;",
       "Checks": [
-        "entra_app_registration_credential_not_expired",
         "keyvault_rbac_key_expiration_set",
         "keyvault_rbac_secret_expiration_set",
         "monitor_storage_account_with_activity_logs_cmk_encrypted",
