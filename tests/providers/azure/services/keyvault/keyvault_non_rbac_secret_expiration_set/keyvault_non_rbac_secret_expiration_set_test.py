@@ -4,7 +4,9 @@ from uuid import uuid4
 from azure.mgmt.keyvault.v2023_07_01.models import SecretAttributes, VaultProperties
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -12,6 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_keyvault_non_rbac_secret_expiration_set:
     def test_no_key_vaults(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_client.key_vaults = {}
 
         with (
@@ -34,6 +37,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
 
     def test_no_secrets(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -76,6 +80,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
 
     def test_key_vaults_invalid_secrets(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
         secret_name = "Secret"
@@ -128,7 +133,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Secret {secret_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have an expiration date set."
+                == f"Secret {secret_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have an expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == secret_name
@@ -137,6 +142,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
 
     def test_key_vaults_invalid_multiple_secrets(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
         secret1_name = "Secret1"
@@ -202,6 +208,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
 
     def test_key_vaults_valid_secrets(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
         secret_name = "name"
@@ -254,7 +261,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Secret {secret_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has an expiration date set."
+                == f"Secret {secret_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has an expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == secret_name
@@ -263,6 +270,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
 
     def test_disabled_secret_skipped(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
 

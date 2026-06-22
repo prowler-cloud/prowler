@@ -20,8 +20,8 @@ The most common high level steps to create a new check are:
 3. Create a check-specific folder. The path should follow this pattern: `prowler/providers/<provider>/services/<service>/<check_name_want_to_implement>`. Adhere to the [Naming Format for Checks](#naming-format-for-checks).
 4. Populate the folder with files as specified in [File Creation](#file-creation).
 5. Run the check locally to ensure it works as expected. For checking you can use the CLI in the next way:
-    - To ensure the check has been detected by Prowler: `poetry run python prowler-cli.py <provider> --list-checks | grep <check_name>`.
-    - To run the check, to find possible issues: `poetry run python prowler-cli.py <provider> --log-level ERROR --verbose --check <check_name>`.
+    - To ensure the check has been detected by Prowler: `uv run python prowler-cli.py <provider> --list-checks | grep <check_name>`.
+    - To run the check, to find possible issues: `uv run python prowler-cli.py <provider> --log-level ERROR --verbose --check <check_name>`.
 6. Create comprehensive tests for the check that cover multiple scenarios including both PASS (compliant) and FAIL (non-compliant) cases. For detailed information about test structure and implementation guidelines, refer to the [Testing](/developer-guide/unit-testing) documentation.
 7. If the check and its corresponding tests are working as expected, you can submit a PR to Prowler.
 

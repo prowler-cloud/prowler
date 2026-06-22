@@ -92,9 +92,7 @@ class Entra(AzureService):
                 try:
                     while users_response:
                         for user in getattr(users_response, "value", []) or []:
-                            sign_in_activity = getattr(
-                                user, "sign_in_activity", None
-                            )
+                            sign_in_activity = getattr(user, "sign_in_activity", None)
                             last_sign_in = (
                                 getattr(
                                     sign_in_activity,
@@ -451,14 +449,10 @@ class Entra(AzureService):
                     while apps_response:
                         for app in getattr(apps_response, "value", []) or []:
                             credentials = []
-                            for cred in getattr(
-                                app, "password_credentials", []
-                            ) or []:
+                            for cred in getattr(app, "password_credentials", []) or []:
                                 credentials.append(
                                     AppCredential(
-                                        display_name=getattr(
-                                            cred, "display_name", ""
-                                        )
+                                        display_name=getattr(cred, "display_name", "")
                                         or "",
                                         credential_type="password",
                                         end_date_time=getattr(
@@ -466,14 +460,10 @@ class Entra(AzureService):
                                         ),
                                     )
                                 )
-                            for cred in getattr(
-                                app, "key_credentials", []
-                            ) or []:
+                            for cred in getattr(app, "key_credentials", []) or []:
                                 credentials.append(
                                     AppCredential(
-                                        display_name=getattr(
-                                            cred, "display_name", ""
-                                        )
+                                        display_name=getattr(cred, "display_name", "")
                                         or "",
                                         credential_type="certificate",
                                         end_date_time=getattr(
@@ -510,7 +500,9 @@ class Entra(AzureService):
         auth_methods_policy = {}
         try:
             for tenant, client in self.clients.items():
-                policy_response = await client.policies.authentication_methods_policy.get()
+                policy_response = (
+                    await client.policies.authentication_methods_policy.get()
+                )
 
                 if not policy_response:
                     auth_methods_policy[tenant] = None
@@ -530,9 +522,7 @@ class Entra(AzureService):
                     else None
                 )
                 registration_enforcement_state = (
-                    getattr(reg_campaign, "state", None)
-                    if reg_campaign
-                    else None
+                    getattr(reg_campaign, "state", None) if reg_campaign else None
                 )
 
                 # Parse authentication method configurations
@@ -549,8 +539,9 @@ class Entra(AzureService):
                     # Extract method name from odata_type
                     # e.g. "#microsoft.graph.microsoftAuthenticatorAuthenticationMethodConfiguration"
                     method_name = (
-                        odata_type.split(".")[-1]
-                        .replace("AuthenticationMethodConfiguration", "")
+                        odata_type.split(".")[-1].replace(
+                            "AuthenticationMethodConfiguration", ""
+                        )
                         if odata_type
                         else getattr(config, "id", "unknown")
                     )

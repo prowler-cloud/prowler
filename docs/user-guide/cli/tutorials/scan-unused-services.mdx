@@ -18,9 +18,11 @@ prowler <provider> --scan-unused-services
 
 #### ACM (AWS Certificate Manager)
 
-Certificates stored in ACM without active usage in AWS resources are excluded. By default, Prowler only scans actively used certificates. Unused certificates will not be checked if they are expired, if their expiring date is near or if they are good.
+Certificates stored in ACM without active usage in AWS resources are excluded. By default, Prowler only scans actively used certificates. Unused certificates are not evaluated for expiration, transparency logging, or weak key algorithms.
 
 - `acm_certificates_expiration_check`
+- `acm_certificates_transparency_logs_enabled`
+- `acm_certificates_with_secure_key_algorithms`
 
 #### Athena
 
@@ -28,6 +30,13 @@ Upon AWS account creation, Athena provisions a default primary workgroup for the
 
 - `athena_workgroup_encryption`
 - `athena_workgroup_enforce_configuration`
+- `athena_workgroup_logging_enabled`
+
+#### Amazon Bedrock
+
+Generative AI workloads benefit from private VPC endpoint connectivity to keep prompt and model traffic off the public internet. Prowler only evaluates this configuration for VPCs in use (with active ENIs).
+
+- `bedrock_vpc_endpoints_configured`
 
 #### AWS CloudTrail
 
@@ -38,15 +47,23 @@ AWS CloudTrail should have at least one trail with a data event to record all S3
 
 #### AWS Elastic Compute Cloud (EC2)
 
-If Amazon Elastic Block Store (EBS) default encyption is not enabled, sensitive data at rest will remain unprotected in EC2. However, Prowler will only generate a finding if EBS volumes exist where default encryption could be enforced.
+If Amazon Elastic Block Store (EBS) default encryption is not enabled, sensitive data at rest remains unprotected in EC2. Prowler only generates a finding if EBS volumes exist where default encryption could be enforced.
 
 - `ec2_ebs_default_encryption`
+
+**EBS Snapshot Public Access**: Public EBS snapshots can leak data. Prowler only evaluates the account-level block setting if EBS snapshots exist in the account.
+
+- `ec2_ebs_snapshot_account_block_public_access`
+
+**EC2 Instance Metadata Service (IMDS)**: Enforcing IMDSv2 at the account level mitigates SSRF-based credential theft. Prowler only evaluates the account-level setting if EC2 instances exist in the account.
+
+- `ec2_instance_account_imdsv2_enabled`
 
 **Security Groups**: Misconfigured security groups increase the attack surface.
 
 Prowler scans only attached security groups to report vulnerabilities in actively used configurations. Applies to:
 
-- 15 security group-related checks, including open ports and ingress/egress traffic rules.
+- 20 security group-related checks, including open ports and ingress/egress traffic rules.
 
     - `ec2_securitygroup_allow_ingress_from_internet_to_port_X`
     - `ec2_securitygroup_default_restrict_traffic`
@@ -55,6 +72,18 @@ Prowler scans only attached security groups to report vulnerabilities in activel
 - 3 network ACL-related checks, ensuring only active ACLs with open ports are flagged.
 
     - `ec2_networkacl_allow_ingress_X_port`
+
+#### AWS Identity and Access Management (IAM)
+
+Customer-managed IAM policies that are not attached to any user, group, or role grant no effective permissions until a principal is bound to them. Prowler treats such policies as dormant by default and skips the content-evaluation checks below when `--scan-unused-services` is not set. Enable the flag to surface findings on unattached policies as well.
+
+- `iam_policy_allows_privilege_escalation`
+- `iam_policy_no_full_access_to_cloudtrail`
+- `iam_policy_no_full_access_to_kms`
+- `iam_policy_no_wildcard_marketplace_subscribe`
+- `iam_no_custom_policy_permissive_role_assumption`
+
+The dedicated `iam_customer_unattached_policy_no_administrative_privileges` check still inspects unattached policies regardless of the flag, since its purpose is to highlight dormant administrator privileges.
 
 #### AWS Glue
 
@@ -71,6 +100,12 @@ Amazon Inspector is a vulnerability discovery service that automates continuous 
 
 - `inspector2_is_enabled`
 
+#### AWS Key Management Service (KMS)
+
+Customer managed Customer Master Keys (CMKs) in the `Disabled` state cannot be used for cryptographic operations, so Prowler skips the unintentional-deletion check on them by default. Enable the flag to evaluate disabled CMKs as well.
+
+- `kms_cmk_not_deleted_unintentionally`
+
 #### Amazon Macie
 
 Amazon Macie leverages machine learning to automatically discover, classify, and protect sensitive data in S3 buckets. Prowler only generates findings if Macie is disabled and there are S3 buckets in the AWS account.
@@ -82,6 +117,15 @@ Amazon Macie leverages machine learning to automatically discover, classify, and
 A network firewall is essential for monitoring and controlling traffic within a Virtual Private Cloud (VPC). Prowler only alerts for VPCs in use, specifically those containing ENIs (Elastic Network Interfaces).
 
 - `networkfirewall_in_all_vpc`
+
+#### Amazon Relational Database Service (RDS)
+
+RDS event subscriptions notify operators of critical database events. Prowler only evaluates these subscription checks when RDS clusters or instances exist in the account.
+
+- `rds_cluster_critical_event_subscription`
+- `rds_instance_critical_event_subscription`
+- `rds_instance_event_subscription_parameter_groups`
+- `rds_instance_event_subscription_security_groups`
 
 #### Amazon S3
 
@@ -98,6 +142,10 @@ VPC settings directly impact network security and availability.
 - VPC Flow Logs: Provide visibility into network traffic for security monitoring. Prowler only checks if Flow Logs are enabled for VPCs in use, i.e., those with active ENIs.
 
     - `vpc_flow_logs_enabled`
+
+- VPC Endpoint for EC2: Routes EC2 API calls through a private VPC endpoint to keep traffic off the public internet. Prowler only evaluates this configuration for VPCs in use, i.e., those with active ENIs.
+
+    - `vpc_endpoint_for_ec2_enabled`
 
 - VPC Subnet Public IP Restrictions: Prevent unintended exposure of resources to the internet. Prowler only checks this configuration for VPCs in use, i.e., those with active ENIs.
 

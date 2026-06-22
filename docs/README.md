@@ -10,10 +10,10 @@ This repository contains the Prowler Open Source documentation powered by [Mintl
 
 ## Local Development
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview documentation changes locally:
+Install a reviewed version of the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview documentation changes locally:
 
 ```bash
-npm i -g mint
+npm install --global mint@4.2.560
 ```
 
 Run the following command at the root of your documentation (where `mint.json` is located):

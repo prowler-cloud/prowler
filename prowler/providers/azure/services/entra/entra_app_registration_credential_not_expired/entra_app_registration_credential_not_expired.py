@@ -7,6 +7,15 @@ EXPIRY_WARNING_DAYS = 30
 
 
 class entra_app_registration_credential_not_expired(Check):
+    """
+    Ensure Microsoft Entra ID app registration credentials are not expired or expiring soon.
+
+    This check evaluates each app registration's password secrets and certificate credentials. A credential is reported individually and flagged when it is already expired, expiring within 30 days, or has no expiration date. Apps with no credentials are skipped.
+
+    - PASS: The credential is valid for more than 30 days.
+    - FAIL: The credential is expired, expiring within 30 days, or has no expiration date.
+    """
+
     def execute(self) -> Check_Report_Azure:
         findings = []
 
@@ -16,9 +25,7 @@ class entra_app_registration_credential_not_expired(Check):
                     continue
 
                 for credential in app.credentials:
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource=app
-                    )
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                     report.subscription = f"Tenant: {tenant_domain}"
                     report.resource_name = (
                         f"{app.name} ({credential.credential_type}: "
@@ -48,14 +55,16 @@ class entra_app_registration_credential_not_expired(Check):
                             report.status = "FAIL"
                             report.status_extended = (
                                 f"App '{app.name}' has a {credential.credential_type} "
-                                f"credential expiring in {days_left} days."
+                                f"credential expiring in {days_left} days (within the "
+                                f"{EXPIRY_WARNING_DAYS}-day rotation threshold); rotate it soon."
                             )
                         else:
                             days_left = (end - now).days
                             report.status = "PASS"
                             report.status_extended = (
                                 f"App '{app.name}' has a {credential.credential_type} "
-                                f"credential valid for {days_left} more days."
+                                f"credential valid for {days_left} more days (beyond the "
+                                f"{EXPIRY_WARNING_DAYS}-day rotation threshold)."
                             )
 
                     findings.append(report)

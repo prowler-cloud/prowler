@@ -493,7 +493,8 @@
         "keyvault_non_rbac_secret_expiration_set",
         "keyvault_logging_enabled",
         "keyvault_private_endpoints",
-        "keyvault_access_only_through_private_endpoints"
+        "keyvault_access_only_through_private_endpoints",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {

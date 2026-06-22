@@ -17,6 +17,9 @@ class keyvault_access_only_through_private_endpoints(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
+            subscription_name = keyvault_client.subscriptions.get(
+                subscription, subscription
+            )
             for keyvault in key_vaults:
                 if (
                     keyvault.properties
@@ -29,9 +32,9 @@ class keyvault_access_only_through_private_endpoints(Check):
 
                     if keyvault.properties.public_network_access_disabled:
                         report.status = "PASS"
-                        report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has public network access disabled and is using private endpoints."
+                        report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription_name} ({subscription}) has public network access disabled and is using private endpoints."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has public network access enabled while using private endpoints."
+                        report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription_name} ({subscription}) has public network access enabled while using private endpoints."
                     findings.append(report)
         return findings

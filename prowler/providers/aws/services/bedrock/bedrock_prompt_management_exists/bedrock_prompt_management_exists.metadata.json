@@ -34,6 +34,8 @@
     "gen-ai"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
+  "RelatedTo": [
+    "bedrock_prompt_encrypted_with_cmk"
+  ],
   "Notes": "Results are generated per scanned region. Regions where `ListPrompts` cannot be queried are omitted from the findings."
 }

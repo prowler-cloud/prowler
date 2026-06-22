@@ -80,7 +80,7 @@ def basic_csa_compliance_data():
         tenant_id="tenant-123",
         scan_id="scan-456",
         provider_id="provider-789",
-        compliance_id="csa_ccm_4.0_aws",
+        compliance_id="csa_ccm_4.0",
         framework="CSA-CCM",
         name="CSA Cloud Controls Matrix v4.0",
         version="4.0",

@@ -13,8 +13,8 @@
   "Risk": "If Access Checker suggests broader audiences or public visibility, users may **inadvertently widen access** to a file beyond the people they intended to share with. This is a common cause of unintentional internal or external over-sharing.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/60781",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/manage-external-sharing-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

@@ -19,7 +19,10 @@ class drive_internal_users_distribute_content(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.domain_resource,
+                resource=drive_client.policies,
+                resource_id="drivePolicies",
+                resource_name="Drive Policies",
+                customer_id=drive_client.provider.identity.customer_id,
             )
 
             allowed = drive_client.policies.allowed_parties_for_distributing_content

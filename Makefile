@@ -1,5 +1,34 @@
 .DEFAULT_GOAL:=help
 
+DEV_LOCAL := ./scripts/development/dev-local.sh
+
+.PHONY: dev dev-setup dev-attach dev-launch dev-stop dev-clean dev-wipe dev-status
+
+##@ Local Development
+dev: ## Start local API, worker, and database logs
+	$(DEV_LOCAL) all
+
+dev-setup: ## Bootstrap local dependencies, migrations, and fixtures
+	$(DEV_LOCAL) setup
+
+dev-attach: ## Attach to the local tmux development session
+	$(DEV_LOCAL) attach
+
+dev-launch: ## Start the local stack on fixed ports and attach
+	$(DEV_LOCAL) launch
+
+dev-stop: ## Stop the local tmux session and containers
+	$(DEV_LOCAL) kill
+
+dev-clean: ## Remove stopped local development containers
+	$(DEV_LOCAL) clean
+
+dev-wipe: ## Stop everything and delete local development data
+	$(DEV_LOCAL) wipe
+
+dev-status: ## Show local development container status
+	$(DEV_LOCAL) status
+
 ##@ Testing
 test:   ## Test with pytest
 	rm -rf .coverage && \
@@ -23,7 +52,7 @@ format: ## Format Code
 
 lint: ## Lint Code
 	@echo "Running flake8..."
-	flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
+	flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude .venv,contrib
 	@echo "Running black... "
 	black --check .
 	@echo "Running pylint..."
@@ -35,7 +64,7 @@ pypi-clean: ## Delete the distribution files
 
 pypi-build: ## Build package
 	$(MAKE) pypi-clean && \
-	poetry build
+	uv build
 
 pypi-upload: ## Upload package
 	python3 -m twine upload --repository pypi dist/*
@@ -56,4 +85,3 @@ run-api-dev: ## Start development environment with API, PostgreSQL, Valkey, MCP,
 
 ##@ Development Environment
 build-and-run-api-dev: build-no-cache-dev run-api-dev
-

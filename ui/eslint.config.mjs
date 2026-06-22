@@ -41,6 +41,9 @@ export default [
   // TypeScript and React files configuration
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
+    linterOptions: {
+      reportUnusedDisableDirectives: "error",
+    },
     plugins: {
       "@typescript-eslint": tsPlugin,
       "@next/next": nextPlugin,

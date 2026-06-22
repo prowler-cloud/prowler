@@ -331,8 +331,8 @@ class TestFinding:
         assert finding_output.auth_method == "mock_identity_type: mock_identity_id"
         assert finding_output.account_organization_uid == "mock_tenant_id_1"
         assert finding_output.account_organization_name == "mock_tenant_domain"
-        assert finding_output.account_uid == "mock_subscription_name"
-        assert finding_output.account_name == "mock_subscription_id"
+        assert finding_output.account_uid == "mock_subscription_id"
+        assert finding_output.account_name == "mock_subscription_name"
         assert finding_output.resource_name == "test_resource_name"
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "us-west-1"
@@ -760,6 +760,87 @@ class TestFinding:
         assert finding_output.metadata.ServiceName == "service"
         assert finding_output.metadata.Severity == Severity.high
         assert finding_output.metadata.ResourceType == "mock_resource_type"
+
+    def _build_linode_check_output(self):
+        check_output = MagicMock()
+        check_output.resource_id = "12345"
+        check_output.resource_name = "test-instance"
+        check_output.resource_details = ""
+        check_output.resource_tags = {}
+        check_output.region = "us-east"
+        check_output.status = Status.PASS
+        check_output.status_extended = "Instance is compliant"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="linode")
+        check_output.resource = {}
+        check_output.compliance = {}
+        return check_output
+
+    def test_generate_output_linode(self):
+        """Test Linode output generation when the account ID is available."""
+        from prowler.providers.linode.models import LinodeIdentityInfo
+
+        provider = MagicMock()
+        provider.type = "linode"
+        provider.identity = LinodeIdentityInfo(
+            username="admin",
+            email="admin@example.com",
+            account_id="E1AF1B6C-1111-2222-3333-444455556666",
+        )
+
+        check_output = self._build_linode_check_output()
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert finding_output.provider == "linode"
+        assert finding_output.auth_method == "api_token"
+        assert finding_output.account_uid == "E1AF1B6C-1111-2222-3333-444455556666"
+        assert finding_output.account_name == "admin"
+
+    def test_generate_output_linode_without_account_id_falls_back_to_username(self):
+        """account_uid is required; when account_id is None it must fall back to
+        the username so findings are never silently dropped."""
+        from prowler.providers.linode.models import LinodeIdentityInfo
+
+        provider = MagicMock()
+        provider.type = "linode"
+        provider.identity = LinodeIdentityInfo(
+            username="admin",
+            email="admin@example.com",
+            account_id=None,
+        )
+
+        check_output = self._build_linode_check_output()
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        # Must not raise a ValidationError and must use the username fallback
+        assert finding_output.account_uid == "admin"
+
+    def test_generate_output_linode_without_account_id_or_username(self):
+        """When neither account_id nor username/email is available, account_uid
+        falls back to the literal provider name."""
+        from prowler.providers.linode.models import LinodeIdentityInfo
+
+        provider = MagicMock()
+        provider.type = "linode"
+        provider.identity = LinodeIdentityInfo(
+            username=None,
+            email=None,
+            account_id=None,
+        )
+
+        check_output = self._build_linode_check_output()
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert finding_output.account_uid == "linode"
 
     def test_generate_output_iac_remote(self):
         # Mock provider
@@ -1507,3 +1588,106 @@ class TestFinding:
 
         with pytest.raises(KeyError):
             Finding.transform_api_finding(dummy_finding, provider)
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    def test_generate_output_stackit(self):
+        provider = MagicMock()
+        provider.type = "stackit"
+        provider.auth_method = "service_account_key"
+        provider.identity.project_id = "test-project-id"
+        provider.identity.project_name = "test-project-name"
+
+        check_output = MagicMock()
+        check_output.resource_id = "test_resource_id"
+        check_output.resource_name = "test_resource_name"
+        check_output.resource_details = ""
+        check_output.location = "eu01"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="stackit")
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "service_account_key"
+        assert finding_output.account_uid == "test-project-id"
+        assert finding_output.account_name == "test-project-name"
+        assert finding_output.resource_name == "test_resource_name"
+        assert finding_output.resource_uid == "test_resource_id"
+        assert finding_output.region == "eu01"
+        assert finding_output.status == Status.PASS
+        assert finding_output.muted is False
+
+    def test_transform_api_finding_stackit(self):
+        provider = MagicMock()
+        provider.type = "stackit"
+        provider.auth_method = "service_account_key"
+        provider.identity.project_id = "stackit-project-id"
+        provider.identity.project_name = "stackit-project-name"
+        dummy_finding = DummyAPIFinding()
+        dummy_finding.inserted_at = 1234567890
+        dummy_finding.scan = DummyScan(provider=provider)
+        dummy_finding.uid = "finding-uid-stackit"
+        dummy_finding.status = "PASS"
+        dummy_finding.status_extended = "StackIT check extended"
+        check_metadata = {
+            "provider": "stackit",
+            "checkid": "service_stackit_check_001",
+            "checktitle": "Test StackIT Check",
+            "checktype": [],
+            "servicename": "service",
+            "subservicename": "",
+            "severity": "high",
+            "resourcetype": "StackITResourceType",
+            "description": "StackIT check description",
+            "risk": "High risk",
+            "relatedurl": "",
+            "remediation": {
+                "code": {
+                    "nativeiac": "",
+                    "terraform": "",
+                    "cli": "",
+                    "other": "",
+                },
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_stackit_check_001",
+                },
+            },
+            "resourceidtemplate": "template",
+            "categories": ["encryption"],
+            "dependson": [],
+            "relatedto": [],
+            "notes": "StackIT notes",
+        }
+        dummy_finding.check_metadata = check_metadata
+        dummy_finding.raw_result = {}
+        dummy_finding.resource_name = "stackit-resource-name"
+        dummy_finding.resource_id = "stackit-resource-uid"
+        dummy_finding.location = "eu01"
+        dummy_finding.project_id = "stackit-project-id"
+        resource = DummyResource(
+            uid="stackit-resource-uid",
+            name="stackit-resource-name",
+            resource_arn="",
+            region="eu01",
+            tags=[],
+        )
+        dummy_finding.resources = DummyResources(resource)
+        dummy_finding.muted = False
+        finding_obj = Finding.transform_api_finding(dummy_finding, provider)
+        assert finding_obj.auth_method == "service_account_key"
+        assert finding_obj.account_uid == "stackit-project-id"
+        assert finding_obj.account_name == "stackit-project-name"
+        assert finding_obj.resource_name == "stackit-resource-name"
+        assert finding_obj.resource_uid == "stackit-resource-uid"
+        assert finding_obj.region == "eu01"

@@ -13,8 +13,8 @@
   "Risk": "Without shortened URL scanning, attackers can use **URL shortening services** to hide malicious destinations in phishing emails. Users cannot visually verify where the link leads, increasing the success rate of **phishing and credential harvesting** attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7676854",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/advanced-phishing-and-malware-protection",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
