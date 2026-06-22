@@ -1,8 +1,9 @@
-import { act, render, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useOrgSetupStore } from "@/store/organizations/store";
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { OrgLaunchScan } from "./org-launch-scan";
 
@@ -75,5 +76,73 @@ describe("OrgLaunchScan", () => {
     expect(toastPayload.title).toBe("Scan Launched");
     expect(toastPayload.action).toBeDefined();
     expect(toastPayload.action.props.children.props.href).toBe("/scans");
+  });
+
+  it("uses a single manual scan when schedules are unavailable", async () => {
+    // Given
+    launchOrganizationScansMock.mockResolvedValue({ successCount: 1 });
+    const onFooterChange = vi.fn();
+
+    render(
+      <OrgLaunchScan
+        onClose={vi.fn()}
+        onBack={vi.fn()}
+        onFooterChange={onFooterChange}
+        capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByText(/scheduled scans are not available for trial accounts/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+
+    // When
+    await waitFor(() => {
+      expect(onFooterChange).toHaveBeenCalled();
+    });
+    const footerConfig = onFooterChange.mock.calls.at(-1)?.[0];
+    await act(async () => {
+      footerConfig.onAction?.();
+    });
+
+    // Then
+    await waitFor(() => {
+      expect(launchOrganizationScansMock).toHaveBeenCalledTimes(1);
+    });
+    expect(launchOrganizationScansMock).toHaveBeenCalledWith(
+      ["provider-1"],
+      "single",
+    );
+  });
+
+  it("blocks manual scans when the trial scan limit is reached", async () => {
+    // Given
+    const onFooterChange = vi.fn();
+
+    render(
+      <OrgLaunchScan
+        onClose={vi.fn()}
+        onBack={vi.fn()}
+        onFooterChange={onFooterChange}
+        capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        isScanLimitReached
+      />,
+    );
+
+    // When
+    await waitFor(() => {
+      expect(onFooterChange).toHaveBeenCalled();
+    });
+    const footerConfig = onFooterChange.mock.calls.at(-1)?.[0];
+    await act(async () => {
+      footerConfig.onAction?.();
+    });
+
+    // Then
+    expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+    expect(footerConfig.actionDisabled).toBe(true);
+    expect(launchOrganizationScansMock).not.toHaveBeenCalled();
   });
 });

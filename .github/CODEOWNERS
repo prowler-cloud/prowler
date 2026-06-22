@@ -1,7 +1,6 @@
 # SDK
 /* @prowler-cloud/detection-remediation
 /prowler/ @prowler-cloud/detection-remediation
-/prowler/compliance/ @prowler-cloud/compliance
 /tests/ @prowler-cloud/detection-remediation
 /dashboard/ @prowler-cloud/detection-remediation
 /docs/ @prowler-cloud/detection-remediation

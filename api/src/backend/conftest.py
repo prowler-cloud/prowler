@@ -571,6 +571,12 @@ def providers_fixture(tenants_fixture):
         alias="vercel_testing",
         tenant_id=tenant.id,
     )
+    provider14 = Provider.objects.create(
+        provider="okta",
+        uid="acme.okta.com",
+        alias="okta_testing",
+        tenant_id=tenant.id,
+    )
 
     return (
         provider1,
@@ -586,6 +592,7 @@ def providers_fixture(tenants_fixture):
         provider11,
         provider12,
         provider13,
+        provider14,
     )
 
 

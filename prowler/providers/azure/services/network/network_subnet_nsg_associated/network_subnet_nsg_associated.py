@@ -12,6 +12,15 @@ EXCLUDED_SUBNET_NAMES = {
 
 
 class network_subnet_nsg_associated(Check):
+    """
+    Ensure every subnet has a Network Security Group (NSG) associated.
+
+    This check evaluates whether each subnet in every virtual network has an NSG associated to enforce inbound and outbound traffic filtering. Azure-managed subnets (e.g. GatewaySubnet, AzureFirewallSubnet, AzureBastionSubnet) are excluded because they must not have custom NSGs.
+
+    - PASS: The subnet has an NSG associated.
+    - FAIL: The subnet does not have an NSG associated.
+    """
+
     def execute(self) -> Check_Report_Azure:
         findings = []
 
@@ -21,9 +30,7 @@ class network_subnet_nsg_associated(Check):
                     if subnet.name in EXCLUDED_SUBNET_NAMES:
                         continue
 
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource=vnet
-                    )
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=vnet)
                     report.subscription = subscription_name
                     report.resource_name = f"{vnet.name}/{subnet.name}"
                     report.resource_id = subnet.id

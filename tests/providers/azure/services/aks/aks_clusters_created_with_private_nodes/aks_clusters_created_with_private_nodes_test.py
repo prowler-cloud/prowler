@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.aks.aks_service import Cluster
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_aks_clusters_created_with_private_nodes:
     def test_aks_no_subscriptions(self):
         aks_client = mock.MagicMock
+        aks_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         aks_client.clusters = {}
 
         with (
@@ -33,6 +36,7 @@ class Test_aks_clusters_created_with_private_nodes:
 
     def test_aks_subscription_empty(self):
         aks_client = mock.MagicMock
+        aks_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -55,6 +59,7 @@ class Test_aks_clusters_created_with_private_nodes:
 
     def test_aks_cluster_no_private_nodes(self):
         aks_client = mock.MagicMock
+        aks_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         cluster_id = str(uuid4())
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
@@ -91,7 +96,7 @@ class Test_aks_clusters_created_with_private_nodes:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Cluster 'cluster_name' was not created with private nodes in subscription '{AZURE_SUBSCRIPTION_ID}'"
+                == f"Cluster 'cluster_name' was not created with private nodes in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'"
             )
             assert result[0].resource_id == cluster_id
             assert result[0].resource_name == "cluster_name"
@@ -100,6 +105,7 @@ class Test_aks_clusters_created_with_private_nodes:
 
     def test_aks_cluster_private_nodes(self):
         aks_client = mock.MagicMock
+        aks_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         cluster_id = str(uuid4())
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
@@ -136,7 +142,7 @@ class Test_aks_clusters_created_with_private_nodes:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Cluster 'cluster_name' was created with private nodes in subscription '{AZURE_SUBSCRIPTION_ID}'"
+                == f"Cluster 'cluster_name' was created with private nodes in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'"
             )
             assert result[0].resource_id == cluster_id
             assert result[0].resource_name == "cluster_name"
@@ -145,6 +151,7 @@ class Test_aks_clusters_created_with_private_nodes:
 
     def test_aks_cluster_public_and_private_nodes(self):
         aks_client = mock.MagicMock
+        aks_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         cluster_id = str(uuid4())
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
@@ -185,7 +192,7 @@ class Test_aks_clusters_created_with_private_nodes:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Cluster 'cluster_name' was not created with private nodes in subscription '{AZURE_SUBSCRIPTION_ID}'"
+                == f"Cluster 'cluster_name' was not created with private nodes in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'"
             )
             assert result[0].resource_id == cluster_id
             assert result[0].resource_name == "cluster_name"

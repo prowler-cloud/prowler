@@ -3,7 +3,6 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.drive.drive_service import DrivePolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -36,10 +35,13 @@ class TestDriveExternalSharingWarnUsers:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "enabled" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
-            assert findings[0].resource_id == CUSTOMER_ID
+            assert findings[0].resource_name == "Drive Policies"
+            assert findings[0].resource_id == "drivePolicies"
             assert findings[0].customer_id == CUSTOMER_ID
-            assert findings[0].resource == mock_provider.domain_resource.dict()
+            assert (
+                findings[0].resource
+                == DrivePolicies(warn_for_external_sharing=True).dict()
+            )
 
     def test_fail_warning_disabled(self):
         """Test FAIL when external sharing warning is explicitly disabled"""

@@ -8,6 +8,7 @@ class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, roles in iam_client.custom_roles.items():
+            subscription_name = iam_client.subscriptions.get(subscription, subscription)
             exits_role_with_permission_over_locks = False
 
             for custom_role in roles.values():
@@ -18,7 +19,7 @@ class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
                 )
                 report.subscription = subscription
                 report.status = "FAIL"
-                report.status_extended = f"Role {custom_role.name} from subscription {subscription} has no permission to administer resource locks."
+                report.status_extended = f"Role {custom_role.name} from subscription {subscription_name} ({subscription}) has no permission to administer resource locks."
 
                 for permission_item in custom_role.permissions:
                     if exits_role_with_permission_over_locks:
@@ -26,7 +27,7 @@ class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
                     for action in permission_item.actions:
                         if search("^Microsoft.Authorization/locks/.*", action):
                             report.status = "PASS"
-                            report.status_extended = f"Role {custom_role.name} from subscription {subscription} has permission to administer resource locks."
+                            report.status_extended = f"Role {custom_role.name} from subscription {subscription_name} ({subscription}) has permission to administer resource locks."
                             exits_role_with_permission_over_locks = True
                             break
                 findings.append(report)

@@ -85,18 +85,15 @@ test.describe("Middleware Error Handling", () => {
       await context.clearCookies();
 
       const token = "test-token-regression";
-      const response = await page.goto(
-        `/sign-up?invitation_token=${token}`,
-        { waitUntil: "commit" },
-      );
+      const response = await page.goto(`/sign-up?invitation_token=${token}`, {
+        waitUntil: "commit",
+      });
 
       // The middleware must not rewrite the URL any more. Assert the final
       // URL stayed on /sign-up with the token intact, and that the sign-up
       // form actually rendered (guards against "URL stayed but page broke").
       expect(response?.status()).toBe(200);
-      await expect(page).toHaveURL(
-        `/sign-up?invitation_token=${token}`,
-      );
+      await expect(page).toHaveURL(`/sign-up?invitation_token=${token}`);
       await signUpPage.verifyPageLoaded();
     },
   );

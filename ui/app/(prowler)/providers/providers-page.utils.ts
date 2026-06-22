@@ -2,12 +2,18 @@ import {
   listOrganizationsSafe,
   listOrganizationUnitsSafe,
 } from "@/actions/organizations/organizations";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders, getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
+import { getSchedules } from "@/actions/schedules";
 import {
   extractFiltersAndQuery,
   extractSortAndKey,
 } from "@/lib/helper-filters";
+import {
+  buildProviderScheduleSummary,
+  buildSchedulesByProviderId,
+  isScheduleConfigured,
+} from "@/lib/schedules";
 import {
   FilterEntity,
   FilterOption,
@@ -27,7 +33,8 @@ import {
   ProvidersTableRow,
   ProvidersTableRowsInput,
 } from "@/types/providers-table";
-import { SCAN_TRIGGER, ScanProps } from "@/types/scans";
+import { SCAN_TRIGGER, ScanProps, ScanScheduleSummary } from "@/types/scans";
+import { ScheduleAttributes } from "@/types/schedules";
 
 const PROVIDERS_STATUS_MAPPING = [
   {
@@ -127,22 +134,46 @@ const buildScheduledProviderIds = (scans: ScanProps[]): Set<string> => {
   return scheduled;
 };
 
+// A schedule is backed by the Provider row itself, so its `/schedules` entry
+// exists before the first scheduled Scan is materialized — only enabled,
+// configured ones carry a displayable cadence summary.
+const buildProviderScheduleSummaryFor = (
+  attributes: ScheduleAttributes | undefined,
+  now: Date,
+): ScanScheduleSummary | undefined =>
+  attributes && attributes.scan_enabled && isScheduleConfigured(attributes)
+    ? buildProviderScheduleSummary(attributes, now)
+    : undefined;
+
 const enrichProviders = (
-  providersResponse?: ProvidersApiResponse,
-  scheduledProviderIds?: Set<string>,
+  providersResponse: ProvidersApiResponse | undefined,
+  scanScheduledProviderIds: Set<string>,
+  schedulesByProviderId: Record<string, ScheduleAttributes>,
 ): ProvidersProviderRow[] => {
   const providerGroupLookup = createProviderGroupLookup(providersResponse);
+  const now = new Date();
 
-  return (providersResponse?.data ?? []).map((provider) => ({
-    ...provider,
-    rowType: PROVIDERS_ROW_TYPE.PROVIDER,
-    groupNames:
-      provider.relationships.provider_groups.data.map(
-        (providerGroup: { id: string }) =>
-          providerGroupLookup.get(providerGroup.id) ?? "Unknown Group",
-      ) ?? [],
-    hasSchedule: scheduledProviderIds?.has(provider.id) ?? false,
-  }));
+  return (providersResponse?.data ?? []).map((provider) => {
+    const scheduleSummary = buildProviderScheduleSummaryFor(
+      schedulesByProviderId[provider.id],
+      now,
+    );
+
+    return {
+      ...provider,
+      rowType: PROVIDERS_ROW_TYPE.PROVIDER,
+      groupNames:
+        provider.relationships.provider_groups.data.map(
+          (providerGroup: { id: string }) =>
+            providerGroupLookup.get(providerGroup.id) ?? "Unknown Group",
+        ) ?? [],
+      // A fired scheduled scan OR a configured schedule that hasn't fired yet.
+      hasSchedule:
+        scanScheduledProviderIds.has(provider.id) ||
+        scheduleSummary !== undefined,
+      scheduleSummary,
+    };
+  });
 };
 
 const createOrganizationRow = ({
@@ -453,6 +484,7 @@ export async function loadProvidersAccountsViewData({
     providersResponse,
     allProvidersResponse,
     scansResponse,
+    schedulesResponse,
     organizationsResponse,
     organizationUnitsResponse,
   ] = await Promise.all([
@@ -467,8 +499,8 @@ export async function loadProvidersAccountsViewData({
     ),
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
     // TODO: Replace with a dedicated lightweight endpoint when available.
-    resolveActionResult(getProviders({ pageSize: 500 })),
-    // Fetch active scheduled scans to determine daily schedule per provider
+    resolveActionResult(getAllProviders()),
+    // Fetch active scheduled scans to flag providers whose schedule has fired.
     resolveActionResult(
       getScans({
         pageSize: 500,
@@ -478,6 +510,9 @@ export async function loadProvidersAccountsViewData({
         },
       }),
     ),
+    // Fetch configured schedules to also flag providers whose schedule has not
+    // fired yet (best-effort: absent in OSS, where the helper yields no ids).
+    resolveActionResult(getSchedules()),
     isCloud
       ? listOrganizationsSafe()
       : Promise.resolve(emptyOrganizationsResponse),
@@ -486,13 +521,18 @@ export async function loadProvidersAccountsViewData({
       : Promise.resolve(emptyOrganizationUnitsResponse),
   ]);
 
-  const scheduledProviderIds = buildScheduledProviderIds(
+  const scanScheduledProviderIds = buildScheduledProviderIds(
     scansResponse?.data ?? [],
   );
+  const schedulesByProviderId = buildSchedulesByProviderId(schedulesResponse);
 
   const orgs = organizationsResponse?.data ?? [];
   const ous = organizationUnitsResponse?.data ?? [];
-  const providers = enrichProviders(providersResponse, scheduledProviderIds);
+  const providers = enrichProviders(
+    providersResponse,
+    scanScheduledProviderIds,
+    schedulesByProviderId,
+  );
 
   const rows = buildProvidersTableRows({
     isCloud,

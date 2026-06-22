@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Cell, Label, Pie, PieChart, Tooltip } from "recharts";
+import {
+  Cell,
+  Label,
+  Pie,
+  PieChart,
+  Sector,
+  type SectorProps,
+  Tooltip,
+} from "recharts";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 
@@ -156,6 +164,22 @@ export function DonutChart({
     },
   }));
 
+  // Reserve a small ring at the outer edge so the active sector can grow into
+  // it without being clipped by the SVG viewport (consumers like
+  // RequirementsStatusCard wrap the chart in a fixed-size box where
+  // outerRadius == container/2 leaves no room to expand).
+  const ACTIVE_GROW = 4;
+  const restingOuterRadius = Math.max(
+    innerRadius + 1,
+    outerRadius - ACTIVE_GROW,
+  );
+
+  // Grows the hovered slice up to the original outerRadius so tiny segments
+  // (e.g. 1% fail) are easy to see and target with the cursor.
+  const renderActiveShape = (props: SectorProps) => (
+    <Sector {...props} outerRadius={(props.outerRadius ?? 0) + ACTIVE_GROW} />
+  );
+
   return (
     <>
       <ChartContainer
@@ -163,15 +187,29 @@ export function DonutChart({
         className="mx-auto aspect-square max-h-[350px]"
       >
         <PieChart>
-          {!isEmpty && <Tooltip content={<CustomTooltip />} />}
+          {!isEmpty && (
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={false}
+              wrapperStyle={{ zIndex: 1000 }}
+            />
+          )}
           <Pie
             data={isEmpty ? emptyData : chartData}
             dataKey="value"
             nameKey="name"
             innerRadius={innerRadius}
-            outerRadius={outerRadius}
+            outerRadius={restingOuterRadius}
             strokeWidth={0}
             paddingAngle={0}
+            // `?? undefined` — Recharts treats `null` as truthy in some paths
+            // and `||` would clobber index 0 (e.g. the "Pass" pillar).
+            activeIndex={hoveredIndex ?? undefined}
+            activeShape={renderActiveShape}
+            onMouseEnter={(_, index) => {
+              if (!isEmpty) setHoveredIndex(index);
+            }}
+            onMouseLeave={() => setHoveredIndex(null)}
           >
             {(isEmpty ? emptyData : chartData).map((entry, index) => {
               const opacity =
@@ -186,8 +224,6 @@ export function DonutChart({
                   style={{
                     transition: "opacity 0.2s",
                   }}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
                   onClick={() => {
                     if (isClickable) {
                       onSegmentClick(data[index], index);

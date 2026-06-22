@@ -47,21 +47,19 @@ class Test_network_subnet_nsg_associated:
                 new=network_client,
             ),
         ):
-            from prowler.providers.azure.services.network.network_subnet_nsg_associated.network_subnet_nsg_associated import (
-                network_subnet_nsg_associated,
-            )
             from prowler.providers.azure.services.network.network_service import (
                 VirtualNetwork,
                 VNetSubnet,
+            )
+            from prowler.providers.azure.services.network.network_subnet_nsg_associated.network_subnet_nsg_associated import (
+                network_subnet_nsg_associated,
             )
 
             vnet = VirtualNetwork(
                 id=VNET_ID,
                 name="test-vnet",
                 location="eastus",
-                subnets=[
-                    VNetSubnet(id=SUBNET_ID, name="test-subnet", nsg_id=NSG_ID)
-                ],
+                subnets=[VNetSubnet(id=SUBNET_ID, name="test-subnet", nsg_id=NSG_ID)],
             )
             network_client.virtual_networks = {AZURE_SUBSCRIPTION_ID: [vnet]}
 
@@ -83,21 +81,19 @@ class Test_network_subnet_nsg_associated:
                 new=network_client,
             ),
         ):
-            from prowler.providers.azure.services.network.network_subnet_nsg_associated.network_subnet_nsg_associated import (
-                network_subnet_nsg_associated,
-            )
             from prowler.providers.azure.services.network.network_service import (
                 VirtualNetwork,
                 VNetSubnet,
+            )
+            from prowler.providers.azure.services.network.network_subnet_nsg_associated.network_subnet_nsg_associated import (
+                network_subnet_nsg_associated,
             )
 
             vnet = VirtualNetwork(
                 id=VNET_ID,
                 name="test-vnet",
                 location="eastus",
-                subnets=[
-                    VNetSubnet(id=SUBNET_ID, name="app-subnet", nsg_id=None)
-                ],
+                subnets=[VNetSubnet(id=SUBNET_ID, name="app-subnet", nsg_id=None)],
             )
             network_client.virtual_networks = {AZURE_SUBSCRIPTION_ID: [vnet]}
 
@@ -119,12 +115,12 @@ class Test_network_subnet_nsg_associated:
                 new=network_client,
             ),
         ):
-            from prowler.providers.azure.services.network.network_subnet_nsg_associated.network_subnet_nsg_associated import (
-                network_subnet_nsg_associated,
-            )
             from prowler.providers.azure.services.network.network_service import (
                 VirtualNetwork,
                 VNetSubnet,
+            )
+            from prowler.providers.azure.services.network.network_subnet_nsg_associated.network_subnet_nsg_associated import (
+                network_subnet_nsg_associated,
             )
 
             vnet = VirtualNetwork(
@@ -159,12 +155,12 @@ class Test_network_subnet_nsg_associated:
                 new=network_client,
             ),
         ):
-            from prowler.providers.azure.services.network.network_subnet_nsg_associated.network_subnet_nsg_associated import (
-                network_subnet_nsg_associated,
-            )
             from prowler.providers.azure.services.network.network_service import (
                 VirtualNetwork,
                 VNetSubnet,
+            )
+            from prowler.providers.azure.services.network.network_subnet_nsg_associated.network_subnet_nsg_associated import (
+                network_subnet_nsg_associated,
             )
 
             vnet = VirtualNetwork(

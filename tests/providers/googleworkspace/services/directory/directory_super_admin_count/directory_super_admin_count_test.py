@@ -3,7 +3,6 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.directory.directory_service import User
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -54,8 +53,8 @@ class TestDirectorySuperAdminCount:
             assert findings[0].status == "PASS"
             assert "2 super administrator(s)" in findings[0].status_extended
             assert "within the recommended range" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
-            assert findings[0].resource_id == CUSTOMER_ID
+            assert findings[0].resource_name == "Directory Users"
+            assert findings[0].resource_id == "directoryUsers"
             assert findings[0].customer_id == CUSTOMER_ID
             assert findings[0].resource == mock_provider.domain_resource.dict()
 
