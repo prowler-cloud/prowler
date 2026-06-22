@@ -1,5 +1,4 @@
 from unittest import mock
-from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
