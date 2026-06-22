@@ -42,6 +42,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the GCP provider, mapping existing GCP checks across the five DORA pillars [(#11642)](https://github.com/prowler-cloud/prowler/pull/11642)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Cloudflare provider, mapping existing Cloudflare edge/network checks across the applicable DORA pillars [(#11645)](https://github.com/prowler-cloud/prowler/pull/11645)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the AlibabaCloud provider, mapping existing AlibabaCloud checks across the applicable DORA pillars [(#11646)](https://github.com/prowler-cloud/prowler/pull/11646)
+- `apigateway_domain_name_pqc_tls_enabled` check for AWS provider to verify API Gateway custom domain names use a post-quantum TLS security policy [(#11316)](https://github.com/prowler-cloud/prowler/pull/11316)
 
 ### 🔄 Changed
 
@@ -173,7 +174,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `apigateway_domain_name_pqc_tls_enabled` check for AWS provider to verify API Gateway custom domain names use a post-quantum TLS security policy [(#11316)](https://github.com/prowler-cloud/prowler/pull/11316)
 - Sites, Additional Google services, and Marketplace checks for Google Workspace provider using the Cloud Identity Policy API [(#11281)](https://github.com/prowler-cloud/prowler/pull/11281)
 - `entra_app_registration_client_secret_unused` check for M365 provider [(#11232)](https://github.com/prowler-cloud/prowler/pull/11232)
 - `cloudsql_instance_cmek_encryption_enabled` check for GCP provider [(#11023)](https://github.com/prowler-cloud/prowler/pull/11023)
