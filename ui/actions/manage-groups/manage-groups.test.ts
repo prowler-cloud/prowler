@@ -110,4 +110,14 @@ describe("getAllProviderGroups", () => {
 
     expect(result).toBeUndefined();
   });
+
+  it("returns undefined when a later page resolves to an error payload", async () => {
+    handleApiResponseMock
+      .mockResolvedValueOnce(makePage([makeGroup("g1", "Group 1")], 1, 2))
+      .mockResolvedValueOnce({ error: "Forbidden", status: 403 });
+
+    const result = await getAllProviderGroups();
+
+    expect(result).toBeUndefined();
+  });
 });

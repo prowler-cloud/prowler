@@ -1,7 +1,7 @@
 "use client";
 
-import { ProviderGroupSelector } from "@/app/(prowler)/_overview/_components/provider-group-selector";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import {
   Select,
   SelectContent,

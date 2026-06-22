@@ -3,9 +3,9 @@
 import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { ProviderGroupSelector } from "@/app/(prowler)/_overview/_components/provider-group-selector";
 import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import {
   MultiSelect,
   MultiSelectContent,

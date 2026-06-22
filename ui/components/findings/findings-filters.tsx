@@ -4,7 +4,6 @@ import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-import { ProviderGroupSelector } from "@/app/(prowler)/_overview/_components/provider-group-selector";
 import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
@@ -15,6 +14,7 @@ import {
   FilterSummaryStrip,
 } from "@/components/filters/filter-summary-strip";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";

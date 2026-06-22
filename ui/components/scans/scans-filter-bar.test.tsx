@@ -9,12 +9,9 @@ vi.mock("@/components/filters/provider-account-selectors", () => ({
   ProviderAccountSelectors: () => <div>Provider account selectors</div>,
 }));
 
-vi.mock(
-  "@/app/(prowler)/_overview/_components/provider-group-selector",
-  () => ({
-    ProviderGroupSelector: () => <div>Provider group selector</div>,
-  }),
-);
+vi.mock("@/components/filters/provider-group-selector", () => ({
+  ProviderGroupSelector: () => <div>Provider group selector</div>,
+}));
 
 vi.mock("@/components/shadcn", () => ({
   Select: ({ children }: { children: React.ReactNode }) => (

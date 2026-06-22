@@ -76,7 +76,15 @@ export const getAllProviderGroups = async (): Promise<
       const response = await fetch(url.toString(), { headers });
       const data = (await handleApiResponse(response)) as
         | ProviderGroupsResponse
+        | { error: string; status?: number }
         | undefined;
+
+      // A later page resolving to an API error payload must abort rather than
+      // be treated as "no more pages", which would silently truncate groups.
+      if (data && "error" in data) {
+        console.error("Error fetching all provider groups:", data.error);
+        return undefined;
+      }
 
       if (!data?.data || data.data.length === 0) {
         hasMorePages = false;

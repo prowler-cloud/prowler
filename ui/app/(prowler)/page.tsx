@@ -3,10 +3,10 @@ import { Suspense } from "react";
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
-import { ProviderGroupSelector } from "./_overview/_components/provider-group-selector";
 import {
   AttackSurfaceSkeleton,
   AttackSurfaceSSR,

@@ -50,6 +50,10 @@ const PROVIDER_TYPE_FILTER_KEYS = [
   `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_TYPE}]`,
 ] as const satisfies ReadonlyArray<ScansFilterParam>;
 
+const PROVIDER_GROUP_FILTER_KEYS = [
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_GROUPS_IN}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
+
 const getFilterSearchQuery = (
   filters: Record<string, string | string[]>,
 ): string => {
@@ -92,11 +96,18 @@ const filterProvidersForPendingRows = (
   const types = parseCsvParam(
     getFirstSearchParam(searchParams, PROVIDER_TYPE_FILTER_KEYS),
   );
+  const groups = parseCsvParam(
+    getFirstSearchParam(searchParams, PROVIDER_GROUP_FILTER_KEYS),
+  );
 
   return providers.filter(
     (provider) =>
       (uids.length === 0 || uids.includes(provider.attributes.uid)) &&
-      (types.length === 0 || types.includes(provider.attributes.provider)),
+      (types.length === 0 || types.includes(provider.attributes.provider)) &&
+      (groups.length === 0 ||
+        (provider.relationships?.provider_groups?.data ?? []).some((group) =>
+          groups.includes(group.id),
+        )),
   );
 };
 
@@ -162,12 +173,18 @@ export default async function Scans({
   const session = await auth();
   const resolvedSearchParams = await searchParams;
 
-  const [providersData, providerGroupsData] = await Promise.all([
+  const [providersResult, providerGroupsResult] = await Promise.allSettled([
     getAllProviders(),
     getAllProviderGroups(),
   ]);
-  const providers = providersData?.data ?? [];
-  const providerGroups = providerGroupsData?.data ?? [];
+  const providers =
+    providersResult.status === "fulfilled"
+      ? (providersResult.value?.data ?? [])
+      : [];
+  const providerGroups =
+    providerGroupsResult.status === "fulfilled"
+      ? (providerGroupsResult.value?.data ?? [])
+      : [];
 
   const connectedProviders = providers.filter(
     (provider: ProviderProps) =>
