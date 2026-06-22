@@ -295,6 +295,36 @@ describe("LaunchStep", () => {
         expect.objectContaining({ title: "Unable to save scan schedule" }),
       );
     });
+
+    it("disables launch actions while schedule capability is loading", async () => {
+      // Given
+      const onFooterChange = vi.fn();
+      seedConnectedProvider();
+
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={vi.fn()}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+          isScheduleCapabilityLoading
+        />,
+      );
+
+      // When
+      await screen.findByText("Loading scan options...");
+      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      expect(lastFooterConfig(onFooterChange)?.backDisabled).toBe(true);
+      expect(lastFooterConfig(onFooterChange)?.actionDisabled).toBe(true);
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
+      expect(scheduleDailyMock).not.toHaveBeenCalled();
+    });
   });
 
   describe("Prowler Cloud trial/onboarding (manual scan only)", () => {

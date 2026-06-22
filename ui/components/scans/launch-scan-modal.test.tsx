@@ -432,6 +432,28 @@ describe("LaunchScanModal", () => {
       expect(getScheduleMock).not.toHaveBeenCalled();
     });
 
+    it("hides schedule mode but allows manual scans in MANUAL_ONLY", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <LaunchScanModal
+          open
+          onOpenChange={vi.fn()}
+          providers={[provider]}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+
+      expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
+      expect(getScheduleMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
+    });
+
     it("hides the mode selector and blocks over-limit accounts in MANUAL_ONLY", () => {
       render(
         <LaunchScanModal
@@ -448,6 +470,32 @@ describe("LaunchScanModal", () => {
       expect(
         screen.getByRole("button", { name: /launch scan/i }),
       ).toBeDisabled();
+    });
+
+    it("blocks scans and schedules in BLOCKED", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <LaunchScanModal
+          open
+          onOpenChange={vi.fn()}
+          providers={[provider]}
+          capability={SCAN_SCHEDULE_CAPABILITY.BLOCKED}
+        />,
+      );
+
+      expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+      expect(
+        screen.getByRole("button", { name: /launch scan/i }),
+      ).toBeDisabled();
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(getScheduleMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
     });
   });
 });

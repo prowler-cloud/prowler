@@ -271,6 +271,7 @@
         }
       ],
       "Checks": [
+        "aks_cluster_local_accounts_disabled",
         "defender_ensure_defender_for_containers_is_on",
         "defender_ensure_defender_for_cosmosdb_is_on",
         "defender_ensure_defender_for_databases_is_on",
@@ -1346,6 +1347,7 @@
         }
       ],
       "Checks": [
+        "aks_cluster_azure_monitor_enabled",
         "defender_ensure_defender_cspm_is_on",
         "monitor_alert_create_policy_assignment",
         "monitor_alert_create_update_nsg",
@@ -1427,7 +1429,9 @@
         "network_public_ip_shodan",
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
+        "network_subnet_nsg_associated",
         "network_udp_internet_access_restricted",
+        "network_vnet_ddos_protection_enabled",
         "network_watcher_enabled"
       ]
     },
@@ -1481,6 +1485,7 @@
         "network_public_ip_shodan",
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
+        "network_subnet_nsg_associated",
         "network_udp_internet_access_restricted",
         "network_watcher_enabled"
       ]

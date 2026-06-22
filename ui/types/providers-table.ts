@@ -67,6 +67,7 @@ export interface ProvidersOrganizationRow {
   parentExternalId: string | null;
   organizationId: string | null;
   providerCount: number;
+  providerIds: string[];
   subRows: ProvidersTableRow[];
 }
 
