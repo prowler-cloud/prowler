@@ -73,6 +73,10 @@ class Test_recovery_vault_has_protected_items:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert "1 protected items" in result[0].status_extended
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == VAULT_ID
+            assert result[0].resource_name == "test-vault"
+            assert result[0].location == "eastus"
 
     def test_vault_empty(self):
         recovery_client = mock.MagicMock
@@ -107,3 +111,7 @@ class Test_recovery_vault_has_protected_items:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "no protected items" in result[0].status_extended
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == VAULT_ID
+            assert result[0].resource_name == "empty-vault"
+            assert result[0].location == "westeurope"

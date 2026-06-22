@@ -5,11 +5,11 @@ MINIMUM_RETENTION_DAYS = 30
 
 
 class recovery_vault_backup_policy_retention_adequate(Check):
-    def execute(self) -> Check_Report_Azure:
+    def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
         for subscription_name, vaults in recovery_client.vaults.items():
-            for vault_id, vault in vaults.items():
+            for vault in vaults.values():
                 if not vault.backup_policies:
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=vault
@@ -26,7 +26,7 @@ class recovery_vault_backup_policy_retention_adequate(Check):
                     findings.append(report)
                     continue
 
-                for policy_id, policy in vault.backup_policies.items():
+                for policy in vault.backup_policies.values():
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=vault
                     )
