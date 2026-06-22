@@ -5,7 +5,11 @@ MINIMUM_RETENTION_DAYS = 30
 
 
 class recovery_vault_backup_policy_retention_adequate(Check):
+    """Check if vault backup policies retain backups for at least 30 days."""
+
     def execute(self) -> list[Check_Report_Azure]:
+        """Execute the check across Recovery Services vault backup policies."""
+
         findings = []
 
         for subscription_name, vaults in recovery_client.vaults.items():

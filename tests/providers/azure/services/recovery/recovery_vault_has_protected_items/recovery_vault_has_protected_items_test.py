@@ -11,7 +11,7 @@ VAULT_ID = f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/rg1/providers
 
 class Test_recovery_vault_has_protected_items:
     def test_no_subscriptions(self):
-        recovery_client = mock.MagicMock
+        recovery_client = mock.MagicMock()
 
         with (
             mock.patch(
@@ -34,7 +34,7 @@ class Test_recovery_vault_has_protected_items:
             assert len(result) == 0
 
     def test_vault_with_protected_items(self):
-        recovery_client = mock.MagicMock
+        recovery_client = mock.MagicMock()
 
         with (
             mock.patch(
@@ -79,7 +79,7 @@ class Test_recovery_vault_has_protected_items:
             assert result[0].location == "eastus"
 
     def test_vault_empty(self):
-        recovery_client = mock.MagicMock
+        recovery_client = mock.MagicMock()
 
         with (
             mock.patch(

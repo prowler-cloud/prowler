@@ -10,7 +10,7 @@ POLICY_ID = f"{VAULT_ID}/backupPolicies/DefaultPolicy"
 
 class Test_recovery_vault_backup_policy_retention_adequate:
     def test_no_subscriptions(self):
-        recovery_client = mock.MagicMock
+        recovery_client = mock.MagicMock()
 
         with (
             mock.patch(
@@ -33,7 +33,7 @@ class Test_recovery_vault_backup_policy_retention_adequate:
             assert len(result) == 0
 
     def test_vault_no_policies(self):
-        recovery_client = mock.MagicMock
+        recovery_client = mock.MagicMock()
 
         with (
             mock.patch(
@@ -67,7 +67,7 @@ class Test_recovery_vault_backup_policy_retention_adequate:
             assert "has no backup policies configured" in result[0].status_extended
 
     def test_policy_adequate_retention(self):
-        recovery_client = mock.MagicMock
+        recovery_client = mock.MagicMock()
 
         with (
             mock.patch(
@@ -108,7 +108,7 @@ class Test_recovery_vault_backup_policy_retention_adequate:
             assert "90-day" in result[0].status_extended
 
     def test_policy_insufficient_retention(self):
-        recovery_client = mock.MagicMock
+        recovery_client = mock.MagicMock()
 
         with (
             mock.patch(
@@ -150,7 +150,7 @@ class Test_recovery_vault_backup_policy_retention_adequate:
             assert "minimum: 30" in result[0].status_extended
 
     def test_policy_no_retention_configured(self):
-        recovery_client = mock.MagicMock
+        recovery_client = mock.MagicMock()
 
         with (
             mock.patch(

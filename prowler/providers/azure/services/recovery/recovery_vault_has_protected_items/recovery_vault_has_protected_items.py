@@ -3,7 +3,11 @@ from prowler.providers.azure.services.recovery.recovery_client import recovery_c
 
 
 class recovery_vault_has_protected_items(Check):
+    """Check if Recovery Services vaults have protected backup items."""
+
     def execute(self) -> list[Check_Report_Azure]:
+        """Execute the check across Recovery Services vaults."""
+
         findings = []
 
         for subscription_name, vaults in recovery_client.vaults.items():

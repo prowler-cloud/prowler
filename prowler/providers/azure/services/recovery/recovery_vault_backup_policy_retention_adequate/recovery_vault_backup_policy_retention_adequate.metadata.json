@@ -18,7 +18,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az backup policy set --resource-group <resource-group> --vault-name <vault-name> --name <policy-name> --policy @policy.json",
       "NativeIaC": "",
       "Other": "1. Sign in to the Azure portal\n2. Go to Recovery Services vaults and select the vault\n3. Go to Backup policies\n4. Select the policy to modify\n5. Under Retention range, set Daily backup point retention to at least 30 days\n6. Click Save",
       "Terraform": ""
