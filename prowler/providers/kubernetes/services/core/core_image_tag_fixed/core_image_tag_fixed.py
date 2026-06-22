@@ -31,7 +31,7 @@ class core_image_tag_fixed(Check):
                 f"Pod {pod.name} has fixed image tags on all containers."
             )
 
-            for container in pod.containers.values():
+            for container in (pod.containers or {}).values():
                 image = container.image
                 if not _has_fixed_image_tag(image):
                     report.status = "FAIL"

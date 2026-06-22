@@ -18,7 +18,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl set resources deployment/<workload-name> -c <container-name> --limits=memory=<memory-limit> -n <namespace>\n# Example: kubectl set resources deployment/nginx -c nginx --limits=memory=128Mi -n default",
       "NativeIaC": "",
       "Other": "1. Open your Kubernetes UI (e.g., cloud provider console or Dashboard)\n2. Navigate to the failing workload (Deployment/StatefulSet/DaemonSet) or Pod and choose Edit YAML/Manifest\n3. Set resources.limits.memory for each affected container:\n   - For controllers: spec.template.spec.containers[].resources.limits.memory\n   - For standalone Pods: spec.containers[].resources.limits.memory\n4. Save changes (controllers will roll out new Pods). If it is a standalone Pod, delete and recreate it to apply the change",
       "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"<IMAGE>\"\n      resources {\n        limits = {\n          memory = \"128Mi\" # Critical: sets a memory ceiling to prevent unbounded consumption\n        }\n      }\n    }\n  }\n}\n```"

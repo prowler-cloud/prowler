@@ -19,7 +19,7 @@ class core_memory_requests_set(Check):
                 f"Pod {pod.name} has memory requests set on all containers."
             )
 
-            for container in pod.containers.values():
+            for container in (pod.containers or {}).values():
                 if (
                     not container.resources
                     or not container.resources.get("requests")

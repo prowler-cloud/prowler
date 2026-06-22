@@ -19,7 +19,7 @@ class core_memory_limits_set(Check):
                 f"Pod {pod.name} has memory limits set on all containers."
             )
 
-            for container in pod.containers.values():
+            for container in (pod.containers or {}).values():
                 if (
                     not container.resources
                     or not container.resources.get("limits")
