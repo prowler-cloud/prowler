@@ -123,6 +123,10 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
   ),
 }));
 
+import {
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { LaunchScanModal } from "./launch-scan-modal";
@@ -329,6 +333,39 @@ describe("LaunchScanModal", () => {
     expect(
       await screen.findByText("Provider already has a scan in progress"),
     ).toBeInTheDocument();
+    expect(toastMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it("maps payment-required scan errors to the shared subscription message", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    scanOnDemandMock.mockResolvedValueOnce({
+      error:
+        "An active subscription is required to use this API endpoint in Prowler Cloud.",
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+
+    render(
+      <LaunchScanModal
+        open
+        onOpenChange={onOpenChange}
+        providers={[provider]}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+    await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+    expect(
+      await screen.findByText(
+        ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/An active subscription is required/i),
+    ).not.toBeInTheDocument();
     expect(toastMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
