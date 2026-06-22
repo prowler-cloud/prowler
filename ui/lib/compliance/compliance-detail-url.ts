@@ -3,8 +3,14 @@ interface ComplianceDetailPathParams {
   title: string;
   complianceId: string;
   version: string;
-  scanId: string;
+  /** Single-scan scope. Omitted when provider filters drive aggregated mode. */
+  scanId?: string | null;
   regionFilter?: string | null;
+  /**
+   * Aggregated-mode scope: provider-filter keys (e.g. filter[provider_type__in])
+   * carried instead of scanId. XOR with scanId — when present, scanId is dropped.
+   */
+  providerFilters?: Record<string, string>;
 }
 
 /** Builds the `/compliance/[compliancetitle]` detail URL used by the overview cards. */
@@ -14,11 +20,23 @@ export function buildComplianceDetailPath({
   version,
   scanId,
   regionFilter,
+  providerFilters,
 }: ComplianceDetailPathParams): string {
   const params = new URLSearchParams();
   params.set("complianceId", complianceId);
   params.set("version", version);
-  params.set("scanId", scanId);
+
+  const providerEntries = providerFilters
+    ? Object.entries(providerFilters).filter(([, value]) => value)
+    : [];
+  if (providerEntries.length > 0) {
+    for (const [key, value] of providerEntries) {
+      params.set(key, value);
+    }
+  } else if (scanId) {
+    params.set("scanId", scanId);
+  }
+
   if (regionFilter) {
     params.set("filter[region__in]", regionFilter);
   }
