@@ -13,8 +13,8 @@
   "Risk": "Allowing all organization users or anyone to view group conversations can lead to **information disclosure** of sensitive discussions, internal decisions, and confidential data shared within groups.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/10308022",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/groups/what-you-get-with-groups-for-business",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

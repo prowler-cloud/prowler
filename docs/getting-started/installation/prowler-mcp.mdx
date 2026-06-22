@@ -141,6 +141,45 @@ Choose one of the following installation methods:
 
 ---
 
+## Updating Prowler MCP Server
+
+When running Prowler MCP Server locally ("Option 2: Run Locally"), upgrade to the latest version using the same method chosen for installation. The hosted server (`https://mcp.prowler.com/mcp`) is always kept up to date by Prowler and requires no action.
+
+<Tabs>
+  <Tab title="Docker">
+    Pull the latest image and restart the container:
+
+    ```bash
+    docker pull prowlercloud/prowler-mcp
+    ```
+
+    <Note>
+      Recreate any running container after pulling the new image so the updated version takes effect.
+    </Note>
+  </Tab>
+  <Tab title="From Source">
+    Pull the latest changes and sync the dependencies:
+
+    ```bash
+    cd prowler/mcp_server
+    git pull
+    uv sync
+    uv run prowler-mcp --help
+    ```
+  </Tab>
+  <Tab title="Build Docker Image">
+    Pull the latest source and rebuild the image:
+
+    ```bash
+    cd prowler/mcp_server
+    git pull
+    docker build -t prowler-mcp .
+    ```
+  </Tab>
+</Tabs>
+
+---
+
 ## Command Line Options
 
 The Prowler MCP Server supports the following command-line arguments:

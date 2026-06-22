@@ -1,7 +1,33 @@
 import logging
 import time
 
+from django.core.handlers.asgi import ASGIRequest
+from django.db import connections
+
 from config.custom_logging import BackendLogger
+
+
+class CloseDBConnectionsMiddleware:
+    """
+    Close request-scoped DB connections at the end of each ASGI request.
+
+    Under the ASGI worker, connections opened by sync views are not released
+    by Django's normal request-boundary cleanup, so they accumulate idle until
+    Postgres runs out of slots. Only ASGI requests are handled; the sync WSGI
+    test client manages its own connections and must be left alone.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            return self.get_response(request)
+        finally:
+            if isinstance(request, ASGIRequest):
+                for conn in connections.all(initialized_only=True):
+                    if not conn.in_atomic_block:
+                        conn.close_if_unusable_or_obsolete()
 
 
 def extract_auth_info(request) -> dict:

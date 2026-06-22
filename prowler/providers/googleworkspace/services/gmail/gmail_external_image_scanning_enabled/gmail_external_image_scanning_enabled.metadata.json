@@ -13,8 +13,8 @@
   "Risk": "Without external image scanning, attackers can use **linked images to track email opens**, deliver **exploit payloads via image rendering vulnerabilities**, or use images as part of sophisticated **phishing schemes** that mimic legitimate communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7676854",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/gmail/advanced/advanced-phishing-and-malware-protection",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

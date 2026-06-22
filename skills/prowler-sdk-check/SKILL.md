@@ -16,7 +16,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## Check Structure
 
-```
+```text
 prowler/providers/{provider}/services/{service}/{check_name}/
 ├── __init__.py
 ├── {check_name}.py
@@ -90,7 +90,7 @@ See `prowler-test-sdk` skill for test patterns (PASS, FAIL, no resources, error 
 
 ## Check Naming Convention
 
-```
+```text
 {service}_{resource}_{security_control}
 ```
 

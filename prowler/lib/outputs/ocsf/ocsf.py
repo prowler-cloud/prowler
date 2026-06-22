@@ -227,6 +227,10 @@ class OCSF(Output):
                             json_output = finding.json(exclude_none=True, indent=4)
                         self._file_descriptor.write(json_output)
                         self._file_descriptor.write(",")
+                    except OSError:
+                        # I/O errors (e.g. ENOSPC) are not recoverable per finding:
+                        # fail fast instead of logging once per finding.
+                        raise
                     except Exception as error:
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -239,6 +243,10 @@ class OCSF(Output):
                     self._file_descriptor.truncate()
                     self._file_descriptor.write("]")
                     self._file_descriptor.close()
+        except OSError:
+            # Propagate unrecoverable I/O errors (e.g. ENOSPC) so the caller can
+            # fail fast instead of producing a corrupt output file.
+            raise
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
