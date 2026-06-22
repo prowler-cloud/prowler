@@ -9,23 +9,23 @@
   "Severity": "medium",
   "ResourceType": "microsoft.containerservice/managedclusters",
   "ResourceGroup": "container",
-  "Description": "**Azure Kubernetes Service** clusters are evaluated for **Azure Monitor** integration. Azure Monitor (Container Insights) provides metrics collection, log aggregation, and alerting for cluster health and workload performance.",
-  "Risk": "Without monitoring, cluster degradation, resource exhaustion, and anomalous behavior go undetected. Lack of observability delays incident detection and hampers forensic investigation after a security event.",
+  "Description": "**Azure Kubernetes Service** clusters are evaluated for **Azure Monitor managed service for Prometheus** (the cluster's `azureMonitorProfile.metrics` configuration). When enabled, cluster and workload metrics are collected into an Azure Monitor workspace for dashboards and alerting. This is distinct from Container Insights (the `omsagent` logs addon).",
+  "Risk": "Without **Azure Monitor metrics**, cluster degradation, resource exhaustion, and anomalous behavior go undetected. Lack of metric-based observability delays incident detection and hampers investigation after a security or availability event.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-overview",
-    "https://learn.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az-aks-enable-addons",
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/containers/kubernetes-monitoring-enable",
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/containers/prometheus-metrics-enable",
     "https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/managedclusters"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az aks enable-addons --resource-group <RESOURCE_GROUP> --name <CLUSTER_NAME> --addons monitoring --workspace-resource-id <LOG_ANALYTICS_WORKSPACE_RESOURCE_ID>",
-      "NativeIaC": "```bicep\n// Bicep: AKS cluster with Azure Monitor (Container Insights) enabled\nresource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    addonProfiles: {\n      omsagent: {\n        enabled: true // CRITICAL: enables Azure Monitor / Container Insights\n        config: {\n          logAnalyticsWorkspaceResourceID: '<log_analytics_workspace_resource_id>'\n        }\n      }\n    }\n  }\n}\n```",
-      "Other": "1. Sign in to the Azure portal and open your AKS cluster\n2. In the left menu, select Monitoring > Insights\n3. Click Configure monitoring\n4. Select an existing Log Analytics workspace or create a new one\n5. Click Configure to enable Azure Monitor / Container Insights",
-      "Terraform": "```hcl\n# Terraform: AKS cluster with Azure Monitor (Container Insights) enabled\nresource \"azurerm_kubernetes_cluster\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<region>\"\n  resource_group_name = \"<example_resource_name>\"\n  dns_prefix          = \"<example_resource_name>\"\n\n  oms_agent {\n    log_analytics_workspace_id = \"<log_analytics_workspace_resource_id>\" # CRITICAL: enables Azure Monitor / Container Insights\n  }\n}\n```"
+      "CLI": "az aks update --resource-group <RESOURCE_GROUP> --name <CLUSTER_NAME> --enable-azure-monitor-metrics",
+      "NativeIaC": "```bicep\n// Bicep: AKS cluster with Azure Monitor managed Prometheus metrics enabled\nresource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    azureMonitorProfile: {\n      metrics: {\n        enabled: true // CRITICAL: enables Azure Monitor managed service for Prometheus (metrics)\n      }\n    }\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and open your AKS cluster\n2. In the left menu, select Monitoring > Insights\n3. Click Configure monitoring\n4. Ensure 'Enable Prometheus metrics' is selected and choose (or create) an Azure Monitor workspace\n5. Click Configure to enable Azure Monitor managed Prometheus metrics",
+      "Terraform": "```hcl\n# Terraform: AKS cluster with Azure Monitor managed Prometheus metrics enabled\nresource \"azurerm_kubernetes_cluster\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<region>\"\n  resource_group_name = \"<example_resource_name>\"\n  dns_prefix          = \"<example_resource_name>\"\n\n  monitor_metrics {} # CRITICAL: enables Azure Monitor managed service for Prometheus (metrics)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable **Azure Monitor (Container Insights)** on AKS clusters and route metrics and logs to a Log Analytics workspace. Pair it with alerting on cluster health and workload performance, and retain logs long enough to support incident detection and forensic investigation.",
+      "Text": "Enable **Azure Monitor managed service for Prometheus** on AKS clusters so cluster and workload metrics are collected into an Azure Monitor workspace. Pair it with alerting on cluster health and resource saturation, and consider also enabling Container Insights (logs) for full observability.",
       "Url": "https://hub.prowler.com/check/aks_cluster_azure_monitor_enabled"
     }
   },

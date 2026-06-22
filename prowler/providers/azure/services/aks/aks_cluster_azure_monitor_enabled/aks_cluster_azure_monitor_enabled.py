@@ -22,14 +22,10 @@ class aks_cluster_azure_monitor_enabled(Check):
 
                 if cluster.azure_monitor_enabled:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"Cluster '{cluster.name}' has Azure Monitor enabled."
-                    )
+                    report.status_extended = f"Cluster '{cluster.name}' has Azure Monitor managed Prometheus metrics enabled."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = (
-                        f"Cluster '{cluster.name}' does not have Azure Monitor enabled."
-                    )
+                    report.status_extended = f"Cluster '{cluster.name}' does not have Azure Monitor managed Prometheus metrics enabled."
 
                 findings.append(report)
 

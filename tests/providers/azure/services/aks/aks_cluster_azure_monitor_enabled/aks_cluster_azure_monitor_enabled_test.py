@@ -81,7 +81,7 @@ class Test_aks_cluster_azure_monitor_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Cluster 'test-cluster' has Azure Monitor enabled."
+                == "Cluster 'test-cluster' has Azure Monitor managed Prometheus metrics enabled."
             )
             assert result[0].resource_name == "test-cluster"
             assert result[0].resource_id == cluster.id
@@ -113,7 +113,7 @@ class Test_aks_cluster_azure_monitor_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Cluster 'test-cluster' does not have Azure Monitor enabled."
+                == "Cluster 'test-cluster' does not have Azure Monitor managed Prometheus metrics enabled."
             )
             assert result[0].resource_name == "test-cluster"
             assert result[0].resource_id == cluster.id
