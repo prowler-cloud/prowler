@@ -1103,6 +1103,7 @@
         }
       ],
       "Checks": [
+        "entra_authentication_methods_policy_strong_auth_enforced",
         "entra_conditional_access_policy_require_mfa_for_management_app",
         "entra_non_privileged_user_has_mfa entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa",
