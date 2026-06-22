@@ -72,22 +72,18 @@ function getStringArray(value: unknown): string[] {
     : [];
 }
 
+/**
+ * Providers whose schedule was actually saved. The backend reports successes
+ * under `updated`, populated only after each provider's schedule commits, so
+ * it already excludes failures — no client-side subtraction is needed.
+ */
 function getUpdatedProviderIds(result: SchedulesBulkResponse): string[] {
-  const attributes = result.data?.attributes;
-  const updated = getStringArray(attributes?.updated);
-  if (updated.length > 0) return updated;
-
-  const updatedProviderIds = getStringArray(attributes?.updated_provider_ids);
-  if (updatedProviderIds.length > 0) return updatedProviderIds;
-
-  return getStringArray(attributes?.provider_ids);
+  return getStringArray(result.data?.attributes?.updated);
 }
 
 function getFailedCount(result: SchedulesBulkResponse): number {
-  const attributes = result.data?.attributes;
-  const failed = attributes?.failed;
-  if (Array.isArray(failed)) return failed.length;
-  return getStringArray(attributes?.failed_provider_ids).length;
+  const failed = result.data?.attributes?.failed;
+  return Array.isArray(failed) ? failed.length : 0;
 }
 
 function formatAccountCount(count: number): string {
@@ -185,10 +181,27 @@ export function OrgLaunchScan({
 
     const updatedProviderIds = getUpdatedProviderIds(result);
     const failedCount = getFailedCount(result);
+
+    // No provider was actually updated (e.g. the endpoint returned 200 but every
+    // schedule failed). Surface it as an error and keep the wizard open to retry
+    // instead of navigating away with a misleading "saved for 0 accounts" toast.
+    if (updatedProviderIds.length === 0) {
+      setIsLaunching(false);
+      toast({
+        variant: "destructive",
+        title: "Unable to save scan schedules",
+        description:
+          failedCount > 0
+            ? `The scan schedule could not be saved for ${formatAccountCount(failedCount)}.`
+            : "The scan schedule could not be saved for any account.",
+      });
+      return;
+    }
+
     let initialScanFailureCount = 0;
     let initialScanSuccessCount = 0;
 
-    if (values.launchInitialScan && updatedProviderIds.length > 0) {
+    if (values.launchInitialScan) {
       const scanResult = await launchOrganizationScans(
         updatedProviderIds,
         SCAN_SCHEDULE.SINGLE,

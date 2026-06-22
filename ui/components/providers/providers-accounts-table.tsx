@@ -7,7 +7,6 @@ import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
-import type { ScanScheduleProvider } from "@/components/scans/schedule/edit-scan-schedule-modal";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 import {
@@ -15,7 +14,10 @@ import {
   isProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
-import type { ScanScheduleCapability } from "@/types/schedules";
+import type {
+  ScanScheduleCapability,
+  ScanScheduleProvider,
+} from "@/types/schedules";
 
 import { getColumnProviders } from "./table";
 

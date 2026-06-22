@@ -1,4 +1,4 @@
-import type { ProviderProps } from "./providers";
+import type { ProviderProps, ProviderType } from "./providers";
 
 export const SCHEDULE_FREQUENCY = {
   DAILY: "DAILY",
@@ -26,8 +26,9 @@ export const SCHEDULE_WEEKDAY_LABELS = [
  * the runtime environment (Cloud vs non-Cloud); the prowler-cloud overlay
  * computes a billing-aware capability and injects it via the `capability` prop.
  *
- * - `ADVANCED`: full scheduling through the new `/schedules/{providerId}` API
- *   (Prowler Cloud, subscribed/paid).
+ * - `ADVANCED`: full scheduling through the new schedules API —
+ *   `/schedules/{providerId}` for a single provider, `/schedules/bulk` for the
+ *   organization flow (Prowler Cloud, subscribed/paid).
  * - `DAILY_LEGACY`: Prowler OSS / non-Cloud. Only the legacy `Daily` schedule
  *   (`/schedules/daily`) plus optional on-demand scans are allowed.
  * - `MANUAL_ONLY`: Prowler Cloud trial/onboarding. No schedules at all, only a
@@ -90,18 +91,16 @@ export interface ScheduleUpdatePayload {
   scan_day_of_month: number | null;
 }
 
+/** Per-provider failure, as returned by `/schedules/bulk`: `{ id, error }`. */
 export interface SchedulesBulkFailure {
-  provider_id?: string;
-  providerId?: string;
-  error?: string;
+  id: string;
+  error: string;
 }
 
 export interface SchedulesBulkAttributes {
+  /** Provider ids whose schedule was committed (already excludes failures). */
   updated?: string[];
-  updated_provider_ids?: string[];
-  provider_ids?: string[];
   failed?: SchedulesBulkFailure[];
-  failed_provider_ids?: string[];
 }
 
 export interface SchedulesBulkData {
@@ -115,6 +114,14 @@ export interface SchedulesBulkResponse {
   error?: unknown;
   errors?: unknown;
   status?: number;
+}
+
+/** Minimal provider identity needed to render and target schedule actions. */
+export interface ScanScheduleProvider {
+  providerId: string;
+  providerType: ProviderType;
+  providerUid: string;
+  providerAlias: string | null;
 }
 
 export interface ScheduleFormValues {

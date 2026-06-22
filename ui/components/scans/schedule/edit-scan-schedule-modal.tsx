@@ -28,16 +28,12 @@ import {
   scheduleFormSchema,
 } from "@/lib/schedules";
 import type { ProviderType, ScheduleProps } from "@/types";
-import type { ScheduleFormValues } from "@/types/schedules";
+import type {
+  ScanScheduleProvider,
+  ScheduleFormValues,
+} from "@/types/schedules";
 
 import { ScanScheduleFields } from "./scan-schedule-fields";
-
-export interface ScanScheduleProvider {
-  providerId: string;
-  providerType: ProviderType;
-  providerUid: string;
-  providerAlias: string | null;
-}
 
 export const EDIT_SCAN_SCHEDULE_STATE = {
   LOADING: "loading",

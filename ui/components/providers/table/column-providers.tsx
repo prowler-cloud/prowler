@@ -7,7 +7,6 @@ import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
-import type { ScanScheduleProvider } from "@/components/scans/schedule/edit-scan-schedule-modal";
 import { Badge } from "@/components/shadcn";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
@@ -21,7 +20,10 @@ import {
   ProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
-import type { ScanScheduleCapability } from "@/types/schedules";
+import type {
+  ScanScheduleCapability,
+  ScanScheduleProvider,
+} from "@/types/schedules";
 
 import { LinkToScans } from "../link-to-scans";
 import { DataTableRowActions } from "./data-table-row-actions";

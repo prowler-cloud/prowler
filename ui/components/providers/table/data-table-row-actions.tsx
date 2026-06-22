@@ -24,7 +24,6 @@ import {
   EDIT_SCAN_SCHEDULE_STATE,
   EditScanScheduleModal,
   type EditScanScheduleState,
-  type ScanScheduleProvider,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
 import {
   ActionDropdown,
@@ -49,6 +48,7 @@ import {
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
+  type ScanScheduleProvider,
   type ScheduleApiResponse,
 } from "@/types/schedules";
 
