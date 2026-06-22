@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud functions remove-iam-policy-binding <FUNCTION_NAME> --region=<REGION> --member=allUsers --role=roles/cloudfunctions.invoker",
+      "CLI": "gcloud functions remove-iam-policy-binding <FUNCTION_NAME> --region=<REGION> --member=<allUsers|allAuthenticatedUsers> --role=roles/cloudfunctions.invoker",
       "NativeIaC": "",
       "Other": "1. In Google Cloud Console, go to Cloud Functions\n2. Select the function and open the Permissions tab\n3. Remove any binding with allUsers or allAuthenticatedUsers\n4. Grant invocation rights only to specific service accounts or user groups",
       "Terraform": "```hcl\nresource \"google_cloudfunctions2_function_iam_binding\" \"<example_resource_name>\" {\n  project        = \"<example_resource_id>\"\n  location       = \"<example_resource_id>\"\n  cloud_function = \"<example_resource_name>\"\n  role           = \"roles/cloudfunctions.invoker\"\n  members        = [\"serviceAccount:<example_resource_id>\"] # Critical: never include allUsers or allAuthenticatedUsers\n}\n```"
