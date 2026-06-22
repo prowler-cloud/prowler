@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "database_cluster_ip_whitelist_configured",
+  "CheckTitle": "Check if E2E Cloud database clusters with public IPs have IP whitelisting configured",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "database",
+  "Description": "Check if E2E Cloud database clusters with public IPs have IP whitelisting configured",
+  "Risk": "Database clusters without IP whitelisting allow broader network access and increase unauthorized connection risk.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/rds/clusters/<CLUSTER_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"whitelist_ips\":[\"<CIDR>\"]}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud database clusters with public IPs have IP whitelisting configured",
+      "Url": "https://hub.prowler.com/check/database_cluster_ip_whitelist_configured"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "database_cluster_backup_enabled",
+  "CheckTitle": "Check if E2E Cloud database clusters have backups enabled",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "database",
+  "Description": "Check if E2E Cloud database clusters have backups enabled",
+  "Risk": "Database clusters without backups are vulnerable to data loss from failures or accidental deletion.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/rds/clusters/<CLUSTER_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"backup_enabled\":true}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud database clusters have backups enabled",
+      "Url": "https://hub.prowler.com/check/database_cluster_backup_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ]
+}

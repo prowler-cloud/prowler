@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "node_rescue_mode_disabled",
+  "CheckTitle": "Check if E2E Cloud nodes do not have rescue mode enabled",
+  "CheckType": [],
+  "ServiceName": "node",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "compute",
+  "Description": "Check if E2E Cloud nodes do not have rescue mode enabled",
+  "Risk": "Rescue mode provides elevated access to node filesystems and can bypass normal operating controls, increasing the risk of unauthorized data access or persistence.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X POST -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/disable-rescue/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\"",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud nodes do not have rescue mode enabled",
+      "Url": "https://hub.prowler.com/check/node_rescue_mode_disabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ]
+}

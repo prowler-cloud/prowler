@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "loadbalancer_backend_health_check_enabled",
+  "CheckTitle": "Check if E2E Cloud ALB load balancers have backend health checks enabled",
+  "CheckType": [],
+  "ServiceName": "loadbalancer",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "LoadBalancer",
+  "ResourceGroup": "network",
+  "Description": "Check if E2E Cloud application load balancers have HTTP health checks configured for backends.",
+  "Risk": "Load balancers without backend health checks may route traffic to failed or unhealthy nodes, causing outages and masking active compromise on degraded backends.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/appliances/<APPLIANCE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"backends\":[{\"http_check\":true}]}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure HTTP health checks for ALB backends.",
+      "Url": "https://hub.prowler.com/check/loadbalancer_backend_health_check_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/load-balancer/"
+  ]
+}

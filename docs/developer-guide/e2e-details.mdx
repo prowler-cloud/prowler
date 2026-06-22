@@ -1,0 +1,46 @@
+---
+title: 'E2E Cloud Provider'
+---
+
+This page documents the [E2E Cloud](https://www.e2enetworks.com/) provider implementation in Prowler SDK.
+
+E2E Cloud uses the MyAccount REST API documented at [E2E Cloud API](https://docs.e2enetworks.com/api/myaccount/compute/nodes/). Authentication requires both an API key and a Bearer auth token generated from the MyAccount portal.
+
+## Authentication
+
+Set the following environment variables before running scans:
+
+```bash
+export E2E_API_KEY=<api-key>
+export E2E_AUTH_TOKEN=<auth-token>
+export E2E_PROJECT_ID=<project-id>
+export E2E_LOCATION=Delhi
+```
+
+Optional CLI flags (`--e2e-api-key`, `--e2e-auth-token`, `--e2e-project-id`, `--e2e-location`) are available for backward compatibility, but environment variables are preferred.
+
+## Usage
+
+```bash
+uv run python prowler-cli.py e2e --list-checks
+uv run python prowler-cli.py e2e --service node --log-level DEBUG
+```
+
+## Services and Checks
+
+The initial release includes four services:
+
+- `node` — compute node posture (public IP, encryption, compliance, VPC attachment)
+- `securitygroup` — security group rules and node attachments
+- `loadbalancer` — appliance HTTPS, health checks, BitNinja protection
+- `storage` — object storage buckets and block volumes
+
+Provider code lives under [`prowler/providers/e2e/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/e2e).
+
+## Architecture Notes
+
+- API client: [`prowler/providers/e2e/lib/api/client.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/e2e/lib/api/client.py)
+- Provider class: [`prowler/providers/e2e/e2e_provider.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/e2e/e2e_provider.py)
+- Check reports use `CheckReportE2e` in [`prowler/lib/check/models.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py)
+
+Supported regions default to `Delhi` and `Chennai` per the E2E Cloud OpenAPI specification.

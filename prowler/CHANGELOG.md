@@ -37,6 +37,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the GCP provider, mapping existing GCP checks across the five DORA pillars [(#11642)](https://github.com/prowler-cloud/prowler/pull/11642)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Cloudflare provider, mapping existing Cloudflare edge/network checks across the applicable DORA pillars [(#11645)](https://github.com/prowler-cloud/prowler/pull/11645)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the AlibabaCloud provider, mapping existing AlibabaCloud checks across the applicable DORA pillars [(#11646)](https://github.com/prowler-cloud/prowler/pull/11646)
+- E2E Cloud provider with `network`, `database`, and extended `storage` services (32 checks across compute, network, security groups, load balancers, storage, and DBaaS), plus a Cartography-style resource graph schema at `prowler/providers/e2e/docs/schema.md`
 
 ### 🔄 Changed
 

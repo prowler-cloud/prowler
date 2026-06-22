@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "network_reserveip_floating_ip_unattached",
+  "CheckTitle": "Check if E2E Cloud floating IPs are attached to nodes",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "network",
+  "Description": "Check if E2E Cloud floating IPs are attached to nodes",
+  "Risk": "Unattached floating IPs may be reassigned unexpectedly and disrupt secure routing assumptions.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/reserve_ips/<RESERVE_ID>/attach/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"vm_id\":<VM_ID>}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud floating IPs are attached to nodes",
+      "Url": "https://hub.prowler.com/check/network_reserveip_floating_ip_unattached"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/reserve-ip/"
+  ]
+}

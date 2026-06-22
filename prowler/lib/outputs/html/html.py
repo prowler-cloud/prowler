@@ -1397,6 +1397,45 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_e2e_assessment_summary(provider: Provider) -> str:
+        """Get the HTML assessment summary for the E2E Cloud provider."""
+        try:
+            locations = ", ".join(provider.identity.locations)
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Cloud Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {provider.identity.project_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Locations:</b> {locations}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Cloud Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Bearer Token
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_vercel_assessment_summary(provider: Provider) -> str:
         """
         get_vercel_assessment_summary gets the HTML assessment summary for the Vercel provider

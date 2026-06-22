@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "network_vpc_has_attached_nodes",
+  "CheckTitle": "Check if E2E Cloud VPCs have attached nodes",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "ResourceGroup": "network",
+  "Description": "Check if E2E Cloud VPCs have attached nodes",
+  "Risk": "VPCs without attached nodes may indicate unused network segments or misconfiguration that weakens segmentation.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"vpc_id\":<VPC_ID>}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud VPCs have attached nodes",
+      "Url": "https://hub.prowler.com/check/network_vpc_has_attached_nodes"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
+  ]
+}

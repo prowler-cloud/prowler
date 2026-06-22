@@ -156,6 +156,7 @@ from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
 from prowler.providers.scaleway.models import ScalewayOutputOptions
 from prowler.providers.stackit.models import StackITOutputOptions
+from prowler.providers.e2e.models import E2eOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
 
 
@@ -429,6 +430,10 @@ def prowler():
         )
     elif provider == "vercel":
         output_options = VercelOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "e2e":
+        output_options = E2eOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "okta":

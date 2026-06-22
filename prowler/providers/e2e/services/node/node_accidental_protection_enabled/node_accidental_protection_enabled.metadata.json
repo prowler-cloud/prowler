@@ -1,0 +1,34 @@
+{
+  "Provider": "e2e",
+  "CheckID": "node_accidental_protection_enabled",
+  "CheckTitle": "Check if E2E Cloud nodes have accidental protection enabled",
+  "CheckType": [],
+  "ServiceName": "node",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "compute",
+  "Description": "Check if E2E Cloud nodes have accidental protection enabled",
+  "Risk": "Nodes without accidental protection are easier to delete or modify unintentionally, increasing the risk of service disruption and unplanned exposure of compute resources.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/?apikey=$E2E_API_KEY&project_id=$E2E_PROJECT_ID&location=<LOCATION>\" -d '{\"is_accidental_protection\":true}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check if E2E Cloud nodes have accidental protection enabled",
+      "Url": "https://hub.prowler.com/check/node_accidental_protection_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ]
+}
