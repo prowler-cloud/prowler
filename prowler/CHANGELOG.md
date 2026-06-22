@@ -29,6 +29,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `aks_cluster_azure_monitor_enabled` check for Azure provider, verifying AKS clusters have Azure Monitor (Container Insights) enabled for metrics, logs, and alerting [(#11029)](https://github.com/prowler-cloud/prowler/pull/11029)
 - `aks_cluster_local_accounts_disabled` check for Azure provider, verifying AKS clusters have local accounts disabled so authentication is forced through Microsoft Entra ID [(#11030)](https://github.com/prowler-cloud/prowler/pull/11030)
 - `network_subnet_nsg_associated` check for Azure provider, verifying virtual network subnets have a network security group associated to enforce traffic filtering [(#11043)](https://github.com/prowler-cloud/prowler/pull/11043)
+- `network_vnet_ddos_protection_enabled` check for Azure provider, verifying virtual networks have Azure DDoS Network Protection enabled [(#11044)](https://github.com/prowler-cloud/prowler/pull/11044)
+- `entra_app_registration_credential_not_expired` check for Azure provider, verifying Entra ID app registration secrets and certificates are not expired, expiring within 30 days, or without an expiration date [(#11038)](https://github.com/prowler-cloud/prowler/pull/11038)
 - `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
 - Public `Provider.get_class()` method that resolves a provider class by name for both built-in and external (entry-point) providers [(#11398)](https://github.com/prowler-cloud/prowler/pull/11398)
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
@@ -42,8 +44,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the GCP provider, mapping existing GCP checks across the five DORA pillars [(#11642)](https://github.com/prowler-cloud/prowler/pull/11642)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Cloudflare provider, mapping existing Cloudflare edge/network checks across the applicable DORA pillars [(#11645)](https://github.com/prowler-cloud/prowler/pull/11645)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the AlibabaCloud provider, mapping existing AlibabaCloud checks across the applicable DORA pillars [(#11646)](https://github.com/prowler-cloud/prowler/pull/11646)
-- `acmpca_certificate_authority_pqc_key_algorithm` check and new `acmpca` service for AWS provider to verify AWS Private CA certificate authorities use a post-quantum (ML-DSA) key algorithm [(#11318)](https://github.com/prowler-cloud/prowler/pull/11318)
+- `cloudfront_distributions_pqc_tls_enabled` check for AWS provider to verify CloudFront distributions enforce a post-quantum TLS 1.3 security policy [(#11317)](https://github.com/prowler-cloud/prowler/pull/11317)
+- `apigateway_domain_name_pqc_tls_enabled` check for AWS provider to verify API Gateway custom domain names use a post-quantum TLS security policy [(#11316)](https://github.com/prowler-cloud/prowler/pull/11316)
 - `transfer_server_pqc_ssh_kex_enabled` check for AWS provider to verify Transfer Family servers use a post-quantum hybrid SSH key exchange security policy [(#11315)](https://github.com/prowler-cloud/prowler/pull/11315)
+- `acmpca_certificate_authority_pqc_key_algorithm` check and new `acmpca` service for AWS provider to verify AWS Private CA certificate authorities use a post-quantum (ML-DSA) key algorithm [(#11318)](https://github.com/prowler-cloud/prowler/pull/11318)
 
 ### 🔄 Changed
 

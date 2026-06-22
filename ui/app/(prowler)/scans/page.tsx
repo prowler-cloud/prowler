@@ -30,6 +30,7 @@ import {
   ScanProps,
   SearchParamsProps,
 } from "@/types";
+import type { ScanScheduleCapability } from "@/types/schedules";
 
 const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
 // Pending schedule rows are derived from provider schedules, but must honor the
@@ -244,9 +245,11 @@ export default async function Scans({
 const SSRDataTableScans = async ({
   searchParams,
   providers,
+  scanScheduleCapability,
 }: {
   searchParams: SearchParamsProps;
   providers: ProviderProps[];
+  scanScheduleCapability?: ScanScheduleCapability;
 }) => {
   const tab = getScanJobsTab(searchParams.tab);
 
@@ -359,6 +362,7 @@ const SSRDataTableScans = async ({
       meta={tableMeta}
       tab={tab}
       hasFilters={hasUserFilters}
+      scanScheduleCapability={scanScheduleCapability}
     />
   );
 };

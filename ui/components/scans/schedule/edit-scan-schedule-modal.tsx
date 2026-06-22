@@ -6,12 +6,21 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { removeSchedule, updateSchedule } from "@/actions/schedules";
+import {
+  removeSchedule,
+  updateSchedule,
+  updateSchedulesBulk,
+} from "@/actions/schedules";
+import {
+  ProviderTypeIconStack,
+  type ProviderTypeIconStackItem,
+} from "@/components/icons/providers-badge/provider-type-icon";
 import { Button, FieldError } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { EntityInfo } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
+import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import {
   buildScheduleUpdatePayload,
   getScheduleFormValues,
@@ -19,16 +28,12 @@ import {
   scheduleFormSchema,
 } from "@/lib/schedules";
 import type { ProviderType, ScheduleProps } from "@/types";
-import type { ScheduleFormValues } from "@/types/schedules";
+import type {
+  ScanScheduleProvider,
+  ScheduleFormValues,
+} from "@/types/schedules";
 
 import { ScanScheduleFields } from "./scan-schedule-fields";
-
-export interface ScanScheduleProvider {
-  providerId: string;
-  providerType: ProviderType;
-  providerUid: string;
-  providerAlias: string | null;
-}
 
 export const EDIT_SCAN_SCHEDULE_STATE = {
   LOADING: "loading",
@@ -45,22 +50,56 @@ export type EditScanScheduleState =
   | { kind: typeof EDIT_SCAN_SCHEDULE_STATE.ERROR; message: string };
 
 interface EditScanScheduleFormProps {
-  provider: ScanScheduleProvider;
+  provider?: ScanScheduleProvider;
+  providers?: ScanScheduleProvider[];
+  providerIds?: string[];
+  targetName?: string;
+  targetId?: string;
   schedule: ScheduleProps | null;
   onClose: () => void;
+  onSaved?: () => void;
 }
 
 interface EditScanScheduleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   provider?: ScanScheduleProvider;
+  providers?: ScanScheduleProvider[];
+  providerIds?: string[];
+  targetName?: string;
+  targetId?: string;
   state: EditScanScheduleState;
+  onSaved?: () => void;
+}
+
+function getBulkProviderTypeIconItems(
+  providers: ScanScheduleProvider[],
+): ProviderTypeIconStackItem[] {
+  const seen = new Set<ProviderType>();
+  const items: ProviderTypeIconStackItem[] = [];
+
+  for (const provider of providers) {
+    if (seen.has(provider.providerType)) continue;
+    seen.add(provider.providerType);
+    items.push({
+      key: provider.providerType,
+      type: provider.providerType,
+      tooltip: provider.providerType,
+    });
+  }
+
+  return items;
 }
 
 function EditScanScheduleForm({
   provider,
+  providers,
+  providerIds,
+  targetName,
+  targetId,
   schedule,
   onClose,
+  onSaved,
 }: EditScanScheduleFormProps) {
   const router = useRouter();
   const [isConfirmRemoveOpen, setIsConfirmRemoveOpen] = useState(false);
@@ -72,12 +111,23 @@ function EditScanScheduleForm({
   const hasSchedule = schedule
     ? isScheduleConfigured(schedule.attributes)
     : false;
+  const targetProviders = providers ?? (provider ? [provider] : []);
+  const targetProviderIds =
+    providerIds ?? targetProviders.map((target) => target.providerId);
+  const referenceProvider = targetProviders[0];
+  const isBulk = providers !== undefined || providerIds !== undefined;
+  const bulkProviderTypeIconItems = isBulk
+    ? getBulkProviderTypeIconItems(targetProviders)
+    : [];
+  const providerCountLabel = `${targetProviderIds.length} provider${
+    targetProviderIds.length === 1 ? "" : "s"
+  }`;
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const result = await updateSchedule(
-      provider.providerId,
-      buildScheduleUpdatePayload(values),
-    );
+    const payload = buildScheduleUpdatePayload(values);
+    const result = isBulk
+      ? await updateSchedulesBulk(targetProviderIds, payload)
+      : await updateSchedule(targetProviderIds[0], payload);
 
     if (result?.error) {
       form.setError("root", { message: String(result.error) });
@@ -86,27 +136,38 @@ function EditScanScheduleForm({
 
     toast({
       title: "Scan schedule saved",
-      description: "The scan schedule was updated successfully.",
+      description: isBulk
+        ? `The scan schedule was updated for ${providerCountLabel}.`
+        : "The scan schedule was updated successfully.",
     });
+    onSaved?.();
     onClose();
     router.refresh();
   });
 
   const handleRemove = async () => {
     setIsRemoving(true);
-    const result = await removeSchedule(provider.providerId);
+    const results = await runWithConcurrencyLimit(
+      targetProviderIds,
+      10,
+      (providerId) => removeSchedule(providerId),
+    );
     setIsRemoving(false);
     setIsConfirmRemoveOpen(false);
 
-    if (result?.error) {
-      form.setError("root", { message: String(result.error) });
+    const failedResult = results.find((result) => result?.error);
+    if (failedResult?.error) {
+      form.setError("root", { message: String(failedResult.error) });
       return;
     }
 
     toast({
       title: "Scan schedule removed",
-      description: "The scan schedule was removed successfully.",
+      description: isBulk
+        ? `The scan schedule was removed for ${providerCountLabel}.`
+        : "The scan schedule was removed successfully.",
     });
+    onSaved?.();
     onClose();
     router.refresh();
   };
@@ -116,11 +177,30 @@ function EditScanScheduleForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-8">
-      <EntityInfo
-        cloudProvider={provider.providerType}
-        entityAlias={provider.providerAlias ?? provider.providerUid}
-        entityId={provider.providerUid}
-      />
+      {referenceProvider && (
+        <EntityInfo
+          cloudProvider={isBulk ? undefined : referenceProvider.providerType}
+          icon={
+            isBulk && bulkProviderTypeIconItems.length > 0 ? (
+              <ProviderTypeIconStack
+                items={bulkProviderTypeIconItems}
+                max={bulkProviderTypeIconItems.length}
+                size={35}
+                className="flex-wrap"
+              />
+            ) : undefined
+          }
+          entityAlias={
+            isBulk
+              ? (targetName ?? providerCountLabel)
+              : (referenceProvider.providerAlias ??
+                referenceProvider.providerUid)
+          }
+          entityId={isBulk ? targetId : referenceProvider.providerUid}
+          idLabel={isBulk ? "ID" : "UID"}
+          badge={isBulk ? providerCountLabel : undefined}
+        />
+      )}
 
       <ScanScheduleFields
         form={form}
@@ -154,7 +234,11 @@ function EditScanScheduleForm({
         open={isConfirmRemoveOpen}
         onOpenChange={setIsConfirmRemoveOpen}
         title="Are you absolutely sure?"
-        description="This action cannot be undone. The scan schedule for this provider will be removed and scans will no longer run automatically."
+        description={
+          isBulk
+            ? `This action cannot be undone. The scan schedule for these ${providerCountLabel} will be removed and scans will no longer run automatically.`
+            : "This action cannot be undone. The scan schedule for this provider will be removed and scans will no longer run automatically."
+        }
       >
         <div className="flex w-full justify-end gap-4">
           <Button
@@ -186,9 +270,21 @@ export function EditScanScheduleModal({
   open,
   onOpenChange,
   provider,
+  providers,
+  providerIds,
+  targetName,
+  targetId,
   state,
+  onSaved,
 }: EditScanScheduleModalProps) {
   const close = () => onOpenChange(false);
+  const hasTarget = Boolean(
+    provider || providers?.length || providerIds?.length,
+  );
+  const keyPrefix =
+    provider?.providerId ??
+    providerIds?.join(":") ??
+    providers?.map((item) => item.providerId).join(":");
 
   return (
     <Modal
@@ -214,12 +310,17 @@ export function EditScanScheduleModal({
         </div>
       )}
 
-      {state.kind === EDIT_SCAN_SCHEDULE_STATE.LOADED && provider && (
+      {state.kind === EDIT_SCAN_SCHEDULE_STATE.LOADED && hasTarget && (
         <EditScanScheduleForm
-          key={`${provider.providerId}-${state.schedule?.attributes.scan_hour ?? "none"}`}
+          key={`${keyPrefix}-${state.schedule?.attributes.scan_hour ?? "none"}`}
           provider={provider}
+          providers={providers}
+          providerIds={providerIds}
+          targetName={targetName}
+          targetId={targetId}
           schedule={state.schedule}
           onClose={close}
+          onSaved={onSaved}
         />
       )}
     </Modal>

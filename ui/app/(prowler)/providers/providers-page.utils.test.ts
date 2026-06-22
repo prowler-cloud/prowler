@@ -28,7 +28,10 @@ vi.mock("@/actions/schedules", () => schedulesActionsMock);
 
 import { SearchParamsProps } from "@/types";
 import { ProvidersApiResponse } from "@/types/providers";
-import { ProvidersProviderRow } from "@/types/providers-table";
+import {
+  isProvidersOrganizationRow,
+  ProvidersProviderRow,
+} from "@/types/providers-table";
 import {
   SCHEDULE_FREQUENCY,
   type ScheduleAttributes,
@@ -643,13 +646,73 @@ describe("buildProvidersTableRows", () => {
 
     // Then
     expect(rows).toHaveLength(1);
-    expect(rows[0].rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
-    expect(rows[0].subRows).toHaveLength(2);
+    const orgRow = rows[0];
+    expect(isProvidersOrganizationRow(orgRow)).toBe(true);
+    if (!isProvidersOrganizationRow(orgRow)) {
+      throw new Error("Expected organization row");
+    }
+    expect(orgRow.subRows).toHaveLength(2);
     expect(
-      rows[0].subRows?.every(
+      orgRow.subRows?.every(
         (row) => row.rowType === PROVIDERS_ROW_TYPE.PROVIDER,
       ),
     ).toBe(true);
+    expect(orgRow.providerIds).toEqual(["provider-1", "provider-2"]);
+  });
+
+  it("keeps organization relationship provider ids even when providers are not in the visible page", () => {
+    // Given
+    const providers = [
+      toProviderRow(providersResponse.data[0], {
+        relationships: {
+          ...providersResponse.data[0].relationships,
+          organization: {
+            data: null,
+          },
+        },
+      }),
+    ];
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-1",
+          type: "organizations",
+          attributes: {
+            name: "Large Organization",
+            org_type: "aws",
+            external_id: "o-large",
+            metadata: {},
+            root_external_id: "r-large",
+          },
+          relationships: {
+            providers: {
+              data: [
+                { type: "providers", id: "provider-1" },
+                { type: "providers", id: "provider-not-in-page" },
+              ],
+            },
+            organizational_units: {
+              data: [],
+            },
+          },
+        },
+      ],
+      organizationUnits: [],
+      isCloud: true,
+    });
+
+    // Then
+    expect(rows).toHaveLength(1);
+    const orgRow = rows[0];
+    expect(isProvidersOrganizationRow(orgRow)).toBe(true);
+    if (!isProvidersOrganizationRow(orgRow)) {
+      throw new Error("Expected organization row");
+    }
+    expect(orgRow.subRows).toHaveLength(1);
+    expect(orgRow.providerIds).toEqual(["provider-1", "provider-not-in-page"]);
   });
 });
 

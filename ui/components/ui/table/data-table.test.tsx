@@ -162,6 +162,7 @@ describe("DataTable", () => {
       expect(actionsCell).toHaveClass("right-0");
       expect(actionsCell).toHaveClass("z-20");
       expect(actionsCell).toHaveClass("bg-bg-neutral-secondary");
+      expect(actionsCell).toHaveClass("last:rounded-r-none!");
       expect(actionsCell).not.toHaveClass("border-l");
       expect(actionsCell).toHaveClass("before:bg-gradient-to-r");
       expect(actionsCell).toHaveClass("before:from-transparent");

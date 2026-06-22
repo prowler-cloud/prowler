@@ -241,7 +241,8 @@
         "app_function_not_publicly_accessible",
         "containerregistry_not_publicly_accessible",
         "network_public_ip_shodan",
-        "storage_blob_public_access_level_is_disabled"
+        "storage_blob_public_access_level_is_disabled",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {

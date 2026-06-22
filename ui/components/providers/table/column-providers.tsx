@@ -20,6 +20,10 @@ import {
   ProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import type {
+  ScanScheduleCapability,
+  ScanScheduleProvider,
+} from "@/types/schedules";
 
 import { LinkToScans } from "../link-to-scans";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -103,9 +107,12 @@ function countSelectedLeaves(rows: Row<ProvidersTableRow>[]): number {
 export function getColumnProviders(
   rowSelection: RowSelectionState,
   testableProviderIds: string[],
+  selectedScheduleProviderIds: string[],
+  selectedScheduleProviders: ScanScheduleProvider[],
   onClearSelection: () => void,
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void,
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void,
+  scanScheduleCapability?: ScanScheduleCapability,
 ): ColumnDef<ProvidersTableRow>[] {
   return [
     {
@@ -317,9 +324,12 @@ export function getColumnProviders(
             hasSelection={hasSelection}
             isRowSelected={row.getIsSelected()}
             testableProviderIds={testableProviderIds}
+            selectedScheduleProviderIds={selectedScheduleProviderIds}
+            selectedScheduleProviders={selectedScheduleProviders}
             onClearSelection={onClearSelection}
             onOpenProviderWizard={onOpenProviderWizard}
             onOpenOrganizationWizard={onOpenOrganizationWizard}
+            capability={scanScheduleCapability}
           />
         );
       },
