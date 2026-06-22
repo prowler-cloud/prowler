@@ -24,7 +24,10 @@ import {
 } from "@/components/shared/cloud-feature-badge";
 import { ToastAction, useToast } from "@/components/ui";
 import { EntityInfo } from "@/components/ui/entities";
-import { getActionErrorMessage } from "@/lib/action-errors";
+import {
+  type ActionErrorResult,
+  getActionErrorMessage,
+} from "@/lib/action-errors";
 import {
   getScanScheduleCapability,
   getScheduleFormDefaults,
@@ -130,10 +133,7 @@ export function LaunchStep({
     }
   }, [isAdvanced, mode]);
 
-  const launchOnDemandScan = async (): Promise<{
-    error?: unknown;
-    status?: number;
-  } | null> => {
+  const launchOnDemandScan = async (): Promise<ActionErrorResult | null> => {
     if (!providerId || isBlocked) return null;
     const formData = new FormData();
     formData.set("providerId", providerId);
