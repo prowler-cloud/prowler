@@ -1,7 +1,7 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_image_tag_fixed",
-  "CheckTitle": "Ensure image tag is not set to Latest or Blank",
+  "CheckTitle": "Container images use fixed tags",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Pin all container images to a **specific version tag** or **digest** (`@sha256:...`) to ensure reproducible, auditable deployments.\n\n- Avoid `latest` and untagged images in production\n- Use **image digests** for maximum immutability\n- Enforce tag policies with **admission controllers** (e.g., OPA Gatekeeper, Kyverno)\n- Integrate image scanning into CI/CD pipelines for **defense in depth**",
-      "Url": "https://kubernetes.io/docs/concepts/containers/images/"
+      "Url": "https://hub.prowler.com/check/core_image_tag_fixed"
     }
   },
   "Categories": [

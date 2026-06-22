@@ -1,7 +1,7 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_memory_limits_set",
-  "CheckTitle": "Ensure memory limits are set on all containers",
+  "CheckTitle": "Container memory limits are configured",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Set **memory limits** on every container to prevent unbounded consumption and protect node stability.\n\n- Start with observed usage plus headroom; tune with **VPA** recommendations\n- Combine with **LimitRanges** and **ResourceQuotas** at the namespace level for **defense in depth**\n- Monitor memory usage and OOMKill events to right-size limits over time",
-      "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+      "Url": "https://hub.prowler.com/check/core_memory_limits_set"
     }
   },
   "Categories": [

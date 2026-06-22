@@ -17,11 +17,11 @@ class Test_core_memory_limits_set:
                 return_value=set_mocked_kubernetes_provider(),
             ),
             mock.patch(
-                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_client",
+                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set.core_client",
                 new=core_client,
             ),
         ):
-            from prowler.providers.kubernetes.services.core.core_memory_limits_set import (
+            from prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set import (
                 core_memory_limits_set,
             )
 
@@ -71,11 +71,11 @@ class Test_core_memory_limits_set:
                 return_value=set_mocked_kubernetes_provider(),
             ),
             mock.patch(
-                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_client",
+                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set.core_client",
                 new=core_client,
             ),
         ):
-            from prowler.providers.kubernetes.services.core.core_memory_limits_set import (
+            from prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set import (
                 core_memory_limits_set,
             )
 
@@ -128,11 +128,11 @@ class Test_core_memory_limits_set:
                 return_value=set_mocked_kubernetes_provider(),
             ),
             mock.patch(
-                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_client",
+                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set.core_client",
                 new=core_client,
             ),
         ):
-            from prowler.providers.kubernetes.services.core.core_memory_limits_set import (
+            from prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set import (
                 core_memory_limits_set,
             )
 
@@ -186,11 +186,11 @@ class Test_core_memory_limits_set:
                 return_value=set_mocked_kubernetes_provider(),
             ),
             mock.patch(
-                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_client",
+                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set.core_client",
                 new=core_client,
             ),
         ):
-            from prowler.providers.kubernetes.services.core.core_memory_limits_set import (
+            from prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set import (
                 core_memory_limits_set,
             )
 
@@ -199,3 +199,70 @@ class Test_core_memory_limits_set:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+
+    def test_mixed_containers_fails_on_missing_memory_limit(self):
+        limited_container = Container(
+            name="limited-container",
+            image="nginx:1.25.3",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources={"limits": {"memory": "128Mi"}},
+        )
+        unlimited_container = Container(
+            name="unlimited-container",
+            image="busybox:1.36",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources={"requests": {"memory": "64Mi"}},
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={
+                "limited-container": limited_container,
+                "unlimited-container": unlimited_container,
+            },
+        )
+
+        core_client = mock.MagicMock
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_memory_limits_set.core_memory_limits_set import (
+                core_memory_limits_set,
+            )
+
+            check = core_memory_limits_set()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == (
+                "Pod test-pod does not have memory limits set on container unlimited-container."
+            )
