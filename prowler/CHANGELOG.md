@@ -45,6 +45,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Azure PostgreSQL flexible server inventory no longer aborts the whole subscription when the `connection_throttle.enable` parameter is missing (e.g. PostgreSQL v18), and logs the expected "Entra ID authentication not enabled" case as a warning instead of an error, so servers are still scanned [(#11045)](https://github.com/prowler-cloud/prowler/pull/11045)
 - `iam_policy_allows_privilege_escalation` now includes the `privilege-escalation` category [(#11648)](https://github.com/prowler-cloud/prowler/pull/11648)
+- Azure `keyvault_logging_enabled` now accepts Key Vault diagnostic settings that enable the explicit `AuditEvent` category, avoiding false failures when Azure returns category-based logs without category groups [(#11660)](https://github.com/prowler-cloud/prowler/pull/11660)
 
 ### 🔐 Security
 
