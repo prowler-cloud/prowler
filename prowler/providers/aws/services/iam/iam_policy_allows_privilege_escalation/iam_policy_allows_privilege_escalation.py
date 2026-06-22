@@ -11,6 +11,8 @@ class iam_policy_allows_privilege_escalation(Check):
 
         for policy in iam_client.policies.values():
             if policy.type == "Custom":
+                if not policy.attached and not iam_client.provider.scan_unused_services:
+                    continue
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region
                 report.status = "PASS"

@@ -20,6 +20,9 @@ import {
   findOrCreateFramework,
   updateCounters,
 } from "./commons";
+import { compareSectionsByCanonicalOrder } from "./threatscore-pillars";
+
+export { getTopFailedSections } from "./threat-helpers";
 
 export const mapComplianceData = (
   attributesData: AttributesData,
@@ -91,6 +94,14 @@ export const mapComplianceData = (
     control.requirements.push(requirement);
   }
 
+  // Sort categories within each framework by canonical pillar order so
+  // the accordion, charts and breakdown all agree on the same ordering.
+  frameworks.forEach((framework) => {
+    framework.categories.sort((a, b) =>
+      compareSectionsByCanonicalOrder(a.name, b.name),
+    );
+  });
+
   // Calculate counters and percentualScore (Threat-specific logic)
   frameworks.forEach((framework) => {
     framework.pass = 0;
@@ -149,9 +160,7 @@ export const mapComplianceData = (
           ? (numerator / denominator) * 100
           : 0;
 
-      // Add percentualScore to category (we can extend the type or use a custom property)
-      (category as any).percentualScore =
-        Math.round(percentualScore * 100) / 100; // Round to 2 decimal places
+      category.percentualScore = Math.round(percentualScore * 100) / 100;
 
       framework.pass += category.pass;
       framework.fail += category.fail;
@@ -168,7 +177,7 @@ export const toAccordionItems = (
 ): AccordionItemProps[] => {
   return data.flatMap((framework) =>
     framework.categories.map((category) => {
-      const percentualScore = (category as any).percentualScore || 0;
+      const percentualScore = category.percentualScore ?? 0;
 
       return {
         key: `${framework.name}-${category.name}`,

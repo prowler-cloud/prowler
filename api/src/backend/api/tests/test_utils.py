@@ -31,6 +31,7 @@ from prowler.providers.image.image_provider import ImageProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
+from prowler.providers.okta.okta_provider import OktaProvider
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 from prowler.providers.vercel.vercel_provider import VercelProvider
@@ -130,6 +131,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.OPENSTACK.value, OpenstackProvider),
             (Provider.ProviderChoices.IMAGE.value, ImageProvider),
             (Provider.ProviderChoices.VERCEL.value, VercelProvider),
+            (Provider.ProviderChoices.OKTA.value, OktaProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -239,6 +241,31 @@ class TestProwlerProviderConnectionTest:
         )
 
     @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_okta_provider(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Okta provider passes org domain and provider_id."""
+        provider = MagicMock()
+        provider.uid = "acme.okta.com"
+        provider.provider = Provider.ProviderChoices.OKTA.value
+        provider.secret.secret = {
+            "okta_client_id": "0oa123456789abcdef",
+            "okta_private_key": "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+            "okta_scopes": ["okta.policies.read"],
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            okta_client_id="0oa123456789abcdef",
+            okta_private_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+            okta_scopes=["okta.policies.read"],
+            okta_org_domain="acme.okta.com",
+            provider_id="acme.okta.com",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_image_provider_no_creds(
         self, mock_return_prowler_provider
     ):
@@ -308,6 +335,10 @@ class TestGetProwlerProviderKwargs:
                 Provider.ProviderChoices.VERCEL.value,
                 {"team_id": "provider_uid"},
             ),
+            (
+                Provider.ProviderChoices.OKTA.value,
+                {"okta_org_domain": "provider_uid"},
+            ),
         ],
     )
     def test_get_prowler_provider_kwargs(self, provider_type, expected_extra_kwargs):
@@ -324,6 +355,30 @@ class TestGetProwlerProviderKwargs:
         result = get_prowler_provider_kwargs(provider)
 
         expected_result = {**secret_dict, **expected_extra_kwargs}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_oraclecloud_converts_region_string_to_set(
+        self,
+    ):
+        secret_dict = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+            "region": "us-ashburn-1",
+            "pass_phrase": "fake-passphrase",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret = secret_mock
+        provider.uid = "ocid1.tenancy.oc1..fake"
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {**secret_dict, "region": {"us-ashburn-1"}}
         assert result == expected_result
 
     def test_get_prowler_provider_kwargs_with_mutelist(self):

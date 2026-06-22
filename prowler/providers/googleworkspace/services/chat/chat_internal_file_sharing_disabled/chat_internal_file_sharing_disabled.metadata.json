@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "chat_internal_file_sharing_disabled",
+  "CheckTitle": "Internal file sharing in Chat is set to no files",
+  "CheckType": [],
+  "ServiceName": "chat",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Google Chat **internal file sharing** controls whether users can share files with other people inside the organization via Chat conversations. Organizations in regulated industries may need to **control and audit** all file sharing, even between internal users.",
+  "Risk": "Unrestricted internal file sharing in Chat allows files with **sensitive information** to be distributed freely without passing through approved channels. This undermines **data governance** and **audit trail** requirements, making it harder to track data movement within the organization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/chat/set-up-chat-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Google Chat and classic Hangouts**\n3. Click **Chat File Sharing**\n4. Under Setting, set **Internal filesharing** to **No files**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable **internal file sharing** in Chat to enforce file distribution through **approved channels** with proper audit trails and governance controls.",
+      "Url": "https://hub.prowler.com/check/chat_internal_file_sharing_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "chat_external_file_sharing_disabled"
+  ],
+  "Notes": ""
+}

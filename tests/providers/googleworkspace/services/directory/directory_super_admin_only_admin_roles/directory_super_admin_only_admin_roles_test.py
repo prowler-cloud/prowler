@@ -6,7 +6,6 @@ from prowler.providers.googleworkspace.services.directory.directory_service impo
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -90,8 +89,8 @@ class TestDirectorySuperAdminOnlyAdminRoles:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "used only for super admin activities" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
-            assert findings[0].resource_id == CUSTOMER_ID
+            assert findings[0].resource_name == "Directory Users"
+            assert findings[0].resource_id == "directoryUsers"
             assert findings[0].customer_id == CUSTOMER_ID
             assert findings[0].resource == mock_provider.domain_resource.dict()
 

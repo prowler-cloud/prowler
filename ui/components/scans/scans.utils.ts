@@ -1,0 +1,370 @@
+import {
+  describeScheduleCadence,
+  getNextScheduledRunInTimezone,
+  getScheduleCadenceParts,
+  isScheduleConfigured,
+} from "@/lib/schedules";
+import {
+  DEFAULT_SCAN_JOBS_TAB,
+  type MetaDataProps,
+  type ProviderProps,
+  SCAN_JOBS_TAB,
+  SCAN_STATE,
+  SCAN_TRIGGER,
+  type ScanAttributes,
+  type ScanFindingsSummary,
+  type ScanJobsTab,
+  type ScanProps,
+  type ScanState,
+  type ScanTrigger,
+  type ScheduleAttributes,
+  type SearchParamsProps,
+} from "@/types";
+
+export const SCAN_STATE_FILTER_KEYS = [
+  "filter[state]",
+  "filter[state__in]",
+] as const;
+
+const ALL_VALUE = "all";
+
+const SCAN_JOBS_TAB_STATES: Record<ScanJobsTab, ScanState[]> = {
+  [SCAN_JOBS_TAB.ACTIVE]: [SCAN_STATE.AVAILABLE, SCAN_STATE.EXECUTING],
+  [SCAN_JOBS_TAB.COMPLETED]: [
+    SCAN_STATE.COMPLETED,
+    SCAN_STATE.FAILED,
+    SCAN_STATE.CANCELLED,
+  ],
+  [SCAN_JOBS_TAB.SCHEDULED]: [SCAN_STATE.SCHEDULED],
+};
+
+const toStateFilter = (states: ScanState[]): Record<string, string> => ({
+  "filter[state__in]": states.join(","),
+});
+
+const SCAN_JOBS_TAB_FILTERS = Object.fromEntries(
+  Object.entries(SCAN_JOBS_TAB_STATES).map(([tab, states]) => [
+    tab,
+    toStateFilter(states),
+  ]),
+) as Record<ScanJobsTab, Record<string, string>>;
+
+export interface ScanTriggerFilterOption {
+  value: typeof ALL_VALUE | ScanTrigger;
+  label: string;
+}
+
+export interface ScanStatusFilterOption {
+  value: typeof ALL_VALUE | ScanState;
+  label: string;
+}
+
+export function getScanTriggerFilterOptions(
+  isCloudEnvironment: boolean,
+): ScanTriggerFilterOption[] {
+  const options: ScanTriggerFilterOption[] = [
+    { value: ALL_VALUE, label: "All Types" },
+    { value: SCAN_TRIGGER.MANUAL, label: "Manual" },
+    { value: SCAN_TRIGGER.SCHEDULED, label: "Scheduled" },
+  ];
+
+  if (isCloudEnvironment) {
+    options.push({ value: SCAN_TRIGGER.IMPORTED, label: "Imported" });
+  }
+
+  return options;
+}
+
+export function isScanStateFilterKey(key: string): boolean {
+  return SCAN_STATE_FILTER_KEYS.some((filterKey) => filterKey === key);
+}
+
+function isSearchParamValue(value: unknown): value is string | string[] {
+  return typeof value === "string" || Array.isArray(value);
+}
+
+export function getScanJobsUserFilters(
+  searchParams: SearchParamsProps,
+): Record<string, string | string[]> {
+  const tab = getScanJobsTab(searchParams.tab);
+
+  return Object.entries(searchParams).reduce<Record<string, string | string[]>>(
+    (filters, [key, value]) => {
+      if (tab === SCAN_JOBS_TAB.SCHEDULED && key === "filter[trigger]") {
+        return filters;
+      }
+
+      if (
+        key.startsWith("filter[") &&
+        !isScanStateFilterKey(key) &&
+        isSearchParamValue(value)
+      ) {
+        filters[key] = value;
+      }
+
+      return filters;
+    },
+    {},
+  );
+}
+
+function parseStateFilter(value?: string | string[]): ScanState[] {
+  const rawValue = Array.isArray(value) ? value.join(",") : value;
+  if (!rawValue || rawValue === ALL_VALUE) return [];
+
+  return rawValue
+    .split(",")
+    .filter((item): item is ScanState =>
+      Object.values(SCAN_STATE).includes(item as ScanState),
+    );
+}
+
+export function getScanJobsTab(value?: string | string[]): ScanJobsTab {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const tabs = Object.values(SCAN_JOBS_TAB);
+
+  return tabs.includes(rawValue as ScanJobsTab)
+    ? (rawValue as ScanJobsTab)
+    : DEFAULT_SCAN_JOBS_TAB;
+}
+
+export function getScanJobsTabFilters(
+  tab: ScanJobsTab,
+  stateFilter?: string | string[],
+): Record<string, string> {
+  const selectedStates = parseStateFilter(stateFilter);
+  const allowedStates = SCAN_JOBS_TAB_STATES[tab];
+  const matchingStates = selectedStates.filter((state) =>
+    allowedStates.includes(state),
+  );
+
+  if (matchingStates.length === 0) return { ...SCAN_JOBS_TAB_FILTERS[tab] };
+
+  return { "filter[state__in]": matchingStates.join(",") };
+}
+
+export function getScanAlias(scan: ScanProps): string {
+  if (scan.attributes.trigger === SCAN_TRIGGER.SCHEDULED)
+    return "Scheduled Scan";
+  return scan.attributes.name?.trim() || "-";
+}
+
+export function formatScanDuration(duration?: number | null): string {
+  if (duration === null || duration === undefined || duration < 0) return "-";
+
+  const totalSeconds = Math.round(duration);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0) return `${hours}h ${remainingMinutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes} min ${seconds} sec`;
+  return `${seconds} sec`;
+}
+
+export function getScanScheduleLabel(trigger?: ScanTrigger | string): string {
+  if (trigger === "scheduled") return "Scheduled";
+  if (trigger === "manual") return "Manual";
+  if (trigger === "imported") return "Imported";
+  return "-";
+}
+
+export function getScanStatusLabel(state?: ScanState | string): string {
+  if (state === "available") return "Queued";
+  if (!state) return "-";
+  return state.charAt(0).toUpperCase() + state.slice(1);
+}
+
+export function getScanStatusFilterOptions(
+  tab: ScanJobsTab,
+): ScanStatusFilterOption[] {
+  return [
+    { value: ALL_VALUE, label: "All Statuses" },
+    ...SCAN_JOBS_TAB_STATES[tab].map((state) => ({
+      value: state,
+      label: getScanStatusLabel(state),
+    })),
+  ];
+}
+
+export interface BuildPendingScheduleRowsParams {
+  providers: ProviderProps[];
+  schedulesByProviderId: Record<string, ScheduleAttributes>;
+  /** Providers that already have a real `state=scheduled` Scan row. */
+  coveredProviderIds: Set<string>;
+  now: Date;
+}
+
+interface AppendPendingScheduleRowsToPageParams
+  extends BuildPendingScheduleRowsParams {
+  scans: ScanProps[];
+  meta?: MetaDataProps;
+  page: number;
+  pageSize: number;
+}
+
+/**
+ * Synthesizes Scheduled-tab rows for configured schedules without a Scan row
+ * yet (the backend only creates one after each run).
+ */
+export function buildPendingScheduleRows({
+  providers,
+  schedulesByProviderId,
+  coveredProviderIds,
+  now,
+}: BuildPendingScheduleRowsParams): ScanProps[] {
+  return providers.flatMap((provider) => {
+    if (coveredProviderIds.has(provider.id)) return [];
+
+    const schedule = schedulesByProviderId[provider.id];
+    if (!schedule || !isScheduleConfigured(schedule) || !schedule.scan_enabled)
+      return [];
+
+    // Prefer the server-computed next fire time; fall back to a client estimate.
+    const nextScanAt =
+      schedule.next_scan_at ??
+      getNextScheduledRunInTimezone(schedule, now)?.toISOString() ??
+      null;
+
+    return [
+      {
+        type: "scans" as const,
+        id: `pending-schedule-${provider.id}`,
+        attributes: {
+          name: "",
+          trigger: SCAN_TRIGGER.SCHEDULED,
+          state: SCAN_STATE.SCHEDULED,
+          unique_resource_count: 0,
+          progress: 0,
+          scanner_args: null,
+          duration: null,
+          started_at: null,
+          inserted_at: now.toISOString(),
+          completed_at: null,
+          scheduled_at: nextScanAt,
+          next_scan_at: null,
+        },
+        relationships: {
+          provider: { data: { type: "providers", id: provider.id } },
+          // No Celery task behind synthetic rows.
+          task: { data: { type: "tasks", id: "" } },
+        },
+        providerInfo: {
+          provider: provider.attributes.provider,
+          uid: provider.attributes.uid,
+          alias: provider.attributes.alias,
+        },
+        pendingSchedule: {
+          summary: describeScheduleCadence(schedule),
+          cadence: getScheduleCadenceParts(schedule).cadence,
+          nextScanAt,
+          lastScanAt: schedule.last_scan_at ?? null,
+        },
+      },
+    ];
+  });
+}
+
+export function getProviderIdsFromScans(scans: ScanProps[]): Set<string> {
+  return new Set(
+    scans
+      .map((scan) => scan.relationships?.provider?.data?.id)
+      .filter((id): id is string => Boolean(id)),
+  );
+}
+
+export function appendPendingScheduleRowsToPage({
+  scans,
+  meta,
+  page,
+  pageSize,
+  providers,
+  schedulesByProviderId,
+  coveredProviderIds,
+  now,
+}: AppendPendingScheduleRowsToPageParams): {
+  data: ScanProps[];
+  meta?: MetaDataProps;
+} {
+  // The API paginates real scheduled scans, while pending rows come from
+  // configured schedules without a scan yet. Reconcile both sources here so the
+  // rendered rows and pagination metadata describe the same combined list.
+  const pendingRows = buildPendingScheduleRows({
+    providers,
+    schedulesByProviderId,
+    coveredProviderIds,
+    now,
+  });
+  const safePageSize = Math.max(1, pageSize);
+  const realCount = meta?.pagination.count ?? scans.length;
+  const pendingStart = Math.max(0, (page - 1) * safePageSize - realCount);
+  const pendingSlots = Math.max(0, safePageSize - scans.length);
+  const pagePendingRows = pendingRows.slice(
+    pendingStart,
+    pendingStart + pendingSlots,
+  );
+  const combinedCount = realCount + pendingRows.length;
+  const combinedPages =
+    combinedCount === 0 ? 0 : Math.ceil(combinedCount / safePageSize);
+
+  return {
+    data: [...scans, ...pagePendingRows],
+    meta: meta
+      ? {
+          ...meta,
+          pagination: {
+            ...meta.pagination,
+            page,
+            count: combinedCount,
+            pages: combinedPages,
+          },
+        }
+      : undefined,
+  };
+}
+
+function getNumericValue(
+  source: Record<string, unknown>,
+  keys: string[],
+): number | undefined {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+
+  return undefined;
+}
+
+export function getScanFindingsSummary(
+  attributes: ScanAttributes,
+): ScanFindingsSummary | null {
+  const root = attributes as unknown as Record<string, unknown>;
+  const nested =
+    typeof root.findings === "object" && root.findings !== null
+      ? (root.findings as Record<string, unknown>)
+      : {};
+  const source = { ...root, ...nested };
+
+  const fail = getNumericValue(source, [
+    "fail",
+    "failed",
+    "failed_findings",
+    "fail_findings",
+  ]);
+  const pass = getNumericValue(source, [
+    "pass",
+    "passed",
+    "passed_findings",
+    "pass_findings",
+  ]);
+
+  if (fail === undefined || pass === undefined) return null;
+
+  return {
+    fail,
+    pass,
+    failNew: getNumericValue(source, ["fail_new", "new_failed_findings"]),
+    passNew: getNumericValue(source, ["pass_new", "new_passed_findings"]),
+  };
+}

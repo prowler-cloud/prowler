@@ -406,12 +406,14 @@ class TestBedrockPromptPagination:
         regional_client.get_paginator.assert_called_once_with("list_prompts")
         paginator.paginate.assert_called_once()
 
-    def test_list_prompts_ignores_audit_resources_filter(self):
-        """Prompt collection is region-scoped and must ignore audit_resources."""
+    def test_list_prompts_filters_audit_resources(self):
+        """Prompt collection must honor audit_resources when resource ARNs are scoped."""
         audit_info = MagicMock()
         audit_info.audited_partition = "aws"
         audit_info.audited_account = "123456789012"
-        audit_info.audit_resources = ["arn:aws:s3:::unrelated-resource"]
+        audit_info.audit_resources = [
+            "arn:aws:bedrock:us-east-1:123456789012:prompt/prompt-1"
+        ]
 
         regional_client = MagicMock()
         regional_client.region = "us-east-1"
@@ -424,7 +426,12 @@ class TestBedrockPromptPagination:
                         "id": "prompt-1",
                         "name": "prompt-name-1",
                         "arn": "arn:aws:bedrock:us-east-1:123456789012:prompt/prompt-1",
-                    }
+                    },
+                    {
+                        "id": "prompt-2",
+                        "name": "prompt-name-2",
+                        "arn": "arn:aws:bedrock:us-east-1:123456789012:prompt/prompt-2",
+                    },
                 ]
             }
         ]
@@ -438,6 +445,14 @@ class TestBedrockPromptPagination:
         bedrock_agent_service._list_prompts(regional_client)
 
         assert len(bedrock_agent_service.prompts) == 1
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:prompt/prompt-1"
+            in bedrock_agent_service.prompts
+        )
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:prompt/prompt-2"
+            not in bedrock_agent_service.prompts
+        )
         assert "us-east-1" in bedrock_agent_service.prompt_scanned_regions
 
     def test_list_prompts_error_does_not_mark_region_scanned(self):
