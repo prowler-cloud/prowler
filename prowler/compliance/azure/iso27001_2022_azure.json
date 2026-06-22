@@ -1429,6 +1429,7 @@
         "network_public_ip_shodan",
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
+        "network_subnet_nsg_associated",
         "network_udp_internet_access_restricted",
         "network_watcher_enabled"
       ]
@@ -1483,6 +1484,7 @@
         "network_public_ip_shodan",
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
+        "network_subnet_nsg_associated",
         "network_udp_internet_access_restricted",
         "network_watcher_enabled"
       ]
