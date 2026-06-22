@@ -365,7 +365,9 @@ class Test_ECS_Service:
                 "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
                 new=mock_generate_multi_region_clients,
             ),
-            patch("botocore.client.BaseClient._make_api_call", new=counting_make_api_call),
+            patch(
+                "botocore.client.BaseClient._make_api_call", new=counting_make_api_call
+            ),
         ):
             aws_provider = set_mocked_aws_provider(
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
