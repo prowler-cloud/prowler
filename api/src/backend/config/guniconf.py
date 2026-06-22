@@ -3,7 +3,7 @@ import multiprocessing
 import os
 import threading
 
-from uvicorn_workers import UvicornWorker
+from uvicorn_worker import UvicornWorker
 
 from config.env import env
 
