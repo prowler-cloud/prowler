@@ -12,9 +12,7 @@ class recovery_vault_has_protected_items(Check):
 
         for subscription_name, vaults in recovery_client.vaults.items():
             for vault in vaults.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=vault
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=vault)
                 report.subscription = subscription_name
                 report.resource_name = vault.name
                 report.resource_id = vault.id
