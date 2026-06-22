@@ -28,9 +28,15 @@ class RolesAnywhere(AWSService):
                         continue
                     source = ta.get("source", {}) or {}
                     source_data = source.get("sourceData", {}) or {}
-                    tags = regional_client.list_tags_for_resource(resourceArn=arn).get(
-                        "tags", []
-                    )
+                    tags = []
+                    try:
+                        tags = regional_client.list_tags_for_resource(
+                            resourceArn=arn
+                        ).get("tags", [])
+                    except Exception as error:
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                     self.trust_anchors[arn] = TrustAnchor(
                         arn=arn,
                         id=ta.get("trustAnchorId", ""),

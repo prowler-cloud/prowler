@@ -41,6 +41,20 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def mock_make_api_call_tags_failure(self, operation_name, kwarg):
+    if operation_name == "ListTagsForResource":
+        raise botocore.exceptions.ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDeniedException",
+                    "Message": "Access denied",
+                }
+            },
+            operation_name,
+        )
+    return mock_make_api_call(self, operation_name, kwarg)
+
+
 class Test_RolesAnywhere_Service:
     @mock_aws
     def test_service(self):
@@ -63,3 +77,16 @@ class Test_RolesAnywhere_Service:
         assert ta.acm_pca_arn == PCA_ARN
         assert ta.region == AWS_REGION_US_EAST_1
         assert ta.tags == [{"key": "Environment", "value": "test"}]
+
+    @patch(
+        "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_tags_failure
+    )
+    @mock_aws
+    def test_list_trust_anchors_continues_when_tags_fail(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        rolesanywhere = RolesAnywhere(aws_provider)
+        assert len(rolesanywhere.trust_anchors) == 1
+        ta = rolesanywhere.trust_anchors[TA_ARN]
+        assert isinstance(ta, TrustAnchor)
+        assert ta.id == TA_ID
+        assert ta.tags == []
