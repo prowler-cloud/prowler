@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check produces two findings per tenant: one for MFA registration enforcement and one for strong method availability. Microsoft recommends phishing-resistant methods (FIDO2, certificate-based) over app-based push notifications."
+  "Notes": "This check reports a single finding per tenant and passes only when both the MFA registration campaign is enabled and at least one strong method is enabled. Microsoft recommends phishing-resistant methods (FIDO2, certificate-based) over app-based push notifications."
 }
