@@ -4,6 +4,15 @@ from prowler.providers.kubernetes.services.core.core_service import Container, P
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
+from tests.providers.kubernetes.services.core.conftest import (
+    make_container,
+    make_core_client,
+    make_pod,
+    run_check,
+)
+
+MODULE = "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed"
+CLASS = "core_image_tag_fixed"
 
 
 class Test_core_image_tag_fixed:
@@ -515,3 +524,49 @@ class Test_core_image_tag_fixed:
             assert result[0].status_extended == (
                 "Pod test-pod has container latest-container with image 'busybox:latest' that does not use a fixed tag."
             )
+
+    def test_init_container_image_tag_latest(self):
+        pod = make_pod(
+            containers={"app": make_container(image="nginx:1.25.3")},
+            init_containers={
+                "init": make_container(name="init", image="busybox:latest")
+            },
+        )
+
+        result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
+
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended == (
+            "Pod test-pod has container init with image 'busybox:latest' that does not use a fixed tag."
+        )
+
+    def test_ephemeral_container_image_tag_blank(self):
+        pod = make_pod(
+            containers={"app": make_container(image="nginx:1.25.3")},
+            ephemeral_containers={
+                "debug": make_container(name="debug", image="busybox")
+            },
+        )
+
+        result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
+
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended == (
+            "Pod test-pod has container debug with image 'busybox' that does not use a fixed tag."
+        )
+
+    def test_init_and_ephemeral_image_tags_fixed_without_regular_containers(self):
+        pod = make_pod(
+            containers=None,
+            init_containers={"init": make_container(name="init", image="busybox:1.36")},
+            ephemeral_containers={
+                "debug": make_container(name="debug", image="debug@sha256:abc123")
+            },
+        )
+
+        result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
+
+        assert result[0].status == "PASS"
+        assert result[0].status_extended == (
+            "Pod test-pod has fixed image tags on all containers."
+        )

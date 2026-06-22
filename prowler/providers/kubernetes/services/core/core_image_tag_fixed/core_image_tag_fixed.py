@@ -31,11 +31,18 @@ class core_image_tag_fixed(Check):
                 f"Pod {pod.name} has fixed image tags on all containers."
             )
 
-            for container in (pod.containers or {}).values():
-                image = container.image
-                if not _has_fixed_image_tag(image):
-                    report.status = "FAIL"
-                    report.status_extended = f"Pod {pod.name} has container {container.name} with image '{image}' that does not use a fixed tag."
+            for containers in (
+                pod.containers,
+                pod.init_containers,
+                pod.ephemeral_containers,
+            ):
+                for container in (containers or {}).values():
+                    image = container.image
+                    if not _has_fixed_image_tag(image):
+                        report.status = "FAIL"
+                        report.status_extended = f"Pod {pod.name} has container {container.name} with image '{image}' that does not use a fixed tag."
+                        break
+                if report.status == "FAIL":
                     break
 
             findings.append(report)

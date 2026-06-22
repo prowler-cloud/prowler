@@ -20,11 +20,16 @@ class core_memory_requests_set(Check):
             )
 
             for container in (pod.containers or {}).values():
-                if (
-                    not container.resources
-                    or not container.resources.get("requests")
-                    or not container.resources["requests"].get("memory")
-                ):
+                resources = container.resources or {}
+                requests = (
+                    resources.get("requests") if isinstance(resources, dict) else None
+                )
+                memory = (
+                    requests.get("memory")
+                    if requests and isinstance(requests, dict)
+                    else None
+                )
+                if not memory:
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} does not have memory requests set on container {container.name}."
                     break

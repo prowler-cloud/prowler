@@ -20,11 +20,16 @@ class core_memory_limits_set(Check):
             )
 
             for container in (pod.containers or {}).values():
-                if (
-                    not container.resources
-                    or not container.resources.get("limits")
-                    or not container.resources["limits"].get("memory")
-                ):
+                resources = container.resources or {}
+                limits = (
+                    resources.get("limits") if isinstance(resources, dict) else None
+                )
+                memory = (
+                    limits.get("memory")
+                    if limits and isinstance(limits, dict)
+                    else None
+                )
+                if not memory:
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} does not have memory limits set on container {container.name}."
                     break
