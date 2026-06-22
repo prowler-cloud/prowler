@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  ACTION_ERROR_API_MESSAGES,
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
@@ -208,8 +209,7 @@ describe("OrgLaunchScan", () => {
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
       updateSchedulesBulkMock.mockResolvedValue({
-        error:
-          "An active subscription is required to use this API endpoint in Prowler Cloud.",
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
         status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
       });
 

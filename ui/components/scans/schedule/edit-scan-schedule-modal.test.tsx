@@ -81,6 +81,7 @@ vi.mock("@/components/shadcn/modal", () => ({
 }));
 
 import {
+  ACTION_ERROR_API_MESSAGES,
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
@@ -299,8 +300,7 @@ describe("EditScanScheduleModal remove flow", () => {
   it("uses the shared subscription error copy when saving is blocked", async () => {
     const user = userEvent.setup();
     updateScheduleMock.mockResolvedValue({
-      error:
-        "An active subscription is required to use this API endpoint in Prowler Cloud.",
+      error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
       status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
     });
 
@@ -314,15 +314,16 @@ describe("EditScanScheduleModal remove flow", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/An active subscription is required/i),
+      screen.queryByText(
+        ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
     ).not.toBeInTheDocument();
   });
 
   it("uses the shared subscription error copy when removing is blocked", async () => {
     const user = userEvent.setup();
     removeScheduleMock.mockResolvedValue({
-      error:
-        "An active subscription is required to use this API endpoint in Prowler Cloud.",
+      error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
       status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
     });
     renderLoaded();
@@ -343,7 +344,9 @@ describe("EditScanScheduleModal remove flow", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/An active subscription is required/i),
+      screen.queryByText(
+        ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
     ).not.toBeInTheDocument();
   });
 

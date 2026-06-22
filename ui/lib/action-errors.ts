@@ -13,6 +13,11 @@ export const ACTION_ERROR_MESSAGES = {
     "You don't have permission to perform this action. Ask an administrator to update your role.",
 } as const satisfies Record<ActionErrorStatus, string>;
 
+export const ACTION_ERROR_API_MESSAGES = {
+  [ACTION_ERROR_STATUS.PAYMENT_REQUIRED]:
+    "An active subscription is required to use this API endpoint in Prowler Cloud.",
+} as const satisfies Partial<Record<ActionErrorStatus, string>>;
+
 export interface ActionErrorResult {
   error?: unknown;
   status?: number;

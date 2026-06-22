@@ -124,6 +124,7 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
 }));
 
 import {
+  ACTION_ERROR_API_MESSAGES,
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
@@ -342,8 +343,7 @@ describe("LaunchScanModal", () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     scanOnDemandMock.mockResolvedValueOnce({
-      error:
-        "An active subscription is required to use this API endpoint in Prowler Cloud.",
+      error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
       status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
     });
 
@@ -364,7 +364,9 @@ describe("LaunchScanModal", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/An active subscription is required/i),
+      screen.queryByText(
+        ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
     ).not.toBeInTheDocument();
     expect(toastMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
