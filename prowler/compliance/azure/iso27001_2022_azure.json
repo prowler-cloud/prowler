@@ -1346,6 +1346,7 @@
         }
       ],
       "Checks": [
+        "aks_cluster_azure_monitor_enabled",
         "defender_ensure_defender_cspm_is_on",
         "monitor_alert_create_policy_assignment",
         "monitor_alert_create_update_nsg",
