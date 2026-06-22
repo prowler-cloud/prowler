@@ -271,6 +271,7 @@
         }
       ],
       "Checks": [
+        "aks_cluster_local_accounts_disabled",
         "defender_ensure_defender_for_containers_is_on",
         "defender_ensure_defender_for_cosmosdb_is_on",
         "defender_ensure_defender_for_databases_is_on",
