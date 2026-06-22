@@ -29,6 +29,7 @@ interface UserRowData {
   attributes?: UserRowAttributes;
   canBeExpelled?: boolean;
   currentTenantId?: string;
+  isCurrentUser?: boolean;
 }
 
 interface DataTableRowActionsProps<UserProps extends UserRowData> {
@@ -57,6 +58,10 @@ export function DataTableRowActions<UserProps extends UserRowData>({
     row.original.canBeExpelled === true && !!row.original.currentTenantId;
   const currentTenantId = row.original.currentTenantId;
 
+  // A user can only delete their own account (enforced by the backend), so the
+  // delete action is shown exclusively for the current user's row.
+  const canDeleteUser = row.original.isCurrentUser === true;
+
   return (
     <>
       <Modal
@@ -74,14 +79,16 @@ export function DataTableRowActions<UserProps extends UserRowData>({
           setIsOpen={setIsEditOpen}
         />
       </Modal>
-      <Modal
-        open={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your user account and remove your data from the server."
-      >
-        <DeleteForm userId={userId} setIsOpen={setIsDeleteOpen} />
-      </Modal>
+      {canDeleteUser && (
+        <Modal
+          open={isDeleteOpen}
+          onOpenChange={setIsDeleteOpen}
+          title="Are you absolutely sure?"
+          description="This action cannot be undone. This will permanently delete your user account and remove your data from the server."
+        >
+          <DeleteForm userId={userId} setIsOpen={setIsDeleteOpen} />
+        </Modal>
+      )}
       {canExpelUser && currentTenantId && (
         <Modal
           open={isExpelOpen}
@@ -104,22 +111,26 @@ export function DataTableRowActions<UserProps extends UserRowData>({
             label="Edit User"
             onSelect={() => setIsEditOpen(true)}
           />
-          <ActionDropdownDangerZone>
-            {canExpelUser && (
-              <ActionDropdownItem
-                icon={<UserMinus aria-hidden="true" />}
-                label="Expel from organization"
-                destructive
-                onSelect={() => setIsExpelOpen(true)}
-              />
-            )}
-            <ActionDropdownItem
-              icon={<Trash2 aria-hidden="true" />}
-              label="Delete User"
-              destructive
-              onSelect={() => setIsDeleteOpen(true)}
-            />
-          </ActionDropdownDangerZone>
+          {(canExpelUser || canDeleteUser) && (
+            <ActionDropdownDangerZone>
+              {canExpelUser && (
+                <ActionDropdownItem
+                  icon={<UserMinus aria-hidden="true" />}
+                  label="Expel from organization"
+                  destructive
+                  onSelect={() => setIsExpelOpen(true)}
+                />
+              )}
+              {canDeleteUser && (
+                <ActionDropdownItem
+                  icon={<Trash2 aria-hidden="true" />}
+                  label="Delete User"
+                  destructive
+                  onSelect={() => setIsDeleteOpen(true)}
+                />
+              )}
+            </ActionDropdownDangerZone>
+          )}
         </ActionDropdown>
       </div>
     </>

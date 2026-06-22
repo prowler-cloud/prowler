@@ -13,8 +13,8 @@
   "Risk": "Unrestricted Chat app installation allows **unvetted third-party applications** to access user data including conversation content and organizational information. An attacker could distribute a malicious Chat app to **exfiltrate confidential data** or establish **persistent access** to internal communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/6089179",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/apps/manage-the-marketplace-app-allowlist-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

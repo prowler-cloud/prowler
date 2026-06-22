@@ -38,3 +38,20 @@ export type PollSettledResult<R = unknown> =
       task?: TaskData<R>;
       result?: R;
     };
+
+export interface TaskDetails {
+  attributes: {
+    state: string;
+    completed_at: string;
+    result: {
+      exc_type?: string;
+      exc_message?: string[];
+      exc_module?: string;
+    };
+    task_args: {
+      scan_id: string;
+      provider_id: string;
+      checks_to_execute: string[];
+    };
+  };
+}

@@ -13,8 +13,8 @@
   "Risk": "When Drive for desktop is enabled, organizational files are **synchronized to local devices** and remain accessible if the device is lost, stolen, or compromised. Because Drive for desktop bypasses the central offline-access controls, this channel is a frequently overlooked path for sensitive data to leave organization-managed environments.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7491144",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/set-up-drive-for-desktop-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

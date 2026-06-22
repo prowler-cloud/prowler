@@ -1,3 +1,4 @@
+import pytest
 from boto3 import client
 from moto import mock_aws
 
@@ -5,6 +6,9 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     CloudWatch,
     LogGroup,
     Logs,
+)
+from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -405,3 +409,13 @@ class Test_CloudWatch_Service:
         assert list(logs.log_groups) == [
             "arn:aws:logs:us-east-1:123456789012:log-group:success:*"
         ]
+
+
+class Test_build_metric_filter_pattern:
+    @pytest.mark.parametrize("bad_operator", ["==", "~=", "<", "<>", ">=", ""])
+    def test_rejects_unsupported_operator(self, bad_operator):
+        with pytest.raises(ValueError, match="unsupported operator"):
+            build_metric_filter_pattern(
+                event_names=["ConsoleLogin"],
+                extra_clauses=[("errorMessage", bad_operator, "Failed authentication")],
+            )

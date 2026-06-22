@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_service_principal_privileged_role_no_owners",
+  "CheckTitle": "Service principals with privileged Entra directory roles must have no owners",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **service principals** holding permanent **Control Plane (Tier 0)** directory roles (such as **Global Administrator** or **Privileged Role Administrator**) are evaluated for the presence of **owners** on either the service principal itself or its parent **app registration**.",
+  "Risk": "An **owner** of a service principal or its parent app registration can **rotate credentials** and sign in as the service principal, inheriting its **Tier 0** role outside **PIM** and **Conditional Access** controls. This is a documented privilege escalation path impacting **confidentiality**, **integrity**, and **availability** of the tenant's control plane.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/serviceprincipal-list-owners?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/application-list-owners?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/rbacapplication-list-roleassignments?view=graph-rest-1.0"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Identity > Applications > Enterprise applications > select the service principal\n3. Under Owners, remove all owners\n4. Repeat for the parent App Registration under Identity > Applications > App registrations\n5. Use PIM eligible assignments instead of permanent role assignments where possible",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove all owners from service principals that hold privileged Entra directory roles. Manage privileged service principals exclusively via PIM-eligible role assignments and break-glass controls. Ensure no human account can silently inherit control-plane privileges through ownership.",
+      "Url": "https://hub.prowler.com/check/entra_service_principal_privileged_role_no_owners"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_service_principal_no_secrets_for_permanent_tier0_roles"
+  ],
+  "Notes": "Only service principals with permanent Tier 0 directory role assignments are evaluated. Microsoft first-party service principals and multi-tenant ISV apps consented from other publishers are excluded by the service layer."
+}
