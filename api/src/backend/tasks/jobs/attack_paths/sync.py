@@ -94,6 +94,8 @@ def sync_graph(
         "nodes": node_result["parents"],
         "child_nodes": node_result["children"],
         "relationships": relationships_synced + node_result["parent_child_rels"],
+        "structural_relationships": relationships_synced,
+        "item_relationships": node_result["parent_child_rels"],
     }
 
 
@@ -125,6 +127,9 @@ def sync_nodes(
     extra_labels = _build_extra_labels(tenant_id, provider_id)
 
     while True:
+        tb = time.perf_counter()
+        prev_children = children_synced
+        prev_rels = parent_child_rels
         parent_groups: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
         child_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
         rel_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -168,10 +173,17 @@ def sync_nodes(
             parent_child_rels += len(batch)
 
         parents_synced += batch_count
+        batch_dt = time.perf_counter() - tb
+        batch_elements = (
+            batch_count
+            + (children_synced - prev_children)
+            + (parent_child_rels - prev_rels)
+        )
+        rate = batch_elements / batch_dt if batch_dt else 0
         logger.info(
-            f"Synced {parents_synced} parents (+{children_synced} child items, "
-            f"+{parent_child_rels} item rels) from {source_database} to "
-            f"{target_database} in {time.perf_counter() - t0:.3f}s"
+            f"[sync nodes] {parents_synced} source (+{children_synced} items, "
+            f"+{parent_child_rels} item rels) · batch {batch_dt:.1f}s · "
+            f"elapsed {time.perf_counter() - t0:.1f}s · ~{rate:.0f} elem/s"
         )
 
     return {
@@ -198,6 +210,7 @@ def sync_relationships(
     total_synced = 0
 
     while True:
+        tb = time.perf_counter()
         grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
         batch_count = 0
 
@@ -219,8 +232,11 @@ def sync_relationships(
             sink.write_relationships(target_database, rel_type, provider_id, batch)
 
         total_synced += batch_count
+        batch_dt = time.perf_counter() - tb
+        rate = batch_count / batch_dt if batch_dt else 0
         logger.info(
-            f"Synced {total_synced} relationships from {source_database} to {target_database} in {time.perf_counter() - t0:.3f}s"
+            f"[sync rels] {total_synced} structural · batch {batch_dt:.1f}s · "
+            f"elapsed {time.perf_counter() - t0:.1f}s · ~{rate:.0f}/s"
         )
 
     return total_synced
@@ -466,8 +482,15 @@ def _normalize_sink_properties(
 
 
 def _warn_unnormalized_list(labels: tuple[str, ...], key: str) -> None:
-    """Emit one warning per (label, property) tuple for the lifetime of the process."""
-    for label in labels:
+    """Warn once per (label, property), on the real label(s) only.
+
+    Every synced node also carries internal isolation labels (`_AWSResource`,
+    `_ProviderResource`, `_Tenant_*`, `_Provider_*`); warning on those just
+    doubles the noise, so skip them and point at the actionable Cartography
+    label. Falls back to all labels if only internal ones are present.
+    """
+    real_labels = [label for label in labels if not label.startswith("_")]
+    for label in real_labels or labels:
         token = (label, key)
         if token in _WARNED_UNNORMALIZED:
             continue

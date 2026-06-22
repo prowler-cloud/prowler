@@ -299,7 +299,11 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
 
         logger.info(
-            f"Syncing graph from {tmp_database_name} into {tenant_database_name}"
+            f"Syncing graph for provider {prowler_api_provider.id} "
+            f"(tenant {prowler_api_provider.tenant_id}, "
+            f"type {prowler_api_provider.provider}) into "
+            f"{settings.ATTACK_PATHS_SINK_DATABASE} sink "
+            f"(staging {tmp_database_name})"
         )
         t0 = time.perf_counter()
         sync_result = sync.sync_graph(
@@ -309,9 +313,18 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             provider_id=str(prowler_api_provider.id),
             provider_type=prowler_api_provider.provider,
         )
+        elapsed = time.perf_counter() - t0
+        total_nodes = sync_result["nodes"] + sync_result["child_nodes"]
+        elements = total_nodes + sync_result["relationships"]
+        rate = elements / elapsed if elapsed else 0
         logger.info(
-            f"Synced graph in {time.perf_counter() - t0:.3f}s "
-            f"(nodes={sync_result['nodes']}, relationships={sync_result['relationships']})"
+            f"Synced graph in {elapsed:.3f}s — "
+            f"nodes={total_nodes} (source={sync_result['nodes']}, "
+            f"items={sync_result['child_nodes']}), "
+            f"relationships={sync_result['relationships']} "
+            f"(structural={sync_result['structural_relationships']}, "
+            f"items={sync_result['item_relationships']}), "
+            f"~{rate:.0f} elem/s"
         )
         sync_completed = True
         # TODO: drop after Neptune cutover
