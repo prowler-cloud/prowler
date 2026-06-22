@@ -445,6 +445,13 @@ mainConfig:
       - "ML_DSA_65"
       - "ML_DSA_87"
 
+    # AWS Post-Quantum SSH Key Exchange Configuration
+    # aws.transfer_server_pqc_ssh_kex_enabled
+    transfer_pqc_ssh_allowed_policies:
+      - "TransferSecurityPolicy-2025-03"
+      - "TransferSecurityPolicy-FIPS-2025-03"
+      - "TransferSecurityPolicy-AS2Restricted-2025-07"
+
 
     # aws.rolesanywhere_trust_anchor_pqc_pki
     rolesanywhere_pqc_pca_key_algorithms:

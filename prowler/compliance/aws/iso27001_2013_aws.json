@@ -35,7 +35,8 @@
       ],
       "Checks": [
         "elb_insecure_ssl_ciphers",
-        "elbv2_insecure_ssl_ciphers"
+        "elbv2_insecure_ssl_ciphers",
+        "transfer_server_pqc_ssh_kex_enabled"
       ]
     },
     {
