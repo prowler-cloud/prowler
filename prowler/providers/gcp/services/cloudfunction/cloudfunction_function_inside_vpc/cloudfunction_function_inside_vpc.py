@@ -25,7 +25,11 @@ class cloudfunction_function_inside_vpc(Check):
         for function in cloudfunction_client.functions:
             if function.state != "ACTIVE":
                 continue
-            report = Check_Report_GCP(metadata=self.metadata(), resource=function)
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=function,
+                resource_id=function.name,
+            )
             if function.vpc_connector:
                 report.status = "PASS"
                 report.status_extended = (
