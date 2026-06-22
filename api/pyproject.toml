@@ -62,7 +62,8 @@ dependencies = [
   "gevent (==25.9.1)",
   "werkzeug (==3.1.7)",
   "sqlparse (==0.5.5)",
-  "fonttools (==4.62.1)"
+  "fonttools (==4.62.1)",
+  "uvicorn (==0.49.0)",
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
@@ -422,6 +423,7 @@ constraint-dependencies = [
   "uritemplate==4.2.0",
   "urllib3==2.7.0",
   "uuid6==2024.7.10",
+  "uvicorn==0.49.0",
   "uvloop==0.22.1",
   "vine==5.1.0",
   "vulture==2.14",
