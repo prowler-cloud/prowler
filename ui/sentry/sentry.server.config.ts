@@ -2,6 +2,8 @@ import * as Sentry from "@sentry/nextjs";
 
 import { readEnv } from "@/lib/runtime-env";
 
+import { applySentryEventPolicy, SENTRY_EVENT_SOURCE } from "./event-policy";
+
 const sentryDsn = readEnv("UI_SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN");
 const sentryEnvironment = readEnv(
   "UI_SENTRY_ENVIRONMENT",
@@ -47,15 +49,13 @@ if (sentryDsn) {
       }),
     ],
 
-    // 🎣 Filter expected errors - Don't send noise to Sentry
+    // 🎣 Filter expected framework control-flow - Don't send noise to Sentry.
+    // HTTP status-based suppression belongs in applySentryEventPolicy, where
+    // structured event context prevents broad numeric matches from hiding crashes.
     ignoreErrors: [
       // NextAuth redirect errors - Expected behavior
       "NEXT_REDIRECT",
       "NEXT_NOT_FOUND",
-      // Expected HTTP errors - Expected when users lack permissions
-      "401", // Unauthorized
-      "403", // Forbidden
-      "404", // Not Found
     ],
 
     beforeSend(event, hint) {
@@ -82,15 +82,12 @@ if (sentryDsn) {
               error_type: "api_error",
             };
           }
-
-          // Don't send NextAuth expected errors
-          if (error.message.includes("NEXT_REDIRECT")) {
-            return null;
-          }
         }
       }
 
-      return event;
+      return applySentryEventPolicy(event, hint, {
+        source: SENTRY_EVENT_SOURCE.SERVER,
+      });
     },
   });
 }
