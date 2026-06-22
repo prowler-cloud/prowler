@@ -13743,7 +13743,9 @@ class TestTenantFinishACSView:
             .filter(user=user, tenant=victim_tenant)
             .exists()
         )
-        assert not SAMLToken.objects.using(MainRouter.admin_db).filter(user=user).exists()
+        assert (
+            not SAMLToken.objects.using(MainRouter.admin_db).filter(user=user).exists()
+        )
 
     def test_rollback_saml_user_when_error_occurs(self, users_fixture, monkeypatch):
         """Test that a user is properly deleted when created during SAML flow and an error occurs"""
