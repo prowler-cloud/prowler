@@ -80,6 +80,9 @@ class Network(AzureService):
                                     id=flow_log.id,
                                     name=flow_log.name,
                                     enabled=flow_log.enabled,
+                                    target_resource_id=getattr(
+                                        flow_log, "target_resource_id", None
+                                    ),
                                     retention_policy=RetentionPolicy(
                                         enabled=(
                                             flow_log.retention_policy.enabled
@@ -91,6 +94,34 @@ class Network(AzureService):
                                             if flow_log.retention_policy
                                             else 0
                                         ),
+                                    ),
+                                    traffic_analytics_enabled=bool(
+                                        getattr(
+                                            getattr(
+                                                getattr(
+                                                    flow_log,
+                                                    "flow_analytics_configuration",
+                                                    None,
+                                                ),
+                                                "network_watcher_flow_analytics_configuration",
+                                                None,
+                                            ),
+                                            "enabled",
+                                            False,
+                                        )
+                                    ),
+                                    workspace_resource_id=getattr(
+                                        getattr(
+                                            getattr(
+                                                flow_log,
+                                                "flow_analytics_configuration",
+                                                None,
+                                            ),
+                                            "network_watcher_flow_analytics_configuration",
+                                            None,
+                                        ),
+                                        "workspace_resource_id",
+                                        None,
                                     ),
                                 )
                                 for flow_log in flow_logs
@@ -196,9 +227,6 @@ class Network(AzureService):
                             id=vnet.id,
                             name=vnet.name,
                             location=vnet.location,
-                            enable_ddos_protection=getattr(
-                                vnet, "enable_ddos_protection", False
-                            ),
                             subnets=subnets,
                         )
                     )
@@ -228,6 +256,9 @@ class FlowLog:
     name: str
     enabled: bool
     retention_policy: RetentionPolicy
+    target_resource_id: Optional[str] = None
+    traffic_analytics_enabled: bool = False
+    workspace_resource_id: Optional[str] = None
 
 
 @dataclass
@@ -277,7 +308,6 @@ class VirtualNetwork:
     id: str
     name: str
     location: str
-    enable_ddos_protection: bool = False
     subnets: List[VNetSubnet] = None
 
     def __post_init__(self):
