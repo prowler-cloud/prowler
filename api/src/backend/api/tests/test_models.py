@@ -1,10 +1,7 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from allauth.socialaccount.models import SocialApp
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-
 from api.db_router import MainRouter
 from api.models import (
     ProviderComplianceScore,
@@ -16,6 +13,8 @@ from api.models import (
     StatusChoices,
     TenantComplianceSummary,
 )
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 
 @pytest.mark.django_db
@@ -376,7 +375,7 @@ class TestProviderComplianceScoreModel:
     def test_create_provider_compliance_score(self, providers_fixture, scans_fixture):
         provider = providers_fixture[0]
         scan = scans_fixture[0]
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         score = ProviderComplianceScore.objects.create(
@@ -398,7 +397,7 @@ class TestProviderComplianceScoreModel:
     ):
         provider = providers_fixture[0]
         scan = scans_fixture[0]
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         ProviderComplianceScore.objects.create(
@@ -427,12 +426,12 @@ class TestProviderComplianceScoreModel:
     ):
         provider1, provider2, *_ = providers_fixture
         scan1 = scans_fixture[0]
-        scan1.completed_at = datetime.now(timezone.utc)
+        scan1.completed_at = datetime.now(UTC)
         scan1.save()
 
         scan2 = scans_fixture[2]
         scan2.state = StateChoices.COMPLETED
-        scan2.completed_at = datetime.now(timezone.utc)
+        scan2.completed_at = datetime.now(UTC)
         scan2.save()
 
         score1 = ProviderComplianceScore.objects.create(

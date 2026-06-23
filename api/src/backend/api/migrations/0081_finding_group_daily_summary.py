@@ -2,13 +2,12 @@
 
 import uuid
 
+import api.rls
 import django.db.models.deletion
 from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.db import migrations, models
 from django.db.models.functions import Upper
 from django.utils import timezone
-
-import api.rls
 
 
 class Migration(migrations.Migration):

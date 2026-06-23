@@ -15,7 +15,6 @@ from prowler_mcp_server.prowler_app.models.finding_groups import (
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
 
-
 StatusFilter = Literal["FAIL", "PASS", "MANUAL"]
 SeverityFilter = Literal["critical", "high", "medium", "low", "informational"]
 DeltaFilter = Literal["new", "changed"]
@@ -464,9 +463,7 @@ class FindingGroupsTools(BaseTool):
 
             clean_params = self.api_client.build_filter_params(params)
             api_response = await self.api_client.get(endpoint, params=clean_params)
-            response = FindingGroupResourcesListResponse.from_api_response(
-                api_response
-            )
+            response = FindingGroupResourcesListResponse.from_api_response(api_response)
             return response.model_dump()
         except Exception as e:
             self.logger.error(f"Error listing finding group resources: {e}")

@@ -8,7 +8,16 @@ from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import Any
 
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Provider, StatusChoices
+from api.utils import initialize_prowler_provider
 from celery.utils.log import get_task_logger
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
+from prowler.lib.outputs.finding import Finding as FindingOutput
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -22,16 +31,6 @@ from tasks.jobs.threatscore_utils import (
     _calculate_requirements_data_from_statistics,
     _load_findings_for_requirement_checks,
 )
-
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.models import Provider, StatusChoices
-from api.utils import initialize_prowler_provider
-from prowler.lib.check.compliance_models import (
-    Compliance,
-    get_bulk_compliance_frameworks_universal,
-)
-from prowler.lib.outputs.finding import Finding as FindingOutput
 
 from .components import (
     ColumnConfig,

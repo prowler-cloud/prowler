@@ -1,12 +1,10 @@
 import logging
-
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import neo4j
-
-from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
-
-from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
+from api.attack_paths import AttackPathsQueryDefinition
+from api.attack_paths import database as graph_database
 from api.attack_paths.cypher_sanitizer import (
     inject_provider_label,
     validate_custom_query,
@@ -17,6 +15,7 @@ from api.attack_paths.queries.schema import (
     get_cartography_schema_query,
 )
 from config.custom_logging import BackendLogger
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from tasks.jobs.attack_paths.config import (
     INTERNAL_LABELS,
     INTERNAL_PROPERTIES,

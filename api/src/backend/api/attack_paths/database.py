@@ -1,18 +1,16 @@
 import atexit
 import logging
 import threading
-
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 from uuid import UUID
 
 import neo4j
 import neo4j.exceptions
-
+from api.attack_paths.retryable_session import RetryableSession
 from config.env import env
 from django.conf import settings
-
-from api.attack_paths.retryable_session import RetryableSession
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     PROVIDER_RESOURCE_LABEL,

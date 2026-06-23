@@ -1,5 +1,4 @@
 import sentry_sdk
-
 from config.env import env
 
 IGNORED_EXCEPTIONS = [

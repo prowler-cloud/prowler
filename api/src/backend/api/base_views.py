@@ -1,3 +1,9 @@
+from api.authentication import CombinedJWTOrAPIKeyAuthentication
+from api.db_router import MainRouter, reset_read_db_alias, set_read_db_alias
+from api.db_utils import POSTGRES_USER_VAR, rls_transaction
+from api.filters import CustomDjangoFilterBackend
+from api.models import Role, UserRoleRelationship
+from api.rbac.permissions import HasPermissions
 from django.conf import settings
 from django.db import transaction
 from rest_framework import permissions
@@ -7,13 +13,6 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework_json_api import filters
 from rest_framework_json_api.views import ModelViewSet
-
-from api.authentication import CombinedJWTOrAPIKeyAuthentication
-from api.db_router import MainRouter, reset_read_db_alias, set_read_db_alias
-from api.db_utils import POSTGRES_USER_VAR, rls_transaction
-from api.filters import CustomDjangoFilterBackend
-from api.models import Role, UserRoleRelationship
-from api.rbac.permissions import HasPermissions
 
 
 class BaseViewSet(ModelViewSet):

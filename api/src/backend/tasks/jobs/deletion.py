@@ -1,10 +1,3 @@
-from celery.utils.log import get_task_logger
-from django.db import DatabaseError
-from tasks.jobs.queries import (
-    COMPLIANCE_DELETE_EMPTY_TENANT_SUMMARY_SQL,
-    COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
-)
-
 from api.attack_paths import database as graph_database
 from api.db_router import MainRouter
 from api.db_utils import batch_delete, rls_transaction
@@ -17,6 +10,12 @@ from api.models import (
     Scan,
     ScanSummary,
     Tenant,
+)
+from celery.utils.log import get_task_logger
+from django.db import DatabaseError
+from tasks.jobs.queries import (
+    COMPLIANCE_DELETE_EMPTY_TENANT_SUMMARY_SQL,
+    COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
 )
 
 logger = get_task_logger(__name__)

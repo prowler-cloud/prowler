@@ -3,7 +3,7 @@ import io
 import json
 import os
 import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,31 +15,6 @@ import jwt
 import pytest
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
-from botocore.exceptions import ClientError, NoCredentialsError
-from conftest import (
-    API_JSON_CONTENT_TYPE,
-    TEST_PASSWORD,
-    TEST_USER,
-    TODAY,
-    today_after_n_days,
-)
-from django.conf import settings
-from django.db import connection
-from django.db.models import Count
-from django.http import JsonResponse
-from django.test import RequestFactory
-from django.test.utils import CaptureQueriesContext
-from django.urls import reverse
-from django_celery_results.models import TaskResult
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.response import Response
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
-from rest_framework_simplejwt.tokens import RefreshToken
-
 from api.attack_paths import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
@@ -84,8 +59,32 @@ from api.models import (
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from botocore.exceptions import ClientError, NoCredentialsError
+from conftest import (
+    API_JSON_CONTENT_TYPE,
+    TEST_PASSWORD,
+    TEST_USER,
+    TODAY,
+    today_after_n_days,
+)
+from django.conf import settings
+from django.db import connection
+from django.db.models import Count
+from django.http import JsonResponse
+from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
+from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class TestViewSet:
@@ -1508,9 +1507,9 @@ class TestProviderViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -4288,11 +4287,11 @@ class TestScanViewSet:
                     "Contents": [
                         {
                             "Key": old_key,
-                            "LastModified": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                            "LastModified": datetime(2024, 1, 1, tzinfo=UTC),
                         },
                         {
                             "Key": latest_key,
-                            "LastModified": datetime(2024, 2, 2, tzinfo=timezone.utc),
+                            "LastModified": datetime(2024, 2, 2, tzinfo=UTC),
                         },
                     ]
                 }
@@ -4541,7 +4540,7 @@ class TestScanViewSet:
         )
         # `inserted_at` is `auto_now_add`, and within the test transaction the DB
         # `now()` is constant, so force distinct timestamps to make order_by stable.
-        base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        base = datetime(2024, 1, 1, tzinfo=UTC)
         Task.objects.filter(pk=old_task.pk).update(inserted_at=base)
         Task.objects.filter(pk=new_task.pk).update(
             inserted_at=base + timedelta(hours=1)
@@ -5785,13 +5784,13 @@ class TestAttackPathsScanViewSet:
                     content_type=API_JSON_CONTENT_TYPE,
                 )
                 if i < 10:
-                    assert (
-                        response.status_code == status.HTTP_200_OK
-                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    assert response.status_code == status.HTTP_200_OK, (
+                        f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    )
                 else:
-                    assert (
-                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-                    ), f"Request {i + 1} should be throttled"
+                    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS, (
+                        f"Request {i + 1} should be throttled"
+                    )
 
     # -- Timeout simulation -------------------------------------------------------
 
@@ -5994,9 +5993,9 @@ class TestResourceViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -6588,9 +6587,9 @@ class TestResourceViewSet:
             (e for e in errors if e["source"]["parameter"] == expected_invalid_param),
             None,
         )
-        assert (
-            error is not None
-        ), f"Expected error for parameter '{expected_invalid_param}'"
+        assert error is not None, (
+            f"Expected error for parameter '{expected_invalid_param}'"
+        )
         assert error["code"] == "invalid"
         assert error["status"] == "400"  # Must be string per JSON:API spec
         assert expected_invalid_param in error["detail"]
@@ -6979,9 +6978,8 @@ class TestResourceViewSet:
         This ensures the endpoint follows API conventions where missing authentication
         returns 401 Unauthorized, not 404 Not Found.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]  # AWS provider from fixture
 
@@ -7054,9 +7052,8 @@ class TestResourceViewSet:
         This ensures authentication errors are properly distinguished from
         resource not found errors.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]
 
@@ -7074,9 +7071,8 @@ class TestResourceViewSet:
         tenant = tenants_fixture[0]
         expired_payload = {
             "token_type": "access",
-            "exp": datetime.now(timezone.utc)
-            - timedelta(hours=1),  # Expired 1 hour ago
-            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
+            "exp": datetime.now(UTC) - timedelta(hours=1),  # Expired 1 hour ago
+            "iat": datetime.now(UTC) - timedelta(hours=2),
             "jti": str(uuid4()),
             "user_id": str(uuid4()),
             "tenant_id": str(tenant.id),
@@ -7101,9 +7097,8 @@ class TestResourceViewSet:
 
         Malformed or invalid tokens should return 401 Unauthorized, not 404 Not Found.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]
 
@@ -7122,16 +7117,16 @@ class TestResourceViewSet:
         # Test with completely malformed token
         client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for malformed token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for malformed token but got {response.status_code}"
+        )
 
         # Test with empty bearer token
         client.credentials(HTTP_AUTHORIZATION="Bearer ")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for empty bearer token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for empty bearer token but got {response.status_code}"
+        )
 
 
 @pytest.mark.django_db
@@ -7266,9 +7261,9 @@ class TestFindingViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -7867,9 +7862,9 @@ class TestJWTFields:
             reverse("token-obtain"), data, format="json"
         )
 
-        assert (
-            response.status_code == status.HTTP_200_OK
-        ), f"Unexpected status code: {response.status_code}"
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Unexpected status code: {response.status_code}"
+        )
 
         access_token = response.data["attributes"]["access"]
         payload = jwt.decode(access_token, options={"verify_signature": False})
@@ -7883,28 +7878,28 @@ class TestJWTFields:
         # Verify expected fields
         for field in expected_fields:
             assert field in payload, f"The field '{field}' is not in the JWT"
-            assert (
-                payload[field] == expected_fields[field]
-            ), f"The value of '{field}' does not match"
+            assert payload[field] == expected_fields[field], (
+                f"The value of '{field}' does not match"
+            )
 
         # Verify time fields are integers
         for time_field in ["exp", "iat", "nbf"]:
             assert time_field in payload, f"The field '{time_field}' is not in the JWT"
-            assert isinstance(
-                payload[time_field], int
-            ), f"The field '{time_field}' is not an integer"
+            assert isinstance(payload[time_field], int), (
+                f"The field '{time_field}' is not an integer"
+            )
 
         # Verify identification fields are non-empty strings
         for id_field in ["jti", "sub", "tenant_id"]:
             assert id_field in payload, f"The field '{id_field}' is not in the JWT"
-            assert (
-                isinstance(payload[id_field], str) and payload[id_field]
-            ), f"The field '{id_field}' is not a valid string"
+            assert isinstance(payload[id_field], str) and payload[id_field], (
+                f"The field '{id_field}' is not a valid string"
+            )
 
 
 @pytest.mark.django_db
 class TestInvitationViewSet:
-    TOMORROW = datetime.now(timezone.utc) + timedelta(days=1, hours=1)
+    TOMORROW = datetime.now(UTC) + timedelta(days=1, hours=1)
     TOMORROW_ISO = TOMORROW.isoformat()
 
     def test_invitations_list(self, authenticated_client, invitations_fixture):
@@ -8027,9 +8022,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": "thisisarandomemail@prowler.com",
-                    "expires_at": (
-                        datetime.now(timezone.utc) + timedelta(hours=23)
-                    ).isoformat(),
+                    "expires_at": (datetime.now(UTC) + timedelta(hours=23)).isoformat(),
                 },
             }
         }
@@ -8056,7 +8049,7 @@ class TestInvitationViewSet:
         invitation, *_ = invitations_fixture
         role1, role2, *_ = roles_fixture
         new_email = "new_email@prowler.com"
-        new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+        new_expires_at = datetime.now(UTC) + timedelta(days=7)
         new_expires_at_iso = new_expires_at.isoformat()
         data = {
             "data": {
@@ -8143,9 +8136,7 @@ class TestInvitationViewSet:
                 "id": str(invitation.id),
                 "type": "invitations",
                 "attributes": {
-                    "expires_at": (
-                        datetime.now(timezone.utc) + timedelta(hours=23)
-                    ).isoformat(),
+                    "expires_at": (datetime.now(UTC) + timedelta(hours=23)).isoformat(),
                 },
             }
         }
@@ -8318,7 +8309,7 @@ class TestInvitationViewSet:
         self, authenticated_client, invitations_fixture
     ):
         invitation, *_ = invitations_fixture
-        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
         invitation.email = TEST_USER
         invitation.save()
 
@@ -8337,7 +8328,7 @@ class TestInvitationViewSet:
     ):
         new_email = "new_email@prowler.com"
         invitation, *_ = invitations_fixture
-        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
         invitation.email = new_email
         invitation.save()
 
@@ -9433,8 +9424,8 @@ class TestComplianceOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant_id=provider.tenant_id,
-            started_at=datetime.now(timezone.utc),
-            completed_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
         )
 
     def _create_requirement(
@@ -10122,7 +10113,7 @@ class TestComplianceOverviewViewSet:
         assert gcp_provider.provider == Provider.ProviderChoices.GCP.value
         assert azure_provider.provider == Provider.ProviderChoices.AZURE.value
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         gcp_scan = Scan.objects.create(
             name="gcp scan",
             provider=gcp_provider,
@@ -10251,7 +10242,7 @@ class TestComplianceOverviewViewSet:
             provider_group=provider_group,
         )
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         allowed_scan = Scan.objects.create(
             name="allowed scan",
             provider=allowed_provider,
@@ -10603,7 +10594,7 @@ class TestOverviewViewSet:
         assert denied_provider.provider not in aggregated
 
     def _create_scan(self, tenant, provider, name, started_at=None):
-        scan_started = started_at or datetime.now(timezone.utc) - timedelta(hours=1)
+        scan_started = started_at or datetime.now(UTC) - timedelta(hours=1)
         return Scan.objects.create(
             tenant=tenant,
             provider=provider,
@@ -10746,8 +10737,8 @@ class TestOverviewViewSet:
             failed_findings=35,
         )
 
-        older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc)
-        newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=timezone.utc)
+        older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=UTC)
+        newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=UTC)
         ThreatScoreSnapshot.objects.filter(id=snapshot1.id).update(
             inserted_at=older_inserted
         )
@@ -11366,7 +11357,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
         )
 
         # Create scan for day 3
@@ -11376,7 +11367,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC),
         )
 
         # Create DailySeveritySummary for day 1
@@ -11449,7 +11440,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=UTC),
         )
         scan2 = Scan.objects.create(
             name="severity-over-time-scan-p2",
@@ -11457,7 +11448,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 2, 1, 14, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 2, 1, 14, 0, 0, tzinfo=UTC),
         )
 
         # Create DailySeveritySummary for provider1
@@ -11521,7 +11512,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 3, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC),
         )
         scan2 = Scan.objects.create(
             name="severity-over-time-filter-scan-p2",
@@ -11529,7 +11520,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 3, 1, 14, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 3, 1, 14, 0, 0, tzinfo=UTC),
         )
 
         # Provider 1 - critical=100
@@ -12658,9 +12649,9 @@ class TestIntegrationViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
@@ -13325,7 +13316,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=valid_token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expires_at=datetime.now(UTC) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -13351,7 +13342,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=expired_token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+            expires_at=datetime.now(UTC) - timedelta(seconds=1),
         )
 
         url = reverse("token-saml")
@@ -13370,7 +13361,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expires_at=datetime.now(UTC) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -14368,9 +14359,9 @@ class TestLighthouseConfigViewSet:
         )
         # Check that API key is masked with asterisks only
         masked_api_key = data["attributes"]["api_key"]
-        assert all(
-            c == "*" for c in masked_api_key
-        ), "API key should contain only asterisks"
+        assert all(c == "*" for c in masked_api_key), (
+            "API key should contain only asterisks"
+        )
 
     @pytest.mark.parametrize(
         "field_name, invalid_value",
@@ -18159,9 +18150,9 @@ class TestFindingGroupViewSet:
         assert len(data) == 2
         for item in data:
             resource = item["attributes"]["resource"]
-            assert (
-                resource["resource_group"] == "storage"
-            ), "resource_group must be 'storage'"
+            assert resource["resource_group"] == "storage", (
+                "resource_group must be 'storage'"
+            )
 
     def test_resources_name_icontains(
         self, authenticated_client, finding_groups_fixture
@@ -18475,12 +18466,12 @@ class TestFindingGroupViewSet:
         assert response_p1.status_code == status.HTTP_200_OK
         p1_check_ids = {item["id"] for item in response_p1.json()["data"]}
         # Provider1 has scan1 with 4 checks
-        assert (
-            len(p1_check_ids) == 4
-        ), f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
-        assert (
-            "cloudtrail_enabled" not in p1_check_ids
-        ), "cloudtrail_enabled should NOT be in provider1"
+        assert len(p1_check_ids) == 4, (
+            f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
+        )
+        assert "cloudtrail_enabled" not in p1_check_ids, (
+            "cloudtrail_enabled should NOT be in provider1"
+        )
 
         # Get finding groups for provider2 only
         response_p2 = authenticated_client.get(
@@ -18490,12 +18481,12 @@ class TestFindingGroupViewSet:
         assert response_p2.status_code == status.HTTP_200_OK
         p2_check_ids = {item["id"] for item in response_p2.json()["data"]}
         # Provider2 has scan2 with 1 check
-        assert (
-            len(p2_check_ids) == 1
-        ), f"Provider2 should have 1 check, got {len(p2_check_ids)}"
-        assert (
-            "cloudtrail_enabled" in p2_check_ids
-        ), "cloudtrail_enabled should be in provider2"
+        assert len(p2_check_ids) == 1, (
+            f"Provider2 should have 1 check, got {len(p2_check_ids)}"
+        )
+        assert "cloudtrail_enabled" in p2_check_ids, (
+            "cloudtrail_enabled should be in provider2"
+        )
 
     # Test provider_type filter actually filters data
     def test_finding_groups_provider_type_filter_actually_filters(
@@ -18518,9 +18509,9 @@ class TestFindingGroupViewSet:
             {"filter[inserted_at]": TODAY, "filter[provider_type]": "gcp"},
         )
         assert response_gcp.status_code == status.HTTP_200_OK
-        assert (
-            len(response_gcp.json()["data"]) == 0
-        ), "GCP filter should return 0 results"
+        assert len(response_gcp.json()["data"]) == 0, (
+            "GCP filter should return 0 results"
+        )
 
     def test_finding_groups_pagination(
         self, authenticated_client, finding_groups_fixture
@@ -18786,7 +18777,7 @@ class TestFindingGroupViewSet:
             provider=provider1,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
         latest_scan_provider2 = Scan.objects.create(
@@ -18794,7 +18785,7 @@ class TestFindingGroupViewSet:
             provider=provider2,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
         older_scan_provider1 = Scan.objects.create(
@@ -18802,7 +18793,7 @@ class TestFindingGroupViewSet:
             provider=provider1,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc) - timedelta(days=1),
+            completed_at=datetime.now(UTC) - timedelta(days=1),
         )
 
         # Older scan — these should be excluded from /latest
@@ -18816,7 +18807,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(days=2),
+            first_seen_at=datetime.now(UTC) - timedelta(days=2),
             muted=False,
         )
 
@@ -18831,7 +18822,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p1_pass.add_resources([resource1])
@@ -18846,7 +18837,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p1_fail.add_resources([resource2])
@@ -18862,7 +18853,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p2.add_resources([resource3])
@@ -19396,7 +19387,7 @@ class TestFindingGroupViewSet:
         resource = resources_fixture[0]
         check_id = "overlap_regression_check"
 
-        t0 = datetime.now(timezone.utc) - timedelta(hours=5)
+        t0 = datetime.now(UTC) - timedelta(hours=5)
         t1 = t0 + timedelta(hours=1)
         t1_end = t1 + timedelta(minutes=30)
         t2 = t0 + timedelta(hours=4)
