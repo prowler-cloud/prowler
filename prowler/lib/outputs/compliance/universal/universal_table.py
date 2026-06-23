@@ -2,6 +2,11 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import ComplianceFramework
 
 
@@ -166,6 +171,10 @@ def _render_grouped(
     pass_count = []
     fail_count = []
     muted_count = []
+    # A requirement whose configurable checks ran with an invalid config can't be
+    # trusted: treat the finding as FAIL (config is scan-global, memoised by id).
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
 
     for index, finding in enumerate(findings):
         check_id = finding.check_metadata.CheckID
@@ -173,6 +182,12 @@ def _render_grouped(
             continue
 
         for req in check_map[check_id]:
+            effective_status = get_effective_status(
+                finding.status,
+                resolve_requirement_config_status(
+                    req, audit_config, config_status_cache
+                ),
+            )
             for group_key in _get_group_key(req, group_by):
                 if group_key not in groups:
                     groups[group_key] = {"FAIL": 0, "PASS": 0, "Muted": 0}
@@ -182,10 +197,10 @@ def _render_grouped(
                         muted_count.append(index)
                         groups[group_key]["Muted"] += 1
                 else:
-                    if finding.status == "FAIL" and index not in fail_count:
+                    if effective_status == "FAIL" and index not in fail_count:
                         fail_count.append(index)
                         groups[group_key]["FAIL"] += 1
-                    elif finding.status == "PASS" and index not in pass_count:
+                    elif effective_status == "PASS" and index not in pass_count:
                         pass_count.append(index)
                         groups[group_key]["PASS"] += 1
 
@@ -261,6 +276,10 @@ def _render_split(
     pass_count = []
     fail_count = []
     muted_count = []
+    # A requirement whose configurable checks ran with an invalid config can't be
+    # trusted: treat the finding as FAIL (config is scan-global, memoised by id).
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
 
     for index, finding in enumerate(findings):
         check_id = finding.check_metadata.CheckID
@@ -268,6 +287,12 @@ def _render_split(
             continue
 
         for req in check_map[check_id]:
+            effective_status = get_effective_status(
+                finding.status,
+                resolve_requirement_config_status(
+                    req, audit_config, config_status_cache
+                ),
+            )
             for group_key in _get_group_key(req, group_by):
                 if group_key not in groups:
                     groups[group_key] = {
@@ -282,15 +307,15 @@ def _render_split(
                         muted_count.append(index)
                         groups[group_key]["Muted"] += 1
                 else:
-                    if finding.status == "FAIL" and index not in fail_count:
+                    if effective_status == "FAIL" and index not in fail_count:
                         fail_count.append(index)
-                    elif finding.status == "PASS" and index not in pass_count:
+                    elif effective_status == "PASS" and index not in pass_count:
                         pass_count.append(index)
 
                     for sv in split_values:
                         if sv in str(split_val):
                             if not finding.muted:
-                                if finding.status == "FAIL":
+                                if effective_status == "FAIL":
                                     groups[group_key][sv]["FAIL"] += 1
                                 else:
                                     groups[group_key][sv]["PASS"] += 1
@@ -374,6 +399,10 @@ def _render_scored(
     generic_score = 0
     max_generic_score = 0
     counted_generic = []
+    # A requirement whose configurable checks ran with an invalid config can't be
+    # trusted: treat the finding as FAIL (config is scan-global, memoised by id).
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
 
     for index, finding in enumerate(findings):
         check_id = finding.check_metadata.CheckID
@@ -381,6 +410,12 @@ def _render_scored(
             continue
 
         for req in check_map[check_id]:
+            effective_status = get_effective_status(
+                finding.status,
+                resolve_requirement_config_status(
+                    req, audit_config, config_status_cache
+                ),
+            )
             for group_key in _get_group_key(req, group_by):
                 attrs = req.attributes
                 risk = attrs.get(risk_field, 0)
@@ -393,7 +428,7 @@ def _render_scored(
                     counted_per_group[group_key] = []
 
                 if index not in counted_per_group[group_key] and not finding.muted:
-                    if finding.status == "PASS":
+                    if effective_status == "PASS":
                         score_per_group[group_key] += risk * weight
                     max_score_per_group[group_key] += risk * weight
                     counted_per_group[group_key].append(index)
@@ -403,15 +438,15 @@ def _render_scored(
                         muted_count.append(index)
                         groups[group_key]["Muted"] += 1
                 else:
-                    if finding.status == "FAIL" and index not in fail_count:
+                    if effective_status == "FAIL" and index not in fail_count:
                         fail_count.append(index)
                         groups[group_key]["FAIL"] += 1
-                    elif finding.status == "PASS" and index not in pass_count:
+                    elif effective_status == "PASS" and index not in pass_count:
                         pass_count.append(index)
                         groups[group_key]["PASS"] += 1
 
                 if index not in counted_generic and not finding.muted:
-                    if finding.status == "PASS":
+                    if effective_status == "PASS":
                         generic_score += risk * weight
                     max_generic_score += risk * weight
                     counted_generic.append(index)

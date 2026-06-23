@@ -137,7 +137,33 @@
           "guardduty_centrally_managed",
           "guardduty_delegated_admin_enabled_all_regions"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art7",
@@ -168,7 +194,18 @@
           "cloudfront_distributions_https_enabled",
           "rds_instance_transport_encrypted"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
+      ]
     },
     {
       "id": "DORA-Art8",
@@ -190,7 +227,15 @@
           "ec2_networkacl_unused",
           "secretsmanager_secret_unused"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art9",
@@ -267,7 +312,21 @@
           "inspector2_active_findings_exist",
           "ec2_elastic_ip_shodan"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art11",
@@ -349,7 +408,15 @@
           "accessanalyzer_enabled_without_findings",
           "cloudtrail_insights_exist"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art14",
@@ -430,7 +497,21 @@
           "cloudtrail_threat_detection_llm_jacking",
           "cloudtrail_threat_detection_privilege_escalation"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art19",
@@ -480,7 +561,15 @@
           "ec2_instance_with_outdated_ami",
           "ssm_managed_compliant_patching"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art25",
@@ -507,7 +596,21 @@
           "iam_no_expired_server_certificates_stored",
           "ssm_managed_compliant_patching"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art28",
@@ -538,7 +641,15 @@
           "vpc_peering_routing_tables_with_least_privilege",
           "awslambda_function_using_cross_account_layers"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art30",
@@ -568,7 +679,15 @@
           "iam_policy_attached_only_to_group_or_roles",
           "accessanalyzer_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art45",
@@ -591,7 +710,21 @@
           "cloudtrail_threat_detection_privilege_escalation",
           "accessanalyzer_enabled_without_findings"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     }
   ]
 }

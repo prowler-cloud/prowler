@@ -229,7 +229,15 @@
         "oraclecloud": [
           "cloudguard_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "A&A-04",
@@ -334,7 +342,21 @@
         "oraclecloud": [
           "cloudguard_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "AIS-04",
@@ -978,7 +1000,15 @@
           "defender_ensure_defender_for_server_is_on",
           "vm_backup_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "BCR-11",
@@ -1414,7 +1444,27 @@
           "events_rule_security_list_changes",
           "events_rule_vcn_changes"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "CEK-03",
@@ -1656,7 +1706,17 @@
           "filestorage_file_system_encrypted_with_cmk",
           "objectstorage_bucket_encrypted_with_cmk"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "storage_smb_channel_encryption_with_secure_algorithm",
+          "ConfigKey": "recommended_smb_channel_encryption_algorithms",
+          "Operator": "subset",
+          "Value": [
+            "AES-256-GCM"
+          ]
+        }
+      ]
     },
     {
       "id": "CEK-04",
@@ -1798,7 +1858,27 @@
           "dns_rsasha1_in_use_to_key_sign_in_dnssec",
           "dns_rsasha1_in_use_to_zone_sign_in_dnssec"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        },
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
+      ]
     },
     {
       "id": "CEK-08",
@@ -2341,7 +2421,15 @@
         "alibabacloud": [
           "securitycenter_all_assets_agent_installed"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DSP-02",
@@ -2579,7 +2667,15 @@
         "alibabacloud": [
           "securitycenter_all_assets_agent_installed"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DSP-04",
@@ -2993,7 +3089,18 @@
         "oraclecloud": [
           "compute_instance_in_transit_encryption_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
+      ]
     },
     {
       "id": "DSP-16",
@@ -3399,7 +3506,21 @@
         "oraclecloud": [
           "cloudguard_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "IAM-02",
@@ -6251,7 +6372,15 @@
           "cloudguard_enabled",
           "events_rule_cloudguard_problems"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "LOG-02",
@@ -6554,7 +6683,21 @@
           "events_notification_topic_and_subscription_exists",
           "events_rule_local_user_authentication"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "LOG-04",
@@ -7598,7 +7741,15 @@
           "events_rule_cloudguard_problems",
           "events_notification_topic_and_subscription_exists"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "SEF-03",
@@ -7876,7 +8027,21 @@
         "oraclecloud": [
           "cloudguard_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "SEF-08",
@@ -8457,7 +8622,15 @@
         "oraclecloud": [
           "cloudguard_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "TVM-05",
@@ -8725,7 +8898,15 @@
         "oraclecloud": [
           "cloudguard_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "UEM-08",

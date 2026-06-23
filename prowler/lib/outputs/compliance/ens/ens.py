@@ -2,6 +2,11 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 
 
 def get_ens_table(
@@ -26,12 +31,24 @@ def get_ens_table(
     pass_count = []
     fail_count = []
     muted_count = []
+    # The applied config is scan-global (the provider's audit_config). Evaluate
+    # each requirement's config constraints once against it (memoised by Id).
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
             if compliance.Framework == "ENS":
                 for requirement in compliance.Requirements:
+                    # A requirement whose configurable checks ran with an invalid
+                    # config can't be trusted: treat the finding as FAIL.
+                    config_status = resolve_requirement_config_status(
+                        requirement, audit_config, config_status_cache
+                    )
+                    effective_status = get_effective_status(
+                        finding.status, config_status
+                    )
                     for attribute in requirement.Attributes:
                         marco_categoria = f"{attribute.Marco}/{attribute.Categoria}"
                         # Check if Marco/Categoria exists
@@ -49,7 +66,7 @@ def get_ens_table(
                                 muted_count.append(index)
                                 marcos[marco_categoria]["Muted"] += 1
                         else:
-                            if finding.status == "FAIL":
+                            if effective_status == "FAIL":
                                 if (
                                     attribute.Tipo != "recomendacion"
                                     and index not in fail_count
@@ -58,7 +75,7 @@ def get_ens_table(
                                     marcos[marco_categoria][
                                         "Estado"
                                     ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
-                            elif finding.status == "PASS" and index not in pass_count:
+                            elif effective_status == "PASS" and index not in pass_count:
                                 pass_count.append(index)
                         if attribute.Nivel == "opcional":
                             marcos[marco_categoria]["Opcional"] += 1

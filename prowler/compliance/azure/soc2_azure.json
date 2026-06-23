@@ -265,6 +265,17 @@
         "sqlserver_tde_encryption_enabled",
         "sqlserver_unrestricted_inbound_access",
         "storage_secure_transfer_required_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -308,6 +319,17 @@
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
         "storage_ensure_minimum_tls_version_12"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {

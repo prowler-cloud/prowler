@@ -1,4 +1,8 @@
 from prowler.config.config import timestamp
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.compliance.prowler_threatscore.models import (
@@ -36,10 +40,22 @@ class ProwlerThreatScoreAzure(ComplianceOutput):
         Returns:
             - None
         """
+        # Evaluate each requirement's config constraints once against the
+        # scan-global applied config; a requirement whose configurable checks
+        # ran with a config too loose to trust is forced to FAIL.
+        requirement_config_status = build_requirement_config_status(
+            compliance.Requirements
+        )
+
         for finding in findings:
             for requirement in compliance.Requirements:
                 # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
                 if finding.check_id in requirement.Checks:
+                    row_status, row_status_extended = apply_config_status(
+                        finding.status,
+                        finding.status_extended,
+                        requirement_config_status.get(requirement.Id),
+                    )
                     for attribute in requirement.Attributes:
                         compliance_row = ProwlerThreatScoreAzureModel(
                             Provider=finding.provider,
@@ -56,8 +72,8 @@ class ProwlerThreatScoreAzure(ComplianceOutput):
                             Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
                             Requirements_Attributes_LevelOfRisk=attribute.LevelOfRisk,
                             Requirements_Attributes_Weight=attribute.Weight,
-                            Status=finding.status,
-                            StatusExtended=finding.status_extended,
+                            Status=row_status,
+                            StatusExtended=row_status_extended,
                             ResourceId=finding.resource_uid,
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,

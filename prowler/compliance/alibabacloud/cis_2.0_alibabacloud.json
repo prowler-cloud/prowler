@@ -109,6 +109,14 @@
       ],
       "Checks": [
         "ram_user_console_access_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "ram_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -841,6 +849,14 @@
       ],
       "Checks": [
         "sls_logstore_retention_period"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sls_logstore_retention_period",
+          "ConfigKey": "min_log_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ]
     },
     {
@@ -1353,6 +1369,14 @@
       ],
       "Checks": [
         "rds_instance_sql_audit_retention"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "rds_instance_sql_audit_retention",
+          "ConfigKey": "min_rds_audit_retention_days",
+          "Operator": "gte",
+          "Value": 180
+        }
       ]
     },
     {
