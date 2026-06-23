@@ -8,10 +8,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Controlled `402` and `403` Server Action error messages for alert seed and mutation flows [(#11629)](https://github.com/prowler-cloud/prowler/pull/11629)
 
-### 🔄 Changed
-
-- Scans Scheduled tab is now built from the `/schedules` endpoint (`filter[configured]=true`) instead of mixing scheduled scans with client-synthesized rows, and the Edit Scan Schedule action is limited to the Scheduled tab [(#11670)](https://github.com/prowler-cloud/prowler/pull/11670)
-
 ### 🐞 Fixed
 
 - Attack Paths now shows distinct messages while a scan is queued, running, or building its graph — plus a separate "couldn't load scans" error — instead of always showing "No scans available" [(#11512)](https://github.com/prowler-cloud/prowler/pull/11512)
