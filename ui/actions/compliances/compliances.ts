@@ -1,7 +1,11 @@
 "use server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
-import { hasComplianceProviderFilters } from "@/lib/compliance/compliance-provider-filters";
+import {
+  type ComplianceFilters,
+  type ComplianceProviderFilters,
+  hasComplianceProviderFilters,
+} from "@/lib/compliance/compliance-provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getCompliancesOverview = async ({
@@ -11,7 +15,7 @@ export const getCompliancesOverview = async ({
 }: {
   scanId?: string;
   region?: string | string[];
-  filters?: Record<string, string | string[] | undefined>;
+  filters?: ComplianceProviderFilters;
 } = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -50,7 +54,7 @@ export const getComplianceOverviewMetadataInfo = async ({
   filters = {},
 }: {
   sort?: string;
-  filters?: Record<string, string | string[] | undefined>;
+  filters?: ComplianceFilters;
 } = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -120,7 +124,7 @@ export const getComplianceRequirements = async ({
   complianceId: string;
   scanId?: string;
   region?: string | string[];
-  filters?: Record<string, string | string[] | undefined>;
+  filters?: ComplianceProviderFilters;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -130,9 +134,7 @@ export const getComplianceRequirements = async ({
 
     // Forward provider-scope filters (aggregated mode); XOR with scan_id.
     Object.entries(filters).forEach(([key, value]) => {
-      if (value === undefined) return;
-      const serialized = Array.isArray(value) ? value.join(",") : value;
-      if (serialized.trim() !== "") url.searchParams.append(key, serialized);
+      if (value && value.trim() !== "") url.searchParams.append(key, value);
     });
 
     if (scanId && !hasComplianceProviderFilters(filters)) {

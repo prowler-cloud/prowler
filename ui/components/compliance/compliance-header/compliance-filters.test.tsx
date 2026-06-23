@@ -45,21 +45,18 @@ vi.mock("@/components/filters/provider-account-selectors", () => ({
   ),
 }));
 
-vi.mock(
-  "@/app/(prowler)/_overview/_components/provider-group-selector",
-  () => ({
-    ProviderGroupSelector: ({
-      paramsToDeleteOnChange,
-    }: {
-      paramsToDeleteOnChange?: string[];
-    }) => (
-      <div
-        data-testid="provider-group-selector"
-        data-params={(paramsToDeleteOnChange ?? []).join(",")}
-      />
-    ),
-  }),
-);
+vi.mock("@/components/filters/provider-group-selector", () => ({
+  ProviderGroupSelector: ({
+    paramsToDeleteOnChange,
+  }: {
+    paramsToDeleteOnChange?: string[];
+  }) => (
+    <div
+      data-testid="provider-group-selector"
+      data-params={(paramsToDeleteOnChange ?? []).join(",")}
+    />
+  ),
+}));
 
 vi.mock("@/components/filters/clear-filters-button", () => ({
   ClearFiltersButton: () => <div data-testid="clear-filters" />,

@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/ui";
 import {
+  type ComplianceProviderFilters,
   extractComplianceProviderFilters,
   hasComplianceProviderFilters,
 } from "@/lib/compliance/compliance-provider-filters";
@@ -226,7 +227,7 @@ const SSRComplianceGrid = async ({
   scanId: string | null;
   selectedScan?: ScanEntity;
   hasProviderFilters: boolean;
-  providerFilters: Record<string, string>;
+  providerFilters: ComplianceProviderFilters;
 }) => {
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 

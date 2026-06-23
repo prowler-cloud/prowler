@@ -1,3 +1,5 @@
+import type { ComplianceProviderFilters } from "./compliance-provider-filters";
+
 interface ComplianceDetailPathParams {
   /** Framework title as shown on the card (URL-encoded into the path). */
   title: string;
@@ -10,7 +12,7 @@ interface ComplianceDetailPathParams {
    * Aggregated-mode scope: provider-filter keys (e.g. filter[provider_type__in])
    * carried instead of scanId. XOR with scanId — when present, scanId is dropped.
    */
-  providerFilters?: Record<string, string>;
+  providerFilters?: ComplianceProviderFilters;
 }
 
 /** Builds the `/compliance/[compliancetitle]` detail URL used by the overview cards. */
@@ -27,7 +29,9 @@ export function buildComplianceDetailPath({
   params.set("version", version);
 
   const providerEntries = providerFilters
-    ? Object.entries(providerFilters).filter(([, value]) => value)
+    ? Object.entries(providerFilters).filter(
+        (entry): entry is [string, string] => Boolean(entry[1]),
+      )
     : [];
   if (providerEntries.length > 0) {
     for (const [key, value] of providerEntries) {

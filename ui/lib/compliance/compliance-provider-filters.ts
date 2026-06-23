@@ -1,16 +1,35 @@
 import type { SearchParamsProps } from "@/types/components";
+import { FILTER_FIELD, FilterParam } from "@/types/filters";
 
 /**
- * Provider-scope filter keys the compliance UI sets. A subset of the API's
- * `PROVIDER_FILTER_KEYS`; the backend (`ComplianceOverviewViewSet`) treats these
- * as an alternative to `filter[scan_id]` (XOR) and aggregates compliance across
- * the latest completed scan of each matching provider.
+ * Provider-scope filter param keys the compliance UI sets — the same three the
+ * overview dashboard uses, derived from the shared `FILTER_FIELD` source of
+ * truth. The backend (`ComplianceOverviewViewSet`) treats these as an
+ * alternative to `filter[scan_id]` (XOR) and aggregates compliance across the
+ * latest completed scan of each matching provider.
  */
+export type ComplianceProviderFilterParam = FilterParam<
+  (typeof FILTER_FIELD)["PROVIDER_TYPE" | "PROVIDER_ID" | "PROVIDER_GROUPS"]
+>;
+
+/** Present, CSV-joined provider-scope filters (aggregated mode). */
+export type ComplianceProviderFilters = Partial<
+  Record<ComplianceProviderFilterParam, string>
+>;
+
+/**
+ * Filters the compliance server actions accept: the provider-scope keys above
+ * (aggregated mode) or `filter[scan_id]` (single-scan mode) — XOR.
+ */
+export type ComplianceFilters = Partial<
+  Record<ComplianceProviderFilterParam | FilterParam<"scan_id">, string>
+>;
+
 export const COMPLIANCE_PROVIDER_FILTER_KEYS = [
-  "filter[provider_type__in]",
-  "filter[provider_id__in]",
-  "filter[provider_groups__in]",
-] as const;
+  `filter[${FILTER_FIELD.PROVIDER_TYPE}]`,
+  `filter[${FILTER_FIELD.PROVIDER_ID}]`,
+  `filter[${FILTER_FIELD.PROVIDER_GROUPS}]`,
+] as const satisfies ReadonlyArray<ComplianceProviderFilterParam>;
 
 type SearchParamsLike = SearchParamsProps | URLSearchParams;
 
@@ -34,8 +53,8 @@ export const hasComplianceProviderFilters = (
 /** Returns only the present, non-empty provider-scope filters (CSV-joined). */
 export const extractComplianceProviderFilters = (
   params: SearchParamsLike,
-): Record<string, string> => {
-  const result: Record<string, string> = {};
+): ComplianceProviderFilters => {
+  const result: ComplianceProviderFilters = {};
   for (const key of COMPLIANCE_PROVIDER_FILTER_KEYS) {
     const value = readParam(params, key).trim();
     if (value.length > 0) {

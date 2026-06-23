@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { ProviderGroupSelector } from "@/app/(prowler)/_overview/_components/provider-group-selector";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import {
   MultiSelect,
   MultiSelectContent,

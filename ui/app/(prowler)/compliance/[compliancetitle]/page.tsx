@@ -28,6 +28,7 @@ import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance"
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import {
+  type ComplianceProviderFilters,
   extractComplianceProviderFilters,
   hasComplianceProviderFilters,
 } from "@/lib/compliance/compliance-provider-filters";
@@ -281,7 +282,7 @@ const SSRComplianceContent = async ({
   } | null;
   targetSection?: string;
   hasProviderFilters: boolean;
-  providerFilters: Record<string, string>;
+  providerFilters: ComplianceProviderFilters;
 }) => {
   const requirementsData = await getComplianceRequirements({
     complianceId,
