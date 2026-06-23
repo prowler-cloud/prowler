@@ -25,6 +25,11 @@ import {
 import { ToastAction, useToast } from "@/components/ui";
 import { EntityInfo } from "@/components/ui/entities";
 import {
+  type ActionErrorResult,
+  getActionErrorMessage,
+  hasActionError,
+} from "@/lib/action-errors";
+import {
   getScanScheduleCapability,
   getScheduleFormDefaults,
   scheduleFormSchema,
@@ -129,7 +134,7 @@ export function LaunchStep({
     }
   }, [isAdvanced, mode]);
 
-  const launchOnDemandScan = async (): Promise<{ error?: unknown } | null> => {
+  const launchOnDemandScan = async (): Promise<ActionErrorResult | null> => {
     if (!providerId || isBlocked) return null;
     const formData = new FormData();
     formData.set("providerId", providerId);
@@ -144,12 +149,12 @@ export function LaunchStep({
     setIsLaunching(true);
     const scanResult = await launchOnDemandScan();
 
-    if (scanResult?.error) {
+    if (hasActionError(scanResult)) {
       setIsLaunching(false);
       toast({
         variant: "destructive",
         title: "Unable to launch scan",
-        description: String(scanResult.error),
+        description: getActionErrorMessage(scanResult),
       });
       return;
     }

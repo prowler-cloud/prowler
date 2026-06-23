@@ -3,6 +3,11 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  ACTION_ERROR_API_MESSAGES,
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   SCAN_JOBS_TAB,
@@ -203,7 +208,10 @@ describe("OrgLaunchScan", () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
-      updateSchedulesBulkMock.mockResolvedValue({ error: "Denied" });
+      updateSchedulesBulkMock.mockResolvedValue({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
 
       render(
         <OrgLaunchScan
@@ -226,6 +234,8 @@ describe("OrgLaunchScan", () => {
           expect.objectContaining({
             variant: "destructive",
             title: "Unable to save scan schedules",
+            description:
+              ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
           }),
         ),
       );
