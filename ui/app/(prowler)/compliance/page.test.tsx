@@ -13,4 +13,15 @@ describe("Compliance overview page", () => {
     expect(source).toContain("ComplianceOverviewGrid");
     expect(source).not.toContain("filter[search]");
   });
+
+  it("switches to aggregated mode when provider filters are present", () => {
+    expect(source).toContain("hasComplianceProviderFilters");
+    expect(source).toContain("extractComplianceProviderFilters");
+  });
+
+  it("feeds the provider and provider-group selectors", () => {
+    expect(source).toContain("getAllProviders");
+    expect(source).toContain("getAllProviderGroups");
+    expect(source).toContain("providerGroups={");
+  });
 });

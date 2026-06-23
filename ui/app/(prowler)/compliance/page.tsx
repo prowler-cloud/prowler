@@ -5,7 +5,9 @@ import {
   getComplianceOverviewMetadataInfo,
   getCompliancesOverview,
 } from "@/actions/compliances";
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getThreatScore } from "@/actions/overview";
+import { getAllProviders } from "@/actions/providers/providers";
 import { getScans } from "@/actions/scans";
 import {
   ComplianceSkeletonGrid,
@@ -17,6 +19,11 @@ import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overv
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/ui";
+import {
+  type ComplianceProviderFilters,
+  extractComplianceProviderFilters,
+  hasComplianceProviderFilters,
+} from "@/lib/compliance/compliance-provider-filters";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import {
   ExpandedScanData,
@@ -34,16 +41,24 @@ export default async function Compliance({
   const resolvedSearchParams = await searchParams;
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
-  const scansData = await getScans({
-    filters: {
-      "filter[state]": "completed",
-    },
-    pageSize: 50,
-    fields: {
-      scans: "name,completed_at,provider",
-    },
-    include: "provider",
-  });
+  const hasProviderFilters = hasComplianceProviderFilters(resolvedSearchParams);
+  const providerFilters =
+    extractComplianceProviderFilters(resolvedSearchParams);
+
+  const [scansData, providersData, providerGroupsData] = await Promise.all([
+    getScans({
+      filters: {
+        "filter[state]": "completed",
+      },
+      pageSize: 50,
+      fields: {
+        scans: "name,completed_at,provider",
+      },
+      include: "provider",
+    }),
+    getAllProviders(),
+    getAllProviderGroups(),
+  ]);
 
   if (!scansData?.data) {
     return (
@@ -90,9 +105,12 @@ export default async function Compliance({
   const scanIdFromUrl = Array.isArray(scanIdParam)
     ? scanIdParam[0]
     : scanIdParam;
-  const selectedScanId: string | null =
-    scanIdFromUrl || expandedScansData[0]?.id || null;
-  const onboardingAction = selectedScanId
+  // Aggregated mode ignores scanId entirely (backend XOR); provider filters drive scope.
+  const selectedScanId: string | null = hasProviderFilters
+    ? null
+    : scanIdFromUrl || expandedScansData[0]?.id || null;
+  const hasScope = hasProviderFilters || Boolean(selectedScanId);
+  const onboardingAction = hasScope
     ? { flowId: "view-compliance" }
     : {
         flowId: "view-compliance",
@@ -115,13 +133,15 @@ export default async function Compliance({
       }
     : undefined;
 
-  const metadataInfoData = selectedScanId
-    ? await getComplianceOverviewMetadataInfo({
-        filters: {
-          "filter[scan_id]": selectedScanId,
-        },
-      })
-    : { data: { attributes: { regions: [] } } };
+  const metadataInfoData = hasProviderFilters
+    ? await getComplianceOverviewMetadataInfo({ filters: providerFilters })
+    : selectedScanId
+      ? await getComplianceOverviewMetadataInfo({
+          filters: {
+            "filter[scan_id]": selectedScanId,
+          },
+        })
+      : { data: { attributes: { regions: [] } } };
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
@@ -146,13 +166,15 @@ export default async function Compliance({
       icon="lucide:shield-check"
       onboardingAction={onboardingAction}
     >
-      {selectedScanId ? (
+      {hasScope ? (
         <>
           <div className="mb-6">
             <ComplianceFilters
               scans={expandedScansData}
               uniqueRegions={uniqueRegions}
               selectedScanId={selectedScanId}
+              providers={providersData?.data ?? []}
+              providerGroups={providerGroupsData?.data ?? []}
             />
           </div>
 
@@ -182,6 +204,8 @@ export default async function Compliance({
               searchParams={resolvedSearchParams}
               scanId={selectedScanId}
               selectedScan={selectedScanData}
+              hasProviderFilters={hasProviderFilters}
+              providerFilters={providerFilters}
             />
           </Suspense>
         </>
@@ -196,15 +220,23 @@ const SSRComplianceGrid = async ({
   searchParams,
   scanId,
   selectedScan,
+  hasProviderFilters,
+  providerFilters,
 }: {
   searchParams: SearchParamsProps;
   scanId: string | null;
   selectedScan?: ScanEntity;
+  hasProviderFilters: boolean;
+  providerFilters: ComplianceProviderFilters;
 }) => {
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
-  const compliancesData =
-    scanId && scanId.trim() !== ""
+  const compliancesData = hasProviderFilters
+    ? await getCompliancesOverview({
+        region: regionFilter,
+        filters: providerFilters,
+      })
+    : scanId && scanId.trim() !== ""
       ? await getCompliancesOverview({
           scanId,
           region: regionFilter,
@@ -230,8 +262,9 @@ const SSRComplianceGrid = async ({
       <Alert variant="info">
         <Info className="size-4" />
         <AlertDescription>
-          This scan has no compliance data available yet, please select a
-          different one.
+          {hasProviderFilters
+            ? "No completed scans match the selected providers."
+            : "This scan has no compliance data available yet, please select a different one."}
         </AlertDescription>
       </Alert>
     );

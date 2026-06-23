@@ -7,6 +7,7 @@ import { ComplianceCard } from "@/components/compliance/compliance-card";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/ui/table/data-table-search";
 import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
+import { extractComplianceProviderFilters } from "@/lib/compliance/compliance-provider-filters";
 import { getFlowById } from "@/lib/onboarding";
 import { createViewComplianceTourStepHandlers } from "@/lib/tours/view-compliance.tour";
 import type { ComplianceOverviewData } from "@/types/compliance";
@@ -43,6 +44,10 @@ export const ComplianceOverviewGrid = ({
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Aggregated mode: provider filters in the URL replace the single-scan scope.
+  const providerFilters = extractComplianceProviderFilters(searchParams);
+  const isAggregated = Object.keys(providerFilters).length > 0;
+
   const filteredFrameworks = frameworks.filter((compliance) =>
     compliance.attributes.framework
       .toLowerCase()
@@ -62,8 +67,9 @@ export const ComplianceOverviewGrid = ({
         title: first.attributes.framework,
         complianceId: first.id,
         version: first.attributes.version,
-        scanId,
+        scanId: isAggregated ? null : scanId,
         regionFilter: searchParams.get("filter[region__in]"),
+        providerFilters: isAggregated ? providerFilters : undefined,
       }),
     );
   };

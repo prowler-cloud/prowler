@@ -27,4 +27,21 @@ describe("ComplianceCard", () => {
     expect(source).toContain('orientation="column"');
     expect(source).toContain('buttonWidth="icon"');
   });
+
+  it("derives aggregated mode from the provider filters in the URL", () => {
+    expect(source).toContain("extractComplianceProviderFilters");
+    expect(source).toContain("const isAggregated =");
+  });
+
+  it("hides the per-scan PDF download in aggregated mode", () => {
+    expect(source).toContain("{!isAggregated && (");
+    expect(source).toContain("<ComplianceDownloadContainer");
+  });
+
+  it("carries provider filters (not scanId) into the drill-down when aggregated", () => {
+    expect(source).toContain(
+      "providerFilters: isAggregated ? providerFilters : undefined",
+    );
+    expect(source).toContain("scanId: isAggregated ? null : scanId");
+  });
 });

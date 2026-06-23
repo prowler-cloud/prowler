@@ -28,6 +28,11 @@ import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance"
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import {
+  type ComplianceProviderFilters,
+  extractComplianceProviderFilters,
+  hasComplianceProviderFilters,
+} from "@/lib/compliance/compliance-provider-filters";
+import {
   getReportTypeForCompliance,
   pickLatestCisPerProvider,
 } from "@/lib/compliance/compliance-report-types";
@@ -37,15 +42,19 @@ import {
   Framework,
   RequirementsTotals,
 } from "@/types/compliance";
+import { SearchParamsProps } from "@/types/components";
 import { ScanEntity } from "@/types/scans";
 
-interface ComplianceDetailSearchParams {
+interface ComplianceDetailSearchParams extends SearchParamsProps {
   complianceId: string;
   version?: string;
   scanId?: string;
   section?: string;
   "filter[region__in]"?: string;
   "filter[cis_profile_level]"?: string;
+  "filter[provider_type__in]"?: string;
+  "filter[provider_id__in]"?: string;
+  "filter[provider_groups__in]"?: string;
   page?: string;
   pageSize?: string;
 }
@@ -64,6 +73,10 @@ export default async function ComplianceDetail({
   const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
+  const hasProviderFilters = hasComplianceProviderFilters(resolvedSearchParams);
+  const providerFilters =
+    extractComplianceProviderFilters(resolvedSearchParams);
+
   // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
   const paramsForKey = Object.fromEntries(
     Object.entries(resolvedSearchParams).filter(
@@ -78,14 +91,15 @@ export default async function ComplianceDetail({
     : `${formattedTitle}`;
 
   let selectedScan: ScanEntity | null = null;
-  const selectedScanId = scanId || null;
+  // Aggregated mode ignores scanId entirely (backend XOR); provider filters drive scope.
+  const selectedScanId = hasProviderFilters ? null : scanId || null;
 
   const [metadataInfoData, attributesData, selectedScanResponse] =
     await Promise.all([
       getComplianceOverviewMetadataInfo({
-        filters: {
-          "filter[scan_id]": selectedScanId ?? undefined,
-        },
+        filters: hasProviderFilters
+          ? providerFilters
+          : { "filter[scan_id]": selectedScanId ?? undefined },
       }),
       getComplianceAttributes(complianceId, selectedScanId ?? undefined),
       selectedScanId
@@ -238,6 +252,8 @@ export default async function ComplianceDetail({
           attributesData={attributesData}
           threatScoreData={threatScoreData}
           targetSection={section}
+          hasProviderFilters={hasProviderFilters}
+          providerFilters={providerFilters}
         />
       </Suspense>
     </ContentLayout>
@@ -252,6 +268,8 @@ const SSRComplianceContent = async ({
   attributesData,
   threatScoreData,
   targetSection,
+  hasProviderFilters,
+  providerFilters,
 }: {
   complianceId: string;
   scanId: string;
@@ -263,15 +281,18 @@ const SSRComplianceContent = async ({
     sectionScores: Record<string, number>;
   } | null;
   targetSection?: string;
+  hasProviderFilters: boolean;
+  providerFilters: ComplianceProviderFilters;
 }) => {
   const requirementsData = await getComplianceRequirements({
     complianceId,
-    scanId,
+    scanId: scanId || undefined,
     region,
+    filters: hasProviderFilters ? providerFilters : undefined,
   });
   const type = requirementsData?.data?.[0]?.type;
 
-  if (!scanId || type === "tasks") {
+  if ((!scanId && !hasProviderFilters) || type === "tasks") {
     return (
       <div className="flex flex-col gap-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
