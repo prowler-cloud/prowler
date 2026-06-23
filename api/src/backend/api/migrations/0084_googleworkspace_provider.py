@@ -1,6 +1,5 @@
-from django.db import migrations
-
 import api.db_utils
+from django.db import migrations
 
 
 class Migration(migrations.Migration):

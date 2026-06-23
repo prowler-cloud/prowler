@@ -1,6 +1,4 @@
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from django.db import transaction
-
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.models import (
@@ -11,6 +9,7 @@ from api.models import (
     User,
     UserRoleRelationship,
 )
+from django.db import transaction
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):

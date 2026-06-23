@@ -1,7 +1,8 @@
 """Pydantic models for simplified resources responses."""
 
-from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 from pydantic import BaseModel
+
+from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 
 
 class SimplifiedResource(MinimalSerializerMixin, BaseModel):

@@ -3,13 +3,11 @@
 from unittest.mock import patch
 
 import pytest
-
-from rest_framework.exceptions import ValidationError
-
 from api.attack_paths.cypher_sanitizer import (
     inject_provider_label,
     validate_custom_query,
 )
+from rest_framework.exceptions import ValidationError
 
 PROVIDER_ID = "019c41ee-7df3-7dec-a684-d839f95619f8"
 LABEL = "_Provider_019c41ee7df37deca684d839f95619f8"
@@ -202,9 +200,7 @@ class TestClauseSplitting:
 
     def test_multiple_match_clauses(self):
         cypher = (
-            "MATCH (a:AWSAccount)--(b:AWSRole) "
-            "MATCH (b)--(c:AWSPolicy) "
-            "RETURN a, b, c"
+            "MATCH (a:AWSAccount)--(b:AWSRole) MATCH (b)--(c:AWSPolicy) RETURN a, b, c"
         )
         result = _inject(cypher)
         assert f"(a:AWSAccount:{LABEL})" in result
@@ -265,9 +261,7 @@ class TestRealWorldQueries:
 
     def test_custom_bare_query(self):
         cypher = (
-            "MATCH (a)-[:HAS_POLICY]->(b)\n"
-            "WHERE a.name CONTAINS 'admin'\n"
-            "RETURN a, b"
+            "MATCH (a)-[:HAS_POLICY]->(b)\nWHERE a.name CONTAINS 'admin'\nRETURN a, b"
         )
         result = _inject(cypher)
         assert f"(a:{LABEL})" in result
@@ -344,9 +338,7 @@ class TestEdgeCases:
         assert f"(outer:AWSAccount:{LABEL})" in result
 
     def test_multiple_protected_regions(self):
-        cypher = (
-            "MATCH (n:X {a: 'hello'}) " 'WHERE n.b = "world" ' "// comment\n" "RETURN n"
-        )
+        cypher = "MATCH (n:X {a: 'hello'}) WHERE n.b = \"world\" // comment\nRETURN n"
         result = _inject(cypher)
         assert "'hello'" in result
         assert '"world"' in result

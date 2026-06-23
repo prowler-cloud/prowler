@@ -1,6 +1,7 @@
-from typing import Optional, Tuple
 from uuid import UUID
 
+from api.db_router import MainRouter
+from api.models import TenantAPIKey, TenantAPIKeyManager
 from cryptography.fernet import InvalidToken
 from django.utils import timezone
 from drf_simple_apikey.backends import APIKeyAuthentication as BaseAPIKeyAuth
@@ -9,9 +10,6 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
-from api.db_router import MainRouter
-from api.models import TenantAPIKey, TenantAPIKeyManager
 
 
 class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
@@ -81,7 +79,7 @@ class CombinedJWTOrAPIKeyAuthentication(BaseAuthentication):
     jwt_auth = JWTAuthentication()
     api_key_auth = TenantAPIKeyAuthentication()
 
-    def authenticate(self, request: Request) -> Optional[Tuple[object, dict]]:
+    def authenticate(self, request: Request) -> tuple[object, dict] | None:
         auth_header = request.headers.get("Authorization", "")
 
         # Prioritize JWT authentication if both are present

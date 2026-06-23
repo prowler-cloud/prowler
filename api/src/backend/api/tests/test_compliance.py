@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from api import compliance as compliance_module
 from api.compliance import (
     generate_compliance_overview_template,

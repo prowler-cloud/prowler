@@ -2,12 +2,11 @@ import uuid
 from unittest.mock import call, patch
 
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import DatabaseError, IntegrityError
-
 from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY
 from api.decorators import handle_provider_deletion, set_tenant
 from api.exceptions import ProviderDeletedException
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import DatabaseError, IntegrityError
 
 
 @pytest.mark.django_db

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -29,7 +29,7 @@ class TestGetNextExecutionDatetime:
             task_id="abc123",
             task_name="scan-perform-scheduled",
             status="SUCCESS",
-            date_created=datetime.now(timezone.utc) - timedelta(hours=1),
+            date_created=datetime.now(UTC) - timedelta(hours=1),
             result="Success",
         )
         return task_result

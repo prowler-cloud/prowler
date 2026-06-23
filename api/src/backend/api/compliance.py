@@ -352,7 +352,7 @@ def generate_compliance_overview_template(
                 total_requirements += 1
                 provider_check_list = list(requirement.checks.get(provider_type, []))
                 total_checks = len(provider_check_list)
-                checks_dict = {check: None for check in provider_check_list}
+                checks_dict = dict.fromkeys(provider_check_list)
 
                 req_status_val = "MANUAL" if total_checks == 0 else "PASS"
 
