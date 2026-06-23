@@ -58,9 +58,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
   // Aggregated mode: provider filters replace the single-scan scope, so per-scan
   // affordances (CIS PDF) are hidden and the drill-down carries provider filters.
-  const providerFilters = extractComplianceProviderFilters(
-    new URLSearchParams(searchParams.toString()),
-  );
+  const providerFilters = extractComplianceProviderFilters(searchParams);
   const isAggregated = Object.keys(providerFilters).length > 0;
 
   const formatTitle = (title: string) => {

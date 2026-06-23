@@ -1,16 +1,29 @@
+import type { ReadonlyURLSearchParams } from "next/navigation";
+
 import type { SearchParamsProps } from "@/types/components";
 import { FILTER_FIELD, FilterParam } from "@/types/filters";
 
 /**
- * Provider-scope filter param keys the compliance UI sets — the same three the
- * overview dashboard uses, derived from the shared `FILTER_FIELD` source of
- * truth. The backend (`ComplianceOverviewViewSet`) treats these as an
- * alternative to `filter[scan_id]` (XOR) and aggregates compliance across the
- * latest completed scan of each matching provider.
+ * Provider-scope filter fields the compliance UI sets — a subset of the shared
+ * `FILTER_FIELD` source of truth, the same three the overview dashboard uses.
  */
-export type ComplianceProviderFilterParam = FilterParam<
-  (typeof FILTER_FIELD)["PROVIDER_TYPE" | "PROVIDER_ID" | "PROVIDER_GROUPS"]
->;
+const COMPLIANCE_PROVIDER_FILTER_FIELD = {
+  PROVIDER_TYPE: FILTER_FIELD.PROVIDER_TYPE,
+  PROVIDER_ID: FILTER_FIELD.PROVIDER_ID,
+  PROVIDER_GROUPS: FILTER_FIELD.PROVIDER_GROUPS,
+} as const;
+
+type ComplianceProviderFilterField =
+  (typeof COMPLIANCE_PROVIDER_FILTER_FIELD)[keyof typeof COMPLIANCE_PROVIDER_FILTER_FIELD];
+
+/**
+ * Provider-scope filter param keys (e.g. `filter[provider_type__in]`). The
+ * backend (`ComplianceOverviewViewSet`) treats these as an alternative to
+ * `filter[scan_id]` (XOR) and aggregates compliance across the latest completed
+ * scan of each matching provider.
+ */
+export type ComplianceProviderFilterParam =
+  FilterParam<ComplianceProviderFilterField>;
 
 /** Present, CSV-joined provider-scope filters (aggregated mode). */
 export type ComplianceProviderFilters = Partial<
@@ -26,12 +39,20 @@ export type ComplianceFilters = Partial<
 >;
 
 export const COMPLIANCE_PROVIDER_FILTER_KEYS = [
-  `filter[${FILTER_FIELD.PROVIDER_TYPE}]`,
-  `filter[${FILTER_FIELD.PROVIDER_ID}]`,
-  `filter[${FILTER_FIELD.PROVIDER_GROUPS}]`,
+  `filter[${COMPLIANCE_PROVIDER_FILTER_FIELD.PROVIDER_TYPE}]`,
+  `filter[${COMPLIANCE_PROVIDER_FILTER_FIELD.PROVIDER_ID}]`,
+  `filter[${COMPLIANCE_PROVIDER_FILTER_FIELD.PROVIDER_GROUPS}]`,
 ] as const satisfies ReadonlyArray<ComplianceProviderFilterParam>;
 
-type SearchParamsLike = SearchParamsProps | URLSearchParams;
+/**
+ * Accepts either an SSR plain search-params object or the client
+ * `useSearchParams()` result (`ReadonlyURLSearchParams`), so callers don't need
+ * to wrap the latter in a fresh `URLSearchParams`.
+ */
+type SearchParamsLike =
+  | SearchParamsProps
+  | URLSearchParams
+  | ReadonlyURLSearchParams;
 
 const readParam = (params: SearchParamsLike, key: string): string => {
   if (params instanceof URLSearchParams) {

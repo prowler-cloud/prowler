@@ -45,9 +45,7 @@ export const ComplianceOverviewGrid = ({
   const [searchTerm, setSearchTerm] = useState("");
 
   // Aggregated mode: provider filters in the URL replace the single-scan scope.
-  const providerFilters = extractComplianceProviderFilters(
-    new URLSearchParams(searchParams.toString()),
-  );
+  const providerFilters = extractComplianceProviderFilters(searchParams);
   const isAggregated = Object.keys(providerFilters).length > 0;
 
   const filteredFrameworks = frameworks.filter((compliance) =>

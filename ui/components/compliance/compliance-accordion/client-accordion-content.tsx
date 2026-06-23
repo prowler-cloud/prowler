@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { getFindings } from "@/actions/findings/findings";
+import { getFindings, getLatestFindings } from "@/actions/findings/findings";
 import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
@@ -51,9 +51,7 @@ export const ClientAccordionContent = ({
   // so scope this requirement's findings by those providers rather than one scan.
   // Stable string key keeps the effect deps free of a per-render object.
   const providerScopeKey = new URLSearchParams(
-    extractComplianceProviderFilters(
-      new URLSearchParams(searchParams.toString()),
-    ),
+    extractComplianceProviderFilters(searchParams),
   ).toString();
 
   useEffect(() => {
@@ -77,10 +75,15 @@ export const ClientAccordionContent = ({
         try {
           const checkIds = requirement.check_ids;
           const encodedSort = sort.replace(/^\+/, "");
-          const scopeFilters = providerScopeKey
+          // Aggregated mode carries provider filters but no scan/date, which the
+          // /findings endpoint rejects (400). Use /findings/latest there — it
+          // needs neither and scopes to the latest scan per matching provider.
+          const isAggregated = providerScopeKey.length > 0;
+          const scopeFilters = isAggregated
             ? Object.fromEntries(new URLSearchParams(providerScopeKey))
             : { "filter[scan]": scanId };
-          const findingsData = await getFindings({
+          const loadFindings = isAggregated ? getLatestFindings : getFindings;
+          const findingsData = await loadFindings({
             filters: {
               "filter[check_id__in]": checkIds.join(","),
               ...scopeFilters,
