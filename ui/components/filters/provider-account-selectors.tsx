@@ -5,20 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { type AccountFilterKey, FilterType } from "@/types/filters";
 import type { ProviderProps } from "@/types/providers";
-
-const ACCOUNT_FILTER_KEY = {
-  PROVIDER_ID: "provider_id__in",
-  PROVIDER_UID: "provider_uid__in",
-} as const;
 
 const ACCOUNT_VALUE = {
   ID: "id",
   UID: "uid",
 } as const;
 
-type AccountFilterKey =
-  (typeof ACCOUNT_FILTER_KEY)[keyof typeof ACCOUNT_FILTER_KEY];
 type AccountValue = (typeof ACCOUNT_VALUE)[keyof typeof ACCOUNT_VALUE];
 
 interface ProviderAccountSelectorsBaseProps {
@@ -97,7 +91,7 @@ const getCompatibleAccounts = ({
 
 export function ProviderAccountSelectors({
   providers,
-  accountFilterKey = ACCOUNT_FILTER_KEY.PROVIDER_ID,
+  accountFilterKey = FilterType.PROVIDER_ID,
   accountValue = ACCOUNT_VALUE.ID,
   providerSelectorClassName,
   accountSelectorClassName,
