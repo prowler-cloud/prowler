@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -33,11 +35,14 @@ class SecretManager(GCPService):
                 while request is not None:
                     response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                     for secret in response.get("secrets", []):
+                        rotation = secret.get("rotation") or {}
                         self.secrets.append(
                             Secret(
                                 id=secret["name"],
                                 name=secret["name"].split("/")[-1],
                                 project_id=project_id,
+                                rotation_period=rotation.get("rotationPeriod"),
+                                next_rotation_time=rotation.get("nextRotationTime"),
                             )
                         )
                     request = (
@@ -84,4 +89,6 @@ class Secret(BaseModel):
     name: str
     project_id: str
     location: str = "global"
+    rotation_period: Optional[str] = None
+    next_rotation_time: Optional[str] = None
     publicly_accessible: bool = False

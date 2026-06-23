@@ -582,6 +582,9 @@ gcp:
   # GCP Storage Sufficient Retention Period
   # gcp.cloudstorage_bucket_sufficient_retention_period
   storage_min_retention_days: 90
+  # GCP Secret Manager Rotation Period
+  # gcp.secretmanager_secret_rotation_enabled
+  secretmanager_max_rotation_days: 90
 
 # Kubernetes Configuration
 kubernetes:
