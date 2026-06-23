@@ -60,7 +60,43 @@ class TestSecretManagerService:
             assert secret.id == f"projects/{GCP_PROJECT_ID}/secrets/my-secret"
             assert secret.project_id == GCP_PROJECT_ID
             assert secret.location == "global"
+            assert secret.rotation_period is None
+            assert secret.next_rotation_time is None
             assert secret.publicly_accessible is False
+
+    def test_get_secrets_with_rotation(self):
+        def mock_api_client(*args, **kwargs):
+            return _make_secretmanager_client(
+                secrets_list=[
+                    {
+                        "name": f"projects/{GCP_PROJECT_ID}/secrets/secret-with-rotation",
+                        "rotation": {
+                            "rotationPeriod": "7776000s",
+                            "nextRotationTime": "2026-09-01T00:00:00Z",
+                        },
+                    }
+                ]
+            )
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+        ):
+            sm_client = SecretManager(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+
+            assert len(sm_client.secrets) == 1
+            secret = sm_client.secrets[0]
+            assert secret.name == "secret-with-rotation"
+            assert secret.rotation_period == "7776000s"
+            assert secret.next_rotation_time == "2026-09-01T00:00:00Z"
 
     def test_get_secrets_iam_policy_all_users(self):
         def mock_api_client(*args, **kwargs):
