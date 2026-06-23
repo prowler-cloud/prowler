@@ -86,6 +86,14 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "ec2_instance_older_than_specific_days",
+          "ConfigKey": "max_ec2_instance_age_in_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {
@@ -223,6 +231,20 @@
         "iam_no_root_access_key",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ]
     },
     {
@@ -760,6 +782,12 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
+        },
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
         }
       ]
     },

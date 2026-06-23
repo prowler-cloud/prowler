@@ -1343,6 +1343,32 @@
             "사례 2 : 정보시스템 및 개인정보처리시스템 로그인 실패 시 해당 ID가 존재하지 않거나 비밀번호가 틀림을 자세히 표시해 주고 있으며, 로그인 실패횟수에 대한 제한이 없는 경우"
           ]
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "appstream_fleet_maximum_session_duration",
+          "ConfigKey": "max_session_duration_seconds",
+          "Operator": "lte",
+          "Value": 36000
+        },
+        {
+          "Check": "appstream_fleet_session_disconnect_timeout",
+          "ConfigKey": "max_disconnect_timeout_in_seconds",
+          "Operator": "lte",
+          "Value": 300
+        },
+        {
+          "Check": "appstream_fleet_session_idle_disconnect_timeout",
+          "ConfigKey": "max_idle_disconnect_timeout_in_seconds",
+          "Operator": "lte",
+          "Value": 600
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ]
     },
     {
@@ -2202,6 +2228,26 @@
             "사례 3 : 개발시스템에 적용되어 있는 암호키와 운영시스템에 적용된 암호키가 동일하여, 암호화된 실데이터가 개발시스템을 통해 쉽게 복호화가 가능한 경우"
           ]
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "secretsmanager_secret_rotated_periodically",
+          "ConfigKey": "max_days_secret_unrotated",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "secretsmanager_secret_unused",
+          "ConfigKey": "max_days_secret_unused",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -2509,6 +2555,14 @@
             "사례 4 : 장애처리절차와 장애유형별 조치방법 간 일관성이 없거나 예상소요시간 산정에 대한 근거가 부족하여 신속·정확하고 체계적인 대응이 어려운 경우"
           ]
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "ec2_instance_older_than_specific_days",
+          "ConfigKey": "max_ec2_instance_age_in_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {
@@ -2566,6 +2620,26 @@
             "사례 3 : 상위 지침 또는 내부 지침에 따라 별도로 백업하여 관리하도록 명시된 일부 시스템(보안시스템 정책 및 로그 등)에 대한 백업이 이행되고 있지 않은 경우",
             "사례 4 : 상위 지침 또는 내부 지침에는 주기적으로 백업매체에 대한 복구 테스트를 수행하도록 정하고 있으나 복구테스트를 장기간 실시하지 않은 경우"
           ]
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "elasticache_redis_cluster_backup_enabled",
+          "ConfigKey": "minimum_snapshot_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
         }
       ]
     },
@@ -2661,6 +2735,32 @@
             "사례 5 : 로그 서버의 용량의 충분하지 않아서 개인정보처리시스템 접속기록이 2개월 밖에 남아 있지 않은 경우",
             "사례 6 : 개인정보처리자가 정보주체 10만 명의 개인정보를 처리하는 개인정보처리시스템의 개인정보취급자 접속기록을 1년간만 보관하고 있는 경우"
           ]
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudtrail_threat_detection_enumeration",
+          "ConfigKey": "threat_detection_enumeration_threshold",
+          "Operator": "lte",
+          "Value": 0.3
+        },
+        {
+          "Check": "cloudtrail_threat_detection_llm_jacking",
+          "ConfigKey": "threat_detection_llm_jacking_threshold",
+          "Operator": "lte",
+          "Value": 0.4
+        },
+        {
+          "Check": "cloudtrail_threat_detection_privilege_escalation",
+          "ConfigKey": "threat_detection_privilege_escalation_threshold",
+          "Operator": "lte",
+          "Value": 0.2
+        },
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
         }
       ]
     },
@@ -3410,6 +3510,12 @@
             "RSA-1024",
             "P-192"
           ]
+        },
+        {
+          "Check": "ec2_securitygroup_with_many_ingress_egress_rules",
+          "ConfigKey": "max_security_group_rules",
+          "Operator": "lte",
+          "Value": 50
         }
       ],
       "Attributes": [

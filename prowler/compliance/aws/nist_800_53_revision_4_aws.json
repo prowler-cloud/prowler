@@ -615,6 +615,14 @@
       ],
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ]
     },
     {
@@ -698,6 +706,14 @@
         "elbv2_deletion_protection",
         "ssm_managed_compliant_patching",
         "ec2_networkacl_allow_ingress_any_port"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "ec2_instance_older_than_specific_days",
+          "ConfigKey": "max_ec2_instance_age_in_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {

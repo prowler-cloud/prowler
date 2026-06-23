@@ -1812,6 +1812,14 @@
           "References": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/mailtips/mailtips:https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps",
           "DefaultValue": "MailTipsAllTipsEnabled: TrueMailTipsExternalRecipientsTipsEnabled: FalseMailTipsGroupMetricsEnabled: TrueMailTipsLargeAudienceThreshold: 25"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "exchange_organization_mailtips_enabled",
+          "ConfigKey": "recommended_mailtips_large_audience_threshold",
+          "Operator": "lte",
+          "Value": 25
+        }
       ]
     },
     {

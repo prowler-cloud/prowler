@@ -183,6 +183,12 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
         }
       ]
     },
@@ -390,6 +396,14 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "ec2_securitygroup_with_many_ingress_egress_rules",
+          "ConfigKey": "max_security_group_rules",
+          "Operator": "lte",
+          "Value": 50
+        }
       ]
     },
     {

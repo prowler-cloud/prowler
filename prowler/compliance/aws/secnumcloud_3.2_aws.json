@@ -307,6 +307,38 @@
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_no_expired_server_certificates_stored"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ]
     },
     {
@@ -562,6 +594,20 @@
         "codebuild_project_no_secrets_in_variables",
         "ssm_document_secrets",
         "cloudwatch_log_group_no_secrets_in_logs"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "secretsmanager_secret_rotated_periodically",
+          "ConfigKey": "max_days_secret_unrotated",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "secretsmanager_secret_unused",
+          "ConfigKey": "max_days_secret_unused",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -849,6 +895,26 @@
         "documentdb_cluster_backup_enabled",
         "elasticache_redis_cluster_backup_enabled",
         "redshift_cluster_automated_snapshot"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "elasticache_redis_cluster_backup_enabled",
+          "ConfigKey": "minimum_snapshot_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        }
       ]
     },
     {
@@ -885,6 +951,14 @@
         "codebuild_project_logging_enabled",
         "ecs_task_definitions_logging_enabled",
         "glue_etl_jobs_logging_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ]
     },
     {

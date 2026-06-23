@@ -192,6 +192,12 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
+        },
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
         }
       ]
     },

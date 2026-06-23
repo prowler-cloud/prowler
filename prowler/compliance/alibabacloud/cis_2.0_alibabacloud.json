@@ -1575,6 +1575,14 @@
       ],
       "Checks": [
         "cs_kubernetes_cluster_check_recent"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cs_kubernetes_cluster_check_recent",
+          "ConfigKey": "max_cluster_check_days",
+          "Operator": "lte",
+          "Value": 7
+        }
       ]
     },
     {

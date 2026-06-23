@@ -44,6 +44,12 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
+        },
+        {
+          "Check": "ec2_instance_older_than_specific_days",
+          "ConfigKey": "max_ec2_instance_age_in_days",
+          "Operator": "lte",
+          "Value": 180
         }
       ]
     },
@@ -125,6 +131,38 @@
         "iam_user_two_active_access_key",
         "organizations_scp_check_deny_regions",
         "organizations_opt_out_ai_services_policy"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ]
     },
     {
@@ -203,6 +241,14 @@
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
         "wafv2_webacl_logging_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ]
     },
     {

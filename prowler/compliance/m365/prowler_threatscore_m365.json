@@ -529,6 +529,14 @@
           "LevelOfRisk": 2,
           "Weight": 8
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "exchange_organization_mailtips_enabled",
+          "ConfigKey": "recommended_mailtips_large_audience_threshold",
+          "Operator": "lte",
+          "Value": 25
+        }
       ]
     },
     {

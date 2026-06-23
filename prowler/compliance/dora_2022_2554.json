@@ -161,7 +161,23 @@
           "ram_policy_attached_only_to_group_or_roles",
           "ram_policy_no_administrative_privileges"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_service_account_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180,
+          "Provider": "gcp"
+        },
+        {
+          "Check": "ram_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "alibabacloud"
+        }
+      ]
     },
     {
       "id": "DORA-Art6",
@@ -413,6 +429,20 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
+        },
+        {
+          "Check": "iam_sa_user_managed_key_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180,
+          "Provider": "gcp"
+        },
+        {
+          "Check": "secretsmanager_secret_unused",
+          "ConfigKey": "max_days_secret_unused",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
         }
       ]
     },
@@ -665,6 +695,34 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
+        },
+        {
+          "Check": "apim_threat_detection_llm_jacking",
+          "ConfigKey": "apim_threat_detection_llm_jacking_threshold",
+          "Operator": "lte",
+          "Value": 0.1,
+          "Provider": "azure"
+        },
+        {
+          "Check": "cloudtrail_threat_detection_enumeration",
+          "ConfigKey": "threat_detection_enumeration_threshold",
+          "Operator": "lte",
+          "Value": 0.3,
+          "Provider": "aws"
+        },
+        {
+          "Check": "cloudtrail_threat_detection_llm_jacking",
+          "ConfigKey": "threat_detection_llm_jacking_threshold",
+          "Operator": "lte",
+          "Value": 0.4,
+          "Provider": "aws"
+        },
+        {
+          "Check": "cloudtrail_threat_detection_privilege_escalation",
+          "ConfigKey": "threat_detection_privilege_escalation_threshold",
+          "Operator": "lte",
+          "Value": 0.2,
+          "Provider": "aws"
         }
       ]
     },
@@ -714,7 +772,23 @@
           "cs_kubernetes_cluster_check_recent",
           "cs_kubernetes_cluster_check_weekly"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "cs_kubernetes_cluster_check_recent",
+          "ConfigKey": "max_cluster_check_days",
+          "Operator": "lte",
+          "Value": 7,
+          "Provider": "alibabacloud"
+        },
+        {
+          "Check": "cs_kubernetes_cluster_check_weekly",
+          "ConfigKey": "max_cluster_check_days",
+          "Operator": "lte",
+          "Value": 7,
+          "Provider": "alibabacloud"
+        }
+      ]
     },
     {
       "id": "DORA-Art12",
@@ -778,7 +852,23 @@
           "compute_snapshot_not_outdated",
           "compute_instance_suspended_without_persistent_disks"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "cloudstorage_bucket_sufficient_retention_period",
+          "ConfigKey": "storage_min_retention_days",
+          "Operator": "gte",
+          "Value": 90,
+          "Provider": "gcp"
+        },
+        {
+          "Check": "compute_snapshot_not_outdated",
+          "ConfigKey": "max_snapshot_age_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "gcp"
+        }
+      ]
     },
     {
       "id": "DORA-Art13",
@@ -953,7 +1043,30 @@
           "rds_instance_postgresql_log_disconnections_enabled",
           "rds_instance_postgresql_log_duration_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365,
+          "Provider": "aws"
+        },
+        {
+          "Check": "rds_instance_sql_audit_retention",
+          "ConfigKey": "min_rds_audit_retention_days",
+          "Operator": "gte",
+          "Value": 180,
+          "Provider": "alibabacloud"
+        },
+        {
+          "Check": "sls_logstore_retention_period",
+          "ConfigKey": "min_log_retention_days",
+          "Operator": "gte",
+          "Value": 365,
+          "Provider": "alibabacloud"
+        }
+      ]
     },
     {
       "id": "DORA-Art18",

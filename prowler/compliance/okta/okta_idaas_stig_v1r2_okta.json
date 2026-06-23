@@ -25,6 +25,14 @@
           "CheckText": "From the Admin Console: 1. Select Security >> Global Session Policy. 2. In the Default Policy, verify a rule is configured at Priority 1 that is not named \"Default Rule\". 3. Click the edit icon next to the Priority 1 rule. 4. Verify the \"Maximum Okta global session idle time\" is set to 15 minutes. If \"Maximum Okta global session idle time\" is not set to 15 minutes, this is a finding.",
           "FixText": "From the Admin Console: 1. Go to Security >> Global Session Policy. 2. Select the Default Policy. 3. In the Rules table, make these updates: - Click \"Add rule\". - Set \"Maximum Okta global session idle time\" to 15 minutes."
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "signon_global_session_idle_timeout_15min",
+          "ConfigKey": "okta_max_session_idle_minutes",
+          "Operator": "lte",
+          "Value": 15
+        }
       ]
     },
     {
@@ -45,6 +53,14 @@
           ],
           "CheckText": "From the Admin Console: 1. Select Applications >> Applications >> Okta Admin Console. 2. In the Sign On tab, under \"Okta Admin Console session\", verify the \"Maximum app session idle time\" is set to 15 minutes. If the \"Maximum app session idle time\" is not set to 15 minutes, this is a finding.",
           "FixText": "From the Admin Console: 1. Select Applications >> Applications >> Okta Admin Console. 2. In the Sign On tab, under \"Okta Admin Console session\", set the \"Maximum app session idle time\" to 15 minutes."
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "application_admin_console_session_idle_timeout_15min",
+          "ConfigKey": "okta_admin_console_idle_timeout_max_minutes",
+          "Operator": "lte",
+          "Value": 15
         }
       ]
     },

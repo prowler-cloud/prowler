@@ -80,6 +80,14 @@
         "iam_role_kms_enforce_separation_of_duties",
         "iam_service_account_unused",
         "iam_sa_no_user_managed_keys"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_service_account_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {
@@ -2717,6 +2725,14 @@
         "iam_sa_user_managed_key_unused",
         "iam_service_account_unused",
         "iam_sa_no_administrative_privileges"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_sa_user_managed_key_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {

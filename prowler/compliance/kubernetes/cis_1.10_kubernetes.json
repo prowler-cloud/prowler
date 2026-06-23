@@ -866,6 +866,14 @@
           "DefaultValue": "By default, auditing is not enabled.",
           "References": "https://kubernetes.io/docs/admin/kube-apiserver/:https://kubernetes.io/docs/concepts/cluster-administration/audit/:https://github.com/kubernetes/features/issues/22"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxbackup_set",
+          "ConfigKey": "audit_log_maxbackup",
+          "Operator": "gte",
+          "Value": 10
+        }
       ]
     },
     {
@@ -888,6 +896,14 @@
           "AdditionalInformation": "",
           "DefaultValue": "By default, auditing is not enabled.",
           "References": "https://kubernetes.io/docs/admin/kube-apiserver/:https://kubernetes.io/docs/concepts/cluster-administration/audit/:https://github.com/kubernetes/features/issues/22"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxsize_set",
+          "ConfigKey": "audit_log_maxsize",
+          "Operator": "gte",
+          "Value": 100
         }
       ]
     },

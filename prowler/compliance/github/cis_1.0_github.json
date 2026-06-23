@@ -182,6 +182,14 @@
           "References": "",
           "DefaultValue": "By default, newly opened Git branches would never be removed, regardless of activity or inactivity."
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "repository_inactive_not_archived",
+          "ConfigKey": "inactive_not_archived_days_threshold",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {

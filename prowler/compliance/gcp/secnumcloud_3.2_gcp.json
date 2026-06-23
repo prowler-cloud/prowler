@@ -292,6 +292,20 @@
       "Checks": [
         "iam_sa_user_managed_key_unused",
         "iam_service_account_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_sa_user_managed_key_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180
+        },
+        {
+          "Check": "iam_service_account_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {
@@ -751,6 +765,14 @@
         "cloudsql_instance_postgres_log_statement_flag",
         "cloudsql_instance_postgres_log_min_error_statement_flag",
         "cloudsql_instance_postgres_log_min_messages_flag"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudstorage_bucket_sufficient_retention_period",
+          "ConfigKey": "storage_min_retention_days",
+          "Operator": "gte",
+          "Value": 90
+        }
       ]
     },
     {

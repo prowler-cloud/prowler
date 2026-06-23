@@ -6845,6 +6845,14 @@
       ],
       "Checks": [
         "apim_threat_detection_llm_jacking"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apim_threat_detection_llm_jacking",
+          "ConfigKey": "apim_threat_detection_llm_jacking_threshold",
+          "Operator": "lte",
+          "Value": 0.1
+        }
       ]
     },
     {

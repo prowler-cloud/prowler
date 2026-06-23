@@ -263,6 +263,20 @@
         "iam_user_two_active_access_key",
         "iam_user_console_access_unused",
         "bedrock_api_key_no_long_term_credentials"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ]
     },
     {
@@ -301,6 +315,20 @@
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
         "iam_role_cross_account_readonlyaccess_policy"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        }
       ]
     },
     {
@@ -432,6 +460,20 @@
         "secretsmanager_has_restrictive_resource_policy",
         "secretsmanager_not_publicly_accessible",
         "secretsmanager_secret_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "secretsmanager_secret_rotated_periodically",
+          "ConfigKey": "max_days_secret_unrotated",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "secretsmanager_secret_unused",
+          "ConfigKey": "max_days_secret_unused",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -591,6 +633,14 @@
       ],
       "Checks": [
         "cloudtrail_threat_detection_llm_jacking"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudtrail_threat_detection_llm_jacking",
+          "ConfigKey": "threat_detection_llm_jacking_threshold",
+          "Operator": "lte",
+          "Value": 0.4
+        }
       ]
     },
     {
@@ -900,6 +950,20 @@
         "cloudtrail_threat_detection_llm_jacking",
         "cloudtrail_threat_detection_privilege_escalation",
         "cloudtrail_threat_detection_enumeration"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudtrail_threat_detection_enumeration",
+          "ConfigKey": "threat_detection_enumeration_threshold",
+          "Operator": "lte",
+          "Value": 0.3
+        },
+        {
+          "Check": "cloudtrail_threat_detection_privilege_escalation",
+          "ConfigKey": "threat_detection_privilege_escalation_threshold",
+          "Operator": "lte",
+          "Value": 0.2
+        }
       ]
     },
     {

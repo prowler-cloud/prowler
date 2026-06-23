@@ -50,6 +50,14 @@
           "SubSection": "1.1 Policy on the security of network and information systems",
           "Service": "generic"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "secretsmanager_secret_rotated_periodically",
+          "ConfigKey": "max_days_secret_unrotated",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -65,6 +73,20 @@
           "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
           "SubSection": "1.1 Policy on the security of network and information systems",
           "Service": "generic"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        },
+        {
+          "Check": "kinesis_stream_data_retention_period",
+          "ConfigKey": "min_kinesis_stream_retention_hours",
+          "Operator": "gte",
+          "Value": 168
         }
       ]
     },
@@ -726,6 +748,26 @@
           "SubSection": "3.4 Event assessment and classification",
           "Service": "cloudtrail"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudtrail_threat_detection_enumeration",
+          "ConfigKey": "threat_detection_enumeration_threshold",
+          "Operator": "lte",
+          "Value": 0.3
+        },
+        {
+          "Check": "cloudtrail_threat_detection_llm_jacking",
+          "ConfigKey": "threat_detection_llm_jacking_threshold",
+          "Operator": "lte",
+          "Value": 0.4
+        },
+        {
+          "Check": "cloudtrail_threat_detection_privilege_escalation",
+          "ConfigKey": "threat_detection_privilege_escalation_threshold",
+          "Operator": "lte",
+          "Value": 0.2
+        }
       ]
     },
     {
@@ -855,6 +897,26 @@
           "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
           "SubSection": "3.6 Post-incident reviews",
           "Service": "generic"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "elasticache_redis_cluster_backup_enabled",
+          "ConfigKey": "minimum_snapshot_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
         }
       ]
     },
@@ -1595,6 +1657,14 @@
           "SubSection": "9.2 Cryptography",
           "Service": "secretsmanager"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "secretsmanager_secret_unused",
+          "ConfigKey": "max_days_secret_unused",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -1876,6 +1946,14 @@
           "SubSection": "11.3 Privileged accounts and system administration accounts",
           "Service": "iam"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ]
     },
     {
@@ -1977,6 +2055,32 @@
           "SubSection": "11.5 Identification",
           "Service": "iam"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ]
     },
     {
@@ -2061,6 +2165,26 @@
           "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
           "SubSection": "11.6 Authentication",
           "Service": "appstream"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "appstream_fleet_maximum_session_duration",
+          "ConfigKey": "max_session_duration_seconds",
+          "Operator": "lte",
+          "Value": 36000
+        },
+        {
+          "Check": "appstream_fleet_session_disconnect_timeout",
+          "ConfigKey": "max_disconnect_timeout_in_seconds",
+          "Operator": "lte",
+          "Value": 300
+        },
+        {
+          "Check": "appstream_fleet_session_idle_disconnect_timeout",
+          "ConfigKey": "max_idle_disconnect_timeout_in_seconds",
+          "Operator": "lte",
+          "Value": 600
         }
       ]
     },

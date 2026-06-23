@@ -1235,6 +1235,14 @@
           "LevelOfRisk": 3,
           "Weight": 10
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxbackup_set",
+          "ConfigKey": "audit_log_maxbackup",
+          "Operator": "gte",
+          "Value": 10
+        }
       ]
     },
     {
@@ -1252,6 +1260,14 @@
           "AdditionalInformation": "Rotating audit logs based on size ensures that individual log files remain manageable for processing, transfer, and analysis. Very large log files can be difficult to handle with standard tools and may cause issues with log management systems or SIEM solutions. Setting an appropriate maximum size triggers log rotation at reasonable intervals, creating manageable log files while ensuring continuous audit coverage without gaps during rotation. This is particularly important when audit logs need to be transferred to external systems for analysis or long-term storage.",
           "LevelOfRisk": 2,
           "Weight": 8
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxsize_set",
+          "ConfigKey": "audit_log_maxsize",
+          "Operator": "gte",
+          "Value": 100
         }
       ]
     },

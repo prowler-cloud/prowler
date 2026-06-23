@@ -914,7 +914,30 @@
         "oraclecloud": [
           "objectstorage_bucket_versioning_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        },
+        {
+          "Check": "elasticache_redis_cluster_backup_enabled",
+          "ConfigKey": "minimum_snapshot_retention_period",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        },
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        }
+      ]
     },
     {
       "id": "BCR-09",
@@ -2210,7 +2233,16 @@
           "identity_user_customer_secret_keys_rotated_90_days",
           "identity_user_db_passwords_rotated_90_days"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "secretsmanager_secret_rotated_periodically",
+          "ConfigKey": "max_days_secret_unrotated",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        }
+      ]
     },
     {
       "id": "CEK-14",
@@ -3252,7 +3284,44 @@
         "oraclecloud": [
           "audit_log_retention_period_365_days"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "cloudstorage_bucket_sufficient_retention_period",
+          "ConfigKey": "storage_min_retention_days",
+          "Operator": "gte",
+          "Value": 90,
+          "Provider": "gcp"
+        },
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365,
+          "Provider": "aws"
+        },
+        {
+          "Check": "kinesis_stream_data_retention_period",
+          "ConfigKey": "min_kinesis_stream_retention_hours",
+          "Operator": "gte",
+          "Value": 168,
+          "Provider": "aws"
+        },
+        {
+          "Check": "rds_instance_sql_audit_retention",
+          "ConfigKey": "min_rds_audit_retention_days",
+          "Operator": "gte",
+          "Value": 180,
+          "Provider": "alibabacloud"
+        },
+        {
+          "Check": "sls_logstore_retention_period",
+          "ConfigKey": "min_log_retention_days",
+          "Operator": "gte",
+          "Value": 365,
+          "Provider": "alibabacloud"
+        }
+      ]
     },
     {
       "id": "DSP-17",
@@ -3859,7 +3928,44 @@
           "identity_user_customer_secret_keys_rotated_90_days",
           "identity_user_valid_email_address"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_sa_user_managed_key_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180,
+          "Provider": "gcp"
+        },
+        {
+          "Check": "iam_service_account_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180,
+          "Provider": "gcp"
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "ram_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "alibabacloud"
+        }
+      ]
     },
     {
       "id": "IAM-04",
@@ -4385,7 +4491,16 @@
           "identity_user_customer_secret_keys_rotated_90_days",
           "identity_user_db_passwords_rotated_90_days"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "secretsmanager_secret_unused",
+          "ConfigKey": "max_days_secret_unused",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        }
+      ]
     },
     {
       "id": "IAM-09",

@@ -2110,6 +2110,14 @@
           "References": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/mailtips/mailtips",
           "DefaultValue": "MailTipsAllTipsEnabled: True, MailTipsExternalRecipientsTipsEnabled: False, MailTipsGroupMetricsEnabled: True, MailTipsLargeAudienceThreshold: 25"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "exchange_organization_mailtips_enabled",
+          "ConfigKey": "recommended_mailtips_large_audience_threshold",
+          "Operator": "lte",
+          "Value": 25
+        }
       ]
     },
     {

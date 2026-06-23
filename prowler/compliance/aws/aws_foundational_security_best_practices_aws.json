@@ -12,14 +12,6 @@
       "Checks": [
         "acm_certificates_expiration_check"
       ],
-      "ConfigRequirements": [
-        {
-          "Check": "acm_certificates_expiration_check",
-          "ConfigKey": "days_to_expire_threshold",
-          "Operator": "gte",
-          "Value": 30
-        }
-      ],
       "Attributes": [
         {
           "ItemId": "ACM.1",
@@ -1154,6 +1146,14 @@
           "SectionDescription": "This section contains recommendations for configuring EC2 resources.",
           "Service": "EC2"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "ec2_instance_older_than_specific_days",
+          "ConfigKey": "max_ec2_instance_age_in_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {
@@ -2241,6 +2241,14 @@
           "Section": "ElastiCache",
           "SectionDescription": "This section contains recommendations for configuring ElastiCache resources.",
           "Service": "ElastiCache"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "elasticache_redis_cluster_backup_enabled",
+          "ConfigKey": "minimum_snapshot_retention_period",
+          "Operator": "gte",
+          "Value": 7
         }
       ]
     },

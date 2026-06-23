@@ -1049,6 +1049,20 @@
         "rds_instance_backup_enabled",
         "neptune_cluster_backup_enabled",
         "documentdb_cluster_backup_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        }
       ]
     },
     {
@@ -1836,6 +1850,12 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
+        },
+        {
+          "Check": "cloudtrail_threat_detection_enumeration",
+          "ConfigKey": "threat_detection_enumeration_threshold",
+          "Operator": "lte",
+          "Value": 0.3
         }
       ]
     },
@@ -2621,6 +2641,14 @@
       ],
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ]
     },
     {
@@ -4357,14 +4385,6 @@
       ],
       "Checks": [
         "acm_certificates_expiration_check"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "acm_certificates_expiration_check",
-          "ConfigKey": "days_to_expire_threshold",
-          "Operator": "gte",
-          "Value": 30
-        }
       ]
     },
     {
@@ -4798,6 +4818,14 @@
       "Checks": [
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_periodically"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "secretsmanager_secret_rotated_periodically",
+          "ConfigKey": "max_days_secret_unrotated",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {

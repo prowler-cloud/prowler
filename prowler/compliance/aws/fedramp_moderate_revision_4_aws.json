@@ -805,6 +805,14 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "ec2_instance_older_than_specific_days",
+          "ConfigKey": "max_ec2_instance_age_in_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {

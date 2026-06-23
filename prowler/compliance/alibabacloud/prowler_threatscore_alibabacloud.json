@@ -407,6 +407,14 @@
           "LevelOfRisk": 3,
           "Weight": 10
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cs_kubernetes_cluster_check_weekly",
+          "ConfigKey": "max_cluster_check_days",
+          "Operator": "lte",
+          "Value": 7
+        }
       ]
     },
     {
@@ -882,6 +890,14 @@
           "AdditionalInformation": "Insufficient log retention can result in missing critical evidence during security investigations. Many compliance frameworks require minimum log retention periods, and organizations should configure retention based on their regulatory and operational requirements.",
           "LevelOfRisk": 2,
           "Weight": 8
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sls_logstore_retention_period",
+          "ConfigKey": "min_log_retention_days",
+          "Operator": "gte",
+          "Value": 365
         }
       ]
     },

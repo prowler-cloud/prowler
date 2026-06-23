@@ -689,6 +689,14 @@
           "Section": "Requirement 3: Protect stored cardholder data",
           "SubSection": "Requirement 3: Protect stored cardholder data"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "elasticache_redis_cluster_backup_enabled",
+          "ConfigKey": "minimum_snapshot_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        }
       ]
     },
     {
@@ -1555,6 +1563,20 @@
           "Section": "Requirement 8: Identify and authenticate access to system components",
           "SubSection": "Requirement 8: Identify and authenticate access to system components"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ]
     },
     {
@@ -1589,6 +1611,26 @@
           "ItemId": "8.1.4",
           "Section": "Requirement 8: Identify and authenticate access to system components",
           "SubSection": "8.1 Define and implement policies and procedures to ensure proper user identification management for non-consumer users and administrators"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90
         }
       ]
     },
@@ -2117,6 +2159,14 @@
           "ItemId": "10.1",
           "Section": "Requirement 10: Track and monitor all access to network resources and cardholder data",
           "SubSection": "Requirement 10: Track and monitor all access to network resources and cardholder data"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
         }
       ]
     },

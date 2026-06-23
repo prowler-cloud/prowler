@@ -172,6 +172,14 @@
         "cloudstorage_bucket_soft_delete_enabled",
         "cloudstorage_bucket_lifecycle_management_enabled",
         "compute_snapshot_not_outdated"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "compute_snapshot_not_outdated",
+          "ConfigKey": "max_snapshot_age_days",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     }
   ]

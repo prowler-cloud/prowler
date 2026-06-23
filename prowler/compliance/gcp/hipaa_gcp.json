@@ -96,6 +96,14 @@
         "iam_role_sa_enforce_separation_of_duties",
         "iam_sa_no_user_managed_keys",
         "iam_sa_user_managed_key_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_sa_user_managed_key_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {

@@ -479,6 +479,14 @@
           "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 8.",
           "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "ec2_instance_older_than_specific_days",
+          "ConfigKey": "max_ec2_instance_age_in_days",
+          "Operator": "lte",
+          "Value": 180
+        }
       ]
     },
     {
@@ -1154,6 +1162,26 @@
           "AuditProcedure": "Run all listed checks. Manually verify cadence and retention match criticality.",
           "AdditionalInformation": "ASD Essential Eight ML1 - Regular backups - clause 1.",
           "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "elasticache_redis_cluster_backup_enabled",
+          "ConfigKey": "minimum_snapshot_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        },
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
         }
       ]
     },
