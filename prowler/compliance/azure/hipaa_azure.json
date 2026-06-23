@@ -182,6 +182,7 @@
         }
       ],
       "Checks": [
+        "entra_user_with_recent_sign_in",
         "storage_key_rotation_90_days",
         "keyvault_key_rotation_enabled",
         "keyvault_rbac_key_expiration_set",
