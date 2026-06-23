@@ -14,7 +14,7 @@ dev = [
   "pytest-env==1.1.3",
   "pytest-randomly==3.15.0",
   "pytest-xdist==3.6.1",
-  "ruff==0.5.0",
+  "ruff==0.15.11",
   "tqdm==4.67.1",
   "vulture==2.14",
   "prek==0.3.9"
@@ -72,6 +72,23 @@ package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
 version = "1.32.0"
+
+# Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
+# target-version tracks this project's lowest supported Python.
+[tool.ruff]
+src = ["src"]
+target-version = "py311"
+
+[tool.ruff.lint]
+# Defaults (E4/E7/E9, F) plus import sorting, modern-syntax upgrades, and
+# comprehension lints — all mechanically auto-fixable. flake8-bugbear (B) is a
+# good next step but needs manual cleanup (e.g. B904 raise-from), so it is left
+# out of the shared baseline for now.
+extend-select = [
+  "I",  # isort — import ordering (prek's isort hook covers only the SDK)
+  "UP",  # pyupgrade — modern syntax for the min supported Python
+  "C4"  # flake8-comprehensions
+]
 
 [tool.uv]
 # Transitive pins matching master to avoid silent drift; bump deliberately.
@@ -393,7 +410,7 @@ constraint-dependencies = [
   "rpds-py==0.30.0",
   "rsa==4.9.1",
   "ruamel-yaml==0.19.1",
-  "ruff==0.5.0",
+  "ruff==0.15.11",
   "s3transfer==0.14.0",
   "scaleway==2.10.3",
   "scaleway-core==2.10.3",
