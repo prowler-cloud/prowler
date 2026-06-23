@@ -371,14 +371,9 @@ export function buildScheduledTabRows(
       .map((provider) => [provider.id, provider]),
   );
 
-  // Defensive: the backend's `filter[configured]=true` already excludes
-  // unconfigured schedules, but guard against a deleted/unconfigured schedule
-  // (scan_hour=null) leaking through if that filter is unavailable.
-  const data = (result.data ?? [])
-    .filter((schedule) => isScheduleConfigured(schedule.attributes))
-    .map((schedule) =>
-      mapScheduleToScanRow(schedule, providerById.get(schedule.id), now),
-    );
+  const data = (result.data ?? []).map((schedule) =>
+    mapScheduleToScanRow(schedule, providerById.get(schedule.id), now),
+  );
 
   return { data, meta: result.meta };
 }
