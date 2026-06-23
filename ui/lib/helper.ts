@@ -11,10 +11,14 @@ import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
+import { readEnv } from "@/lib/runtime-env";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
-export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+export const baseUrl = process.env.AUTH_URL;
+export const apiBaseUrl = readEnv(
+  "UI_API_BASE_URL",
+  "NEXT_PUBLIC_API_BASE_URL",
+);
 
 /**
  * Extracts a form value from a FormData object
@@ -104,6 +108,25 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
 
 const REPORT_PREPARATION_ERROR =
   "Unable to prepare the scan report. Please try again in a few minutes.";
+
+export const GENERIC_SERVER_ERROR_MESSAGE =
+  "Server is temporarily unavailable. Please try again in a few minutes.";
+
+const HTML_ERROR_PATTERN =
+  /(?:<!doctype\s+html|<html\b|<\/?(?:head|title|body|center|h1|h2|pre)\b)/i;
+
+export const sanitizeErrorMessage = (
+  message: string,
+  fallback = GENERIC_SERVER_ERROR_MESSAGE,
+): string => {
+  const trimmedMessage = message.trim();
+
+  if (!trimmedMessage) {
+    return fallback;
+  }
+
+  return HTML_ERROR_PATTERN.test(trimmedMessage) ? fallback : trimmedMessage;
+};
 
 const getPreflightErrorMessage = async (response: Response) => {
   const contentType = response.headers.get("content-type")?.toLowerCase() || "";
@@ -400,11 +423,11 @@ export function decryptKey(passkey: string) {
 
 export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    return error.message;
+    return sanitizeErrorMessage(error.message);
   } else if (error && typeof error === "object" && "message" in error) {
-    return String(error.message);
+    return sanitizeErrorMessage(String(error.message));
   } else if (typeof error === "string") {
-    return error;
+    return sanitizeErrorMessage(error);
   } else {
     return "Oops! Something went wrong.";
   }

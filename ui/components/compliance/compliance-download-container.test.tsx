@@ -163,7 +163,7 @@ describe("ComplianceDownloadContainer", () => {
         compact
         presentation="dropdown"
         scanId="scan-1"
-        complianceId="dora"
+        complianceId="dora_2022_2554"
       />,
     );
 
@@ -178,7 +178,7 @@ describe("ComplianceDownloadContainer", () => {
 
     expect(downloadComplianceOcsfMock).toHaveBeenCalledWith(
       "scan-1",
-      "dora",
+      "dora_2022_2554",
       {},
     );
   });

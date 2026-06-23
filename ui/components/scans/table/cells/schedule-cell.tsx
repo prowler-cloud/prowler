@@ -1,18 +1,23 @@
 "use client";
 
 import { getScanScheduleLabel } from "@/components/scans/scans.utils";
-import { DateWithTime } from "@/components/shadcn/entities";
+import { StackedCell } from "@/components/shadcn";
+import { formatLocalTimeWithZone } from "@/lib/date-utils";
 import type { ScanProps } from "@/types";
 
+// Trigger label on top, cadence (in the browser's timezone) underneath.
 export function ScheduleCell({ scan }: { scan: ScanProps }) {
+  const schedule = scan.providerSchedule;
+  const localTime = formatLocalTimeWithZone(schedule?.nextScanAt ?? null);
+
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-text-neutral-primary text-sm">
-        {getScanScheduleLabel(scan.attributes.trigger)}
-      </span>
-      {scan.attributes.scheduled_at && (
-        <DateWithTime dateTime={scan.attributes.scheduled_at} showTime />
-      )}
-    </div>
+    <StackedCell
+      primary={getScanScheduleLabel(scan.attributes.trigger)}
+      secondary={
+        schedule
+          ? `${schedule.cadence ?? schedule.summary}${localTime ? ` @ ${localTime}` : ""}`
+          : undefined
+      }
+    />
   );
 }

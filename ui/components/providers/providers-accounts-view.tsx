@@ -29,6 +29,7 @@ import {
 } from "@/lib/tours/use-driver-tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
+import type { ScanScheduleCapability } from "@/types/schedules";
 
 const addProviderFlow = getFlowById("add-provider")!;
 
@@ -51,6 +52,9 @@ interface ProvidersAccountsViewProps {
   metadata?: MetaDataProps;
   providers: ProviderProps[];
   rows: ProvidersTableRow[];
+  /** Cloud overlay seam for provider-creation scan launch. */
+  scanScheduleCapability?: ScanScheduleCapability;
+  isScanLimitReached?: boolean;
 }
 
 export function ProvidersAccountsView({
@@ -59,6 +63,8 @@ export function ProvidersAccountsView({
   metadata,
   providers,
   rows,
+  scanScheduleCapability,
+  isScanLimitReached,
 }: ProvidersAccountsViewProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -146,6 +152,7 @@ export function ProvidersAccountsView({
             isCloud={isCloud}
             metadata={metadata}
             rows={rows}
+            scanScheduleCapability={scanScheduleCapability}
             onOpenProviderWizard={openProviderWizard}
             onOpenOrganizationWizard={openOrganizationWizard}
           />
@@ -157,6 +164,8 @@ export function ProvidersAccountsView({
         initialData={providerWizardInitialData}
         orgInitialData={orgWizardInitialData}
         refreshOnClose={false}
+        scanScheduleCapability={scanScheduleCapability}
+        isScanLimitReached={isScanLimitReached}
       />
     </>
   );

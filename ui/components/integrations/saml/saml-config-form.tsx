@@ -18,7 +18,7 @@ import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { CustomServerInput } from "@/components/shadcn/custom";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { FormButtons } from "@/components/shadcn/form";
-import { apiBaseUrl } from "@/lib";
+import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 
 const validateXMLContent = (
   xmlContent: string,
@@ -253,10 +253,12 @@ export const SamlConfigForm = ({
     reader.readAsText(file);
   };
 
+  const { apiBaseUrl } = useRuntimeConfig();
   const trimmedEmailDomain = emailDomain.trim();
-  const acsUrl = trimmedEmailDomain
-    ? `${apiBaseUrl}/accounts/saml/${trimmedEmailDomain}/acs/`
-    : "";
+  const acsUrl =
+    trimmedEmailDomain && apiBaseUrl
+      ? `${apiBaseUrl}/accounts/saml/${trimmedEmailDomain}/acs/`
+      : "";
 
   return (
     <form

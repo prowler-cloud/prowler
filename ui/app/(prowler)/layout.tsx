@@ -4,14 +4,15 @@ import * as Sentry from "@sentry/nextjs";
 import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
-import { getScansByState } from "@/actions/scans/scans";
 import { getProviders } from "@/actions/providers";
+import { getScansByState } from "@/actions/scans/scans";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
   OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
+import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
 import { fontMono, fontSans } from "@/config/fonts";
@@ -76,7 +77,9 @@ export default async function RootLayout({
 
   return (
     <html suppressHydrationWarning lang="en">
-      <head />
+      <head>
+        <RuntimePublicConfig />
+      </head>
       <body
         suppressHydrationWarning
         className={cn(

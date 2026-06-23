@@ -560,7 +560,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     # Per-framework exporters in `COMPLIANCE_CLASS_MAP` consume the legacy bulk.
     frameworks_bulk = Compliance.get_bulk(provider_type)
-    # Universal-only frameworks (top-level JSONs like `dora.json`) are emitted
+    # Universal-only frameworks (top-level JSONs like `dora_2022_2554.json`) are emitted
     # via `process_universal_compliance_frameworks` below.
     universal_bulk = get_prowler_provider_compliance(provider_type)
     universal_only_names = {
@@ -650,7 +650,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 writer.batch_write_data_to_file(**extra)
                 writer._data.clear()
 
-            # Universal-only frameworks (e.g. `dora.json`).
+            # Universal-only frameworks (e.g. `dora_2022_2554.json`).
             if universal_only_names:
                 process_universal_compliance_frameworks(
                     input_compliance_frameworks=universal_only_names,

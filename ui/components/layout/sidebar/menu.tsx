@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { useAuth } from "@/hooks";
+import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { getMenuList } from "@/lib/menu-list";
 import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
 import { cn } from "@/lib/utils";
@@ -61,9 +62,11 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
     (state) => state.openLaunchScanModal,
   );
   const isScansPage = pathname.startsWith("/scans");
+  const { apiDocsUrl } = useRuntimeConfig();
 
   const menuList = getMenuList({
     pathname,
+    apiDocsUrl,
   });
 
   const labelsToHide = MENU_HIDE_RULES.filter((rule) =>

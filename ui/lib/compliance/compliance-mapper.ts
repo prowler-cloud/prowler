@@ -228,7 +228,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       createElement(OktaIDaaSStigCustomDetails, { requirement }),
   },
   // DORA (Regulation (EU) 2022/2554) — universal framework keyed by the
-  // `framework` field of `prowler/compliance/dora.json` ("DORA"). Groups by
+  // `framework` field of `prowler/compliance/dora_2022_2554.json` ("DORA"). Groups by
   // Pillar (5 enum values) and surfaces Pillar / Article / ArticleTitle in
   // the requirement detail drawer.
   DORA: {

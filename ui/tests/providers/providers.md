@@ -32,26 +32,26 @@
 4. Fill provider details (account ID and alias)
 5. Select "credentials" authentication type
 6. Fill static credentials (access key and secret key)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - AWS provider successfully added with static credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays AWS option
 - Credentials form accepts static credentials
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by account ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by account ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -88,26 +88,26 @@
 4. Fill provider details (account ID and alias)
 5. Select "role" authentication type
 6. Fill role credentials (access key, secret key, and role ARN)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - AWS provider successfully added with role credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays AWS option
 - Role credentials form accepts all required fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by account ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by account ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -144,26 +144,26 @@
 3. Select Azure provider type
 4. Fill provider details (subscription ID and alias)
 5. Fill Azure credentials (client ID, client secret, tenant ID)
-6. Launch initial scan
-7. Verify redirect to Scans page
-8. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+6. Confirm provider connection without launching a scan
+7. Verify return to Providers page
+8. Verify provider exists in Providers table
 
 ### Expected Result
 
 - Azure provider successfully added with static credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays Azure option
 - Azure credentials form accepts all required fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by subscription ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by subscription ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -201,26 +201,26 @@
 4. Fill provider details (domain ID and alias)
 5. Select static credentials type
 6. Fill M365 credentials (client ID, client secret, tenant ID)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - M365 provider successfully added with static credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays M365 option
 - M365 credentials form accepts all required fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by domain ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by domain ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -258,26 +258,26 @@
 4. Fill provider details (domain ID and alias)
 5. Select certificate credentials type
 6. Fill M365 certificate credentials (client ID, tenant ID, certificate content)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - M365 provider successfully added with certificate credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays M365 option
 - Certificate credentials form accepts all required fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by domain ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by domain ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -316,16 +316,16 @@
 4. Fill provider details (context and alias)
 5. Verify credentials page is loaded
 6. Fill Kubernetes credentials (kubeconfig content)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - Kubernetes provider successfully added with kubeconfig content
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -334,10 +334,10 @@
 - Provider details form accepts context and alias
 - Credentials page loads with kubeconfig content field
 - Kubeconfig content is properly filled in the correct field
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by context)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by context)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -377,16 +377,16 @@
 4. Fill provider details (project ID and alias)
 5. Select service account credentials type
 6. Fill GCP service account key credentials
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - GCP provider successfully added with service account key
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -395,10 +395,10 @@
 - Provider details form accepts project ID and alias
 - Service account credentials page loads with service account key field
 - Service account key is properly filled in the correct field
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by project ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by project ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -439,16 +439,16 @@
 4. Fill provider details (username and alias)
 5. Select personal access token credentials type
 6. Fill GitHub personal access token credentials
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - GitHub provider successfully added with personal access token
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -457,10 +457,10 @@
 - Provider details form accepts username and alias
 - Personal access token credentials page loads with token field
 - Personal access token is properly filled in the correct field
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by username)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by username)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -499,16 +499,16 @@
 4. Fill provider details (username and alias)
 5. Select GitHub App credentials type
 6. Fill GitHub App credentials (App ID and private key)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - GitHub provider successfully added with GitHub App credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -517,10 +517,10 @@
 - Provider details form accepts username and alias
 - GitHub App credentials page loads with App ID and private key fields
 - GitHub App credentials are properly filled in the correct fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by username)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by username)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -560,16 +560,16 @@
 4. Fill provider details (organization name and alias)
 5. Select personal access token credentials type
 6. Fill GitHub organization personal access token credentials
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - GitHub provider successfully added with organization personal access token
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -578,10 +578,10 @@
 - Provider details form accepts organization name and alias
 - Personal access token credentials page loads with token field
 - Organization personal access token is properly filled in the correct field
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by organization name)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by organization name)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -621,16 +621,16 @@
 5. Select "role" authentication type
 6. Switch authentication method to "Use AWS SDK default credentials"
 7. Fill role ARN using AWS SDK credential inputs
-8. Launch initial scan
-9. Verify redirect to Scans page
-10. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+8. Confirm provider connection without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
 - AWS provider successfully added using AWS SDK default credentials to assume the role
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -638,10 +638,10 @@
 - Connect account page displays AWS option
 - Credentials form exposes AWS SDK default authentication method
 - Role ARN field accepts provided value when SDK method is selected
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by account ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by account ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -679,16 +679,16 @@
 4. Fill provider details (tenancy ID and alias)
 5. Verify OCI credentials page is loaded
 6. Fill OCI credentials (user ID, fingerprint, key content, region)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - OCI provider successfully added with API Key credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -697,10 +697,10 @@
 - Provider details form accepts tenancy ID and alias
 - OCI credentials page loads
 - Credentials form accepts all required fields (user ID, fingerprint, key content, region)
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by tenancy ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by tenancy ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -798,16 +798,16 @@
 6. Select static credentials type
 7. Verify static credentials page is loaded
 8. Fill AlibabaCloud credentials (access key ID and access key secret)
-9. Launch initial scan
-10. Verify redirect to Scans page
-11. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+9. Confirm provider connection without launching a scan
+10. Verify return to Providers page
+11. Verify provider exists in Providers table
 
 ### Expected Result
 
 - AlibabaCloud provider successfully added with static credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -817,10 +817,10 @@
 - Credentials page loads with credential type selection
 - Static credentials page loads with access key ID and access key secret fields
 - Static credentials are properly filled in the correct fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by account ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by account ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -860,16 +860,16 @@
 6. Select RAM Role credentials type
 7. Verify RAM Role credentials page is loaded
 8. Fill AlibabaCloud RAM Role credentials (access key ID, access key secret, and role ARN)
-9. Launch initial scan
-10. Verify redirect to Scans page
-11. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+9. Confirm provider connection without launching a scan
+10. Verify return to Providers page
+11. Verify provider exists in Providers table
 
 ### Expected Result
 
 - AlibabaCloud provider successfully added with RAM Role credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -879,10 +879,10 @@
 - Credentials page loads with credential type selection
 - RAM Role credentials page loads with access key ID, access key secret, and role ARN fields
 - RAM Role credentials are properly filled in the correct fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by account ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by account ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -924,15 +924,15 @@
 6. Continue to authentication details and provide role ARN
 7. Confirm StackSet deployment checkbox and authenticate
 8. Confirm organization account selection step and continue
-9. Verify organization launch step, choose single scan schedule, and launch
-10. Verify redirect to Scans page
+9. Verify organization launch step, choose daily scan schedule, and save
+10. Verify return to Providers page
 
 ### Expected Result
 
 - AWS Organizations flow completes successfully
 - Accounts are connected and launch step is displayed
 - Scan scheduling selection is applied
-- User is redirected to Scans page after launch
+- User returns to Providers page after saving
 
 ### Key verification points
 
@@ -941,7 +941,7 @@
 - Authentication details step loads
 - Account selection step loads
 - Accounts connected launch step appears
-- Successful redirect to Scans page after launching
+- Successful return to Providers page after saving
 
 ### Notes
 
@@ -978,16 +978,16 @@
 4. Fill provider details (customer ID and alias)
 5. Verify Google Workspace credentials page is loaded
 6. Fill Google Workspace credentials (customer ID, service account JSON, delegated user email)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - Google Workspace provider successfully added with Service Account credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -998,10 +998,10 @@
 - Customer ID help text is visible with instructions on finding the Customer ID
 - Service account JSON field accepts multi-line formatted JSON
 - Delegated user email field validates email format
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by customer ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by customer ID)
+- Provider UID matches the expected value
 
 ### Notes
 
@@ -1042,16 +1042,16 @@
 4. Fill provider details (team ID and alias)
 5. Verify Vercel credentials page is loaded
 6. Fill Vercel credentials (API token)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - Vercel provider successfully added with API Token credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -1060,10 +1060,10 @@
 - Provider details form accepts team ID and alias
 - Credentials page loads with the API Token field
 - API Token is properly filled in the correct (masked) field
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by team ID)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by team ID)
+- Provider UID matches the expected value
 
 ### Notes
 

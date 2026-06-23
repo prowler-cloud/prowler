@@ -44,6 +44,18 @@ type DataTableRowAttributes = {
  * to allow them to flex naturally within the table layout.
  */
 const DEFAULT_COLUMN_SIZE = 150;
+const ACTIONS_COLUMN_ID = "actions";
+const STICKY_ACTION_COLUMN_CLASS = "sticky right-0 z-20 min-w-12";
+const STICKY_ACTION_CELL_CLASS = `${STICKY_ACTION_COLUMN_CLASS} last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary group-data-[state=selected]:bg-bg-neutral-tertiary group-data-[state=selected]:before:to-bg-neutral-tertiary`;
+
+const getStickyActionColumnClassName = (
+  columnId: string,
+  variant: "header" | "cell",
+) => {
+  if (columnId !== ACTIONS_COLUMN_ID) return undefined;
+
+  return variant === "header" ? undefined : STICKY_ACTION_CELL_CLASS;
+};
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -286,16 +298,21 @@ export function DataTable<TData, TValue>({
             <TableRow key={`${headerGroup.id}-${selectionKey}-${expansionKey}`}>
               {headerGroup.headers.map((header) => {
                 const size = header.getSize();
+                const isActionsHeader = header.column.id === ACTIONS_COLUMN_ID;
                 return (
                   <TableHead
                     key={header.id}
+                    className={getStickyActionColumnClassName(
+                      header.column.id,
+                      "header",
+                    )}
                     style={
                       getSubRows && size !== DEFAULT_COLUMN_SIZE
                         ? { width: `${size}px` }
                         : undefined
                     }
                   >
-                    {header.isPlaceholder
+                    {header.isPlaceholder || isActionsHeader
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
@@ -323,13 +340,19 @@ export function DataTable<TData, TValue>({
                     <TableRow
                       {...getRowAttributes?.(row)}
                       data-state={row.getIsSelected() && "selected"}
-                      className={cn(onRowClick && "cursor-pointer")}
+                      className={cn("group", onRowClick && "cursor-pointer")}
                       onClick={(event) =>
                         handleRowClick(row, event.target as HTMLElement)
                       }
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
+                        <TableCell
+                          key={cell.id}
+                          className={getStickyActionColumnClassName(
+                            cell.column.id,
+                            "cell",
+                          )}
+                        >
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext(),

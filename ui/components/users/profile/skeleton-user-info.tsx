@@ -148,7 +148,9 @@ const FieldSkeleton = ({
   inline?: boolean;
 }) => {
   return (
-    <div className={inline ? "flex items-center gap-2" : "flex flex-col gap-1.5"}>
+    <div
+      className={inline ? "flex items-center gap-2" : "flex flex-col gap-1.5"}
+    >
       <Skeleton className={`h-3 ${labelWidth} rounded`} />
       <Skeleton className={`h-4 ${valueWidth} rounded`} />
     </div>

@@ -44,14 +44,14 @@ export function DataTableExpandToggle<TData>({
   const isExpanded = isExpandedProp ?? row.getIsExpanded();
 
   if (!row.getCanExpand()) {
-    return <div className="w-4" />;
+    return <div className="w-4 shrink-0" />;
   }
 
   return (
     <button
       onClick={row.getToggleExpandedHandler()}
       className={cn(
-        "rounded transition-colors",
+        "shrink-0 rounded transition-colors",
         "hover:bg-white/10",
         "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
       )}
