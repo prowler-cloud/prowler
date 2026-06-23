@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+
 from prowler.lib.check.compliance_config_eval import (
     CONFIG_NOT_VALID_PREFIX,
     accumulate_group_status,
@@ -333,6 +335,14 @@ class Test_accumulate_group_status:
         accumulate_group_status(0, "PASS", counts, seen)
         accumulate_group_status(0, "FAIL", counts, seen)
         assert counts == {"FAIL": 1, "PASS": 0}
+
+    def test_muted_on_fail_pass_only_counts_raises(self):
+        # Level-style callers only ever pass PASS/FAIL (they guard on
+        # ``not finding.muted``). Passing "Muted" to a Muted-less counts must
+        # fail loudly rather than silently create a bogus key.
+        counts = {"FAIL": 0, "PASS": 0}
+        with pytest.raises(KeyError):
+            accumulate_group_status(0, "Muted", counts, {})
 
 
 class Test_apply_config_status:
