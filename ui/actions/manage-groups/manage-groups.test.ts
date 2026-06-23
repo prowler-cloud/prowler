@@ -120,4 +120,19 @@ describe("getAllProviderGroups", () => {
 
     expect(result).toBeUndefined();
   });
+
+  it("returns undefined instead of a truncated list when the max-page cap is hit", async () => {
+    // Given an API that always reports more pages than the 50-page safety cap
+    handleApiResponseMock.mockImplementation((response: Response) => {
+      void response;
+      return Promise.resolve(makePage([makeGroup("g", "Group")], 1, 9999));
+    });
+
+    // When fetching every page
+    const result = await getAllProviderGroups();
+
+    // Then it must not return a partial/truncated list; bail out instead
+    expect(result).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(50);
+  });
 });

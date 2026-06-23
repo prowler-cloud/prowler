@@ -1,7 +1,10 @@
 import type { FindingsFilterParam } from "@/actions/findings/findings-filters";
 import type { FilterChip } from "@/components/filters/filter-summary-strip";
 import { formatLabel, getCategoryLabel, getGroupLabel } from "@/lib/categories";
-import { getScanEntityLabel } from "@/lib/helper-filters";
+import {
+  getProviderGroupDisplayValue,
+  getScanEntityLabel,
+} from "@/lib/helper-filters";
 import { FINDING_STATUS_DISPLAY_NAMES } from "@/types";
 import { ProviderGroup } from "@/types/components";
 import { getProviderDisplayName, ProviderProps } from "@/types/providers";
@@ -29,14 +32,6 @@ function getProviderAccountDisplayValue(
   }
 
   return provider.attributes.alias || provider.attributes.uid || providerId;
-}
-
-function getProviderGroupDisplayValue(
-  groupId: string,
-  groups: ProviderGroup[],
-): string {
-  const group = groups.find((item) => item.id === groupId);
-  return group?.attributes.name || groupId;
 }
 
 function getScanDisplayValue(

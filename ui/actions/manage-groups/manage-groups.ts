@@ -59,7 +59,6 @@ export const getProviderGroups = async ({
 export const getAllProviderGroups = async (): Promise<
   ProviderGroupsResponse | undefined
 > => {
-  const headers = await getAuthHeaders({ contentType: false });
   const pageSize = 100; // Larger page size to minimize API calls
   const maxPages = 50; // Safety limit: 50 pages × 100 = 5000 groups max
   let currentPage = 1;
@@ -68,6 +67,7 @@ export const getAllProviderGroups = async (): Promise<
   let hasMorePages = true;
 
   try {
+    const headers = await getAuthHeaders({ contentType: false });
     while (hasMorePages && currentPage <= maxPages) {
       const url = new URL(`${apiBaseUrl}/provider-groups`);
       url.searchParams.append("page[number]", currentPage.toString());
@@ -100,6 +100,13 @@ export const getAllProviderGroups = async (): Promise<
       } else {
         currentPage++;
       }
+    }
+
+    if (hasMorePages && currentPage > maxPages) {
+      console.error(
+        `Error fetching all provider groups: exceeded max page limit (${maxPages})`,
+      );
+      return undefined;
     }
 
     if (lastResponse) {

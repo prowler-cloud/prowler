@@ -9,6 +9,10 @@ import { SankeyChart } from "@/components/graphs/sankey-chart";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../_lib/filter-params";
+import {
+  parseFilterIds,
+  scopeProvidersByGroup,
+} from "../../_lib/provider-scope";
 
 export async function RiskPipelineViewSSR({
   searchParams,
@@ -27,18 +31,8 @@ export async function RiskPipelineViewSSR({
 
   // Scope the provider set to the selected groups so we enumerate only their
   // provider types below (the per-type API calls also carry the group filter).
-  const selectedGroupIds = providerGroupsFilter
-    ? String(providerGroupsFilter)
-        .split(",")
-        .map((id) => id.trim())
-    : [];
-  const scopedProviders = selectedGroupIds.length
-    ? allProviders.filter((p) =>
-        p.relationships.provider_groups?.data?.some((group) =>
-          selectedGroupIds.includes(group.id),
-        ),
-      )
-    : allProviders;
+  const selectedGroupIds = parseFilterIds(providerGroupsFilter);
+  const scopedProviders = scopeProvidersByGroup(allProviders, selectedGroupIds);
 
   // Build severityByProviderType based on filters
   const severityByProviderType: SeverityByProviderType = {};
@@ -46,9 +40,7 @@ export async function RiskPipelineViewSSR({
 
   if (providerIdFilter) {
     // Case: Accounts are selected - group by provider type and make parallel calls
-    const selectedAccountIds = String(providerIdFilter)
-      .split(",")
-      .map((id) => id.trim());
+    const selectedAccountIds = parseFilterIds(providerIdFilter);
 
     // Group selected accounts by provider type
     const accountsByType: Record<string, string[]> = {};
@@ -87,9 +79,9 @@ export async function RiskPipelineViewSSR({
     }
   } else if (providerTypeFilter) {
     // Case: Provider types are selected - make parallel calls for each type
-    selectedProviderTypes = String(providerTypeFilter)
-      .split(",")
-      .map((t) => t.trim().toLowerCase());
+    selectedProviderTypes = parseFilterIds(providerTypeFilter).map((type) =>
+      type.toLowerCase(),
+    );
 
     const severityPromises = selectedProviderTypes.map(async (providerType) => {
       const response = await getFindingsBySeverity({

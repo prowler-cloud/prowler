@@ -1,6 +1,7 @@
 import type { ResourcesFilterParam } from "@/actions/resources/resources-filters";
 import type { FilterChip } from "@/components/filters/filter-summary-strip";
 import { formatLabel, getGroupLabel } from "@/lib/categories";
+import { getProviderGroupDisplayValue } from "@/lib/helper-filters";
 import type { ProviderGroup } from "@/types/components";
 import type { ProviderProps } from "@/types/providers";
 import { getProviderDisplayName } from "@/types/providers";
@@ -25,14 +26,6 @@ function getProviderAccountDisplayValue(
   }
 
   return provider.attributes.alias || provider.attributes.uid || providerId;
-}
-
-function getProviderGroupDisplayValue(
-  groupId: string,
-  groups: ProviderGroup[],
-): string {
-  const group = groups.find((item) => item.id === groupId);
-  return group?.attributes.name || groupId;
 }
 
 export function getResourcesFilterDisplayValue(
