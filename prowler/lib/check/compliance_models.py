@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from enum import Enum
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 from pydantic.v1 import BaseModel, Field, ValidationError, root_validator
 
@@ -304,6 +304,34 @@ class STIG_Requirement_Attribute(BaseModel):
 
 
 # Base Compliance Model
+class Compliance_Requirement_ConfigConstraint(BaseModel):
+    """A constraint a requirement places on a configurable check's config.
+
+    Declares that the configurable check ``Check`` must have run with
+    ``ConfigKey`` satisfying ``Operator`` ``Value`` for the requirement's
+    result to be trusted. Example: ``max_unused_access_keys_days <= 45``.
+
+    Operators:
+    - ``lte``/``gte``/``eq``: scalar comparisons (e.g. a max-age or min-retention
+      threshold, or a boolean toggle).
+    - ``in``: the applied scalar must be one of ``Value`` (a list).
+    - ``subset``: the applied list must be a subset of ``Value`` — for allowlist
+      configs (e.g. ``recommended_minimal_tls_versions``); widening the allowlist
+      with a weaker value (e.g. TLS ``1.0``) breaks the constraint.
+    - ``superset``: the applied list must be a superset of ``Value`` — for
+      denylist configs (e.g. ``insecure_key_algorithms``); removing a forbidden
+      value from the denylist breaks the constraint.
+    """
+
+    Check: str
+    ConfigKey: str
+    Operator: Literal["lte", "gte", "eq", "in", "subset", "superset"]
+    # ``bool`` must precede ``int`` so pydantic v1 keeps booleans (e.g. a
+    # ``mute_non_default_regions == false`` constraint) instead of coercing
+    # them to 0/1.
+    Value: Union[bool, int, float, str, list]
+
+
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
     """Compliance_Requirement holds the base model for every requirement within a compliance framework"""
@@ -329,6 +357,7 @@ class Compliance_Requirement(BaseModel):
         ]
     ]
     Checks: list[str]
+    ConfigRequirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
 
 
 class Compliance(BaseModel):
@@ -701,6 +730,7 @@ class UniversalComplianceRequirement(BaseModel):
     name: Optional[str] = None
     attributes: dict = Field(default_factory=dict)
     checks: dict[str, list[str]] = Field(default_factory=dict)
+    config_requirements: Optional[list[dict]] = None
     tactics: Optional[list] = None
     sub_techniques: Optional[list] = None
     platforms: Optional[list] = None
@@ -913,6 +943,11 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
                 attrs = req.Attributes[0].dict()
             else:
                 attrs = {}
+            config_requirements = (
+                [c.dict() for c in req.ConfigRequirements]
+                if getattr(req, "ConfigRequirements", None)
+                else None
+            )
             universal_requirements.append(
                 UniversalComplianceRequirement(
                     id=req.Id,
@@ -920,6 +955,7 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
                     name=req.Name,
                     attributes=attrs,
                     checks=req_checks,
+                    config_requirements=config_requirements,
                 )
             )
 

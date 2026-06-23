@@ -1,0 +1,240 @@
+from types import SimpleNamespace
+
+from prowler.lib.check.compliance_config_eval import (
+    CONFIG_NOT_VALID_PREFIX,
+    apply_config_status,
+    build_requirement_config_status,
+    evaluate_config_constraints,
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
+
+CONSTRAINTS = [
+    {
+        "Check": "iam_user_accesskey_unused",
+        "ConfigKey": "max_unused_access_keys_days",
+        "Operator": "lte",
+        "Value": 45,
+    }
+]
+
+
+class Test_evaluate_config_constraints:
+    def test_no_constraints_is_compliant(self):
+        assert evaluate_config_constraints(None, {}) == (True, "")
+        assert evaluate_config_constraints([], {"x": 1}) == (True, "")
+
+    def test_config_absent_assumes_default_ok(self):
+        # Key not explicitly set → default assumed adequate.
+        is_ok, reason = evaluate_config_constraints(CONSTRAINTS, {})
+        assert is_ok is True
+        assert reason == ""
+
+    def test_none_audit_config_is_compliant(self):
+        assert evaluate_config_constraints(CONSTRAINTS, None) == (True, "")
+
+    def test_lte_satisfied(self):
+        assert evaluate_config_constraints(
+            CONSTRAINTS, {"max_unused_access_keys_days": 45}
+        ) == (True, "")
+
+    def test_lte_violated(self):
+        is_ok, reason = evaluate_config_constraints(
+            CONSTRAINTS, {"max_unused_access_keys_days": 120}
+        )
+        assert is_ok is False
+        assert "max_unused_access_keys_days" in reason
+        assert "120" in reason
+
+    def test_gte_operator(self):
+        c = [{"Check": "c", "ConfigKey": "k", "Operator": "gte", "Value": 10}]
+        assert evaluate_config_constraints(c, {"k": 10})[0] is True
+        assert evaluate_config_constraints(c, {"k": 9})[0] is False
+
+    def test_eq_operator(self):
+        c = [{"Check": "c", "ConfigKey": "k", "Operator": "eq", "Value": "HIGH"}]
+        assert evaluate_config_constraints(c, {"k": "HIGH"})[0] is True
+        assert evaluate_config_constraints(c, {"k": "LOW"})[0] is False
+
+    def test_in_operator(self):
+        c = [{"Check": "c", "ConfigKey": "k", "Operator": "in", "Value": [1, 2, 3]}]
+        assert evaluate_config_constraints(c, {"k": 2})[0] is True
+        assert evaluate_config_constraints(c, {"k": 9})[0] is False
+
+    def test_subset_operator_allowlist(self):
+        # Allowlist config: applied list must stay within the secure baseline.
+        c = [
+            {
+                "Check": "sqlserver_recommended_minimal_tls_version",
+                "ConfigKey": "recommended_minimal_tls_versions",
+                "Operator": "subset",
+                "Value": ["1.2", "1.3"],
+            }
+        ]
+        assert (
+            evaluate_config_constraints(
+                c, {"recommended_minimal_tls_versions": ["1.2", "1.3"]}
+            )[0]
+            is True
+        )
+        # Stricter (subset) still passes.
+        assert (
+            evaluate_config_constraints(
+                c, {"recommended_minimal_tls_versions": ["1.3"]}
+            )[0]
+            is True
+        )
+        # Widening with a weaker value breaks it.
+        is_ok, reason = evaluate_config_constraints(
+            c, {"recommended_minimal_tls_versions": ["1.0", "1.2", "1.3"]}
+        )
+        assert is_ok is False
+        assert "recommended_minimal_tls_versions" in reason
+
+    def test_superset_operator_denylist(self):
+        # Denylist config: applied list must keep covering the forbidden baseline.
+        c = [
+            {
+                "Check": "acm_certificates_with_secure_key_algorithms",
+                "ConfigKey": "insecure_key_algorithms",
+                "Operator": "superset",
+                "Value": ["RSA-1024", "P-192"],
+            }
+        ]
+        assert (
+            evaluate_config_constraints(
+                c, {"insecure_key_algorithms": ["RSA-1024", "P-192"]}
+            )[0]
+            is True
+        )
+        # Extra forbidden values are fine.
+        assert (
+            evaluate_config_constraints(
+                c, {"insecure_key_algorithms": ["RSA-1024", "P-192", "P-224"]}
+            )[0]
+            is True
+        )
+        # Removing a forbidden value breaks it.
+        assert (
+            evaluate_config_constraints(c, {"insecure_key_algorithms": ["P-192"]})[0]
+            is False
+        )
+
+    def test_subset_superset_non_list_not_satisfied(self):
+        sub = [{"Check": "c", "ConfigKey": "k", "Operator": "subset", "Value": ["a"]}]
+        sup = [{"Check": "c", "ConfigKey": "k", "Operator": "superset", "Value": ["a"]}]
+        # A scalar applied value cannot satisfy a set constraint.
+        assert evaluate_config_constraints(sub, {"k": "a"})[0] is False
+        assert evaluate_config_constraints(sup, {"k": "a"})[0] is False
+
+    def test_mismatched_types_not_satisfied(self):
+        assert (
+            evaluate_config_constraints(
+                CONSTRAINTS, {"max_unused_access_keys_days": "x"}
+            )[0]
+            is False
+        )
+
+    def test_multiple_constraints_first_violation_reported(self):
+        constraints = [
+            {"Check": "a", "ConfigKey": "k1", "Operator": "lte", "Value": 45},
+            {"Check": "b", "ConfigKey": "k2", "Operator": "lte", "Value": 45},
+        ]
+        is_ok, reason = evaluate_config_constraints(constraints, {"k1": 45, "k2": 90})
+        assert is_ok is False
+        assert "b.k2" in reason
+
+
+# A constraint forcing FAIL when the applied value is too loose.
+REGION_CONSTRAINT = [
+    {
+        "Check": "securityhub_enabled",
+        "ConfigKey": "mute_non_default_regions",
+        "Operator": "eq",
+        "Value": False,
+    }
+]
+
+
+def _legacy_req(req_id, constraints=None):
+    """Fake legacy Compliance_Requirement (``Id`` / ``ConfigRequirements``)."""
+    return SimpleNamespace(Id=req_id, ConfigRequirements=constraints)
+
+
+def _universal_req(req_id, constraints=None):
+    """Fake UniversalComplianceRequirement (``id`` / ``config_requirements``)."""
+    return SimpleNamespace(id=req_id, config_requirements=constraints)
+
+
+class Test_build_requirement_config_status:
+    def test_only_requirements_with_constraints_included(self):
+        reqs = [_legacy_req("1", CONSTRAINTS), _legacy_req("2", None)]
+        status = build_requirement_config_status(
+            reqs, {"max_unused_access_keys_days": 120}
+        )
+        assert set(status) == {"1"}
+        assert status["1"][0] is False
+
+    def test_supports_universal_requirements(self):
+        reqs = [_universal_req("u1", REGION_CONSTRAINT)]
+        status = build_requirement_config_status(
+            reqs, {"mute_non_default_regions": True}
+        )
+        assert status["u1"][0] is False
+
+    def test_compliant_when_config_satisfied(self):
+        reqs = [_legacy_req("1", CONSTRAINTS)]
+        status = build_requirement_config_status(
+            reqs, {"max_unused_access_keys_days": 30}
+        )
+        assert status["1"] == (True, "")
+
+
+class Test_resolve_requirement_config_status:
+    def test_memoises_by_requirement_id(self):
+        cache = {}
+        req = _legacy_req("1", CONSTRAINTS)
+        first = resolve_requirement_config_status(
+            req, {"max_unused_access_keys_days": 120}, cache
+        )
+        assert cache["1"] is first
+        assert first[0] is False
+        # A different audit_config is ignored once cached (intended for one build).
+        second = resolve_requirement_config_status(req, {}, cache)
+        assert second is first
+
+    def test_requirement_without_constraints_is_ok(self):
+        cache = {}
+        req = _legacy_req("1", None)
+        assert resolve_requirement_config_status(req, {}, cache) == (True, "")
+
+
+class Test_apply_config_status:
+    def test_none_config_status_keeps_finding(self):
+        assert apply_config_status("PASS", "ext", None) == ("PASS", "ext")
+
+    def test_compliant_keeps_finding(self):
+        assert apply_config_status("PASS", "ext", (True, "")) == ("PASS", "ext")
+
+    def test_invalid_config_forces_fail_and_prefixes_reason(self):
+        status, extended = apply_config_status("PASS", "ext", (False, "bad config"))
+        assert status == "FAIL"
+        assert extended.startswith(CONFIG_NOT_VALID_PREFIX)
+        assert "bad config" in extended
+        assert "ext" in extended
+
+
+class Test_get_effective_status:
+    def test_none_and_compliant_keep_status(self):
+        assert get_effective_status("PASS", None) == "PASS"
+        assert get_effective_status("PASS", (True, "")) == "PASS"
+
+    def test_invalid_config_forces_fail(self):
+        assert get_effective_status("PASS", (False, "reason")) == "FAIL"
+
+
+class Test_get_scan_audit_config:
+    def test_returns_empty_without_global_provider(self):
+        # No global provider set in this unit-test context → safe empty mapping.
+        assert get_scan_audit_config() == {}

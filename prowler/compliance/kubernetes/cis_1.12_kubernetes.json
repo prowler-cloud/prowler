@@ -820,6 +820,14 @@
       "Checks": [
         "apiserver_audit_log_maxage_set"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxage_set",
+          "ConfigKey": "audit_log_maxage",
+          "Operator": "gte",
+          "Value": 30
+        }
+      ],
       "Attributes": [
         {
           "Section": "1 Control Plane Components",

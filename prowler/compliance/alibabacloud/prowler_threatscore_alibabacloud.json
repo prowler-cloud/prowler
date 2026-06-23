@@ -47,6 +47,14 @@
       "Checks": [
         "ram_user_console_access_unused"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "ram_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 90
+        }
+      ],
       "Attributes": [
         {
           "Title": "Inactive users disabled for console access",
@@ -694,6 +702,14 @@
       "Description": "Ensure RDS SQL audit retention is greater than 6 months",
       "Checks": [
         "rds_instance_sql_audit_retention"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "rds_instance_sql_audit_retention",
+          "ConfigKey": "min_rds_audit_retention_days",
+          "Operator": "gte",
+          "Value": 180
+        }
       ],
       "Attributes": [
         {

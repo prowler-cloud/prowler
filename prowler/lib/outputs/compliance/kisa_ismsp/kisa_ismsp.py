@@ -2,6 +2,11 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 
 
 def get_kisa_ismsp_table(
@@ -25,6 +30,10 @@ def get_kisa_ismsp_table(
     pass_count = []
     fail_count = []
     muted_count = []
+    # The applied config is scan-global (the provider's audit_config). Evaluate
+    # each requirement's config constraints once against it (memoised by Id).
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
@@ -35,6 +44,14 @@ def get_kisa_ismsp_table(
             ):
                 provider = compliance.Provider
                 for requirement in compliance.Requirements:
+                    # A requirement whose configurable checks ran with an invalid
+                    # config can't be trusted: treat the finding as FAIL.
+                    config_status = resolve_requirement_config_status(
+                        requirement, audit_config, config_status_cache
+                    )
+                    effective_status = get_effective_status(
+                        finding.status, config_status
+                    )
                     for attribute in requirement.Attributes:
                         section = attribute.Section
                         # Check if Section exists
@@ -52,10 +69,10 @@ def get_kisa_ismsp_table(
                         if finding.muted:
                             if index not in muted_count:
                                 muted_count.append(index)
-                        elif finding.status == "FAIL":
+                        elif effective_status == "FAIL":
                             if index not in fail_count:
                                 fail_count.append(index)
-                        elif finding.status == "PASS":
+                        elif effective_status == "PASS":
                             if index not in pass_count:
                                 pass_count.append(index)
 
@@ -65,9 +82,9 @@ def get_kisa_ismsp_table(
                             section_seen[section].add(index)
                             if finding.muted:
                                 sections[section]["Muted"] += 1
-                            elif finding.status == "FAIL":
+                            elif effective_status == "FAIL":
                                 sections[section]["Status"]["FAIL"] += 1
-                            elif finding.status == "PASS":
+                            elif effective_status == "PASS":
                                 sections[section]["Status"]["PASS"] += 1
 
     # Add results to table

@@ -3006,6 +3006,16 @@
       "Checks": [
         "storage_smb_channel_encryption_with_secure_algorithm"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "storage_smb_channel_encryption_with_secure_algorithm",
+          "ConfigKey": "recommended_smb_channel_encryption_algorithms",
+          "Operator": "subset",
+          "Value": [
+            "AES-256-GCM"
+          ]
+        }
+      ],
       "Attributes": [
         {
           "Section": "9 Storage Services",

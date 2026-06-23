@@ -1,4 +1,8 @@
 from prowler.config.config import timestamp
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.cis.models import AWSCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
@@ -34,10 +38,24 @@ class AWSCIS(ComplianceOutput):
         Returns:
             - None
         """
+        # The applied config is scan-global (the provider's audit_config), so
+        # evaluate each requirement's config constraints once against it.
+        requirement_config_status = build_requirement_config_status(
+            compliance.Requirements
+        )
+
         for finding in findings:
             for requirement in compliance.Requirements:
                 # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
                 if finding.check_id in requirement.Checks:
+                    # A requirement whose configurable checks ran with an invalid
+                    # config can't be trusted: force FAIL regardless of the
+                    # finding's own status.
+                    row_status, row_status_extended = apply_config_status(
+                        finding.status,
+                        finding.status_extended,
+                        requirement_config_status.get(requirement.Id),
+                    )
                     for attribute in requirement.Attributes:
                         compliance_row = AWSCISModel(
                             Provider=finding.provider,
@@ -59,8 +77,8 @@ class AWSCIS(ComplianceOutput):
                             Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
                             Requirements_Attributes_DefaultValue=attribute.DefaultValue,
                             Requirements_Attributes_References=attribute.References,
-                            Status=finding.status,
-                            StatusExtended=finding.status_extended,
+                            Status=row_status,
+                            StatusExtended=row_status_extended,
                             ResourceId=finding.resource_uid,
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,

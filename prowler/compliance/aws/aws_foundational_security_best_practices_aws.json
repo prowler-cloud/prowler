@@ -12,6 +12,14 @@
       "Checks": [
         "acm_certificates_expiration_check"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_expiration_check",
+          "ConfigKey": "days_to_expire_threshold",
+          "Operator": "gte",
+          "Value": 30
+        }
+      ],
       "Attributes": [
         {
           "ItemId": "ACM.1",
@@ -28,6 +36,17 @@
       "Description": "This control checks whether RSA certificates managed by AWS Certificate Manager use a key length of at least 2,048 bits. The control fails if the key length is smaller than 2,048 bits.",
       "Checks": [
         "acm_certificates_with_secure_key_algorithms"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ],
       "Attributes": [
         {
@@ -777,6 +796,14 @@
       "Checks": [
         "config_recorder_all_regions_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "ItemId": "Config.1",
@@ -891,6 +918,14 @@
       "Description": "This control checks whether an Amazon DocumentDB cluster has a backup retention period greater than or equal to 7 days. The control fails if the backup retention period is less than 7 days.",
       "Checks": [
         "documentdb_cluster_backup_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        }
       ],
       "Attributes": [
         {
@@ -2370,6 +2405,14 @@
       "Checks": [
         "guardduty_is_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "ItemId": "GuardDuty.1",
@@ -2547,6 +2590,20 @@
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 90
+        }
+      ],
       "Attributes": [
         {
           "ItemId": "IAM.8",
@@ -2634,6 +2691,20 @@
       "Checks": [
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ],
       "Attributes": [
         {
@@ -2950,6 +3021,14 @@
       "Description": "This control checks whether a Neptune DB cluster has automated backups enabled, and a backup retention period greater than or equal to 7 days. The control fails if backups aren't enabled for the Neptune DB cluster, or if the retention period is less than 7 days.",
       "Checks": [
         "neptune_cluster_backup_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        }
       ],
       "Attributes": [
         {

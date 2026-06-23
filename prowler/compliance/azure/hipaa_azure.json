@@ -765,6 +765,17 @@
         "mysql_flexible_server_minimum_tls_version_12",
         "mysql_flexible_server_ssl_connection_enabled",
         "postgresql_flexible_server_enforce_ssl_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -817,6 +828,17 @@
         "mysql_flexible_server_ssl_connection_enabled",
         "postgresql_flexible_server_enforce_ssl_enabled",
         "databricks_workspace_cmk_encryption_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     }
   ]

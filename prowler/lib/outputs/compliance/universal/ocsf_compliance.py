@@ -19,6 +19,10 @@ from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.config.config import prowler_version
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import ComplianceFramework
 from prowler.lib.logger import logger
 from prowler.lib.outputs.utils import unroll_dict_to_list
@@ -181,11 +185,22 @@ class OCSFComplianceOutput:
             for check_id in all_checks:
                 check_req_map.setdefault(check_id, []).append(req)
 
+        # The applied config is scan-global (the provider's audit_config). A
+        # requirement whose config constraints aren't satisfied is FAILed even
+        # when its findings PASS, mirroring the CSV/CLI behaviour.
+        requirement_config_status = build_requirement_config_status(
+            framework.requirements
+        )
+
         for finding in findings:
             if finding.check_id in check_req_map:
                 for req in check_req_map[finding.check_id]:
                     cf = self._build_compliance_finding(
-                        finding, framework, req, compliance_name
+                        finding,
+                        framework,
+                        req,
+                        compliance_name,
+                        requirement_config_status.get(req.id, (True, "")),
                     )
                     if cf:
                         self._data.append(cf)
@@ -240,10 +255,17 @@ class OCSFComplianceOutput:
         framework: ComplianceFramework,
         requirement,
         compliance_name: str,
+        config_status: tuple = (True, ""),
     ) -> ComplianceFinding:
         try:
+            # If the requirement's config isn't valid, the requirement FAILs even
+            # though the check (and finding) passed. The Check keeps the real
+            # finding status; the Compliance status reflects the requirement.
+            effective_status, message = apply_config_status(
+                finding.status, finding.status_extended, config_status
+            )
             compliance_status = PROWLER_TO_COMPLIANCE_STATUS.get(
-                finding.status, ComplianceStatusID.Unknown
+                effective_status, ComplianceStatusID.Unknown
             )
             check_status = PROWLER_TO_COMPLIANCE_STATUS.get(
                 finding.status, ComplianceStatusID.Unknown
@@ -293,7 +315,7 @@ class OCSFComplianceOutput:
                         else None
                     ),
                 ),
-                message=finding.status_extended,
+                message=message,
                 metadata=Metadata(
                     event_code=finding.check_id,
                     product=Product(

@@ -215,7 +215,33 @@
           "securitycenter_vulnerability_scan_enabled",
           "actiontrail_multi_region_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art7",
@@ -299,7 +325,35 @@
           "ecs_unattached_disk_encrypted",
           "ecs_instance_no_legacy_network"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        },
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        },
+        {
+          "Check": "storage_smb_channel_encryption_with_secure_algorithm",
+          "ConfigKey": "recommended_smb_channel_encryption_algorithms",
+          "Operator": "subset",
+          "Value": [
+            "AES-256-GCM"
+          ]
+        }
+      ]
     },
     {
       "id": "DORA-Art8",
@@ -344,7 +398,15 @@
           "securitycenter_all_assets_agent_installed",
           "ram_user_console_access_unused"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art9",
@@ -580,7 +642,21 @@
           "ecs_instance_endpoint_protection_installed",
           "cs_kubernetes_cloudmonitor_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art11",
@@ -732,7 +808,15 @@
           "securitycenter_all_assets_agent_installed",
           "ecs_instance_latest_os_patches_applied"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art14",
@@ -901,7 +985,21 @@
           "securitycenter_notification_enabled_high_risk",
           "securitycenter_vulnerability_scan_enabled"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art19",
@@ -1017,7 +1115,15 @@
           "cs_kubernetes_cluster_check_recent",
           "cs_kubernetes_cluster_check_weekly"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art25",
@@ -1079,7 +1185,21 @@
           "ecs_instance_latest_os_patches_applied",
           "ecs_instance_no_legacy_network"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art28",
@@ -1144,7 +1264,15 @@
           "oss_bucket_not_publicly_accessible",
           "actiontrail_oss_bucket_not_publicly_accessible"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art30",
@@ -1200,7 +1328,15 @@
           "ram_policy_attached_only_to_group_or_roles",
           "ram_no_root_access_key"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     },
     {
       "id": "DORA-Art45",
@@ -1245,7 +1381,21 @@
           "actiontrail_multi_region_enabled",
           "sls_logstore_retention_period"
         ]
-      }
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
     }
   ]
 }
