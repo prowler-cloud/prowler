@@ -13,8 +13,8 @@
   "Risk": "Allowlisted domains are still external. Users may not realize that even an allowlisted recipient is outside the organization, leading to **unintentional disclosure of sensitive content** to legitimate but external collaborators. A warning prompt at share time mitigates that without preventing the sharing itself.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/60781",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/manage-external-sharing-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

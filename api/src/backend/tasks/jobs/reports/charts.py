@@ -1,9 +1,11 @@
 import gc
 import io
 import math
+import time
 from typing import Callable
 
 import matplotlib
+from celery.utils.log import get_task_logger
 
 # Use non-interactive Agg backend for memory efficiency in server environments
 # This MUST be set before importing pyplot
@@ -19,6 +21,26 @@ from .config import (  # noqa: E402
     CHART_COLOR_YELLOW,
     CHART_DPI_DEFAULT,
 )
+
+logger = get_task_logger(__name__)
+
+
+def _log_chart_built(name: str, dpi: int, buffer: io.BytesIO, started: float) -> None:
+    """Emit a structured DEBUG line summarising a chart render.
+
+    Centralised so the formatting stays consistent across all chart helpers
+    and so we never accidentally pay for buffer.getbuffer().nbytes when
+    debug logging is disabled.
+    """
+    if logger.isEnabledFor(10):  # logging.DEBUG
+        logger.debug(
+            "chart_built name=%s dpi=%d bytes=%d elapsed_s=%.2f",
+            name,
+            dpi,
+            buffer.getbuffer().nbytes,
+            time.perf_counter() - started,
+        )
+
 
 # Use centralized DPI setting from config
 DEFAULT_CHART_DPI = CHART_DPI_DEFAULT
@@ -77,6 +99,7 @@ def create_vertical_bar_chart(
     Returns:
         BytesIO buffer containing the PNG image
     """
+    _started = time.perf_counter()
     if color_func is None:
         color_func = get_chart_color_for_percentage
 
@@ -122,6 +145,7 @@ def create_vertical_bar_chart(
         plt.close(fig)
         gc.collect()  # Force garbage collection after heavy matplotlib operation
 
+    _log_chart_built("vertical_bar", dpi, buffer, _started)
     return buffer
 
 
@@ -156,6 +180,7 @@ def create_horizontal_bar_chart(
     Returns:
         BytesIO buffer containing the PNG image
     """
+    _started = time.perf_counter()
     if color_func is None:
         color_func = get_chart_color_for_percentage
 
@@ -207,6 +232,7 @@ def create_horizontal_bar_chart(
         plt.close(fig)
         gc.collect()  # Force garbage collection after heavy matplotlib operation
 
+    _log_chart_built("horizontal_bar", dpi, buffer, _started)
     return buffer
 
 
@@ -239,6 +265,7 @@ def create_radar_chart(
     Returns:
         BytesIO buffer containing the PNG image
     """
+    _started = time.perf_counter()
     num_vars = len(labels)
     angles = [n / float(num_vars) * 2 * math.pi for n in range(num_vars)]
 
@@ -275,6 +302,7 @@ def create_radar_chart(
         plt.close(fig)
         gc.collect()  # Force garbage collection after heavy matplotlib operation
 
+    _log_chart_built("radar", dpi, buffer, _started)
     return buffer
 
 
@@ -303,6 +331,7 @@ def create_pie_chart(
     Returns:
         BytesIO buffer containing the PNG image
     """
+    _started = time.perf_counter()
     fig, ax = plt.subplots(figsize=figsize)
 
     _, _, autotexts = ax.pie(
@@ -330,6 +359,7 @@ def create_pie_chart(
         plt.close(fig)
         gc.collect()  # Force garbage collection after heavy matplotlib operation
 
+    _log_chart_built("pie", dpi, buffer, _started)
     return buffer
 
 
@@ -362,6 +392,7 @@ def create_stacked_bar_chart(
     Returns:
         BytesIO buffer containing the PNG image
     """
+    _started = time.perf_counter()
     fig, ax = plt.subplots(figsize=figsize)
 
     # Default colors if not provided
@@ -401,4 +432,5 @@ def create_stacked_bar_chart(
         plt.close(fig)
         gc.collect()  # Force garbage collection after heavy matplotlib operation
 
+    _log_chart_built("stacked_bar", dpi, buffer, _started)
     return buffer

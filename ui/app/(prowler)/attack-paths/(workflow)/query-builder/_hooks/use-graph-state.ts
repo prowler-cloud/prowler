@@ -14,6 +14,11 @@ interface FilteredViewState {
   isFilteredView: boolean;
   filteredNodeId: string | null;
   fullData: AttackPathGraphData | null; // Original data before filtering
+  // Tier 1 expansion state: which resource nodes have their findings revealed.
+  // Lives in the store (not local component state) so it survives the data
+  // swaps that happen when entering/exiting filtered view. Reset only on
+  // fresh data loads (new query / scan) — see `setGraphData`.
+  expandedResources: Set<string>;
 }
 
 interface GraphStore extends GraphState, FilteredViewState {
@@ -21,14 +26,13 @@ interface GraphStore extends GraphState, FilteredViewState {
   setSelectedNodeId: (nodeId: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setZoom: (zoomLevel: number) => void;
-  setPan: (panX: number, panY: number) => void;
   setFilteredView: (
     isFiltered: boolean,
     nodeId: string | null,
     filteredData: AttackPathGraphData | null,
     fullData: AttackPathGraphData | null,
   ) => void;
+  toggleExpandedResource: (resourceId: string) => void;
   reset: () => void;
 }
 
@@ -37,15 +41,13 @@ const initialState: GraphState & FilteredViewState = {
   selectedNodeId: null,
   loading: false,
   error: null,
-  zoomLevel: 1,
-  panX: 0,
-  panY: 0,
   isFilteredView: false,
   filteredNodeId: null,
   fullData: null,
+  expandedResources: new Set(),
 };
 
-const useGraphStore = create<GraphStore>((set) => ({
+export const useGraphStore = create<GraphStore>((set) => ({
   ...initialState,
   setGraphData: (data) =>
     set({
@@ -54,12 +56,12 @@ const useGraphStore = create<GraphStore>((set) => ({
       error: null,
       isFilteredView: false,
       filteredNodeId: null,
+      // Fresh data → drop any stale expansion from the previous graph.
+      expandedResources: new Set(),
     }),
   setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
-  setZoom: (zoomLevel) => set({ zoomLevel }),
-  setPan: (panX, panY) => set({ panX, panY }),
   setFilteredView: (isFiltered, nodeId, filteredData, fullData) =>
     set({
       isFilteredView: isFiltered,
@@ -67,6 +69,13 @@ const useGraphStore = create<GraphStore>((set) => ({
       data: filteredData,
       fullData,
       selectedNodeId: nodeId,
+    }),
+  toggleExpandedResource: (resourceId) =>
+    set((state) => {
+      const next = state.expandedResources.has(resourceId)
+        ? new Set<string>()
+        : new Set([resourceId]);
+      return { expandedResources: next };
     }),
   reset: () => set(initialState),
 }));
@@ -104,11 +113,6 @@ export const useGraphState = () => {
 
   const setError = (error: string | null) => {
     store.setError(error);
-  };
-
-  const updateZoomAndPan = (zoomLevel: number, panX: number, panY: number) => {
-    store.setZoom(zoomLevel);
-    store.setPan(panX, panY);
   };
 
   const resetGraph = () => {
@@ -162,18 +166,16 @@ export const useGraphState = () => {
     selectedNode: getSelectedNode(),
     loading: store.loading,
     error: store.error,
-    zoomLevel: store.zoomLevel,
-    panX: store.panX,
-    panY: store.panY,
     isFilteredView: store.isFilteredView,
     filteredNodeId: store.filteredNodeId,
     filteredNode: getFilteredNode(),
+    expandedResources: store.expandedResources,
+    toggleExpandedResource: store.toggleExpandedResource,
     updateGraphData,
     selectNode,
     startLoading,
     stopLoading,
     setError,
-    updateZoomAndPan,
     resetGraph,
     clearGraph,
     enterFilteredView,

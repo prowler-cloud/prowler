@@ -3,7 +3,6 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.drive.drive_service import DrivePolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -38,7 +37,7 @@ class TestDriveAccessCheckerRecipientsOnly:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "recipients only" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_name == "Drive Policies"
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_fail_recipients_or_audience(self):

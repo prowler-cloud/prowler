@@ -35,7 +35,10 @@
       ],
       "Checks": [
         "elb_insecure_ssl_ciphers",
-        "elbv2_insecure_ssl_ciphers"
+        "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled"
       ]
     },
     {
@@ -869,6 +872,7 @@
       "Checks": [
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]

@@ -1,4 +1,21 @@
 /* Version Badge Styling */
+.version-badge-link,
+.version-badge-link:hover,
+.version-badge-link:focus,
+.version-badge-link:active,
+.version-badge-link:visited {
+    display: inline-block;
+    text-decoration: none !important;
+    background-image: none !important;
+    border-bottom: none !important;
+    color: inherit;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.version-badge-link:hover {
+    opacity: 0.85;
+}
+
 .version-badge-container {
     display: inline-block;
         margin: 0 0 1rem 0;

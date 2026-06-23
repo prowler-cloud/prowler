@@ -67,6 +67,10 @@ const ALLOWED_TOOLS = new Set([
   "prowler_app_search_security_findings",
   "prowler_app_get_finding_details",
   "prowler_app_get_findings_overview",
+  // Finding Groups
+  "prowler_app_list_finding_groups",
+  "prowler_app_get_finding_group_details",
+  "prowler_app_list_finding_group_resources",
   // Providers
   "prowler_app_search_providers",
   // Scans

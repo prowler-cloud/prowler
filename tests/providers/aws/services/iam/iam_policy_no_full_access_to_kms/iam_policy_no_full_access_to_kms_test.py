@@ -330,6 +330,81 @@ class Test_iam_policy_no_full_access_to_kms_with_unicode:
                 assert result[0].region == "us-east-1"
 
     @mock_aws
+    def test_unattached_policy_skipped_when_scan_unused_services_disabled(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], scan_unused_services=False
+        )
+        iam_client = client("iam")
+        policy_name = "unattached_kms_full"
+        policy_document_full_access = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "kms:*", "Resource": "*"},
+            ],
+        }
+        iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document_full_access)
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms.iam_client",
+                new=IAM(aws_provider),
+            ):
+                from prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms import (
+                    iam_policy_no_full_access_to_kms,
+                )
+
+                check = iam_policy_no_full_access_to_kms()
+                result = check.execute()
+                assert result == []
+
+    @mock_aws
+    def test_attached_policy_fails_when_scan_unused_services_disabled(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], scan_unused_services=False
+        )
+        iam_client = client("iam")
+        user_name = "test_user_kms"
+        policy_name = "attached_kms_full"
+        policy_document_full_access = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "kms:*", "Resource": "*"},
+            ],
+        }
+        arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document_full_access)
+        )["Policy"]["Arn"]
+        iam_client.create_user(UserName=user_name)
+        iam_client.attach_user_policy(UserName=user_name, PolicyArn=arn)
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms.iam_client",
+                new=IAM(aws_provider),
+            ):
+                from prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms import (
+                    iam_policy_no_full_access_to_kms,
+                )
+
+                check = iam_policy_no_full_access_to_kms()
+                result = check.execute()
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == f"Custom Policy {policy_name} allows 'kms:*' privileges."
+                )
+                assert result[0].resource_arn == arn
+
+    @mock_aws
     def test_policy_full_access_and_full_deny_to_kms(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam")

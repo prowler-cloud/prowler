@@ -29,7 +29,7 @@ vi.mock("@/lib", () => ({
   wait: vi.fn(),
 }));
 
-vi.mock("@/lib/provider-credentials/build-crendentials", () => ({
+vi.mock("@/lib/provider-credentials/build-credentials", () => ({
   buildSecretConfig: vi.fn(() => ({
     secretType: "access-secret-key",
     secret: { key: "value" },

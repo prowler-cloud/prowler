@@ -16,7 +16,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## Check Structure
 
-```
+```text
 prowler/providers/{provider}/services/{service}/{check_name}/
 ├── __init__.py
 ├── {check_name}.py
@@ -73,13 +73,13 @@ For detailed field documentation, see `references/metadata-docs.md`.
 ### 5. Verify Check Detection
 
 ```bash
-poetry run python prowler-cli.py {provider} --list-checks | grep {check_name}
+uv run python prowler-cli.py {provider} --list-checks | grep {check_name}
 ```
 
 ### 6. Run Check Locally
 
 ```bash
-poetry run python prowler-cli.py {provider} --log-level ERROR --verbose --check {check_name}
+uv run python prowler-cli.py {provider} --log-level ERROR --verbose --check {check_name}
 ```
 
 ### 7. Create Tests
@@ -90,7 +90,7 @@ See `prowler-test-sdk` skill for test patterns (PASS, FAIL, no resources, error 
 
 ## Check Naming Convention
 
-```
+```text
 {service}_{resource}_{security_control}
 ```
 
@@ -243,16 +243,16 @@ class ec2_instance_hardened(Check):
 
 ```bash
 # Verify detection
-poetry run python prowler-cli.py {provider} --list-checks | grep {check_name}
+uv run python prowler-cli.py {provider} --list-checks | grep {check_name}
 
 # Run check
-poetry run python prowler-cli.py {provider} --log-level ERROR --verbose --check {check_name}
+uv run python prowler-cli.py {provider} --log-level ERROR --verbose --check {check_name}
 
 # Run with specific profile/credentials
-poetry run python prowler-cli.py aws --profile myprofile --check {check_name}
+uv run python prowler-cli.py aws --profile myprofile --check {check_name}
 
 # Run multiple checks
-poetry run python prowler-cli.py {provider} --check {check1} {check2} {check3}
+uv run python prowler-cli.py {provider} --check {check1} {check2} {check3}
 ```
 
 ## Resources

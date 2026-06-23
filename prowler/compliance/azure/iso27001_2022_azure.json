@@ -271,6 +271,7 @@
         }
       ],
       "Checks": [
+        "aks_cluster_local_accounts_disabled",
         "defender_ensure_defender_for_containers_is_on",
         "defender_ensure_defender_for_cosmosdb_is_on",
         "defender_ensure_defender_for_databases_is_on",
@@ -1102,6 +1103,7 @@
         }
       ],
       "Checks": [
+        "entra_authentication_methods_policy_strong_auth_enforced",
         "entra_conditional_access_policy_require_mfa_for_management_app",
         "entra_non_privileged_user_has_mfa entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa",
@@ -1266,7 +1268,11 @@
           "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cosmosdb_account_backup_policy_continuous",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
+      ]
     },
     {
       "Id": "A.8.14",
@@ -1293,7 +1299,12 @@
         "storage_ensure_private_endpoints_in_storage_accounts",
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_using_managed_disks",
-        "vm_trusted_launch_enabled"
+        "vm_trusted_launch_enabled",
+        "cosmosdb_account_automatic_failover_enabled",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "mysql_flexible_server_high_availability_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_high_availability_enabled"
       ]
     },
     {
@@ -1337,6 +1348,8 @@
         }
       ],
       "Checks": [
+        "aks_cluster_azure_monitor_enabled",
+        "defender_ensure_defender_cspm_is_on",
         "monitor_alert_create_policy_assignment",
         "monitor_alert_create_update_nsg",
         "monitor_alert_create_update_public_ip_address_rule",
@@ -1407,6 +1420,9 @@
         "aks_network_policy_enabled",
         "containerregistry_not_publicly_accessible",
         "cosmosdb_account_firewall_use_selected_networks",
+        "cosmosdb_account_public_network_access_disabled",
+        "databricks_workspace_no_public_ip_enabled",
+        "databricks_workspace_public_network_access_disabled",
         "network_bastion_host_exists",
         "network_flow_log_captured_sent",
         "network_flow_log_more_than_90_days",
@@ -1414,7 +1430,9 @@
         "network_public_ip_shodan",
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
+        "network_subnet_nsg_associated",
         "network_udp_internet_access_restricted",
+        "network_vnet_ddos_protection_enabled",
         "network_watcher_enabled"
       ]
     },
@@ -1468,6 +1486,7 @@
         "network_public_ip_shodan",
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
+        "network_subnet_nsg_associated",
         "network_udp_internet_access_restricted",
         "network_watcher_enabled"
       ]
@@ -1500,6 +1519,8 @@
       ],
       "Checks": [
         "app_minimum_tls_version_12",
+        "cosmosdb_account_minimum_tls_version",
+        "entra_app_registration_credential_not_expired",
         "monitor_storage_account_with_activity_logs_cmk_encrypted",
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled",
