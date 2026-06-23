@@ -24,6 +24,14 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 - Finding Groups tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
 
+### 🔄 Changed
+
+- `prowler_app_get_resource_events` now requests the API's `text/plain` representation and returns a markdown report [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+### 🗑️ Removed
+
+- `ResourceEvent`/`ResourceEventsResponse` models are removed since the tool no longer parses JSON:API for API `resources/{id}/events` [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
 ### 🔐 Security
 
 - `cryptography` from 46.0.1 to 47.0.0 (transitive) for CVE-2026-39892 and CVE-2026-26007 / CVE-2026-34073 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
