@@ -114,10 +114,7 @@ const filterProvidersForPendingRows = (
   );
 };
 
-// Provider filters the `/schedules` ScheduleFilter actually exposes. The scans
-// filter-bar targets providers by uid (`provider_uid__in`), which this endpoint
-// does not support (it filters by provider id / type), so forwarding only these
-// keys keeps pagination native AND avoids a JSON:API 400 on unknown params.
+// Provider filters the `/schedules` ScheduleFilter exposes (no `provider_uid__in`, which would 400).
 const SCHEDULE_SUPPORTED_PROVIDER_FILTERS = [
   "filter[provider]",
   "filter[provider__in]",
@@ -127,11 +124,7 @@ const SCHEDULE_SUPPORTED_PROVIDER_FILTERS = [
   "filter[provider_group__in]",
 ] as const;
 
-/**
- * Provider filter params forwarded to `/schedules` for the schedules-only
- * Scheduled tab. The backend applies them, so pagination stays native (filtering
- * client-side would desync `meta.count`).
- */
+/** Provider filters forwarded to `/schedules` so the backend applies them and pagination stays native. */
 const pickScheduleProviderFilters = (
   searchParams: SearchParamsProps,
 ): Record<string, string | string[]> => {
@@ -310,10 +303,7 @@ const SSRDataTableScans = async ({
 
   const query = (filters["filter[search]"] as string) || "";
 
-  // The Scheduled tab is sourced purely from /schedules when the environment
-  // grants advanced scheduling (Prowler Cloud). The backend filters to configured
-  // schedules (filter[configured]=true), so pagination is delegated natively and
-  // no /scans reconciliation is needed. Non-advanced envs keep the legacy path.
+  // Advanced (Cloud) sources the Scheduled tab from /schedules; other envs keep the legacy /scans path.
   const capability =
     scanScheduleCapability ?? getScanScheduleCapability(isCloud());
 

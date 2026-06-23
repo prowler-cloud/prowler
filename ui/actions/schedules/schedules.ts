@@ -81,16 +81,7 @@ export const getSchedules = async () => {
   }
 };
 
-/**
- * Fetches ONE page of configured schedules for the Scans "Scheduled" tab.
- *
- * Unlike `getSchedules` (which walks every page and discards `meta`/`included`
- * for the modal/legacy path), this delegates pagination natively to the endpoint
- * and returns `data`/`included`/`meta` verbatim. `filter[configured]=true` makes
- * the backend exclude providers without a configured schedule (`scan_hour=null`),
- * so the count stays correct without any client-side filtering. Provider filters
- * (`filter[provider__in]`, `filter[provider_type__in]`) are forwarded as-is.
- */
+/** Fetches one page of configured schedules for the Scheduled tab, with native pagination. */
 export const getSchedulesPage = async ({
   page = 1,
   pageSize = 10,

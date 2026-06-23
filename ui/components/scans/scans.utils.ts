@@ -326,13 +326,7 @@ export function appendPendingScheduleRowsToPage({
   };
 }
 
-/**
- * Maps a `/schedules` resource (1:1 with a provider) to the `ScanProps` row shape
- * the Scheduled-tab columns already render. Used by the schedules-only Scheduled
- * tab (capability `ADVANCED`), where the backend filters to configured schedules
- * via `filter[configured]=true`, so no client-side `scan_hour` check is needed.
- * The provider comes from the response's `included`.
- */
+/** Maps a `/schedules` resource (1:1 with a provider) to the Scheduled-tab row shape. */
 export function mapScheduleToScanRow(
   schedule: ScheduleProps,
   provider: ProviderProps | undefined,
