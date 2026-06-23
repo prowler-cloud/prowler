@@ -311,6 +311,12 @@ class Compliance_Requirement_ConfigConstraint(BaseModel):
     ``ConfigKey`` satisfying ``Operator`` ``Value`` for the requirement's
     result to be trusted. Example: ``max_unused_access_keys_days <= 45``.
 
+    ``Provider`` scopes the constraint to a single provider. It is required for
+    universal (multi-provider) frameworks, where the same requirement maps
+    checks across providers and a constraint must only apply when that provider
+    is the one being scanned. Single-provider frameworks may omit it (the
+    framework's provider is already the one being scanned).
+
     Operators:
     - ``lte``/``gte``/``eq``: scalar comparisons (e.g. a max-age or min-retention
       threshold, or a boolean toggle).
@@ -330,6 +336,9 @@ class Compliance_Requirement_ConfigConstraint(BaseModel):
     # ``mute_non_default_regions == false`` constraint) instead of coercing
     # them to 0/1.
     Value: Union[bool, int, float, str, list]
+    # Provider this constraint applies to (e.g. ``aws``). ``None`` means it
+    # applies whenever the requirement runs (single-provider frameworks).
+    Provider: Optional[str] = None
 
 
 # TODO: move this to compliance folder

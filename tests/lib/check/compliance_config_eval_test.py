@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from prowler.lib.check.compliance_config_eval import (
     CONFIG_NOT_VALID_PREFIX,
@@ -7,6 +8,7 @@ from prowler.lib.check.compliance_config_eval import (
     evaluate_config_constraints,
     get_effective_status,
     get_scan_audit_config,
+    get_scan_provider_type,
     resolve_requirement_config_status,
 )
 
@@ -146,6 +148,47 @@ class Test_evaluate_config_constraints:
         assert "b.k2" in reason
 
 
+class Test_provider_scoping:
+    # An AWS-scoped constraint on a config key whose value is too loose.
+    AWS_CONSTRAINT = [
+        {
+            "Check": "securityhub_enabled",
+            "Provider": "aws",
+            "ConfigKey": "mute_non_default_regions",
+            "Operator": "eq",
+            "Value": False,
+        }
+    ]
+
+    def test_applies_when_provider_matches(self):
+        is_ok, _ = evaluate_config_constraints(
+            self.AWS_CONSTRAINT, {"mute_non_default_regions": True}, "aws"
+        )
+        assert is_ok is False
+
+    def test_skipped_when_provider_differs(self):
+        # Same loose value, but scanning GCP → the AWS constraint must not fire.
+        is_ok, reason = evaluate_config_constraints(
+            self.AWS_CONSTRAINT, {"mute_non_default_regions": True}, "gcp"
+        )
+        assert is_ok is True
+        assert reason == ""
+
+    def test_none_provider_type_disables_scoping(self):
+        # Without a known provider every constraint is evaluated (legacy default).
+        is_ok, _ = evaluate_config_constraints(
+            self.AWS_CONSTRAINT, {"mute_non_default_regions": True}, None
+        )
+        assert is_ok is False
+
+    def test_untagged_constraint_applies_to_any_provider(self):
+        # Single-provider frameworks omit Provider → always evaluated.
+        is_ok, _ = evaluate_config_constraints(
+            CONSTRAINTS, {"max_unused_access_keys_days": 120}, "aws"
+        )
+        assert is_ok is False
+
+
 # A constraint forcing FAIL when the applied value is too loose.
 REGION_CONSTRAINT = [
     {
@@ -238,3 +281,20 @@ class Test_get_scan_audit_config:
     def test_returns_empty_without_global_provider(self):
         # No global provider set in this unit-test context → safe empty mapping.
         assert get_scan_audit_config() == {}
+
+
+class Test_get_scan_provider_type:
+    def test_returns_empty_when_no_global_provider(self):
+        # Unresolvable provider → scoping disabled (empty string).
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            side_effect=Exception("no provider"),
+        ):
+            assert get_scan_provider_type() == ""
+
+    def test_returns_global_provider_type(self):
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=SimpleNamespace(type="aws"),
+        ):
+            assert get_scan_provider_type() == "aws"

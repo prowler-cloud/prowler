@@ -87,11 +87,11 @@ def test_there_are_constraints_to_validate():
 )
 class Test_Constraint_Wellformed:
     def test_has_required_keys(self, fname, req_id, checks, constraint):
-        assert set(constraint) == {
-            "Check",
-            "ConfigKey",
-            "Operator",
-            "Value",
+        required = {"Check", "ConfigKey", "Operator", "Value"}
+        # ``Provider`` is optional (universal frameworks set it, single-provider
+        # ones omit it); no other key is allowed.
+        assert required <= set(constraint) <= required | {
+            "Provider"
         }, f"{fname}:{req_id} malformed constraint {constraint}"
 
     def test_operator_valid(self, fname, req_id, checks, constraint):
@@ -148,6 +148,36 @@ class Test_Region_Mute_Invariant:
                 assert (
                     c["Operator"] == "eq" and c["Value"] is False
                 ), f"{fname}:{req_id} region-mute must be eq false"
+
+
+class Test_Universal_Provider_Scoping:
+    """Universal (multi-provider) frameworks map checks per provider, so every
+    constraint must declare which provider it scopes to and that provider must
+    actually map the targeted check. Without this a constraint authored for one
+    provider's check would wrongly apply to scans of every other provider."""
+
+    def test_multiprovider_constraints_declare_consistent_provider(self):
+        gaps = []
+        for path in _ALL_FILES:
+            data = _load(path)
+            for req in _requirements(data):
+                ch = req.get("Checks", req.get("checks"))
+                # Only universal frameworks key their checks by provider.
+                if not isinstance(ch, dict):
+                    continue
+                for c in _req_constraints(req):
+                    provider = c.get("Provider")
+                    if not provider:
+                        gaps.append(
+                            f"{pathlib.Path(path).name}:{_req_id(req)}:"
+                            f"{c['Check']} missing Provider"
+                        )
+                    elif c["Check"] not in set(ch.get(provider, [])):
+                        gaps.append(
+                            f"{pathlib.Path(path).name}:{_req_id(req)}:"
+                            f"{c['Check']} not mapped under provider {provider}"
+                        )
+        assert not gaps, f"universal constraints with bad Provider: {gaps}"
 
 
 @pytest.mark.parametrize(

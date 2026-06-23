@@ -70,6 +70,24 @@ class Test_Compliance_Requirement_ConfigConstraint:
         with pytest.raises(ValidationError):
             Compliance_Requirement_ConfigConstraint(Check="c", ConfigKey="k")
 
+    def test_provider_defaults_to_none(self):
+        # Single-provider frameworks omit Provider; it is optional.
+        c = Compliance_Requirement_ConfigConstraint(
+            Check="c", ConfigKey="k", Operator="eq", Value=False
+        )
+        assert c.Provider is None
+
+    def test_provider_scopes_constraint(self):
+        # Universal frameworks tag each constraint with the provider it applies to.
+        c = Compliance_Requirement_ConfigConstraint(
+            Check="securityhub_enabled",
+            Provider="aws",
+            ConfigKey="mute_non_default_regions",
+            Operator="eq",
+            Value=False,
+        )
+        assert c.Provider == "aws"
+
 
 class Test_ConfigRequirements_On_Compliance:
     def test_requirements_without_constraints_default_to_none(self):
@@ -99,11 +117,14 @@ class Test_Adapt_Legacy_To_Universal:
         assert legacy_with == universal_with
         assert universal_with, "expected at least one requirement with constraints"
 
-        # The constraint payload survives as a list of dicts with the same keys.
+        # The constraint payload survives as a list of dicts with the same keys
+        # (``Provider`` is carried through too, ``None`` for single-provider
+        # frameworks like CIS AWS).
         sample = next(r for r in universal.requirements if r.config_requirements)
         entry = sample.config_requirements[0]
         assert isinstance(entry, dict)
-        assert set(entry) == {"Check", "ConfigKey", "Operator", "Value"}
+        assert set(entry) == {"Check", "Provider", "ConfigKey", "Operator", "Value"}
+        assert entry["Provider"] is None
 
     def test_requirements_without_constraints_are_none_in_universal(self):
         legacy = Compliance(**json.load(open(_CIS_6_0)))

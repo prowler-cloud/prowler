@@ -219,24 +219,28 @@
       "config_requirements": [
         {
           "Check": "accessanalyzer_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
         },
         {
           "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
         },
         {
           "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
         },
         {
           "Check": "securityhub_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -329,6 +333,7 @@
       "config_requirements": [
         {
           "Check": "acm_certificates_with_secure_key_algorithms",
+          "Provider": "aws",
           "ConfigKey": "insecure_key_algorithms",
           "Operator": "superset",
           "Value": [
@@ -338,6 +343,7 @@
         },
         {
           "Check": "sqlserver_recommended_minimal_tls_version",
+          "Provider": "azure",
           "ConfigKey": "recommended_minimal_tls_versions",
           "Operator": "subset",
           "Value": [
@@ -347,6 +353,7 @@
         },
         {
           "Check": "storage_smb_channel_encryption_with_secure_algorithm",
+          "Provider": "azure",
           "ConfigKey": "recommended_smb_channel_encryption_algorithms",
           "Operator": "subset",
           "Value": [
@@ -402,6 +409,7 @@
       "config_requirements": [
         {
           "Check": "accessanalyzer_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -646,12 +654,14 @@
       "config_requirements": [
         {
           "Check": "guardduty_is_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
         },
         {
           "Check": "securityhub_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -812,6 +822,7 @@
       "config_requirements": [
         {
           "Check": "securityhub_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -989,12 +1000,14 @@
       "config_requirements": [
         {
           "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
         },
         {
           "Check": "securityhub_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -1119,6 +1132,7 @@
       "config_requirements": [
         {
           "Check": "securityhub_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -1189,12 +1203,14 @@
       "config_requirements": [
         {
           "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
         },
         {
           "Check": "guardduty_is_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -1268,6 +1284,7 @@
       "config_requirements": [
         {
           "Check": "accessanalyzer_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -1332,6 +1349,7 @@
       "config_requirements": [
         {
           "Check": "accessanalyzer_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
@@ -1385,12 +1403,14 @@
       "config_requirements": [
         {
           "Check": "guardduty_is_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
         },
         {
           "Check": "securityhub_enabled",
+          "Provider": "aws",
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false

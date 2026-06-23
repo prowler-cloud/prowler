@@ -54,17 +54,24 @@ def _check_operator(applied: Any, operator: str, expected: Any) -> bool:
 def evaluate_config_constraints(
     config_requirements: Optional[list],
     audit_config: Optional[dict],
+    provider_type: Optional[str] = None,
 ) -> tuple[bool, str]:
     """Evaluate a requirement's config constraints against the scan's config.
 
     Args:
         config_requirements: list of constraints, each a mapping (or object with
-            the same attributes) holding ``Check``, ``ConfigKey``, ``Operator``
-            and ``Value``. ``None``/empty means the requirement has no config
-            expectations.
+            the same attributes) holding ``Check``, ``ConfigKey``, ``Operator``,
+            ``Value`` and an optional ``Provider``. ``None``/empty means the
+            requirement has no config expectations.
         audit_config: the scan-global configuration mapping (the provider's
             ``audit_config``, i.e. ``{config_key: value}``). The applied config
             is identical across every resource and region of a scan.
+        provider_type: the provider being scanned (e.g. ``aws``). A constraint
+            tagged with a ``Provider`` is only evaluated when it matches this
+            value; this scopes universal (multi-provider) framework constraints
+            to the right provider. ``None`` disables provider scoping (every
+            constraint is evaluated), which is the correct behaviour for
+            single-provider frameworks.
 
     Returns:
         ``(is_compliant, reason)``. ``is_compliant`` is ``True`` when there are
@@ -86,11 +93,17 @@ def evaluate_config_constraints(
             config_key = constraint.get("ConfigKey")
             operator = constraint.get("Operator")
             expected = constraint.get("Value")
+            provider = constraint.get("Provider")
         else:
             check = getattr(constraint, "Check", None)
             config_key = getattr(constraint, "ConfigKey", None)
             operator = getattr(constraint, "Operator", None)
             expected = getattr(constraint, "Value", None)
+            provider = getattr(constraint, "Provider", None)
+
+        if provider and provider_type and provider != provider_type:
+            # Constraint scoped to another provider → not applicable to this scan.
+            continue
 
         if config_key not in audit_config:
             # Config not explicitly set → default is assumed adequate.
@@ -124,6 +137,21 @@ def get_scan_audit_config() -> dict:
         return {}
 
 
+def get_scan_provider_type() -> str:
+    """Return the provider being scanned (e.g. ``aws``) for constraint scoping.
+
+    Imported lazily to avoid a circular import with the provider package and to
+    keep this module usable from contexts without a global provider (returns
+    ``""`` if no provider is set, which disables provider scoping).
+    """
+    try:
+        from prowler.providers.common.provider import Provider
+
+        return Provider.get_global_provider().type or ""
+    except Exception:
+        return ""
+
+
 def _requirement_id(requirement: Any) -> Optional[str]:
     """Return a requirement's id across the legacy (``Id``) and universal (``id``) models."""
     return getattr(requirement, "Id", None) or getattr(requirement, "id", None)
@@ -145,6 +173,7 @@ def _requirement_constraints(requirement: Any) -> Optional[list]:
 def build_requirement_config_status(
     requirements: list,
     audit_config: Optional[dict] = None,
+    provider_type: Optional[str] = None,
 ) -> dict:
     """Map every requirement id to its ``(is_compliant, reason)`` config verdict.
 
@@ -155,15 +184,19 @@ def build_requirement_config_status(
         requirements: the framework's requirements (legacy or universal models).
         audit_config: the applied config; resolved via ``get_scan_audit_config``
             when omitted.
+        provider_type: the provider being scanned, for constraint scoping;
+            resolved via ``get_scan_provider_type`` when omitted.
     """
     if audit_config is None:
         audit_config = get_scan_audit_config()
+    if provider_type is None:
+        provider_type = get_scan_provider_type()
     status = {}
     for requirement in requirements:
         constraints = _requirement_constraints(requirement)
         if constraints:
             status[_requirement_id(requirement)] = evaluate_config_constraints(
-                constraints, audit_config
+                constraints, audit_config, provider_type
             )
     return status
 
@@ -172,21 +205,26 @@ def resolve_requirement_config_status(
     requirement: Any,
     audit_config: dict,
     cache: dict,
+    provider_type: Optional[str] = None,
 ) -> tuple[bool, str]:
     """Return a requirement's ``(is_compliant, reason)`` verdict, memoised in ``cache``.
 
     For table generators that iterate findings × compliances and only encounter
     each requirement lazily. ``cache`` is keyed by requirement id and reused
-    across the whole table build.
+    across the whole table build. ``provider_type`` scopes the constraints to the
+    provider being scanned; resolved via ``get_scan_provider_type`` when omitted.
     """
     req_id = _requirement_id(requirement)
     if req_id not in cache:
         constraints = _requirement_constraints(requirement)
-        cache[req_id] = (
-            evaluate_config_constraints(constraints, audit_config)
-            if constraints
-            else (True, "")
-        )
+        if constraints:
+            if provider_type is None:
+                provider_type = get_scan_provider_type()
+            cache[req_id] = evaluate_config_constraints(
+                constraints, audit_config, provider_type
+            )
+        else:
+            cache[req_id] = (True, "")
     return cache[req_id]
 
 
