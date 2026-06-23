@@ -1273,7 +1273,8 @@
       "Checks": [
         "cosmosdb_account_backup_policy_continuous",
         "mysql_flexible_server_geo_redundant_backup_enabled",
-        "postgresql_flexible_server_geo_redundant_backup_enabled"
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "recovery_vault_backup_policy_retention_adequate"
       ]
     },
     {

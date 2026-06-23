@@ -431,6 +431,7 @@
         }
       ],
       "Checks": [
+        "recovery_vault_backup_policy_retention_adequate",
         "vm_backup_enabled",
         "vm_sufficient_daily_backup_retention_period",
         "storage_blob_versioning_is_enabled",
