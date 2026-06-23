@@ -208,7 +208,7 @@ def test_no_new_config_requirement_gaps():
         "These frameworks map a configurable check whose config relaxes the "
         "verdict but declare no ConfigRequirements for it. Add the constraint, "
         "or (only if the config truly cannot relax the verdict) add its key to "
-        f"_KEYS_NOT_AFFECTING_VERDICT:\n  " + "\n  ".join(new_gaps)
+        "_KEYS_NOT_AFFECTING_VERDICT:\n  " + "\n  ".join(new_gaps)
     )
 
 
