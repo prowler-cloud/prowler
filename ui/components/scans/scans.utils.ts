@@ -1,4 +1,5 @@
 import {
+  buildProviderScheduleSummary,
   describeScheduleCadence,
   getNextScheduledRunInTimezone,
   getScheduleCadenceParts,
@@ -18,6 +19,7 @@ import {
   type ScanState,
   type ScanTrigger,
   type ScheduleAttributes,
+  type ScheduleProps,
   type SearchParamsProps,
 } from "@/types";
 
@@ -321,6 +323,55 @@ export function appendPendingScheduleRowsToPage({
           },
         }
       : undefined,
+  };
+}
+
+/**
+ * Maps a `/schedules` resource (1:1 with a provider) to the `ScanProps` row shape
+ * the Scheduled-tab columns already render. Used by the schedules-only Scheduled
+ * tab (capability `ADVANCED`), where the backend filters to configured schedules
+ * via `filter[configured]=true`, so no client-side `scan_hour` check is needed.
+ * The provider comes from the response's `included`.
+ */
+export function mapScheduleToScanRow(
+  schedule: ScheduleProps,
+  provider: ProviderProps | undefined,
+  now: Date,
+): ScanProps {
+  // Reuse the canonical cadence + next/last-run summary used across the app.
+  const summary = buildProviderScheduleSummary(schedule.attributes, now);
+
+  return {
+    type: "scans",
+    id: `schedule-${schedule.id}`,
+    attributes: {
+      name: "",
+      trigger: SCAN_TRIGGER.SCHEDULED,
+      state: SCAN_STATE.SCHEDULED,
+      unique_resource_count: 0,
+      progress: 0,
+      scanner_args: null,
+      duration: null,
+      started_at: null,
+      inserted_at: now.toISOString(),
+      completed_at: null,
+      scheduled_at: summary.nextScanAt ?? null,
+      next_scan_at: null,
+    },
+    relationships: {
+      // The schedule resource id IS the provider id.
+      provider: { data: { type: "providers", id: schedule.id } },
+      // No Celery task behind a schedule row.
+      task: { data: { type: "tasks", id: "" } },
+    },
+    providerInfo: provider
+      ? {
+          provider: provider.attributes.provider,
+          uid: provider.attributes.uid,
+          alias: provider.attributes.alias,
+        }
+      : undefined,
+    pendingSchedule: summary,
   };
 }
 

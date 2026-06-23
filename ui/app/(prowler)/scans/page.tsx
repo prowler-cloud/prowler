@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { getSchedules } from "@/actions/schedules";
+import { getSchedules, getSchedulesPage } from "@/actions/schedules";
 import { auth } from "@/auth.config";
 import { PageReady } from "@/components/onboarding";
 import {
@@ -12,6 +12,7 @@ import {
   getScanJobsTab,
   getScanJobsTabFilters,
   getScanJobsUserFilters,
+  mapScheduleToScanRow,
 } from "@/components/scans/scans.utils";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
@@ -21,8 +22,10 @@ import { ContentLayout } from "@/components/ui";
 import {
   buildProviderScheduleSummary,
   buildSchedulesByProviderId,
+  getScanScheduleCapability,
   isScheduleConfigured,
 } from "@/lib/schedules";
+import { isCloud } from "@/lib/shared/env";
 import {
   ProviderProps,
   SCAN_JOBS_TAB,
@@ -30,7 +33,11 @@ import {
   ScanProps,
   SearchParamsProps,
 } from "@/types";
-import type { ScanScheduleCapability } from "@/types/schedules";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+  type ScheduleProps,
+} from "@/types/schedules";
 
 const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
 // Pending schedule rows are derived from provider schedules, but must honor the
@@ -105,6 +112,37 @@ const filterProvidersForPendingRows = (
       (uids.length === 0 || uids.includes(provider.attributes.uid)) &&
       (types.length === 0 || types.includes(provider.attributes.provider)),
   );
+};
+
+// Provider filters the `/schedules` ScheduleFilter actually exposes. The scans
+// filter-bar targets providers by uid (`provider_uid__in`), which this endpoint
+// does not support (it filters by provider id / type), so forwarding only these
+// keys keeps pagination native AND avoids a JSON:API 400 on unknown params.
+const SCHEDULE_SUPPORTED_PROVIDER_FILTERS = [
+  "filter[provider]",
+  "filter[provider__in]",
+  "filter[provider_type]",
+  "filter[provider_type__in]",
+  "filter[provider_group]",
+  "filter[provider_group__in]",
+] as const;
+
+/**
+ * Provider filter params forwarded to `/schedules` for the schedules-only
+ * Scheduled tab. The backend applies them, so pagination stays native (filtering
+ * client-side would desync `meta.count`).
+ */
+const pickScheduleProviderFilters = (
+  searchParams: SearchParamsProps,
+): Record<string, string | string[]> => {
+  const filters: Record<string, string | string[]> = {};
+  for (const key of SCHEDULE_SUPPORTED_PROVIDER_FILTERS) {
+    const value = searchParams[key];
+    if (typeof value === "string" || Array.isArray(value)) {
+      filters[key] = value;
+    }
+  }
+  return filters;
 };
 
 const getActiveScanCount = async (
@@ -271,6 +309,53 @@ const SSRDataTableScans = async ({
   };
 
   const query = (filters["filter[search]"] as string) || "";
+
+  // The Scheduled tab is sourced purely from /schedules when the environment
+  // grants advanced scheduling (Prowler Cloud). The backend filters to configured
+  // schedules (filter[configured]=true), so pagination is delegated natively and
+  // no /scans reconciliation is needed. Non-advanced envs keep the legacy path.
+  const capability =
+    scanScheduleCapability ?? getScanScheduleCapability(isCloud());
+
+  if (
+    tab === SCAN_JOBS_TAB.SCHEDULED &&
+    capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED
+  ) {
+    const schedulesPage = await getSchedulesPage({
+      page,
+      pageSize,
+      sort,
+      filters: pickScheduleProviderFilters(searchParams),
+    });
+
+    const included =
+      schedulesPage && "included" in schedulesPage
+        ? ((schedulesPage.included ?? []) as ProviderProps[])
+        : [];
+    const providerById = new Map(
+      included
+        .filter((resource) => resource.type === "providers")
+        .map((provider) => [provider.id, provider]),
+    );
+
+    const now = new Date();
+    const scheduleRows = ((schedulesPage?.data ?? []) as ScheduleProps[]).map(
+      (schedule) =>
+        mapScheduleToScanRow(schedule, providerById.get(schedule.id), now),
+    );
+    const scheduleMeta =
+      schedulesPage && "meta" in schedulesPage ? schedulesPage.meta : undefined;
+
+    return (
+      <ScanJobsTable
+        data={scheduleRows}
+        meta={scheduleMeta}
+        tab={tab}
+        hasFilters={hasUserFilters}
+        scanScheduleCapability={capability}
+      />
+    );
+  }
 
   const scansData = await getScans({
     query,

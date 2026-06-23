@@ -81,6 +81,50 @@ export const getSchedules = async () => {
   }
 };
 
+/**
+ * Fetches ONE page of configured schedules for the Scans "Scheduled" tab.
+ *
+ * Unlike `getSchedules` (which walks every page and discards `meta`/`included`
+ * for the modal/legacy path), this delegates pagination natively to the endpoint
+ * and returns `data`/`included`/`meta` verbatim. `filter[configured]=true` makes
+ * the backend exclude providers without a configured schedule (`scan_hour=null`),
+ * so the count stays correct without any client-side filtering. Provider filters
+ * (`filter[provider__in]`, `filter[provider_type__in]`) are forwarded as-is.
+ */
+export const getSchedulesPage = async ({
+  page = 1,
+  pageSize = 10,
+  sort = "",
+  filters = {},
+}: {
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  filters?: Record<string, string | string[]>;
+} = {}) => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/schedules`);
+
+  url.searchParams.set("filter[configured]", "true");
+  url.searchParams.set("include", "provider");
+  url.searchParams.set("page[number]", String(page));
+  url.searchParams.set("page[size]", String(pageSize));
+  if (sort) url.searchParams.set("sort", sort);
+
+  for (const [key, value] of Object.entries(filters)) {
+    const normalized = Array.isArray(value) ? value.join(",") : value;
+    if (normalized) url.searchParams.set(key, normalized);
+  }
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+
+    return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
 export const updateSchedule = async (
   providerId: string,
   payload: ScheduleUpdatePayload,
