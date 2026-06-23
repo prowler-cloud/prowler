@@ -52,6 +52,7 @@ class Recovery(AzureService):
         """
         logger.info("Recovery - Getting Recovery Services vaults...")
         vaults_dict: dict[str, dict[str, BackupVault]] = {}
+        subscription_id = "unknown"
         try:
             vaults_dict: dict[str, dict[str, BackupVault]] = {}
             for subscription_id, client in self.clients.items():
@@ -74,6 +75,13 @@ class Recovery(AzureService):
 
 
 class RecoveryBackup(AzureService):
+    """
+    Service wrapper for Azure Recovery Services backup data.
+
+    Collects the backup protected items and backup policies for each Recovery
+    Services vault discovered by the Recovery service.
+    """
+
     def __init__(
         self,
         provider: AzureProvider,
