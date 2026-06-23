@@ -120,7 +120,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | Google Workspace | 65 | 11 | 2 | 6 | Official | UI, API, CLI |
 | OpenStack | 34 | 5 | 0 | 9 | Official | UI, API, CLI |
 | Vercel | 26 | 6 | 0 | 8 | Official | UI, API, CLI |
-| Okta | 29 | 8 | 1 | 2 | Official | CLI |
+| Okta | 29 | 8 | 1 | 2 | Official | UI, API, CLI |
 | Linode [Contact us](https://prowler.com/contact) | 10 | 3 | 0 | 4 | Unofficial | CLI |
 | Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 0 | 1 | Unofficial | CLI |
 | StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 0 | 3 | Unofficial | CLI |
