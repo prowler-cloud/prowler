@@ -74,7 +74,12 @@ class Entra(AzureService):
         try:
             request_configuration = RequestConfiguration(
                 query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
-                    select=["id", "displayName", "accountEnabled"]
+                    select=[
+                        "id",
+                        "displayName",
+                        "accountEnabled",
+                        "signInActivity",
+                    ]
                 )
             )
             for tenant, client in self.clients.items():
@@ -87,6 +92,16 @@ class Entra(AzureService):
                 try:
                     while users_response:
                         for user in getattr(users_response, "value", []) or []:
+                            sign_in_activity = getattr(user, "sign_in_activity", None)
+                            last_sign_in = (
+                                getattr(
+                                    sign_in_activity,
+                                    "last_sign_in_date_time",
+                                    None,
+                                )
+                                if sign_in_activity
+                                else None
+                            )
                             users[tenant].update(
                                 {
                                     user.id: User(
@@ -98,6 +113,7 @@ class Entra(AzureService):
                                         account_enabled=getattr(
                                             user, "account_enabled", True
                                         ),
+                                        last_sign_in=last_sign_in,
                                     )
                                 }
                             )
@@ -556,6 +572,7 @@ class User(BaseModel):
     name: str
     is_mfa_capable: bool = False
     account_enabled: bool = True
+    last_sign_in: Optional[datetime] = None
 
 
 class DefaultUserRolePermissions(BaseModel):

@@ -81,6 +81,41 @@ export const getSchedules = async () => {
   }
 };
 
+/** Fetches one page of configured schedules for the Scheduled tab, with native pagination. */
+export const getSchedulesPage = async ({
+  page = 1,
+  pageSize = 10,
+  sort = "",
+  filters = {},
+}: {
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  filters?: Record<string, string | string[]>;
+} = {}) => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/schedules`);
+
+  url.searchParams.set("filter[configured]", "true");
+  url.searchParams.set("include", "provider");
+  url.searchParams.set("page[number]", String(page));
+  url.searchParams.set("page[size]", String(pageSize));
+  if (sort) url.searchParams.set("sort", sort);
+
+  for (const [key, value] of Object.entries(filters)) {
+    const normalized = Array.isArray(value) ? value.join(",") : value;
+    if (normalized) url.searchParams.set(key, normalized);
+  }
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+
+    return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
 export const updateSchedule = async (
   providerId: string,
   payload: ScheduleUpdatePayload,

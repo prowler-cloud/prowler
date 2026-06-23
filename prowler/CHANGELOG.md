@@ -2,7 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.31.0] (Prowler UNRELEASED)
+## [5.32.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11667)](https://github.com/prowler-cloud/prowler/pull/11667)
+
+---
+
+## [5.31.0] (Prowler v5.31.0)
 
 ### 🚀 Added
 
@@ -33,6 +41,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `network_vnet_ddos_protection_enabled` check for Azure provider, verifying virtual networks have Azure DDoS Network Protection enabled [(#11044)](https://github.com/prowler-cloud/prowler/pull/11044)
 - `entra_app_registration_credential_not_expired` check for Azure provider, verifying Entra ID app registration secrets and certificates are not expired, expiring within 30 days, or without an expiration date [(#11038)](https://github.com/prowler-cloud/prowler/pull/11038)
 - `entra_authentication_methods_policy_strong_auth_enforced` check for Azure provider, verifying the Entra ID authentication methods policy enforces MFA registration and enables at least one strong method (Microsoft Authenticator, FIDO2, or X.509 certificate) [(#11039)](https://github.com/prowler-cloud/prowler/pull/11039)
+- `entra_user_with_recent_sign_in` check for Azure provider, detecting stale enabled accounts that have not signed in within the last 90 days (requires Entra ID P1/P2 licensing for sign-in activity) [(#11040)](https://github.com/prowler-cloud/prowler/pull/11040)
 - `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
 - Public `Provider.get_class()` method that resolves a provider class by name for both built-in and external (entry-point) providers [(#11398)](https://github.com/prowler-cloud/prowler/pull/11398)
 - Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
@@ -53,7 +62,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `acmpca_certificate_authority_pqc_key_algorithm` check and new `acmpca` service for AWS provider to verify AWS Private CA certificate authorities use a post-quantum (ML-DSA) key algorithm [(#11318)](https://github.com/prowler-cloud/prowler/pull/11318)
 - `rolesanywhere_trust_anchor_pqc_pki` check and new `rolesanywhere` service for AWS provider to verify IAM Roles Anywhere trust anchors are backed by a post-quantum (ML-DSA) PKI [(#11319)](https://github.com/prowler-cloud/prowler/pull/11319)
 - Kubernetes core checks for container CPU limits, CPU requests, memory limits, memory requests, fixed image tags, liveness probes, and readiness probes [(#11373)](https://github.com/prowler-cloud/prowler/pull/11373)
-- Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11667)](https://github.com/prowler-cloud/prowler/pull/11667)
+- `recovery_vault_backup_policy_retention_adequate` check for Azure provider, verifying Recovery Services backup policies retain daily backups for at least 30 days [(#11047)](https://github.com/prowler-cloud/prowler/pull/11047)
 
 ### 🔄 Changed
 
