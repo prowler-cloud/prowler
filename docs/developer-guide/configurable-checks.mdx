@@ -156,7 +156,7 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 
 | Key | Allowed range | Notes |
 |---|---|---|
-| `vm_backup_min_daily_retention_days` | `7..9999` days | Azure Backup hard limit; <7 days defeats DR/ransomware recovery |
+| `vm_backup_min_daily_retention_days` | `7..9999` days | Azure Backup hard limit; under 7 days defeats DR/ransomware recovery |
 | `apim_threat_detection_llm_jacking_threshold` | `0.0..1.0` | fraction of suspicious actions |
 | `apim_threat_detection_llm_jacking_minutes` | `5..43200` min | under 5 min the signal is mostly false positives |
 | `shodan_api_key` | ≤512 chars | |
