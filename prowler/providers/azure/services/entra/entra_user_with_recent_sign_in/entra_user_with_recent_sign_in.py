@@ -7,13 +7,21 @@ STALE_THRESHOLD_DAYS = 90
 
 
 class entra_user_with_recent_sign_in(Check):
+    """
+    Ensure enabled Entra ID users have signed in within the last 90 days.
+
+    This check evaluates each enabled user's last interactive sign-in to detect stale or dormant accounts that should be reviewed or deprovisioned. Sign-in activity requires Entra ID P1/P2 licensing.
+
+    - PASS: The enabled user signed in within the last 90 days.
+    - FAIL: The enabled user has not signed in for more than 90 days, or has never signed in.
+    - FAIL (tenant-level): No sign-in activity data is available for any enabled user, indicating missing P1/P2 licensing or Graph permissions (reported once instead of flagging every user).
+    """
+
     def execute(self) -> Check_Report_Azure:
         findings = []
 
         for tenant_domain, users in entra_client.users.items():
-            enabled_users = {
-                k: v for k, v in users.items() if v.account_enabled
-            }
+            enabled_users = {k: v for k, v in users.items() if v.account_enabled}
 
             if not enabled_users:
                 continue
@@ -21,9 +29,7 @@ class entra_user_with_recent_sign_in(Check):
             # If all enabled users are missing sign-in data, avoid claiming
             # they never signed in. This usually indicates missing telemetry,
             # often due to licensing or Graph permission limitations.
-            all_null = all(
-                u.last_sign_in is None for u in enabled_users.values()
-            )
+            all_null = all(u.last_sign_in is None for u in enabled_users.values())
             if all_null:
                 first_user = next(iter(enabled_users.values()))
                 report = Check_Report_Azure(
@@ -44,23 +50,17 @@ class entra_user_with_recent_sign_in(Check):
                 continue
 
             for user_domain_name, user in enabled_users.items():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=user
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=user)
                 report.subscription = f"Tenant: {tenant_domain}"
 
                 if user.last_sign_in is None:
                     report.status = "FAIL"
-                    report.status_extended = (
-                        f"User {user.name} has never signed in."
-                    )
+                    report.status_extended = f"User {user.name} has never signed in."
                 else:
                     last = user.last_sign_in
                     if last.tzinfo is None:
                         last = last.replace(tzinfo=timezone.utc)
-                    days_since = (
-                        datetime.now(timezone.utc) - last
-                    ).days
+                    days_since = (datetime.now(timezone.utc) - last).days
                     if days_since > STALE_THRESHOLD_DAYS:
                         report.status = "FAIL"
                         report.status_extended = (

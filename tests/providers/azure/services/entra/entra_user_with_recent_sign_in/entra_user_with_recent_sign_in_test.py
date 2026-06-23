@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 from uuid import uuid4
 
@@ -43,10 +43,10 @@ class Test_entra_user_with_recent_sign_in:
                 new=entra_client,
             ),
         ):
+            from prowler.providers.azure.services.entra.entra_service import User
             from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
                 entra_user_with_recent_sign_in,
             )
-            from prowler.providers.azure.services.entra.entra_service import User
 
             user = User(
                 id=user_id,
@@ -75,10 +75,10 @@ class Test_entra_user_with_recent_sign_in:
                 new=entra_client,
             ),
         ):
+            from prowler.providers.azure.services.entra.entra_service import User
             from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
                 entra_user_with_recent_sign_in,
             )
-            from prowler.providers.azure.services.entra.entra_service import User
 
             user = User(
                 id=user_id,
@@ -109,10 +109,10 @@ class Test_entra_user_with_recent_sign_in:
                 new=entra_client,
             ),
         ):
+            from prowler.providers.azure.services.entra.entra_service import User
             from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
                 entra_user_with_recent_sign_in,
             )
-            from prowler.providers.azure.services.entra.entra_service import User
 
             user = User(
                 id=user_id,
@@ -144,10 +144,10 @@ class Test_entra_user_with_recent_sign_in:
                 new=entra_client,
             ),
         ):
+            from prowler.providers.azure.services.entra.entra_service import User
             from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
                 entra_user_with_recent_sign_in,
             )
-            from prowler.providers.azure.services.entra.entra_service import User
 
             user = User(
                 id=user_id,
@@ -178,10 +178,10 @@ class Test_entra_user_with_recent_sign_in:
                 new=entra_client,
             ),
         ):
+            from prowler.providers.azure.services.entra.entra_service import User
             from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
                 entra_user_with_recent_sign_in,
             )
-            from prowler.providers.azure.services.entra.entra_service import User
 
             user = User(
                 id=user_id,
@@ -211,10 +211,10 @@ class Test_entra_user_with_recent_sign_in:
                 new=entra_client,
             ),
         ):
+            from prowler.providers.azure.services.entra.entra_service import User
             from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
                 entra_user_with_recent_sign_in,
             )
-            from prowler.providers.azure.services.entra.entra_service import User
 
             # Multiple enabled users, ALL with no sign-in data = license issue
             users = {}
@@ -250,10 +250,10 @@ class Test_entra_user_with_recent_sign_in:
                 new=entra_client,
             ),
         ):
+            from prowler.providers.azure.services.entra.entra_service import User
             from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
                 entra_user_with_recent_sign_in,
             )
-            from prowler.providers.azure.services.entra.entra_service import User
 
             active_user = User(
                 id=str(uuid4()),
@@ -279,8 +279,7 @@ class Test_entra_user_with_recent_sign_in:
             result = check.execute()
             assert len(result) == 2
             assert any(
-                r.status == "PASS" and "5 days ago" in r.status_extended
-                for r in result
+                r.status == "PASS" and "5 days ago" in r.status_extended for r in result
             )
             assert any(
                 r.status == "FAIL" and "never signed in" in r.status_extended
@@ -301,10 +300,10 @@ class Test_entra_user_with_recent_sign_in:
                 new=entra_client,
             ),
         ):
+            from prowler.providers.azure.services.entra.entra_service import User
             from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
                 entra_user_with_recent_sign_in,
             )
-            from prowler.providers.azure.services.entra.entra_service import User
 
             user = User(
                 id=user_id,
