@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from enum import Enum
-from typing import Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from pydantic.v1 import BaseModel, Field, ValidationError, root_validator
 
@@ -335,7 +335,7 @@ class Compliance_Requirement_ConfigConstraint(BaseModel):
     # ``bool`` must precede ``int`` so pydantic v1 keeps booleans (e.g. a
     # ``mute_non_default_regions == false`` constraint) instead of coercing
     # them to 0/1.
-    Value: Union[bool, int, float, str, list]
+    Value: Union[bool, int, float, str, list[Any]]
     # Provider this constraint applies to (e.g. ``aws``). ``None`` means it
     # applies whenever the requirement runs (single-provider frameworks).
     Provider: Optional[str] = None

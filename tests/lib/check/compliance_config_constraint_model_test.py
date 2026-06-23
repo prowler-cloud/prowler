@@ -23,6 +23,12 @@ _REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
 _CIS_6_0 = _REPO_ROOT / "prowler" / "compliance" / "aws" / "cis_6.0_aws.json"
 
 
+def _load_cis():
+    """Load the CIS 6.0 AWS framework JSON via a context manager."""
+    with open(_CIS_6_0, encoding="utf-8") as f:
+        return json.load(f)
+
+
 class Test_Compliance_Requirement_ConfigConstraint:
     @pytest.mark.parametrize(
         "operator,value",
@@ -91,14 +97,14 @@ class Test_Compliance_Requirement_ConfigConstraint:
 
 class Test_ConfigRequirements_On_Compliance:
     def test_requirements_without_constraints_default_to_none(self):
-        compliance = Compliance(**json.load(open(_CIS_6_0)))
+        compliance = Compliance(**_load_cis())
         # Requirement without configurable checks → ConfigRequirements is None.
         no_constraint = [r for r in compliance.Requirements if not r.ConfigRequirements]
         assert no_constraint
         assert no_constraint[0].ConfigRequirements is None
 
     def test_requirement_with_constraints_parses(self):
-        compliance = Compliance(**json.load(open(_CIS_6_0)))
+        compliance = Compliance(**_load_cis())
         with_constraint = [r for r in compliance.Requirements if r.ConfigRequirements]
         assert with_constraint, "cis_6.0_aws should declare ConfigRequirements"
         constraint = with_constraint[0].ConfigRequirements[0]
@@ -109,7 +115,7 @@ class Test_ConfigRequirements_On_Compliance:
 
 class Test_Adapt_Legacy_To_Universal:
     def test_config_requirements_carried_to_universal(self):
-        legacy = Compliance(**json.load(open(_CIS_6_0)))
+        legacy = Compliance(**_load_cis())
         universal = adapt_legacy_to_universal(legacy)
 
         legacy_with = {r.Id for r in legacy.Requirements if r.ConfigRequirements}
@@ -127,7 +133,7 @@ class Test_Adapt_Legacy_To_Universal:
         assert entry["Provider"] is None
 
     def test_requirements_without_constraints_are_none_in_universal(self):
-        legacy = Compliance(**json.load(open(_CIS_6_0)))
+        legacy = Compliance(**_load_cis())
         universal = adapt_legacy_to_universal(legacy)
         without = [r for r in universal.requirements if not r.config_requirements]
         assert without

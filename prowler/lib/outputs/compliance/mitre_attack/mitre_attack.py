@@ -3,6 +3,8 @@ from tabulate import tabulate
 
 from prowler.config.config import orange_color
 from prowler.lib.check.compliance_config_eval import (
+    accumulate_group_status,
+    accumulate_overview_status,
     get_effective_status,
     get_scan_audit_config,
     resolve_requirement_config_status,
@@ -26,11 +28,9 @@ def get_mitre_attack_table(
         "Status": [],
         "Muted": [],
     }
-    pass_count = []
-    fail_count = []
-    muted_count = []
-    # The applied config is scan-global (the provider's audit_config). Evaluate
-    # each requirement's config constraints once against it (memoised by Id).
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
     audit_config = get_scan_audit_config()
     config_status_cache = {}
     for index, finding in enumerate(findings):
@@ -43,40 +43,23 @@ def get_mitre_attack_table(
             ):
                 provider = compliance.Provider
                 for requirement in compliance.Requirements:
-                    # A requirement whose configurable checks ran with an invalid
-                    # config can't be trusted: treat the finding as FAIL.
                     config_status = resolve_requirement_config_status(
                         requirement, audit_config, config_status_cache
                     )
                     effective_status = get_effective_status(
                         finding.status, config_status
                     )
+                    status = "Muted" if finding.muted else effective_status
                     for tactic in requirement.Tactics:
                         if tactic not in tactics:
                             tactics[tactic] = {"FAIL": 0, "PASS": 0, "Muted": 0}
-                            tactic_seen[tactic] = set()
-
-                        # Overview totals: count each finding once per framework
-                        if finding.muted:
-                            if index not in muted_count:
-                                muted_count.append(index)
-                        elif effective_status == "FAIL":
-                            if index not in fail_count:
-                                fail_count.append(index)
-                        elif effective_status == "PASS":
-                            if index not in pass_count:
-                                pass_count.append(index)
-
-                        # Per-tactic counts: count each finding once per tactic
-                        # it belongs to (a finding can map to several tactics).
-                        if index not in tactic_seen[tactic]:
-                            tactic_seen[tactic].add(index)
-                            if finding.muted:
-                                tactics[tactic]["Muted"] += 1
-                            elif effective_status == "FAIL":
-                                tactics[tactic]["FAIL"] += 1
-                            elif effective_status == "PASS":
-                                tactics[tactic]["PASS"] += 1
+                            tactic_seen[tactic] = {}
+                        accumulate_overview_status(
+                            index, status, pass_count, fail_count, muted_count
+                        )
+                        accumulate_group_status(
+                            index, status, tactics[tactic], tactic_seen[tactic]
+                        )
     # Add results to table
     tactics = dict(sorted(tactics.items()))
     for tactic in tactics:

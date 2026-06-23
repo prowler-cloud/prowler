@@ -3,6 +3,7 @@ from tabulate import tabulate
 
 from prowler.config.config import orange_color
 from prowler.lib.check.compliance_config_eval import (
+    accumulate_overview_status,
     get_effective_status,
     get_scan_audit_config,
     resolve_requirement_config_status,
@@ -27,11 +28,9 @@ def get_kisa_ismsp_table(
         "Status": [],
         "Muted": [],
     }
-    pass_count = []
-    fail_count = []
-    muted_count = []
-    # The applied config is scan-global (the provider's audit_config). Evaluate
-    # each requirement's config constraints once against it (memoised by Id).
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
     audit_config = get_scan_audit_config()
     config_status_cache = {}
     for index, finding in enumerate(findings):
@@ -44,8 +43,6 @@ def get_kisa_ismsp_table(
             ):
                 provider = compliance.Provider
                 for requirement in compliance.Requirements:
-                    # A requirement whose configurable checks ran with an invalid
-                    # config can't be trusted: treat the finding as FAIL.
                     config_status = resolve_requirement_config_status(
                         requirement, audit_config, config_status_cache
                     )
@@ -63,29 +60,27 @@ def get_kisa_ismsp_table(
                                 },
                                 "Muted": 0,
                             }
-                            section_seen[section] = set()
+                            section_seen[section] = {}
 
-                        # Overview totals: count each finding once per framework
-                        if finding.muted:
-                            if index not in muted_count:
-                                muted_count.append(index)
-                        elif effective_status == "FAIL":
-                            if index not in fail_count:
-                                fail_count.append(index)
-                        elif effective_status == "PASS":
-                            if index not in pass_count:
-                                pass_count.append(index)
+                        status = "Muted" if finding.muted else effective_status
+                        accumulate_overview_status(
+                            index, status, pass_count, fail_count, muted_count
+                        )
 
-                        # Per-section counts: count each finding once per section
-                        # it belongs to (a finding can map to several sections).
-                        if index not in section_seen[section]:
-                            section_seen[section].add(index)
-                            if finding.muted:
+                        # FAIL/PASS live under ["Status"], Muted at top level.
+                        previous = section_seen[section].get(index)
+                        if previous is None:
+                            section_seen[section][index] = status
+                            if status == "Muted":
                                 sections[section]["Muted"] += 1
-                            elif effective_status == "FAIL":
+                            elif status == "FAIL":
                                 sections[section]["Status"]["FAIL"] += 1
-                            elif effective_status == "PASS":
+                            elif status == "PASS":
                                 sections[section]["Status"]["PASS"] += 1
+                        elif previous == "PASS" and status == "FAIL":
+                            section_seen[section][index] = "FAIL"
+                            sections[section]["Status"]["PASS"] -= 1
+                            sections[section]["Status"]["FAIL"] += 1
 
     # Add results to table
     sections = dict(sorted(sections.items()))

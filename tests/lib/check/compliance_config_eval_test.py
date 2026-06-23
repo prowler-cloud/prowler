@@ -3,6 +3,8 @@ from unittest.mock import patch
 
 from prowler.lib.check.compliance_config_eval import (
     CONFIG_NOT_VALID_PREFIX,
+    accumulate_group_status,
+    accumulate_overview_status,
     apply_config_status,
     build_requirement_config_status,
     evaluate_config_constraints,
@@ -253,6 +255,69 @@ class Test_resolve_requirement_config_status:
         assert resolve_requirement_config_status(req, {}, cache) == (True, "")
 
 
+class Test_accumulate_overview_status:
+    def test_fail_wins_over_earlier_pass(self):
+        p, f, m = set(), set(), set()
+        accumulate_overview_status(0, "PASS", p, f, m)
+        accumulate_overview_status(0, "FAIL", p, f, m)
+        assert (p, f, m) == (set(), {0}, set())
+
+    def test_pass_after_fail_does_not_double_count(self):
+        p, f, m = set(), set(), set()
+        accumulate_overview_status(0, "FAIL", p, f, m)
+        accumulate_overview_status(0, "PASS", p, f, m)
+        assert (p, f, m) == (set(), {0}, set())
+
+    def test_pass_only(self):
+        p, f, m = set(), set(), set()
+        accumulate_overview_status(0, "PASS", p, f, m)
+        assert (p, f, m) == ({0}, set(), set())
+
+    def test_muted(self):
+        p, f, m = set(), set(), set()
+        accumulate_overview_status(0, "Muted", p, f, m)
+        assert (p, f, m) == (set(), set(), {0})
+
+
+class Test_accumulate_group_status:
+    def test_first_status_counted(self):
+        counts = {"FAIL": 0, "PASS": 0, "Muted": 0}
+        seen = {}
+        accumulate_group_status(0, "PASS", counts, seen)
+        assert counts == {"FAIL": 0, "PASS": 1, "Muted": 0}
+        assert seen == {0: "PASS"}
+
+    def test_pass_upgraded_to_fail(self):
+        counts = {"FAIL": 0, "PASS": 0, "Muted": 0}
+        seen = {}
+        accumulate_group_status(0, "PASS", counts, seen)
+        accumulate_group_status(0, "FAIL", counts, seen)
+        assert counts == {"FAIL": 1, "PASS": 0, "Muted": 0}
+        assert seen == {0: "FAIL"}
+
+    def test_fail_not_downgraded_by_later_pass(self):
+        counts = {"FAIL": 0, "PASS": 0, "Muted": 0}
+        seen = {}
+        accumulate_group_status(0, "FAIL", counts, seen)
+        accumulate_group_status(0, "PASS", counts, seen)
+        assert counts == {"FAIL": 1, "PASS": 0, "Muted": 0}
+
+    def test_same_index_not_double_counted(self):
+        counts = {"FAIL": 0, "PASS": 0, "Muted": 0}
+        seen = {}
+        accumulate_group_status(0, "PASS", counts, seen)
+        accumulate_group_status(0, "PASS", counts, seen)
+        assert counts["PASS"] == 1
+
+    def test_works_with_fail_pass_only_counts(self):
+        # Level-style counts (no "Muted" key) used by CIS / split tables.
+        counts = {"FAIL": 0, "PASS": 0}
+        seen = {}
+        accumulate_group_status(0, "PASS", counts, seen)
+        accumulate_group_status(0, "FAIL", counts, seen)
+        assert counts == {"FAIL": 1, "PASS": 0}
+
+
 class Test_apply_config_status:
     def test_none_config_status_keeps_finding(self):
         assert apply_config_status("PASS", "ext", None) == ("PASS", "ext")
@@ -285,10 +350,11 @@ class Test_get_scan_audit_config:
 
 class Test_get_scan_provider_type:
     def test_returns_empty_when_no_global_provider(self):
-        # Unresolvable provider → scoping disabled (empty string).
+        # No global provider set → get_global_provider() returns None →
+        # ``None.type`` raises AttributeError → scoping disabled (empty string).
         with patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            side_effect=Exception("no provider"),
+            return_value=None,
         ):
             assert get_scan_provider_type() == ""
 

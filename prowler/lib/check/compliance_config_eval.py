@@ -52,8 +52,8 @@ def _check_operator(applied: Any, operator: str, expected: Any) -> bool:
 
 
 def evaluate_config_constraints(
-    config_requirements: Optional[list],
-    audit_config: Optional[dict],
+    config_requirements: Optional[list[Any]],
+    audit_config: Optional[dict[str, Any]],
     provider_type: Optional[str] = None,
 ) -> tuple[bool, str]:
     """Evaluate a requirement's config constraints against the scan's config.
@@ -120,20 +120,25 @@ def evaluate_config_constraints(
     return True, ""
 
 
-def get_scan_audit_config() -> dict:
+def get_scan_audit_config() -> dict[str, Any]:
     """Return the scan-global applied configuration (the provider's audit_config).
 
     The applied config is identical across every resource and region of a scan,
     so every compliance output evaluates constraints against this single mapping.
     Imported lazily to avoid a circular import with the provider package and to
-    keep this module usable from contexts without a global provider (returns
-    ``{}`` if no provider is set or audit_config is unavailable).
+    keep this module usable from contexts without a global provider.
+
+    Returns:
+        The provider's ``audit_config`` mapping, or ``{}`` when no global
+        provider is set (``AttributeError``) or the provider package cannot be
+        imported (``ImportError``).
     """
     try:
         from prowler.providers.common.provider import Provider
 
         return Provider.get_global_provider().audit_config or {}
-    except Exception:
+    except (AttributeError, ImportError):
+        # No global provider set, or provider package unavailable.
         return {}
 
 
@@ -141,14 +146,19 @@ def get_scan_provider_type() -> str:
     """Return the provider being scanned (e.g. ``aws``) for constraint scoping.
 
     Imported lazily to avoid a circular import with the provider package and to
-    keep this module usable from contexts without a global provider (returns
-    ``""`` if no provider is set, which disables provider scoping).
+    keep this module usable from contexts without a global provider.
+
+    Returns:
+        The provider's ``type`` (e.g. ``aws``), or ``""`` when no global provider
+        is set (``AttributeError``) or the provider package cannot be imported
+        (``ImportError``); an empty string disables provider scoping.
     """
     try:
         from prowler.providers.common.provider import Provider
 
         return Provider.get_global_provider().type or ""
-    except Exception:
+    except (AttributeError, ImportError):
+        # No global provider set, or provider package unavailable.
         return ""
 
 
@@ -171,10 +181,10 @@ def _requirement_constraints(requirement: Any) -> Optional[list]:
 
 
 def build_requirement_config_status(
-    requirements: list,
-    audit_config: Optional[dict] = None,
+    requirements: list[Any],
+    audit_config: Optional[dict[str, Any]] = None,
     provider_type: Optional[str] = None,
-) -> dict:
+) -> dict[str, tuple[bool, str]]:
     """Map every requirement id to its ``(is_compliant, reason)`` config verdict.
 
     Only requirements that actually declare constraints are included; callers use
@@ -186,6 +196,10 @@ def build_requirement_config_status(
             when omitted.
         provider_type: the provider being scanned, for constraint scoping;
             resolved via ``get_scan_provider_type`` when omitted.
+
+    Returns:
+        A mapping ``{requirement_id: (is_compliant, reason)}`` containing only the
+        requirements that declare config constraints.
     """
     if audit_config is None:
         audit_config = get_scan_audit_config()
@@ -203,16 +217,26 @@ def build_requirement_config_status(
 
 def resolve_requirement_config_status(
     requirement: Any,
-    audit_config: dict,
+    audit_config: dict[str, Any],
     cache: dict,
     provider_type: Optional[str] = None,
 ) -> tuple[bool, str]:
     """Return a requirement's ``(is_compliant, reason)`` verdict, memoised in ``cache``.
 
     For table generators that iterate findings × compliances and only encounter
-    each requirement lazily. ``cache`` is keyed by requirement id and reused
-    across the whole table build. ``provider_type`` scopes the constraints to the
-    provider being scanned; resolved via ``get_scan_provider_type`` when omitted.
+    each requirement lazily.
+
+    Args:
+        requirement: the requirement (legacy or universal model).
+        audit_config: the scan-global applied config.
+        cache: a dict keyed by requirement id, reused across the whole table
+            build to memoise verdicts.
+        provider_type: the provider being scanned, for constraint scoping;
+            resolved via ``get_scan_provider_type`` when omitted.
+
+    Returns:
+        The ``(is_compliant, reason)`` verdict; ``(True, "")`` when the
+        requirement declares no constraints.
     """
     req_id = _requirement_id(requirement)
     if req_id not in cache:
@@ -231,14 +255,25 @@ def resolve_requirement_config_status(
 def apply_config_status(
     status: str,
     status_extended: str,
-    config_status: Optional[tuple],
+    config_status: Optional[tuple[bool, str]],
 ) -> tuple[str, str]:
     """Override a finding's ``(status, status_extended)`` when its config is invalid.
 
     A requirement whose configurable checks ran with a config too loose to trust
     is forced to ``FAIL`` regardless of the finding's own status, with the reason
-    prepended to ``status_extended``. ``config_status`` is the ``(ok, reason)``
-    tuple from ``build_requirement_config_status`` (``None`` → no constraints).
+    prepended to ``status_extended``.
+
+    Args:
+        status: the finding's original status (e.g. ``PASS`` / ``FAIL``).
+        status_extended: the finding's extended status message.
+        config_status: the ``(is_compliant, reason)`` tuple from
+            ``build_requirement_config_status``/``resolve_requirement_config_status``,
+            or ``None`` when the requirement declares no constraints.
+
+    Returns:
+        The ``(status, status_extended)`` to report: unchanged when the config is
+        valid (or ``config_status`` is ``None``); otherwise ``FAIL`` with the
+        reason prepended to ``status_extended``.
     """
     if not config_status or config_status[0]:
         return status, status_extended
@@ -250,9 +285,53 @@ def apply_config_status(
 
 def get_effective_status(
     status: str,
-    config_status: Optional[tuple],
+    config_status: Optional[tuple[bool, str]],
 ) -> str:
-    """Return the effective status for table aggregation (``FAIL`` if config invalid)."""
+    """Return the effective status for table aggregation.
+
+    Args:
+        status: the finding's original status.
+        config_status: the ``(is_compliant, reason)`` tuple, or ``None`` when the
+            requirement declares no constraints.
+
+    Returns:
+        ``FAIL`` when ``config_status`` marks the config invalid; otherwise the
+        finding's original ``status``.
+    """
     if not config_status or config_status[0]:
         return status
     return "FAIL"
+
+
+def accumulate_overview_status(
+    index: int,
+    status: str,
+    pass_indices: set,
+    fail_indices: set,
+    muted_indices: set,
+) -> None:
+    """Record a finding in the overview totals once, with FAIL precedence over PASS (sets mutated in place)."""
+    if status == "Muted":
+        muted_indices.add(index)
+    elif status == "FAIL":
+        fail_indices.add(index)
+        pass_indices.discard(index)
+    elif status == "PASS" and index not in fail_indices:
+        pass_indices.add(index)
+
+
+def accumulate_group_status(
+    index: int,
+    status: str,
+    counts: dict,
+    seen: dict,
+) -> None:
+    """Count a finding once per group, upgrading a counted PASS to FAIL on conflict (mutates ``counts``/``seen``)."""
+    previous = seen.get(index)
+    if previous is None:
+        seen[index] = status
+        counts[status] += 1
+    elif previous == "PASS" and status == "FAIL":
+        seen[index] = "FAIL"
+        counts["PASS"] -= 1
+        counts["FAIL"] += 1

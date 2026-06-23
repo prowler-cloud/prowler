@@ -38,9 +38,6 @@ class KubernetesISO27001(ComplianceOutput):
         Returns:
             - None
         """
-        # Evaluate each requirement's config constraints once against the
-        # scan-global applied config; a requirement whose configurable checks
-        # ran with a config too loose to trust is forced to FAIL.
         requirement_config_status = build_requirement_config_status(
             compliance.Requirements
         )

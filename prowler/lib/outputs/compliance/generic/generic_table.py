@@ -20,8 +20,6 @@ def get_generic_compliance_table(
     pass_count = []
     fail_count = []
     muted_count = []
-    # The applied config is scan-global (the provider's audit_config). Evaluate
-    # each requirement's config constraints once against it (memoised by Id).
     audit_config = get_scan_audit_config()
     config_status_cache = {}
     for index, finding in enumerate(findings):
@@ -34,9 +32,6 @@ def get_generic_compliance_table(
                 and compliance.Version in compliance_framework.upper()
                 and compliance.Provider.upper() in compliance_framework.upper()
             ):
-                # A requirement whose configurable checks ran with an invalid
-                # config can't be trusted: treat the finding as FAIL if any of
-                # the requirements it maps to has an invalid config.
                 effective_status = finding.status
                 for requirement in compliance.Requirements:
                     if finding.check_id in requirement.Checks:

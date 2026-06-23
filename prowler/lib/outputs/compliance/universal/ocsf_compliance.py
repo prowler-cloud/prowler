@@ -185,9 +185,6 @@ class OCSFComplianceOutput:
             for check_id in all_checks:
                 check_req_map.setdefault(check_id, []).append(req)
 
-        # The applied config is scan-global (the provider's audit_config). A
-        # requirement whose config constraints aren't satisfied is FAILed even
-        # when its findings PASS, mirroring the CSV/CLI behaviour.
         requirement_config_status = build_requirement_config_status(
             framework.requirements
         )
@@ -258,9 +255,6 @@ class OCSFComplianceOutput:
         config_status: tuple = (True, ""),
     ) -> ComplianceFinding:
         try:
-            # If the requirement's config isn't valid, the requirement FAILs even
-            # though the check (and finding) passed. The Check keeps the real
-            # finding status; the Compliance status reflects the requirement.
             effective_status, message = apply_config_status(
                 finding.status, finding.status_extended, config_status
             )

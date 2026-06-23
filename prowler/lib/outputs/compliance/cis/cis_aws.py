@@ -38,8 +38,6 @@ class AWSCIS(ComplianceOutput):
         Returns:
             - None
         """
-        # The applied config is scan-global (the provider's audit_config), so
-        # evaluate each requirement's config constraints once against it.
         requirement_config_status = build_requirement_config_status(
             compliance.Requirements
         )
@@ -48,9 +46,6 @@ class AWSCIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
                 if finding.check_id in requirement.Checks:
-                    # A requirement whose configurable checks ran with an invalid
-                    # config can't be trusted: force FAIL regardless of the
-                    # finding's own status.
                     row_status, row_status_extended = apply_config_status(
                         finding.status,
                         finding.status_extended,
