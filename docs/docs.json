@@ -134,6 +134,7 @@
                   "user-guide/tutorials/prowler-app-mute-findings"
                 ]
               },
+              "user-guide/tutorials/prowler-app-scan-config",
               {
                 "group": "Integrations",
                 "expanded": true,

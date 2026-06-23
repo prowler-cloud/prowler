@@ -40,9 +40,76 @@ When adding a new configurable check to Prowler, update the following files:
   # aws.awslambda_function_vpc_multi_az
   lambda_min_azs: 2
   ```
+- **Provider Schema:** Add the typed field to the provider's Pydantic schema in `prowler/config/schema/<provider>.py`. This is required: the loader validates user configs against these schemas and the shipped `config.yaml` must round-trip with zero warnings. See [Adding a parameter to the provider schema](#adding-a-parameter-to-the-provider-schema) below.
 - **Test Fixtures:** If tests depend on this configuration, add the variable to `tests/config/fixtures/config.yaml`.
 - **Documentation:** Document the new variable in the list of configurable checks in `docs/tutorials/configuration_file.md`.
 
 For a complete list of checks that already support configuration, see the [Configuration File Tutorial](/user-guide/cli/tutorials/configuration_file).
+
+## Adding a parameter to the provider schema
+
+Every provider has a typed Pydantic schema in `prowler/config/schema/`. When a config is loaded, `validate_provider_config` checks each user-supplied key against the schema, logs a warning, and drops any field that fails validation. The consumer's `.get(key, default)` then falls back to the built-in default.
+
+This catches typos in a value (for example, `0.2` typed as `20`, or `"medium"` for an enum that expects `"MEDIUM"`). It does NOT catch typos in a key name: `disalowed_regions` (one `l` missing) is treated as an unknown key and passes through untouched, because third-party check plugins legitimately rely on unknown keys being preserved. Reviewers should still check that any new key the YAML adds is named exactly the same as the field on the schema.
+
+### Where to add the field
+
+1. Open `prowler/config/schema/<provider>.py` (for example, `aws.py`).
+2. Add a field on the provider's schema class. Always make it `Optional[...] = None` so the absence of the key is valid.
+3. Apply the tightest type the value allows. Examples below.
+
+If you are introducing an entirely new provider rather than a new parameter, also add an entry mapping the provider name to its schema class in `prowler/config/schema/registry.py`. The loader uses that registry to find the schema for the provider it is loading.
+
+### Choosing the right type
+
+| Value kind | Field declaration |
+|---|---|
+| Boolean toggle | `Optional[bool] = None` |
+| Strictly positive integer (days, counts) | `Optional[int] = Field(default=None, gt=0)` |
+| Fraction in 0..1 (threshold) | `Optional[float] = Field(default=None, ge=0.0, le=1.0)` |
+| Closed set of strings | `Optional[Literal["A", "B", "C"]] = None` |
+| Free-form string | `Optional[str] = None` |
+| List of strings or ints | `Optional[list[str]] = None` |
+
+Prefer `Literal[...]` over `str` whenever the value is one of a known set. Prefer `Field(gt=0)` over `int` whenever zero or negative would be nonsensical. The point of the schema is to catch real-world mistakes that previously passed silently.
+
+### Custom validators (only when needed)
+
+If the value has structural rules beyond type and range, add a `field_validator`. Examples already in `aws.py`:
+
+- `_validate_port_range` rejects ports outside `0..65535`.
+- `_validate_account_ids` rejects anything that isn't a 12-digit AWS account ID.
+- `_validate_trusted_ips` rejects entries that aren't a valid IP or CIDR.
+
+Raise `ValueError` from the validator. The framework converts the error into a warning and drops the offending key.
+
+### Example: adding a new parameter
+
+Say a new check needs `max_iam_role_session_hours`, a strictly positive integer that defaults to 12 in code.
+
+1. **Schema** (`prowler/config/schema/aws.py`):
+    ```python
+    # IAM
+    max_iam_role_session_hours: Optional[int] = Field(default=None, gt=0)
+    ```
+2. **Shipped config** (`prowler/config/config.yaml`):
+    ```yaml
+    # aws.iam_role_session_duration_within_limit
+    max_iam_role_session_hours: 12
+    ```
+3. **Consumer** (the check):
+    ```python
+    max_hours = iam_client.audit_config.get("max_iam_role_session_hours", 12)
+    ```
+4. **Tests** in `tests/config/schema/aws_schema_test.py`:
+    - one test for a valid value that round-trips,
+    - one test for an invalid value (zero, negative, wrong type) that is dropped.
+
+### What the loader guarantees
+
+- **Unknown keys pass through.** Third-party check plugins can introduce arbitrary keys without schema edits; they will not be filtered.
+- **Invalid values never crash the run.** They produce a single warning per field and the key is dropped.
+- **Coerced values are normalized.** A YAML-quoted `"180"` for an `int` field arrives downstream as the integer `180`.
+- **The shipped `config.yaml` must round-trip cleanly.** The integration test `test_shipped_default_config_loads_without_warnings` will fail if a key is added to the YAML without a matching schema field, so the two stay in sync.
 
 This approach ensures that checks are easily configurable, making Prowler highly adaptable to different environments and requirements.
