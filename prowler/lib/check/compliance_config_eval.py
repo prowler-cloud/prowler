@@ -101,8 +101,15 @@ def evaluate_config_constraints(
             expected = getattr(constraint, "Value", None)
             provider = getattr(constraint, "Provider", None)
 
-        if provider and provider_type and provider != provider_type:
-            # Constraint scoped to another provider → not applicable to this scan.
+        # Constraint scoped to another provider → not applicable to this scan.
+        # Compared case-insensitively (and trimmed) so a constraint authored as
+        # e.g. "AWS" still scopes to the "aws" scan instead of being silently
+        # bypassed by a casing/format mismatch.
+        if (
+            provider
+            and provider_type
+            and str(provider).strip().lower() != str(provider_type).strip().lower()
+        ):
             continue
 
         if config_key not in audit_config:

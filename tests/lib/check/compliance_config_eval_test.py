@@ -183,6 +183,23 @@ class Test_provider_scoping:
         )
         assert is_ok is False
 
+    def test_provider_match_is_case_insensitive(self):
+        # A constraint authored as "AWS" must still scope to the "aws" scan,
+        # not be silently bypassed by a casing mismatch.
+        constraint = [
+            {
+                "Check": "securityhub_enabled",
+                "Provider": "AWS",
+                "ConfigKey": "mute_non_default_regions",
+                "Operator": "eq",
+                "Value": False,
+            }
+        ]
+        is_ok, _ = evaluate_config_constraints(
+            constraint, {"mute_non_default_regions": True}, "aws"
+        )
+        assert is_ok is False
+
     def test_untagged_constraint_applies_to_any_provider(self):
         # Single-provider frameworks omit Provider → always evaluated.
         is_ok, _ = evaluate_config_constraints(

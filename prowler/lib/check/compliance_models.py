@@ -336,8 +336,9 @@ class Compliance_Requirement_ConfigConstraint(BaseModel):
     # ``mute_non_default_regions == false`` constraint) instead of coercing
     # them to 0/1.
     Value: Union[bool, int, float, str, list[Any]]
-    # Provider this constraint applies to (e.g. ``aws``). ``None`` means it
-    # applies whenever the requirement runs (single-provider frameworks).
+    # Provider this constraint applies to (e.g. ``aws``), matched
+    # case-insensitively. ``None`` applies whenever the requirement runs
+    # (single-provider frameworks).
     Provider: Optional[str] = None
 
 

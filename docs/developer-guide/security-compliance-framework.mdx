@@ -2,6 +2,8 @@
 title: 'Creating a New Security Compliance Framework in Prowler'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 This guide explains how to add a new security compliance framework to Prowler, end to end. It covers directory layout, the two supported JSON schemas (universal and legacy), the Pydantic models that validate each framework, check mapping conventions, output formatting, local validation, testing, and the pull request process.
 
 ## Introduction
@@ -482,6 +484,8 @@ Loader-error behaviour differs between the two entry points:
 - `load_compliance_framework_universal()` is more lenient — it logs the error and returns `None`, so `get_bulk_compliance_frameworks_universal()` simply skips the broken file and keeps loading the rest.
 
 ## Configuration Guardrails for Requirements
+
+<VersionBadge version="5.31.0" />
 
 Some requirements are only truly satisfied when the configurable checks behind them ran with a configuration strict enough to meet the control. A [configurable check](/developer-guide/configurable-checks) reads thresholds from the scan's `audit_config`, so loosening a value can make the check PASS while the requirement it backs is, in fact, not satisfied.
 
