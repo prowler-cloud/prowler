@@ -8,11 +8,12 @@ import { auth } from "@/auth.config";
 import { PageReady } from "@/components/onboarding";
 import {
   appendPendingScheduleRowsToPage,
+  buildScheduledTabRows,
   getProviderIdsFromScans,
   getScanJobsTab,
   getScanJobsTabFilters,
   getScanJobsUserFilters,
-  mapScheduleToScanRow,
+  pickScheduleProviderFilters,
 } from "@/components/scans/scans.utils";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
@@ -27,6 +28,7 @@ import {
 } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import {
+  FilterType,
   ProviderProps,
   SCAN_JOBS_TAB,
   SCAN_TRIGGER,
@@ -36,17 +38,16 @@ import {
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
-  type ScheduleProps,
 } from "@/types/schedules";
 
 const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
-// Pending schedule rows are derived from provider schedules, but must honor the
-// same provider filters as real scan rows. Keep these filter keys typed locally
-// without narrowing the global SearchParamsProps shape used by Next pages.
+// Pending schedule rows must honor the same provider filters as real scan rows.
+// The `__in` keys reuse the shared FilterType; the singular variants have no
+// FilterType equivalent, so they stay as literals.
 const PENDING_ROW_PROVIDER_FILTER = {
-  PROVIDER_UID_IN: "provider_uid__in",
+  PROVIDER_UID_IN: FilterType.PROVIDER_UID,
   PROVIDER_UID: "provider_uid",
-  PROVIDER_TYPE_IN: "provider_type__in",
+  PROVIDER_TYPE_IN: FilterType.PROVIDER_TYPE,
   PROVIDER_TYPE: "provider_type",
 } as const;
 
@@ -112,30 +113,6 @@ const filterProvidersForPendingRows = (
       (uids.length === 0 || uids.includes(provider.attributes.uid)) &&
       (types.length === 0 || types.includes(provider.attributes.provider)),
   );
-};
-
-// Provider filters the `/schedules` ScheduleFilter exposes (no `provider_uid__in`, which would 400).
-const SCHEDULE_SUPPORTED_PROVIDER_FILTERS = [
-  "filter[provider]",
-  "filter[provider__in]",
-  "filter[provider_type]",
-  "filter[provider_type__in]",
-  "filter[provider_group]",
-  "filter[provider_group__in]",
-] as const;
-
-/** Provider filters forwarded to `/schedules` so the backend applies them and pagination stays native. */
-const pickScheduleProviderFilters = (
-  searchParams: SearchParamsProps,
-): Record<string, string | string[]> => {
-  const filters: Record<string, string | string[]> = {};
-  for (const key of SCHEDULE_SUPPORTED_PROVIDER_FILTERS) {
-    const value = searchParams[key];
-    if (typeof value === "string" || Array.isArray(value)) {
-      filters[key] = value;
-    }
-  }
-  return filters;
 };
 
 const getActiveScanCount = async (
@@ -317,29 +294,12 @@ const SSRDataTableScans = async ({
       sort,
       filters: pickScheduleProviderFilters(searchParams),
     });
-
-    const included =
-      schedulesPage && "included" in schedulesPage
-        ? ((schedulesPage.included ?? []) as ProviderProps[])
-        : [];
-    const providerById = new Map(
-      included
-        .filter((resource) => resource.type === "providers")
-        .map((provider) => [provider.id, provider]),
-    );
-
-    const now = new Date();
-    const scheduleRows = ((schedulesPage?.data ?? []) as ScheduleProps[]).map(
-      (schedule) =>
-        mapScheduleToScanRow(schedule, providerById.get(schedule.id), now),
-    );
-    const scheduleMeta =
-      schedulesPage && "meta" in schedulesPage ? schedulesPage.meta : undefined;
+    const { data, meta } = buildScheduledTabRows(schedulesPage, new Date());
 
     return (
       <ScanJobsTable
-        data={scheduleRows}
-        meta={scheduleMeta}
+        data={data}
+        meta={meta}
         tab={tab}
         hasFilters={hasUserFilters}
         scanScheduleCapability={capability}

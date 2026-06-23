@@ -1,4 +1,8 @@
 import {
+  PROVIDER_IN_FILTER_KEY,
+  PROVIDER_TYPE_IN_FILTER_KEY,
+} from "@/lib/provider-filters";
+import {
   buildProviderScheduleSummary,
   describeScheduleCadence,
   getNextScheduledRunInTimezone,
@@ -324,6 +328,54 @@ export function appendPendingScheduleRowsToPage({
         }
       : undefined,
   };
+}
+
+// Provider filters the `/schedules` endpoint accepts (by id / type). The scans
+// filter-bar's uid filter is not supported there, so it is intentionally dropped.
+const SCHEDULE_FORWARDED_FILTER_KEYS = [
+  PROVIDER_IN_FILTER_KEY,
+  PROVIDER_TYPE_IN_FILTER_KEY,
+] as const;
+
+/** Provider filters forwarded to `/schedules` so the backend applies them and pagination stays native. */
+export function pickScheduleProviderFilters(
+  searchParams: SearchParamsProps,
+): Record<string, string | string[]> {
+  const filters: Record<string, string | string[]> = {};
+  for (const key of SCHEDULE_FORWARDED_FILTER_KEYS) {
+    const value = searchParams[key];
+    if (typeof value === "string" || Array.isArray(value)) {
+      filters[key] = value;
+    }
+  }
+  return filters;
+}
+
+interface SchedulesPageResult {
+  data?: ScheduleProps[] | null;
+  included?: { type: string; id: string }[];
+  meta?: MetaDataProps;
+  error?: unknown;
+}
+
+/** Builds Scheduled-tab rows + meta from a `getSchedulesPage` result (advanced/Cloud path). */
+export function buildScheduledTabRows(
+  result: SchedulesPageResult | null | undefined,
+  now: Date,
+): { data: ScanProps[]; meta?: MetaDataProps } {
+  if (!result || result.error) return { data: [] };
+
+  const providerById = new Map(
+    ((result.included ?? []) as ProviderProps[])
+      .filter((resource) => resource.type === "providers")
+      .map((provider) => [provider.id, provider]),
+  );
+
+  const data = (result.data ?? []).map((schedule) =>
+    mapScheduleToScanRow(schedule, providerById.get(schedule.id), now),
+  );
+
+  return { data, meta: result.meta };
 }
 
 /** Maps a `/schedules` resource (1:1 with a provider) to the Scheduled-tab row shape. */

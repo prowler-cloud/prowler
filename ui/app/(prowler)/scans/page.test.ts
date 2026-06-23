@@ -34,7 +34,7 @@ describe("scans page scheduled tab source", () => {
   });
 
   it("maps schedule resources to rows and delegates pagination to the endpoint", () => {
-    expect(source).toContain("mapScheduleToScanRow");
+    expect(source).toContain("buildScheduledTabRows");
     expect(source).toContain("pickScheduleProviderFilters");
   });
 });

@@ -13,6 +13,7 @@ import {
 import {
   appendPendingScheduleRowsToPage,
   buildPendingScheduleRows,
+  buildScheduledTabRows,
   formatScanDuration,
   getScanAlias,
   getScanFindingsSummary,
@@ -446,6 +447,39 @@ describe("buildPendingScheduleRows", () => {
 
       expect(row.attributes.scheduled_at).toBeNull();
       expect(row.pendingSchedule?.nextScanAt).toBeNull();
+    });
+  });
+
+  describe("buildScheduledTabRows", () => {
+    const schedule: ScheduleProps = {
+      type: "schedules",
+      id: "p1",
+      attributes: {
+        ...weeklySchedule,
+        next_scan_at: "2026-06-15T00:00:00Z",
+        last_scan_at: null,
+      },
+      relationships: { provider: { data: { type: "providers", id: "p1" } } },
+    };
+
+    it("maps schedule data and passes meta through verbatim", () => {
+      const meta = makeMeta({ page: 1, pages: 3, count: 25 });
+
+      const result = buildScheduledTabRows(
+        { data: [schedule], included: [makeProvider("p1")], meta },
+        now,
+      );
+
+      expect(result.data.map((row) => row.id)).toEqual(["schedule-p1"]);
+      expect(result.data[0].providerInfo?.uid).toBe("uid-p1");
+      expect(result.meta).toBe(meta);
+    });
+
+    it("returns an empty result on error or missing data", () => {
+      expect(buildScheduledTabRows({ error: "boom" }, now)).toEqual({
+        data: [],
+      });
+      expect(buildScheduledTabRows(null, now)).toEqual({ data: [] });
     });
   });
 });
