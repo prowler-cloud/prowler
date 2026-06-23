@@ -1117,7 +1117,9 @@
           "storage_blob_versioning_is_enabled",
           "storage_geo_redundant_enabled",
           "vm_scaleset_associated_with_load_balancer",
-          "vm_scaleset_not_empty"
+          "vm_scaleset_not_empty",
+          "cosmosdb_account_automatic_failover_enabled",
+          "cosmosdb_account_backup_policy_continuous"
         ],
         "gcp": [
           "compute_instance_automatic_restart_enabled",
@@ -1650,6 +1652,7 @@
           "cloudfront_distributions_origin_traffic_encrypted",
           "cloudfront_distributions_custom_ssl_certificate",
           "transfer_server_in_transit_encryption_enabled",
+          "transfer_server_pqc_ssh_kex_enabled",
           "sagemaker_notebook_instance_encryption_enabled",
           "sagemaker_training_jobs_volume_and_output_encryption_enabled",
           "workspaces_volume_encryption_enabled",
@@ -1843,6 +1846,7 @@
           "acm_certificates_with_secure_key_algorithms",
           "elb_insecure_ssl_ciphers",
           "elbv2_insecure_ssl_ciphers",
+          "transfer_server_pqc_ssh_kex_enabled",
           "cloudfront_distributions_using_deprecated_ssl_protocols"
         ],
         "azure": [

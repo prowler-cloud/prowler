@@ -18,6 +18,9 @@ def get_cis_table(
     compliance_overview: bool,
 ):
     sections = {}
+    section_muted_seen = {}
+    section_split_seen = {}
+    provider = ""
     cis_compliance_table = {
         "Provider": [],
         "Section": [],
@@ -38,6 +41,7 @@ def get_cis_table(
         for compliance in check_compliances:
             version_in_name = compliance_framework.split("_")[1]
             if compliance.Framework == "CIS" and version_in_name in compliance.Version:
+                provider = compliance.Provider
                 for requirement in compliance.Requirements:
                     # A requirement whose configurable checks ran with an invalid
                     # config can't be trusted: treat the finding as FAIL.
@@ -57,9 +61,19 @@ def get_cis_table(
                                 "Level 2": {"FAIL": 0, "PASS": 0},
                                 "Muted": 0,
                             }
+                            section_muted_seen[section] = set()
+                            section_split_seen[section] = {
+                                "Level 1": set(),
+                                "Level 2": set(),
+                            }
                         if finding.muted:
+                            # Overview total: count each finding once per framework
                             if index not in muted_count:
                                 muted_count.append(index)
+                            # Per-section Muted: count each finding once per section
+                            # it belongs to (a finding can map to several sections).
+                            if index not in section_muted_seen[section]:
+                                section_muted_seen[section].add(index)
                                 sections[section]["Muted"] += 1
                         else:
                             if effective_status == "FAIL" and index not in fail_count:
@@ -67,13 +81,21 @@ def get_cis_table(
                             elif effective_status == "PASS" and index not in pass_count:
                                 pass_count.append(index)
                         if "Level 1" in attribute.Profile:
-                            if not finding.muted:
+                            if (
+                                not finding.muted
+                                and index not in section_split_seen[section]["Level 1"]
+                            ):
+                                section_split_seen[section]["Level 1"].add(index)
                                 if effective_status == "FAIL":
                                     sections[section]["Level 1"]["FAIL"] += 1
                                 else:
                                     sections[section]["Level 1"]["PASS"] += 1
                         elif "Level 2" in attribute.Profile:
-                            if not finding.muted:
+                            if (
+                                not finding.muted
+                                and index not in section_split_seen[section]["Level 2"]
+                            ):
+                                section_split_seen[section]["Level 2"].add(index)
                                 if effective_status == "FAIL":
                                     sections[section]["Level 2"]["FAIL"] += 1
                                 else:
@@ -82,7 +104,7 @@ def get_cis_table(
     # Add results to table
     sections = dict(sorted(sections.items()))
     for section in sections:
-        cis_compliance_table["Provider"].append(compliance.Provider)
+        cis_compliance_table["Provider"].append(provider)
         cis_compliance_table["Section"].append(section)
         if sections[section]["Level 1"]["FAIL"] > 0:
             cis_compliance_table["Level 1"].append(

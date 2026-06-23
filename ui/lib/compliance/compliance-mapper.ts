@@ -12,6 +12,7 @@ import { GenericCustomDetails } from "@/components/compliance/compliance-custom-
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
 import { KISACustomDetails } from "@/components/compliance/compliance-custom-details/kisa-details";
 import { MITRECustomDetails } from "@/components/compliance/compliance-custom-details/mitre-details";
+import { OktaIDaaSStigCustomDetails } from "@/components/compliance/compliance-custom-details/okta-idaas-stig-details";
 import { ThreatCustomDetails } from "@/components/compliance/compliance-custom-details/threat-details";
 import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
@@ -74,6 +75,10 @@ import {
   mapComplianceData as mapMITREComplianceData,
   toAccordionItems as toMITREAccordionItems,
 } from "./mitre";
+import {
+  mapComplianceData as mapOktaIDaaSStigComplianceData,
+  toAccordionItems as toOktaIDaaSStigAccordionItems,
+} from "./okta-idaas-stig";
 import {
   getTopFailedSections as getThreatScoreTopFailedSections,
   mapComplianceData as mapThetaComplianceData,
@@ -213,8 +218,17 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     getDetailsComponent: (requirement: Requirement) =>
       createElement(CSACustomDetails, { requirement }),
   },
+  "Okta-IDaaS-STIG": {
+    mapComplianceData: mapOktaIDaaSStigComplianceData,
+    toAccordionItems: toOktaIDaaSStigAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(OktaIDaaSStigCustomDetails, { requirement }),
+  },
   // DORA (Regulation (EU) 2022/2554) — universal framework keyed by the
-  // `framework` field of `prowler/compliance/dora.json` ("DORA"). Groups by
+  // `framework` field of `prowler/compliance/dora_2022_2554.json` ("DORA"). Groups by
   // Pillar (5 enum values) and surfaces Pillar / Article / ArticleTitle in
   // the requirement detail drawer.
   DORA: {

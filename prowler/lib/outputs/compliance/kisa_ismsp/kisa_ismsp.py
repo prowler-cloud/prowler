@@ -18,7 +18,9 @@ def get_kisa_ismsp_table(
     compliance_overview: bool,
 ):
     sections = {}
+    section_seen = {}
     sections_status = {}
+    provider = ""
     kisa_ismsp_compliance_table = {
         "Provider": [],
         "Section": [],
@@ -40,6 +42,7 @@ def get_kisa_ismsp_table(
                 compliance.Framework.startswith("KISA")
                 and compliance.Version in compliance_framework
             ):
+                provider = compliance.Provider
                 for requirement in compliance.Requirements:
                     # A requirement whose configurable checks ran with an invalid
                     # config can't be trusted: treat the finding as FAIL.
@@ -60,16 +63,28 @@ def get_kisa_ismsp_table(
                                 },
                                 "Muted": 0,
                             }
+                            section_seen[section] = set()
+
+                        # Overview totals: count each finding once per framework
                         if finding.muted:
                             if index not in muted_count:
                                 muted_count.append(index)
-                                sections[section]["Muted"] += 1
-                        else:
-                            if effective_status == "FAIL" and index not in fail_count:
+                        elif effective_status == "FAIL":
+                            if index not in fail_count:
                                 fail_count.append(index)
-                                sections[section]["Status"]["FAIL"] += 1
-                            elif effective_status == "PASS" and index not in pass_count:
+                        elif effective_status == "PASS":
+                            if index not in pass_count:
                                 pass_count.append(index)
+
+                        # Per-section counts: count each finding once per section
+                        # it belongs to (a finding can map to several sections).
+                        if index not in section_seen[section]:
+                            section_seen[section].add(index)
+                            if finding.muted:
+                                sections[section]["Muted"] += 1
+                            elif effective_status == "FAIL":
+                                sections[section]["Status"]["FAIL"] += 1
+                            elif effective_status == "PASS":
                                 sections[section]["Status"]["PASS"] += 1
 
     # Add results to table
@@ -87,7 +102,7 @@ def get_kisa_ismsp_table(
             else:
                 sections_status[section] = f"{Fore.GREEN}PASS{Style.RESET_ALL}"
     for section in sections:
-        kisa_ismsp_compliance_table["Provider"].append(compliance.Provider)
+        kisa_ismsp_compliance_table["Provider"].append(provider)
         kisa_ismsp_compliance_table["Section"].append(section)
         kisa_ismsp_compliance_table["Status"].append(sections_status[section])
         kisa_ismsp_compliance_table["Muted"].append(

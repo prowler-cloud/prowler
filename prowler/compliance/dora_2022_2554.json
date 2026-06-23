@@ -1,0 +1,1401 @@
+{
+  "framework": "DORA",
+  "name": "Digital Operational Resilience Act (Regulation (EU) 2022/2554)",
+  "version": "2022/2554",
+  "description": "The Digital Operational Resilience Act (DORA) is a European Union regulation (Regulation (EU) 2022/2554) that sets a uniform framework for the digital operational resilience of the EU financial sector. Mandatory since 17 January 2025, it applies to financial entities (banks, insurers, investment firms, payment institutions, etc.) and to ICT third-party service providers. DORA is structured around five pillars: ICT risk management, ICT-related incident reporting, digital operational resilience testing, ICT third-party risk management, and information sharing. This Prowler mapping covers the technical controls auditable from cloud configuration; the organisational, contractual and supervisory obligations defined in DORA must be addressed outside of Prowler.",
+  "icon": "dora",
+  "attributes_metadata": [
+    {
+      "key": "Pillar",
+      "label": "Pillar",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "ICT Risk Management",
+        "ICT-Related Incident Reporting",
+        "Digital Operational Resilience Testing",
+        "ICT Third-Party Risk Management",
+        "Information Sharing"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Article",
+      "label": "Article",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "ArticleTitle",
+      "label": "Article Title",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Pillar"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#003399",
+      "secondary_color": "#0055A5",
+      "bg_color": "#F0F4FA",
+      "group_by_field": "Pillar",
+      "sections": [
+        "ICT Risk Management",
+        "ICT-Related Incident Reporting",
+        "Digital Operational Resilience Testing",
+        "ICT Third-Party Risk Management",
+        "Information Sharing"
+      ],
+      "section_short_names": {
+        "ICT Risk Management": "ICT Risk Mgmt",
+        "ICT-Related Incident Reporting": "Incident Reporting",
+        "Digital Operational Resilience Testing": "Resilience Testing",
+        "ICT Third-Party Risk Management": "Third-Party Risk",
+        "Information Sharing": "Info Sharing"
+      },
+      "charts": [
+        {
+          "id": "pillar_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Pillar",
+          "title": "Compliance Score by DORA Pillar",
+          "y_label": "Pillar",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "DORA-Art5",
+      "name": "Governance and organisation",
+      "description": "Financial entities shall have a sound, comprehensive and well-documented ICT internal governance and control framework. Senior management is accountable for ICT risk and shall enforce strong identity, authentication and least-privilege policies for privileged identities, including the root account.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 5",
+        "ArticleTitle": "Governance and organisation"
+      },
+      "checks": {
+        "aws": [
+          "iam_avoid_root_usage",
+          "iam_no_root_access_key",
+          "iam_root_mfa_enabled",
+          "iam_root_hardware_mfa_enabled",
+          "iam_root_credentials_management_enabled",
+          "iam_password_policy_minimum_length_14",
+          "iam_password_policy_lowercase",
+          "iam_password_policy_uppercase",
+          "iam_password_policy_number",
+          "iam_password_policy_symbol",
+          "iam_password_policy_reuse_24",
+          "iam_password_policy_expires_passwords_within_90_days_or_less",
+          "iam_securityaudit_role_created",
+          "iam_support_role_created",
+          "organizations_account_part_of_organizations",
+          "iam_user_mfa_enabled_console_access",
+          "iam_user_hardware_mfa_enabled"
+        ],
+        "azure": [
+          "entra_global_admin_in_less_than_five_users",
+          "entra_privileged_user_has_mfa",
+          "entra_non_privileged_user_has_mfa",
+          "entra_user_with_vm_access_has_mfa",
+          "entra_security_defaults_enabled",
+          "entra_conditional_access_policy_require_mfa_for_admin_portals",
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_users_cannot_create_microsoft_365_groups",
+          "iam_subscription_roles_owner_custom_not_created",
+          "iam_role_user_access_admin_restricted",
+          "iam_custom_role_has_permissions_to_administer_resource_locks"
+        ],
+        "gcp": [
+          "compute_project_os_login_enabled",
+          "compute_project_os_login_2fa_enabled",
+          "iam_no_service_roles_at_project_level",
+          "iam_sa_no_administrative_privileges",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_organization_essential_contacts_configured",
+          "iam_account_access_approval_enabled",
+          "iam_service_account_unused",
+          "compute_instance_default_service_account_in_use",
+          "compute_instance_default_service_account_in_use_with_full_api_access",
+          "gke_cluster_no_default_service_account"
+        ],
+        "alibabacloud": [
+          "ram_no_root_access_key",
+          "ram_user_mfa_enabled_console_access",
+          "ram_user_console_access_unused",
+          "ram_rotate_access_key_90_days",
+          "ram_password_policy_minimum_length",
+          "ram_password_policy_lowercase",
+          "ram_password_policy_uppercase",
+          "ram_password_policy_number",
+          "ram_password_policy_symbol",
+          "ram_password_policy_password_reuse_prevention",
+          "ram_password_policy_max_password_age",
+          "ram_password_policy_max_login_attempts",
+          "ram_policy_attached_only_to_group_or_roles",
+          "ram_policy_no_administrative_privileges"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art6",
+      "name": "ICT risk management framework",
+      "description": "Financial entities shall have an ICT risk management framework that is sound, comprehensive and well-documented, enabling them to address ICT risk quickly, efficiently and comprehensively and to ensure a high level of digital operational resilience. This includes continuous configuration recording, security findings aggregation and an enterprise-wide visibility plane.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 6",
+        "ArticleTitle": "ICT risk management framework"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled",
+          "config_recorder_using_aws_service_role",
+          "securityhub_enabled",
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "organizations_delegated_administrators",
+          "guardduty_centrally_managed",
+          "guardduty_delegated_admin_enabled_all_regions"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "policy_ensure_asc_enforcement_enabled"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled",
+          "iam_audit_logs_enabled",
+          "logging_sink_created",
+          "gcr_container_scanning_enabled",
+          "artifacts_container_analysis_enabled",
+          "iam_organization_essential_contacts_configured"
+        ],
+        "alibabacloud": [
+          "securitycenter_advanced_or_enterprise_edition",
+          "securitycenter_all_assets_agent_installed",
+          "securitycenter_vulnerability_scan_enabled",
+          "actiontrail_multi_region_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art7",
+      "name": "ICT systems, protocols and tools",
+      "description": "Financial entities shall use and maintain updated ICT systems, protocols and tools that are appropriate to the magnitude of operations supporting ICT functions, technologically resilient, and adequately equipped to securely process data. Cryptographic primitives, certificate hygiene and network segmentation are core to this requirement.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 7",
+        "ArticleTitle": "ICT systems, protocols and tools"
+      },
+      "checks": {
+        "aws": [
+          "acm_certificates_with_secure_key_algorithms",
+          "acm_certificates_transparency_logs_enabled",
+          "acm_certificates_expiration_check",
+          "ec2_ebs_default_encryption",
+          "kms_cmk_rotation_enabled",
+          "s3_bucket_secure_transport_policy",
+          "s3_bucket_default_encryption",
+          "s3_bucket_kms_encryption",
+          "vpc_subnet_separate_private_public",
+          "vpc_subnet_no_public_ip_by_default",
+          "elb_insecure_ssl_ciphers",
+          "elbv2_insecure_ssl_ciphers",
+          "elb_ssl_listeners",
+          "elbv2_ssl_listeners",
+          "cloudfront_distributions_using_deprecated_ssl_protocols",
+          "cloudfront_distributions_https_enabled",
+          "rds_instance_transport_encrypted"
+        ],
+        "azure": [
+          "storage_ensure_minimum_tls_version_12",
+          "storage_secure_transfer_required_is_enabled",
+          "storage_smb_channel_encryption_with_secure_algorithm",
+          "storage_smb_protocol_version_is_latest",
+          "app_minimum_tls_version_12",
+          "app_ensure_http_is_redirected_to_https",
+          "app_ensure_using_http20",
+          "sqlserver_recommended_minimal_tls_version",
+          "mysql_flexible_server_minimum_tls_version_12",
+          "mysql_flexible_server_ssl_connection_enabled",
+          "postgresql_flexible_server_enforce_ssl_enabled",
+          "keyvault_key_rotation_enabled",
+          "storage_key_rotation_90_days",
+          "aks_network_policy_enabled"
+        ],
+        "gcp": [
+          "cloudsql_instance_ssl_connections",
+          "compute_instance_encryption_with_csek_enabled",
+          "compute_instance_confidential_computing_enabled",
+          "bigquery_dataset_cmk_encryption",
+          "bigquery_table_cmk_encryption",
+          "dataproc_encrypted_with_cmks_disabled",
+          "kms_key_rotation_enabled",
+          "kms_key_rotation_max_90_days",
+          "dns_dnssec_disabled",
+          "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+          "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+          "compute_network_not_legacy",
+          "compute_network_default_in_use",
+          "compute_instance_single_network_interface"
+        ],
+        "cloudflare": [
+          "zone_universal_ssl_enabled",
+          "zone_ssl_strict",
+          "zone_min_tls_version_secure",
+          "zone_tls_1_3_enabled",
+          "zone_hsts_enabled",
+          "zone_https_redirect_enabled",
+          "zone_automatic_https_rewrites_enabled",
+          "zone_development_mode_disabled",
+          "zone_record_caa_exists",
+          "zone_dnssec_enabled"
+        ],
+        "alibabacloud": [
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_ssl_enabled",
+          "rds_instance_tde_enabled",
+          "rds_instance_tde_key_custom",
+          "ecs_attached_disk_encrypted",
+          "ecs_unattached_disk_encrypted",
+          "ecs_instance_no_legacy_network"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        },
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        },
+        {
+          "Check": "storage_smb_channel_encryption_with_secure_algorithm",
+          "ConfigKey": "recommended_smb_channel_encryption_algorithms",
+          "Operator": "subset",
+          "Value": [
+            "AES-256-GCM"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art8",
+      "name": "Identification",
+      "description": "Financial entities shall identify, classify and adequately document all ICT supported business functions, roles and responsibilities, the information assets and ICT assets supporting them, and their interdependencies. They shall on a continuous basis identify all sources of ICT risk, in particular the risk exposure to and from other financial entities.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 8",
+        "ArticleTitle": "Identification"
+      },
+      "checks": {
+        "aws": [
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "macie_is_enabled",
+          "macie_automated_sensitive_data_discovery_enabled",
+          "ec2_securitygroup_not_used",
+          "ec2_elastic_ip_unassigned",
+          "ec2_networkacl_unused",
+          "secretsmanager_secret_unused"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "network_watcher_enabled",
+          "network_public_ip_shodan",
+          "vm_scaleset_not_empty"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled",
+          "iam_service_account_unused",
+          "iam_sa_user_managed_key_unused",
+          "apikeys_key_exists",
+          "compute_instance_suspended_without_persistent_disks",
+          "compute_public_address_shodan"
+        ],
+        "cloudflare": [
+          "dns_record_no_wildcard",
+          "dns_record_no_internal_ip",
+          "dns_record_cname_target_valid"
+        ],
+        "alibabacloud": [
+          "securitycenter_all_assets_agent_installed",
+          "ram_user_console_access_unused"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art9",
+      "name": "Protection and prevention",
+      "description": "Financial entities shall continuously monitor and control the security and functioning of ICT systems and tools and minimise the impact of ICT risk by deploying appropriate ICT security tools, policies and procedures. Encryption at rest and in transit, blocking of public exposure, network access controls, secret management and instance hardening are central to this article.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 9",
+        "ArticleTitle": "Protection and prevention"
+      },
+      "checks": {
+        "aws": [
+          "kms_key_not_publicly_accessible",
+          "ec2_ebs_volume_encryption",
+          "ec2_ebs_snapshots_encrypted",
+          "ec2_ebs_public_snapshot",
+          "ec2_ebs_snapshot_account_block_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_level_public_access_block",
+          "s3_bucket_public_access",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_write_acl",
+          "s3_bucket_public_list_acl",
+          "s3_bucket_acl_prohibited",
+          "s3_access_point_public_access_block",
+          "ec2_securitygroup_default_restrict_traffic",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+          "rds_instance_storage_encrypted",
+          "rds_cluster_storage_encrypted",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "secretsmanager_not_publicly_accessible",
+          "secretsmanager_has_restrictive_resource_policy",
+          "secretsmanager_automatic_rotation_enabled",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "sns_topics_kms_encryption_at_rest_enabled",
+          "sns_topics_not_publicly_accessible",
+          "ec2_instance_imdsv2_enabled",
+          "ec2_instance_account_imdsv2_enabled",
+          "efs_encryption_at_rest_enabled",
+          "awslambda_function_not_publicly_accessible"
+        ],
+        "azure": [
+          "storage_account_public_network_access_disabled",
+          "storage_blob_public_access_level_is_disabled",
+          "storage_default_network_access_rule_is_denied",
+          "storage_ensure_private_endpoints_in_storage_accounts",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled",
+          "storage_account_key_access_disabled",
+          "storage_default_to_entra_authorization_enabled",
+          "containerregistry_not_publicly_accessible",
+          "containerregistry_uses_private_link",
+          "cosmosdb_account_use_private_endpoints",
+          "cosmosdb_account_firewall_use_selected_networks",
+          "keyvault_private_endpoints",
+          "keyvault_access_only_through_private_endpoints",
+          "keyvault_rbac_enabled",
+          "app_function_not_publicly_accessible",
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_public_access_disabled",
+          "aks_clusters_created_with_private_nodes",
+          "sqlserver_unrestricted_inbound_access",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk",
+          "vm_ensure_using_managed_disks",
+          "vm_trusted_launch_enabled",
+          "vm_linux_enforce_ssh_authentication",
+          "vm_jit_access_enabled",
+          "sqlserver_tde_encryption_enabled",
+          "sqlserver_tde_encrypted_with_cmk",
+          "databricks_workspace_cmk_encryption_enabled",
+          "network_ssh_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_http_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "network_bastion_host_exists"
+        ],
+        "gcp": [
+          "kms_key_not_publicly_accessible",
+          "bigquery_dataset_public_access",
+          "bigquery_dataset_cmk_encryption",
+          "bigquery_table_cmk_encryption",
+          "cloudstorage_bucket_public_access",
+          "cloudstorage_bucket_uniform_bucket_level_access",
+          "cloudstorage_uses_vpc_service_controls",
+          "cloudsql_instance_public_access",
+          "cloudsql_instance_public_ip",
+          "cloudsql_instance_private_ip_assignment",
+          "cloudsql_instance_ssl_connections",
+          "cloudsql_instance_cmek_encryption_enabled",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_instance_public_ip",
+          "compute_instance_shielded_vm_enabled",
+          "compute_instance_confidential_computing_enabled",
+          "compute_instance_serial_ports_in_use",
+          "compute_instance_block_project_wide_ssh_keys_disabled",
+          "compute_instance_ip_forwarding_is_enabled",
+          "compute_instance_encryption_with_csek_enabled",
+          "compute_image_not_publicly_shared",
+          "dataproc_encrypted_with_cmks_disabled",
+          "kms_key_rotation_enabled",
+          "gke_cluster_no_default_service_account",
+          "cloudfunction_function_inside_vpc",
+          "apikeys_api_restrictions_configured",
+          "apikeys_api_restricted_with_gemini_api",
+          "cloudsql_instance_mysql_local_infile_flag",
+          "cloudsql_instance_mysql_skip_show_database_flag",
+          "cloudsql_instance_sqlserver_contained_database_authentication_flag",
+          "cloudsql_instance_sqlserver_cross_db_ownership_chaining_flag",
+          "cloudsql_instance_sqlserver_external_scripts_enabled_flag",
+          "cloudsql_instance_sqlserver_remote_access_flag",
+          "cloudsql_instance_sqlserver_trace_flag",
+          "cloudsql_instance_sqlserver_user_connections_flag",
+          "cloudsql_instance_sqlserver_user_options_flag"
+        ],
+        "cloudflare": [
+          "zone_universal_ssl_enabled",
+          "zone_ssl_strict",
+          "zone_min_tls_version_secure",
+          "zone_tls_1_3_enabled",
+          "zone_hsts_enabled",
+          "zone_https_redirect_enabled",
+          "zone_automatic_https_rewrites_enabled",
+          "zone_record_caa_exists",
+          "zone_dnssec_enabled",
+          "zone_waf_enabled",
+          "zone_waf_owasp_ruleset_enabled",
+          "zone_firewall_blocking_rules_configured",
+          "zone_browser_integrity_check_enabled",
+          "zone_bot_fight_mode_enabled",
+          "zone_rate_limiting_enabled",
+          "zone_challenge_passage_configured",
+          "zone_ip_geolocation_enabled",
+          "dns_record_proxied",
+          "dns_record_no_internal_ip",
+          "dns_record_no_wildcard",
+          "dns_record_cname_target_valid",
+          "zone_record_spf_exists",
+          "zone_record_dkim_exists",
+          "zone_record_dmarc_exists"
+        ],
+        "alibabacloud": [
+          "oss_bucket_not_publicly_accessible",
+          "oss_bucket_secure_transport_enabled",
+          "actiontrail_oss_bucket_not_publicly_accessible",
+          "ecs_attached_disk_encrypted",
+          "ecs_unattached_disk_encrypted",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_instance_endpoint_protection_installed",
+          "rds_instance_no_public_access_whitelist",
+          "rds_instance_ssl_enabled",
+          "rds_instance_tde_enabled",
+          "rds_instance_tde_key_custom",
+          "cs_kubernetes_network_policy_enabled",
+          "cs_kubernetes_eni_multiple_ip_enabled",
+          "cs_kubernetes_private_cluster_enabled",
+          "cs_kubernetes_rbac_enabled",
+          "cs_kubernetes_dashboard_disabled"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art10",
+      "name": "Detection",
+      "description": "Financial entities shall have in place mechanisms to promptly detect anomalous activities, including ICT network performance issues and ICT-related incidents, and to identify potential single points of failure. Threat detection across compute, identity, storage and the API control plane is required for timely detection.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 10",
+        "ArticleTitle": "Detection"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "guardduty_ec2_malware_protection_enabled",
+          "guardduty_lambda_protection_enabled",
+          "guardduty_rds_protection_enabled",
+          "guardduty_s3_protection_enabled",
+          "guardduty_eks_audit_log_enabled",
+          "guardduty_eks_runtime_monitoring_enabled",
+          "securityhub_enabled",
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation",
+          "cloudtrail_insights_exist",
+          "inspector2_is_enabled",
+          "inspector2_active_findings_exist",
+          "ec2_elastic_ip_shodan"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_mcas_is_enabled",
+          "defender_container_images_scan_enabled",
+          "defender_container_images_resolved_vulnerabilities",
+          "sqlserver_microsoft_defender_enabled",
+          "apim_threat_detection_llm_jacking"
+        ],
+        "gcp": [
+          "compute_public_address_shodan",
+          "gcr_container_scanning_enabled",
+          "artifacts_container_analysis_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "compute_network_dns_logging_enabled",
+          "cloudstorage_bucket_logging_enabled",
+          "compute_loadbalancer_logging_enabled",
+          "logging_sink_created"
+        ],
+        "cloudflare": [
+          "zone_bot_fight_mode_enabled",
+          "zone_browser_integrity_check_enabled",
+          "zone_rate_limiting_enabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled",
+          "securitycenter_notification_enabled_high_risk",
+          "securitycenter_all_assets_agent_installed",
+          "ecs_instance_endpoint_protection_installed",
+          "cs_kubernetes_cloudmonitor_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art11",
+      "name": "Response and recovery",
+      "description": "Financial entities shall put in place a comprehensive ICT business continuity policy, including ICT response and recovery plans, that ensures the continuity of ICT-supported critical or important functions. Operational alarming, automated event routing and tested recovery actions are essential.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 11",
+        "ArticleTitle": "Response and recovery"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_alarm_actions_enabled",
+          "cloudwatch_alarm_actions_alarm_state_configured",
+          "eventbridge_global_endpoint_event_replication_enabled",
+          "sns_subscription_not_using_http_endpoints",
+          "backup_plans_exist",
+          "backup_vaults_exist",
+          "rds_instance_critical_event_subscription",
+          "rds_cluster_critical_event_subscription"
+        ],
+        "azure": [
+          "monitor_alert_service_health_exists",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_delete_security_solution",
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_attack_path_notifications_properly_configured",
+          "vm_backup_enabled",
+          "vm_sufficient_daily_backup_retention_period"
+        ],
+        "gcp": [
+          "compute_instance_automatic_restart_enabled",
+          "compute_instance_group_autohealing_enabled",
+          "compute_instance_on_host_maintenance_migrate",
+          "cloudsql_instance_high_availability_enabled",
+          "cloudsql_instance_automated_backups",
+          "compute_instance_deletion_protection_enabled",
+          "compute_instance_group_load_balancer_attached",
+          "compute_instance_preemptible_vm_disabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_notification_enabled_high_risk",
+          "cs_kubernetes_cluster_check_recent",
+          "cs_kubernetes_cluster_check_weekly"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art12",
+      "name": "Backup policies and procedures, restoration and recovery procedures and methods",
+      "description": "Financial entities shall develop and document backup policies and procedures specifying the scope of data subject to backup and the minimum frequency of the backup, as well as restoration and recovery procedures and methods. Backups must be encrypted, retained, and resources must be designed for recoverability across availability zones and regions.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 12",
+        "ArticleTitle": "Backup policies and procedures, restoration and recovery procedures and methods"
+      },
+      "checks": {
+        "aws": [
+          "backup_plans_exist",
+          "backup_vaults_exist",
+          "backup_vaults_encrypted",
+          "backup_recovery_point_encrypted",
+          "backup_reportplans_exist",
+          "rds_instance_backup_enabled",
+          "rds_cluster_protected_by_backup_plan",
+          "rds_instance_protected_by_backup_plan",
+          "rds_instance_multi_az",
+          "rds_cluster_multi_az",
+          "rds_cluster_backtrack_enabled",
+          "rds_instance_deletion_protection",
+          "rds_cluster_deletion_protection",
+          "rds_snapshots_encrypted",
+          "s3_bucket_object_versioning",
+          "s3_bucket_object_lock",
+          "s3_bucket_cross_region_replication",
+          "s3_bucket_no_mfa_delete",
+          "dynamodb_tables_pitr_enabled",
+          "dynamodb_table_deletion_protection_enabled",
+          "ec2_ebs_volume_protected_by_backup_plan",
+          "ec2_ebs_volume_snapshots_exists",
+          "autoscaling_group_multiple_az",
+          "elb_is_in_multiple_az",
+          "elbv2_is_in_multiple_az",
+          "cloudfront_distributions_multiple_origin_failover_configured",
+          "dynamodb_table_protected_by_backup_plan"
+        ],
+        "azure": [
+          "vm_backup_enabled",
+          "vm_sufficient_daily_backup_retention_period",
+          "vm_ensure_using_managed_disks",
+          "storage_ensure_soft_delete_is_enabled",
+          "storage_ensure_file_shares_soft_delete_is_enabled",
+          "storage_blob_versioning_is_enabled",
+          "storage_geo_redundant_enabled",
+          "keyvault_recoverable"
+        ],
+        "gcp": [
+          "cloudsql_instance_automated_backups",
+          "cloudsql_instance_high_availability_enabled",
+          "cloudstorage_bucket_versioning_enabled",
+          "cloudstorage_bucket_soft_delete_enabled",
+          "cloudstorage_bucket_lifecycle_management_enabled",
+          "cloudstorage_bucket_sufficient_retention_period",
+          "compute_instance_group_multiple_zones",
+          "compute_instance_disk_auto_delete_disabled",
+          "compute_instance_deletion_protection_enabled",
+          "compute_snapshot_not_outdated",
+          "compute_instance_suspended_without_persistent_disks"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art13",
+      "name": "Learning and evolving",
+      "description": "Financial entities shall have in place capabilities and staff to gather information on vulnerabilities and cyber threats, perform post ICT-related incident reviews, and continuously feed lessons learnt back into the ICT risk assessment process. Findings aggregation and continuous insights drive this cycle.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 13",
+        "ArticleTitle": "Learning and evolving"
+      },
+      "checks": {
+        "aws": [
+          "securityhub_enabled",
+          "guardduty_no_high_severity_findings",
+          "inspector2_active_findings_exist",
+          "accessanalyzer_enabled_without_findings",
+          "cloudtrail_insights_exist"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_assessments_vm_endpoint_protection_installed",
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_system_updates_are_applied",
+          "sqlserver_vulnerability_assessment_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "sqlserver_va_scan_reports_configured"
+        ],
+        "gcp": [
+          "gcr_container_scanning_enabled",
+          "artifacts_container_analysis_enabled",
+          "iam_cloud_asset_inventory_enabled",
+          "logging_sink_created"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled",
+          "securitycenter_all_assets_agent_installed",
+          "ecs_instance_latest_os_patches_applied"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art14",
+      "name": "Communication",
+      "description": "As part of the ICT risk management framework, financial entities shall have in place crisis communication plans enabling a responsible disclosure of ICT-related incidents or major vulnerabilities to clients, counterparts and the public. Reliable, encrypted and access-controlled notification channels are required.",
+      "attributes": {
+        "Pillar": "ICT Risk Management",
+        "Article": "Article 14",
+        "ArticleTitle": "Communication"
+      },
+      "checks": {
+        "aws": [
+          "sns_topics_kms_encryption_at_rest_enabled",
+          "sns_topics_not_publicly_accessible",
+          "sns_subscription_not_using_http_endpoints",
+          "eventbridge_bus_exposed",
+          "eventbridge_bus_cross_account_access",
+          "eventbridge_schema_registry_cross_account_access",
+          "cloudwatch_alarm_actions_enabled",
+          "cloudwatch_alarm_actions_alarm_state_configured"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_attack_path_notifications_properly_configured",
+          "monitor_alert_service_health_exists"
+        ],
+        "gcp": [
+          "iam_organization_essential_contacts_configured",
+          "logging_sink_created",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_notification_enabled_high_risk"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art17",
+      "name": "ICT-related incident management process",
+      "description": "Financial entities shall define, establish and implement an ICT-related incident management process to detect, manage and notify ICT-related incidents. Comprehensive trail logging, log integrity protection, retention and centralisation of ICT events are foundational requirements.",
+      "attributes": {
+        "Pillar": "ICT-Related Incident Reporting",
+        "Article": "Article 17",
+        "ArticleTitle": "ICT-related incident management process"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_multi_region_enabled_logging_management_events",
+          "cloudtrail_kms_encryption_enabled",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_logs_s3_bucket_access_logging_enabled",
+          "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "cloudtrail_bucket_requires_mfa_delete",
+          "cloudtrail_bedrock_logging_enabled",
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "cloudwatch_log_group_no_secrets_in_logs",
+          "cloudwatch_log_group_not_publicly_accessible",
+          "vpc_flow_logs_enabled",
+          "ec2_client_vpn_endpoint_connection_logging_enabled",
+          "route53_public_hosted_zones_cloudwatch_logging_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "cloudfront_distributions_logging_enabled",
+          "s3_bucket_server_access_logging_enabled"
+        ],
+        "azure": [
+          "monitor_diagnostic_settings_exists",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_storage_account_with_activity_logs_is_private",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "keyvault_logging_enabled",
+          "sqlserver_auditing_enabled",
+          "sqlserver_auditing_retention_90_days",
+          "mysql_flexible_server_audit_log_enabled",
+          "mysql_flexible_server_audit_log_connection_activated",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on",
+          "postgresql_flexible_server_log_retention_days_greater_3",
+          "app_http_logs_enabled",
+          "app_function_application_insights_enabled",
+          "appinsights_ensure_is_configured"
+        ],
+        "gcp": [
+          "iam_audit_logs_enabled",
+          "cloudstorage_audit_logs_enabled",
+          "logging_sink_created",
+          "cloudstorage_bucket_logging_enabled",
+          "cloudstorage_bucket_log_retention_policy_lock",
+          "cloudstorage_bucket_sufficient_retention_period",
+          "compute_subnet_flow_logs_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_loadbalancer_logging_enabled",
+          "cloudsql_instance_postgres_enable_pgaudit_flag",
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudsql_instance_postgres_log_statement_flag",
+          "cloudsql_instance_postgres_log_min_messages_flag",
+          "cloudsql_instance_postgres_log_error_verbosity_flag",
+          "cloudsql_instance_postgres_log_min_error_statement_flag",
+          "cloudsql_instance_postgres_log_min_duration_statement_flag"
+        ],
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "actiontrail_oss_bucket_not_publicly_accessible",
+          "oss_bucket_logging_enabled",
+          "sls_logstore_retention_period",
+          "vpc_flow_logs_enabled",
+          "cs_kubernetes_log_service_enabled",
+          "rds_instance_sql_audit_enabled",
+          "rds_instance_sql_audit_retention",
+          "rds_instance_postgresql_log_connections_enabled",
+          "rds_instance_postgresql_log_disconnections_enabled",
+          "rds_instance_postgresql_log_duration_enabled"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art18",
+      "name": "Classification of ICT-related incidents and cyber threats",
+      "description": "Financial entities shall classify ICT-related incidents and shall determine their impact based on criteria such as the number of clients affected, duration, geographical spread, data losses, and criticality of the services affected. Severity-aware threat detection across the estate underpins this classification.",
+      "attributes": {
+        "Pillar": "ICT-Related Incident Reporting",
+        "Article": "Article 18",
+        "ArticleTitle": "Classification of ICT-related incidents and cyber threats"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_no_high_severity_findings",
+          "guardduty_centrally_managed",
+          "guardduty_delegated_admin_enabled_all_regions",
+          "securityhub_enabled",
+          "inspector2_active_findings_exist",
+          "accessanalyzer_enabled_without_findings",
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation"
+        ],
+        "azure": [
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_attack_path_notifications_properly_configured",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_mcas_is_enabled",
+          "sqlserver_microsoft_defender_enabled",
+          "apim_threat_detection_llm_jacking"
+        ],
+        "gcp": [
+          "gcr_container_scanning_enabled",
+          "artifacts_container_analysis_enabled",
+          "compute_public_address_shodan",
+          "iam_cloud_asset_inventory_enabled",
+          "iam_audit_logs_enabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_notification_enabled_high_risk",
+          "securitycenter_vulnerability_scan_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art19",
+      "name": "Reporting of major ICT-related incidents and voluntary notification of significant cyber threats",
+      "description": "Financial entities shall report major ICT-related incidents to the relevant competent authority and may, on a voluntary basis, notify significant cyber threats. Detective metric filters, change-tracking alarms and reliable notification topics are needed to surface and route reportable events.",
+      "attributes": {
+        "Pillar": "ICT-Related Incident Reporting",
+        "Article": "Article 19",
+        "ArticleTitle": "Reporting of major ICT-related incidents and voluntary notification of significant cyber threats"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_log_metric_filter_authentication_failures",
+          "cloudwatch_log_metric_filter_unauthorized_api_calls",
+          "cloudwatch_log_metric_filter_root_usage",
+          "cloudwatch_log_metric_filter_sign_in_without_mfa",
+          "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+          "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+          "cloudwatch_log_metric_filter_policy_changes",
+          "cloudwatch_log_metric_filter_security_group_changes",
+          "cloudwatch_log_metric_filter_aws_organizations_changes",
+          "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "sns_subscription_not_using_http_endpoints"
+        ],
+        "azure": [
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_sqlserver_fr",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_service_health_exists",
+          "defender_additional_email_configured_with_a_security_contact"
+        ],
+        "gcp": [
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+          "iam_organization_essential_contacts_configured",
+          "logging_sink_created"
+        ],
+        "alibabacloud": [
+          "sls_management_console_authentication_failures_alert_enabled",
+          "sls_management_console_signin_without_mfa_alert_enabled",
+          "sls_root_account_usage_alert_enabled",
+          "sls_unauthorized_api_calls_alert_enabled",
+          "sls_ram_role_changes_alert_enabled",
+          "sls_oss_bucket_policy_changes_alert_enabled",
+          "sls_oss_permission_changes_alert_enabled",
+          "sls_rds_instance_configuration_changes_alert_enabled",
+          "sls_security_group_changes_alert_enabled",
+          "sls_vpc_changes_alert_enabled",
+          "sls_vpc_network_route_changes_alert_enabled",
+          "sls_cloud_firewall_changes_alert_enabled",
+          "sls_customer_created_cmk_changes_alert_enabled"
+        ]
+      }
+    },
+    {
+      "id": "DORA-Art24",
+      "name": "General requirements for the performance of digital operational resilience testing",
+      "description": "Financial entities shall establish, maintain and review a sound and comprehensive digital operational resilience testing programme, as an integral part of the ICT risk management framework. Continuous vulnerability discovery, configuration assessment and instance manageability are foundational.",
+      "attributes": {
+        "Pillar": "Digital Operational Resilience Testing",
+        "Article": "Article 24",
+        "ArticleTitle": "General requirements for the performance of digital operational resilience testing"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_is_enabled",
+          "inspector2_active_findings_exist",
+          "securityhub_enabled",
+          "ec2_instance_managed_by_ssm",
+          "ec2_instance_with_outdated_ami",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_ensure_system_updates_are_applied",
+          "defender_container_images_scan_enabled",
+          "defender_assessments_vm_endpoint_protection_installed",
+          "sqlserver_vulnerability_assessment_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "vm_ensure_using_approved_images",
+          "vm_desired_sku_size"
+        ],
+        "gcp": [
+          "gcr_container_scanning_enabled",
+          "artifacts_container_analysis_enabled",
+          "compute_instance_shielded_vm_enabled",
+          "compute_snapshot_not_outdated",
+          "compute_public_address_shodan"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled",
+          "securitycenter_advanced_or_enterprise_edition",
+          "ecs_instance_latest_os_patches_applied",
+          "cs_kubernetes_cluster_check_recent",
+          "cs_kubernetes_cluster_check_weekly"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art25",
+      "name": "Testing of ICT tools and systems",
+      "description": "Financial entities shall ensure that tests are undertaken on ICT tools and systems, on critical ICT systems supporting all critical or important functions, at least yearly. Vulnerability assessments, deprecated component detection and certificate hygiene must be tracked.",
+      "attributes": {
+        "Pillar": "Digital Operational Resilience Testing",
+        "Article": "Article 25",
+        "ArticleTitle": "Testing of ICT tools and systems"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_is_enabled",
+          "inspector2_active_findings_exist",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "config_recorder_all_regions_enabled",
+          "ec2_instance_with_outdated_ami",
+          "ec2_instance_managed_by_ssm",
+          "ec2_instance_paravirtual_type",
+          "rds_instance_deprecated_engine_version",
+          "acm_certificates_expiration_check",
+          "rds_instance_certificate_expiration",
+          "iam_no_expired_server_certificates_stored",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_resolved_vulnerabilities",
+          "sqlserver_vulnerability_assessment_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "sqlserver_va_scan_reports_configured",
+          "sqlserver_va_emails_notifications_admins_enabled",
+          "keyvault_key_expiration_set_in_non_rbac",
+          "keyvault_rbac_key_expiration_set",
+          "keyvault_non_rbac_secret_expiration_set",
+          "keyvault_rbac_secret_expiration_set",
+          "app_ensure_java_version_is_latest",
+          "app_ensure_php_version_is_latest",
+          "app_ensure_python_version_is_latest",
+          "app_function_latest_runtime_version",
+          "storage_smb_protocol_version_is_latest"
+        ],
+        "gcp": [
+          "gcr_container_scanning_enabled",
+          "artifacts_container_analysis_enabled",
+          "compute_snapshot_not_outdated",
+          "compute_network_not_legacy",
+          "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+          "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+          "apikeys_key_rotated_in_90_days",
+          "iam_sa_user_managed_key_rotate_90_days"
+        ],
+        "cloudflare": [
+          "zone_min_tls_version_secure"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled",
+          "ecs_instance_latest_os_patches_applied",
+          "ecs_instance_no_legacy_network"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art28",
+      "name": "General principles (ICT third-party risk)",
+      "description": "Financial entities shall manage ICT third-party risk as an integral component of ICT risk within their ICT risk management framework. Cross-account access, trust boundaries, organization-level controls and dependency visibility are critical to monitor third-party exposure on AWS.",
+      "attributes": {
+        "Pillar": "ICT Third-Party Risk Management",
+        "Article": "Article 28",
+        "ArticleTitle": "General principles (ICT third-party risk)"
+      },
+      "checks": {
+        "aws": [
+          "iam_role_cross_service_confused_deputy_prevention",
+          "iam_role_cross_account_readonlyaccess_policy",
+          "iam_no_custom_policy_permissive_role_assumption",
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "s3_bucket_cross_account_access",
+          "dynamodb_table_cross_account_access",
+          "eventbridge_bus_cross_account_access",
+          "eventbridge_schema_registry_cross_account_access",
+          "cloudwatch_cross_account_sharing_disabled",
+          "organizations_delegated_administrators",
+          "organizations_account_part_of_organizations",
+          "organizations_scp_check_deny_regions",
+          "vpc_endpoint_connections_trust_boundaries",
+          "vpc_endpoint_services_allowed_principals_trust_boundaries",
+          "vpc_peering_routing_tables_with_least_privilege",
+          "awslambda_function_using_cross_account_layers"
+        ],
+        "azure": [
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_policy_user_consent_for_verified_apps",
+          "storage_cross_tenant_replication_disabled",
+          "containerregistry_uses_private_link",
+          "cosmosdb_account_use_private_endpoints",
+          "keyvault_access_only_through_private_endpoints",
+          "aks_clusters_created_with_private_nodes"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudstorage_bucket_public_access",
+          "kms_key_not_publicly_accessible",
+          "cloudstorage_uses_vpc_service_controls",
+          "cloudfunction_function_inside_vpc",
+          "iam_sa_no_user_managed_keys",
+          "iam_sa_no_administrative_privileges",
+          "iam_no_service_roles_at_project_level",
+          "apikeys_api_restrictions_configured",
+          "apikeys_api_restricted_with_gemini_api",
+          "compute_image_not_publicly_shared",
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "cloudflare": [
+          "zone_record_caa_exists",
+          "dns_record_cname_target_valid"
+        ],
+        "alibabacloud": [
+          "ram_policy_no_administrative_privileges",
+          "oss_bucket_not_publicly_accessible",
+          "actiontrail_oss_bucket_not_publicly_accessible"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art30",
+      "name": "Key contractual provisions",
+      "description": "Contractual arrangements with ICT third-party service providers shall be set out in writing and include, at minimum, agreed service levels and clear allocation of rights and obligations. Privilege boundaries, least-privilege policies and absence of administrative wildcards are the technical guardrails that enforce these contractual constraints inside AWS.",
+      "attributes": {
+        "Pillar": "ICT Third-Party Risk Management",
+        "Article": "Article 30",
+        "ArticleTitle": "Key contractual provisions"
+      },
+      "checks": {
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_customer_unattached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_inline_policy_allows_privilege_escalation",
+          "iam_policy_allows_privilege_escalation",
+          "iam_inline_policy_no_full_access_to_cloudtrail",
+          "iam_inline_policy_no_full_access_to_kms",
+          "iam_policy_no_full_access_to_cloudtrail",
+          "iam_policy_no_full_access_to_kms",
+          "iam_role_administratoraccess_policy",
+          "iam_user_administrator_access_policy",
+          "iam_group_administrator_access_policy",
+          "iam_administrator_access_with_mfa",
+          "iam_policy_attached_only_to_group_or_roles",
+          "accessanalyzer_enabled"
+        ],
+        "azure": [
+          "iam_subscription_roles_owner_custom_not_created",
+          "iam_role_user_access_admin_restricted",
+          "iam_custom_role_has_permissions_to_administer_resource_locks",
+          "entra_global_admin_in_less_than_five_users",
+          "app_function_identity_without_admin_privileges",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps"
+        ],
+        "gcp": [
+          "iam_sa_no_administrative_privileges",
+          "iam_no_service_roles_at_project_level",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_user_managed_keys",
+          "compute_instance_default_service_account_in_use",
+          "compute_instance_default_service_account_in_use_with_full_api_access",
+          "gke_cluster_no_default_service_account",
+          "iam_account_access_approval_enabled",
+          "apikeys_api_restrictions_configured"
+        ],
+        "alibabacloud": [
+          "ram_policy_no_administrative_privileges",
+          "ram_policy_attached_only_to_group_or_roles",
+          "ram_no_root_access_key"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "DORA-Art45",
+      "name": "Information-sharing arrangements on cyber threat information and intelligence",
+      "description": "Financial entities may exchange amongst themselves cyber threat information and intelligence, including indicators of compromise, tactics, techniques and procedures, cyber security alerts and configuration tools. Centralised threat detection, sensitive data discovery and trail-based intelligence enable participation in such information-sharing arrangements.",
+      "attributes": {
+        "Pillar": "Information Sharing",
+        "Article": "Article 45",
+        "ArticleTitle": "Information-sharing arrangements on cyber threat information and intelligence"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_centrally_managed",
+          "securityhub_enabled",
+          "macie_is_enabled",
+          "macie_automated_sensitive_data_discovery_enabled",
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation",
+          "accessanalyzer_enabled_without_findings"
+        ],
+        "azure": [
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_attack_path_notifications_properly_configured",
+          "sqlserver_microsoft_defender_enabled",
+          "apim_threat_detection_llm_jacking"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled",
+          "iam_audit_logs_enabled",
+          "gcr_container_scanning_enabled",
+          "artifacts_container_analysis_enabled",
+          "compute_public_address_shodan",
+          "logging_sink_created"
+        ],
+        "alibabacloud": [
+          "securitycenter_advanced_or_enterprise_edition",
+          "securitycenter_notification_enabled_high_risk",
+          "actiontrail_multi_region_enabled",
+          "sls_logstore_retention_period"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    }
+  ]
+}

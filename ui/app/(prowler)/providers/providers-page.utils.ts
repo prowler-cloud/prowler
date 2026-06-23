@@ -4,10 +4,16 @@ import {
 } from "@/actions/organizations/organizations";
 import { getAllProviders, getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
+import { getSchedules } from "@/actions/schedules";
 import {
   extractFiltersAndQuery,
   extractSortAndKey,
 } from "@/lib/helper-filters";
+import {
+  buildProviderScheduleSummary,
+  buildSchedulesByProviderId,
+  isScheduleConfigured,
+} from "@/lib/schedules";
 import {
   FilterEntity,
   FilterOption,
@@ -27,7 +33,8 @@ import {
   ProvidersTableRow,
   ProvidersTableRowsInput,
 } from "@/types/providers-table";
-import { SCAN_TRIGGER, ScanProps } from "@/types/scans";
+import { SCAN_TRIGGER, ScanProps, ScanScheduleSummary } from "@/types/scans";
+import { ScheduleAttributes } from "@/types/schedules";
 
 const PROVIDERS_STATUS_MAPPING = [
   {
@@ -127,22 +134,46 @@ const buildScheduledProviderIds = (scans: ScanProps[]): Set<string> => {
   return scheduled;
 };
 
+// A schedule is backed by the Provider row itself, so its `/schedules` entry
+// exists before the first scheduled Scan is materialized — only enabled,
+// configured ones carry a displayable cadence summary.
+const buildProviderScheduleSummaryFor = (
+  attributes: ScheduleAttributes | undefined,
+  now: Date,
+): ScanScheduleSummary | undefined =>
+  attributes && attributes.scan_enabled && isScheduleConfigured(attributes)
+    ? buildProviderScheduleSummary(attributes, now)
+    : undefined;
+
 const enrichProviders = (
-  providersResponse?: ProvidersApiResponse,
-  scheduledProviderIds?: Set<string>,
+  providersResponse: ProvidersApiResponse | undefined,
+  scanScheduledProviderIds: Set<string>,
+  schedulesByProviderId: Record<string, ScheduleAttributes>,
 ): ProvidersProviderRow[] => {
   const providerGroupLookup = createProviderGroupLookup(providersResponse);
+  const now = new Date();
 
-  return (providersResponse?.data ?? []).map((provider) => ({
-    ...provider,
-    rowType: PROVIDERS_ROW_TYPE.PROVIDER,
-    groupNames:
-      provider.relationships.provider_groups.data.map(
-        (providerGroup: { id: string }) =>
-          providerGroupLookup.get(providerGroup.id) ?? "Unknown Group",
-      ) ?? [],
-    hasSchedule: scheduledProviderIds?.has(provider.id) ?? false,
-  }));
+  return (providersResponse?.data ?? []).map((provider) => {
+    const scheduleSummary = buildProviderScheduleSummaryFor(
+      schedulesByProviderId[provider.id],
+      now,
+    );
+
+    return {
+      ...provider,
+      rowType: PROVIDERS_ROW_TYPE.PROVIDER,
+      groupNames:
+        provider.relationships.provider_groups.data.map(
+          (providerGroup: { id: string }) =>
+            providerGroupLookup.get(providerGroup.id) ?? "Unknown Group",
+        ) ?? [],
+      // A fired scheduled scan OR a configured schedule that hasn't fired yet.
+      hasSchedule:
+        scanScheduledProviderIds.has(provider.id) ||
+        scheduleSummary !== undefined,
+      scheduleSummary,
+    };
+  });
 };
 
 const createOrganizationRow = ({
@@ -152,6 +183,7 @@ const createOrganizationRow = ({
   externalId,
   organizationId,
   parentExternalId,
+  providerIds,
   subRows,
 }: {
   externalId: string | null;
@@ -160,6 +192,7 @@ const createOrganizationRow = ({
   name: string;
   organizationId: string | null;
   parentExternalId: string | null;
+  providerIds: string[];
   subRows: ProvidersTableRow[];
 }): ProvidersOrganizationRow => ({
   id,
@@ -169,7 +202,8 @@ const createOrganizationRow = ({
   externalId,
   organizationId,
   parentExternalId,
-  providerCount: countProviderRows(subRows),
+  providerCount: providerIds.length,
+  providerIds,
   subRows,
 });
 
@@ -203,14 +237,14 @@ function getProviderRowsByIds({
     .filter((provider): provider is ProvidersProviderRow => Boolean(provider));
 }
 
-function countProviderRows(rows: ProvidersTableRow[]): number {
-  return rows.reduce((total, row) => {
-    if (row.rowType === PROVIDERS_ROW_TYPE.PROVIDER) {
-      return total + 1;
-    }
+function dedupeIds(ids: string[]): string[] {
+  return Array.from(new Set(ids));
+}
 
-    return total + countProviderRows(row.subRows);
-  }, 0);
+function collectOrganizationRowProviderIds(
+  rows: ProvidersOrganizationRow[],
+): string[] {
+  return dedupeIds(rows.flatMap((row) => row.providerIds));
 }
 
 function getOrganizationUnitRelationshipId(
@@ -277,6 +311,13 @@ function buildOrganizationUnitRows({
           ? providerRowsFromRelationships
           : (providersByOrganizationUnitId.get(organizationUnit.id) ?? []);
       const subRows = [...childOrganizationUnitRows, ...providerRows];
+      const directProviderIds =
+        providerRowsFromRelationships.length > 0
+          ? getRelationshipProviderIds(organizationUnit.relationships)
+          : providerRows.map((provider) => provider.id);
+      const childProviderIds = collectOrganizationRowProviderIds(
+        childOrganizationUnitRows,
+      );
 
       return createOrganizationRow({
         groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT,
@@ -285,10 +326,13 @@ function buildOrganizationUnitRows({
         externalId: organizationUnit.attributes.external_id,
         organizationId,
         parentExternalId: organizationUnit.attributes.parent_external_id,
+        providerIds: dedupeIds([...childProviderIds, ...directProviderIds]),
         subRows,
       });
     })
-    .filter((organizationUnitRow) => organizationUnitRow.subRows.length > 0);
+    .filter(
+      (organizationUnitRow) => organizationUnitRow.providerIds.length > 0,
+    );
 }
 
 export function buildProvidersTableRows({
@@ -387,6 +431,12 @@ export function buildProvidersTableRows({
               (provider) => !providersInOus.has(provider.id),
             );
       const subRows = [...organizationProviders, ...organizationUnitRows];
+      const directProviderIds =
+        organizationProvidersFromRelationships.length > 0
+          ? getRelationshipProviderIds(organization.relationships)
+          : organizationProviders.map((provider) => provider.id);
+      const organizationUnitProviderIds =
+        collectOrganizationRowProviderIds(organizationUnitRows);
 
       return createOrganizationRow({
         groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION,
@@ -395,10 +445,14 @@ export function buildProvidersTableRows({
         externalId: organization.attributes.external_id,
         organizationId: organization.id,
         parentExternalId: organization.attributes.root_external_id,
+        providerIds: dedupeIds([
+          ...directProviderIds,
+          ...organizationUnitProviderIds,
+        ]),
         subRows,
       });
     })
-    .filter((organizationRow) => organizationRow.subRows.length > 0);
+    .filter((organizationRow) => organizationRow.providerIds.length > 0);
 
   const assignedProviderIds = new Set<string>();
 
@@ -453,6 +507,7 @@ export async function loadProvidersAccountsViewData({
     providersResponse,
     allProvidersResponse,
     scansResponse,
+    schedulesResponse,
     organizationsResponse,
     organizationUnitsResponse,
   ] = await Promise.all([
@@ -468,7 +523,7 @@ export async function loadProvidersAccountsViewData({
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
     // TODO: Replace with a dedicated lightweight endpoint when available.
     resolveActionResult(getAllProviders()),
-    // Fetch active scheduled scans to determine daily schedule per provider
+    // Fetch active scheduled scans to flag providers whose schedule has fired.
     resolveActionResult(
       getScans({
         pageSize: 500,
@@ -478,6 +533,9 @@ export async function loadProvidersAccountsViewData({
         },
       }),
     ),
+    // Fetch configured schedules to also flag providers whose schedule has not
+    // fired yet (best-effort: absent in OSS, where the helper yields no ids).
+    resolveActionResult(getSchedules()),
     isCloud
       ? listOrganizationsSafe()
       : Promise.resolve(emptyOrganizationsResponse),
@@ -486,13 +544,18 @@ export async function loadProvidersAccountsViewData({
       : Promise.resolve(emptyOrganizationUnitsResponse),
   ]);
 
-  const scheduledProviderIds = buildScheduledProviderIds(
+  const scanScheduledProviderIds = buildScheduledProviderIds(
     scansResponse?.data ?? [],
   );
+  const schedulesByProviderId = buildSchedulesByProviderId(schedulesResponse);
 
   const orgs = organizationsResponse?.data ?? [];
   const ous = organizationUnitsResponse?.data ?? [];
-  const providers = enrichProviders(providersResponse, scheduledProviderIds);
+  const providers = enrichProviders(
+    providersResponse,
+    scanScheduledProviderIds,
+    schedulesByProviderId,
+  );
 
   const rows = buildProvidersTableRows({
     isCloud,

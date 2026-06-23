@@ -1,0 +1,572 @@
+from unittest import mock
+
+from prowler.providers.kubernetes.services.core.core_service import Container, Pod
+from tests.providers.kubernetes.kubernetes_fixtures import (
+    set_mocked_kubernetes_provider,
+)
+from tests.providers.kubernetes.services.core.conftest import (
+    make_container,
+    make_core_client,
+    make_pod,
+    run_check,
+)
+
+MODULE = "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed"
+CLASS = "core_image_tag_fixed"
+
+
+class Test_core_image_tag_fixed:
+    def test_no_pods(self):
+        core_client = mock.MagicMock()
+        core_client.pods = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    def test_image_tag_fixed(self):
+        container = Container(
+            name="test-container",
+            image="nginx:1.25.3",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={"test-container": container},
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].status_extended == (
+                "Pod test-pod has fixed image tags on all containers."
+            )
+            assert result[0].resource_id == "test-uid-1234"
+            assert result[0].resource_name == "test-pod"
+
+    def test_pod_without_containers(self):
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers=None,
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].status_extended == (
+                "Pod test-pod has fixed image tags on all containers."
+            )
+
+    def test_image_tag_latest(self):
+        container = Container(
+            name="test-container",
+            image="nginx:latest",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={"test-container": container},
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "does not use a fixed tag" in result[0].status_extended
+
+    def test_image_tag_blank(self):
+        container = Container(
+            name="test-container",
+            image="nginx",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={"test-container": container},
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "does not use a fixed tag" in result[0].status_extended
+
+    def test_image_with_digest(self):
+        container = Container(
+            name="test-container",
+            image="nginx@sha256:abc123def456",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={"test-container": container},
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_image_with_registry_port_and_no_tag(self):
+        container = Container(
+            name="test-container",
+            image="localhost:5000/nginx",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={"test-container": container},
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "does not use a fixed tag" in result[0].status_extended
+
+    def test_image_tag_uppercase_latest(self):
+        container = Container(
+            name="test-container",
+            image="nginx:Latest",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={"test-container": container},
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "does not use a fixed tag" in result[0].status_extended
+
+    def test_image_with_empty_tag(self):
+        container = Container(
+            name="test-container",
+            image="nginx:",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={"test-container": container},
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "does not use a fixed tag" in result[0].status_extended
+
+    def test_mixed_containers_fails_on_first_unfixed_image(self):
+        fixed_container = Container(
+            name="fixed-container",
+            image="nginx:1.25.3",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+        latest_container = Container(
+            name="latest-container",
+            image="busybox:latest",
+            command=None,
+            ports=None,
+            env=None,
+            security_context={},
+            resources=None,
+        )
+
+        pod = Pod(
+            name="test-pod",
+            uid="test-uid-1234",
+            namespace="default",
+            labels=None,
+            annotations=None,
+            node_name=None,
+            service_account=None,
+            status_phase="Running",
+            pod_ip="10.0.0.1",
+            host_ip="192.168.1.1",
+            host_pid=None,
+            host_ipc=None,
+            host_network=False,
+            security_context={},
+            containers={
+                "fixed-container": fixed_container,
+                "latest-container": latest_container,
+            },
+        )
+
+        core_client = mock.MagicMock()
+        core_client.pods = {"test-uid-1234": pod}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_kubernetes_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed.core_client",
+                new=core_client,
+            ),
+        ):
+            from prowler.providers.kubernetes.services.core.core_image_tag_fixed.core_image_tag_fixed import (
+                core_image_tag_fixed,
+            )
+
+            check = core_image_tag_fixed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == (
+                "Pod test-pod has container latest-container with image 'busybox:latest' that does not use a fixed tag."
+            )
+
+    def test_init_container_image_tag_latest(self):
+        pod = make_pod(
+            containers={"app": make_container(image="nginx:1.25.3")},
+            init_containers={
+                "init": make_container(name="init", image="busybox:latest")
+            },
+        )
+
+        result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
+
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended == (
+            "Pod test-pod has container init with image 'busybox:latest' that does not use a fixed tag."
+        )
+
+    def test_ephemeral_container_image_tag_blank(self):
+        pod = make_pod(
+            containers={"app": make_container(image="nginx:1.25.3")},
+            ephemeral_containers={
+                "debug": make_container(name="debug", image="busybox")
+            },
+        )
+
+        result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
+
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended == (
+            "Pod test-pod has container debug with image 'busybox' that does not use a fixed tag."
+        )
+
+    def test_init_and_ephemeral_image_tags_fixed_without_regular_containers(self):
+        pod = make_pod(
+            containers=None,
+            init_containers={"init": make_container(name="init", image="busybox:1.36")},
+            ephemeral_containers={
+                "debug": make_container(name="debug", image="debug@sha256:abc123")
+            },
+        )
+
+        result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
+
+        assert result[0].status == "PASS"
+        assert result[0].status_extended == (
+            "Pod test-pod has fixed image tags on all containers."
+        )
