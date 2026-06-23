@@ -248,6 +248,11 @@ describe("getSchedulesPage delegates pagination to the endpoint", () => {
     );
     // meta is propagated verbatim so the table paginates natively.
     expect(result?.meta?.pagination?.count).toBe(35);
+    // Never cached: the tab must reflect schedule deletes/edits immediately.
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ cache: "no-store" }),
+    );
   });
 
   it("normalizes array filter values into a CSV param", async () => {

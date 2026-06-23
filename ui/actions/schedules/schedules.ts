@@ -108,7 +108,11 @@ export const getSchedulesPage = async ({
   }
 
   try {
-    const response = await fetch(url.toString(), { headers });
+    // Always fresh: the tab must reflect schedule deletes/edits immediately.
+    const response = await fetch(url.toString(), {
+      headers,
+      cache: "no-store",
+    });
 
     return handleApiResponse(response);
   } catch (error) {
