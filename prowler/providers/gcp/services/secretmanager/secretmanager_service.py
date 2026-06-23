@@ -35,7 +35,7 @@ class SecretManager(GCPService):
                 while request is not None:
                     response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                     for secret in response.get("secrets", []):
-                        rotation = secret.get("rotation", {})
+                        rotation = secret.get("rotation") or {}
                         self.secrets.append(
                             Secret(
                                 id=secret["name"],

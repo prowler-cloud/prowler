@@ -31,34 +31,35 @@ class secretmanager_secret_rotation_enabled(Check):
                 resource_id=secret.name,
             )
 
-            rotation_days = None
+            rotation_seconds = None
             if secret.rotation_period:
                 try:
-                    rotation_days = int(float(secret.rotation_period[:-1])) // 86400
+                    rotation_seconds = float(secret.rotation_period[:-1])
                 except (ValueError, IndexError):
-                    rotation_days = None
+                    rotation_seconds = None
 
             rotation_overdue = False
-            if rotation_days is not None and secret.next_rotation_time:
+            if rotation_seconds is not None and secret.next_rotation_time:
                 try:
-                    try:
-                        next_rotation_time = datetime.datetime.strptime(
-                            secret.next_rotation_time, "%Y-%m-%dT%H:%M:%S.%fZ"
-                        )
-                    except ValueError:
-                        next_rotation_time = datetime.datetime.strptime(
-                            secret.next_rotation_time, "%Y-%m-%dT%H:%M:%SZ"
-                        )
-                    rotation_overdue = next_rotation_time < datetime.datetime.now()
+                    parsed = secret.next_rotation_time.replace("Z", "+00:00")
+                    next_rotation_time = datetime.datetime.fromisoformat(parsed)
+                    rotation_overdue = next_rotation_time < datetime.datetime.now(
+                        datetime.timezone.utc
+                    )
                 except (ValueError, AttributeError):
                     rotation_overdue = True
 
-            if rotation_days is None:
+            max_rotation_seconds = max_rotation_days * 86400
+            rotation_days = (
+                int(rotation_seconds // 86400) if rotation_seconds is not None else None
+            )
+
+            if rotation_seconds is None:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Secret {secret.name} does not have automatic rotation enabled."
                 )
-            elif rotation_days > max_rotation_days:
+            elif rotation_seconds > max_rotation_seconds:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Secret {secret.name} has rotation enabled but the period "

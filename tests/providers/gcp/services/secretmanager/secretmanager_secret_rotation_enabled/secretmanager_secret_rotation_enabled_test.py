@@ -122,6 +122,44 @@ class Test_secretmanager_secret_rotation_enabled:
             assert "exceeds the 90-day maximum" in result[0].status_extended
             assert result[0].resource_id == "secret-stale"
 
+    def test_rotation_period_one_second_over_max_fail(self):
+        """90 days + 1 second must fail — comparison is on seconds, not floored days."""
+        secretmanager_client = mock.MagicMock()
+        secretmanager_client.audit_config = {"secretmanager_max_rotation_days": 90}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                _CLIENT_PATH,
+                new=secretmanager_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.secretmanager.secretmanager_secret_rotation_enabled.secretmanager_secret_rotation_enabled import (
+                secretmanager_secret_rotation_enabled,
+            )
+            from prowler.providers.gcp.services.secretmanager.secretmanager_service import (
+                Secret,
+            )
+
+            # 90 days = 7_776_000 seconds. Add 1 second.
+            secretmanager_client.secrets = [
+                Secret(
+                    id=_secret_id("secret-90d-plus-1s"),
+                    name="secret-90d-plus-1s",
+                    project_id=GCP_PROJECT_ID,
+                    rotation_period="7776001s",
+                )
+            ]
+
+            check = secretmanager_secret_rotation_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "exceeds the 90-day maximum" in result[0].status_extended
+
     def test_no_rotation_fail(self):
         secretmanager_client = mock.MagicMock()
         secretmanager_client.audit_config = {"secretmanager_max_rotation_days": 90}
