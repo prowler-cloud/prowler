@@ -559,12 +559,11 @@ export function DataTableRowActions({
             icon={<Timer />}
             label="View Scan Jobs"
             onSelect={() => {
-              // Use the same key the scans filter bar binds to
-              // (`provider_uid__in`) so the provider is pre-selected in the UI,
-              // and URLSearchParams to encode UIDs that contain URL-unsafe chars
-              // (e.g. GitHub UIDs like https://github.com/org/repo).
+              // Same key the scans filter bar binds to (`provider__in`, by id) so
+              // the provider is pre-selected and the filter works on every tab,
+              // including Scheduled (whose endpoint only accepts provider id).
               const params = new URLSearchParams({
-                "filter[provider_uid__in]": providerUid,
+                "filter[provider__in]": providerId,
               });
               router.push(`/scans?${params.toString()}`);
             }}

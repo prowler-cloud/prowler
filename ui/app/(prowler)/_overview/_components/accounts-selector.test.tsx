@@ -2,6 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { FilterType } from "@/types/filters";
+
 import { AccountsSelector } from "./accounts-selector";
 
 const multiSelectContentSpy = vi.fn();
@@ -170,7 +172,10 @@ describe("AccountsSelector", () => {
 
   it("can use provider UID values for pages whose API filters by provider_uid__in", () => {
     render(
-      <AccountsSelector providers={providers} filterKey="provider_uid__in" />,
+      <AccountsSelector
+        providers={providers}
+        filterKey={FilterType.PROVIDER_UID}
+      />,
     );
 
     expect(
