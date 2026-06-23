@@ -15,18 +15,20 @@ declare global {
       NEXT_PUBLIC_API_DOCS_URL?: string;
       UI_API_DOCS_URL?: string;
 
-      // GTM
+      UI_GOOGLE_TAG_MANAGER_ENABLE?: "true" | "false";
       /** @deprecated use UI_GOOGLE_TAG_MANAGER_ID */
       NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID?: string;
       UI_GOOGLE_TAG_MANAGER_ID?: string;
 
-      // SENTRY
+      UI_SENTRY_ENABLE?: "true" | "false";
       /** @deprecated use UI_SENTRY_DSN */
       NEXT_PUBLIC_SENTRY_DSN?: string;
       UI_SENTRY_DSN?: string;
       /** @deprecated use UI_SENTRY_ENVIRONMENT */
       NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
       UI_SENTRY_ENVIRONMENT?: string;
+
+      BILLING_CLOUD_ENABLE?: "true" | "false";
 
       // Build-time public config
       NEXT_PUBLIC_IS_CLOUD_ENV?: "true" | "false";
@@ -44,9 +46,10 @@ declare global {
       SENTRY_PROJECT?: string;
       SENTRY_AUTH_TOKEN?: string;
 
-      // TODO Reserved runtime public config (registered now; no UI consumer yet)
+      UI_POSTHOG_ENABLE?: "true" | "false";
       POSTHOG_KEY?: string;
       POSTHOG_HOST?: string;
+      // TODO Reserved runtime public config (registered now; no UI consumer yet)
       REO_DEV_CLIENT_ID?: string;
 
       // Social OAuth
