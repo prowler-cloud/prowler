@@ -481,5 +481,21 @@ describe("buildPendingScheduleRows", () => {
       });
       expect(buildScheduledTabRows(null, now)).toEqual({ data: [] });
     });
+
+    it("drops unconfigured schedules even if the backend returns them", () => {
+      const unconfigured: ScheduleProps = {
+        ...schedule,
+        id: "p2",
+        attributes: { ...schedule.attributes, scan_hour: null },
+        relationships: { provider: { data: { type: "providers", id: "p2" } } },
+      };
+
+      const result = buildScheduledTabRows(
+        { data: [schedule, unconfigured], included: [], meta: undefined },
+        now,
+      );
+
+      expect(result.data.map((row) => row.id)).toEqual(["schedule-p1"]);
+    });
   });
 });
