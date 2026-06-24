@@ -1,3 +1,4 @@
+from math import isfinite
 from uuid import UUID
 
 from api.db_router import MainRouter
@@ -29,16 +30,29 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         except ValueError:
             raise AuthenticationFailed("Invalid API Key.")
 
-        if "_pk" not in payload or "_exp" not in payload:
+        if not isinstance(payload, dict):
             raise AuthenticationFailed("Invalid API Key.")
 
-        if payload["_exp"] < timezone.now().timestamp():
+        payload_pk = payload.get("_pk")
+        payload_exp = payload.get("_exp")
+        if (
+            not isinstance(payload_pk, str)
+            or isinstance(payload_exp, bool)
+            or not isinstance(payload_exp, (int, float))
+            or not isfinite(payload_exp)
+        ):
+            raise AuthenticationFailed("Invalid API Key.")
+
+        try:
+            api_key_pk = UUID(payload_pk)
+        except ValueError:
+            raise AuthenticationFailed("Invalid API Key.")
+
+        if payload_exp < timezone.now().timestamp():
             raise AuthenticationFailed("API Key has already expired.")
 
         try:
-            api_key = self.model.objects.using(MainRouter.admin_db).get(
-                id=payload["_pk"]
-            )
+            api_key = self.model.objects.using(MainRouter.admin_db).get(id=api_key_pk)
         except ObjectDoesNotExist:
             raise AuthenticationFailed("No entity matching this api key.")
 

@@ -90,6 +90,29 @@ class TestTenantAPIKeyAuthentication:
         assert manager_has_create_api_key
         assert all(manager_has_create_api_key)
 
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {"_pk": str(uuid4()), "_exp": "not-a-timestamp"},
+            {
+                "_pk": "not-a-uuid",
+                "_exp": (datetime.now(UTC) + timedelta(days=1)).timestamp(),
+            },
+            {"_pk": str(uuid4()), "_exp": True},
+        ],
+    )
+    def test_authenticate_credentials_rejects_malformed_payloads(
+        self, auth_backend, request_factory, payload
+    ):
+        """Malformed decrypted payloads fail as authentication errors."""
+        request = request_factory.get("/")
+        encrypted_key = auth_backend.key_crypto.generate(payload)
+
+        with pytest.raises(AuthenticationFailed) as exc_info:
+            auth_backend._authenticate_credentials(request, encrypted_key)
+
+        assert str(exc_info.value.detail) == "Invalid API Key."
+
     def test_authenticate_credentials_restores_manager_on_exception(
         self, auth_backend, request_factory
     ):
