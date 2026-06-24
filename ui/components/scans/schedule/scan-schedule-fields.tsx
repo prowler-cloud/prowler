@@ -17,6 +17,7 @@ import {
 } from "@/components/shadcn";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import {
+  formatDayOfMonth,
   formatScheduleHour,
   getBrowserTimezone,
   getNextScheduledRun,
@@ -59,20 +60,18 @@ interface ScanScheduleFieldsProps {
    * (interval/weekly/monthly) are disabled. Used for non-Cloud (OSS) accounts.
    */
   canUseAdvancedSchedule?: boolean;
-  /** Render the "Available in Prowler Cloud" upsell badge on locked controls. */
+  /** Render the "Available in Prowler Cloud" upsell badge in the header. */
   showCloudUpgradeBadge?: boolean;
 }
 
 function NumberSelect({
   label,
-  labelAddon,
   value,
   values,
   onChange,
   disabled,
 }: {
   label: string;
-  labelAddon?: ReactNode;
   value: number;
   values: ReadonlyArray<{ value: number; label: string }>;
   onChange: (value: number) => void;
@@ -80,10 +79,7 @@ function NumberSelect({
 }) {
   return (
     <Field>
-      <div className="flex items-center justify-between gap-2">
-        <FieldLabel>{label}</FieldLabel>
-        {labelAddon}
-      </div>
+      <FieldLabel>{label}</FieldLabel>
       <Select
         value={String(value)}
         onValueChange={(nextValue) => onChange(Number(nextValue))}
@@ -119,7 +115,7 @@ function getScheduleSummary({
     case SCHEDULE_FREQUENCY.WEEKLY:
       return `Weekly on ${SCHEDULE_WEEKDAY_LABELS[dayOfWeek] ?? SCHEDULE_WEEKDAY_LABELS[0]}`;
     case SCHEDULE_FREQUENCY.MONTHLY:
-      return `Monthly on day ${dayOfMonth}`;
+      return `Monthly on the ${formatDayOfMonth(dayOfMonth)}`;
     default:
       return "Daily";
   }
@@ -164,6 +160,7 @@ export function ScanScheduleFields({
           <h3 className="text-text-neutral-primary text-sm font-medium">
             Scan Schedule
           </h3>
+          {cloudUpgradeBadge}
         </div>
         {headerAction}
       </div>
@@ -175,7 +172,6 @@ export function ScanScheduleFields({
           render={({ field }) => (
             <NumberSelect
               label="Scan Time"
-              labelAddon={cloudUpgradeBadge}
               value={field.value}
               values={HOUR_OPTIONS}
               onChange={field.onChange}
@@ -189,10 +185,7 @@ export function ScanScheduleFields({
           name="frequency"
           render={({ field }) => (
             <Field>
-              <div className="flex items-center justify-between gap-2">
-                <FieldLabel>Repeats</FieldLabel>
-                {cloudUpgradeBadge}
-              </div>
+              <FieldLabel>Repeats</FieldLabel>
               <Select
                 value={
                   canUseAdvancedSchedule
