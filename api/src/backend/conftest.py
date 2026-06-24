@@ -165,6 +165,9 @@ def _compliance_cache_guard(request):
         _COMPLIANCE_FRAMEWORK_CACHE.clear()
         _COMPLIANCE_CHECKS_CACHE.clear()
         _COMPLIANCE_PATH_CACHE.clear()
+        import api.compliance as api_compliance
+
+        api_compliance.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
 
 
 def today_after_n_days(n_days: int) -> str:
