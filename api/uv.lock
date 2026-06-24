@@ -110,7 +110,7 @@ constraints = [
     { name = "blinker", specifier = "==1.9.0" },
     { name = "boto3", specifier = "==1.40.61" },
     { name = "botocore", specifier = "==1.40.61" },
-    { name = "cartography", specifier = "==0.137.0" },
+    { name = "cartography", specifier = "==0.138.1" },
     { name = "celery", specifier = "==5.6.2" },
     { name = "certifi", specifier = "==2026.1.4" },
     { name = "cffi", specifier = "==2.0.0" },
@@ -376,6 +376,7 @@ constraints = [
     { name = "zstd", specifier = "==1.5.7.3" },
 ]
 overrides = [
+    { name = "azure-mgmt-containerservice", specifier = "==34.1.0" },
     { name = "dulwich", specifier = "==1.2.5" },
     { name = "microsoft-kiota-abstractions", specifier = "==1.9.9" },
     { name = "okta", specifier = "==3.4.2" },
@@ -1408,6 +1409,20 @@ wheels = [
 ]
 
 [[package]]
+name = "azure-mgmt-managementgroups"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-mgmt-core" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fd/73/ac5e064ed7343e1b3172f32f09be3efca906087218d3046b5038f2f394ed/azure_mgmt_managementgroups-1.1.0.tar.gz", hash = "sha256:e6199baf118890ba2bda35dda83a88861c0b1bbef126311b20ec12eed9681951", size = 60101, upload-time = "2026-02-13T03:45:45.439Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/bc/993158de03cc0a49f2cf8192615ffedbc508c417cb3522e88f6652b714cc/azure_mgmt_managementgroups-1.1.0-py3-none-any.whl", hash = "sha256:140934589559ef6afcac6f1d24f995588a1965aaa89d47851c1cc639fafb1942", size = 83586, upload-time = "2026-02-13T03:45:46.836Z" },
+]
+
+[[package]]
 name = "azure-mgmt-monitor"
 version = "6.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1726,7 +1741,7 @@ wheels = [
 
 [[package]]
 name = "cartography"
-version = "0.137.0"
+version = "0.138.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "adal" },
@@ -1746,6 +1761,7 @@ dependencies = [
     { name = "azure-mgmt-eventhub" },
     { name = "azure-mgmt-keyvault" },
     { name = "azure-mgmt-logic" },
+    { name = "azure-mgmt-managementgroups" },
     { name = "azure-mgmt-monitor" },
     { name = "azure-mgmt-network" },
     { name = "azure-mgmt-resource" },
@@ -1797,9 +1813,9 @@ dependencies = [
     { name = "workos" },
     { name = "xmltodict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/72/18/1a4aa5f87009831a7fb2c29bb5b56cd6f1f78d558450d342f86ddf5fce1c/cartography-0.137.0.tar.gz", hash = "sha256:777253121addf7f76f7550e177b1e3995ad69a72facc296a83bdb4300c35c6b8", size = 9626365, upload-time = "2026-06-03T18:19:54.193Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/cd/0eb6a5a3c89cc179801d902ade9719af1a583c516c00f50d72b8207db1eb/cartography-0.138.1.tar.gz", hash = "sha256:356e946a0bcac899cba293d57803c71bd35fdeabe623f5f67d9405d7a643af9f", size = 9756966, upload-time = "2026-06-19T22:11:32.411Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3e/7d/f88563d3a6033da6ec0cedc00eff2e26da1637e87a7c110af3780b16825b/cartography-0.137.0-py3-none-any.whl", hash = "sha256:79c6f1f940ec3a7d203fb491b63ee8c1801dae99f45a57a22f9117f6462b4a05", size = 1947058, upload-time = "2026-06-03T18:19:57.385Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/15/4447ec968825b2a19cba26ecb74964208aa3f941d9181a7782572e30b43d/cartography-0.138.1-py3-none-any.whl", hash = "sha256:88ec0898ea1a1b3f4653be9a3e7e61144f5cee20384b9040e92039617d39f029", size = 2014725, upload-time = "2026-06-19T22:11:29.886Z" },
 ]
 
 [[package]]
@@ -4783,7 +4799,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cartography", specifier = "==0.137.0" },
+    { name = "cartography", specifier = "==0.138.1" },
     { name = "celery", specifier = "==5.6.2" },
     { name = "defusedxml", specifier = "==0.7.1" },
     { name = "dj-rest-auth", extras = ["with-social", "jwt"], specifier = "==7.0.1" },
