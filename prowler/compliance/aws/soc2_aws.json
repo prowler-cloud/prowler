@@ -24,20 +24,6 @@
         "iam_inline_policy_no_administrative_privileges",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "iam_user_accesskey_unused",
-          "ConfigKey": "max_unused_access_keys_days",
-          "Operator": "lte",
-          "Value": 45
-        },
-        {
-          "Check": "iam_user_console_access_unused",
-          "ConfigKey": "max_console_access_days",
-          "Operator": "lte",
-          "Value": 45
-        }
       ]
     },
     {
@@ -150,26 +136,6 @@
         "cloudtrail_threat_detection_privilege_escalation",
         "cloudtrail_threat_detection_enumeration",
         "cloudtrail_threat_detection_llm_jacking"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "cloudtrail_threat_detection_enumeration",
-          "ConfigKey": "threat_detection_enumeration_threshold",
-          "Operator": "lte",
-          "Value": 0.3
-        },
-        {
-          "Check": "cloudtrail_threat_detection_llm_jacking",
-          "ConfigKey": "threat_detection_llm_jacking_threshold",
-          "Operator": "lte",
-          "Value": 0.4
-        },
-        {
-          "Check": "cloudtrail_threat_detection_privilege_escalation",
-          "ConfigKey": "threat_detection_privilege_escalation_threshold",
-          "Operator": "lte",
-          "Value": 0.2
-        }
       ]
     },
     {
@@ -494,12 +460,6 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
-        },
-        {
-          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
-          "ConfigKey": "log_group_retention_days",
-          "Operator": "gte",
-          "Value": 365
         }
       ]
     },
@@ -720,14 +680,6 @@
         "s3_bucket_object_versioning",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "kinesis_stream_data_retention_period"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "kinesis_stream_data_retention_period",
-          "ConfigKey": "min_kinesis_stream_retention_hours",
-          "Operator": "gte",
-          "Value": 168
-        }
       ]
     },
     {

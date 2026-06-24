@@ -1555,14 +1555,6 @@
           "LevelOfRisk": 2,
           "Weight": 8
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
-          "ConfigKey": "log_group_retention_days",
-          "Operator": "gte",
-          "Value": 365
-        }
       ]
     },
     {

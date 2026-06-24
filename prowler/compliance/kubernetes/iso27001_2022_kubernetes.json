@@ -1109,26 +1109,6 @@
         "apiserver_audit_log_maxbackup_set",
         "apiserver_audit_log_maxsize_set",
         "apiserver_audit_log_path_set"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "apiserver_audit_log_maxage_set",
-          "ConfigKey": "audit_log_maxage",
-          "Operator": "gte",
-          "Value": 30
-        },
-        {
-          "Check": "apiserver_audit_log_maxbackup_set",
-          "ConfigKey": "audit_log_maxbackup",
-          "Operator": "gte",
-          "Value": 10
-        },
-        {
-          "Check": "apiserver_audit_log_maxsize_set",
-          "ConfigKey": "audit_log_maxsize",
-          "Operator": "gte",
-          "Value": 100
-        }
       ]
     },
     {

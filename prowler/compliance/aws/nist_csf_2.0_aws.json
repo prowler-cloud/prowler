@@ -405,24 +405,6 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
-        },
-        {
-          "Check": "cloudtrail_threat_detection_enumeration",
-          "ConfigKey": "threat_detection_enumeration_threshold",
-          "Operator": "lte",
-          "Value": 0.3
-        },
-        {
-          "Check": "cloudtrail_threat_detection_llm_jacking",
-          "ConfigKey": "threat_detection_llm_jacking_threshold",
-          "Operator": "lte",
-          "Value": 0.4
-        },
-        {
-          "Check": "cloudtrail_threat_detection_privilege_escalation",
-          "ConfigKey": "threat_detection_privilege_escalation_threshold",
-          "Operator": "lte",
-          "Value": 0.2
         }
       ]
     },
@@ -858,36 +840,6 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
-        },
-        {
-          "Check": "iam_role_access_not_stale_to_bedrock",
-          "ConfigKey": "max_unused_bedrock_access_days",
-          "Operator": "lte",
-          "Value": 60
-        },
-        {
-          "Check": "iam_user_access_not_stale_to_bedrock",
-          "ConfigKey": "max_unused_bedrock_access_days",
-          "Operator": "lte",
-          "Value": 60
-        },
-        {
-          "Check": "iam_user_access_not_stale_to_sagemaker",
-          "ConfigKey": "max_unused_sagemaker_access_days",
-          "Operator": "lte",
-          "Value": 90
-        },
-        {
-          "Check": "iam_user_accesskey_unused",
-          "ConfigKey": "max_unused_access_keys_days",
-          "Operator": "lte",
-          "Value": 45
-        },
-        {
-          "Check": "iam_user_console_access_unused",
-          "ConfigKey": "max_console_access_days",
-          "Operator": "lte",
-          "Value": 45
         }
       ]
     },
@@ -1367,26 +1319,6 @@
         "rds_cluster_protected_by_backup_plan",
         "rds_instance_backup_enabled",
         "rds_instance_protected_by_backup_plan"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "documentdb_cluster_backup_enabled",
-          "ConfigKey": "minimum_backup_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        },
-        {
-          "Check": "elasticache_redis_cluster_backup_enabled",
-          "ConfigKey": "minimum_snapshot_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        },
-        {
-          "Check": "neptune_cluster_backup_enabled",
-          "ConfigKey": "minimum_backup_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        }
       ]
     },
     {
@@ -1422,12 +1354,6 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
-        },
-        {
-          "Check": "secretsmanager_secret_rotated_periodically",
-          "ConfigKey": "max_days_secret_unrotated",
-          "Operator": "lte",
-          "Value": 90
         }
       ]
     },

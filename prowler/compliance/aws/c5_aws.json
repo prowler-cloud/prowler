@@ -428,14 +428,6 @@
         "cloudtrail_threat_detection_enumeration",
         "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
         "wellarchitected_workload_no_high_or_medium_risks"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "cloudtrail_threat_detection_enumeration",
-          "ConfigKey": "threat_detection_enumeration_threshold",
-          "Operator": "lte",
-          "Value": 0.3
-        }
       ]
     },
     {
@@ -590,14 +582,6 @@
       ],
       "Checks": [
         "secretsmanager_secret_rotated_periodically"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "secretsmanager_secret_rotated_periodically",
-          "ConfigKey": "max_days_secret_unrotated",
-          "Operator": "lte",
-          "Value": 90
-        }
       ]
     },
     {
@@ -615,14 +599,6 @@
       "Checks": [
         "guardduty_no_high_severity_findings",
         "cloudtrail_threat_detection_privilege_escalation"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "cloudtrail_threat_detection_privilege_escalation",
-          "ConfigKey": "threat_detection_privilege_escalation_threshold",
-          "Operator": "lte",
-          "Value": 0.2
-        }
       ]
     },
     {
@@ -1566,14 +1542,6 @@
         "waf_global_webacl_logging_enabled",
         "wafv2_webacl_logging_enabled",
         "wafv2_webacl_rule_logging_enabled"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
-          "ConfigKey": "log_group_retention_days",
-          "Operator": "gte",
-          "Value": 365
-        }
       ]
     },
     {
@@ -1787,14 +1755,6 @@
         "rds_cluster_deletion_protection",
         "rds_instance_deletion_protection",
         "s3_bucket_no_mfa_delete"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "kinesis_stream_data_retention_period",
-          "ConfigKey": "min_kinesis_stream_retention_hours",
-          "Operator": "gte",
-          "Value": 168
-        }
       ]
     },
     {
@@ -3032,14 +2992,6 @@
         "iam_user_mfa_enabled_console_access",
         "iam_user_console_access_unused",
         "iam_user_no_setup_initial_access_key"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "iam_user_console_access_unused",
-          "ConfigKey": "max_console_access_days",
-          "Operator": "lte",
-          "Value": 45
-        }
       ]
     },
     {
@@ -3110,26 +3062,6 @@
         "rds_cluster_protected_by_backup_plan",
         "rds_instance_backup_enabled",
         "rds_instance_protected_by_backup_plan"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "documentdb_cluster_backup_enabled",
-          "ConfigKey": "minimum_backup_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        },
-        {
-          "Check": "elasticache_redis_cluster_backup_enabled",
-          "ConfigKey": "minimum_snapshot_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        },
-        {
-          "Check": "neptune_cluster_backup_enabled",
-          "ConfigKey": "minimum_backup_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        }
       ]
     },
     {
@@ -5448,38 +5380,6 @@
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_secret_unused"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "iam_role_access_not_stale_to_bedrock",
-          "ConfigKey": "max_unused_bedrock_access_days",
-          "Operator": "lte",
-          "Value": 60
-        },
-        {
-          "Check": "iam_user_access_not_stale_to_bedrock",
-          "ConfigKey": "max_unused_bedrock_access_days",
-          "Operator": "lte",
-          "Value": 60
-        },
-        {
-          "Check": "iam_user_access_not_stale_to_sagemaker",
-          "ConfigKey": "max_unused_sagemaker_access_days",
-          "Operator": "lte",
-          "Value": 90
-        },
-        {
-          "Check": "iam_user_accesskey_unused",
-          "ConfigKey": "max_unused_access_keys_days",
-          "Operator": "lte",
-          "Value": 45
-        },
-        {
-          "Check": "secretsmanager_secret_unused",
-          "ConfigKey": "max_days_secret_unused",
-          "Operator": "lte",
-          "Value": 90
-        }
       ]
     },
     {
@@ -10588,26 +10488,6 @@
         "appstream_fleet_session_idle_disconnect_timeout",
         "appstream_fleet_session_disconnect_timeout",
         "appstream_fleet_maximum_session_duration"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "appstream_fleet_maximum_session_duration",
-          "ConfigKey": "max_session_duration_seconds",
-          "Operator": "lte",
-          "Value": 36000
-        },
-        {
-          "Check": "appstream_fleet_session_disconnect_timeout",
-          "ConfigKey": "max_disconnect_timeout_in_seconds",
-          "Operator": "lte",
-          "Value": 300
-        },
-        {
-          "Check": "appstream_fleet_session_idle_disconnect_timeout",
-          "ConfigKey": "max_idle_disconnect_timeout_in_seconds",
-          "Operator": "lte",
-          "Value": 600
-        }
       ]
     },
     {

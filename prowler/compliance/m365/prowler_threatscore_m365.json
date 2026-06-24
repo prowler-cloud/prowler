@@ -529,14 +529,6 @@
           "LevelOfRisk": 2,
           "Weight": 8
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "exchange_organization_mailtips_enabled",
-          "ConfigKey": "recommended_mailtips_large_audience_threshold",
-          "Operator": "lte",
-          "Value": 25
-        }
       ]
     },
     {
@@ -827,6 +819,14 @@
           "LevelOfRisk": 4,
           "Weight": 100
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "entra_admin_users_sign_in_frequency_enabled",
+          "ConfigKey": "sign_in_frequency",
+          "Operator": "lte",
+          "Value": 4
+        }
       ]
     },
     {
@@ -971,6 +971,68 @@
           "AdditionalInformation": "Blocking file types commonly associated with malware helps prevent the delivery of malicious payloads that can compromise hosts, exfiltrate data, or facilitate phishing attacks. By enforcing a strict attachment policy, organizations reduce their exposure to threats delivered through legacy formats, binary executables, and compressed archives. Allow-listing only those file types necessary for business operations and blocking all others is an effective strategy for mitigating risks such as Business Email Compromise (BEC) and enhancing overall email security posture.",
           "LevelOfRisk": 2,
           "Weight": 8
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "ConfigKey": "recommended_blocked_file_types",
+          "Operator": "superset",
+          "Value": [
+            "ace",
+            "ani",
+            "apk",
+            "app",
+            "appx",
+            "arj",
+            "bat",
+            "cab",
+            "cmd",
+            "com",
+            "deb",
+            "dex",
+            "dll",
+            "docm",
+            "elf",
+            "exe",
+            "hta",
+            "img",
+            "iso",
+            "jar",
+            "jnlp",
+            "kext",
+            "lha",
+            "lib",
+            "library",
+            "lnk",
+            "lzh",
+            "macho",
+            "msc",
+            "msi",
+            "msix",
+            "msp",
+            "mst",
+            "pif",
+            "ppa",
+            "ppam",
+            "reg",
+            "rev",
+            "scf",
+            "scr",
+            "sct",
+            "sys",
+            "uif",
+            "vb",
+            "vbe",
+            "vbs",
+            "vxd",
+            "wsc",
+            "wsf",
+            "wsh",
+            "xll",
+            "xz",
+            "z"
+          ]
         }
       ]
     },

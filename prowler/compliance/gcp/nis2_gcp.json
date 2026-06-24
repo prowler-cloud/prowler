@@ -704,20 +704,6 @@
           "SubSection": "6.2 Secure development life cycle",
           "Service": "generic"
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "iam_sa_user_managed_key_unused",
-          "ConfigKey": "max_unused_account_days",
-          "Operator": "lte",
-          "Value": 180
-        },
-        {
-          "Check": "iam_service_account_unused",
-          "ConfigKey": "max_unused_account_days",
-          "Operator": "lte",
-          "Value": 180
-        }
       ]
     },
     {

@@ -20,6 +20,14 @@
           "SectionDescription": "This section contains recommendations for configuring ACM resources.",
           "Service": "ACM"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_expiration_check",
+          "ConfigKey": "days_to_expire_threshold",
+          "Operator": "gte",
+          "Value": 30
+        }
       ]
     },
     {
@@ -1146,14 +1154,6 @@
           "SectionDescription": "This section contains recommendations for configuring EC2 resources.",
           "Service": "EC2"
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "ec2_instance_older_than_specific_days",
-          "ConfigKey": "max_ec2_instance_age_in_days",
-          "Operator": "lte",
-          "Value": 180
-        }
       ]
     },
     {
@@ -1994,6 +1994,14 @@
           "SectionDescription": "This section contains recommendations for configuring ELB resources.",
           "Service": "ELB"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "elb_is_in_multiple_az",
+          "ConfigKey": "elb_min_azs",
+          "Operator": "gte",
+          "Value": 2
+        }
       ]
     },
     {
@@ -2027,6 +2035,14 @@
           "Section": "ELB",
           "SectionDescription": "This section contains recommendations for configuring ELB resources.",
           "Service": "ELB"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "elbv2_is_in_multiple_az",
+          "ConfigKey": "elbv2_min_azs",
+          "Operator": "gte",
+          "Value": 2
         }
       ]
     },
@@ -2241,14 +2257,6 @@
           "Section": "ElastiCache",
           "SectionDescription": "This section contains recommendations for configuring ElastiCache resources.",
           "Service": "ElastiCache"
-        }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "elasticache_redis_cluster_backup_enabled",
-          "ConfigKey": "minimum_snapshot_retention_period",
-          "Operator": "gte",
-          "Value": 7
         }
       ]
     },
@@ -2869,6 +2877,40 @@
           "Section": "Lambda",
           "SectionDescription": "This section contains recommendations for configuring Lambda resources.",
           "Service": "Lambda"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "awslambda_function_using_supported_runtimes",
+          "ConfigKey": "obsolete_lambda_runtimes",
+          "Operator": "superset",
+          "Value": [
+            "java8",
+            "go1.x",
+            "provided",
+            "python3.6",
+            "python2.7",
+            "python3.7",
+            "python3.8",
+            "nodejs4.3",
+            "nodejs4.3-edge",
+            "nodejs6.10",
+            "nodejs",
+            "nodejs8.10",
+            "nodejs10.x",
+            "nodejs12.x",
+            "nodejs14.x",
+            "nodejs16.x",
+            "dotnet5.0",
+            "dotnet6",
+            "dotnet7",
+            "dotnetcore1.0",
+            "dotnetcore2.0",
+            "dotnetcore2.1",
+            "dotnetcore3.1",
+            "ruby2.5",
+            "ruby2.7"
+          ]
         }
       ]
     },

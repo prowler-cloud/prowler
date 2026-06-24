@@ -290,14 +290,6 @@
       ],
       "Checks": [
         "ram_user_console_access_unused"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "ram_user_console_access_unused",
-          "ConfigKey": "max_console_access_days",
-          "Operator": "lte",
-          "Value": 45
-        }
       ]
     },
     {
@@ -668,14 +660,6 @@
       "Checks": [
         "actiontrail_multi_region_enabled",
         "sls_logstore_retention_period"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "sls_logstore_retention_period",
-          "ConfigKey": "min_log_retention_days",
-          "Operator": "gte",
-          "Value": 365
-        }
       ]
     },
     {
@@ -744,14 +728,6 @@
         "rds_instance_sql_audit_enabled",
         "rds_instance_sql_audit_retention",
         "sls_logstore_retention_period"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "rds_instance_sql_audit_retention",
-          "ConfigKey": "min_rds_audit_retention_days",
-          "Operator": "gte",
-          "Value": 180
-        }
       ]
     },
     {
@@ -1040,14 +1016,6 @@
       "Checks": [
         "securitycenter_vulnerability_scan_enabled",
         "cs_kubernetes_cluster_check_weekly"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "cs_kubernetes_cluster_check_weekly",
-          "ConfigKey": "max_cluster_check_days",
-          "Operator": "lte",
-          "Value": 7
-        }
       ]
     },
     {

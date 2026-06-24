@@ -1343,32 +1343,6 @@
             "Case 2: In the login process for information systems and personal information processing systems, detailed messages are displayed about whether the ID exists or the password is incorrect, and there is no limit on login failure attempts."
           ]
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "appstream_fleet_maximum_session_duration",
-          "ConfigKey": "max_session_duration_seconds",
-          "Operator": "lte",
-          "Value": 36000
-        },
-        {
-          "Check": "appstream_fleet_session_disconnect_timeout",
-          "ConfigKey": "max_disconnect_timeout_in_seconds",
-          "Operator": "lte",
-          "Value": 300
-        },
-        {
-          "Check": "appstream_fleet_session_idle_disconnect_timeout",
-          "ConfigKey": "max_idle_disconnect_timeout_in_seconds",
-          "Operator": "lte",
-          "Value": 600
-        },
-        {
-          "Check": "iam_user_console_access_unused",
-          "ConfigKey": "max_console_access_days",
-          "Operator": "lte",
-          "Value": 45
-        }
       ]
     },
     {
@@ -2226,26 +2200,6 @@
             "Case 3: The encryption key applied in the development system is the same as the one applied in the production system, making it easy to decrypt actual data through the development system."
           ]
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "iam_user_accesskey_unused",
-          "ConfigKey": "max_unused_access_keys_days",
-          "Operator": "lte",
-          "Value": 45
-        },
-        {
-          "Check": "secretsmanager_secret_rotated_periodically",
-          "ConfigKey": "max_days_secret_unrotated",
-          "Operator": "lte",
-          "Value": 90
-        },
-        {
-          "Check": "secretsmanager_secret_unused",
-          "ConfigKey": "max_days_secret_unused",
-          "Operator": "lte",
-          "Value": 90
-        }
       ]
     },
     {
@@ -2551,14 +2505,6 @@
             "Case 4: Inconsistencies exist between fault handling procedures and fault type-specific response methods, or there is a lack of rationale for estimating response times, making swift, accurate, and systematic responses difficult."
           ]
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "ec2_instance_older_than_specific_days",
-          "ConfigKey": "max_ec2_instance_age_in_days",
-          "Operator": "lte",
-          "Value": 180
-        }
       ]
     },
     {
@@ -2616,26 +2562,6 @@
             "Case 3: Some systems (e.g., security system policies and logs) that are required to be separately backed up according to higher-level or internal guidelines are not being backed up.",
             "Case 4: Although higher-level or internal guidelines stipulate that recovery tests for backup media should be conducted periodically, recovery tests have not been performed for an extended period."
           ]
-        }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "documentdb_cluster_backup_enabled",
-          "ConfigKey": "minimum_backup_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        },
-        {
-          "Check": "elasticache_redis_cluster_backup_enabled",
-          "ConfigKey": "minimum_snapshot_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        },
-        {
-          "Check": "neptune_cluster_backup_enabled",
-          "ConfigKey": "minimum_backup_retention_period",
-          "Operator": "gte",
-          "Value": 7
         }
       ]
     },
@@ -2732,32 +2658,6 @@
             "Case 5: The capacity of the log server is insufficient, leaving only two months of access records for the personal information processing system.",
             "Case 6: A personal information processing system handling personal information of 100,000 data subjects is only retaining access logs for one year."
           ]
-        }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "cloudtrail_threat_detection_enumeration",
-          "ConfigKey": "threat_detection_enumeration_threshold",
-          "Operator": "lte",
-          "Value": 0.3
-        },
-        {
-          "Check": "cloudtrail_threat_detection_llm_jacking",
-          "ConfigKey": "threat_detection_llm_jacking_threshold",
-          "Operator": "lte",
-          "Value": 0.4
-        },
-        {
-          "Check": "cloudtrail_threat_detection_privilege_escalation",
-          "ConfigKey": "threat_detection_privilege_escalation_threshold",
-          "Operator": "lte",
-          "Value": 0.2
-        },
-        {
-          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
-          "ConfigKey": "log_group_retention_days",
-          "Operator": "gte",
-          "Value": 365
         }
       ]
     },
@@ -3507,12 +3407,6 @@
             "RSA-1024",
             "P-192"
           ]
-        },
-        {
-          "Check": "ec2_securitygroup_with_many_ingress_egress_rules",
-          "ConfigKey": "max_security_group_rules",
-          "Operator": "lte",
-          "Value": 50
         }
       ],
       "Attributes": [

@@ -444,32 +444,6 @@
         "ecr_repositories_lifecycle_policy_enabled",
         "elbv2_listeners_underneath",
         "iam_password_policy_expires_passwords_within_90_days_or_less"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "appstream_fleet_maximum_session_duration",
-          "ConfigKey": "max_session_duration_seconds",
-          "Operator": "lte",
-          "Value": 36000
-        },
-        {
-          "Check": "appstream_fleet_session_disconnect_timeout",
-          "ConfigKey": "max_disconnect_timeout_in_seconds",
-          "Operator": "lte",
-          "Value": 300
-        },
-        {
-          "Check": "appstream_fleet_session_idle_disconnect_timeout",
-          "ConfigKey": "max_idle_disconnect_timeout_in_seconds",
-          "Operator": "lte",
-          "Value": 600
-        },
-        {
-          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
-          "ConfigKey": "log_group_retention_days",
-          "Operator": "gte",
-          "Value": 365
-        }
       ]
     },
     {
@@ -804,14 +778,6 @@
         "shield_advanced_protection_in_global_accelerators",
         "shield_advanced_protection_in_internet_facing_load_balancers",
         "shield_advanced_protection_in_route53_hosted_zones"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "ec2_securitygroup_with_many_ingress_egress_rules",
-          "ConfigKey": "max_security_group_rules",
-          "Operator": "lte",
-          "Value": 50
-        }
       ]
     },
     {

@@ -290,20 +290,6 @@
           "Value": "Significant",
           "Comment": "This control is able to mitigate against abuse of compromised valid accounts by restricting access from those accounts to resources contained within the VPC perimeter the account belongs to. Resources and services contained in other VPC networks also cannot be accessed by user accounts that are not within the VPC network perimeter."
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "iam_sa_user_managed_key_unused",
-          "ConfigKey": "max_unused_account_days",
-          "Operator": "lte",
-          "Value": 180
-        },
-        {
-          "Check": "iam_service_account_unused",
-          "ConfigKey": "max_unused_account_days",
-          "Operator": "lte",
-          "Value": 180
-        }
       ]
     },
     {

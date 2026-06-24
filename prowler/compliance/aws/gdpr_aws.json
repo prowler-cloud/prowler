@@ -66,18 +66,6 @@
           "ConfigKey": "mute_non_default_regions",
           "Operator": "eq",
           "Value": false
-        },
-        {
-          "Check": "iam_user_accesskey_unused",
-          "ConfigKey": "max_unused_access_keys_days",
-          "Operator": "lte",
-          "Value": 45
-        },
-        {
-          "Check": "iam_user_console_access_unused",
-          "ConfigKey": "max_console_access_days",
-          "Operator": "lte",
-          "Value": 45
         }
       ]
     },

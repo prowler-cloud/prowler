@@ -9000,14 +9000,6 @@
           "Section": "10.3.3: Audit logs are protected from destruction and unauthorized modifications. ",
           "Service": "elasticache"
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "elasticache_redis_cluster_backup_enabled",
-          "ConfigKey": "minimum_snapshot_retention_period",
-          "Operator": "gte",
-          "Value": 7
-        }
       ]
     },
     {
@@ -9035,14 +9027,6 @@
         {
           "Section": "10.3.3: Audit logs are protected from destruction and unauthorized modifications. ",
           "Service": "neptune"
-        }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "neptune_cluster_backup_enabled",
-          "ConfigKey": "minimum_backup_retention_period",
-          "Operator": "gte",
-          "Value": 7
         }
       ]
     },
@@ -9625,14 +9609,6 @@
         {
           "Section": "10.5.1: Audit log history is retained and available for analysis. ",
           "Service": "documentdb"
-        }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "documentdb_cluster_backup_enabled",
-          "ConfigKey": "minimum_backup_retention_period",
-          "Operator": "gte",
-          "Value": 7
         }
       ]
     },
@@ -17053,14 +17029,6 @@
           "Section": "7.2.4: Access to system components and data is appropriately defined and assigned. ",
           "Service": "iam"
         }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "iam_user_accesskey_unused",
-          "ConfigKey": "max_unused_access_keys_days",
-          "Operator": "lte",
-          "Value": 45
-        }
       ]
     },
     {
@@ -17074,14 +17042,6 @@
         {
           "Section": "7.2.4: Access to system components and data is appropriately defined and assigned. ",
           "Service": "secretsmanager"
-        }
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "secretsmanager_secret_unused",
-          "ConfigKey": "max_days_secret_unused",
-          "Operator": "lte",
-          "Value": 90
         }
       ]
     },
