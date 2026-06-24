@@ -1,23 +1,33 @@
 "use client";
 
-import { Bot, Loader2, Send, Square, UserRound } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Bot,
+  FileCheck2,
+  Loader2,
+  Network,
+  Settings,
+  ShieldAlert,
+  Square,
+  UserRound,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 
 import {
-  archiveLighthouseV2Session,
   cancelLighthouseV2Run,
   createLighthouseV2Session,
   getLighthouseV2Messages,
-  getLighthouseV2Sessions,
   sendLighthouseV2Message,
 } from "@/actions/lighthouse-v2/lighthouse-v2";
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { LighthouseIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Select,
@@ -33,6 +43,7 @@ import {
   type LighthouseV2StreamState,
   reduceLighthouseV2Event,
 } from "@/lib/lighthouse-v2/event-reducer";
+import { notifyLighthouseV2SessionsChanged } from "@/lib/lighthouse-v2/session-events";
 import { cn } from "@/lib/utils";
 import {
   LIGHTHOUSE_V2_MESSAGE_ROLE,
@@ -42,12 +53,9 @@ import {
   type LighthouseV2Configuration,
   type LighthouseV2Message,
   type LighthouseV2ProviderType,
-  type LighthouseV2Session,
   type LighthouseV2SSEEvent,
   type LighthouseV2SupportedModel,
 } from "@/types/lighthouse-v2";
-
-import { LighthouseV2SessionHistory } from "../history";
 
 interface LighthouseV2ChatPageProps {
   configurations: LighthouseV2Configuration[];
@@ -55,21 +63,40 @@ interface LighthouseV2ChatPageProps {
     LighthouseV2ProviderType,
     LighthouseV2SupportedModel[]
   >;
-  sessions: LighthouseV2Session[];
   initialSessionId?: string;
   initialMessages: LighthouseV2Message[];
   initialPrompt?: string;
-  showHistory?: boolean;
 }
+
+const LIGHTHOUSE_V2_SUGGESTIONS = [
+  {
+    label: "Critical findings",
+    prompt: "Summarize my most critical open findings and what to fix first.",
+    icon: ShieldAlert,
+  },
+  {
+    label: "Compliance gaps",
+    prompt: "What are my highest-impact compliance gaps right now?",
+    icon: FileCheck2,
+  },
+  {
+    label: "Attack paths",
+    prompt: "Find risky attack paths and explain the exposure.",
+    icon: Network,
+  },
+  {
+    label: "Docs",
+    prompt: "Point me to the relevant Prowler documentation for this task.",
+    icon: BookOpen,
+  },
+] as const;
 
 export function LighthouseV2ChatPage({
   configurations,
   modelsByProvider,
-  sessions,
   initialSessionId,
   initialMessages,
   initialPrompt,
-  showHistory = true,
 }: LighthouseV2ChatPageProps) {
   const router = useRouter();
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -88,13 +115,11 @@ export function LighthouseV2ChatPage({
       modelsByProvider[initialProvider]?.[0]?.id ??
       "",
   );
-  const [localSessions, setLocalSessions] = useState(sessions);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     initialSessionId ?? null,
   );
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
-  const [search, setSearch] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [blockedByConflict, setBlockedByConflict] = useState(false);
   const [lastSubmittedText, setLastSubmittedText] = useState<string | null>(
@@ -130,15 +155,6 @@ export function LighthouseV2ChatPage({
     }
   };
 
-  const refreshSessions = async (nextSearch = search) => {
-    const result = await getLighthouseV2Sessions(
-      nextSearch ? { search: nextSearch } : undefined,
-    );
-    if ("data" in result) {
-      setLocalSessions(result.data);
-    }
-  };
-
   const closeStream = () => {
     eventSourceRef.current?.close();
     eventSourceRef.current = null;
@@ -156,7 +172,7 @@ export function LighthouseV2ChatPage({
       closeStream();
       setBlockedByConflict(false);
       await refreshMessages(sessionId);
-      await refreshSessions();
+      notifyLighthouseV2SessionsChanged();
     }
   };
 
@@ -221,7 +237,7 @@ export function LighthouseV2ChatPage({
     }
 
     setActiveSessionId(result.data.id);
-    setLocalSessions((current) => [result.data, ...current]);
+    notifyLighthouseV2SessionsChanged();
     router.push(`/lighthouse?session=${encodeURIComponent(result.data.id)}`);
     return result.data.id;
   };
@@ -262,7 +278,7 @@ export function LighthouseV2ChatPage({
     if (result.data.streamUrl) {
       startStream(result.data.streamUrl, sessionId);
     }
-    await refreshSessions();
+    notifyLighthouseV2SessionsChanged();
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -283,49 +299,10 @@ export function LighthouseV2ChatPage({
     );
     setBlockedByConflict(false);
     await refreshMessages(activeSessionId);
+    notifyLighthouseV2SessionsChanged();
     if ("error" in result) {
       setFeedback(result.error);
     }
-  };
-
-  const handleOpenSession = async (sessionId: string) => {
-    closeStream();
-    setActiveSessionId(sessionId);
-    setStreamState(createInitialLighthouseV2StreamState());
-    setBlockedByConflict(false);
-    setFeedback(null);
-    router.push(`/lighthouse?session=${encodeURIComponent(sessionId)}`);
-    await refreshMessages(sessionId);
-  };
-
-  const handleNewSession = () => {
-    closeStream();
-    setActiveSessionId(null);
-    setMessages([]);
-    setInput("");
-    setFeedback(null);
-    setBlockedByConflict(false);
-    setStreamState(createInitialLighthouseV2StreamState());
-    router.push("/lighthouse");
-  };
-
-  const handleArchiveSession = async (sessionId: string) => {
-    const result = await archiveLighthouseV2Session(sessionId);
-    if ("error" in result) {
-      setFeedback(result.error);
-      return;
-    }
-    setLocalSessions((current) =>
-      current.filter((session) => session.id !== sessionId),
-    );
-    if (sessionId === activeSessionId) {
-      handleNewSession();
-    }
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    void refreshSessions(value);
   };
 
   useMountEffect(() => {
@@ -335,126 +312,282 @@ export function LighthouseV2ChatPage({
     }
   });
 
+  const hasConversation =
+    messages.length > 0 || Boolean(streamState.assistantText);
+
   return (
-    <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[300px_1fr]">
-      {showHistory && (
-        <LighthouseV2SessionHistory
-          sessions={localSessions}
-          activeSessionId={activeSessionId}
-          search={search}
-          onSearchChange={handleSearchChange}
-          onNewSession={handleNewSession}
-          onOpenSession={handleOpenSession}
-          onArchiveSession={handleArchiveSession}
-        />
-      )}
-
-      <section className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-col rounded-[8px] border">
-        <Conversation className="min-h-0">
-          <ConversationContent>
-            {messages.length === 0 && !streamState.assistantText ? (
-              <ConversationEmptyState title="Lighthouse" description="" />
-            ) : (
-              <>
-                {messages.map((message) => (
-                  <MessageBubble key={message.id} message={message} />
-                ))}
-                {streamState.assistantText && (
-                  <StreamingAssistantMessage streamState={streamState} />
-                )}
-              </>
-            )}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
-
-        <div className="border-border-neutral-secondary border-t p-3">
-          {feedback && (
-            <div className="border-border-neutral-secondary mb-2 flex items-center justify-between gap-3 rounded-[8px] border px-3 py-2 text-sm">
-              <span>{feedback}</span>
-              {streamState.status === "disconnected" && lastSubmittedText && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => submitMessage(lastSubmittedText)}
-                >
-                  Retry
-                </Button>
+    <section className="bg-background flex h-full min-h-0 flex-col">
+      {hasConversation ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <Conversation className="min-h-0">
+            <ConversationContent className="mx-auto w-full max-w-4xl gap-5 px-4 py-8 md:px-8">
+              {messages.map((message) => (
+                <MessageBubble key={message.id} message={message} />
+              ))}
+              {streamState.assistantText && (
+                <StreamingAssistantMessage streamState={streamState} />
               )}
-            </div>
-          )}
-
-          <div className="mb-2 flex flex-wrap gap-2">
-            <Select
-              value={selectedProvider}
-              onValueChange={(value) =>
-                handleProviderChange(value as LighthouseV2ProviderType)
-              }
-            >
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {configurations.map((configuration) => (
-                  <SelectItem
-                    key={configuration.providerType}
-                    value={configuration.providerType}
-                    disabled={configuration.connected !== true}
-                  >
-                    {configuration.providerType}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="h-9 min-w-[220px]">
-                <SelectValue placeholder="Model" />
-              </SelectTrigger>
-              <SelectContent width="wide">
-                {providerModels.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <form className="flex items-end gap-2" onSubmit={handleSubmit}>
-            <Textarea
-              aria-label="Message"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              disabled={!canSend}
-              placeholder={
-                selectedConfiguration?.connected === true
-                  ? "Ask Lighthouse"
-                  : "Connect a provider first"
-              }
-              className="max-h-40 min-h-12 flex-1"
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  void submitMessage(input);
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+          <div className="bg-background px-4 pb-5 md:px-8">
+            <div className="mx-auto w-full max-w-4xl">
+              <LighthouseV2Feedback
+                feedback={feedback}
+                canRetry={
+                  streamState.status === "disconnected" &&
+                  lastSubmittedText !== null
                 }
-              }}
-            />
-            {streamState.activeTaskId ? (
-              <Button type="button" variant="outline" onClick={handleStop}>
-                <Square />
-                Stop
-              </Button>
-            ) : (
-              <Button type="submit" disabled={!canSend || !input.trim()}>
-                <Send />
-                Send
-              </Button>
-            )}
-          </form>
+                onRetry={() =>
+                  lastSubmittedText
+                    ? void submitMessage(lastSubmittedText)
+                    : undefined
+                }
+              />
+              <LighthouseV2Composer
+                canSend={canSend}
+                configurations={configurations}
+                input={input}
+                isStreaming={Boolean(streamState.activeTaskId)}
+                models={providerModels}
+                selectedConfigurationConnected={
+                  selectedConfiguration?.connected === true
+                }
+                selectedModel={selectedModel}
+                selectedProvider={selectedProvider}
+                onInputChange={setInput}
+                onProviderChange={handleProviderChange}
+                onModelChange={setSelectedModel}
+                onStop={handleStop}
+                onSubmit={handleSubmit}
+                onSubmitText={submitMessage}
+              />
+            </div>
+          </div>
         </div>
-      </section>
+      ) : (
+        <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
+          <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5">
+            <LighthouseIcon className="size-12" />
+            <div className="space-y-2 text-center">
+              <h1 className="text-text-neutral-primary text-3xl font-semibold">
+                What do you want to know today?
+              </h1>
+              <p className="text-text-neutral-secondary text-base italic">
+                Understand and secure your cloud.
+              </p>
+            </div>
+            <div className="w-full max-w-4xl">
+              <LighthouseV2Feedback
+                feedback={feedback}
+                canRetry={
+                  streamState.status === "disconnected" &&
+                  lastSubmittedText !== null
+                }
+                onRetry={() =>
+                  lastSubmittedText
+                    ? void submitMessage(lastSubmittedText)
+                    : undefined
+                }
+              />
+              <LighthouseV2Composer
+                canSend={canSend}
+                configurations={configurations}
+                input={input}
+                isStreaming={Boolean(streamState.activeTaskId)}
+                models={providerModels}
+                selectedConfigurationConnected={
+                  selectedConfiguration?.connected === true
+                }
+                selectedModel={selectedModel}
+                selectedProvider={selectedProvider}
+                onInputChange={setInput}
+                onProviderChange={handleProviderChange}
+                onModelChange={setSelectedModel}
+                onStop={handleStop}
+                onSubmit={handleSubmit}
+                onSubmitText={submitMessage}
+              />
+            </div>
+            <div className="flex max-w-4xl flex-wrap items-center justify-center gap-2">
+              <span className="text-text-neutral-secondary basis-full text-center text-sm font-medium">
+                Try Lighthouse for...
+              </span>
+              {LIGHTHOUSE_V2_SUGGESTIONS.map((suggestion) => {
+                const Icon = suggestion.icon;
+                return (
+                  <Button
+                    key={suggestion.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setInput(suggestion.prompt)}
+                  >
+                    <Icon className="size-4" />
+                    {suggestion.label}
+                  </Button>
+                );
+              })}
+              <Button type="button" variant="outline" size="icon-sm" asChild>
+                <Link
+                  href="/lighthouse/config"
+                  aria-label="Lighthouse settings"
+                >
+                  <Settings className="size-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+interface LighthouseV2FeedbackProps {
+  feedback: string | null;
+  canRetry: boolean;
+  onRetry: () => void;
+}
+
+function LighthouseV2Feedback({
+  feedback,
+  canRetry,
+  onRetry,
+}: LighthouseV2FeedbackProps) {
+  if (!feedback) return null;
+
+  return (
+    <div className="border-border-neutral-secondary bg-bg-neutral-secondary mb-3 flex items-center justify-between gap-3 rounded-[8px] border px-3 py-2 text-sm">
+      <span>{feedback}</span>
+      {canRetry && (
+        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      )}
     </div>
+  );
+}
+
+interface LighthouseV2ComposerProps {
+  canSend: boolean;
+  configurations: LighthouseV2Configuration[];
+  input: string;
+  isStreaming: boolean;
+  models: LighthouseV2SupportedModel[];
+  selectedConfigurationConnected: boolean;
+  selectedModel: string;
+  selectedProvider: LighthouseV2ProviderType;
+  onInputChange: (value: string) => void;
+  onModelChange: (value: string) => void;
+  onProviderChange: (provider: LighthouseV2ProviderType) => void;
+  onStop: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmitText: (text: string) => Promise<void>;
+}
+
+function LighthouseV2Composer({
+  canSend,
+  configurations,
+  input,
+  isStreaming,
+  models,
+  selectedConfigurationConnected,
+  selectedModel,
+  selectedProvider,
+  onInputChange,
+  onModelChange,
+  onProviderChange,
+  onStop,
+  onSubmit,
+  onSubmitText,
+}: LighthouseV2ComposerProps) {
+  return (
+    <form
+      className="border-border-neutral-secondary bg-bg-neutral-primary flex min-h-[150px] w-full flex-col rounded-[8px] border shadow-xs"
+      onSubmit={onSubmit}
+    >
+      <Textarea
+        aria-label="Message"
+        value={input}
+        onChange={(event) => onInputChange(event.target.value)}
+        disabled={!canSend}
+        placeholder={
+          selectedConfigurationConnected
+            ? "Ask a question"
+            : "Connect a provider first"
+        }
+        variant="ghost"
+        textareaSize="lg"
+        className="min-h-[104px] flex-1 rounded-b-none border-0 hover:bg-transparent focus:bg-transparent focus:ring-0"
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            void onSubmitText(input);
+          }
+        }}
+      />
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Select
+            value={selectedProvider}
+            onValueChange={(value) =>
+              onProviderChange(value as LighthouseV2ProviderType)
+            }
+          >
+            <SelectTrigger size="sm" iconSize="sm" className="h-8 w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {configurations.map((configuration) => (
+                <SelectItem
+                  key={configuration.providerType}
+                  value={configuration.providerType}
+                  disabled={configuration.connected !== true}
+                >
+                  {configuration.providerType}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedModel} onValueChange={onModelChange}>
+            <SelectTrigger size="sm" iconSize="sm" className="h-8 w-[220px]">
+              <SelectValue placeholder="Model" />
+            </SelectTrigger>
+            <SelectContent width="wide">
+              {models.map((model) => (
+                <SelectItem key={model.id} value={model.id}>
+                  {model.id}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button type="button" variant="outline" size="icon-sm" asChild>
+            <Link href="/lighthouse/config" aria-label="Lighthouse settings">
+              <Settings className="size-4" />
+            </Link>
+          </Button>
+        </div>
+        {isStreaming ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            onClick={onStop}
+          >
+            <Square className="size-4" />
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            size="icon-sm"
+            disabled={!canSend || !input.trim()}
+          >
+            <ArrowRight className="size-4" />
+          </Button>
+        )}
+      </div>
+    </form>
   );
 }
 

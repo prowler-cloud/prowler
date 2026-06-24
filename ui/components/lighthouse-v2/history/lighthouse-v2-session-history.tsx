@@ -1,11 +1,19 @@
 "use client";
 
-import { Archive, MessageSquare, Plus } from "lucide-react";
+import { Archive, Plus } from "lucide-react";
 
 import { Button } from "@/components/shadcn/button/button";
 import { SearchInput } from "@/components/shadcn/search-input/search-input";
 import { cn } from "@/lib/utils";
 import type { LighthouseV2Session } from "@/types/lighthouse-v2";
+
+const SESSION_GROUP_ORDER = [
+  "Today",
+  "Yesterday",
+  "Last 7 days",
+  "Last 30 days",
+  "Older",
+] as const;
 
 interface LighthouseV2SessionHistoryProps {
   sessions: LighthouseV2Session[];
@@ -36,7 +44,7 @@ export function LighthouseV2SessionHistory({
         <SearchInput
           aria-label="Search Lighthouse sessions"
           value={search}
-          placeholder="Search chats"
+          placeholder="Chat history"
           size={compact ? "sm" : "default"}
           onChange={(event) => onSearchChange(event.target.value)}
           onClear={() => onSearchChange("")}
@@ -60,7 +68,7 @@ export function LighthouseV2SessionHistory({
           <div className="flex flex-col gap-4">
             {groups.map((group) => (
               <section key={group.label} className="grid gap-1">
-                <h3 className="text-text-neutral-tertiary px-2 text-xs font-medium">
+                <h3 className="text-text-neutral-tertiary px-2 text-xs font-semibold tracking-wide uppercase">
                   {group.label}
                 </h3>
                 {group.sessions.map((session) => (
@@ -77,9 +85,11 @@ export function LighthouseV2SessionHistory({
                       className="hover:bg-bg-neutral-tertiary flex min-w-0 flex-1 items-center gap-2 rounded-[8px] px-2 py-2 text-left text-sm"
                       onClick={() => onOpenSession(session.id)}
                     >
-                      <MessageSquare className="text-text-neutral-tertiary size-4 shrink-0" />
-                      <span className="truncate">
+                      <span className="min-w-0 flex-1 truncate">
                         {session.title || "Untitled chat"}
+                      </span>
+                      <span className="text-text-neutral-tertiary shrink-0 text-xs">
+                        {formatAgeLabel(session.updatedAt)}
                       </span>
                     </button>
                     <Button
@@ -109,20 +119,55 @@ interface SessionGroup {
 }
 
 function groupSessionsByDate(sessions: LighthouseV2Session[]): SessionGroup[] {
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
   const groups = new Map<string, LighthouseV2Session[]>();
 
   sessions.forEach((session) => {
-    const label = formatter.format(new Date(session.updatedAt));
+    const label = getSessionGroupLabel(session.updatedAt);
     groups.set(label, [...(groups.get(label) ?? []), session]);
   });
 
-  return Array.from(groups.entries()).map(([label, groupSessions]) => ({
-    label,
-    sessions: groupSessions,
-  }));
+  return SESSION_GROUP_ORDER.filter((label) => groups.has(label)).map(
+    (label) => ({
+      label,
+      sessions: groups.get(label) ?? [],
+    }),
+  );
+}
+
+function getSessionGroupLabel(dateString: string) {
+  const ageInDays = getAgeInDays(dateString);
+  if (ageInDays === 0) return "Today";
+  if (ageInDays === 1) return "Yesterday";
+  if (ageInDays <= 7) return "Last 7 days";
+  if (ageInDays <= 30) return "Last 30 days";
+  return "Older";
+}
+
+function formatAgeLabel(dateString: string) {
+  const ageInDays = getAgeInDays(dateString);
+  if (ageInDays === 0) return "Today";
+  if (ageInDays === 1) return "1d";
+  return `${ageInDays}d`;
+}
+
+function getAgeInDays(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const startOfDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  return Math.max(
+    0,
+    Math.floor(
+      (startOfToday.getTime() - startOfDate.getTime()) / millisecondsPerDay,
+    ),
+  );
 }

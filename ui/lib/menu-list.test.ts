@@ -19,6 +19,17 @@ const findApiReference = (options: Parameters<typeof getMenuList>[0]) =>
     .flatMap((menu) => menu.submenus ?? [])
     .find((submenu) => submenu.label === "API reference");
 
+const getTopLevelLabels = () =>
+  getMenuList({ pathname: "/", apiDocsUrl: null }).flatMap((group) =>
+    group.menus.map((menu) => menu.label),
+  );
+
+const getConfigurationLabels = () =>
+  getMenuList({ pathname: "/lighthouse/config", apiDocsUrl: null })
+    .flatMap((group) => group.menus)
+    .find((menu) => menu.label === "Configuration")
+    ?.submenus?.map((submenu) => submenu.label) ?? [];
+
 describe("getMenuList", () => {
   afterEach(() => {
     delete process.env.NEXT_PUBLIC_IS_CLOUD_ENV;
@@ -100,5 +111,26 @@ describe("getMenuList", () => {
     expect(attackPaths).toEqual(
       expect.not.objectContaining({ highlight: true }),
     );
+  });
+
+  it("should keep Lighthouse as a browse item in OSS", () => {
+    // Given / When
+    const labels = getTopLevelLabels();
+
+    // Then
+    expect(labels).toContain("Lighthouse AI");
+  });
+
+  it("should move Lighthouse out of the Cloud browse menu but keep its configuration entry", () => {
+    // Given
+    process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
+
+    // When
+    const labels = getTopLevelLabels();
+    const configLabels = getConfigurationLabels();
+
+    // Then
+    expect(labels).not.toContain("Lighthouse AI");
+    expect(configLabels).toContain("Lighthouse AI");
   });
 });

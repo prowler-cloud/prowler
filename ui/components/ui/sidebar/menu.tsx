@@ -1,7 +1,6 @@
 "use client";
 
 import { Divider } from "@heroui/divider";
-import { Bot, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,13 +15,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area/scroll-area";
 import { CollapsibleMenu } from "@/components/ui/sidebar/collapsible-menu";
 import { MenuItem } from "@/components/ui/sidebar/menu-item";
+import { SidebarNavigationModeToggle } from "@/components/ui/sidebar/navigation-mode-toggle";
 import { useAuth } from "@/hooks";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
-import {
-  SIDEBAR_NAVIGATION_MODE,
-  type SidebarNavigationMode,
-  useSidebar,
-} from "@/hooks/use-sidebar";
+import { SIDEBAR_NAVIGATION_MODE, useSidebar } from "@/hooks/use-sidebar";
 import { getMenuList } from "@/lib/menu-list";
 import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
 import { cn } from "@/lib/utils";
@@ -212,74 +208,6 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
     </div>
   );
 };
-
-function SidebarNavigationModeToggle({
-  isOpen,
-  value,
-  onChange,
-}: {
-  isOpen: boolean;
-  value: SidebarNavigationMode;
-  onChange: (value: SidebarNavigationMode) => void;
-}) {
-  const modes = [
-    {
-      value: SIDEBAR_NAVIGATION_MODE.BROWSE,
-      label: "Browse",
-      icon: LayoutDashboard,
-    },
-    {
-      value: SIDEBAR_NAVIGATION_MODE.CHAT,
-      label: "Chat",
-      icon: Bot,
-    },
-  ] as const;
-
-  return (
-    <div className={cn("mt-3 shrink-0 px-2", !isOpen && "flex justify-center")}>
-      <div
-        className={cn(
-          "border-border-neutral-secondary bg-bg-neutral-secondary flex rounded-[8px] border p-1",
-          isOpen ? "w-full" : "flex-col",
-        )}
-      >
-        {modes.map((mode) => {
-          const Icon = mode.icon;
-          const active = value === mode.value;
-          const button = (
-            <button
-              key={mode.value}
-              type="button"
-              aria-label={mode.label}
-              className={cn(
-                "flex h-8 items-center justify-center rounded-[6px] px-2 text-sm transition-colors",
-                isOpen ? "min-w-0 flex-1 gap-2" : "w-8",
-                active
-                  ? "bg-bg-neutral-tertiary text-text-neutral-primary"
-                  : "text-text-neutral-secondary hover:text-text-neutral-primary",
-              )}
-              onClick={() => onChange(mode.value)}
-            >
-              <Icon className="size-4 shrink-0" />
-              {isOpen && <span className="truncate">{mode.label}</span>}
-            </button>
-          );
-
-          if (isOpen) {
-            return button;
-          }
-
-          return (
-            <Tooltip key={mode.value} delayDuration={100}>
-              <TooltipTrigger asChild>{button}</TooltipTrigger>
-              <TooltipContent side="right">{mode.label}</TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function LaunchScanButtonContent({ isOpen }: { isOpen: boolean }) {
   return (

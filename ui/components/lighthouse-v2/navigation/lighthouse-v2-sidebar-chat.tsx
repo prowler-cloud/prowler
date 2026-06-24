@@ -2,7 +2,7 @@
 
 import { MessageSquare, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   archiveLighthouseV2Session,
@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT } from "@/lib/lighthouse-v2/session-events";
 import type { LighthouseV2Session } from "@/types/lighthouse-v2";
 
 import { LighthouseV2SessionHistory } from "../history";
@@ -23,8 +24,9 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
   const router = useRouter();
   const [sessions, setSessions] = useState<LighthouseV2Session[]>([]);
   const [search, setSearch] = useState("");
+  const searchRef = useRef("");
 
-  const refreshSessions = async (nextSearch = search) => {
+  const refreshSessions = async (nextSearch = searchRef.current) => {
     const result = await getLighthouseV2Sessions(
       nextSearch ? { search: nextSearch } : undefined,
     );
@@ -35,6 +37,7 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+    searchRef.current = value;
     void refreshSessions(value);
   };
 
@@ -57,6 +60,11 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
 
   useMountEffect(() => {
     void refreshSessions();
+    const refresh = () => void refreshSessions(searchRef.current);
+    window.addEventListener(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, refresh);
+    return () => {
+      window.removeEventListener(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, refresh);
+    };
   });
 
   if (!isOpen) {

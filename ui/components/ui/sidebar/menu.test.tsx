@@ -1,15 +1,27 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { Menu } from "./menu";
+import { SIDEBAR_NAVIGATION_MODE } from "@/hooks/use-sidebar";
 
-const { openLaunchScanModalMock, pathnameValue } = vi.hoisted(() => ({
+const { openLaunchScanModalMock, pathnameValue, pushMock } = vi.hoisted(() => ({
   openLaunchScanModalMock: vi.fn(),
   pathnameValue: { current: "/findings" },
+  pushMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => pathnameValue.current,
+  useRouter: () => ({
+    push: pushMock,
+  }),
+}));
+
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: { user: { permissions: {} } },
+    status: "authenticated",
+  }),
 }));
 
 vi.mock("@/hooks", () => ({
@@ -22,17 +34,31 @@ vi.mock("@/lib/menu-list", () => ({
   getMenuList: () => [],
 }));
 
+vi.mock("@/components/lighthouse-v2/navigation", () => ({
+  LighthouseV2SidebarChat: () => <div data-testid="lighthouse-chat-sidebar" />,
+}));
+
 vi.mock("@/store", () => ({
   useScansStore: (
     selector: (state: { openLaunchScanModal: () => void }) => unknown,
   ) => selector({ openLaunchScanModal: openLaunchScanModalMock }),
 }));
 
+let MenuComponent: typeof import("./menu").Menu;
+let SidebarNavigationModeToggleComponent: typeof import("./navigation-mode-toggle").SidebarNavigationModeToggle;
+
+beforeAll(async () => {
+  MenuComponent = (await import("./menu")).Menu;
+  SidebarNavigationModeToggleComponent = (
+    await import("./navigation-mode-toggle")
+  ).SidebarNavigationModeToggle;
+});
+
 describe("Menu", () => {
   it("links scan to the scans page with the modal open", () => {
     pathnameValue.current = "/findings";
 
-    render(<Menu isOpen />);
+    render(<MenuComponent isOpen />);
 
     const launchScanLink = screen.getByRole("link", { name: /launch scan/i });
     const launchScanWrapper = launchScanLink.closest("div.flex.shrink-0");
@@ -51,7 +77,7 @@ describe("Menu", () => {
   it("opens the launch scan modal without navigation when already on scans", async () => {
     pathnameValue.current = "/scans";
 
-    render(<Menu isOpen />);
+    render(<MenuComponent isOpen />);
 
     await screen.getByRole("button", { name: /launch scan/i }).click();
 
@@ -64,7 +90,7 @@ describe("Menu", () => {
   it("shows the Prowler icon when the menu is collapsed", () => {
     pathnameValue.current = "/findings";
 
-    render(<Menu isOpen={false} />);
+    render(<MenuComponent isOpen={false} />);
 
     const launchScanLink = screen.getByRole("link", { name: /launch scan/i });
 
@@ -73,5 +99,53 @@ describe("Menu", () => {
     expect(
       launchScanLink.querySelector('svg[viewBox="0 0 432.08 396.77"]'),
     ).toBeInTheDocument();
+  });
+});
+
+describe("SidebarNavigationModeToggle", () => {
+  beforeEach(() => {
+    pushMock.mockClear();
+  });
+
+  it("navigates to Lighthouse when Chat mode is selected", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <SidebarNavigationModeToggleComponent
+        isOpen
+        value={SIDEBAR_NAVIGATION_MODE.BROWSE}
+        onChange={onChange}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Chat" }));
+
+    // Then
+    expect(onChange).toHaveBeenCalledWith(SIDEBAR_NAVIGATION_MODE.CHAT);
+    expect(pushMock).toHaveBeenCalledWith("/lighthouse");
+  });
+
+  it("does not navigate when Browse mode is selected", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <SidebarNavigationModeToggleComponent
+        isOpen
+        value={SIDEBAR_NAVIGATION_MODE.CHAT}
+        onChange={onChange}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Browse" }));
+
+    // Then
+    expect(onChange).toHaveBeenCalledWith(SIDEBAR_NAVIGATION_MODE.BROWSE);
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });
