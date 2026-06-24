@@ -210,12 +210,14 @@ LIMIT 25
 For the "is any item of this list a substring of a dynamic value" case, such as "does any resource pattern in this policy match a target role ARN", add the `HAS_*` traversal as its own `MATCH` and check the substring relationship between the item value and the dynamic node in `WHERE`:
 
 ```cypher
-MATCH (role:AWSRole), (stmt:AWSPolicyStatement {effect: 'Allow'})
+MATCH (role:AWSRole)
+WHERE role.name = 'Admin'
+MATCH (principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {effect: 'Allow'})
 MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
 WHERE r.value = '*'
    OR r.value CONTAINS role.name
    OR role.arn CONTAINS r.value
-RETURN DISTINCT stmt, role
+RETURN DISTINCT principal.arn AS principal, stmt, role
 LIMIT 25
 ```
 
@@ -252,6 +254,7 @@ When a query needs to inspect the structured members of a condition (for example
 
 - Start small with `LIMIT` to inspect the shape of the data before broadening the pattern.
 - Traverse `HAS_*` edges to reach list-typed property values (for example `action`, `resource`). The parent node does not carry the list as a single field; see [Working with List-Typed Properties](#working-with-list-typed-properties) for the patterns.
+- On large scans, avoid broad disconnected patterns such as `MATCH (a:Label), (b:OtherLabel)`. Bind one side with a selective predicate first, and use `WITH DISTINCT` between expanding traversals when duplicates are possible.
 - Use `RETURN` projections (`RETURN n.name, n.region`) instead of returning whole nodes to keep responses compact.
 - Combine resource nodes with `ProwlerFinding` nodes via `HAS_FINDING` to correlate misconfigurations with the affected resources.
 - When a query times out or returns no rows, simplify the pattern step by step until the first variant runs successfully, then add constraints back.

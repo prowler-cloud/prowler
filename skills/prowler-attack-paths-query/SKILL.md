@@ -124,6 +124,7 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
         MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
         WHERE toLower(act.value) IN ['{permission_lowercase}', '{service}:*']
            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt, path_principal
 
         // Target resources attached to the same principal (sub-patterns below)
         MATCH path_target = (aws)--(target_policy:AWSPolicy)--(principal)
@@ -153,6 +154,7 @@ Key points:
 - The `(aws)--` hub hops stay anonymous. `AWSAccount` is a high-degree node that fans out to every principal, role, policy, and resource in the account; typing those edges forces the planner to enumerate from the hub and collapses performance on multi-tenant Neptune.
 - Other relationship types appear only where the file's existing queries already use one (`TRUSTS_AWS_PRINCIPAL`, `STS_ASSUMEROLE_ALLOW`, `MEMBER_AWS_GROUP`, `HAS_EXECUTION_ROLE`).
 - The finding probe is typed `:HAS_FINDING` and left undirected. The type lets Neptune apply an inline edge filter; the lack of direction matches the convention of the rest of the file.
+- Collapse duplicate rows after each permission gate with `WITH DISTINCT`, carrying only the variables needed by later clauses.
 - Each `HAS_*` traversal is its own `MATCH` clause with a `WHERE` on the child item node. `WITH DISTINCT path_principal, path_target` precedes `collect(path...)` to dedupe the row multiplication produced by the joins.
 - The `RETURN` shape `paths, dpf, dpfr` is the contract the serializer and visualiser depend on. Do not change it.
 
@@ -169,16 +171,34 @@ Four `path_target` shapes cover the common attack types. Each shares the canonic
 | Assume-role lateral | Assumable roles          | `(aws)--(target_role:AWSRole)-[:STS_ASSUMEROLE_ALLOW]-(principal)`                                      | IAM-014 |
 | PassRole + service  | Service-trusting roles   | `(aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]-(:AWSPrincipal {arn: '{service}.amazonaws.com'})` | EC2-001 |
 
-**Multi-permission queries** (e.g. PassRole plus a service-create action) add a second walk before `path_target`. Reuse the per-query counter for the new variables (`act2`, `policy2`, `stmt2`):
+**Multi-permission queries** (e.g. PassRole plus a service-create action) add permission gates before `path_target`. Reuse the per-query counter for new variables (`act2`, `policy2`, `stmt2`) and collapse rows after each gate:
 
 ```cypher
 MATCH (principal)-[:POLICY]->(policy2:AWSPolicy)-[:STATEMENT]->(stmt2:AWSPolicyStatement {effect: 'Allow'})
 MATCH (stmt2)-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
 WHERE toLower(act2.value) IN ['service:*', 'service:createsomething']
    OR act2.value = '*'
+WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 ```
 
-Both `stmt.resource` and `stmt2.resource` are then checked against the target via two `HAS_RESOURCE` traversals (`res`, `res2`). See IAM-015 or EC2-001 in `aws.py`.
+If a permission is an existence-only gate whose statement resource is not checked later, keep the policy and statement anonymous and carry only the variables still needed:
+
+```cypher
+MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {effect: 'Allow'})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+WHERE toLower(act3.value) IN ['service:*', 'service:othersomething']
+   OR act3.value = '*'
+WITH DISTINCT aws, principal, stmt, path_principal
+```
+
+When all matching principals can target the same independent resource set, collect principal paths before expanding targets instead of creating one row per principal-target pair:
+
+```cypher
+WITH aws, collect(DISTINCT path_principal) AS principal_paths
+MATCH path_target = (aws)--(target)
+WITH principal_paths + collect(DISTINCT path_target) AS paths
+```
+
+Statements that constrain a target are still checked via `HAS_RESOURCE` traversals (`res`, `res2`). See IAM-015 or EC2-001 in `aws.py`.
 
 ---
 
