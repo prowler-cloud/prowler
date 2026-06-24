@@ -5,9 +5,9 @@ import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
 import { Button } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 
 import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SamlConfigForm } from "./saml-config-form";
@@ -72,7 +72,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
         size="md"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-default-600 text-sm">
+          <p className="text-text-neutral-secondary text-sm">
             Are you sure you want to remove the SAML SSO configuration? Users
             will no longer be able to sign in using SAML.
           </p>

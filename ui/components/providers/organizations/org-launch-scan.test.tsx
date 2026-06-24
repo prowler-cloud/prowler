@@ -43,7 +43,8 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),

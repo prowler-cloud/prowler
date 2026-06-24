@@ -3,9 +3,9 @@
 import { useState } from "react";
 
 import { Badge, Button, Card } from "@/components/shadcn";
+import { DateWithTime } from "@/components/shadcn/entities";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Modal } from "@/components/shadcn/modal";
-import { DateWithTime } from "@/components/ui/entities";
 import { EditTenantForm } from "@/components/users/forms";
 import { DeleteTenantForm } from "@/components/users/forms/delete-tenant-form";
 import { SwitchTenantForm } from "@/components/users/forms/switch-tenant-form";
@@ -108,12 +108,7 @@ export const MembershipItem = ({
               </Button>
             )}
             {isActiveTenant ? (
-              <Badge
-                variant="outline"
-                className="border-emerald-600 text-emerald-600"
-              >
-                Active
-              </Badge>
+              <Badge variant="success">Active</Badge>
             ) : (
               <Button
                 type="button"

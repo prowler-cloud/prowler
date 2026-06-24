@@ -70,7 +70,8 @@ vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: vi.fn() }),
 }));
 

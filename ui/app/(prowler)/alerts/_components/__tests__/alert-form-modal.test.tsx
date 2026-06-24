@@ -40,7 +40,7 @@ vi.mock(
   }),
 );
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,

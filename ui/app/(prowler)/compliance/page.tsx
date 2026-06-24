@@ -16,7 +16,7 @@ import { ComplianceFilters } from "@/components/compliance/compliance-header/com
 import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overview-grid";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import {
   ExpandedScanData,
@@ -274,7 +274,7 @@ const ComplianceOverviewPanel = ({
     <Card
       variant="base"
       padding="none"
-      className="minimal-scrollbar shadow-small relative z-0 w-full gap-4 overflow-auto"
+      className="minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm"
     >
       <CardContent className="flex flex-col gap-4 p-4">{children}</CardContent>
     </Card>

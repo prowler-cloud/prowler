@@ -1,4 +1,4 @@
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 
 interface AuthFooterLinkProps {
   text: string;
@@ -12,7 +12,7 @@ export const AuthFooterLink = ({
   href,
 }: AuthFooterLinkProps) => {
   return (
-    <p className="text-small text-center">
+    <p className="text-center text-sm">
       {text}&nbsp;
       <CustomLink size="md" href={href} target="_self">
         {linkText}

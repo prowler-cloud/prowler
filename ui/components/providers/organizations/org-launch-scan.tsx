@@ -14,6 +14,7 @@ import {
   WizardFooterConfig,
 } from "@/components/providers/wizard/steps/footer-controls";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
+import { ToastAction, useToast } from "@/components/shadcn";
 import {
   Select,
   SelectContent,
@@ -23,7 +24,6 @@ import {
 } from "@/components/shadcn/select/select";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { ToastAction, useToast } from "@/components/ui";
 import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
   buildScheduleUpdatePayload,

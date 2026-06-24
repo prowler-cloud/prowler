@@ -627,7 +627,7 @@ export function SankeyChart({
         </div>
       )}
       {zeroDataProviders.length > 0 && (
-        <div className="border-divider-primary mt-4 border-t pt-4">
+        <div className="border-border-neutral-secondary mt-4 border-t pt-4">
           <p className="text-text-neutral-tertiary mb-3 text-xs font-medium tracking-wide uppercase">
             Providers with no failed findings
           </p>

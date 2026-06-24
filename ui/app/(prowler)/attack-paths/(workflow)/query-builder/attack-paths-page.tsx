@@ -16,7 +16,7 @@ import { FindingDetailDrawer } from "@/components/findings/table";
 import { PageReady } from "@/components/onboarding";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
-import { Button } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,6 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
-import { useToast } from "@/components/ui";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isCloud } from "@/lib/shared/env";
 import {

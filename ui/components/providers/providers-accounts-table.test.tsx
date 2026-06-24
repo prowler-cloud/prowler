@@ -17,7 +17,7 @@ const { dataTableMockState, getColumnProvidersMock } = vi.hoisted(() => ({
   getColumnProvidersMock: vi.fn((..._args: unknown[]) => []),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({
     onRowSelectionChange,
   }: {
