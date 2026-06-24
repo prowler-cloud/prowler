@@ -8,10 +8,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Controlled `402` and `403` Server Action error messages for alert seed and mutation flows [(#11629)](https://github.com/prowler-cloud/prowler/pull/11629)
 
-### 🔄 Changed
-
-- ESLint: typed flat config with `typescript-eslint` (type-aware via `projectService`) and `eslint-plugin-import-x`, replacing `eslint-plugin-prettier`, `eslint-plugin-simple-import-sort`, and `eslint-plugin-unused-imports` [(#11352)](https://github.com/prowler-cloud/prowler/pull/11352)
-
 ### 🐞 Fixed
 
 - Attack Paths now shows distinct messages while a scan is queued, running, or building its graph — plus a separate "couldn't load scans" error — instead of always showing "No scans available" [(#11512)](https://github.com/prowler-cloud/prowler/pull/11512)
