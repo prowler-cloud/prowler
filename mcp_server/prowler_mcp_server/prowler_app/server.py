@@ -1,4 +1,5 @@
 from fastmcp import FastMCP
+
 from prowler_mcp_server.prowler_app.utils.tool_loader import load_all_tools
 
 # Initialize MCP server

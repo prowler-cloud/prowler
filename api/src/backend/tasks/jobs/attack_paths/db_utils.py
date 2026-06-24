@@ -1,15 +1,14 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
-
-from cartography.config import Config as CartographyConfig
-from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths.config import is_provider_available
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan
 from api.models import Provider as ProwlerAPIProvider
 from api.models import StateChoices
+from cartography.config import Config as CartographyConfig
+from celery.utils.log import get_task_logger
+from tasks.jobs.attack_paths.config import is_provider_available
 
 logger = get_task_logger(__name__)
 
@@ -43,7 +42,7 @@ def create_attack_paths_scan(
             provider_id=provider_id,
             scan_id=scan_id,
             state=StateChoices.SCHEDULED,
-            started_at=datetime.now(tz=timezone.utc),
+            started_at=datetime.now(tz=UTC),
             graph_data_ready=previous_data_ready,
         )
         attack_paths_scan.save()
@@ -104,7 +103,7 @@ def starting_attack_paths_scan(
             return False
 
         locked.state = StateChoices.EXECUTING
-        locked.started_at = datetime.now(tz=timezone.utc)
+        locked.started_at = datetime.now(tz=UTC)
         locked.update_tag = cartography_config.update_tag
         locked.save(update_fields=["state", "started_at", "update_tag"])
 
@@ -121,7 +120,7 @@ def _mark_scan_finished(
     ingestion_exceptions: dict[str, Any],
 ) -> None:
     """Set terminal fields on a scan. Caller must be inside a transaction."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     duration = (
         int((now - attack_paths_scan.started_at).total_seconds())
         if attack_paths_scan.started_at

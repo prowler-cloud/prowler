@@ -13,8 +13,13 @@ export const ACTION_ERROR_MESSAGES = {
     "You don't have permission to perform this action. Ask an administrator to update your role.",
 } as const satisfies Record<ActionErrorStatus, string>;
 
-interface ActionErrorResult {
-  error?: string;
+export const ACTION_ERROR_API_MESSAGES = {
+  [ACTION_ERROR_STATUS.PAYMENT_REQUIRED]:
+    "An active subscription is required to use this API endpoint in Prowler Cloud.",
+} as const satisfies Partial<Record<ActionErrorStatus, string>>;
+
+export interface ActionErrorResult {
+  error?: unknown;
   status?: number;
 }
 
@@ -29,6 +34,17 @@ const isActionErrorStatus = (
   status === ACTION_ERROR_STATUS.PAYMENT_REQUIRED ||
   status === ACTION_ERROR_STATUS.FORBIDDEN;
 
+const isHttpErrorStatus = (status: number | undefined): boolean =>
+  typeof status === "number" && status >= 400;
+
+export const hasActionError = (
+  result: ActionErrorResult | null | undefined,
+): result is ActionErrorResult =>
+  result !== undefined &&
+  result !== null &&
+  ((result.error !== undefined && result.error !== null) ||
+    isHttpErrorStatus(result.status));
+
 export const getActionErrorMessage = (
   result: ActionErrorResult,
   options: GetActionErrorMessageOptions = {},
@@ -39,5 +55,9 @@ export const getActionErrorMessage = (
     );
   }
 
-  return result.error ?? options.fallback ?? "Oops! Something went wrong.";
+  if (result.error !== undefined && result.error !== null) {
+    return String(result.error);
+  }
+
+  return options.fallback ?? "Oops! Something went wrong.";
 };
