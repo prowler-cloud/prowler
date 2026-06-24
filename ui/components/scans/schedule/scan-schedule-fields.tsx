@@ -60,20 +60,18 @@ interface ScanScheduleFieldsProps {
    * (interval/weekly/monthly) are disabled. Used for non-Cloud (OSS) accounts.
    */
   canUseAdvancedSchedule?: boolean;
-  /** Render the "Available in Prowler Cloud" upsell badge on locked controls. */
+  /** Render the "Available in Prowler Cloud" upsell badge in the header. */
   showCloudUpgradeBadge?: boolean;
 }
 
 function NumberSelect({
   label,
-  labelAddon,
   value,
   values,
   onChange,
   disabled,
 }: {
   label: string;
-  labelAddon?: ReactNode;
   value: number;
   values: ReadonlyArray<{ value: number; label: string }>;
   onChange: (value: number) => void;
@@ -81,10 +79,7 @@ function NumberSelect({
 }) {
   return (
     <Field>
-      <div className="flex items-center justify-between gap-2">
-        <FieldLabel>{label}</FieldLabel>
-        {labelAddon}
-      </div>
+      <FieldLabel>{label}</FieldLabel>
       <Select
         value={String(value)}
         onValueChange={(nextValue) => onChange(Number(nextValue))}
@@ -165,6 +160,7 @@ export function ScanScheduleFields({
           <h3 className="text-text-neutral-primary text-sm font-medium">
             Scan Schedule
           </h3>
+          {cloudUpgradeBadge}
         </div>
         {headerAction}
       </div>
@@ -176,7 +172,6 @@ export function ScanScheduleFields({
           render={({ field }) => (
             <NumberSelect
               label="Scan Time"
-              labelAddon={cloudUpgradeBadge}
               value={field.value}
               values={HOUR_OPTIONS}
               onChange={field.onChange}
@@ -190,10 +185,7 @@ export function ScanScheduleFields({
           name="frequency"
           render={({ field }) => (
             <Field>
-              <div className="flex items-center justify-between gap-2">
-                <FieldLabel>Repeats</FieldLabel>
-                {cloudUpgradeBadge}
-              </div>
+              <FieldLabel>Repeats</FieldLabel>
               <Select
                 value={
                   canUseAdvancedSchedule
