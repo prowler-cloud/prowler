@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildProviderScheduleSummary,
+  buildScheduleAttributesFromProvider,
   buildSchedulesByProviderId,
   buildScheduleUpdatePayload,
+  formatDayOfMonth,
   formatScheduleHour,
   getBrowserTimezone,
   getNextScheduledRun,
   getScanScheduleCapability,
+  getScheduleFormDefaults,
   getScheduleFormValues,
   isScheduleConfigured,
 } from "@/lib/schedules";
@@ -161,6 +164,21 @@ describe("formatScheduleHour", () => {
   });
 });
 
+describe("formatDayOfMonth", () => {
+  it.each([
+    [1, "1st"],
+    [2, "2nd"],
+    [3, "3rd"],
+    [4, "4th"],
+    [11, "11th"],
+    [12, "12th"],
+    [13, "13th"],
+    [24, "24th"],
+  ])("formats day %i as %s", (day, expected) => {
+    expect(formatDayOfMonth(day)).toBe(expected);
+  });
+});
+
 describe("isScheduleConfigured", () => {
   it("treats a null scan_hour as not configured", () => {
     expect(isScheduleConfigured({ scan_hour: null })).toBe(false);
@@ -172,6 +190,26 @@ describe("isScheduleConfigured", () => {
 
   it("treats a set scan_hour as configured", () => {
     expect(isScheduleConfigured({ scan_hour: 14 })).toBe(true);
+  });
+});
+
+describe("getScheduleFormDefaults", () => {
+  it("uses the current local hour when the clock is exactly on the hour", () => {
+    expect(
+      getScheduleFormDefaults(new Date(2026, 5, 10, 10, 0, 0, 0)).hour,
+    ).toBe(10);
+  });
+
+  it("uses the next local hour when the current hour already started", () => {
+    expect(
+      getScheduleFormDefaults(new Date(2026, 5, 10, 10, 30, 0, 0)).hour,
+    ).toBe(11);
+  });
+
+  it("wraps the upcoming hour from 23:xx to 0", () => {
+    expect(
+      getScheduleFormDefaults(new Date(2026, 5, 10, 23, 1, 0, 0)).hour,
+    ).toBe(0);
   });
 });
 
@@ -190,7 +228,9 @@ describe("getScheduleFormValues", () => {
   });
 
   it("returns defaults when there is no schedule", () => {
-    expect(getScheduleFormValues(null)).toEqual({
+    expect(
+      getScheduleFormValues(null, new Date(2026, 5, 10, 0, 0, 0, 0)),
+    ).toEqual({
       frequency: SCHEDULE_FREQUENCY.DAILY,
       hour: 0,
       dayOfWeek: 1,
@@ -201,16 +241,19 @@ describe("getScheduleFormValues", () => {
   });
 
   it("returns defaults when scan_hour is null (unconfigured provider)", () => {
-    expect(getScheduleFormValues(buildAttributes({ scan_hour: null }))).toEqual(
-      {
-        frequency: SCHEDULE_FREQUENCY.DAILY,
-        hour: 0,
-        dayOfWeek: 1,
-        dayOfMonth: 1,
-        intervalHours: 48,
-        launchInitialScan: false,
-      },
-    );
+    expect(
+      getScheduleFormValues(
+        buildAttributes({ scan_hour: null }),
+        new Date(2026, 5, 10, 0, 0, 0, 0),
+      ),
+    ).toEqual({
+      frequency: SCHEDULE_FREQUENCY.DAILY,
+      hour: 0,
+      dayOfWeek: 1,
+      dayOfMonth: 1,
+      intervalHours: 48,
+      launchInitialScan: false,
+    });
   });
 
   it("maps a configured schedule onto the form", () => {
@@ -439,6 +482,39 @@ describe("buildSchedulesByProviderId", () => {
   });
 });
 
+describe("buildScheduleAttributesFromProvider", () => {
+  it("returns undefined when the provider payload does not include scan fields", () => {
+    expect(buildScheduleAttributesFromProvider({})).toBeUndefined();
+  });
+
+  it("keeps scan_hour null as an unconfigured provider schedule", () => {
+    const attributes = buildScheduleAttributesFromProvider({
+      scan_enabled: true,
+      scan_frequency: SCHEDULE_FREQUENCY.DAILY,
+      scan_hour: null,
+      scan_timezone: "UTC",
+      scan_interval_hours: null,
+      scan_day_of_week: null,
+      scan_day_of_month: null,
+      next_scan_at: null,
+      last_scan_at: null,
+    });
+
+    expect(attributes).toEqual({
+      scan_enabled: true,
+      scan_frequency: SCHEDULE_FREQUENCY.DAILY,
+      scan_hour: null,
+      scan_timezone: "UTC",
+      scan_interval_hours: null,
+      scan_day_of_week: null,
+      scan_day_of_month: null,
+      next_scan_at: null,
+      last_scan_at: null,
+    });
+    expect(isScheduleConfigured(attributes!)).toBe(false);
+  });
+});
+
 describe("buildProviderScheduleSummary", () => {
   const buildAttributes = (
     overrides: Partial<ScheduleAttributes> = {},
@@ -463,7 +539,7 @@ describe("buildProviderScheduleSummary", () => {
     ],
     [
       { scan_frequency: SCHEDULE_FREQUENCY.MONTHLY, scan_day_of_month: 15 },
-      "Monthly on day 15",
+      "Monthly on the 15th",
     ],
     [
       { scan_frequency: SCHEDULE_FREQUENCY.INTERVAL, scan_interval_hours: 72 },

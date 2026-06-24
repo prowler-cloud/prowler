@@ -227,22 +227,25 @@ export function getColumnProviders(
           return <span className="text-text-neutral-tertiary text-sm">-</span>;
         }
 
-        const lastCheckedAt = (row.original as ProvidersProviderRow).attributes
-          .connection.last_checked_at;
+        const provider = row.original as ProvidersProviderRow;
+        const lastScanAt =
+          "lastScanAt" in provider
+            ? provider.lastScanAt
+            : provider.attributes.connection.last_checked_at;
 
-        if (!lastCheckedAt) {
+        if (!lastScanAt) {
           return (
             <span className="text-text-neutral-tertiary text-sm">Never</span>
           );
         }
 
-        return <DateWithTime dateTime={lastCheckedAt} showTime />;
+        return <DateWithTime dateTime={lastScanAt} showTime />;
       },
       enableSorting: false,
     },
     {
       id: "scanSchedule",
-      size: 140,
+      size: 180,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Scan Schedule" />
       ),

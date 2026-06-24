@@ -23,7 +23,7 @@ export const LinkToScans = ({ hasSchedule, schedule }: LinkToScansProps) => {
 
   return (
     <span className="text-text-neutral-secondary text-sm">
-      {hasSchedule ? "Daily" : "None"}
+      {hasSchedule ? "Scheduled" : "None"}
     </span>
   );
 };

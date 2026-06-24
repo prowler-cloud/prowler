@@ -11,6 +11,7 @@ import {
 } from "@/lib/helper-filters";
 import {
   buildProviderScheduleSummary,
+  buildScheduleAttributesFromProvider,
   buildSchedulesByProviderId,
   isScheduleConfigured,
 } from "@/lib/schedules";
@@ -145,6 +146,18 @@ const buildProviderScheduleSummaryFor = (
     ? buildProviderScheduleSummary(attributes, now)
     : undefined;
 
+const getProviderLastScanAt = (
+  provider: ProvidersApiResponse["data"][number],
+): string | null => {
+  if (
+    Object.prototype.hasOwnProperty.call(provider.attributes, "last_scan_at")
+  ) {
+    return provider.attributes.last_scan_at ?? null;
+  }
+
+  return provider.attributes.connection.last_checked_at ?? null;
+};
+
 const enrichProviders = (
   providersResponse: ProvidersApiResponse | undefined,
   scanScheduledProviderIds: Set<string>,
@@ -154,10 +167,17 @@ const enrichProviders = (
   const now = new Date();
 
   return (providersResponse?.data ?? []).map((provider) => {
+    const providerScheduleAttributes = buildScheduleAttributesFromProvider(
+      provider.attributes,
+    );
+    const scheduleAttributes =
+      providerScheduleAttributes ?? schedulesByProviderId[provider.id];
     const scheduleSummary = buildProviderScheduleSummaryFor(
-      schedulesByProviderId[provider.id],
+      scheduleAttributes,
       now,
     );
+    const hasProviderScheduleAttributes =
+      providerScheduleAttributes !== undefined;
 
     return {
       ...provider,
@@ -167,11 +187,14 @@ const enrichProviders = (
           (providerGroup: { id: string }) =>
             providerGroupLookup.get(providerGroup.id) ?? "Unknown Group",
         ) ?? [],
-      // A fired scheduled scan OR a configured schedule that hasn't fired yet.
-      hasSchedule:
-        scanScheduledProviderIds.has(provider.id) ||
-        scheduleSummary !== undefined,
+      // Provider scan_* fields are authoritative when present. The scheduled
+      // scan fallback only exists for older APIs that do not expose them.
+      hasSchedule: hasProviderScheduleAttributes
+        ? scheduleSummary !== undefined
+        : scanScheduledProviderIds.has(provider.id) ||
+          scheduleSummary !== undefined,
       scheduleSummary,
+      lastScanAt: getProviderLastScanAt(provider),
     };
   });
 };

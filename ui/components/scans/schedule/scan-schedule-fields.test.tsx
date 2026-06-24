@@ -73,4 +73,20 @@ describe("ScanScheduleFields", () => {
       }),
     ).not.toBeInTheDocument();
   });
+
+  it("uses ordinal copy for monthly schedules", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<ScheduleFieldsHarness />);
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: /repeats/i }));
+    await user.click(screen.getByRole("option", { name: /monthly/i }));
+
+    // Then
+    expect(getHelperCopy(/Monthly on the 1st/)).toBeInTheDocument();
+    expect(getHelperCopy(/Monthly on the 1st/)).not.toHaveTextContent(
+      /Monthly on day/,
+    );
+  });
 });

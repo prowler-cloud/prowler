@@ -279,6 +279,9 @@ function LaunchScanForm({
           }
           selectedValues={providerId ? [providerId] : []}
           closeOnSelect
+          placeholder="Select a Provider"
+          emptySelectionLabel="No provider selected"
+          clearSelectionLabel="Clear provider selection"
         />
         {providerError && <FieldError>{providerError}</FieldError>}
       </Field>
@@ -365,7 +368,11 @@ function LaunchScanForm({
         }
         loadingText={isScheduleMode ? "Saving..." : "Launching..."}
         isDisabled={
-          isSubmitting || !providers.length || isScheduleLoading || isBlocked
+          isSubmitting ||
+          !providers.length ||
+          isScheduleLoading ||
+          isBlocked ||
+          (isScheduleMode && !providerId)
         }
         rightIcon={<Rocket className="size-4" />}
       />

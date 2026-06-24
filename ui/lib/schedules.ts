@@ -12,7 +12,6 @@ import {
   type ScheduleUpdatePayload,
 } from "@/types/schedules";
 
-const DEFAULT_SCHEDULE_HOUR = 0;
 const DEFAULT_DAY_OF_WEEK = 1;
 const DEFAULT_DAY_OF_MONTH = 1;
 // The backend (prowler-cloud) enforces SCAN_INTERVAL_HOURS_MIN = 24. 48 is well
@@ -65,6 +64,24 @@ export function formatScheduleHour(hour: number): string {
   return `${displayHour}:00${period}`;
 }
 
+export function formatDayOfMonth(day: number): string {
+  const mod100 = day % 100;
+  if (mod100 >= 11 && mod100 <= 13) {
+    return `${day}th`;
+  }
+
+  switch (day % 10) {
+    case 1:
+      return `${day}st`;
+    case 2:
+      return `${day}nd`;
+    case 3:
+      return `${day}rd`;
+    default:
+      return `${day}th`;
+  }
+}
+
 export function getBrowserTimezone(): string {
   if (typeof window === "undefined") {
     return "UTC";
@@ -73,10 +90,19 @@ export function getBrowserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
-export function getScheduleFormDefaults(): ScheduleFormValues {
+function getDefaultScheduleHour(now: Date): number {
+  const isOnTheHour =
+    now.getMinutes() === 0 &&
+    now.getSeconds() === 0 &&
+    now.getMilliseconds() === 0;
+
+  return (now.getHours() + (isOnTheHour ? 0 : 1)) % 24;
+}
+
+export function getScheduleFormDefaults(now = new Date()): ScheduleFormValues {
   return {
     frequency: SCHEDULE_FREQUENCY.DAILY,
-    hour: DEFAULT_SCHEDULE_HOUR,
+    hour: getDefaultScheduleHour(now),
     dayOfWeek: DEFAULT_DAY_OF_WEEK,
     dayOfMonth: DEFAULT_DAY_OF_MONTH,
     intervalHours: DEFAULT_INTERVAL_HOURS,
@@ -86,8 +112,9 @@ export function getScheduleFormDefaults(): ScheduleFormValues {
 
 export function getScheduleFormValues(
   schedule?: ScheduleAttributes | null,
+  now = new Date(),
 ): ScheduleFormValues {
-  const defaults = getScheduleFormDefaults();
+  const defaults = getScheduleFormDefaults(now);
 
   if (!schedule || schedule.scan_hour === null) {
     return defaults;
@@ -146,6 +173,38 @@ export function buildSchedulesByProviderId(
   }
 
   return byProviderId;
+}
+
+interface ProviderScheduleAttributeSource {
+  scan_enabled?: boolean | null;
+  scan_frequency?: ScheduleAttributes["scan_frequency"] | null;
+  scan_hour?: number | null;
+  scan_timezone?: string | null;
+  scan_interval_hours?: number | null;
+  scan_day_of_week?: number | null;
+  scan_day_of_month?: number | null;
+  next_scan_at?: string | null;
+  last_scan_at?: string | null;
+}
+
+export function buildScheduleAttributesFromProvider(
+  attributes: ProviderScheduleAttributeSource,
+): ScheduleAttributes | undefined {
+  if (!Object.prototype.hasOwnProperty.call(attributes, "scan_hour")) {
+    return undefined;
+  }
+
+  return {
+    scan_enabled: attributes.scan_enabled ?? true,
+    scan_frequency: attributes.scan_frequency ?? SCHEDULE_FREQUENCY.DAILY,
+    scan_hour: attributes.scan_hour ?? null,
+    scan_timezone: attributes.scan_timezone ?? "UTC",
+    scan_interval_hours: attributes.scan_interval_hours ?? null,
+    scan_day_of_week: attributes.scan_day_of_week ?? null,
+    scan_day_of_month: attributes.scan_day_of_month ?? null,
+    next_scan_at: attributes.next_scan_at,
+    last_scan_at: attributes.last_scan_at,
+  };
 }
 
 /**
@@ -224,7 +283,9 @@ export function getScheduleCadenceParts(
     }
     case SCHEDULE_FREQUENCY.MONTHLY:
       return {
-        cadence: `Monthly on day ${attributes.scan_day_of_month ?? 1}`,
+        cadence: `Monthly on the ${formatDayOfMonth(
+          attributes.scan_day_of_month ?? 1,
+        )}`,
         time,
       };
     case SCHEDULE_FREQUENCY.INTERVAL:

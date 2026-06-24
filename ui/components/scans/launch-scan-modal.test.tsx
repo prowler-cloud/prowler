@@ -91,12 +91,14 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
     onBatchChange,
     selectedValues,
     id,
+    placeholder = "All Providers",
   }: {
     disabledValues?: string[];
     providers: { id: string; attributes: { alias: string; uid: string } }[];
     onBatchChange: (filterKey: string, values: string[]) => void;
     selectedValues: string[];
     id?: string;
+    placeholder?: string;
   }) => (
     <div>
       <input aria-label="Search Providers" placeholder="Search Providers..." />
@@ -108,7 +110,7 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
           onBatchChange("provider_id__in", [event.target.value])
         }
       >
-        <option value="">All Providers</option>
+        <option value="">{placeholder}</option>
         {providers.map((provider) => (
           <option
             key={provider.id}
@@ -197,6 +199,16 @@ describe("LaunchScanModal", () => {
     );
 
     expect(screen.getByPlaceholderText("Search Providers...")).toBeVisible();
+  });
+
+  it("uses a single-provider placeholder in the launch selector", () => {
+    render(
+      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+    );
+
+    expect(
+      screen.getByRole("option", { name: "Select a Provider" }),
+    ).toBeInTheDocument();
   });
 
   it("disables disconnected providers in the launch selector", () => {
@@ -458,6 +470,18 @@ describe("LaunchScanModal", () => {
           title: "Scan schedule saved and initial scan launched",
         }),
       );
+    });
+
+    it("disables Save Schedule until a provider is selected", async () => {
+      const user = userEvent.setup();
+      renderAdvanced();
+
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+
+      expect(
+        screen.getByRole("button", { name: /save schedule/i }),
+      ).toBeDisabled();
+      expect(getScheduleMock).not.toHaveBeenCalled();
     });
 
     it("locks schedule mode outside ADVANCED (OSS default)", () => {

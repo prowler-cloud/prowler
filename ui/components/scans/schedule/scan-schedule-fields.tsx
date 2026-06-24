@@ -17,6 +17,7 @@ import {
 } from "@/components/shadcn";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import {
+  formatDayOfMonth,
   formatScheduleHour,
   getBrowserTimezone,
   getNextScheduledRun,
@@ -119,7 +120,7 @@ function getScheduleSummary({
     case SCHEDULE_FREQUENCY.WEEKLY:
       return `Weekly on ${SCHEDULE_WEEKDAY_LABELS[dayOfWeek] ?? SCHEDULE_WEEKDAY_LABELS[0]}`;
     case SCHEDULE_FREQUENCY.MONTHLY:
-      return `Monthly on day ${dayOfMonth}`;
+      return `Monthly on the ${formatDayOfMonth(dayOfMonth)}`;
     default:
       return "Daily";
   }
