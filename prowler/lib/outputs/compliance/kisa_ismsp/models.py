@@ -31,3 +31,33 @@ class AWSKISAISMSPModel(BaseModel):
     Muted: bool
     Framework: str
     Name: str
+
+
+class AzureKISAISMSPModel(BaseModel):
+    """
+    The Azure KISA-ISMS-P Model outputs findings in a format compliant with the Azure KISA-ISMS-P standard
+    """
+
+    Provider: str
+    Description: str
+    SubscriptionId: str
+    Location: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Name: str
+    Requirements_Description: str
+    Requirements_Attributes_Domain: str
+    Requirements_Attributes_Subdomain: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_AuditChecklist: Optional[list[str]] = None
+    Requirements_Attributes_RelatedRegulations: Optional[list[str]] = None
+    Requirements_Attributes_AuditEvidence: Optional[list[str]] = None
+    Requirements_Attributes_NonComplianceCases: Optional[list[str]] = None
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+    Muted: bool
+    Framework: str
+    Name: str
