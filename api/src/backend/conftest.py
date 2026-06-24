@@ -69,6 +69,61 @@ TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
 
 
+def _install_compliance_catalog_test_cache() -> None:
+    """Memoize the heavy SDK catalog loaders for the whole test session.
+
+    ``get_bulk_compliance_frameworks_universal`` re-reads and Pydantic-validates
+    ~100 compliance JSONs (≈20 MB) and ``CheckMetadata.get_bulk`` re-reads ~1k
+    check metadata files on *every* call. Production amortizes this through the
+    per-process lazy caches (``PROWLER_CHECKS`` / ``PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE``)
+    and ``warm_compliance_caches``, but the test suite parametrizes over every
+    provider and deliberately resets the API-level caches, so the same catalogs
+    were re-parsed dozens of times across the suite (≈3s/call locally, ≈19s under
+    coverage in CI).
+
+    The catalog files are immutable during a run and callers treat the parsed
+    objects as read-only, so caching the result per provider is safe. This is the
+    test-only equivalent of an ``lru_cache`` on the SDK functions, without
+    changing SDK behavior in production.
+
+    Installed at conftest import time (before test modules are collected) so that
+    even ``from ... import get_bulk_compliance_frameworks_universal`` bindings in
+    the test modules resolve to the cached wrapper.
+    """
+    import prowler.lib.check.compliance_models as compliance_models
+    from prowler.lib.check.models import CheckMetadata
+
+    framework_cache: dict[str, dict] = {}
+    checks_cache: dict[str, dict] = {}
+
+    original_bulk_frameworks = (
+        compliance_models.get_bulk_compliance_frameworks_universal
+    )
+    original_get_bulk = CheckMetadata.get_bulk
+
+    def cached_bulk_frameworks(provider):
+        if provider not in framework_cache:
+            framework_cache[provider] = original_bulk_frameworks(provider)
+        return framework_cache[provider]
+
+    def cached_get_bulk(provider):
+        if provider not in checks_cache:
+            checks_cache[provider] = original_get_bulk(provider)
+        return checks_cache[provider]
+
+    compliance_models.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
+    CheckMetadata.get_bulk = staticmethod(cached_get_bulk)
+
+    # ``api.compliance`` does ``from ... import get_bulk_compliance_frameworks_universal``
+    # so it holds its own binding; patch it too in case it was imported first.
+    import api.compliance as api_compliance
+
+    api_compliance.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
+
+
+_install_compliance_catalog_test_cache()
+
+
 def today_after_n_days(n_days: int) -> str:
     return datetime.strftime(
         datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
