@@ -99,7 +99,7 @@ class TestTenantAPIKeyAuthentication:
             {"_pk": str(uuid4()), "_exp": "not-a-timestamp"},
             {
                 "_pk": "not-a-uuid",
-                "_exp": (datetime.now(UTC) + timedelta(days=1)).timestamp(),
+                "_exp": (datetime.now(timezone.utc) + timedelta(days=1)).timestamp(),
             },
             {"_pk": str(uuid4()), "_exp": True},
         ],
