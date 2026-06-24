@@ -79,7 +79,7 @@ describe("LaunchStep", () => {
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
-    it("defaults to daily schedule mode and hides advanced cadence outside Cloud", async () => {
+    it("defaults to daily schedule mode and locks advanced cadence outside Cloud", async () => {
       // Given
       const onFooterChange = vi.fn();
       seedConnectedProvider();
@@ -101,15 +101,7 @@ describe("LaunchStep", () => {
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
       ).toBeEnabled();
-      expect(
-        screen.getByText("Daily scan will run automatically."),
-      ).toBeVisible();
-      expect(
-        screen.queryByRole("combobox", { name: /repeats/i }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByText("Available in Prowler Cloud"),
-      ).not.toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: /repeats/i })).toBeDisabled();
 
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
       expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Save");

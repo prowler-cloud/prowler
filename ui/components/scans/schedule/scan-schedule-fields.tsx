@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
+import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import {
   formatDayOfMonth,
   formatScheduleHour,
@@ -59,6 +60,8 @@ interface ScanScheduleFieldsProps {
    * (interval/weekly/monthly) are disabled. Used for non-Cloud (OSS) accounts.
    */
   canUseAdvancedSchedule?: boolean;
+  /** Render the "Available in Prowler Cloud" upsell badge in the header. */
+  showCloudUpgradeBadge?: boolean;
 }
 
 function NumberSelect({
@@ -125,6 +128,7 @@ export function ScanScheduleFields({
   showNextScheduledCopy = false,
   headerAction,
   canUseAdvancedSchedule = true,
+  showCloudUpgradeBadge = false,
 }: ScanScheduleFieldsProps) {
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const control = form.control;
@@ -141,9 +145,12 @@ export function ScanScheduleFields({
   });
   const frequencyLabel = (option: (typeof FREQUENCY_OPTIONS)[number]) =>
     option.label ?? `Every ${intervalHours} hours`;
-  // In OSS (non-Cloud) `/schedules/daily` ignores advanced cadence/time fields,
-  // so daily-only mode intentionally hides those controls instead of disabling them.
-  const advancedDisabled = disabled;
+  // In OSS (non-Cloud) the advanced cadence and time are locked: `/schedules/daily`
+  // ignores them, so they are display-only with a Cloud upsell.
+  const advancedDisabled = disabled || !canUseAdvancedSchedule;
+  const cloudUpgradeBadge = showCloudUpgradeBadge ? (
+    <CloudFeatureBadgeLink size="sm" />
+  ) : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -153,89 +160,90 @@ export function ScanScheduleFields({
           <h3 className="text-text-neutral-primary text-sm font-medium">
             Scan Schedule
           </h3>
+          {cloudUpgradeBadge}
         </div>
         {headerAction}
       </div>
 
-      {canUseAdvancedSchedule && (
-        <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Controller
-              control={form.control}
-              name="hour"
-              render={({ field }) => (
-                <NumberSelect
-                  label="Scan Time"
-                  value={field.value}
-                  values={HOUR_OPTIONS}
-                  onChange={field.onChange}
-                  disabled={advancedDisabled}
-                />
-              )}
-            />
-
-            <Controller
-              control={form.control}
-              name="frequency"
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel>Repeats</FieldLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={advancedDisabled}
-                  >
-                    <SelectTrigger aria-label="Repeats">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FREQUENCY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {frequencyLabel(option)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              )}
-            />
-          </div>
-
-          {frequency === SCHEDULE_FREQUENCY.WEEKLY && (
-            <Controller
-              control={form.control}
-              name="dayOfWeek"
-              render={({ field }) => (
-                <NumberSelect
-                  label="Day of week"
-                  value={field.value}
-                  values={WEEKDAY_OPTIONS}
-                  onChange={field.onChange}
-                  disabled={disabled}
-                />
-              )}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Controller
+          control={form.control}
+          name="hour"
+          render={({ field }) => (
+            <NumberSelect
+              label="Scan Time"
+              value={field.value}
+              values={HOUR_OPTIONS}
+              onChange={field.onChange}
+              disabled={advancedDisabled}
             />
           )}
+        />
 
-          {frequency === SCHEDULE_FREQUENCY.MONTHLY && (
-            <Controller
-              control={form.control}
-              name="dayOfMonth"
-              render={({ field }) => (
-                <NumberSelect
-                  label="Day of month"
-                  value={field.value}
-                  values={MONTH_DAY_OPTIONS.map((day) => ({
-                    value: day,
-                    label: String(day),
-                  }))}
-                  onChange={field.onChange}
-                  disabled={disabled}
-                />
-              )}
+        <Controller
+          control={form.control}
+          name="frequency"
+          render={({ field }) => (
+            <Field>
+              <FieldLabel>Repeats</FieldLabel>
+              <Select
+                value={
+                  canUseAdvancedSchedule
+                    ? field.value
+                    : SCHEDULE_FREQUENCY.DAILY
+                }
+                onValueChange={field.onChange}
+                disabled={advancedDisabled}
+              >
+                <SelectTrigger aria-label="Repeats">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FREQUENCY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {frequencyLabel(option)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
+        />
+      </div>
+
+      {frequency === SCHEDULE_FREQUENCY.WEEKLY && (
+        <Controller
+          control={form.control}
+          name="dayOfWeek"
+          render={({ field }) => (
+            <NumberSelect
+              label="Day of week"
+              value={field.value}
+              values={WEEKDAY_OPTIONS}
+              onChange={field.onChange}
+              disabled={disabled}
             />
           )}
-        </>
+        />
+      )}
+
+      {frequency === SCHEDULE_FREQUENCY.MONTHLY && (
+        <Controller
+          control={form.control}
+          name="dayOfMonth"
+          render={({ field }) => (
+            <NumberSelect
+              label="Day of month"
+              value={field.value}
+              values={MONTH_DAY_OPTIONS.map((day) => ({
+                value: day,
+                label: String(day),
+              }))}
+              onChange={field.onChange}
+              disabled={disabled}
+            />
+          )}
+        />
       )}
 
       {showNextScheduledCopy &&
@@ -260,7 +268,7 @@ export function ScanScheduleFields({
           </p>
         ) : (
           <p className="text-text-neutral-secondary text-sm">
-            Daily scan will run automatically.
+            A daily scan will run automatically once the account is connected.
           </p>
         ))}
 

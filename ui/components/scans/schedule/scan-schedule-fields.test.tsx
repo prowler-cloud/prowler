@@ -29,8 +29,10 @@ beforeAll(() => {
 
 function ScheduleFieldsHarness({
   canUseAdvancedSchedule = true,
+  showCloudUpgradeBadge = false,
 }: {
   canUseAdvancedSchedule?: boolean;
+  showCloudUpgradeBadge?: boolean;
 } = {}) {
   const form = useForm<ScheduleFormValues>({
     defaultValues: getScheduleFormDefaults(),
@@ -41,6 +43,7 @@ function ScheduleFieldsHarness({
       form={form}
       showNextScheduledCopy
       canUseAdvancedSchedule={canUseAdvancedSchedule}
+      showCloudUpgradeBadge={showCloudUpgradeBadge}
     />
   );
 }
@@ -94,27 +97,25 @@ describe("ScanScheduleFields", () => {
     );
   });
 
-  it("shows daily-only copy without advanced selectors or cloud badges when advanced controls are locked", () => {
+  it("shows a single cloud badge beside the Scan Schedule title when advanced controls are locked", () => {
     // Given
-    render(<ScheduleFieldsHarness canUseAdvancedSchedule={false} />);
+    render(
+      <ScheduleFieldsHarness
+        canUseAdvancedSchedule={false}
+        showCloudUpgradeBadge
+      />,
+    );
 
     // Then
-    expect(
-      screen.getByText("Daily scan will run automatically."),
-    ).toBeVisible();
-    expect(
-      screen.queryByText("Available in Prowler Cloud"),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("combobox", { name: "Scan Time" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("combobox", { name: "Repeats" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Scan Schedule").parentElement,
-    ).not.toHaveTextContent("Available in Prowler Cloud");
-    expect(screen.queryByText("Scan Time")).not.toBeInTheDocument();
-    expect(screen.queryByText("Repeats")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Available in Prowler Cloud")).toHaveLength(1);
+    expect(screen.getByText("Scan Schedule").parentElement).toHaveTextContent(
+      "Available in Prowler Cloud",
+    );
+    expect(screen.getByText("Scan Time").parentElement).not.toHaveTextContent(
+      "Available in Prowler Cloud",
+    );
+    expect(screen.getByText("Repeats").parentElement).not.toHaveTextContent(
+      "Available in Prowler Cloud",
+    );
   });
 });

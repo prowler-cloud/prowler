@@ -93,9 +93,9 @@ export function LaunchStep({
   const capability = capabilityProp ?? getScanScheduleCapability(isCloud());
   const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
   const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+  const isDailyLegacy = capability === SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY;
   const isBlocked = capability === SCAN_SCHEDULE_CAPABILITY.BLOCKED;
-  const canUseScheduleMode =
-    isAdvanced || capability === SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY;
+  const canUseScheduleMode = isAdvanced || isDailyLegacy;
   const [isLaunching, setIsLaunching] = useState(false);
   const [mode, setMode] = useState<LaunchMode>(
     canUseScheduleMode ? LAUNCH_MODE.SCHEDULE : LAUNCH_MODE.NOW,
@@ -364,6 +364,7 @@ export function LaunchStep({
           showLaunchInitialScan
           showNextScheduledCopy
           canUseAdvancedSchedule={isAdvanced}
+          showCloudUpgradeBadge={isDailyLegacy}
         />
       )}
     </div>
