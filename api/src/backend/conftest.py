@@ -69,6 +69,107 @@ TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
 
 
+def _install_compliance_catalog_test_cache() -> None:
+    """Memoize the heavy SDK catalog loaders for the whole test session.
+
+    ``get_bulk_compliance_frameworks_universal`` re-reads and Pydantic-validates
+    ~100 compliance JSONs (≈20 MB) and ``CheckMetadata.get_bulk`` re-reads ~1k
+    check metadata files on *every* call. Production amortizes this through the
+    per-process lazy caches (``PROWLER_CHECKS`` / ``PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE``)
+    and ``warm_compliance_caches``, but the test suite parametrizes over every
+    provider and deliberately resets the API-level caches, so the same catalogs
+    were re-parsed dozens of times across the suite (≈3s/call locally, ≈19s under
+    coverage in CI).
+
+    The catalog files are immutable during a run and callers treat the parsed
+    objects as read-only, so caching the result per provider is safe. This is the
+    test-only equivalent of an ``lru_cache`` on the SDK functions, without
+    changing SDK behavior in production.
+
+    A second, lower-level cache memoizes ``load_compliance_framework_universal``
+    **per file path**. ``get_bulk_compliance_frameworks_universal`` parses *every*
+    compliance JSON and only then filters by provider, so a per-provider cache
+    still re-parses all ~100 files on the first load of each provider. The
+    per-path cache makes the first provider parse the files once and every other
+    provider/test reuse the already-parsed ``ComplianceFramework`` objects (only
+    the cheap ``listdir`` + filtering re-runs). ``_load_jsons_from_dir`` calls
+    ``load_compliance_framework_universal`` as a module global, so patching the
+    attribute is picked up without touching the SDK.
+
+    Installed at conftest import time (before test modules are collected) so that
+    even ``from ... import get_bulk_compliance_frameworks_universal`` bindings in
+    the test modules resolve to the cached wrapper.
+    """
+    import prowler.lib.check.compliance_models as compliance_models
+    from prowler.lib.check.models import CheckMetadata
+
+    original_bulk_frameworks = (
+        compliance_models.get_bulk_compliance_frameworks_universal
+    )
+    original_get_bulk = CheckMetadata.get_bulk
+    original_load = compliance_models.load_compliance_framework_universal
+
+    def cached_bulk_frameworks(provider):
+        if provider not in _COMPLIANCE_FRAMEWORK_CACHE:
+            _COMPLIANCE_FRAMEWORK_CACHE[provider] = original_bulk_frameworks(provider)
+        return _COMPLIANCE_FRAMEWORK_CACHE[provider]
+
+    def cached_get_bulk(provider):
+        if provider not in _COMPLIANCE_CHECKS_CACHE:
+            _COMPLIANCE_CHECKS_CACHE[provider] = original_get_bulk(provider)
+        return _COMPLIANCE_CHECKS_CACHE[provider]
+
+    def cached_load(path):
+        if path not in _COMPLIANCE_PATH_CACHE:
+            _COMPLIANCE_PATH_CACHE[path] = original_load(path)
+        return _COMPLIANCE_PATH_CACHE[path]
+
+    compliance_models.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
+    compliance_models.load_compliance_framework_universal = cached_load
+    CheckMetadata.get_bulk = staticmethod(cached_get_bulk)
+
+    # ``api.compliance`` does ``from ... import get_bulk_compliance_frameworks_universal``
+    # so it holds its own binding; patch it too in case it was imported first.
+    import api.compliance as api_compliance
+
+    api_compliance.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
+
+
+# Module-scoped so the ``_compliance_cache_guard`` fixture below can reset them.
+# Keeping them out of ``_install_compliance_catalog_test_cache``'s local scope is
+# what makes the caches resettable between tests; the wrappers above close over
+# these names, and the original loaders stay referenced so patched behaviour is
+# still honoured.
+_COMPLIANCE_FRAMEWORK_CACHE: dict[str, dict] = {}
+_COMPLIANCE_CHECKS_CACHE: dict[str, dict] = {}
+_COMPLIANCE_PATH_CACHE: dict[str, object] = {}
+
+
+_install_compliance_catalog_test_cache()
+
+
+@pytest.fixture(autouse=True)
+def _compliance_cache_guard(request):
+    """Reset the compliance catalog caches after any test that used ``monkeypatch``.
+
+    The session-wide caches in ``_install_compliance_catalog_test_cache`` let the
+    read-only, parametrized compliance tests parse the ~100 catalog JSONs once
+    instead of dozens of times. A test that swaps a loader (or mutates a returned
+    object) could otherwise leak that state into later tests through the shared
+    dicts. Using ``monkeypatch`` as the opt-in signal keeps the full speed-up for
+    catalog-reading tests while giving patching tests a clean slate afterwards;
+    the next test simply repopulates the caches from disk.
+    """
+    yield
+    if "monkeypatch" in request.fixturenames:
+        _COMPLIANCE_FRAMEWORK_CACHE.clear()
+        _COMPLIANCE_CHECKS_CACHE.clear()
+        _COMPLIANCE_PATH_CACHE.clear()
+        import api.compliance as api_compliance
+
+        api_compliance.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
+
+
 def today_after_n_days(n_days: int) -> str:
     return datetime.strftime(
         datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
