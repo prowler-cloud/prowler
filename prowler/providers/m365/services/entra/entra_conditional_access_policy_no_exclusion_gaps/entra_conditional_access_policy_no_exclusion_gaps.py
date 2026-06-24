@@ -19,25 +19,44 @@ class entra_conditional_access_policy_no_exclusion_gaps(Check):
     """Check that objects excluded from Conditional Access policies remain covered.
 
     Excluding a principal from a Conditional Access (CA) policy is only safe when
-    that principal is still included by *some* enabled CA policy that enforces
+    that principal is still covered by *some* enabled CA policy that enforces
     compensating controls. An object excluded everywhere and included nowhere
     sits completely outside CA enforcement, which is how MFA bypass and lateral
     movement against admin accounts happen in real incidents.
 
     For every enabled CA policy this check walks each exclusion collection and
-    verifies the excluded identifier appears in the global include set (the union
-    of every include collection across all enabled policies) of its own type.
+    verifies the excluded object is still in scope of another enabled policy: one
+    that includes it (explicitly, or via the "All" wildcard) and does not itself
+    exclude it. A wildcard belonging to the policy that excludes the object does
+    not count, so a one-off exclusion with no compensating policy is reported as
+    a gap.
 
-    - PASS: Every excluded object is included by an enabled policy, or no enabled
-            policy uses any exclusion.
-    - FAIL: At least one excluded object is never included by any enabled policy.
+    Only principals and target apps are evaluated (users, groups, roles,
+    applications). Platform and location exclusions are scoping conditions rather
+    than principals removed from enforcement, so they are out of scope.
+
+    - PASS: Every excluded object stays in scope of another enabled policy, or no
+            enabled policy uses any exclusion.
+    - FAIL: At least one excluded object is in scope of no other enabled policy.
     """
 
-    # (human label, included attr, excluded attr)
-    _USER_COLLECTIONS = [
-        ("users", "included_users", "excluded_users"),
-        ("groups", "included_groups", "excluded_groups"),
-        ("roles", "included_roles", "excluded_roles"),
+    # (label, conditions attribute, included attr, excluded attr, wildcard token).
+    # The wildcard token, when present in an include collection, scopes a policy
+    # to every object of that type. Groups and roles have no wildcard: they are
+    # always explicit identifiers and transitive group/role expansion is out of
+    # scope for v1, so an excluded group/role is only "covered" when the same
+    # identifier is explicitly included by another enabled policy.
+    _COLLECTIONS = [
+        ("users", "user_conditions", "included_users", "excluded_users", "All"),
+        ("groups", "user_conditions", "included_groups", "excluded_groups", None),
+        ("roles", "user_conditions", "included_roles", "excluded_roles", None),
+        (
+            "applications",
+            "application_conditions",
+            "included_applications",
+            "excluded_applications",
+            "All",
+        ),
     ]
 
     def execute(self) -> list[CheckReportM365]:
@@ -67,39 +86,38 @@ class entra_conditional_access_policy_no_exclusion_gaps(Check):
             )
             return [report]
 
-        include_sets = self._build_include_sets(enabled_policies)
         emergency_users, emergency_groups = self._emergency_access_objects()
 
-        # gaps: type label -> {object_id -> set(policy display names that excluded it)}
-        gaps = defaultdict(lambda: defaultdict(set))
+        # gaps: type label -> set of excluded object IDs with no compensating policy
+        gaps = defaultdict(set)
         any_exclusion = False
 
         for policy in enabled_policies:
-            user_conditions = policy.conditions.user_conditions
-            if user_conditions:
-                for label, _, excluded_attr in self._USER_COLLECTIONS:
-                    for object_id in getattr(user_conditions, excluded_attr):
-                        any_exclusion = True
-                        if self._is_expected_user_exclusion(
-                            label, object_id, emergency_users, emergency_groups
-                        ):
-                            continue
-                        if object_id not in include_sets[label]:
-                            gaps[label][object_id].add(policy.display_name)
-
-            app_conditions = policy.conditions.application_conditions
-            if app_conditions:
-                for object_id in app_conditions.excluded_applications:
+            for (
+                label,
+                conditions_attr,
+                included_attr,
+                excluded_attr,
+                wildcard,
+            ) in self._COLLECTIONS:
+                conditions = getattr(policy.conditions, conditions_attr)
+                if not conditions:
+                    continue
+                for object_id in getattr(conditions, excluded_attr):
                     any_exclusion = True
-                    if object_id not in include_sets["applications"]:
-                        gaps["applications"][object_id].add(policy.display_name)
-
-            platform_conditions = policy.conditions.platform_conditions
-            if platform_conditions:
-                for object_id in platform_conditions.exclude_platforms:
-                    any_exclusion = True
-                    if object_id not in include_sets["platforms"]:
-                        gaps["platforms"][object_id].add(policy.display_name)
+                    if self._is_expected_exclusion(
+                        label, object_id, emergency_users, emergency_groups
+                    ):
+                        continue
+                    if not self._is_covered(
+                        object_id,
+                        conditions_attr,
+                        included_attr,
+                        excluded_attr,
+                        wildcard,
+                        enabled_policies,
+                    ):
+                        gaps[label].add(object_id)
 
         if not any_exclusion:
             report.status = "PASS"
@@ -112,42 +130,72 @@ class entra_conditional_access_policy_no_exclusion_gaps(Check):
         if not gaps:
             report.status = "PASS"
             report.status_extended = (
-                "All objects excluded from enabled Conditional Access policies are "
-                "covered by an include condition in another enabled policy."
+                "Every object excluded from an enabled Conditional Access policy is "
+                "still in scope of another enabled policy, so a compensating control "
+                "remains in effect."
             )
             return [report]
 
         report.status = "FAIL"
         report.status_extended = (
             "Conditional Access exclusion gaps found "
-            f"({self._format_gaps(gaps)}). These objects are excluded but never "
-            "included by any enabled policy, leaving them outside CA enforcement."
+            f"({self._format_gaps(gaps, self._build_name_index())}). These objects "
+            "are excluded but in scope of no other enabled policy, leaving them "
+            "outside CA enforcement."
         )
         return [report]
 
-    def _build_include_sets(self, enabled_policies) -> dict:
-        """Union every include collection across enabled policies, keyed by type."""
-        include_sets = {
-            "users": set(),
-            "groups": set(),
-            "roles": set(),
-            "applications": set(),
-            "platforms": set(),
+    def _build_name_index(self) -> dict:
+        """Map excluded object IDs to display names per type, for readable findings.
+
+        Users, groups, and applications resolve to their display name; roles have
+        no loaded name catalog, so role template IDs are shown as-is. Unresolved
+        IDs (for example deleted principals still referenced by a policy) fall
+        back to the raw identifier.
+        """
+        users = {
+            uid: user.name
+            for uid, user in (getattr(entra_client, "users", {}) or {}).items()
+            if getattr(user, "name", None)
         }
+        groups = {
+            group.id: group.name
+            for group in (getattr(entra_client, "groups", []) or [])
+            if getattr(group, "name", None)
+        }
+        applications = {
+            sp.app_id: sp.name
+            for sp in (getattr(entra_client, "service_principals", {}) or {}).values()
+            if getattr(sp, "app_id", None) and getattr(sp, "name", None)
+        }
+        return {"users": users, "groups": groups, "applications": applications}
+
+    def _is_covered(
+        self,
+        object_id,
+        conditions_attr,
+        included_attr,
+        excluded_attr,
+        wildcard,
+        enabled_policies,
+    ) -> bool:
+        """Return True if any enabled policy keeps ``object_id`` in scope.
+
+        A policy keeps the object in scope when it includes it —explicitly or via
+        the type's wildcard token— and does not also exclude it. The wildcard of a
+        policy that itself excludes the object does not count, which is what makes
+        a one-off exclusion with no compensating policy a real gap.
+        """
         for policy in enabled_policies:
-            user_conditions = policy.conditions.user_conditions
-            if user_conditions:
-                for label, included_attr, _ in self._USER_COLLECTIONS:
-                    include_sets[label].update(getattr(user_conditions, included_attr))
-            app_conditions = policy.conditions.application_conditions
-            if app_conditions:
-                include_sets["applications"].update(
-                    app_conditions.included_applications
-                )
-            platform_conditions = policy.conditions.platform_conditions
-            if platform_conditions:
-                include_sets["platforms"].update(platform_conditions.include_platforms)
-        return include_sets
+            conditions = getattr(policy.conditions, conditions_attr)
+            if not conditions:
+                continue
+            if object_id in getattr(conditions, excluded_attr):
+                continue
+            included = getattr(conditions, included_attr)
+            if object_id in included or (wildcard is not None and wildcard in included):
+                return True
+        return False
 
     def _emergency_access_objects(self) -> tuple[set, set]:
         """Return user and group IDs that act as emergency access (break-glass).
@@ -184,7 +232,7 @@ class entra_conditional_access_policy_no_exclusion_gaps(Check):
         emergency_groups = {gid for gid, n in excluded_groups.items() if n == total}
         return emergency_users, emergency_groups
 
-    def _is_expected_user_exclusion(
+    def _is_expected_exclusion(
         self, label, object_id, emergency_users, emergency_groups
     ) -> bool:
         """Exclusions that are intentional by design and must not count as gaps."""
@@ -196,15 +244,19 @@ class entra_conditional_access_policy_no_exclusion_gaps(Check):
             return True
         return False
 
-    def _format_gaps(self, gaps) -> str:
-        """Render gaps grouped by type with the policies that excluded each object."""
+    def _format_gaps(self, gaps, name_index) -> str:
+        """Render the orphaned objects grouped by type, by display name when known.
+
+        Each ID is shown as its display name when resolvable; unresolved IDs (and
+        all roles, which have no name catalog) fall back to the raw identifier.
+        """
         parts = []
-        for label in ("users", "groups", "roles", "applications", "platforms"):
+        for label in ("users", "groups", "roles", "applications"):
             if label not in gaps:
                 continue
-            entries = []
-            for object_id, policies in gaps[label].items():
-                policy_names = ", ".join(sorted(policies))
-                entries.append(f"{object_id} (excluded by: {policy_names})")
-            parts.append(f"{label}: {'; '.join(entries)}")
+            names = name_index.get(label, {})
+            rendered = sorted(
+                names.get(object_id, object_id) for object_id in gaps[label]
+            )
+            parts.append(f"{label}: {', '.join(rendered)}")
         return " | ".join(parts)

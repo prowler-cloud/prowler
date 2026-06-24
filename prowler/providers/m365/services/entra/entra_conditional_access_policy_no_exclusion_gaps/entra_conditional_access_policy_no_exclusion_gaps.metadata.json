@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Verifies that every object excluded from an enabled Microsoft Entra **Conditional Access** policy (users, groups, roles, applications, or platforms) is still included by at least one enabled policy, so the exclusion keeps a compensating control. The Directory Synchronization Accounts role and confirmed emergency access (break glass) accounts are treated as intentional and not reported.",
+  "Description": "Verifies that every object excluded from an enabled Microsoft Entra **Conditional Access** policy (users, groups, roles, or applications) is still included by at least one enabled policy, so the exclusion keeps a compensating control. The Directory Synchronization Accounts role and confirmed emergency access (break glass) accounts are treated as intentional and not reported.",
   "Risk": "An object excluded from a Conditional Access policy but never included by any other enabled policy sits completely outside Conditional Access enforcement. This creates a silent **MFA bypass** and **lateral movement** path: a principal exempted as a one-off remains permanently uncontrolled if no compensating policy covers it.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -38,5 +38,5 @@
     "entra_conditional_access_policy_directory_sync_account_excluded",
     "entra_emergency_access_exclusion"
   ],
-  "Notes": "Version 1 covers user, group, role, application, and platform exclusions. Service-principal and location exclusions require additional fields on the ConditionalAccessPolicy service model and are planned as a follow-up."
+  "Notes": "Covers user, group, role, and application exclusions. Platform and location exclusions are out of scope because they are scoping conditions rather than principals removed from enforcement. Service-principal exclusions require additional fields on the ConditionalAccessPolicy service model."
 }

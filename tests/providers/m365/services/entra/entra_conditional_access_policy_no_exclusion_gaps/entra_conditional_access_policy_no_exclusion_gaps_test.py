@@ -102,11 +102,19 @@ def _policy(
     )
 
 
-def _run(policies: list[ConditionalAccessPolicy]) -> list:
+def _run(
+    policies: list[ConditionalAccessPolicy],
+    users=None,
+    groups=None,
+    service_principals=None,
+) -> list:
     """Run the check with a mocked entra_client holding the given policies.
 
     Args:
         policies: ConditionalAccessPolicy objects to inject into the mocked client.
+        users: Optional id -> User mapping used to resolve display names.
+        groups: Optional list of Group objects used to resolve display names.
+        service_principals: Optional id -> ServicePrincipal mapping for app names.
 
     Returns:
         The list of check report objects returned by ``execute()``.
@@ -126,6 +134,9 @@ def _run(policies: list[ConditionalAccessPolicy]) -> list:
         )
 
         entra_client.conditional_access_policies = {p.id: p for p in policies}
+        entra_client.users = users or {}
+        entra_client.groups = groups or []
+        entra_client.service_principals = service_principals or {}
         check = entra_conditional_access_policy_no_exclusion_gaps()
         return check.execute()
 
@@ -133,9 +144,10 @@ def _run(policies: list[ConditionalAccessPolicy]) -> list:
 class Test_entra_conditional_access_policy_no_exclusion_gaps:
     """Tests for the Conditional Access exclusion-gap check.
 
-    Verifies that objects excluded from enabled Conditional Access policies are
-    still covered by an include condition in another enabled policy, with the
-    directory-sync role and break-glass accounts treated as intended exclusions.
+    Verifies that objects excluded from enabled Conditional Access policies stay
+    in scope of another enabled policy (explicitly or via the type's wildcard),
+    with the directory-sync role and break-glass accounts treated as intended
+    exclusions.
     """
 
     def test_no_policies(self):
@@ -184,21 +196,53 @@ class Test_entra_conditional_access_policy_no_exclusion_gaps:
         # Policy A excludes user-1; Policy B includes user-1 explicitly -> covered.
         result = _run(
             [
-                _policy(display_name="A", included_users=["All"], excluded_users=["user-1"]),
+                _policy(
+                    display_name="A", included_users=["All"], excluded_users=["user-1"]
+                ),
                 _policy(display_name="B", included_users=["user-1"]),
             ]
         )
         assert result[0].status == "PASS"
-        assert "covered by an include condition" in result[0].status_extended
+        assert "compensating control" in result[0].status_extended
 
     def test_user_exclusion_gap(self):
         # user-1 is excluded but never included anywhere -> FAIL.
         result = _run(
-            [_policy(display_name="A", included_users=["All"], excluded_users=["user-1"])]
+            [
+                _policy(
+                    display_name="A", included_users=["All"], excluded_users=["user-1"]
+                )
+            ]
         )
         assert result[0].status == "FAIL"
         assert "users: user-1" in result[0].status_extended
-        assert "excluded by: A" in result[0].status_extended
+
+    def test_gap_reports_display_name_when_resolvable(self):
+        # A resolvable user shows its display name; an unresolved user (e.g.
+        # deleted but still referenced) falls back to its raw ID.
+        from prowler.providers.m365.services.entra.entra_service import User
+
+        result = _run(
+            [
+                _policy(
+                    display_name="A",
+                    included_users=["All"],
+                    excluded_users=["user-1", "ghost-2"],
+                )
+            ],
+            users={
+                "user-1": User(
+                    id="user-1",
+                    name="Alice Admin",
+                    on_premises_sync_enabled=False,
+                )
+            },
+        )
+        assert result[0].status == "FAIL"
+        assert "Alice Admin" in result[0].status_extended
+        assert "user-1" not in result[0].status_extended
+        # Unresolved ID still surfaces as the raw identifier.
+        assert "ghost-2" in result[0].status_extended
 
     def test_group_and_role_gaps_reported_by_type(self):
         result = _run(
@@ -241,18 +285,58 @@ class Test_entra_conditional_access_policy_no_exclusion_gaps:
         )
         assert result[0].status == "PASS"
 
-    def test_platform_exclusion_gap(self):
+    def test_exclusion_covered_by_all_wildcard_in_another_policy(self):
+        # Policy A excludes user-1; Policy B targets "All" users and does NOT
+        # exclude user-1, so user-1 stays in scope of B -> covered -> PASS.
+        # The "All" wildcard of the policy that excludes the user (A) must not
+        # count, but the wildcard of an unrelated policy (B) does.
         result = _run(
             [
                 _policy(
-                    display_name="PlatPolicy",
+                    display_name="A",
                     included_users=["All"],
-                    exclude_platforms=["android"],
-                )
+                    excluded_users=["user-1"],
+                ),
+                _policy(display_name="B", included_users=["All"]),
+            ]
+        )
+        assert result[0].status == "PASS"
+        assert "compensating control" in result[0].status_extended
+
+    def test_exclusion_only_wildcard_is_self_excluding_is_gap(self):
+        # The only "All" users policy is the one that excludes user-1, and no
+        # other policy covers user-1 -> real gap -> FAIL. This is the case
+        # #11375's global-union "All" handling would have wrongly passed.
+        result = _run(
+            [
+                _policy(
+                    display_name="A",
+                    included_users=["All"],
+                    excluded_users=["user-1"],
+                ),
+                _policy(
+                    display_name="B",
+                    included_users=["All"],
+                    excluded_users=["user-1"],
+                ),
             ]
         )
         assert result[0].status == "FAIL"
-        assert "platforms: android" in result[0].status_extended
+        assert "users: user-1" in result[0].status_extended
+
+    def test_platform_exclusions_are_ignored(self):
+        # Platform exclusions are scoping conditions, not principals removed from
+        # enforcement, so they are out of scope even with no covering policy.
+        result = _run(
+            [
+                _policy(
+                    display_name="MDM",
+                    included_users=["All"],
+                    exclude_platforms=["android", "ios", "macos", "linux"],
+                )
+            ]
+        )
+        assert result[0].status == "PASS"
 
     def test_directory_sync_role_exclusion_skipped(self):
         # Dir-sync role excluded with no fallback must NOT be a gap.
@@ -266,7 +350,7 @@ class Test_entra_conditional_access_policy_no_exclusion_gaps:
             ]
         )
         assert result[0].status == "PASS"
-        assert "covered by an include condition" in result[0].status_extended
+        assert "compensating control" in result[0].status_extended
 
     def test_emergency_access_user_exclusion_skipped(self):
         # A break-glass user excluded from EVERY enabled blocking policy is an
@@ -289,7 +373,7 @@ class Test_entra_conditional_access_policy_no_exclusion_gaps:
             ]
         )
         assert result[0].status == "PASS"
-        assert "covered by an include condition" in result[0].status_extended
+        assert "compensating control" in result[0].status_extended
 
     def test_emergency_access_ignores_report_only_blocking_policy(self):
         # A break-glass user excluded from every ENABLED blocking policy is an
@@ -320,7 +404,7 @@ class Test_entra_conditional_access_policy_no_exclusion_gaps:
             ]
         )
         assert result[0].status == "PASS"
-        assert "covered by an include condition" in result[0].status_extended
+        assert "compensating control" in result[0].status_extended
 
     def test_mixed_gap_and_covered(self):
         # user-1 covered, user-2 orphaned -> FAIL listing only user-2.
