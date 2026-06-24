@@ -7,6 +7,7 @@ import pytest
 from api.authentication import SSEAuthentication, TenantAPIKeyAuthentication
 from api.db_router import MainRouter
 from api.models import TenantAPIKey
+from django.db.models.query import QuerySet
 from django.test import RequestFactory
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -63,6 +64,31 @@ class TestTenantAPIKeyAuthentication:
 
         # Verify the manager was restored
         assert TenantAPIKey.objects == original_manager
+
+    def test_authenticate_credentials_keeps_manager_during_lookup(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Authentication must not expose a QuerySet as the model manager."""
+        api_key = api_keys_fixture[0]
+        raw_key = api_key._raw_key
+        _, encrypted_key = raw_key.split(TenantAPIKey.objects.separator, 1)
+
+        original_get = QuerySet.get
+        manager_has_create_api_key = []
+
+        def observe_manager(queryset, *args, **kwargs):
+            manager_has_create_api_key.append(
+                hasattr(TenantAPIKey.objects, "create_api_key")
+            )
+            return original_get(queryset, *args, **kwargs)
+
+        request = request_factory.get("/")
+
+        with patch.object(QuerySet, "get", observe_manager):
+            auth_backend._authenticate_credentials(request, encrypted_key)
+
+        assert manager_has_create_api_key
+        assert all(manager_has_create_api_key)
 
     def test_authenticate_credentials_restores_manager_on_exception(
         self, auth_backend, request_factory
