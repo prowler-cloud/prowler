@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles";
 import { SkeletonInvitationInfo } from "@/components/invitations/workflow";

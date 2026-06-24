@@ -3,7 +3,7 @@
 import { Accordion as NextUIAccordion, AccordionItem } from "@heroui/accordion";
 import type { Selection } from "@react-types/shared";
 import { ChevronDown } from "lucide-react";
-import { Children, ReactNode, useCallback, useMemo, useState } from "react";
+import { Children, ReactNode, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -84,39 +84,35 @@ export const Accordion = ({
   );
 
   // Use selectedKeys if controlled, otherwise use internal state
-  const expandedKeys = useMemo(
-    () => (isControlled ? new Set(selectedKeys) : internalExpandedKeys),
-    [isControlled, selectedKeys, internalExpandedKeys],
-  );
+  const expandedKeys = isControlled
+    ? new Set(selectedKeys)
+    : internalExpandedKeys;
 
-  const handleSelectionChange = useCallback(
-    (keys: Selection) => {
-      const keysArray = Array.from(keys as Set<string>);
+  const handleSelectionChange = (keys: Selection) => {
+    const keysArray = Array.from(keys as Set<string>);
 
-      // If controlled mode, call parent callback
-      if (isControlled && onSelectionChange) {
-        onSelectionChange(keysArray);
-      } else {
-        // If uncontrolled, update internal state
-        setInternalExpandedKeys(keys);
-      }
+    // If controlled mode, call parent callback
+    if (isControlled && onSelectionChange) {
+      onSelectionChange(keysArray);
+    } else {
+      // If uncontrolled, update internal state
+      setInternalExpandedKeys(keys);
+    }
 
-      // Handle onItemExpand for backward compatibility
-      if (onItemExpand && keys !== expandedKeys) {
-        const currentKeys = Array.from(expandedKeys as Set<string>);
-        const newKeys = keysArray;
+    // Handle onItemExpand for backward compatibility
+    if (onItemExpand && keys !== expandedKeys) {
+      const currentKeys = Array.from(expandedKeys as Set<string>);
+      const newKeys = keysArray;
 
-        const newlyExpandedKeys = newKeys.filter(
-          (key) => !currentKeys.includes(key),
-        );
+      const newlyExpandedKeys = newKeys.filter(
+        (key) => !currentKeys.includes(key),
+      );
 
-        newlyExpandedKeys.forEach((key) => {
-          onItemExpand(key);
-        });
-      }
-    },
-    [expandedKeys, onItemExpand, isControlled, onSelectionChange],
-  );
+      newlyExpandedKeys.forEach((key) => {
+        onItemExpand(key);
+      });
+    }
+  };
 
   return (
     <NextUIAccordion
