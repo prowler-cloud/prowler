@@ -32,6 +32,9 @@ interface AccountsSelectorBaseProps {
   id?: string;
   disabledValues?: string[];
   closeOnSelect?: boolean;
+  placeholder?: string;
+  emptySelectionLabel?: string;
+  clearSelectionLabel?: string;
 }
 
 /** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
@@ -73,6 +76,9 @@ export function AccountsSelector({
     emptyMessage: "No Providers found.",
   },
   closeOnSelect = false,
+  placeholder = "All Providers",
+  emptySelectionLabel = "All selected",
+  clearSelectionLabel = "Select All",
 }: AccountsSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
@@ -163,7 +169,7 @@ export function AccountsSelector({
         onOpenChange={closeOnSelect ? setSelectorOpen : undefined}
       >
         <MultiSelectTrigger id={id} aria-labelledby={labelId}>
-          {selectedLabel() || <MultiSelectValue placeholder="All Providers" />}
+          {selectedLabel() || <MultiSelectValue placeholder={placeholder} />}
         </MultiSelectTrigger>
         <MultiSelectContent search={search}>
           {visibleProviders.length > 0 ? (
@@ -187,7 +193,9 @@ export function AccountsSelector({
                   }
                 }}
               >
-                {selectedIds.length === 0 ? "All selected" : "Select All"}
+                {selectedIds.length === 0
+                  ? emptySelectionLabel
+                  : clearSelectionLabel}
               </div>
               {visibleProviders.map((p) => {
                 const value = getProviderValue(p);
