@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
-- Sentry, Google Tag Manager, and PostHog now load only when their `UI_SENTRY_ENABLE` / `UI_GOOGLE_TAG_MANAGER_ENABLE` / `UI_POSTHOG_ENABLE` flag is `"true"` (default off); a deployment that previously set only `UI_SENTRY_DSN` or `UI_GOOGLE_TAG_MANAGER_ID` must now also set the matching enable flag to keep the integration active [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- Sentry, Google Tag Manager, and PostHog now load only when their `UI_SENTRY_ENABLE` / `UI_GOOGLE_TAG_MANAGER_ENABLE` / `UI_POSTHOG_ENABLE` flag is `"true"` (default off); a deployment that previously set only `UI_SENTRY_DSN` or `UI_GOOGLE_TAG_MANAGER_ID` must now also set the matching enable flag to keep the integration active [(#11682)](https://github.com/prowler-cloud/prowler/pull/11682)
 
 ---
 
