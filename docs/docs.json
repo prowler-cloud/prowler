@@ -74,6 +74,12 @@
             ]
           },
           {
+            "group": "Prowler for Claude Code",
+            "pages": [
+              "getting-started/products/prowler-claude-code-plugin"
+            ]
+          },
+          {
             "group": "Prowler MCP Server",
             "pages": [
               "getting-started/products/prowler-mcp",
@@ -118,8 +124,8 @@
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-import-findings",
-              "user-guide/tutorials/prowler-app-alerts",
+              "user-guide/tutorials/prowler-import-findings",
+              "user-guide/tutorials/prowler-alerts",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -327,6 +333,20 @@
                 ]
               },
               {
+                "group": "Scaleway",
+                "pages": [
+                  "user-guide/providers/scaleway/getting-started-scaleway",
+                  "user-guide/providers/scaleway/authentication"
+                ]
+              },
+              {
+                "group": "StackIT",
+                "pages": [
+                  "user-guide/providers/stackit/getting-started-stackit",
+                  "user-guide/providers/stackit/authentication"
+                ]
+              },
+              {
                 "group": "Vercel",
                 "pages": [
                   "user-guide/providers/vercel/getting-started-vercel",
@@ -338,6 +358,13 @@
                 "pages": [
                   "user-guide/providers/okta/getting-started-okta",
                   "user-guide/providers/okta/authentication"
+                ]
+              },
+              {
+                "group": "Linode",
+                "pages": [
+                  "user-guide/providers/linode/getting-started-linode",
+                  "user-guide/providers/linode/authentication"
                 ]
               }
             ]
@@ -353,7 +380,8 @@
             "group": "Cookbooks",
             "pages": [
               "user-guide/cookbooks/kubernetes-in-cluster",
-              "user-guide/cookbooks/cicd-pipeline"
+              "user-guide/cookbooks/cicd-pipeline",
+              "user-guide/cookbooks/powerbi-cis-benchmarks"
             ]
           }
         ]
@@ -374,7 +402,8 @@
               "developer-guide/lighthouse-architecture",
               "developer-guide/mcp-server",
               "developer-guide/ai-skills",
-              "developer-guide/prowler-studio"
+              "developer-guide/prowler-studio",
+              "developer-guide/server-sent-events"
             ]
           },
           {
@@ -387,13 +416,15 @@
               "developer-guide/kubernetes-details",
               "developer-guide/m365-details",
               "developer-guide/github-details",
-              "developer-guide/llm-details"
+              "developer-guide/llm-details",
+              "developer-guide/stackit-details"
             ]
           },
           {
             "group": "Miscellaneous",
             "pages": [
               "developer-guide/documentation",
+              "developer-guide/environment-variables",
               {
                 "group": "Testing",
                 "pages": [
@@ -562,6 +593,14 @@
     {
       "source": "/contact",
       "destination": "/support"
+    },
+    {
+      "source": "/user-guide/tutorials/prowler-app-import-findings",
+      "destination": "/user-guide/tutorials/prowler-import-findings"
+    },
+    {
+      "source": "/user-guide/tutorials/prowler-app-alerts",
+      "destination": "/user-guide/tutorials/prowler-alerts"
     }
   ]
 }

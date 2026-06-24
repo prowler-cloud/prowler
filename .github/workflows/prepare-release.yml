@@ -29,7 +29,7 @@ jobs:
       pull-requests: write
     steps:
     - name: Harden the runner (Audit all outbound calls)
-      uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+      uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
       with:
         egress-policy: audit
 
@@ -53,7 +53,7 @@ jobs:
 
     - name: Parse version and determine branch
       run: |
-        # Validate version format (reusing pattern from sdk-bump-version.yml)
+        # Validate version format (reusing pattern from bump-version.yml)
         if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
           MAJOR_VERSION=${BASH_REMATCH[1]}
           MINOR_VERSION=${BASH_REMATCH[2]}
@@ -299,17 +299,6 @@ jobs:
         fi
         echo "✓ api/pyproject.toml prowler dependency: $CURRENT_PROWLER_REF"
 
-    - name: Verify API version in api/src/backend/api/v1/views.py
-      if: ${{ env.HAS_API_CHANGES == 'true' }}
-      run: |
-        CURRENT_API_VERSION=$(grep 'spectacular_settings.VERSION = ' api/src/backend/api/v1/views.py | sed -E 's/.*spectacular_settings.VERSION = "([^"]+)".*/\1/' | tr -d '[:space:]')
-        API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
-        if [ "$CURRENT_API_VERSION" != "$API_VERSION_TRIMMED" ]; then
-          echo "ERROR: API version mismatch in views.py (expected: '$API_VERSION_TRIMMED', found: '$CURRENT_API_VERSION')"
-          exit 1
-        fi
-        echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
-
     - name: Verify API version in api/src/backend/api/specs/v1.yaml
       if: ${{ env.HAS_API_CHANGES == 'true' }}
       run: |
@@ -349,7 +338,7 @@ jobs:
 
     - name: Create PR for API dependency update
       if: ${{ env.PATCH_VERSION == '0' }}
-      uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+      uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
       with:
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
         commit-message: 'chore(api): update prowler dependency to ${{ env.BRANCH_NAME }} for release ${{ env.PROWLER_VERSION }}'

@@ -1,17 +1,18 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-from celery import current_app, states
+from api.attack_paths import database as graph_database
+from api.db_router import MainRouter
+from api.db_utils import rls_transaction
+from api.models import AttackPathsScan, StateChoices
+from celery import states
 from celery.utils.log import get_task_logger
 from config.django.base import ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES
 from tasks.jobs.attack_paths.db_utils import (
     _mark_scan_finished,
     recover_graph_data_ready,
 )
-
-from api.attack_paths import database as graph_database
-from api.db_router import MainRouter
-from api.db_utils import rls_transaction
-from api.models import AttackPathsScan, StateChoices
+from tasks.jobs.orphan_recovery import is_worker_alive as _is_worker_alive
+from tasks.jobs.orphan_recovery import revoke_task as _revoke_task
 
 logger = get_task_logger(__name__)
 
@@ -28,7 +29,7 @@ def cleanup_stale_attack_paths_scans() -> dict:
        age plus the parent `Scan` no longer being in flight.
     """
     threshold = timedelta(minutes=ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     cutoff = now - threshold
 
     cleaned_up: list[str] = []
@@ -150,32 +151,6 @@ def _cleanup_stale_scheduled_scans(cutoff: datetime) -> list[str]:
     return cleaned_up
 
 
-def _is_worker_alive(worker: str) -> bool:
-    """Ping a specific Celery worker. Returns `True` if it responds or on error."""
-    try:
-        response = current_app.control.inspect(destination=[worker], timeout=1.0).ping()
-        return response is not None and worker in response
-    except Exception:
-        logger.exception(f"Failed to ping worker {worker}, treating as alive")
-        return True
-
-
-def _revoke_task(task_result, terminate: bool = True) -> None:
-    """Revoke a Celery task. Non-fatal on failure.
-
-    `terminate=True` SIGTERMs the worker if the task is mid-execution; use
-    for EXECUTING cleanup. `terminate=False` only marks the task id revoked
-    across workers, so any worker pulling the queued message discards it;
-    use for SCHEDULED cleanup where the task hasn't run yet.
-    """
-    try:
-        kwargs = {"terminate": True, "signal": "SIGTERM"} if terminate else {}
-        current_app.control.revoke(task_result.task_id, **kwargs)
-        logger.info(f"Revoked task {task_result.task_id}")
-    except Exception:
-        logger.exception(f"Failed to revoke task {task_result.task_id}")
-
-
 def _cleanup_scan(scan, task_result, reason: str) -> bool:
     """
     Clean up a single stale `AttackPathsScan`:
@@ -199,7 +174,7 @@ def _cleanup_scan(scan, task_result, reason: str) -> bool:
     # Mark `TaskResult` as `FAILURE` (not RLS-protected, outside lock)
     if task_result:
         task_result.status = states.FAILURE
-        task_result.date_done = datetime.now(tz=timezone.utc)
+        task_result.date_done = datetime.now(tz=UTC)
         task_result.save(update_fields=["status", "date_done"])
 
     recover_graph_data_ready(fresh_scan)
@@ -225,7 +200,7 @@ def _cleanup_scheduled_scan(scan, task_result, reason: str) -> bool:
 
     if task_result:
         task_result.status = states.FAILURE
-        task_result.date_done = datetime.now(tz=timezone.utc)
+        task_result.date_done = datetime.now(tz=UTC)
         task_result.save(update_fields=["status", "date_done"])
 
     logger.info(f"Cleaned up scheduled scan {scan_id_str}: {reason}")

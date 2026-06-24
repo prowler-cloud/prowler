@@ -1,15 +1,14 @@
 import time
-from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from datetime import UTC, datetime, timedelta
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
-from django.test import RequestFactory
-from rest_framework.exceptions import AuthenticationFailed
-
-from api.authentication import TenantAPIKeyAuthentication
+from api.authentication import SSEAuthentication, TenantAPIKeyAuthentication
 from api.db_router import MainRouter
 from api.models import TenantAPIKey
+from django.test import RequestFactory
+from rest_framework.exceptions import AuthenticationFailed
 
 
 @pytest.mark.django_db
@@ -104,7 +103,7 @@ class TestTenantAPIKeyAuthentication:
         # Verify that last_used_at was updated
         api_key.refresh_from_db()
         assert api_key.last_used_at is not None
-        assert (datetime.now(timezone.utc) - api_key.last_used_at).seconds < 5
+        assert (datetime.now(UTC) - api_key.last_used_at).seconds < 5
 
     def test_authenticate_valid_api_key_uses_admin_database(
         self, auth_backend, api_keys_fixture, request_factory
@@ -195,7 +194,7 @@ class TestTenantAPIKeyAuthentication:
             name="Expired API Key",
             tenant_id=tenant.id,
             entity=user,
-            expiry_date=datetime.now(timezone.utc) - timedelta(days=1),
+            expiry_date=datetime.now(UTC) - timedelta(days=1),
         )
 
         request = request_factory.get("/")
@@ -217,7 +216,7 @@ class TestTenantAPIKeyAuthentication:
         # Manually create an encrypted key with a non-existent ID
         payload = {
             "_pk": non_existent_uuid,
-            "_exp": (datetime.now(timezone.utc) + timedelta(days=30)).timestamp(),
+            "_exp": (datetime.now(UTC) + timedelta(days=30)).timestamp(),
         }
         encrypted_key = auth_backend.key_crypto.generate(payload)
         fake_key = f"{api_key.prefix}.{encrypted_key}"
@@ -368,7 +367,7 @@ class TestTenantAPIKeyAuthentication:
             name="Short-lived API Key",
             tenant_id=tenant.id,
             entity=user,
-            expiry_date=datetime.now(timezone.utc) + timedelta(seconds=1),
+            expiry_date=datetime.now(UTC) + timedelta(seconds=1),
         )
 
         # Wait for the key to expire
@@ -382,3 +381,62 @@ class TestTenantAPIKeyAuthentication:
             auth_backend.authenticate(request)
 
         assert str(exc_info.value.detail) == "API Key has already expired."
+
+
+class TestSSEAuthentication:
+    """`SSEAuthentication` adds an `?access_token=<jwt>` fallback for
+    browser `EventSource` clients while keeping the standard
+    `Authorization` header as the authoritative source."""
+
+    def test_header_present_delegates_to_super(self):
+        request = MagicMock()
+        request.headers = {"Authorization": "Bearer header-token"}
+        with patch.object(
+            SSEAuthentication.__bases__[0], "authenticate", return_value=("user", "tok")
+        ) as super_auth:
+            result = SSEAuthentication().authenticate(request)
+        super_auth.assert_called_once_with(request)
+        assert result == ("user", "tok")
+
+    def test_no_header_no_query_token_delegates_to_super(self):
+        request = MagicMock()
+        request.headers = {}
+        request.query_params = {}
+        with patch.object(
+            SSEAuthentication.__bases__[0], "authenticate", return_value=None
+        ) as super_auth:
+            result = SSEAuthentication().authenticate(request)
+        super_auth.assert_called_once_with(request)
+        assert result is None
+
+    def test_query_token_used_only_as_fallback(self):
+        request = MagicMock()
+        request.headers = {}
+        request.query_params = {"access_token": "query-jwt"}
+
+        jwt_instance = MagicMock()
+        jwt_instance.get_validated_token.return_value = "validated"
+        jwt_instance.get_user.return_value = "query-user"
+
+        with patch.object(SSEAuthentication, "jwt_auth", jwt_instance):
+            user, token = SSEAuthentication().authenticate(request)
+
+        jwt_instance.get_validated_token.assert_called_once_with("query-jwt")
+        assert user == "query-user"
+        assert token == "validated"
+
+    def test_query_token_invalid_raises_authentication_failed(self):
+        request = MagicMock()
+        request.headers = {}
+        request.query_params = {"access_token": "bad-token"}
+
+        jwt_instance = MagicMock()
+        jwt_instance.get_validated_token.side_effect = AuthenticationFailed(
+            "Invalid token"
+        )
+
+        with patch.object(SSEAuthentication, "jwt_auth", jwt_instance):
+            with pytest.raises(AuthenticationFailed):
+                SSEAuthentication().authenticate(request)
+
+        jwt_instance.get_validated_token.assert_called_once_with("bad-token")

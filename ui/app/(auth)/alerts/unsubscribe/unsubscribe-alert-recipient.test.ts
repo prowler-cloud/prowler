@@ -14,7 +14,7 @@ const lastFetchCall = (): { url: string; init: RequestInit } => {
 describe("unsubscribeAlertRecipient", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.com/api/v1");
+    vi.stubEnv("UI_API_BASE_URL", "https://api.example.com/api/v1");
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -100,6 +100,39 @@ describe("unsubscribeAlertRecipient", () => {
     });
     expect(lastFetchCall().url).toBe(
       "https://api.example.com/api/v1/alerts/recipients/unsubscribe",
+    );
+  });
+
+  it("returns the fallback message when the API base URL is missing", async () => {
+    // Given - neither the new name nor its legacy fallback is set
+    vi.stubEnv("UI_API_BASE_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
+
+    // When
+    const result = await unsubscribeAlertRecipient("token-1");
+
+    // Then
+    expect(result).toEqual({
+      ok: false,
+      state: "missing_api_base_url",
+      message:
+        "We could not process this unsubscribe link. Please try again later.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the deprecated NEXT_PUBLIC_API_BASE_URL when UI_API_BASE_URL is unset", async () => {
+    // Given - only the legacy name is configured
+    vi.stubEnv("UI_API_BASE_URL", undefined);
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://legacy.example.com/api/v1");
+
+    // When
+    const result = await unsubscribeAlertRecipient("token-1");
+
+    // Then
+    expect(result.ok).toBe(true);
+    expect(lastFetchCall().url).toBe(
+      "https://legacy.example.com/api/v1/alerts/recipients/unsubscribe?token=token-1",
     );
   });
 });

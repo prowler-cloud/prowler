@@ -1,6 +1,7 @@
-from typing import Optional, Tuple
 from uuid import UUID
 
+from api.db_router import MainRouter
+from api.models import TenantAPIKey, TenantAPIKeyManager
 from cryptography.fernet import InvalidToken
 from django.utils import timezone
 from drf_simple_apikey.backends import APIKeyAuthentication as BaseAPIKeyAuth
@@ -9,9 +10,6 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
-from api.db_router import MainRouter
-from api.models import TenantAPIKey, TenantAPIKeyManager
 
 
 class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
@@ -81,7 +79,7 @@ class CombinedJWTOrAPIKeyAuthentication(BaseAuthentication):
     jwt_auth = JWTAuthentication()
     api_key_auth = TenantAPIKeyAuthentication()
 
-    def authenticate(self, request: Request) -> Optional[Tuple[object, dict]]:
+    def authenticate(self, request: Request) -> tuple[object, dict] | None:
         auth_header = request.headers.get("Authorization", "")
 
         # Prioritize JWT authentication if both are present
@@ -93,3 +91,30 @@ class CombinedJWTOrAPIKeyAuthentication(BaseAuthentication):
 
         # Default fallback
         return self.jwt_auth.authenticate(request)
+
+
+class SSEAuthentication(CombinedJWTOrAPIKeyAuthentication):
+    """JWT/API-Key auth that also accepts `?access_token=<jwt>`.
+
+    Browser `EventSource` is the only widely available SSE client API
+    and it cannot set the `Authorization` header (its constructor takes
+    only a URL and `withCredentials`). To keep browser SSE clients on
+    the same auth stack as the rest of the API, SSE endpoints additionally
+    accept a JWT via the `?access_token=<jwt>` query parameter — the
+    standard parameter name defined in RFC 6750 Section 2.3 for bearer tokens.
+    """
+
+    def authenticate(self, request: Request):
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header:
+            return super().authenticate(request)
+
+        raw_token = request.query_params.get("access_token")
+        if not raw_token:
+            # No header and no query token — let the default path raise
+            # the canonical AuthenticationFailed via the parent class.
+            return super().authenticate(request)
+
+        validated_token = self.jwt_auth.get_validated_token(raw_token)
+        user = self.jwt_auth.get_user(validated_token)
+        return user, validated_token

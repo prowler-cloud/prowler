@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,7 +14,32 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_aws_organizations_changes(Check):
     def execute(self):
-        pattern = r"\$\.eventSource\s*=\s*.?organizations\.amazonaws\.com.+\$\.eventName\s*=\s*.?AcceptHandshake.+\$\.eventName\s*=\s*.?AttachPolicy.+\$\.eventName\s*=\s*.?CancelHandshake.+\$\.eventName\s*=\s*.?CreateAccount.+\$\.eventName\s*=\s*.?CreateOrganization.+\$\.eventName\s*=\s*.?CreateOrganizationalUnit.+\$\.eventName\s*=\s*.?CreatePolicy.+\$\.eventName\s*=\s*.?DeclineHandshake.+\$\.eventName\s*=\s*.?DeleteOrganization.+\$\.eventName\s*=\s*.?DeleteOrganizationalUnit.+\$\.eventName\s*=\s*.?DeletePolicy.+\$\.eventName\s*=\s*.?EnableAllFeatures.+\$\.eventName\s*=\s*.?EnablePolicyType.+\$\.eventName\s*=\s*.?InviteAccountToOrganization.+\$\.eventName\s*=\s*.?LeaveOrganization.+\$\.eventName\s*=\s*.?DetachPolicy.+\$\.eventName\s*=\s*.?DisablePolicyType.+\$\.eventName\s*=\s*.?MoveAccount.+\$\.eventName\s*=\s*.?RemoveAccountFromOrganization.+\$\.eventName\s*=\s*.?UpdateOrganizationalUnit.+\$\.eventName\s*=\s*.?UpdatePolicy.?"
+        pattern = build_metric_filter_pattern(
+            event_source="organizations.amazonaws.com",
+            event_names=[
+                "AcceptHandshake",
+                "AttachPolicy",
+                "CancelHandshake",
+                "CreateAccount",
+                "CreateOrganization",
+                "CreateOrganizationalUnit",
+                "CreatePolicy",
+                "DeclineHandshake",
+                "DeleteOrganization",
+                "DeleteOrganizationalUnit",
+                "DeletePolicy",
+                "EnableAllFeatures",
+                "EnablePolicyType",
+                "InviteAccountToOrganization",
+                "LeaveOrganization",
+                "DetachPolicy",
+                "DisablePolicyType",
+                "MoveAccount",
+                "RemoveAccountFromOrganization",
+                "UpdateOrganizationalUnit",
+                "UpdatePolicy",
+            ],
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

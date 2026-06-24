@@ -40,12 +40,12 @@ describe("layoutWithDagre", () => {
     expect(byId.get("finding-1")).toMatchObject({
       type: "finding",
       width: 150,
-      height: 112,
+      height: 124,
     });
     expect(byId.get("resource-1")).toMatchObject({
       type: "resource",
       width: 136,
-      height: 112,
+      height: 124,
     });
     expect(byId.get("internet-1")).toMatchObject({
       type: "internet",

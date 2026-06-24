@@ -26,11 +26,10 @@ interface UseRelatedFiltersProps {
  * lists update automatically when searchParams change because the component
  * re-renders with new searchParams from Next.js.
  *
- * Cascading filter cleanup (e.g. auto-clearing a scan when its provider is
- * deselected) is handled atomically by the filter components themselves
- * (ProviderTypeSelector clears provider_id__in, AccountsSelector updates
- * provider_type__in). This avoids the production bug where router.push()
- * calls inside useEffect would silently abort pending navigations.
+ * Cascading filter cleanup is handled atomically by composed filter controls
+ * such as ProviderAccountSelectors. This avoids the production bug where
+ * router.push() calls inside useEffect would silently abort pending
+ * navigations.
  */
 export const useRelatedFilters = ({
   providerIds = [],

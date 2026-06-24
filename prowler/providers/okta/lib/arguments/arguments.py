@@ -35,8 +35,9 @@ def init_parser(self):
         nargs="+",
         help=(
             "OAuth scopes to request, space-separated "
-            "(e.g. okta.policies.read okta.users.read). Defaults to the "
-            "read scopes required by the bundled checks."
+            "(e.g. okta.policies.read okta.brands.read okta.apps.read "
+            "okta.logStreams.read okta.idps.read). "
+            "Defaults to the read scopes required by the bundled checks."
         ),
         default=None,
         metavar="OKTA_SCOPES",

@@ -1,7 +1,7 @@
 import { Row } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
@@ -9,8 +9,19 @@ import {
   PROVIDERS_ROW_TYPE,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
-const checkConnectionProviderMock = vi.hoisted(() => vi.fn());
+const { checkConnectionProviderMock, getScheduleMock, pushMock } = vi.hoisted(
+  () => ({
+    checkConnectionProviderMock: vi.fn(),
+    getScheduleMock: vi.fn(),
+    pushMock: vi.fn(),
+  }),
+);
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock }),
+}));
 
 vi.mock("@/actions/organizations/organizations", () => ({
   updateOrganizationName: vi.fn(),
@@ -18,6 +29,10 @@ vi.mock("@/actions/organizations/organizations", () => ({
 
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
+}));
+
+vi.mock("@/actions/schedules", () => ({
+  getSchedule: getScheduleMock,
 }));
 
 vi.mock("../forms/delete-form", () => ({
@@ -30,6 +45,29 @@ vi.mock("../forms/delete-organization-form", () => ({
 
 vi.mock("../forms/edit-name-form", () => ({
   EditNameForm: () => null,
+}));
+
+vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
+  EDIT_SCAN_SCHEDULE_STATE: {
+    LOADING: "loading",
+    LOADED: "loaded",
+    ERROR: "error",
+  },
+  EditScanScheduleModal: ({
+    open,
+    provider,
+    providers,
+  }: {
+    open: boolean;
+    provider?: { providerId: string };
+    providers?: { providerId: string }[];
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Edit Scan Schedule">
+        Editing schedule for{" "}
+        {providers ? `${providers.length} providers` : provider?.providerId}
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -96,6 +134,7 @@ const createOrgRow = () =>
       parentExternalId: null,
       organizationId: "org-1",
       providerCount: 3,
+      providerIds: ["provider-child-1", "provider-child-2"],
       subRows: [
         {
           id: "provider-child-1",
@@ -128,6 +167,7 @@ const createOuRow = () =>
       parentExternalId: "o-abc123def4",
       organizationId: "org-1",
       providerCount: 2,
+      providerIds: ["provider-ou-child-1"],
       subRows: [
         {
           id: "provider-ou-child-1",
@@ -143,6 +183,23 @@ const createOuRow = () =>
   }) as unknown as Row<ProvidersTableRow>;
 
 describe("DataTableRowActions", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  beforeEach(() => {
+    getScheduleMock.mockResolvedValue({
+      data: {
+        type: "schedules",
+        id: "provider-1",
+        attributes: { scan_hour: null },
+        relationships: {
+          provider: { data: { type: "providers", id: "provider-1" } },
+        },
+      },
+    });
+  });
+
   it("renders Add Credentials for provider rows without credentials", async () => {
     // Given
     const user = userEvent.setup();
@@ -163,10 +220,145 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(screen.getByText("Edit Provider Alias")).toBeInTheDocument();
+    // Advanced schedule editing is gated to Prowler Cloud subscribed accounts.
+    expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
     expect(screen.getByText("Add Credentials")).toBeInTheDocument();
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("Delete Provider")).toBeInTheDocument();
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+  });
+
+  it("navigates to the provider-filtered scan jobs from View Scan Jobs", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("View Scan Jobs"));
+
+    // Then: navigates with the key the scans filter bar binds to
+    // (provider__in, by id), URL-encoded, so the provider is pre-selected.
+    expect(pushMock).toHaveBeenCalledWith(
+      "/scans?filter%5Bprovider__in%5D=provider-1",
+    );
+  });
+
+  it("links to scan jobs by provider id even when the uid contains unsafe chars", async () => {
+    // Given a GitHub provider whose UID is a URL with unsafe chars.
+    const user = userEvent.setup();
+    const row = createRow(true);
+    (
+      row.original as unknown as { attributes: { uid: string } }
+    ).attributes.uid = "https://github.com/prowler-cloud/prowler";
+
+    render(
+      <DataTableRowActions
+        row={row}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("View Scan Jobs"));
+
+    // Then the link carries the provider id, never the raw uid.
+    expect(pushMock).toHaveBeenCalledWith(
+      "/scans?filter%5Bprovider__in%5D=provider-1",
+    );
+  });
+
+  it("opens Edit Scan Schedule for Prowler Cloud subscribed provider rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Edit Scan Schedule"));
+
+    // Then
+    expect(
+      screen.getByRole("dialog", { name: /edit scan schedule/i }),
+    ).toHaveTextContent("Editing schedule for provider-1");
+  });
+
+  it("hides Edit Scan Schedule for manual-only Cloud provider rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
+  });
+
+  it("hides Edit Scan Schedule for blocked Cloud provider rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.BLOCKED}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
   });
 
   it("renders Update Credentials for provider rows with credentials", async () => {
@@ -213,6 +405,29 @@ describe("DataTableRowActions", () => {
     // 1 of 2 child providers has a secret
     expect(screen.getByText("Test Connections (1)")).toBeInTheDocument();
     expect(screen.getByText("Delete Organization")).toBeInTheDocument();
+  });
+
+  it("opens Edit Scan Schedule for AWS organization rows", async () => {
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+      />,
+    );
+
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Edit Scan Schedule"));
+
+    expect(
+      screen.getByRole("dialog", { name: /edit scan schedule/i }),
+    ).toHaveTextContent("Editing schedule for 2 providers");
   });
 
   it("renders Delete Organization with destructive styling for org rows", async () => {
@@ -298,6 +513,49 @@ describe("DataTableRowActions", () => {
     // Should show count of selected testable providers (2), not all OU children (1)
     expect(screen.getByText("Test Connections (2)")).toBeInTheDocument();
     expect(screen.queryByText("Test Connections (1)")).not.toBeInTheDocument();
+  });
+
+  it("shows bulk Edit Scan Schedule next to Test Connection for selected rows", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={true}
+        testableProviderIds={["provider-child-1", "provider-standalone"]}
+        selectedScheduleProviderIds={[
+          "provider-child-1",
+          "provider-child-2",
+          "provider-standalone",
+        ]}
+        selectedScheduleProviders={[
+          {
+            providerId: "provider-child-1",
+            providerType: "aws",
+            providerUid: "111",
+            providerAlias: null,
+          },
+          {
+            providerId: "provider-standalone",
+            providerType: "aws",
+            providerUid: "999",
+            providerAlias: "Standalone",
+          },
+        ]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    expect(screen.getByText("Edit Scan Schedule (3)")).toBeInTheDocument();
+    expect(screen.getByText("Test Connection (2)")).toBeInTheDocument();
   });
 
   it("does NOT render Edit Organization Name or Update Credentials for OU rows", async () => {
