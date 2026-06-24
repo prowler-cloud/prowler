@@ -229,7 +229,7 @@ export function getColumnProviders(
 
         const provider = row.original as ProvidersProviderRow;
         const lastScanAt =
-          "lastScanAt" in provider
+          provider.lastScanAt !== undefined
             ? provider.lastScanAt
             : provider.attributes.connection.last_checked_at;
 

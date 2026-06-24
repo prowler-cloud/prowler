@@ -18,6 +18,15 @@ const DEFAULT_DAY_OF_MONTH = 1;
 // above that floor.
 const SCAN_INTERVAL_HOURS_MIN = 24;
 const DEFAULT_INTERVAL_HOURS = 48;
+const ordinalRules = new Intl.PluralRules("en-US", { type: "ordinal" });
+const DAY_OF_MONTH_SUFFIXES: Record<Intl.LDMLPluralRule, string> = {
+  zero: "th",
+  one: "st",
+  two: "nd",
+  few: "rd",
+  many: "th",
+  other: "th",
+};
 
 export const scheduleFormSchema = z.object({
   frequency: z.enum(SCHEDULE_FREQUENCY),
@@ -65,21 +74,7 @@ export function formatScheduleHour(hour: number): string {
 }
 
 export function formatDayOfMonth(day: number): string {
-  const mod100 = day % 100;
-  if (mod100 >= 11 && mod100 <= 13) {
-    return `${day}th`;
-  }
-
-  switch (day % 10) {
-    case 1:
-      return `${day}st`;
-    case 2:
-      return `${day}nd`;
-    case 3:
-      return `${day}rd`;
-    default:
-      return `${day}th`;
-  }
+  return `${day}${DAY_OF_MONTH_SUFFIXES[ordinalRules.select(day)]}`;
 }
 
 export function getBrowserTimezone(): string {

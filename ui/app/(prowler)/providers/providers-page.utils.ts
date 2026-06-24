@@ -518,8 +518,8 @@ export async function loadProvidersAccountsViewData({
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
     // TODO: Replace with a dedicated lightweight endpoint when available.
     resolveActionResult(getAllProviders()),
-    // Fetch configured schedules to also flag providers whose schedule has not
-    // fired yet (best-effort: absent in OSS, where the helper yields no ids).
+    // Fetch configured schedules as a fallback when provider scan_* fields are
+    // absent (best-effort: typically empty in OSS).
     resolveActionResult(getSchedules()),
     isCloud
       ? listOrganizationsSafe()

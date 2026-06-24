@@ -173,7 +173,11 @@ describe("formatDayOfMonth", () => {
     [11, "11th"],
     [12, "12th"],
     [13, "13th"],
+    [21, "21st"],
+    [22, "22nd"],
+    [23, "23rd"],
     [24, "24th"],
+    [31, "31st"],
   ])("formats day %i as %s", (day, expected) => {
     expect(formatDayOfMonth(day)).toBe(expected);
   });
