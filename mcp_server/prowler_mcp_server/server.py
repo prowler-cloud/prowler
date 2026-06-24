@@ -1,7 +1,8 @@
 from fastmcp import FastMCP
+from starlette.responses import JSONResponse
+
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
-from starlette.responses import JSONResponse
 
 prowler_mcp_server = FastMCP("prowler-mcp-server")
 

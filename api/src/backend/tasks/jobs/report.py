@@ -1,3 +1,4 @@
+import fcntl
 import gc
 import os
 import re
@@ -7,9 +8,17 @@ from pathlib import Path
 from shutil import rmtree
 from uuid import UUID
 
-import fcntl
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
+from api.db_utils import rls_transaction
+from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
+from api.utils import initialize_prowler_provider
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_TMP_OUTPUT_DIRECTORY
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
+from prowler.lib.outputs.finding import Finding as FindingOutput
 from tasks.jobs.export import _generate_compliance_output_directory, _upload_to_s3
 from tasks.jobs.reports import (
     FRAMEWORK_REGISTRY,
@@ -24,16 +33,6 @@ from tasks.jobs.threatscore_utils import (
     _aggregate_requirement_statistics_from_database,
     _get_compliance_check_ids,
 )
-
-from api.db_router import READ_REPLICA_ALIAS, MainRouter
-from api.db_utils import rls_transaction
-from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
-from api.utils import initialize_prowler_provider
-from prowler.lib.check.compliance_models import (
-    Compliance,
-    get_bulk_compliance_frameworks_universal,
-)
-from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
 STALE_TMP_OUTPUT_MAX_AGE_HOURS = 48

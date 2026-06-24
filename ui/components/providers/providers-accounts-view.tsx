@@ -156,6 +156,7 @@ export function ProvidersAccountsView({
             isCloud={isCloud}
             metadata={metadata}
             rows={rows}
+            scanScheduleCapability={scanScheduleCapability}
             onOpenProviderWizard={openProviderWizard}
             onOpenOrganizationWizard={openOrganizationWizard}
           />

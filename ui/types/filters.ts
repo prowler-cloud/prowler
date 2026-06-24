@@ -60,6 +60,15 @@ export const FILTER_FIELD = {
 export type FilterField = (typeof FILTER_FIELD)[keyof typeof FILTER_FIELD];
 
 /**
+ * Filter keys the account selectors accept: a provider id (`provider__in` /
+ * `provider_id__in`) or the cloud account uid (`provider_uid__in`).
+ */
+export type AccountFilterKey = (typeof FILTER_FIELD)[
+  | "PROVIDER"
+  | "PROVIDER_ID"
+  | "PROVIDER_UID"];
+
+/**
  * Controls the filter dispatch behavior of DataTableFilterCustom.
  * - "instant": every selection immediately updates the URL (legacy/default behavior)
  * - "batch":   selections accumulate in pending state; URL only updates on explicit apply

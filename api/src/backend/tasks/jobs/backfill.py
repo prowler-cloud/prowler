@@ -1,19 +1,6 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from celery.utils.log import get_task_logger
-from django.db.models import OuterRef, Subquery, Sum
-from django.utils import timezone
-from tasks.jobs.queries import (
-    COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
-    COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
-)
-from tasks.jobs.scan import (
-    aggregate_category_counts,
-    aggregate_finding_group_summaries,
-    aggregate_resource_group_counts,
-)
-
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import (
     POSTGRES_TENANT_VAR,
@@ -35,6 +22,18 @@ from api.models import (
     ScanGroupSummary,
     ScanSummary,
     StateChoices,
+)
+from celery.utils.log import get_task_logger
+from django.db.models import OuterRef, Subquery, Sum
+from django.utils import timezone
+from tasks.jobs.queries import (
+    COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+    COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
+)
+from tasks.jobs.scan import (
+    aggregate_category_counts,
+    aggregate_finding_group_summaries,
+    aggregate_resource_group_counts,
 )
 
 logger = get_task_logger(__name__)

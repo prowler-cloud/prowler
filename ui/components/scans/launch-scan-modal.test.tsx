@@ -123,6 +123,11 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
   ),
 }));
 
+import {
+  ACTION_ERROR_API_MESSAGES,
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { LaunchScanModal } from "./launch-scan-modal";
@@ -334,6 +339,40 @@ describe("LaunchScanModal", () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
+  it("maps payment-required scan errors to the shared subscription message", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    scanOnDemandMock.mockResolvedValueOnce({
+      error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+
+    render(
+      <LaunchScanModal
+        open
+        onOpenChange={onOpenChange}
+        providers={[provider]}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+    await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+    expect(
+      await screen.findByText(
+        ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).not.toBeInTheDocument();
+    expect(toastMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
   describe("schedule mode", () => {
     const weeklyScheduleResponse = {
       data: {
@@ -432,6 +471,28 @@ describe("LaunchScanModal", () => {
       expect(getScheduleMock).not.toHaveBeenCalled();
     });
 
+    it("hides schedule mode but allows manual scans in MANUAL_ONLY", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <LaunchScanModal
+          open
+          onOpenChange={vi.fn()}
+          providers={[provider]}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+
+      expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
+      expect(getScheduleMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
+    });
+
     it("hides the mode selector and blocks over-limit accounts in MANUAL_ONLY", () => {
       render(
         <LaunchScanModal
@@ -448,6 +509,32 @@ describe("LaunchScanModal", () => {
       expect(
         screen.getByRole("button", { name: /launch scan/i }),
       ).toBeDisabled();
+    });
+
+    it("blocks scans and schedules in BLOCKED", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <LaunchScanModal
+          open
+          onOpenChange={vi.fn()}
+          providers={[provider]}
+          capability={SCAN_SCHEDULE_CAPABILITY.BLOCKED}
+        />,
+      );
+
+      expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+      expect(
+        screen.getByRole("button", { name: /launch scan/i }),
+      ).toBeDisabled();
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(getScheduleMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
     });
   });
 });

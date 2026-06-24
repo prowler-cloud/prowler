@@ -8,15 +8,17 @@ import {
   SCANS_PROVIDER_FILTER_FIELD,
   type ScansFilterParam,
 } from "@/actions/scans/scans-filters";
-import { getSchedules } from "@/actions/schedules";
+import { getSchedules, getSchedulesPage } from "@/actions/schedules";
 import { auth } from "@/auth.config";
 import { PageReady } from "@/components/onboarding";
 import {
   appendPendingScheduleRowsToPage,
+  buildScheduledTabRows,
   getProviderIdsFromScans,
   getScanJobsTab,
   getScanJobsTabFilters,
   getScanJobsUserFilters,
+  pickScheduleProviderFilters,
 } from "@/components/scans/scans.utils";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
@@ -26,8 +28,10 @@ import { ContentLayout } from "@/components/ui";
 import {
   buildProviderScheduleSummary,
   buildSchedulesByProviderId,
+  getScanScheduleCapability,
   isScheduleConfigured,
 } from "@/lib/schedules";
+import { isCloud } from "@/lib/shared/env";
 import {
   ProviderProps,
   SCAN_JOBS_TAB,
@@ -35,14 +39,18 @@ import {
   ScanProps,
   SearchParamsProps,
 } from "@/types";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+} from "@/types/schedules";
 
 const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
 // Pending schedule rows are derived from provider schedules, but must honor the
 // same provider filters as real scan rows. The filter keys live with the scans
 // action (SCANS_PROVIDER_FILTER_FIELD) so they stay in sync with ScansFilterParam.
-const PROVIDER_UID_FILTER_KEYS = [
-  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_UID_IN}]`,
-  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_UID}]`,
+const PROVIDER_ID_FILTER_KEYS = [
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_IN}]`,
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER}]`,
 ] as const satisfies ReadonlyArray<ScansFilterParam>;
 
 const PROVIDER_TYPE_FILTER_KEYS = [
@@ -90,8 +98,8 @@ const filterProvidersForPendingRows = (
   providers: ProviderProps[],
   searchParams: SearchParamsProps,
 ): ProviderProps[] => {
-  const uids = parseCsvParam(
-    getFirstSearchParam(searchParams, PROVIDER_UID_FILTER_KEYS),
+  const ids = parseCsvParam(
+    getFirstSearchParam(searchParams, PROVIDER_ID_FILTER_KEYS),
   );
   const types = parseCsvParam(
     getFirstSearchParam(searchParams, PROVIDER_TYPE_FILTER_KEYS),
@@ -102,7 +110,7 @@ const filterProvidersForPendingRows = (
 
   return providers.filter(
     (provider) =>
-      (uids.length === 0 || uids.includes(provider.attributes.uid)) &&
+      (ids.length === 0 || ids.includes(provider.id)) &&
       (types.length === 0 || types.includes(provider.attributes.provider)) &&
       (groups.length === 0 ||
         (provider.relationships?.provider_groups?.data ?? []).some((group) =>
@@ -260,9 +268,11 @@ export default async function Scans({
 const SSRDataTableScans = async ({
   searchParams,
   providers,
+  scanScheduleCapability,
 }: {
   searchParams: SearchParamsProps;
   providers: ProviderProps[];
+  scanScheduleCapability?: ScanScheduleCapability;
 }) => {
   const tab = getScanJobsTab(searchParams.tab);
 
@@ -284,6 +294,33 @@ const SSRDataTableScans = async ({
   };
 
   const query = (filters["filter[search]"] as string) || "";
+
+  // Advanced (Cloud) sources the Scheduled tab from /schedules; other envs keep the legacy /scans path.
+  const capability =
+    scanScheduleCapability ?? getScanScheduleCapability(isCloud());
+
+  if (
+    tab === SCAN_JOBS_TAB.SCHEDULED &&
+    capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED
+  ) {
+    const schedulesPage = await getSchedulesPage({
+      page,
+      pageSize,
+      sort,
+      filters: pickScheduleProviderFilters(searchParams),
+    });
+    const { data, meta } = buildScheduledTabRows(schedulesPage, new Date());
+
+    return (
+      <ScanJobsTable
+        data={data}
+        meta={meta}
+        tab={tab}
+        hasFilters={hasUserFilters}
+        scanScheduleCapability={capability}
+      />
+    );
+  }
 
   const scansData = await getScans({
     query,
@@ -375,6 +412,7 @@ const SSRDataTableScans = async ({
       meta={tableMeta}
       tab={tab}
       hasFilters={hasUserFilters}
+      scanScheduleCapability={scanScheduleCapability}
     />
   );
 };

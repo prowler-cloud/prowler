@@ -6,6 +6,8 @@ across all providers.
 
 from typing import Any
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.resources import (
     DetailedResource,
     ResourceEventsResponse,
@@ -13,7 +15,6 @@ from prowler_mcp_server.prowler_app.models.resources import (
     ResourcesMetadataResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class ResourcesTools(BaseTool):

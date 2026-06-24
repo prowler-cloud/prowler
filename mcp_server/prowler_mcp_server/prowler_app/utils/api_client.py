@@ -2,11 +2,12 @@
 
 import asyncio
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict
+from enum import StrEnum
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
@@ -14,7 +15,7 @@ from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
 ALLOWED_EXTERNAL_DOMAINS: frozenset[str] = frozenset({"raw.githubusercontent.com"})
 
 
-class HTTPMethod(str, Enum):
+class HTTPMethod(StrEnum):
     """HTTP methods enum."""
 
     GET = "GET"
@@ -30,7 +31,7 @@ class SingletonMeta(type):
     All calls to the constructor return the same instance.
     """
 
-    _instances: Dict[type, Any] = {}
+    _instances: dict[type, Any] = {}
 
     def __call__(cls, *args, **kwargs):
         """Control instance creation to ensure singleton behavior."""

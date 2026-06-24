@@ -185,6 +185,7 @@ const createOrganizationRow = ({
   externalId,
   organizationId,
   parentExternalId,
+  providerIds,
   subRows,
 }: {
   externalId: string | null;
@@ -193,6 +194,7 @@ const createOrganizationRow = ({
   name: string;
   organizationId: string | null;
   parentExternalId: string | null;
+  providerIds: string[];
   subRows: ProvidersTableRow[];
 }): ProvidersOrganizationRow => ({
   id,
@@ -202,7 +204,8 @@ const createOrganizationRow = ({
   externalId,
   organizationId,
   parentExternalId,
-  providerCount: countProviderRows(subRows),
+  providerCount: providerIds.length,
+  providerIds,
   subRows,
 });
 
@@ -236,14 +239,14 @@ function getProviderRowsByIds({
     .filter((provider): provider is ProvidersProviderRow => Boolean(provider));
 }
 
-function countProviderRows(rows: ProvidersTableRow[]): number {
-  return rows.reduce((total, row) => {
-    if (row.rowType === PROVIDERS_ROW_TYPE.PROVIDER) {
-      return total + 1;
-    }
+function dedupeIds(ids: string[]): string[] {
+  return Array.from(new Set(ids));
+}
 
-    return total + countProviderRows(row.subRows);
-  }, 0);
+function collectOrganizationRowProviderIds(
+  rows: ProvidersOrganizationRow[],
+): string[] {
+  return dedupeIds(rows.flatMap((row) => row.providerIds));
 }
 
 function getOrganizationUnitRelationshipId(
@@ -310,6 +313,13 @@ function buildOrganizationUnitRows({
           ? providerRowsFromRelationships
           : (providersByOrganizationUnitId.get(organizationUnit.id) ?? []);
       const subRows = [...childOrganizationUnitRows, ...providerRows];
+      const directProviderIds =
+        providerRowsFromRelationships.length > 0
+          ? getRelationshipProviderIds(organizationUnit.relationships)
+          : providerRows.map((provider) => provider.id);
+      const childProviderIds = collectOrganizationRowProviderIds(
+        childOrganizationUnitRows,
+      );
 
       return createOrganizationRow({
         groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT,
@@ -318,10 +328,13 @@ function buildOrganizationUnitRows({
         externalId: organizationUnit.attributes.external_id,
         organizationId,
         parentExternalId: organizationUnit.attributes.parent_external_id,
+        providerIds: dedupeIds([...childProviderIds, ...directProviderIds]),
         subRows,
       });
     })
-    .filter((organizationUnitRow) => organizationUnitRow.subRows.length > 0);
+    .filter(
+      (organizationUnitRow) => organizationUnitRow.providerIds.length > 0,
+    );
 }
 
 export function buildProvidersTableRows({
@@ -420,6 +433,12 @@ export function buildProvidersTableRows({
               (provider) => !providersInOus.has(provider.id),
             );
       const subRows = [...organizationProviders, ...organizationUnitRows];
+      const directProviderIds =
+        organizationProvidersFromRelationships.length > 0
+          ? getRelationshipProviderIds(organization.relationships)
+          : organizationProviders.map((provider) => provider.id);
+      const organizationUnitProviderIds =
+        collectOrganizationRowProviderIds(organizationUnitRows);
 
       return createOrganizationRow({
         groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION,
@@ -428,10 +447,14 @@ export function buildProvidersTableRows({
         externalId: organization.attributes.external_id,
         organizationId: organization.id,
         parentExternalId: organization.attributes.root_external_id,
+        providerIds: dedupeIds([
+          ...directProviderIds,
+          ...organizationUnitProviderIds,
+        ]),
         subRows,
       });
     })
-    .filter((organizationRow) => organizationRow.subRows.length > 0);
+    .filter((organizationRow) => organizationRow.providerIds.length > 0);
 
   const assignedProviderIds = new Set<string>();
 
