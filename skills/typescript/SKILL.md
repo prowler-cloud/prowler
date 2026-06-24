@@ -102,6 +102,38 @@ function isUser(value: unknown): value is User {
 }
 ```
 
+### Type Guard Tests (REQUIRED)
+
+When adding or changing a type guard or mapper predicate, test both accepted and rejected shapes. A positive test alone often hides over-broad matching.
+
+```typescript
+const ERROR_POINTER = {
+  INVITATION_TOKEN: "/data/attributes/invitation_token",
+} as const;
+
+function isInvitationTokenError(error: ApiError): boolean {
+  return error.source?.pointer === ERROR_POINTER.INVITATION_TOKEN;
+}
+
+it("should identify invitation token errors", () => {
+  expect(
+    isInvitationTokenError({
+      detail: "Invalid invitation code.",
+      source: { pointer: ERROR_POINTER.INVITATION_TOKEN },
+    }),
+  ).toBe(true);
+});
+
+it("should not identify payload-level errors as invitation token errors", () => {
+  expect(
+    isInvitationTokenError({
+      detail: "Invalid request data.",
+      source: { pointer: "/data" },
+    }),
+  ).toBe(false);
+});
+```
+
 ## Coupled Optional Props (REQUIRED)
 
 Do not model semantically coupled props as independent optionals — this allows invalid half-states that compile but break at runtime. Use discriminated unions with `never` to make invalid combinations impossible.
