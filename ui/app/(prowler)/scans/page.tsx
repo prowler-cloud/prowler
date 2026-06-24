@@ -181,18 +181,12 @@ export default async function Scans({
   const session = await auth();
   const resolvedSearchParams = await searchParams;
 
-  const [providersResult, providerGroupsResult] = await Promise.allSettled([
+  const [providersData, providerGroupsData] = await Promise.all([
     getAllProviders(),
     getAllProviderGroups(),
   ]);
-  const providers =
-    providersResult.status === "fulfilled"
-      ? (providersResult.value?.data ?? [])
-      : [];
-  const providerGroups =
-    providerGroupsResult.status === "fulfilled"
-      ? (providerGroupsResult.value?.data ?? [])
-      : [];
+  const providers = providersData?.data ?? [];
+  const providerGroups = providerGroupsData?.data ?? [];
 
   const connectedProviders = providers.filter(
     (provider: ProviderProps) =>

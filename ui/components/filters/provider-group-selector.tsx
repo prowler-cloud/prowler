@@ -12,14 +12,17 @@ import {
 } from "@/components/shadcn/select/multiselect";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import type { ProviderGroup } from "@/types/components";
+import { FILTER_FIELD } from "@/types/filters";
 
-const PROVIDER_GROUP_FILTER_KEY = "provider_groups__in";
+const PROVIDER_GROUP_FILTER_KEY = FILTER_FIELD.PROVIDER_GROUPS;
 const URL_FILTER_KEY = `filter[${PROVIDER_GROUP_FILTER_KEY}]`;
 
 /** Common props shared by both batch and instant modes. */
 interface ProviderGroupSelectorBaseProps {
   groups: ProviderGroup[];
   search?: MultiSelectSearchProp;
+  /** DOM id for the control; pass a unique one when rendering more than one. */
+  id?: string;
   /**
    * Instant mode only: extra URL params to delete when the selection changes
    * (e.g. ["page", "scanId"]), mirroring ProviderAccountSelectors. Ignored in
@@ -61,6 +64,7 @@ export function ProviderGroupSelector({
   groups,
   onBatchChange,
   selectedValues,
+  id = "provider-group-selector",
   search = {
     placeholder: "Search Provider Groups...",
     emptyMessage: "No Provider Groups found.",
@@ -69,6 +73,7 @@ export function ProviderGroupSelector({
 }: ProviderGroupSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
+  const labelId = `${id}-label`;
 
   const current = searchParams.get(URL_FILTER_KEY) || "";
   const urlSelectedIds = current ? current.split(",").filter(Boolean) : [];
@@ -110,19 +115,12 @@ export function ProviderGroupSelector({
 
   return (
     <div className="relative">
-      <label
-        htmlFor="provider-group-selector"
-        className="sr-only"
-        id="provider-group-label"
-      >
+      <label htmlFor={id} className="sr-only" id={labelId}>
         Filter by Provider Group. Select one or more Provider Groups to filter
         results.
       </label>
       <MultiSelect values={selectedIds} onValuesChange={handleMultiValueChange}>
-        <MultiSelectTrigger
-          id="provider-group-selector"
-          aria-labelledby="provider-group-label"
-        >
+        <MultiSelectTrigger id={id} aria-labelledby={labelId}>
           {selectedLabel() || (
             <MultiSelectValue placeholder="All Provider Groups" />
           )}

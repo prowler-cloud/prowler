@@ -206,6 +206,24 @@ describe("ProviderGroupSelector", () => {
     expect(params.has("scanId")).toBe(false);
   });
 
+  it("defaults the control id and links the sr-only label to it", () => {
+    render(<ProviderGroupSelector groups={groups} />);
+
+    const label = screen.getByText(/Filter by Provider Group/i);
+    expect(label).toHaveAttribute("for", "provider-group-selector");
+    expect(label).toHaveAttribute("id", "provider-group-selector-label");
+  });
+
+  it("applies a custom id so multiple instances don't collide", () => {
+    render(
+      <ProviderGroupSelector groups={groups} id="resources-provider-group" />,
+    );
+
+    const label = screen.getByText(/Filter by Provider Group/i);
+    expect(label).toHaveAttribute("for", "resources-provider-group");
+    expect(label).toHaveAttribute("id", "resources-provider-group-label");
+  });
+
   it("does not navigate on clear when nothing is selected", () => {
     render(<ProviderGroupSelector groups={groups} />);
 
