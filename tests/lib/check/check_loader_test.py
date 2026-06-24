@@ -26,6 +26,18 @@ CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME = "cloudtrail_threat_detection_enum
 class TestCheckLoader:
     provider = "aws"
 
+    @pytest.fixture(autouse=True)
+    def _disable_aws_checks_allowlist(self, monkeypatch):
+        # These tests exercise Prowler's check-selection logic with synthetic
+        # mock checks that are not part of the real AWS allowlist. The global
+        # allowlist enforcement is bypassed here so this suite tests the
+        # selection logic in isolation; real scans remain clamped to the
+        # allowlist via apply_aws_checks_allowlist.
+        monkeypatch.setattr(
+            "prowler.lib.check.checks_loader.apply_aws_checks_allowlist",
+            lambda checks_to_execute, provider: checks_to_execute,
+        )
+
     def get_custom_check_s3_metadata(self):
         return CheckMetadata(
             Provider="aws",

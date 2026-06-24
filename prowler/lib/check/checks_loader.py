@@ -1,3 +1,5 @@
+import json
+import os
 import sys
 
 from colorama import Fore, Style
@@ -7,6 +9,57 @@ from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.check.tool_wrapper import is_tool_wrapper_provider
 from prowler.lib.logger import logger
+
+# Bundled allowlist shipped next to the rest of the Prowler config files. Every
+# AWS scan is forced to run ONLY the checks listed here. An alternative file can
+# be pointed to with the PROWLER_AWS_CHECKS_ALLOWLIST env var if ever needed.
+AWS_CHECKS_ALLOWLIST_ENV = "PROWLER_AWS_CHECKS_ALLOWLIST"
+AWS_CHECKS_ALLOWLIST_DEFAULT_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+    "config",
+    "aws_checks_allowlist.json",
+)
+
+
+def apply_aws_checks_allowlist(checks_to_execute: set, provider: str) -> set:
+    """Restrict the AWS checks to execute to the bundled allowlist.
+
+    For the ``aws`` provider this is always enforced: whatever Prowler resolved
+    (default "all", ``--checks``, ``--service``, ``--compliance`` ...) is
+    intersected with the approved allowlist so only those checks ever run. Other
+    providers are untouched. Any error fails open (returns the input unchanged)
+    to never break a scan.
+    """
+    try:
+        if provider.lower() != "aws":
+            return checks_to_execute
+
+        # Allow pointing to a custom file; otherwise use the bundled allowlist.
+        allowlist_path = (
+            os.environ.get(AWS_CHECKS_ALLOWLIST_ENV, "").strip()
+            or AWS_CHECKS_ALLOWLIST_DEFAULT_PATH
+        )
+
+        with open(allowlist_path, encoding="utf-8") as f:
+            allowlist = set(json.load(f).get("aws", []))
+
+        if not allowlist:
+            logger.warning(
+                f"AWS checks allowlist '{allowlist_path}' is empty; skipping filtering."
+            )
+            return checks_to_execute
+
+        filtered = checks_to_execute & allowlist
+        logger.info(
+            f"AWS checks allowlist applied ({allowlist_path}): "
+            f"{len(filtered)}/{len(checks_to_execute)} checks kept."
+        )
+        return filtered
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        return checks_to_execute
 
 
 # Generate the list of checks to execute
@@ -239,6 +292,10 @@ def load_checks_to_execute(
         checks_to_execute = update_checks_to_execute_with_aliases(
             checks_to_execute, check_aliases
         )
+
+        # Optionally restrict AWS checks to the configured allowlist. No-op
+        # unless the PROWLER_AWS_CHECKS_ALLOWLIST env var is set (see helper).
+        checks_to_execute = apply_aws_checks_allowlist(checks_to_execute, provider)
 
         return checks_to_execute
 
