@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.31.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Alibaba Cloud `ram_password_policy_number` and `cs_kubernetes_cluster_check_weekly` checks not being loaded due to missing implementation and package files [(#11683)](https://github.com/prowler-cloud/prowler/pull/11683)
+
+---
+
 ## [5.31.0] (Prowler v5.31.0)
 
 ### 🚀 Added
