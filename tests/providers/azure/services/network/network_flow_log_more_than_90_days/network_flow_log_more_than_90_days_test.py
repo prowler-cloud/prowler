@@ -1,11 +1,15 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.network.models import FlowLog, RetentionPolicyParameters
-
-from prowler.providers.azure.services.network.network_service import NetworkWatcher
+from prowler.providers.azure.services.network.network_service import (
+    FlowLog,
+    NetworkWatcher,
+    RetentionPolicy,
+)
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -13,6 +17,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_network_flow_log_more_than_90_days:
     def test_no_network_watchers(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_client.network_watchers = {}
 
         with (
@@ -39,6 +44,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_no_flow_logs(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -77,7 +83,7 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has no flow logs"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has no flow logs"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
@@ -86,6 +92,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_flow_logs_disabled(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -97,8 +104,11 @@ class Test_network_flow_log_more_than_90_days:
                     location="location",
                     flow_logs=[
                         FlowLog(
+                            id=str(uuid4()),
+                            name="disabled-flow-log",
                             enabled=False,
-                            retention_policy=RetentionPolicyParameters(days=90),
+                            target_resource_id=None,
+                            retention_policy=RetentionPolicy(days=90),
                         )
                     ],
                 )
@@ -129,7 +139,7 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has flow logs disabled"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has flow logs disabled"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
@@ -138,6 +148,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_flow_logs_retention_days_80(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -149,8 +160,11 @@ class Test_network_flow_log_more_than_90_days:
                     location="location",
                     flow_logs=[
                         FlowLog(
+                            id=str(uuid4()),
+                            name="retention-80",
                             enabled=True,
-                            retention_policy=RetentionPolicyParameters(days=80),
+                            target_resource_id=None,
+                            retention_policy=RetentionPolicy(days=80),
                         )
                     ],
                 )
@@ -181,7 +195,7 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} flow logs retention policy is less than 90 days"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} flow logs retention policy is less than 90 days"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
@@ -190,6 +204,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_flow_logs_retention_days_0(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -201,8 +216,11 @@ class Test_network_flow_log_more_than_90_days:
                     location="location",
                     flow_logs=[
                         FlowLog(
+                            id=str(uuid4()),
+                            name="retention-0",
                             enabled=True,
-                            retention_policy=RetentionPolicyParameters(days=0),
+                            target_resource_id=None,
+                            retention_policy=RetentionPolicy(days=0),
                         )
                     ],
                 )
@@ -233,7 +251,7 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has flow logs enabled for more than 90 days"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has flow logs enabled for more than 90 days"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
@@ -242,6 +260,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_flow_logs_well_configured(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -253,8 +272,11 @@ class Test_network_flow_log_more_than_90_days:
                     location="location",
                     flow_logs=[
                         FlowLog(
+                            id=str(uuid4()),
+                            name="vnet-flow-log",
                             enabled=True,
-                            retention_policy=RetentionPolicyParameters(days=90),
+                            target_resource_id="/subscriptions/test-sub/resourceGroups/rg/providers/Microsoft.Network/virtualNetworks/test-vnet",
+                            retention_policy=RetentionPolicy(days=90),
                         )
                     ],
                 )
@@ -285,7 +307,7 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has flow logs enabled for more than 90 days"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has flow logs enabled for more than 90 days"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name

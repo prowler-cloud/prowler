@@ -2,21 +2,20 @@
 # (https://github.com/cartography-cncf/cartography), which is licensed under the Apache 2.0 License.
 
 import time
-
 from typing import Any
 
 import aioboto3
 import boto3
 import neo4j
-
+from api.models import (
+    AttackPathsScan as ProwlerAPIAttackPathsScan,
+)
+from api.models import (
+    Provider as ProwlerAPIProvider,
+)
 from cartography.config import Config as CartographyConfig
 from cartography.intel import aws as cartography_aws
 from celery.utils.log import get_task_logger
-
-from api.models import (
-    AttackPathsScan as ProwlerAPIAttackPathsScan,
-    Provider as ProwlerAPIProvider,
-)
 from prowler.providers.common.provider import Provider as ProwlerSDKProvider
 from tasks.jobs.attack_paths import db_utils, utils
 
@@ -49,7 +48,7 @@ def start_aws_ingestion(
     }
 
     boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
-    regions: list[str] = list(prowler_sdk_provider._enabled_regions)
+    regions: list[str] = resolve_aws_regions(prowler_api_provider, prowler_sdk_provider)
     requested_syncs = list(cartography_aws.RESOURCE_FUNCTIONS.keys())
 
     sync_args = cartography_aws._build_aws_sync_kwargs(
@@ -226,6 +225,48 @@ def get_boto3_session(
     return boto3_session
 
 
+def resolve_aws_regions(
+    prowler_api_provider: ProwlerAPIProvider,
+    prowler_sdk_provider: ProwlerSDKProvider,
+) -> list[str]:
+    """Resolve the regions to scan, falling back when `_enabled_regions` is `None`.
+
+    The SDK silently sets `_enabled_regions` to `None` when `ec2:DescribeRegions`
+    fails (missing IAM permission, transient error). Without a fallback the
+    Cartography ingestion crashes with a non-actionable `TypeError`. Try the
+    user's `audited_regions` next, then the partition's static region list.
+    Excluded regions are honored on every branch.
+    """
+    if prowler_sdk_provider._enabled_regions is not None:
+        regions = set(prowler_sdk_provider._enabled_regions)
+
+    elif prowler_sdk_provider.identity.audited_regions:
+        regions = set(prowler_sdk_provider.identity.audited_regions)
+
+    else:
+        partition = prowler_sdk_provider.identity.partition
+        try:
+            regions = prowler_sdk_provider.get_available_aws_service_regions(
+                "ec2", partition
+            )
+
+        except KeyError:
+            raise RuntimeError(
+                f"No region data available for partition {partition!r}; "
+                f"cannot determine regions to scan for "
+                f"{prowler_api_provider.uid}"
+            )
+
+        logger.warning(
+            f"Could not enumerate enabled regions for AWS account "
+            f"{prowler_api_provider.uid}; falling back to all regions in "
+            f"partition {partition!r}"
+        )
+
+    excluded = set(getattr(prowler_sdk_provider, "_excluded_regions", None) or ())
+    return sorted(regions - excluded)
+
+
 def get_aioboto3_session(boto3_session: boto3.Session) -> aioboto3.Session:
     return aioboto3.Session(botocore_session=boto3_session._session)
 
@@ -313,3 +354,16 @@ def sync_aws_account(
             )
 
     return failed_syncs
+
+
+def extract_short_uid(uid: str) -> str:
+    """Return the short identifier from an AWS ARN or resource ID.
+
+    Supported inputs end in one of:
+      - `<type>/<id>`        (e.g. `instance/i-xxx`)
+      - `<type>:<id>`        (e.g. `function:name`)
+      - `<id>`               (e.g. `bucket-name` or `i-xxx`)
+
+    If `uid` is already a short resource ID, it is returned unchanged.
+    """
+    return uid.rsplit("/", 1)[-1].rsplit(":", 1)[-1]

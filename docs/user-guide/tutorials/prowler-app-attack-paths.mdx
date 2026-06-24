@@ -173,6 +173,215 @@ RETURN r.name AS role_name, r.arn AS role_arn, p.arn AS trusted_service
 LIMIT 25
 ```
 
+### Advanced Attack Path Scenarios
+
+The following scenarios show how to compose graph traversals into real attack-path stories. Each query can be pasted directly into the custom query box: the API auto-scopes them to the selected provider and injects tenant/provider isolation, so there is no need to include account identifiers or `$provider_uid` in the text. All queries are openCypher v9 (Neo4j and Neptune compatible).
+
+#### 1. Live attacker on the box that owns the keys
+
+**Query story:** Finds an internet-exposed EC2 under an active GuardDuty SSH brute-force whose instance role can assume a higher-privileged role that can read a sensitive S3 bucket.
+
+```cypher
+MATCH path_ec2 = (acct:AWSAccount)--(ec2:EC2Instance)
+WHERE ec2.exposed_internet = true
+MATCH p0 = (gd:GuardDutyFinding)-[:AFFECTS]->(ec2)
+MATCH p1 = (ec2)-[:INSTANCE_PROFILE]->(prof:AWSInstanceProfile)-[:ASSOCIATED_WITH]->(low:AWSRole)
+MATCH p2 = (low)-[:STS_ASSUMEROLE_ALLOW]-(high:AWSRole)
+MATCH p3 = (high)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
+OPTIONAL MATCH path_net = (internet:Internet)-[:CAN_ACCESS]->(ec2)
+MATCH path_s3 = (acct)--(s3:S3Bucket)
+WHERE high <> low
+  AND stmt.effect = 'Allow'
+  AND size([a IN stmt.action WHERE
+        toLower(a) STARTS WITH 's3:getobject'
+        OR toLower(a) STARTS WITH 's3:listbucket'
+        OR toLower(a) IN ['s3:*']
+      ]) > 0
+  AND size([r IN stmt.resource WHERE
+        r CONTAINS s3.name
+      ]) > 0
+RETURN path_net, path_ec2, p0, p1, p2, p3, path_s3
+```
+
+**How it's built:**
+
+- `path_ec2` anchors the graph on the account node and its internet-exposed EC2 instance, via a real account-to-resource edge. This is the visible spine that keeps everything connected.
+- `p0` ties a `GuardDutyFinding` to that instance through the `AFFECTS` edge (the live SSH brute-force alert).
+- `p1` walks the real graph edges from the instance to its instance profile to the role it runs as.
+- `p2` follows the `STS_ASSUMEROLE_ALLOW` edge to the higher-privileged role the low role can assume. It is undirected so it works regardless of how the assume edge was ingested. `high <> low` stops a role matching itself.
+- `p3` walks that role into its policy and policy statement.
+- `path_net` is the optional `Internet -[:CAN_ACCESS]-> instance` edge. It makes "from the internet" literal on screen. Optional so a missing `Internet` node never breaks the query live.
+- `path_s3` connects the sensitive bucket to the same account node, so it draws connected instead of floating. There is no physical edge from a role to a bucket; the grant is logical, enforced in the `WHERE`: the statement must allow an S3 read action (list comprehension over the `action` array) and its resource must cover the bucket (`CONTAINS s3.name`). The account is the shared hub; the bucket hanging off it next to the role chain is the teaching moment — the access exists only in IAM.
+
+#### 2. Who can read the crown jewels
+
+**Query story:** The sensitive bucket from the previous scenario seen from the data side: every role whose IAM policy can read it, regardless of how the role is reached.
+
+```cypher
+MATCH (s3:S3Bucket)
+WHERE toLower(s3.name) CONTAINS 'sensitive'
+MATCH (role:AWSRole)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
+WHERE stmt.effect = 'Allow'
+  AND size([a IN stmt.action WHERE
+        toLower(a) STARTS WITH 's3:get'
+        OR toLower(a) STARTS WITH 's3:list'
+        OR toLower(a) IN ['s3:*']
+      ]) > 0
+  AND size([r IN stmt.resource WHERE
+        r CONTAINS s3.name
+      ]) > 0
+WITH DISTINCT s3, role
+LIMIT 25
+MATCH path_s3 = (acct:AWSAccount)--(s3)
+MATCH path_role = (acct)--(role)
+RETURN path_s3, path_role
+```
+
+**How it's built:** data-centric, not attacker-centric — the same bucket the previous kill chain exfiltrates, approached from the other direction.
+
+- The `S3Bucket` is bound first by name (one node), so everything else filters against it.
+- `(role:AWSRole)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)` reaches statements only *through a role*, never via a global statement scan. A blanket `AWSPolicyStatement` scan also hits resource-policy statements whose shape differs and makes the list comprehension fail outright.
+- The `WHERE` filters in place: an S3 read action plus a resource that names that bucket.
+- `WITH DISTINCT s3, role LIMIT 25` collapses undirected-traversal duplicates and hard-caps the result.
+- `path_s3` and `path_role` attach the account hubs only after the cap, against at most 25 rows, so the bucket and role(s) draw connected through the account instead of floating.
+- No internet or EC2 here; this answers "who has the keys" instead of "how would an attacker get in."
+
+#### 3. Lateral reach from an internet-exposed instance
+
+**Query story:** The wide-angle view of the live-attacker scenario: every internet-exposed EC2, the role it runs as, and every role that role can assume. The first scenario is one specific exfiltration path inside this reach, under live attack.
+
+```cypher
+MATCH path_ec2 = (acct:AWSAccount)--(ec2:EC2Instance)
+WHERE ec2.exposed_internet = true
+MATCH p1 = (ec2)-[:INSTANCE_PROFILE]->(prof:AWSInstanceProfile)-[:ASSOCIATED_WITH]->(low:AWSRole)
+MATCH p2 = (low)-[:STS_ASSUMEROLE_ALLOW]-(high:AWSRole)
+OPTIONAL MATCH path_net = (internet:Internet)-[:CAN_ACCESS]->(ec2)
+WHERE high <> low
+RETURN path_net, path_ec2, p1, p2
+```
+
+**How it's built:** widens the lens instead of filtering down. It stops at the assume-role hop and shows every role reachable from any internet-exposed instance, without filtering down to a specific S3 leg.
+
+- `path_ec2` is the account-to-instance spine.
+- `p1` walks to the instance role.
+- `p2` fans out to every role that role can assume.
+- `path_net` adds the optional `Internet -[:CAN_ACCESS]->` edge.
+- The first scenario is the specific exfiltration path under live attack; this is the broader privilege reach an attacker inherits the moment they land on the box.
+
+#### 4. Role-chain privilege escalation
+
+**Query story:** A pure-IAM escalation, no compromised instance: a role that can assume a second role whose policy lets it assume a third, admin-level role.
+
+```cypher
+MATCH path_root = (acct:AWSAccount)--(r1:AWSRole)
+MATCH p1 = (r1)-[:STS_ASSUMEROLE_ALLOW]-(r2:AWSRole)
+MATCH p2 = (r2)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
+MATCH path_admin = (acct)--(admin:AWSRole)
+WHERE r1 <> r2 AND r1 <> admin AND r2 <> admin
+  AND stmt.effect = 'Allow'
+  AND size([a IN stmt.action WHERE
+        toLower(a) IN ['sts:*', 'sts:assumerole']
+      ]) > 0
+  AND size([res IN stmt.resource WHERE
+        res CONTAINS admin.name
+      ]) > 0
+RETURN path_root, p1, p2, path_admin
+```
+
+**How it's built:**
+
+- `path_root` anchors role 1 to the account node, the spine that keeps the picture connected.
+- `p1` is the one real assume edge in the chain (role 1 to role 2).
+- `p2` walks role 2 into its policy and statement.
+- `path_admin` connects the target admin role to the same account node so it draws connected. The third hop is not a graph edge: it exists only as `sts:AssumeRole` on that role's ARN inside the statement. The query proves it the same way the first scenario proves S3 access — the statement action must include an assume-role action and its resource list must reference the admin role's name.
+- The three `<>` guards stop a role matching itself at any position.
+
+#### 5. External identity trust map
+
+**Query story:** Finds external identity providers (SSO, GitHub, GitLab, Terraform Cloud) and the AWS roles they are trusted to assume.
+
+```cypher
+MATCH p = (role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]-(idp:AWSPrincipal)
+WHERE idp.arn CONTAINS 'saml-provider'
+   OR idp.arn CONTAINS 'oidc-provider'
+MATCH path_role = (acct:AWSAccount)--(role)
+RETURN p, path_role
+```
+
+**How it's built:** federated principals are stored as `AWSPrincipal` nodes whose ARN contains `saml-provider` (SSO) or `oidc-provider` (GitHub, GitLab, Terraform Cloud).
+
+- `p` matches the trust edge undirected. It is written `(AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(AWSPrincipal)`, role to principal, so a directed `principal -> role` match returns nothing; undirected matches regardless of ingest direction.
+- The `WHERE` keeps only SAML or OIDC providers, drawing a fan-out from each external identity provider to every role it can assume (including reserved SSO admin roles).
+- `path_role` ties every trusted role to the account node so the provider stars share one spine instead of drawing as separate islands.
+
+#### 6. Federated SSO roles flagged as admin or privesc
+
+**Query story:** The dangerous subset of the trust map above — externally-federated SSO roles that Prowler also flags for AdministratorAccess or privilege escalation.
+
+```cypher
+MATCH (idp:AWSPrincipal)-[:TRUSTS_AWS_PRINCIPAL]-(role:AWSRole)
+WHERE idp.arn CONTAINS 'saml-provider'
+   OR idp.arn CONTAINS 'oidc-provider'
+MATCH (role)-[:HAS_FINDING]-(pf:ProwlerFinding)
+WHERE pf.status = 'FAIL'
+  AND pf.check_id IN [
+    'iam_inline_policy_allows_privilege_escalation',
+    'iam_role_administratoraccess_policy',
+    'iam_inline_policy_no_administrative_privileges',
+    'iam_user_administrator_access_policy'
+  ]
+WITH DISTINCT idp, role, pf
+LIMIT 60
+MATCH path_root = (acct:AWSAccount)--(role)
+MATCH p_trust = (idp)-[:TRUSTS_AWS_PRINCIPAL]-(role)
+MATCH p_find = (role)-[:HAS_FINDING]-(pf)
+RETURN path_root, p_trust, p_find
+```
+
+**How it's built:** a plain "list every flagged identity" query is a wide fan that draws as a column, and `ProwlerFinding` nodes accumulate across scans with no scan filter available in custom queries.
+
+- The first MATCH plus `WHERE` keeps only roles trusted by a SAML or OIDC provider (trust edge undirected, so direction does not matter).
+- The second MATCH plus `check_id IN [...]` keeps only those carrying one of the four privilege-escalation or admin checks.
+- `WITH DISTINCT ... LIMIT 60` collapses duplicate finding nodes and hard-caps the result.
+- `p_trust`, `p_find`, and `path_root` draw it connected three ways: provider to role through the trust edge, role to its finding, and role to the account.
+- The previous scenario shows who can walk in; this shows which of those roles Prowler already flags as over-privileged.
+
+#### 7. World-readable S3 buckets
+
+**Query story:** Unlike the IAM-gated sensitive bucket in scenarios 1 and 2, these buckets are open to anyone on the internet with no credentials at all.
+
+```cypher
+MATCH path_s3 = (acct:AWSAccount)--(s3:S3Bucket)
+WHERE s3.anonymous_access = true
+OPTIONAL MATCH p = (s3)--(stmt:S3PolicyStatement)
+RETURN path_s3, p
+```
+
+**How it's built:** the counterpoint to scenarios 1 and 2 — there the sensitive bucket is reachable only through an IAM role chain; here the bucket needs no role at all.
+
+- `path_s3` connects each public bucket to its account node so they draw connected. Cartography sets `anonymous_access = true` when a bucket's policy or ACL allows public access.
+- `p` is an optional match that pulls in the `S3PolicyStatement` granting the access where one exists, so the public grant is visible next to the bucket. Buckets that are public via ACL only still show, connected to the account.
+
+#### 8. Internet exposure surface
+
+**Query story:** The raw external attack surface behind scenarios 1 and 3: every internet-exposed EC2 instance with its security groups and the exact inbound ports left open.
+
+```cypher
+MATCH path_ec2 = (acct:AWSAccount)--(ec2:EC2Instance)
+WHERE ec2.exposed_internet = true
+MATCH p1 = (ec2)--(sg:EC2SecurityGroup)--(rule:IpPermissionInbound)
+OPTIONAL MATCH path_net = (internet:Internet)-[:CAN_ACCESS]->(ec2)
+OPTIONAL MATCH p2 = (ec2)-[:INSTANCE_PROFILE]->(:AWSInstanceProfile)-[:ASSOCIATED_WITH]->(:AWSRole)
+RETURN path_net, path_ec2, p1, p2
+```
+
+**How it's built:** `exposed_internet = true` is Cartography's computed reachability flag.
+
+- `path_ec2` hubs all exposed instances on the account node so they draw as one picture.
+- `p1` joins each instance to its security groups and inbound rules so the open ports are on screen.
+- `path_net` adds the optional `Internet -[:CAN_ACCESS]->` edge so the external reachability is explicit.
+- `p2` optionally adds the instance role, which connects this surface view back to the kill chains in scenarios 1 and 3.
+
 ### Tips for Writing Queries
 
 - Start small with `LIMIT` to inspect the shape of the data before broadening the pattern.

@@ -1,0 +1,168 @@
+---
+title: "Visualize Multi-Cloud CIS Benchmarks With Power BI"
+description: "Ingest Prowler compliance CSV exports into a ready-made Microsoft Power BI template that surfaces CIS Benchmark posture across AWS, Azure, Google Cloud, and Kubernetes."
+---
+
+The Multi-Cloud CIS Benchmarks Power BI template turns Prowler compliance CSV exports into an interactive dashboard. The template ingests scan results from Prowler CLI or Prowler Cloud and renders cross-provider CIS Benchmark coverage, profile-level breakdowns, regional drill-downs, and time-series trends. Center for Internet Security (CIS) Benchmarks are industry-standard configuration baselines maintained by CIS.
+
+The template and its source files live in the Prowler repository under [`contrib/PowerBI/Multicloud CIS Benchmarks`](https://github.com/prowler-cloud/prowler/tree/master/contrib/PowerBI/Multicloud%20CIS%20Benchmarks).
+
+<img src="/images/powerbi/report-cover.png" alt="Multi-Cloud CIS Benchmarks Power BI report cover showing aggregated compliance posture across providers" width="900" />
+
+## Prerequisites
+
+The setup requires the following components:
+
+* **Microsoft Power BI Desktop:** free download from Microsoft.
+* **Prowler compliance CSV exports:** produced by Prowler CLI or downloaded from Prowler Cloud or Prowler App.
+* **Local directory:** holds the CSV exports that the template ingests at load time.
+
+## Supported CIS Benchmarks
+
+The template ships with predefined mappings for the following CIS Benchmark versions. Exports must match these versions for the dashboard to populate correctly:
+
+| Compliance Framework                           | Version  |
+| ---------------------------------------------- | -------- |
+| CIS Amazon Web Services Foundations Benchmark  | v6.0     |
+| CIS Microsoft Azure Foundations Benchmark      | v5.0     |
+| CIS Google Cloud Platform Foundation Benchmark | v4.0     |
+| CIS Kubernetes Benchmark                       | v1.12.0  |
+
+<Warning>
+Other CIS Benchmark versions are not recognized by the template. Confirm the framework version before running the scan or downloading the export.
+</Warning>
+
+## Setup
+
+### Step 1: Install Microsoft Power BI Desktop
+
+Download and install Microsoft Power BI Desktop from the official Microsoft site. The template is opened with this application.
+
+### Step 2: Generate Compliance CSV Exports
+
+Compliance CSV exports can be generated through Prowler CLI or downloaded from Prowler Cloud and Prowler App.
+
+#### Option A: Prowler CLI
+
+Run a scan with the `--compliance` flag pointing to the appropriate CIS framework, for example:
+
+```sh
+prowler aws --compliance cis_6.0_aws
+prowler azure --compliance cis_5.0_azure
+prowler gcp --compliance cis_4.0_gcp
+prowler kubernetes --compliance cis_1.12_kubernetes
+```
+
+The compliance CSV exports are written to `output/compliance/` by default.
+
+#### Option B: Prowler Cloud or Prowler App
+
+Open the Compliance section, select the desired CIS Benchmark, and download the CSV export.
+
+<img src="/images/powerbi/download-compliance-scan.png" alt="Compliance section in Prowler Cloud showing the CSV download option for a CIS Benchmark scan" width="900" />
+
+### Step 3: Create a Local Directory for the Exports
+
+Place every CSV export in a single local directory. The template parses filenames to detect the provider, so filenames must keep the provider keyword (`aws`, `azure`, `gcp`, or `kubernetes`).
+
+<Note>
+Time-series visualizations such as "Compliance Percent Over Time" require multiple scans from different dates in the same directory.
+</Note>
+
+### Step 4: Open the Power BI Template
+
+Download the template file [`Prowler Multicloud CIS Benchmarks.pbit`](https://github.com/prowler-cloud/prowler/raw/master/contrib/PowerBI/Multicloud%20CIS%20Benchmarks/Prowler%20Multicloud%20CIS%20Benchmarks.pbit) and open it. Power BI Desktop prompts for the full filepath to the directory created in step 3.
+
+### Step 5: Provide the Directory Filepath
+
+Enter the absolute filepath without quotation marks. The Windows "copy as path" feature wraps the path in quotation marks automatically; remove them before submitting.
+
+### Step 6: Save the Report as a `.pbix` File
+
+Once the filepath is submitted, the template ingests the CSV exports and renders the report. Save the populated report as a `.pbix` file for future use. Re-running the `.pbit` template generates a fresh report against an updated directory.
+
+## Validation
+
+To confirm the CSV exports were ingested correctly, open the "Configuration" tab inside the report.
+
+<img src="/images/powerbi/validation.png" alt="Configuration tab in the Power BI report displaying loaded CIS Benchmarks, the Prowler CSV folder path, and the list of ingested exports" width="900" />
+
+The "Configuration" tab exposes three tables:
+
+* **Loaded CIS Benchmarks:** lists the benchmarks and versions supported by the template. This table is defined by the template itself and is not editable. All benchmarks remain listed regardless of which provider exports were supplied.
+* **Prowler CSV Folder:** displays the absolute path provided during template load.
+* **Loaded Prowler Exports:** lists every CSV file detected in the directory. A green checkmark identifies the file used as the latest assessment for each provider and benchmark combination.
+
+## Report Sections
+
+The report is organized into three navigable pages:
+
+| Report Page | Purpose                                                                              |
+| ----------- | ------------------------------------------------------------------------------------ |
+| Overview    | Aggregates CIS Benchmark posture across AWS, Azure, Google Cloud, and Kubernetes.    |
+| Benchmark   | Focuses on a single CIS Benchmark with profile-level and regional filters.           |
+| Requirement | Drill-through page that surfaces details for a single benchmark requirement.         |
+
+### Overview Page
+
+The Overview page summarizes CIS Benchmark posture across every supported provider.
+
+<img src="/images/powerbi/overview-page.png" alt="Overview page in the Power BI report aggregating CIS Benchmark posture across AWS, Azure, Google Cloud, and Kubernetes" width="900" />
+
+The Overview page contains the following components:
+
+| Component                                | Description                                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| CIS Benchmark Overview                   | Table listing benchmark name, version, and overall compliance percentage.    |
+| Provider by Requirement Status           | Bar chart breaking down requirements by status and provider.                 |
+| Compliance Percent Heatmap               | Heatmap of compliance percentage by benchmark and profile level.             |
+| Profile Level by Requirement Status      | Bar chart breaking down requirements by status and profile level.            |
+| Compliance Percent Over Time by Provider | Line chart tracking overall compliance percentage over time by provider.     |
+
+### Benchmark Page
+
+The Benchmark page focuses on a single CIS Benchmark. The benchmark, profile level, and region can be selected through dropdown filters.
+
+<img src="/images/powerbi/benchmark-page.png" alt="Benchmark page in the Power BI report showing region heatmap, section breakdown, time-series trend, and the requirements table" width="900" />
+
+The Benchmark page contains the following components:
+
+| Component                                | Description                                                                                                                       |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Compliance Percent Heatmap               | Heatmap of compliance percentage by region and profile level.                                                                     |
+| Benchmark Section by Requirement Status  | Bar chart of requirements grouped by benchmark section and status.                                                                |
+| Compliance Percent Over Time by Region   | Line chart tracking compliance percentage over time by region.                                                                    |
+| Benchmark Requirements                   | Table listing requirement section, requirement number, requirement title, number of resources tested, status, and failing checks. |
+
+### Requirement Page
+
+The Requirement page is a drill-through view that exposes the full context of a single requirement. To populate the page, right-click a row in the "Benchmark Requirements" table on the Benchmark page and select "Drill through" > "Requirement".
+
+<img src="/images/powerbi/requirement-page.png" alt="Requirement drill-through page in the Power BI report showing rationale, remediation, regional breakdown, and the resource-level check results" width="900" />
+
+The Requirement page contains the following components:
+
+| Component                                  | Description                                                                                  |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Title                                      | Requirement title.                                                                           |
+| Rationale                                  | Rationale for the requirement.                                                               |
+| Remediation                                | Remediation guidance for the requirement.                                                    |
+| Region by Check Status                     | Bar chart of Prowler check results grouped by region and status.                             |
+| Resource Checks for Benchmark Requirements | Table listing resource ID, resource name, status, description, and the underlying Prowler check. |
+
+## Walkthrough Video
+
+A full walkthrough is available on YouTube:
+
+[![Multi-Cloud CIS Benchmarks Power BI walkthrough video thumbnail](/images/powerbi/walkthrough-video-thumb.png)](https://www.youtube.com/watch?v=lfKFkTqBxjU)
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Compliance Frameworks" icon="shield-check" href="/user-guide/compliance/tutorials/compliance">
+    Review the Compliance workflow across Prowler Cloud, Prowler App, and Prowler CLI.
+  </Card>
+  <Card title="Prowler Dashboard" icon="chart-line" href="/user-guide/cli/tutorials/dashboard">
+    Explore the built-in local dashboard for Prowler CSV exports.
+  </Card>
+</CardGroup>

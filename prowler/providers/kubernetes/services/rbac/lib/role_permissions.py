@@ -1,36 +1,37 @@
-def is_rule_allowing_permissions(rules, resources, verbs):
+def is_rule_allowing_permissions(rules, resources, verbs, api_groups=("",)):
     """
-    Check Kubernetes role permissions.
+    Check whether any RBAC rule grants the specified verbs on the specified
+    resources within the specified API groups.
 
-    This function takes in Kubernetes role rules, resources, and verbs,
-    and checks if any of the rules grant permissions on the specified
-    resources with the specified verbs.
+    A rule matches when its `apiGroups` includes any of `api_groups` (or "*"),
+    its `resources` includes any of `resources` (or "*"), and its `verbs`
+    includes any of `verbs` (or "*").
 
     Args:
-        rules (List[Rule]): The list of Kubernetes role rules.
-        resources (List[str]): The list of resources to check permissions for.
-        verbs (List[str]): The list of verbs to check permissions for.
+        rules (List[Rule]): RBAC rules from a Role or ClusterRole.
+        resources (List[str]): Resources (or sub-resources) to check.
+        verbs (List[str]): Verbs to check.
+        api_groups (Iterable[str]): API groups the resources live in. Defaults
+            to ("",), the core API group, which matches the most common case.
+            Pass an explicit value for resources outside the core group, e.g.
+            ("admissionregistration.k8s.io",) for webhook configurations.
 
     Returns:
-        bool: True if any of the rules grant permissions, False otherwise.
+        bool: True if any rule grants the permission, False otherwise.
     """
-    if rules:
-        # Iterate through each rule in the list of rules
-        for rule in rules:
-            # Ensure apiGroups are relevant ("" or "v1" for secrets)
-            if rule.apiGroups and all(api not in ["", "v1"] for api in rule.apiGroups):
-                continue  # Skip rules with unrelated apiGroups
-            # Check if the rule has resources, verbs, and matches any of the specified resources and verbs
-            if (
-                rule.resources
-                and (
-                    any(resource in rule.resources for resource in resources)
-                    or "*" in rule.resources
-                )
-                and rule.verbs
-                and (any(verb in rule.verbs for verb in verbs) or "*" in rule.verbs)
-            ):
-                # If the rule matches, return True
-                return True
-    # If no rule matches, return False
+    if not rules:
+        return False
+    for rule in rules:
+        rule_api_groups = rule.apiGroups or [""]
+        if not (
+            any(g in rule_api_groups for g in api_groups) or "*" in rule_api_groups
+        ):
+            continue
+        if (
+            rule.resources
+            and (any(r in rule.resources for r in resources) or "*" in rule.resources)
+            and rule.verbs
+            and (any(v in rule.verbs for v in verbs) or "*" in rule.verbs)
+        ):
+            return True
     return False

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextAuthRequest } from "next-auth";
 
 import { auth } from "@/auth.config";
-import { INVITATION_ACTION_PARAM } from "@/lib/invitation-routing";
 
 const publicRoutes = [
   "/sign-in",
@@ -18,23 +18,8 @@ const isPublicRoute = (pathname: string): boolean => {
 };
 
 // NextAuth's auth() wrapper - renamed from middleware to proxy
-export default auth((req: NextRequest & { auth: any }) => {
+export default auth((req: NextAuthRequest) => {
   const { pathname } = req.nextUrl;
-
-  // Backward compatibility: redirect old invitation links to new smart router
-  // Skip redirect when the user explicitly chose "Create an account" from the smart router
-  if (
-    pathname === "/sign-up" &&
-    req.nextUrl.searchParams.has("invitation_token") &&
-    !req.nextUrl.searchParams.has(INVITATION_ACTION_PARAM)
-  ) {
-    const acceptUrl = new URL("/invitation/accept", req.url);
-    acceptUrl.searchParams.set(
-      "invitation_token",
-      req.nextUrl.searchParams.get("invitation_token")!,
-    );
-    return NextResponse.redirect(acceptUrl);
-  }
 
   const user = req.auth?.user;
   const sessionError = req.auth?.error;

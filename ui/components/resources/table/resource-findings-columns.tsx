@@ -55,6 +55,7 @@ export const getResourceFindingsColumns = (
             isMuted={row.original.attributes.muted}
             mutedReason={row.original.attributes.muted_reason}
             showDeltaWhenMuted
+            reserveMutedSlot
           />
         </div>
       ),

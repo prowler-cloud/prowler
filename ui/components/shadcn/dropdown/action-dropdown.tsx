@@ -15,8 +15,7 @@ import {
 
 const ACTION_TRIGGER_STYLES = {
   table: "hover:bg-bg-neutral-tertiary rounded-full p-1 transition-colors",
-  bordered:
-    "hover:bg-bg-neutral-tertiary rounded-full border border-text-neutral-secondary p-2 transition-colors",
+  bordered: "hover:bg-bg-neutral-tertiary rounded-md p-1.5 transition-colors",
 } as const;
 
 type ActionDropdownVariant = keyof typeof ACTION_TRIGGER_STYLES;
@@ -24,7 +23,7 @@ type ActionDropdownVariant = keyof typeof ACTION_TRIGGER_STYLES;
 interface ActionDropdownProps {
   /** The dropdown trigger element. Defaults to a vertical dots icon button */
   trigger?: ReactNode;
-  /** Trigger style variant. "table" = no border, "bordered" = circular border */
+  /** Trigger style variant. "table" = compact pill, "bordered" = card action */
   variant?: ActionDropdownVariant;
   /** Alignment of the dropdown content */
   align?: "start" | "center" | "end";
@@ -62,7 +61,12 @@ export function ActionDropdown({
             aria-label={ariaLabel}
             className={ACTION_TRIGGER_STYLES[variant]}
           >
-            <EllipsisVertical className="text-text-neutral-secondary size-6" />
+            <EllipsisVertical
+              className={cn(
+                "text-text-neutral-secondary",
+                variant === "bordered" ? "size-5" : "size-6",
+              )}
+            />
           </button>
         )}
       </DropdownMenuTrigger>

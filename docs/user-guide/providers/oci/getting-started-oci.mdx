@@ -16,8 +16,8 @@ The following steps apply to Prowler Cloud and the self-hosted Prowler App.
 
 ### Step 2: Access Prowler Cloud
 1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
-2. Go to **Configuration** → **Cloud Providers** and click **Add Cloud Provider**.
-![Add OCI Cloud Provider](./images/oci-add-cloud-provider.png)
+2. Go to **Configuration** → **Providers** and click **Add Provider**.
+![Add OCI Provider](./images/oci-add-cloud-provider.png)
 3. Select **Oracle Cloud** and enter the **Tenancy OCID** and an optional alias, then choose **Next**.
 ![Add OCI Cloud Tenancy](./images/oci-add-tenancy.png)
 
@@ -46,7 +46,7 @@ Before you begin, ensure you have:
    ```bash
    pip install prowler
    # or for development:
-   poetry install
+   uv sync
    ```
 
 2. **OCI Python SDK** (automatically installed with Prowler):
@@ -398,7 +398,7 @@ prowler oci --severity critical high
 
 ### Next Steps
 
-- Learn about [Compliance Frameworks](/user-guide/cli/tutorials/compliance) in Prowler
+- Learn about [Compliance Frameworks](/user-guide/compliance/tutorials/compliance) in Prowler
 - Review [Prowler Output Formats](/user-guide/cli/tutorials/reporting)
 - Explore [Integrations](/user-guide/cli/tutorials/integrations) with SIEM and ticketing systems
 

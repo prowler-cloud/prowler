@@ -25,7 +25,7 @@
   - `E2E_ORGANIZATION_ID` (expected organization for membership verification)
 - Application running with accessible UI/API endpoints
 
-### Flow Steps:
+### Flow Steps
 
 1. Navigate to invitations page
 2. Click "Send Invitation" button
@@ -40,7 +40,7 @@
 11. Verify successful login
 12. Navigate to user profile and verify `organizationId` matches `E2E_ORGANIZATION_ID`
 
-### Expected Result:
+### Expected Result
 
 - Invitation is created and a valid share URL is provided
 - Invited user can sign up successfully using the invitation link
@@ -48,7 +48,7 @@
 - Login succeeds with the new credentials
 - User profile shows membership in the expected organization
 
-### Key verification points:
+### Key verification points
 
 - Invitations page loads and displays the heading
 - Send Invitation form is visible (email + role select)
@@ -58,7 +58,7 @@
 - Login with the new account succeeds
 - Profile page shows the expected organization id
 
-### Notes:
+### Notes
 
 - Test uses a fresh browser context for the invitee to avoid admin session leakage
 - Email should be unique per run (the test uses a random suffix)

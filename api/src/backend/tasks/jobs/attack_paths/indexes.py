@@ -1,13 +1,11 @@
 import neo4j
-
 from cartography.client.core.tx import run_write_query
 from celery.utils.log import get_task_logger
-
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
-    PROWLER_FINDING_LABEL,
     PROVIDER_ELEMENT_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
+    PROWLER_FINDING_LABEL,
 )
 
 logger = get_task_logger(__name__)

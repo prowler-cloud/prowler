@@ -137,7 +137,7 @@ class Test_Repository_GraphQL:
         provider.repositories = []
         provider.organizations = []
 
-        with patch.object(Repository, "__init__", lambda x, y: None):
+        with patch.object(Repository, "__init__", lambda *_: None):
             repository_service = Repository(provider)
             mock_client = MagicMock()
             repository_service.clients = [mock_client]
@@ -165,7 +165,7 @@ class Test_Repository_GraphQL:
         provider.repositories = []
         provider.organizations = []
 
-        with patch.object(Repository, "__init__", lambda x, y: None):
+        with patch.object(Repository, "__init__", lambda *_: None):
             repository_service = Repository(provider)
             repository_service.clients = [MagicMock()]
             repository_service.provider = provider
@@ -193,7 +193,7 @@ class Test_Repository_GraphQL:
         provider.repositories = []
         provider.organizations = []
 
-        with patch.object(Repository, "__init__", lambda x, y: None):
+        with patch.object(Repository, "__init__", lambda *_: None):
             repository_service = Repository(provider)
             repository_service.clients = [MagicMock()]
             repository_service.provider = provider
@@ -462,3 +462,147 @@ class Test_Repository_ErrorHandling:
                 # Should log rate limit error
                 mock_logger.error.assert_called()
                 assert "Rate limit exceeded" in str(mock_logger.error.call_args)
+
+
+class Test_Repository_DismissStaleReviewsRulesets:
+    def setup_method(self):
+        self.repository_service = Repository.__new__(Repository)
+        self.repository_service.provider = set_mocked_github_provider()
+        self.repository_service.clients = []
+        self.repository_service.audit_config = None
+        self.repository_service.fixer_config = None
+
+    def _build_repo(
+        self,
+        *,
+        branch_protected: bool,
+        dismiss_stale_reviews: bool = False,
+        ruleset_details: list[dict] | None = None,
+    ):
+        repo = MagicMock()
+        repo.id = 1
+        repo.name = "repo1"
+        repo.owner.login = "owner1"
+        repo.full_name = "owner1/repo1"
+        repo.default_branch = "main"
+        repo.private = False
+        repo.archived = False
+        repo.pushed_at = datetime.now(timezone.utc)
+        repo.delete_branch_on_merge = False
+        repo.security_and_analysis = None
+        repo.get_contents.side_effect = [None, None, None, None]
+        repo.get_dependabot_alerts.side_effect = Exception(
+            "403 Forbidden: Dependabot alerts are disabled for this repository."
+        )
+
+        branch = MagicMock()
+        branch.protected = branch_protected
+        branch.get_required_signatures.return_value = False
+
+        protection = MagicMock()
+        protection.required_linear_history = False
+        protection.allow_force_pushes = False
+        protection.allow_deletions = False
+        protection.required_status_checks = None
+        protection.enforce_admins = False
+        protection.required_conversation_resolution = False
+
+        if branch_protected:
+            protection.required_pull_request_reviews = MagicMock(
+                required_approving_review_count=1,
+                require_code_owner_reviews=False,
+                dismiss_stale_reviews=dismiss_stale_reviews,
+            )
+        else:
+            protection.required_pull_request_reviews = None
+
+        branch.get_protection.return_value = protection
+        repo.get_branch.return_value = branch
+
+        ruleset_details = ruleset_details or []
+        repo._requester.requestJsonAndCheck.side_effect = [
+            (None, [{"id": ruleset["id"]} for ruleset in ruleset_details]),
+            *[(None, ruleset) for ruleset in ruleset_details],
+        ]
+
+        return repo
+
+    def _build_pull_request_ruleset(self, *, enforcement: str, include: list[str]):
+        return {
+            "id": 101,
+            "name": "Dismiss stale reviews",
+            "target": "branch",
+            "source_type": "Repository",
+            "source": "owner1/repo1",
+            "enforcement": enforcement,
+            "conditions": {"ref_name": {"include": include, "exclude": []}},
+            "rules": [
+                {
+                    "type": "pull_request",
+                    "parameters": {
+                        "dismiss_stale_reviews_on_push": True,
+                        "require_code_owner_review": False,
+                        "require_last_push_approval": False,
+                        "required_approving_review_count": 1,
+                        "required_review_thread_resolution": False,
+                    },
+                }
+            ],
+        }
+
+    def test_process_repository_uses_classic_branch_protection(self):
+        repo = self._build_repo(branch_protected=True, dismiss_stale_reviews=True)
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.dismiss_stale_reviews is True
+        assert repos[1].default_branch.dismiss_stale_reviews_source == "classic"
+
+    def test_process_repository_uses_active_ruleset_for_default_branch(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_pull_request_ruleset(
+                    enforcement="active", include=["~DEFAULT_BRANCH"]
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.dismiss_stale_reviews is True
+        assert repos[1].default_branch.dismiss_stale_reviews_source == "ruleset"
+
+    def test_process_repository_treats_all_branches_ruleset_as_default_branch(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_pull_request_ruleset(enforcement="active", include=["~ALL"])
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.dismiss_stale_reviews is True
+        assert repos[1].default_branch.dismiss_stale_reviews_source == "ruleset"
+
+    def test_process_repository_marks_inactive_ruleset_as_fail_signal(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_pull_request_ruleset(
+                    enforcement="disabled", include=["~DEFAULT_BRANCH"]
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.dismiss_stale_reviews is False
+        assert (
+            repos[1].default_branch.dismiss_stale_reviews_source == "ruleset_not_active"
+        )

@@ -4,7 +4,13 @@ import { redirect } from "next/navigation";
 
 import { getLatestFindings } from "@/actions/findings";
 import { listOrganizationsSafe } from "@/actions/organizations/organizations";
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import {
+  apiBaseUrl,
+  FINDINGS_FILTERED_SORT,
+  GENERIC_SERVER_ERROR_MESSAGE,
+  getAuthHeaders,
+  sanitizeErrorMessage,
+} from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { OrganizationResource } from "@/types/organizations";
@@ -193,22 +199,27 @@ export const getResourceEvents = async (
 
     if (!response.ok) {
       const rawText = await response.text().catch(() => "");
+      const contentType =
+        response.headers.get("content-type")?.toLowerCase() || "";
       const defaultError = "An error occurred while fetching events.";
+      const fallbackError = contentType.includes("text/html")
+        ? GENERIC_SERVER_ERROR_MESSAGE
+        : response.statusText || defaultError;
       try {
         const errorData = rawText ? JSON.parse(rawText) : null;
+        const errorMessage =
+          errorData?.errors?.[0]?.detail ||
+          errorData?.error ||
+          errorData?.message ||
+          rawText ||
+          fallbackError;
         return {
-          error:
-            errorData?.errors?.[0]?.detail ||
-            errorData?.error ||
-            errorData?.message ||
-            rawText ||
-            response.statusText ||
-            defaultError,
+          error: sanitizeErrorMessage(String(errorMessage), fallbackError),
           status: response.status,
         };
       } catch {
         return {
-          error: rawText || response.statusText || defaultError,
+          error: sanitizeErrorMessage(rawText || fallbackError, fallbackError),
           status: response.status,
         };
       }
@@ -285,7 +296,7 @@ export const getResourceDrawerData = async ({
         page,
         pageSize,
         query,
-        sort: "severity,-inserted_at",
+        sort: FINDINGS_FILTERED_SORT,
         filters: {
           "filter[resource_uid]": resourceUid,
           "filter[status]": "FAIL",

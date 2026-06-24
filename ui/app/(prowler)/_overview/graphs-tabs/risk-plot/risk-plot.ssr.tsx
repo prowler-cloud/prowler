@@ -4,7 +4,7 @@ import {
   adaptToRiskPlotData,
   getProvidersRiskData,
 } from "@/actions/overview/risk-plot";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../_lib/filter-params";
@@ -21,7 +21,7 @@ export async function RiskPlotSSR({
   const providerIdFilter = filters["filter[provider_id__in]"];
 
   // Fetch all providers
-  const providersListResponse = await getProviders({ pageSize: 200 });
+  const providersListResponse = await getAllProviders();
   const allProviders = providersListResponse?.data || [];
 
   // Filter providers based on search params

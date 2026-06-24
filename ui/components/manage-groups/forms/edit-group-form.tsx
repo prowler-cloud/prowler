@@ -130,7 +130,7 @@ export const EditGroupForm = ({
           title: "Success!",
           description: "The group was updated successfully.",
         });
-        router.push("/providers?tab=account-groups");
+        router.push("/providers?tab=provider-groups");
       }
     } catch (_error) {
       toast({
@@ -263,7 +263,7 @@ export const EditGroupForm = ({
             type="button"
             variant="ghost"
             onClick={() => {
-              router.push("/providers?tab=account-groups");
+              router.push("/providers?tab=provider-groups");
             }}
             disabled={isLoading}
           >

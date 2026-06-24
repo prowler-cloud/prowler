@@ -29,11 +29,12 @@
     }
   },
   "Categories": [
-    "trust-boundaries"
+    "trust-boundaries",
+    "vercel-pro-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [
     "team_saml_sso_enabled"
   ],
-  "Notes": ""
+  "Notes": "Required billing plan: Pro or Enterprise."
 }

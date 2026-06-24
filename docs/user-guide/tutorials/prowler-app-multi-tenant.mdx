@@ -67,7 +67,14 @@ The currently active organization is indicated by an **Active** badge. Switching
 
 ## Editing an Organization Name
 
-Organization owners with the **Manage Account** permission can rename an organization:
+Renaming an organization requires **both** of the following conditions to be met:
+
+* The user's **membership role** in that organization must be `owner` (visible as the `owner` badge in the Organizations card).
+* The user must have a role that grants the **Manage Account** permission.
+
+Users who only meet one of the two conditions will not see the **Edit** button. For example, a user whose membership role is `member` will not see the **Edit** button even if their role grants `Manage Account`.
+
+To rename an organization:
 
 1. Navigate to the **Profile** page.
 
@@ -140,6 +147,34 @@ Invitations expire after 7 days. If an invitation has expired, contact the organ
 
 </Note>
 
+## Expelling a User From an Organization
+
+Organization owners can expel a member from the organization. Expelling removes the membership immediately, revoking access to all providers, scans, and findings scoped to that organization. Owners expelling themselves are blocked if they are the last remaining owner of the organization.
+
+To expel a user:
+
+1. Navigate to the **Users** page.
+
+2. Locate the user to remove and open the row actions menu.
+
+3. Select **Expel user**.
+
+    <img src="/images/prowler-app/multi-tenant/expel-user-organization.png" alt="Users table row action menu showing the 'Expel user' destructive option" width="700" />
+
+
+4. Confirm the action in the dialog. The membership is removed immediately and the expelled user loses access to the organization.
+
+    <img src="/images/prowler-app/multi-tenant/expel-user-organization-modal.png" alt="Confirmation dialog asking to expel the selected user from the current organization" width="700" />
+
+
+<Warning>
+Expelling a user revokes any refresh tokens the account holds, but access tokens already issued remain valid until they expire. The default access token lifetime is 30 minutes, so an expelled user may retain access to the organization for up to that window before being fully locked out.
+</Warning>
+
+<Warning>
+If the expelled organization was the user's **only** organization, the account is permanently deleted along with the membership. All personal profile data associated with that account is removed and cannot be recovered. To preserve the account, confirm that the user belongs to another organization before expelling.
+</Warning>
+
 ## Permissions Reference
 
 | Action | Required Conditions |
@@ -147,5 +182,6 @@ Invitations expire after 7 days. If an invitation has expired, contact the organ
 | View organizations | Any authenticated user |
 | Create an organization | Any authenticated user |
 | Switch organizations | Any authenticated user |
-| Edit organization name | Organization owner with **Manage Account** permission |
-| Delete an organization | Organization owner with **Manage Account** permission; must belong to more than one organization |
+| Edit organization name | Membership role `owner` **and** a role with **Manage Account** permission |
+| Delete an organization | Membership role `owner` **and** a role with **Manage Account** permission; must belong to more than one organization |
+| Expel a user from an organization | Organization owner (no additional permission required); last remaining owner cannot expel themselves |

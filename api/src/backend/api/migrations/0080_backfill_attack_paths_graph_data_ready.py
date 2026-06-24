@@ -2,9 +2,8 @@
 # on different database connections, causing a deadlock when combined with RunPython
 # in the same migration.
 
-from django.db import migrations
-
 from api.db_router import MainRouter
+from django.db import migrations
 
 
 def backfill_graph_data_ready(apps, schema_editor):

@@ -10,11 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/shadcn/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { cn } from "@/lib/utils";
 import { FINDING_DELTA, type FindingDelta } from "@/types";
@@ -28,6 +23,7 @@ interface NotificationIndicatorProps {
   isMuted?: boolean;
   mutedReason?: string;
   showDeltaWhenMuted?: boolean;
+  reserveMutedSlot?: boolean;
 }
 
 export const NotificationIndicator = ({
@@ -35,8 +31,31 @@ export const NotificationIndicator = ({
   isMuted = false,
   mutedReason,
   showDeltaWhenMuted = false,
+  reserveMutedSlot = false,
 }: NotificationIndicatorProps) => {
   const hasDelta = delta === DeltaValues.NEW || delta === DeltaValues.CHANGED;
+
+  if (showDeltaWhenMuted && reserveMutedSlot) {
+    return (
+      <div
+        data-slot="notification-indicator"
+        className="flex shrink-0 items-center gap-1"
+      >
+        <div
+          data-slot="notification-muted-slot"
+          className="flex w-5 shrink-0 items-center justify-center"
+        >
+          {isMuted ? <MutedIndicator mutedReason={mutedReason} /> : null}
+        </div>
+        <div
+          data-slot="notification-delta-slot"
+          className="flex w-2 shrink-0 items-center justify-center"
+        >
+          {hasDelta ? <DeltaIndicator delta={delta} /> : null}
+        </div>
+      </div>
+    );
+  }
 
   if (isMuted && hasDelta && showDeltaWhenMuted) {
     return (
@@ -67,12 +86,17 @@ function DeltaIndicator({
 }: {
   delta: typeof DeltaValues.NEW | typeof DeltaValues.CHANGED;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
           onClick={(e) => e.stopPropagation()}
-          className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          className="flex w-2 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
         >
           <div
             className={cn(
@@ -82,9 +106,15 @@ function DeltaIndicator({
                 : "bg-system-severity-low",
             )}
           />
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="border-border-neutral-tertiary bg-bg-neutral-tertiary w-auto rounded-lg px-2 py-1.5 shadow-lg"
+        sideOffset={4}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-1 text-xs">
           <span>
             {delta === DeltaValues.NEW
@@ -107,8 +137,8 @@ function DeltaIndicator({
             </a>
           </Button>
         </div>
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 }
 

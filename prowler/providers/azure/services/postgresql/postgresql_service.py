@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from azure.mgmt.postgresqlflexibleservers import PostgreSQLManagementClient
 
@@ -53,6 +54,8 @@ class PostgreSQL(AzureService):
                         subscription, resource_group, postgresql_server.name
                     )
                     location = server_details.location
+                    backup = getattr(server_details, "backup", None)
+                    ha = getattr(server_details, "high_availability", None)
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
@@ -68,11 +71,15 @@ class PostgreSQL(AzureService):
                             connection_throttling=connection_throttling,
                             log_retention_days=log_retention_days,
                             firewall=firewall,
+                            geo_redundant_backup=getattr(
+                                backup, "geo_redundant_backup", None
+                            ),
+                            high_availability_mode=getattr(ha, "mode", None),
                         )
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return flexible_servers
 
@@ -149,15 +156,37 @@ class PostgreSQL(AzureService):
                 )
             return admin_list
         except Exception as e:
-            logger.error(f"Error getting Entra ID admins for {server_name}: {e}")
+            if "authentication is not enabled" in str(e):
+                # Expected when the server uses PostgreSQL authentication only
+                # (Entra/Azure AD auth disabled); not an error.
+                logger.warning(
+                    f"Entra ID authentication is not enabled for {server_name}; skipping Entra ID admins."
+                )
+            else:
+                logger.error(f"Error getting Entra ID admins for {server_name}: {e}")
             return []
 
     def _get_connection_throttling(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
-        connection_throttling = client.configurations.get(
-            resouce_group_name, server_name, "connection_throttle.enable"
-        )
-        return connection_throttling.value.upper()
+        try:
+            connection_throttling = client.configurations.get(
+                resouce_group_name, server_name, "connection_throttle.enable"
+            )
+            return connection_throttling.value.upper()
+        except Exception as error:
+            message = str(error).lower()
+            if "connection_throttle.enable" in message and (
+                "not exist" in message or "not found" in message
+            ):
+                # The "connection_throttle.enable" parameter does not exist on
+                # newer PostgreSQL versions (e.g. v18); this is expected.
+                return None
+            # Any other failure is a genuine problem: surface it, but still
+            # degrade gracefully instead of aborting the subscription inventory.
+            logger.error(
+                f"Error getting connection throttling for {server_name}: {error}"
+            )
+            return None
 
     def _get_log_retention_days(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
@@ -214,6 +243,8 @@ class Server:
     log_checkpoints: str
     log_connections: str
     log_disconnections: str
-    connection_throttling: str
-    log_retention_days: str
+    connection_throttling: Optional[str]
+    log_retention_days: Optional[str]
     firewall: list[Firewall]
+    geo_redundant_backup: Optional[str] = None
+    high_availability_mode: Optional[str] = None

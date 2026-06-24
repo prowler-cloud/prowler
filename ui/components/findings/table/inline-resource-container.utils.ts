@@ -1,48 +1,26 @@
+import {
+  FAIL_FILTER_VALUE,
+  includesMutedFindings,
+  splitCsvFilterValues,
+} from "@/lib/findings-filters";
 import { FindingGroupRow } from "@/types";
-
-function parseStatusFilterValue(statusFilterValue?: string): string[] {
-  if (!statusFilterValue) {
-    return [];
-  }
-
-  return statusFilterValue
-    .split(",")
-    .map((status) => status.trim().toUpperCase())
-    .filter(Boolean);
-}
 
 export function isFailOnlyStatusFilter(
   filters: Record<string, string | string[] | undefined>,
 ): boolean {
-  const directStatusValues = parseStatusFilterValue(
-    typeof filters["filter[status]"] === "string"
-      ? filters["filter[status]"]
-      : undefined,
+  // Normalise both `filter[status]` and `filter[status__in]` CSV forms
+  // and uppercase so "fail", "Fail" etc. still match the wire value.
+  const direct = splitCsvFilterValues(filters["filter[status]"]).map((s) =>
+    s.toUpperCase(),
   );
-
-  if (directStatusValues.length > 0) {
-    return directStatusValues.length === 1 && directStatusValues[0] === "FAIL";
+  if (direct.length > 0) {
+    return direct.length === 1 && direct[0] === FAIL_FILTER_VALUE;
   }
 
-  const multiStatusValues = parseStatusFilterValue(
-    typeof filters["filter[status__in]"] === "string"
-      ? filters["filter[status__in]"]
-      : undefined,
+  const multi = splitCsvFilterValues(filters["filter[status__in]"]).map((s) =>
+    s.toUpperCase(),
   );
-
-  return multiStatusValues.length === 1 && multiStatusValues[0] === "FAIL";
-}
-
-function includesMutedFindings(
-  filters: Record<string, string | string[] | undefined>,
-): boolean {
-  const mutedFilter = filters["filter[muted]"];
-
-  if (Array.isArray(mutedFilter)) {
-    return mutedFilter.includes("include");
-  }
-
-  return mutedFilter === "include";
+  return multi.length === 1 && multi[0] === FAIL_FILTER_VALUE;
 }
 
 export function getFilteredFindingGroupResourceCount(

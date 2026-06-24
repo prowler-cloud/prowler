@@ -34,6 +34,14 @@ class GithubBaseException(ProwlerException):
             "message": "The provided provider ID does not match with the authenticated user or accessible organizations",
             "remediation": "Check the provider ID and ensure it matches the authenticated user or an organization you have access to.",
         },
+        (5007, "GithubRepoListFileNotFoundError"): {
+            "message": "The repo list file was not found",
+            "remediation": "Check the file path and ensure it exists.",
+        },
+        (5008, "GithubRepoListFileReadError"): {
+            "message": "Error reading the repo list file",
+            "remediation": "Check the file permissions and format.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -103,4 +111,22 @@ class GithubInvalidProviderIdError(GithubCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             5006, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GithubRepoListFileNotFoundError(GithubBaseException):
+    """Exception raised when the repo list file is not found."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            5007, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GithubRepoListFileReadError(GithubBaseException):
+    """Exception raised when the repo list file cannot be read."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            5008, file=file, original_exception=original_exception, message=message
         )

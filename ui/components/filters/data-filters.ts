@@ -24,7 +24,7 @@ export const filterProviders: FilterOption[] = [
   },
   {
     key: "provider__in",
-    labelCheckboxGroup: "Cloud Provider",
+    labelCheckboxGroup: "Provider",
     values: [...PROVIDER_TYPES],
     valueLabelMapping: PROVIDER_TYPE_MAPPING,
   },
@@ -34,7 +34,7 @@ export const filterProviders: FilterOption[] = [
 export const filterScans = [
   {
     key: "provider_type__in",
-    labelCheckboxGroup: "Cloud Provider",
+    labelCheckboxGroup: "Provider",
     values: [...PROVIDER_TYPES],
     valueLabelMapping: PROVIDER_TYPE_MAPPING,
     index: 0,

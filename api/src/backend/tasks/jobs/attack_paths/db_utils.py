@@ -1,15 +1,14 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
-
-from cartography.config import Config as CartographyConfig
-from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths.config import is_provider_available
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan
 from api.models import Provider as ProwlerAPIProvider
 from api.models import StateChoices
+from cartography.config import Config as CartographyConfig
+from celery.utils.log import get_task_logger
+from tasks.jobs.attack_paths.config import is_provider_available
 
 logger = get_task_logger(__name__)
 
@@ -43,7 +42,7 @@ def create_attack_paths_scan(
             provider_id=provider_id,
             scan_id=scan_id,
             state=StateChoices.SCHEDULED,
-            started_at=datetime.now(tz=timezone.utc),
+            started_at=datetime.now(tz=UTC),
             graph_data_ready=previous_data_ready,
         )
         attack_paths_scan.save()
@@ -67,25 +66,52 @@ def retrieve_attack_paths_scan(
         return None
 
 
+def set_attack_paths_scan_task_id(
+    tenant_id: str,
+    scan_pk: str,
+    task_id: str,
+) -> None:
+    """Persist the Celery `task_id` on the `AttackPathsScan` row.
+
+    Called at dispatch time (when `apply_async` returns) so the row carries
+    the task id even while still `SCHEDULED`. This lets the periodic
+    cleanup revoke queued messages for scans that never reached a worker.
+    """
+    with rls_transaction(tenant_id):
+        ProwlerAPIAttackPathsScan.objects.filter(id=scan_pk).update(task_id=task_id)
+
+
 def starting_attack_paths_scan(
     attack_paths_scan: ProwlerAPIAttackPathsScan,
-    task_id: str,
     cartography_config: CartographyConfig,
-) -> None:
-    with rls_transaction(attack_paths_scan.tenant_id):
-        attack_paths_scan.task_id = task_id
-        attack_paths_scan.state = StateChoices.EXECUTING
-        attack_paths_scan.started_at = datetime.now(tz=timezone.utc)
-        attack_paths_scan.update_tag = cartography_config.update_tag
+) -> bool:
+    """Flip the row from `SCHEDULED` to `EXECUTING` atomically.
 
-        attack_paths_scan.save(
-            update_fields=[
-                "task_id",
-                "state",
-                "started_at",
-                "update_tag",
-            ]
-        )
+    Returns `False` if the row is gone or has already moved past
+    `SCHEDULED` (e.g., periodic cleanup raced ahead and marked it
+    `FAILED` while the worker message was still in flight).
+    """
+    with rls_transaction(attack_paths_scan.tenant_id):
+        try:
+            locked = ProwlerAPIAttackPathsScan.objects.select_for_update().get(
+                id=attack_paths_scan.id
+            )
+        except ProwlerAPIAttackPathsScan.DoesNotExist:
+            return False
+
+        if locked.state != StateChoices.SCHEDULED:
+            return False
+
+        locked.state = StateChoices.EXECUTING
+        locked.started_at = datetime.now(tz=UTC)
+        locked.update_tag = cartography_config.update_tag
+        locked.save(update_fields=["state", "started_at", "update_tag"])
+
+    # Keep the in-memory object the caller is holding in sync.
+    attack_paths_scan.state = locked.state
+    attack_paths_scan.started_at = locked.started_at
+    attack_paths_scan.update_tag = locked.update_tag
+    return True
 
 
 def _mark_scan_finished(
@@ -94,7 +120,7 @@ def _mark_scan_finished(
     ingestion_exceptions: dict[str, Any],
 ) -> None:
     """Set terminal fields on a scan. Caller must be inside a transaction."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     duration = (
         int((now - attack_paths_scan.started_at).total_seconds())
         if attack_paths_scan.started_at

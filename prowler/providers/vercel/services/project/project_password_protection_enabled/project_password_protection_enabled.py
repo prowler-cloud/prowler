@@ -1,6 +1,7 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportVercel
+from prowler.providers.vercel.lib.billing import plan_reason_suffix
 from prowler.providers.vercel.services.project.project_client import project_client
 
 
@@ -38,6 +39,7 @@ class project_password_protection_enabled(Check):
                 report.status_extended = (
                     f"Project {project.name} does not have password protection "
                     f"configured for deployments."
+                    f"{plan_reason_suffix(project.billing_plan, {'hobby'}, 'password protection is not available on the Vercel Hobby plan.')}"
                 )
 
             findings.append(report)

@@ -207,15 +207,14 @@ class DockerHubAdapter(RegistryAdapter):
             message=f"Unexpected error during {context} on Docker Hub (HTTP {resp.status_code}): {resp.text[:200]}",
         )
 
-    @staticmethod
-    def _next_tag_page_url(resp: requests.Response) -> str | None:
+    def _next_tag_page_url(self, resp: requests.Response) -> str | None:
         link_header = resp.headers.get("Link", "")
         if not link_header:
             return None
         match = re.search(r'<([^>]+)>;\s*rel="next"', link_header)
-        if match:
-            next_url = match.group(1)
-            if next_url.startswith("/"):
-                return f"{_REGISTRY_HOST}{next_url}"
-            return next_url
-        return None
+        if not match:
+            return None
+        next_url = match.group(1)
+        if next_url.startswith("/"):
+            next_url = f"{_REGISTRY_HOST}{next_url}"
+        return self._validate_outbound_url(next_url, origin_url=_REGISTRY_HOST)

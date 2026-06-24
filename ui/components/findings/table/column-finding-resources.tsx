@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { Container, CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
+import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
@@ -203,23 +203,6 @@ export function getColumnFindingResources({
       enableSorting: false,
       enableHiding: false,
     },
-    // Resource — name + uid (EntityInfo with resource icon)
-    {
-      id: "resource",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Resource" />
-      ),
-      cell: ({ row }) => (
-        <div className="max-w-[240px]">
-          <EntityInfo
-            nameIcon={<Container className="size-4" />}
-            entityAlias={row.original.resourceName}
-            entityId={row.original.resourceUid}
-          />
-        </div>
-      ),
-      enableSorting: false,
-    },
     // Status
     {
       id: "status",
@@ -233,29 +216,35 @@ export function getColumnFindingResources({
       },
       enableSorting: false,
     },
-    // Service
+    // Resource — name + uid
     {
-      id: "service",
+      id: "resource",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Service" />
+        <DataTableColumnHeader column={column} title="Resource" />
       ),
       cell: ({ row }) => (
-        <p className="text-text-neutral-primary max-w-[100px] truncate text-sm">
-          {row.original.service}
-        </p>
+        <div className="max-w-[240px]">
+          <EntityInfo
+            entityAlias={row.original.resourceName}
+            entityId={row.original.resourceUid}
+          />
+        </div>
       ),
       enableSorting: false,
     },
-    // Region
+    // Provider — alias + uid (same style as Resource)
     {
-      id: "region",
+      id: "provider",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Region" />
+        <DataTableColumnHeader column={column} title="Provider" />
       ),
       cell: ({ row }) => (
-        <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
-          {row.original.region}
-        </p>
+        <div className="max-w-[240px]">
+          <EntityInfo
+            entityAlias={row.original.providerAlias}
+            entityId={row.original.providerUid}
+          />
+        </div>
       ),
       enableSorting: false,
     },
@@ -268,20 +257,29 @@ export function getColumnFindingResources({
       cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
       enableSorting: false,
     },
-    // Account — alias + uid (EntityInfo with provider logo)
+    // Service
     {
-      id: "account",
+      id: "service",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Account" />
+        <DataTableColumnHeader column={column} title="Service" />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[240px]">
-          <EntityInfo
-            cloudProvider={row.original.providerType}
-            entityAlias={row.original.providerAlias}
-            entityId={row.original.providerUid}
-          />
-        </div>
+        <InfoField label="Service" variant="compact">
+          {row.original.service || "-"}
+        </InfoField>
+      ),
+      enableSorting: false,
+    },
+    // Region
+    {
+      id: "region",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Region" />
+      ),
+      cell: ({ row }) => (
+        <InfoField label="Region" variant="compact">
+          {row.original.region || "-"}
+        </InfoField>
       ),
       enableSorting: false,
     },

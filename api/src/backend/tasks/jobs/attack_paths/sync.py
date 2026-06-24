@@ -6,11 +6,11 @@ to the tenant database, adding provider isolation labels and properties.
 """
 
 import time
-
 from collections import defaultdict
 from typing import Any
 
 import neo4j
+from api.attack_paths import database as graph_database
 from celery.utils.log import get_task_logger
 from tasks.jobs.attack_paths.config import (
     PROVIDER_ISOLATION_PROPERTIES,
@@ -26,8 +26,6 @@ from tasks.jobs.attack_paths.queries import (
     RELATIONSHIPS_FETCH_QUERY,
     render_cypher_template,
 )
-
-from api.attack_paths import database as graph_database
 
 logger = get_task_logger(__name__)
 

@@ -2,9 +2,17 @@
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=61.0", "wheel"]
 
+[dependency-groups]
+dev = [
+  "bandit==1.8.3",
+  "pytest==9.0.3",
+  "ruff==0.15.11",
+  "vulture==2.14"
+]
+
 [project]
 dependencies = [
-  "fastmcp==2.14.0",
+  "fastmcp==3.2.4",
   "httpx==0.28.1"
 ]
 description = "MCP server for Prowler ecosystem"
@@ -15,6 +23,25 @@ version = "0.5.0"
 
 [project.scripts]
 prowler-mcp = "prowler_mcp_server.main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# Shared ruff baseline (kept in sync with api/pyproject.toml).
+# target-version tracks this project's lowest supported Python.
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+# Defaults (E4/E7/E9, F) plus import sorting, modern-syntax upgrades, and
+# comprehension lints — all mechanically auto-fixable. flake8-bugbear (B) is a
+# good next step but needs manual cleanup, so it is left out of the shared
+# baseline for now.
+extend-select = [
+  "I",  # isort — import ordering
+  "UP",  # pyupgrade — modern syntax for the min supported Python
+  "C4"  # flake8-comprehensions
+]
 
 [tool.uv]
 package = true

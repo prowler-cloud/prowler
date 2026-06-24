@@ -6,8 +6,9 @@ import {
   getLatestFindingGroups,
 } from "@/actions/finding-groups";
 import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import { getScan, getScans } from "@/actions/scans";
+import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   FindingsGroupTable,
@@ -16,6 +17,7 @@ import {
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
+  applyDefaultMutedFilter,
   createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
@@ -34,11 +36,8 @@ export default async function Findings({
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
-  // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
-
   const [providersData, scansData] = await Promise.all([
-    getProviders({ pageSize: 50 }),
+    getAllProviders(),
     getScans({ pageSize: 50 }),
   ]);
 
@@ -50,16 +49,16 @@ export default async function Findings({
       return response?.data;
     },
   });
-
+  const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
+  const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
   const metadataInfoData = await (
-    hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
+    hasHistoricalData ? getMetadataInfo : getLatestMetadataInfo
   )({
     query,
     sort: encodedSort,
-    filters: filtersWithScanDates,
+    filters: resolvedFilters,
   });
 
-  // Extract unique regions, services, categories, groups from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
@@ -67,7 +66,6 @@ export default async function Findings({
   const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
-  // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data?.filter(
     (scan: ScanProps) =>
       scan.attributes.state === "completed" &&
@@ -76,14 +74,27 @@ export default async function Findings({
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
+  const onboardingAction =
+    completedScanIds.length > 0
+      ? { flowId: "explore-findings" }
+      : {
+          flowId: "explore-findings",
+          fallbackFlowId: "view-first-scan",
+          useFallback: true,
+        };
 
   const scanDetails = createScanDetailsMapping(
     completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
+  const alertsEnabled = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   return (
-    <ContentLayout title="Findings" icon="lucide:tag">
+    <ContentLayout
+      title="Findings"
+      icon="lucide:tag"
+      onboardingAction={onboardingAction}
+    >
       <FilterTransitionWrapper>
         <div className="mb-6">
           <FindingsFilters
@@ -95,12 +106,25 @@ export default async function Findings({
             uniqueResourceTypes={uniqueResourceTypes}
             uniqueCategories={uniqueCategories}
             uniqueGroups={uniqueGroups}
+            trailingControls={
+              <SeedFromFindingsButton
+                filterBag={filters}
+                providers={providersData?.data || []}
+                scans={scanDetails}
+                uniqueRegions={uniqueRegions}
+                uniqueServices={uniqueServices}
+                uniqueResourceTypes={uniqueResourceTypes}
+                uniqueCategories={uniqueCategories}
+                uniqueGroups={uniqueGroups}
+                isCloudEnabled={alertsEnabled}
+              />
+            }
           />
         </div>
         <Suspense fallback={<SkeletonTableFindings />}>
           <SSRDataTable
             searchParams={resolvedSearchParams}
-            filters={filtersWithScanDates}
+            filters={resolvedFilters}
           />
         </Suspense>
       </FilterTransitionWrapper>
@@ -119,10 +143,9 @@ const SSRDataTable = async ({
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   const { encodedSort } = extractSortAndKey(searchParams);
-  // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const hasHistoricalData = hasDateOrScanFilter(filters);
 
-  const fetchFindingGroups = hasDateOrScan
+  const fetchFindingGroups = hasHistoricalData
     ? getFindingGroups
     : getLatestFindingGroups;
 
@@ -133,9 +156,8 @@ const SSRDataTable = async ({
     pageSize,
   });
 
-  // Transform API response to FindingGroupRow[]
   const groups = adaptFindingGroupsResponse(findingGroupsData);
-  // Key resets all client state (selection, drill-down) when data changes
+  // Key resets client state (selection, drill-down) when data changes.
   const groupKey = groups.map((g) => g.id).join(",");
 
   return (
@@ -151,7 +173,7 @@ const SSRDataTable = async ({
         data={groups}
         metadata={findingGroupsData?.meta}
         resolvedFilters={filters}
-        hasHistoricalData={hasDateOrScan}
+        hasHistoricalData={hasHistoricalData}
       />
     </>
   );

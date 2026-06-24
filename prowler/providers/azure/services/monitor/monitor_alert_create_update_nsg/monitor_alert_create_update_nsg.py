@@ -8,9 +8,12 @@ class monitor_alert_create_update_nsg(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             activity_log_alerts,
         ) in monitor_client.alert_rules.items():
+            subscription_name = monitor_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for alert_rule in activity_log_alerts:
                 if check_alert_rule(
                     alert_rule, "Microsoft.Network/networkSecurityGroups/write"
@@ -18,19 +21,17 @@ class monitor_alert_create_update_nsg(Check):
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=alert_rule
                     )
-                    report.subscription = subscription_name
+                    report.subscription = subscription_id
                     report.status = "PASS"
-                    report.status_extended = f"There is an alert configured for creating/updating Network Security Groups in subscription {subscription_name}."
+                    report.status_extended = f"There is an alert configured for creating/updating Network Security Groups in subscription {subscription_name} ({subscription_id})."
                     break
             else:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
-                report.subscription = subscription_name
-                report.resource_name = subscription_name
-                report.resource_id = (
-                    f"/subscriptions/{monitor_client.subscriptions[subscription_name]}"
-                )
+                report.subscription = subscription_id
+                report.resource_name = subscription_id
+                report.resource_id = f"/subscriptions/{subscription_id}"
                 report.status = "FAIL"
-                report.status_extended = f"There is not an alert for creating/updating Network Security Groups in subscription {subscription_name}."
+                report.status_extended = f"There is not an alert for creating/updating Network Security Groups in subscription {subscription_name} ({subscription_id})."
 
             findings.append(report)
 

@@ -13,7 +13,7 @@
   "Risk": "Allowing `TLS 1.0/1.1` enables protocol downgrades and weak cipher negotiation, exposing HTTPS traffic to **MITM** interception, credential theft, and tampering. This undermines the **confidentiality** and **integrity** of sessions and data in transit, and can enable account takeover via stolen tokens.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/+azure/app-service/overview-tls",
+    "https://learn.microsoft.com/en-us/azure/app-service/overview-tls",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-bindings#enforce-tls-versions",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-tls-encryption-in-use.html",
     "https://icompaas.freshdesk.com/support/solutions/articles/62000234773-ensure-that-minimum-tls-version-is-set-to-tls-v1-2-or-higher"

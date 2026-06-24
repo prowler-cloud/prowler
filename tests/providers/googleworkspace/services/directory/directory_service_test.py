@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
 
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
+    CUSTOMER_ID,
+    DOMAIN,
     GROUPS_ADMIN_ROLE_ID,
     ROLE_GROUPS_ADMIN,
     ROLE_SEED_ADMIN,
@@ -66,6 +68,7 @@ class TestDirectoryService:
             directory = Directory(mock_provider)
 
             assert len(directory.users) == 3
+            assert directory.domain_resource == mock_provider.domain_resource
             assert "user1-id" in directory.users
             assert "user2-id" in directory.users
             assert "user3-id" in directory.users
@@ -119,6 +122,8 @@ class TestDirectoryService:
             directory = Directory(mock_provider)
 
             assert len(directory.users) == 0
+            assert directory.domain_resource.id == CUSTOMER_ID
+            assert directory.domain_resource.name == DOMAIN
 
     def test_directory_api_error_handling(self):
         """Test handling of API errors"""

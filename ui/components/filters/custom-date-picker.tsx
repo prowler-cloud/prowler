@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/shadcn/popover";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { toLocalDateString } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 /** Batch mode: caller controls both the pending date value and the notification callback (all-or-nothing). */
@@ -67,17 +68,14 @@ export const CustomDatePicker = ({
   const applyDateFilter = (selectedDate: Date | undefined) => {
     if (onBatchChange) {
       // Batch mode: notify caller instead of updating URL
-      onBatchChange(
-        "inserted_at",
-        selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
-      );
+      onBatchChange("inserted_at", toLocalDateString(selectedDate) ?? "");
       return;
     }
 
     // Instant mode (default): push to URL immediately
     if (selectedDate) {
       // Format as YYYY-MM-DD for the API
-      updateFilter("inserted_at", format(selectedDate, "yyyy-MM-dd"));
+      updateFilter("inserted_at", toLocalDateString(selectedDate) ?? "");
     } else {
       updateFilter("inserted_at", null);
     }

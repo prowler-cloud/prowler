@@ -8,31 +8,31 @@ This module handles:
 """
 
 from collections import defaultdict
-from typing import Any, Generator
+from collections.abc import Callable, Generator
+from typing import Any
 from uuid import UUID
 
 import neo4j
-
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Finding as FindingModel
+from api.models import Provider, ResourceFindingMapping
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
+from prowler.config import config as ProwlerConfig
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     FINDINGS_BATCH_SIZE,
     get_node_uid_field,
     get_provider_resource_label,
     get_root_node_label,
+    get_short_uid_extractor,
 )
 from tasks.jobs.attack_paths.queries import (
     ADD_RESOURCE_LABEL_TEMPLATE,
     INSERT_FINDING_TEMPLATE,
     render_cypher_template,
 )
-
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.models import Finding as FindingModel
-from api.models import Provider, ResourceFindingMapping
-from prowler.config import config as ProwlerConfig
 
 logger = get_task_logger(__name__)
 
@@ -57,7 +57,9 @@ _DB_QUERY_FIELDS = [
 ]
 
 
-def _to_neo4j_dict(record: dict[str, Any], resource_uid: str) -> dict[str, Any]:
+def _to_neo4j_dict(
+    record: dict[str, Any], resource_uid: str, resource_short_uid: str
+) -> dict[str, Any]:
     """Transform a Django `.values()` record into a `dict` ready for Neo4j ingestion."""
     return {
         "id": str(record["id"]),
@@ -75,6 +77,7 @@ def _to_neo4j_dict(record: dict[str, Any], resource_uid: str) -> dict[str, Any]:
         "muted": record["muted"],
         "muted_reason": record["muted_reason"],
         "resource_uid": resource_uid,
+        "resource_short_uid": resource_short_uid,
     }
 
 
@@ -170,6 +173,8 @@ def load_findings(
 
     batch_num = 0
     total_records = 0
+    edges_merged = 0
+    edges_dropped = 0
     for batch in findings_batches:
         batch_num += 1
         batch_size = len(batch)
@@ -178,9 +183,15 @@ def load_findings(
         parameters["findings_data"] = batch
 
         logger.info(f"Loading findings batch {batch_num} ({batch_size} records)")
-        neo4j_session.run(query, parameters)
+        summary = neo4j_session.run(query, parameters).single()
+        if summary is not None:
+            edges_merged += summary.get("merged_count", 0)
+            edges_dropped += summary.get("dropped_count", 0)
 
-    logger.info(f"Finished loading {total_records} records in {batch_num} batches")
+    logger.info(
+        f"Finished loading {total_records} records in {batch_num} batches "
+        f"(edges_merged={edges_merged}, edges_dropped={edges_dropped})"
+    )
     return total_records
 
 
@@ -205,8 +216,9 @@ def stream_findings_with_resources(
     )
 
     tenant_id = prowler_api_provider.tenant_id
+    short_uid_extractor = get_short_uid_extractor(prowler_api_provider.provider)
     for batch in _paginate_findings(tenant_id, scan_id):
-        enriched = _enrich_batch_with_resources(batch, tenant_id)
+        enriched = _enrich_batch_with_resources(batch, tenant_id, short_uid_extractor)
         if enriched:
             yield enriched
 
@@ -269,6 +281,7 @@ def _fetch_findings_batch(
 def _enrich_batch_with_resources(
     findings_batch: list[dict[str, Any]],
     tenant_id: str,
+    short_uid_extractor: Callable[[str], str],
 ) -> list[dict[str, Any]]:
     """
     Enrich findings with their resource UIDs.
@@ -280,7 +293,7 @@ def _enrich_batch_with_resources(
     resource_map = _build_finding_resource_map(finding_ids, tenant_id)
 
     return [
-        _to_neo4j_dict(finding, resource_uid)
+        _to_neo4j_dict(finding, resource_uid, short_uid_extractor(resource_uid))
         for finding in findings_batch
         for resource_uid in resource_map.get(finding["id"], [])
     ]

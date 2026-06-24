@@ -21,6 +21,7 @@ from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+    get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
@@ -454,6 +455,55 @@ class TestAWSProvider:
         assert (
             aws_provider.organizations_metadata.organization_arn == organization["Arn"]
         )
+
+    @mock_aws
+    def test_aws_provider_organizations_uses_assumed_role_session_by_default(self):
+        # Regression test for issue #10215.
+        # When only `role_arn` is provided (no `organizations_role_arn`),
+        # the FIRST attempt to fetch Organizations metadata must use the
+        # assumed role session (current_session), not the pre-assume
+        # credentials. This mirrors the CLI: `aws sts assume-role` followed
+        # by `aws organizations describe-account` uses the assumed identity.
+        role_arn = create_role(AWS_REGION_EU_WEST_1)
+
+        captured_sessions = []
+        original_get_organizations_info = AwsProvider.get_organizations_info
+
+        def capture(self, organizations_session, aws_account_id):
+            captured_sessions.append(organizations_session)
+            return original_get_organizations_info(
+                self, organizations_session, aws_account_id
+            )
+
+        with patch.object(AwsProvider, "get_organizations_info", capture):
+            aws_provider = AwsProvider(role_arn=role_arn, session_duration=900)
+
+        assert captured_sessions[0] is aws_provider.session.current_session
+        assert captured_sessions[0] is not aws_provider.session.original_session
+
+    @mock_aws
+    def test_aws_provider_organizations_falls_back_to_original_session(self):
+        # When `role_arn` is provided and the assumed role session cannot
+        # retrieve Organizations metadata (e.g. management-account ->
+        # member-account flow where the member account has no Organizations
+        # permissions), retry with the original (pre-assume) session.
+        role_arn = create_role(AWS_REGION_EU_WEST_1)
+
+        captured_sessions = []
+        original_get_organizations_info = AwsProvider.get_organizations_info
+
+        def capture(self, organizations_session, aws_account_id):
+            captured_sessions.append(organizations_session)
+            return original_get_organizations_info(
+                self, organizations_session, aws_account_id
+            )
+
+        with patch.object(AwsProvider, "get_organizations_info", capture):
+            aws_provider = AwsProvider(role_arn=role_arn, session_duration=900)
+
+        assert len(captured_sessions) == 2
+        assert captured_sessions[0] is aws_provider.session.current_session
+        assert captured_sessions[1] is aws_provider.session.original_session
 
     @mock_aws
     def test_aws_provider_session_with_mfa(self):
@@ -2192,6 +2242,12 @@ aws:
 
         assert session_config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
         assert session_config.retries == {"max_attempts": 10, "mode": "standard"}
+
+    def test_get_default_session_config(self):
+        config = get_default_session_config()
+
+        assert config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
+        assert config.retries == {"max_attempts": 3, "mode": "standard"}
 
     @mock_aws
     @patch(

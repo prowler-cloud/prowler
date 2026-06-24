@@ -20,6 +20,7 @@ class Project(VercelService):
         """List all projects, optionally filtered by --project argument."""
         try:
             raw_projects = self._paginate("/v9/projects", "projects")
+            identity = getattr(self.provider, "identity", None)
 
             filter_projects = self.provider.filter_projects
             seen_ids: set[str] = set()
@@ -57,10 +58,17 @@ class Project(VercelService):
                 pwd_protection = proj.get("passwordProtection")
                 security = proj.get("security", {}) or {}
 
+                project_team_id = proj.get("accountId") or self.provider.session.team_id
+
                 self.projects[project_id] = VercelProject(
                     id=project_id,
                     name=project_name,
-                    team_id=proj.get("accountId") or self.provider.session.team_id,
+                    team_id=project_team_id,
+                    billing_plan=(
+                        identity.get_billing_plan_for(project_team_id)
+                        if identity
+                        else None
+                    ),
                     framework=proj.get("framework"),
                     node_version=proj.get("nodeVersion"),
                     auto_expose_system_envs=proj.get("autoExposeSystemEnvs", False),
@@ -160,6 +168,7 @@ class VercelProject(BaseModel):
     id: str
     name: str
     team_id: Optional[str] = None
+    billing_plan: Optional[str] = None
     framework: Optional[str] = None
     node_version: Optional[str] = None
     auto_expose_system_envs: bool = False

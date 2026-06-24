@@ -12,14 +12,23 @@ import {
 import type { ProviderWizardInitialData } from "../types";
 import { useProviderWizardController } from "./use-provider-wizard-controller";
 
-const { refreshMock } = vi.hoisted(() => ({
+const { refreshMock, requestOpenOnWizardCloseMock } = vi.hoisted(() => ({
   refreshMock: vi.fn(),
+  requestOpenOnWizardCloseMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: refreshMock,
   }),
+}));
+
+vi.mock("@/store/onboarding-checkpoint", () => ({
+  useOnboardingCheckpointStore: {
+    getState: () => ({
+      requestOpenOnWizardClose: requestOpenOnWizardCloseMock,
+    }),
+  },
 }));
 
 vi.mock("next-auth/react", () => ({
@@ -33,8 +42,11 @@ describe("useProviderWizardController", () => {
   beforeEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    requestOpenOnWizardCloseMock.mockClear();
     sessionStorage.clear();
     localStorage.clear();
+    // Checkpoint is Cloud-only.
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
     useProviderWizardStore.getState().reset();
     useOrgSetupStore.getState().reset();
   });
@@ -56,6 +68,78 @@ describe("useProviderWizardController", () => {
 
     // Then
     expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("requests the onboarding checkpoint with providerConnected:true when a provider was created", () => {
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+    act(() => {
+      useProviderWizardStore.getState().setProvider({
+        id: "provider-1",
+        type: "aws",
+        uid: "111111111111",
+        alias: "production",
+      });
+    });
+
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // providerId is read before the store reset clears it.
+    expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
+      providerConnected: true,
+    });
+  });
+
+  it("requests the onboarding checkpoint with providerConnected:false when no provider was created", () => {
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+
+    act(() => {
+      result.current.handleClose();
+    });
+
+    expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
+      providerConnected: false,
+    });
+  });
+
+  it("does not request the onboarding checkpoint in self-hosted (OSS) deployments", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+    act(() => {
+      useProviderWizardStore.getState().setProvider({
+        id: "provider-1",
+        type: "aws",
+        uid: "111111111111",
+        alias: "production",
+      });
+    });
+
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Checkpoint stays untouched, but the close still refreshes.
+    expect(requestOpenOnWizardCloseMock).not.toHaveBeenCalled();
     expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 
@@ -153,7 +237,7 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("moves to launch step after a successful connection test in update mode", async () => {
+  it("closes the wizard after a successful connection test in update mode", async () => {
     // Given
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
@@ -181,9 +265,10 @@ describe("useProviderWizardController", () => {
       result.current.handleTestSuccess();
     });
 
-    // Then
-    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.LAUNCH);
-    expect(onOpenChange).not.toHaveBeenCalled();
+    // Credential rotation skips the launch/schedule step.
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(result.current.currentStep).not.toBe(PROVIDER_WIZARD_STEP.LAUNCH);
   });
 
   it("does not override launch footer config in the controller", () => {
@@ -279,7 +364,7 @@ describe("useProviderWizardController", () => {
       result.current.setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
     });
 
-    // When: provider data refreshes while modal is still open
+    // Provider data refreshes while modal is still open — user progress must be kept.
     rerender({
       open: true,
       initialData: {
@@ -292,7 +377,6 @@ describe("useProviderWizardController", () => {
       },
     });
 
-    // Then: keep user progress in the current flow
     expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.TEST);
     expect(useProviderWizardStore.getState().via).toBe("service-account");
   });

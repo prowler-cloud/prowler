@@ -15,23 +15,69 @@ from prowler.lib.check.models import Severity
 from prowler.lib.cli.redact import warn_sensitive_argument_values
 from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
+    PROVIDER_ALIASES,
+    enforce_invoked_provider_loaded,
     init_providers_parser,
     validate_asff_usage,
     validate_provider_arguments,
+    validate_sarif_usage,
 )
+from prowler.providers.common.provider import Provider
 
 
 class ProwlerArgumentParser:
     # Set the default parser
     def __init__(self):
+        # Discover any providers not in the hardcoded list below
+        # TODO - First step to support current providers and the new external provider implementation
+        known_providers = {
+            "aws",
+            "azure",
+            "gcp",
+            "kubernetes",
+            "m365",
+            "github",
+            "googleworkspace",
+            "cloudflare",
+            "oraclecloud",
+            "openstack",
+            "alibabacloud",
+            "iac",
+            "llm",
+            "image",
+            "nhn",
+            "mongodbatlas",
+            "vercel",
+            "okta",
+            "scaleway",
+            "stackit",
+            "linode",
+        }
+        all_providers = set(Provider.get_available_providers())
+        new_providers = sorted(all_providers - known_providers)
+
+        # Build extra strings for dynamically discovered providers
+        extra_providers_csv = ""
+        extra_providers_text = ""
+        if new_providers:
+            providers_help = Provider.get_providers_help_text()
+            extra_providers_csv = "," + ",".join(new_providers)
+            extra_lines = []
+            for name in new_providers:
+                help_text = providers_help.get(name, "")
+                if help_text:
+                    extra_lines.append(f"    {name:<20}{help_text}")
+            if extra_lines:
+                extra_providers_text = "\n" + "\n".join(extra_lines)
+
         # CLI Arguments
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image} ...",
-            epilog="""
+            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,dashboard,iac,image,llm{extra_providers_csv}}} ...",
+            epilog=f"""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
+  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode{extra_providers_csv}}}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -39,22 +85,27 @@ Available Cloud Providers:
     m365                Microsoft 365 Provider
     github              GitHub Provider
     googleworkspace     Google Workspace Provider
+    okta                Okta Provider
     cloudflare          Cloudflare Provider
     oraclecloud         Oracle Cloud Infrastructure Provider
     openstack           OpenStack Provider
+    stackit             StackIT Provider
     alibabacloud        Alibaba Cloud Provider
-    iac                 IaC Provider (Beta)
+    iac                 IaC Provider
     llm                 LLM Provider (Beta)
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider (Beta)
+    mongodbatlas        MongoDB Atlas Provider
+    scaleway            Scaleway Provider
     vercel              Vercel Provider
+    linode              Linode Provider{extra_providers_text}
+
 
 Available components:
     dashboard           Local dashboard
 
 To see the different available options on a specific component, run:
-    prowler {provider|dashboard} -h|--help
+    prowler {{provider|dashboard}} -h|--help
 
 Detailed documentation at https://docs.prowler.com
 """,
@@ -113,17 +164,19 @@ Detailed documentation at https://docs.prowler.com
             and (sys.argv[1] not in ("-v", "--version"))
         ):
             # Since the provider is always the second argument, we are checking if
-            # a flag, starting by "-", is supplied
-            if "-" in sys.argv[1]:
+            # a flag is supplied. Use startswith("-") instead of "in" to avoid
+            # matching external provider names that contain hyphens
+            # (e.g. "local-acme-snowflake").
+            if sys.argv[1].startswith("-"):
                 sys.argv = self.__set_default_provider__(sys.argv)
 
-            # Provider aliases mapping
-            # Microsoft 365
-            elif sys.argv[1] == "microsoft365":
-                sys.argv[1] = "m365"
-            # Oracle Cloud Infrastructure
-            elif sys.argv[1] == "oci":
-                sys.argv[1] = "oraclecloud"
+            # Provider aliases mapping (single source: arguments.PROVIDER_ALIASES)
+            elif sys.argv[1] in PROVIDER_ALIASES:
+                sys.argv[1] = PROVIDER_ALIASES[sys.argv[1]]
+
+        # Selective fail-loud here (post argv-normalisation, pre parse_args)
+        # so the invoked-provider check stays correct under parse(args=...).
+        enforce_invoked_provider_loaded(self)
 
         # Warn about sensitive flags passed with explicit values
         # Snapshot argv before parse_args() which may exit on errors
@@ -152,6 +205,12 @@ Detailed documentation at https://docs.prowler.com
         )
         if not asff_is_valid:
             self.parser.error(asff_error)
+
+        sarif_is_valid, sarif_error = validate_sarif_usage(
+            args.provider, getattr(args, "output_formats", None)
+        )
+        if not sarif_is_valid:
+            self.parser.error(sarif_error)
 
         return args
 

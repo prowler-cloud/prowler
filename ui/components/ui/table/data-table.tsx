@@ -34,12 +34,32 @@ import { useFilterTransitionOptional } from "@/contexts";
 import { cn } from "@/lib";
 import { FilterOption, MetaDataProps } from "@/types";
 
+type DataTableRowAttributes = {
+  [key: `data-${string}`]: string | undefined;
+};
+
 /**
  * Default column size used by TanStack Table when no explicit size is set.
  * We skip applying inline width styles for columns with this default value
  * to allow them to flex naturally within the table layout.
  */
 const DEFAULT_COLUMN_SIZE = 150;
+const ACTIONS_COLUMN_ID = "actions";
+const TABLE_COLUMN_GAP_CLASS = "pr-6";
+const STICKY_ACTION_COLUMN_CLASS = "sticky right-0 z-20 min-w-12";
+const STICKY_ACTION_CELL_CLASS = `${STICKY_ACTION_COLUMN_CLASS} last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary group-data-[state=selected]:bg-bg-neutral-tertiary group-data-[state=selected]:before:to-bg-neutral-tertiary`;
+
+const getTableColumnClassName = (
+  columnId: string,
+  variant: "header" | "cell",
+) => {
+  const isActionsColumn = columnId === ACTIONS_COLUMN_ID;
+
+  return cn(
+    !isActionsColumn && TABLE_COLUMN_GAP_CLASS,
+    isActionsColumn && variant === "cell" && STICKY_ACTION_CELL_CLASS,
+  );
+};
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -110,6 +130,12 @@ interface DataTableProviderProps<TData, TValue> {
   searchBadge?: { label: string; onDismiss: () => void };
   /** Optional click handler for top-level rows. */
   onRowClick?: (row: Row<TData>) => void;
+  /** Optional data attributes applied to each top-level row. */
+  getRowAttributes?: (row: Row<TData>) => DataTableRowAttributes;
+  /** Optional header rendered inside the table container, above the toolbar. */
+  header?: ReactNode;
+  /** Optional content rendered in the toolbar before the total entries count. */
+  toolbarRightContent?: ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -140,6 +166,9 @@ export function DataTable<TData, TValue>({
   renderAfterRow,
   searchBadge,
   onRowClick,
+  getRowAttributes,
+  header,
+  toolbarRightContent,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -212,7 +241,7 @@ export function DataTable<TData, TValue>({
   // Format total entries count
   const totalEntries = metadata?.pagination?.count ?? 0;
   const formattedTotal = totalEntries.toLocaleString();
-  const showToolbar = showSearch || metadata;
+  const showToolbar = showSearch || metadata || toolbarRightContent;
 
   const rows = table.getRowModel().rows;
 
@@ -235,10 +264,14 @@ export function DataTable<TData, TValue>({
         isPending && "pointer-events-none opacity-60",
       )}
     >
+      {header && <div className="w-full">{header}</div>}
       {/* Table Toolbar */}
       {showToolbar && (
-        <div className="flex items-center justify-between">
-          <div>
+        <div
+          data-testid="data-table-toolbar"
+          className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between"
+        >
+          <div className="w-full md:w-auto">
             {showSearch && (
               <DataTableSearch
                 paramPrefix={paramPrefix}
@@ -250,11 +283,17 @@ export function DataTable<TData, TValue>({
               />
             )}
           </div>
-          {metadata && (
-            <span className="text-text-neutral-secondary text-sm">
-              {formattedTotal} Total Entries
-            </span>
-          )}
+          <div
+            data-testid="data-table-toolbar-right"
+            className="flex w-full flex-col items-start gap-2 md:ml-auto md:w-auto md:flex-row md:items-center md:gap-4"
+          >
+            {toolbarRightContent}
+            {metadata && (
+              <span className="text-text-neutral-secondary text-sm whitespace-nowrap">
+                {formattedTotal} Total Entries
+              </span>
+            )}
+          </div>
         </div>
       )}
       <Table className={getSubRows ? "table-fixed" : undefined}>
@@ -263,16 +302,21 @@ export function DataTable<TData, TValue>({
             <TableRow key={`${headerGroup.id}-${selectionKey}-${expansionKey}`}>
               {headerGroup.headers.map((header) => {
                 const size = header.getSize();
+                const isActionsHeader = header.column.id === ACTIONS_COLUMN_ID;
                 return (
                   <TableHead
                     key={header.id}
+                    className={getTableColumnClassName(
+                      header.column.id,
+                      "header",
+                    )}
                     style={
                       getSubRows && size !== DEFAULT_COLUMN_SIZE
                         ? { width: `${size}px` }
                         : undefined
                     }
                   >
-                    {header.isPlaceholder
+                    {header.isPlaceholder || isActionsHeader
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
@@ -298,14 +342,21 @@ export function DataTable<TData, TValue>({
                 ) : (
                   <Fragment key={row.id}>
                     <TableRow
+                      {...getRowAttributes?.(row)}
                       data-state={row.getIsSelected() && "selected"}
-                      className={cn(onRowClick && "cursor-pointer")}
+                      className={cn("group", onRowClick && "cursor-pointer")}
                       onClick={(event) =>
                         handleRowClick(row, event.target as HTMLElement)
                       }
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
+                        <TableCell
+                          key={cell.id}
+                          className={getTableColumnClassName(
+                            cell.column.id,
+                            "cell",
+                          )}
+                        >
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext(),

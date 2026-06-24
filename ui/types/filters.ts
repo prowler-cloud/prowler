@@ -32,6 +32,7 @@ export interface CustomDropdownFilterProps {
 export enum FilterType {
   SCAN = "scan__in",
   PROVIDER = "provider__in",
+  PROVIDER_ID = "provider_id__in",
   PROVIDER_UID = "provider_uid__in",
   PROVIDER_TYPE = "provider_type__in",
   REGION = "region__in",
@@ -39,10 +40,21 @@ export enum FilterType {
   RESOURCE_TYPE = "resource_type__in",
   SEVERITY = "severity__in",
   STATUS = "status__in",
-  DELTA = "delta__in",
+  // The API only registers `delta` (exact, singular). `delta__in` is silently
+  // dropped, so the dropdown, URL, and backend must all use `delta`.
+  DELTA = "delta",
   CATEGORY = "category__in",
   RESOURCE_GROUPS = "resource_groups__in",
 }
+
+/**
+ * Filter keys the account selectors accept: a provider id (`provider__in` /
+ * `provider_id__in`) or the cloud account uid (`provider_uid__in`).
+ */
+export type AccountFilterKey =
+  | FilterType.PROVIDER
+  | FilterType.PROVIDER_ID
+  | FilterType.PROVIDER_UID;
 
 /**
  * Controls the filter dispatch behavior of DataTableFilterCustom.
@@ -68,11 +80,13 @@ export type FilterParam =
   | "filter[severity__in]"
   | "filter[status__in]"
   | "filter[delta__in]"
+  | "filter[delta]"
   | "filter[region__in]"
   | "filter[service__in]"
   | "filter[resource_type__in]"
   | "filter[category__in]"
   | "filter[resource_groups__in]"
+  | "filter[scan]"
   | "filter[scan__in]"
   | "filter[scan_id]"
   | "filter[scan_id__in]"

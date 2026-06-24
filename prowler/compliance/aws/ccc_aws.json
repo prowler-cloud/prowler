@@ -49,6 +49,9 @@
         "elb_insecure_ssl_ciphers",
         "elb_ssl_listeners",
         "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elbv2_ssl_listeners",
         "elbv2_nlb_tls_termination_enabled",
         "s3_bucket_secure_transport_policy",
@@ -1958,6 +1961,7 @@
         }
       ],
       "Checks": [
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events",
         "cloudtrail_cloudwatch_logging_enabled",
@@ -6426,9 +6430,9 @@
         }
       ],
       "Checks": [
+        "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
-        "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_guardrail_sensitive_information_filter_enabled"
       ]
     },
     {
@@ -6485,9 +6489,9 @@
         }
       ],
       "Checks": [
+        "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
-        "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_guardrail_sensitive_information_filter_enabled"
       ]
     },
     {
@@ -6546,8 +6550,8 @@
         }
       ],
       "Checks": [
-        "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_agent_guardrail_enabled",
+        "bedrock_guardrail_sensitive_information_filter_enabled"
       ]
     },
     {
@@ -6606,8 +6610,8 @@
         }
       ],
       "Checks": [
-        "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_agent_guardrail_enabled",
+        "bedrock_guardrail_sensitive_information_filter_enabled"
       ]
     },
     {

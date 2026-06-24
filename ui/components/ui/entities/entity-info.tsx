@@ -17,12 +17,16 @@ interface EntityInfoProps {
   icon?: ReactNode;
   /** Small icon rendered inline before the entity alias text */
   nameIcon?: ReactNode;
+  /** Inline element rendered after the entity alias (e.g. action link). */
+  nameAction?: ReactNode;
   entityAlias?: string;
   entityId?: string;
   badge?: string;
   /** Label before the ID value. Defaults to "UID" */
   idLabel?: string;
   showCopyAction?: boolean;
+  /** Inline element rendered after the entity ID (e.g. action link). */
+  idAction?: ReactNode;
   /** @deprecated No longer used — layout handles overflow naturally */
   maxWidth?: string;
   /** @deprecated No longer used */
@@ -35,11 +39,13 @@ export const EntityInfo = ({
   cloudProvider,
   icon,
   nameIcon,
+  nameAction,
   entityAlias,
   entityId,
   badge,
   idLabel = "UID",
   showCopyAction = true,
+  idAction,
 }: EntityInfoProps) => {
   const canCopy = Boolean(entityId && showCopyAction);
   const renderedIcon =
@@ -71,9 +77,10 @@ export const EntityInfo = ({
                 ({badge})
               </span>
             )}
+            {nameAction && <span className="shrink-0">{nameAction}</span>}
           </div>
           {entityId && (
-            <div className="flex min-w-0 items-center gap-1">
+            <div className="flex min-w-0 items-center gap-2">
               <span className="text-text-neutral-tertiary shrink-0 text-xs font-medium">
                 {idLabel}:
               </span>
@@ -82,6 +89,7 @@ export const EntityInfo = ({
                 className="max-w-[160px]"
                 hideCopyButton={!canCopy}
               />
+              {idAction && <span className="shrink-0">{idAction}</span>}
             </div>
           )}
         </div>

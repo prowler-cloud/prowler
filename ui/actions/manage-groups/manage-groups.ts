@@ -23,7 +23,7 @@ export const getProviderGroups = async ({
   const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1)
-    redirect("/providers?tab=account-groups");
+    redirect("/providers?tab=provider-groups");
 
   const url = new URL(`${apiBaseUrl}/provider-groups`);
 
@@ -112,7 +112,7 @@ export const createProviderGroup = async (formData: FormData) => {
       body,
     });
 
-    return await handleApiResponse(response, "/providers?tab=account-groups");
+    return await handleApiResponse(response, "/providers?tab=provider-groups");
   } catch (error) {
     handleApiError(error);
   }
@@ -169,7 +169,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
 
   if (!providerGroupId) {
     return {
-      errors: [{ detail: "Account Group ID is required." }],
+      errors: [{ detail: "Provider Group ID is required." }],
     };
   }
 

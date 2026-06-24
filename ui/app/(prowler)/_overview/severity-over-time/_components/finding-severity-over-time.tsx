@@ -6,6 +6,7 @@ import { useState } from "react";
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
 import { LineChart } from "@/components/graphs/line-chart";
 import { LineConfig, LineDataPoint } from "@/components/graphs/types";
+import { applyFailNonMutedFilters } from "@/lib";
 import {
   SEVERITY_LEVELS,
   SEVERITY_LINE_CONFIGS,
@@ -57,11 +58,8 @@ export const FindingSeverityOverTime = ({
   }) => {
     const params = new URLSearchParams();
 
-    // Always filter by FAIL status since this chart shows failed findings
-    params.set("filter[status__in]", "FAIL");
-
-    // Exclude muted findings
-    params.set("filter[muted]", "false");
+    // Show active failing findings only for this chart's drill-down.
+    applyFailNonMutedFilters(params);
 
     // Add scan_ids filter
     if (
