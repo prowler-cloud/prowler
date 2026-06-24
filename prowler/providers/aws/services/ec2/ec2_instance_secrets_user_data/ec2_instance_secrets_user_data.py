@@ -4,7 +4,7 @@ from base64 import b64decode
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -42,6 +42,7 @@ class ec2_instance_secrets_user_data(Check):
                         detect_secrets_plugins=ec2_client.audit_config.get(
                             "detect_secrets_plugins"
                         ),
+                        validate=ec2_client.audit_config.get("secrets_validate", False),
                     )
                     if detect_secrets_output:
                         secrets_string = ", ".join(
@@ -52,6 +53,7 @@ class ec2_instance_secrets_user_data(Check):
                         )
                         report.status = "FAIL"
                         report.status_extended = f"Potential secret found in EC2 instance {instance.id} User Data -> {secrets_string}."
+                        annotate_verified_secrets(report, detect_secrets_output)
 
                     else:
                         report.status = "PASS"

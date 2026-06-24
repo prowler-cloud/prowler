@@ -2,7 +2,7 @@ import os
 import tempfile
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
@@ -28,6 +28,7 @@ class awslambda_function_no_secrets_in_code(Check):
                         # List all files
                         files_in_zip = next(os.walk(tmp_dir_name))[2]
                         secrets_findings = []
+                        all_secrets = []
                         for file in files_in_zip:
                             detect_secrets_output = detect_secrets_scan(
                                 file=f"{tmp_dir_name}/{file}",
@@ -35,8 +36,12 @@ class awslambda_function_no_secrets_in_code(Check):
                                 detect_secrets_plugins=awslambda_client.audit_config.get(
                                     "detect_secrets_plugins",
                                 ),
+                                validate=awslambda_client.audit_config.get(
+                                    "secrets_validate", False
+                                ),
                             )
                             if detect_secrets_output:
+                                all_secrets.extend(detect_secrets_output)
                                 for (
                                     secret
                                 ) in (
@@ -59,6 +64,7 @@ class awslambda_function_no_secrets_in_code(Check):
                             final_output_string = "; ".join(secrets_findings)
                             report.status = "FAIL"
                             report.status_extended = f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} found in Lambda function {function.name} code -> {final_output_string}."
+                            annotate_verified_secrets(report, all_secrets)
 
                     findings.append(report)
 

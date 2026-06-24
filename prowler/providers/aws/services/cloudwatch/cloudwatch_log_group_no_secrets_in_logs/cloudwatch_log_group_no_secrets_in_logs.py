@@ -1,7 +1,7 @@
 from json import dumps, loads
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     convert_to_cloudwatch_timestamp_format,
 )
@@ -22,6 +22,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                     f"No secrets found in {log_group.name} log group."
                 )
                 log_group_secrets = []
+                all_secrets = []
                 if log_group.log_streams:
                     for log_stream_name in log_group.log_streams:
                         log_stream_secrets = {}
@@ -37,9 +38,13 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                             detect_secrets_plugins=logs_client.audit_config.get(
                                 "detect_secrets_plugins",
                             ),
+                            validate=logs_client.audit_config.get(
+                                "secrets_validate", False
+                            ),
                         )
 
                         if log_stream_secrets_output:
+                            all_secrets.extend(log_stream_secrets_output)
                             for secret in log_stream_secrets_output:
                                 flagged_event = log_group.log_streams[log_stream_name][
                                     secret["line_number"] - 1
@@ -73,6 +78,9 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                                         detect_secrets_plugins=logs_client.audit_config.get(
                                             "detect_secrets_plugins"
                                         ),
+                                        validate=logs_client.audit_config.get(
+                                            "secrets_validate", False
+                                        ),
                                     )
                                     if event_detect_secrets_output:
                                         for secret in event_detect_secrets_output:
@@ -99,6 +107,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                     secrets_string = "; ".join(log_group_secrets)
                     report.status = "FAIL"
                     report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}."
+                    annotate_verified_secrets(report, all_secrets)
                 findings.append(report)
         return findings
 

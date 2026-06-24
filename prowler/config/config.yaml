@@ -423,6 +423,13 @@ aws:
   # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
 
+  # Validate discovered secrets by checking whether they are live against the
+  # provider APIs. WARNING: this makes outbound network calls that authenticate
+  # with the discovered secret itself; the credential is exercised against the
+  # provider and the call will appear in the audited account's logs (and may
+  # trigger its monitoring). Disabled by default (scans stay fully offline).
+  secrets_validate: False
+
   # AWS Secrets Manager Configuration
   # aws.secretsmanager_secret_unused
   # Maximum number of days a secret can be unused

@@ -1,7 +1,7 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.glue.glue_client import glue_client
 
 
@@ -27,6 +27,7 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
 
             if job.arguments:
                 secrets_found = []
+                all_secrets = []
                 for arg_name, arg_value in job.arguments.items():
                     detect_secrets_output = detect_secrets_scan(
                         data=json.dumps({arg_name: arg_value}),
@@ -34,8 +35,12 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
                         detect_secrets_plugins=glue_client.audit_config.get(
                             "detect_secrets_plugins",
                         ),
+                        validate=glue_client.audit_config.get(
+                            "secrets_validate", False
+                        ),
                     )
                     if detect_secrets_output:
+                        all_secrets.extend(detect_secrets_output)
                         secrets_found.extend(
                             [
                                 f"{secret['type']} in argument {arg_name}"
@@ -46,6 +51,7 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
                 if secrets_found:
                     report.status = "FAIL"
                     report.status_extended = f"Potential secrets found in Glue job {job.name} default arguments: {', '.join(secrets_found)}."
+                    annotate_verified_secrets(report, all_secrets)
 
             findings.append(report)
 

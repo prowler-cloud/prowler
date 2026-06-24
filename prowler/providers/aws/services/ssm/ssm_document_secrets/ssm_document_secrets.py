@@ -1,7 +1,7 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
 
@@ -25,6 +25,7 @@ class ssm_document_secrets(Check):
                     detect_secrets_plugins=ssm_client.audit_config.get(
                         "detect_secrets_plugins"
                     ),
+                    validate=ssm_client.audit_config.get("secrets_validate", False),
                 )
                 if detect_secrets_output:
                     secrets_string = ", ".join(
@@ -35,6 +36,7 @@ class ssm_document_secrets(Check):
                     )
                     report.status = "FAIL"
                     report.status_extended = f"Potential secret found in SSM Document {document.name} -> {secrets_string}."
+                    annotate_verified_secrets(report, detect_secrets_output)
 
             findings.append(report)
 

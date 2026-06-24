@@ -1,7 +1,7 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 
 
@@ -19,6 +19,7 @@ class codebuild_project_no_secrets_in_variables(Check):
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} does not have sensitive environment plaintext credentials."
             secrets_found = []
+            all_secrets = []
 
             if project.environment_variables:
                 for env_var in project.environment_variables:
@@ -32,8 +33,12 @@ class codebuild_project_no_secrets_in_variables(Check):
                             detect_secrets_plugins=codebuild_client.audit_config.get(
                                 "detect_secrets_plugins",
                             ),
+                            validate=codebuild_client.audit_config.get(
+                                "secrets_validate", False
+                            ),
                         )
                         if detect_secrets_output:
+                            all_secrets.extend(detect_secrets_output)
                             secrets_info = [
                                 f"{secret['type']} in variable {env_var.name}"
                                 for secret in detect_secrets_output
@@ -43,6 +48,7 @@ class codebuild_project_no_secrets_in_variables(Check):
             if secrets_found:
                 report.status = "FAIL"
                 report.status_extended = f"CodeBuild project {project.name} has sensitive environment plaintext credentials in variables: {', '.join(secrets_found)}."
+                annotate_verified_secrets(report, all_secrets)
 
             findings.append(report)
 

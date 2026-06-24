@@ -4,7 +4,7 @@ from base64 import b64decode
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -18,6 +18,7 @@ class ec2_launch_template_no_secrets(Check):
             report = Check_Report_AWS(metadata=self.metadata(), resource=template)
 
             versions_with_secrets = []
+            all_secrets = []
 
             for version in template.versions:
                 if not version.template_data.user_data:
@@ -48,9 +49,11 @@ class ec2_launch_template_no_secrets(Check):
                     detect_secrets_plugins=ec2_client.audit_config.get(
                         "detect_secrets_plugins"
                     ),
+                    validate=ec2_client.audit_config.get("secrets_validate", False),
                 )
 
                 if version_secrets:
+                    all_secrets.extend(version_secrets)
                     secrets_string = ", ".join(
                         [
                             f"{secret['type']} on line {secret['line_number']}"
@@ -64,6 +67,7 @@ class ec2_launch_template_no_secrets(Check):
             if len(versions_with_secrets) > 0:
                 report.status = "FAIL"
                 report.status_extended = f"Potential secret found in User Data for EC2 Launch Template {template.name} in template versions: {', '.join(versions_with_secrets)}."
+                annotate_verified_secrets(report, all_secrets)
             else:
                 report.status = "PASS"
                 report.status_extended = f"No secrets found in User Data of any version for EC2 Launch Template {template.name}."

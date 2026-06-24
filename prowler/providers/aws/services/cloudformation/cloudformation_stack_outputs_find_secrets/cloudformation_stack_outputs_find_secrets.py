@@ -1,5 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.cloudformation.cloudformation_client import (
     cloudformation_client,
 )
@@ -32,6 +32,9 @@ class cloudformation_stack_outputs_find_secrets(Check):
                     detect_secrets_plugins=cloudformation_client.audit_config.get(
                         "detect_secrets_plugins",
                     ),
+                    validate=cloudformation_client.audit_config.get(
+                        "secrets_validate", False
+                    ),
                 )
                 # If secrets are found, update the report status
                 if detect_secrets_output:
@@ -43,6 +46,7 @@ class cloudformation_stack_outputs_find_secrets(Check):
                     )
                     report.status = "FAIL"
                     report.status_extended = f"Potential secret found in CloudFormation Stack {stack.name} Outputs -> {secrets_string}."
+                    annotate_verified_secrets(report, detect_secrets_output)
 
             else:
                 report.status = "PASS"

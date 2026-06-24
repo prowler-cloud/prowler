@@ -2,7 +2,7 @@ import json
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportOpenStack
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.openstack.services.objectstorage.objectstorage_client import (
     objectstorage_client,
 )
@@ -40,6 +40,9 @@ class objectstorage_container_metadata_sensitive_data(Check):
                     detect_secrets_plugins=objectstorage_client.audit_config.get(
                         "detect_secrets_plugins"
                     ),
+                    validate=objectstorage_client.audit_config.get(
+                        "secrets_validate", False
+                    ),
                 )
 
                 if detect_secrets_output:
@@ -56,6 +59,7 @@ class objectstorage_container_metadata_sensitive_data(Check):
                     )
                     report.status = "FAIL"
                     report.status_extended = f"Container {container.name} metadata contains potential secrets -> {secrets_string}."
+                    annotate_verified_secrets(report, detect_secrets_output)
             else:
                 report.status_extended = f"Container {container.name} has no metadata (no sensitive data exposure risk)."
 

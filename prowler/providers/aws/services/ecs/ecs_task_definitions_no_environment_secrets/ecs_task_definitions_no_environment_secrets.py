@@ -1,7 +1,7 @@
 from json import dumps
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
@@ -18,6 +18,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
             report.resource_id = f"{task_definition.name}:{task_definition.revision}"
             report.status = "PASS"
             extended_status_parts = []
+            all_secrets = []
 
             for container in task_definition.container_definitions:
                 container_secrets_found = []
@@ -36,8 +37,10 @@ class ecs_task_definitions_no_environment_secrets(Check):
                         detect_secrets_plugins=ecs_client.audit_config.get(
                             "detect_secrets_plugins",
                         ),
+                        validate=ecs_client.audit_config.get("secrets_validate", False),
                     )
                     if detect_secrets_output:
+                        all_secrets.extend(detect_secrets_output)
                         secrets_string = ", ".join(
                             [
                                 f"{secret['type']} on the environment variable {original_env_vars[secret['line_number'] - 2]}"
@@ -56,6 +59,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
                     + "; ".join(extended_status_parts)
                     + "."
                 )
+                annotate_verified_secrets(report, all_secrets)
             else:
                 report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}."
             findings.append(report)
