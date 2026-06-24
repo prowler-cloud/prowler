@@ -86,6 +86,16 @@ def _install_compliance_catalog_test_cache() -> None:
     test-only equivalent of an ``lru_cache`` on the SDK functions, without
     changing SDK behavior in production.
 
+    A second, lower-level cache memoizes ``load_compliance_framework_universal``
+    **per file path**. ``get_bulk_compliance_frameworks_universal`` parses *every*
+    compliance JSON and only then filters by provider, so a per-provider cache
+    still re-parses all ~100 files on the first load of each provider. The
+    per-path cache makes the first provider parse the files once and every other
+    provider/test reuse the already-parsed ``ComplianceFramework`` objects (only
+    the cheap ``listdir`` + filtering re-runs). ``_load_jsons_from_dir`` calls
+    ``load_compliance_framework_universal`` as a module global, so patching the
+    attribute is picked up without touching the SDK.
+
     Installed at conftest import time (before test modules are collected) so that
     even ``from ... import get_bulk_compliance_frameworks_universal`` bindings in
     the test modules resolve to the cached wrapper.
@@ -95,11 +105,13 @@ def _install_compliance_catalog_test_cache() -> None:
 
     framework_cache: dict[str, dict] = {}
     checks_cache: dict[str, dict] = {}
+    path_cache: dict[str, object] = {}
 
     original_bulk_frameworks = (
         compliance_models.get_bulk_compliance_frameworks_universal
     )
     original_get_bulk = CheckMetadata.get_bulk
+    original_load = compliance_models.load_compliance_framework_universal
 
     def cached_bulk_frameworks(provider):
         if provider not in framework_cache:
@@ -111,7 +123,13 @@ def _install_compliance_catalog_test_cache() -> None:
             checks_cache[provider] = original_get_bulk(provider)
         return checks_cache[provider]
 
+    def cached_load(path):
+        if path not in path_cache:
+            path_cache[path] = original_load(path)
+        return path_cache[path]
+
     compliance_models.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
+    compliance_models.load_compliance_framework_universal = cached_load
     CheckMetadata.get_bulk = staticmethod(cached_get_bulk)
 
     # ``api.compliance`` does ``from ... import get_bulk_compliance_frameworks_universal``
