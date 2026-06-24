@@ -2,12 +2,13 @@ from collections.abc import Callable
 from uuid import UUID
 
 from config.env import env
-from tasks.jobs.attack_paths.provider_config import (  # noqa: F401  (re-exported)
-    AWS_CONFIG,
-    PROVIDER_CONFIGS,
-    NormalizedList,
-    ProviderConfig,
-)
+from tasks.jobs.attack_paths import provider_config as _provider_config
+
+# Re-export provider config objects so existing imports keep working.
+AWS_CONFIG = _provider_config.AWS_CONFIG
+NormalizedList = _provider_config.NormalizedList
+PROVIDER_CONFIGS = _provider_config.PROVIDER_CONFIGS
+ProviderConfig = _provider_config.ProviderConfig
 
 # Batch size for Neo4j write operations (resource labeling, cleanup)
 BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
@@ -30,10 +31,6 @@ TENANT_LABEL_PREFIX = "_Tenant_"
 PROVIDER_LABEL_PREFIX = "_Provider_"
 DYNAMIC_ISOLATION_PREFIXES = [TENANT_LABEL_PREFIX, PROVIDER_LABEL_PREFIX]
 
-
-# `ProviderConfig`, `NormalizedList`, `AWS_CONFIG`, and `PROVIDER_CONFIGS` are
-# defined in `provider_config.py` and re-exported above so existing imports
-# (`from tasks.jobs.attack_paths.config import ...`) keep working.
 
 # Labels added by Prowler that should be filtered from API responses
 # Derived from provider configs + common internal labels

@@ -12,7 +12,6 @@ A database name starting with `db-tmp-scan-` is a cartography temp DB and
 routes to ingest. Everything else routes to the configured sink.
 """
 
-import atexit  # noqa: F401 - kept for tests that patch api.attack_paths.database.atexit
 from contextlib import AbstractContextManager
 from typing import Any
 from uuid import UUID

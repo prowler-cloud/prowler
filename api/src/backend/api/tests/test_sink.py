@@ -6,16 +6,18 @@ builds dual writer/reader Bolt drivers.
 """
 
 import json
+from importlib import import_module
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Prime patch-target resolution. `api.attack_paths.sink/__init__.py` doesn't
 # eagerly import these submodules (they're loaded on demand inside the
 # factory), so `mock.patch("api.attack_paths.sink.<sub>.…")` would fail with
 # AttributeError on first call. Importing here registers them as attributes
 # of the package before any decorator runs.
-import api.attack_paths.sink.neo4j  # noqa: F401
-import api.attack_paths.sink.neptune  # noqa: F401
-import pytest
+import_module("api.attack_paths.sink.neo4j")
+import_module("api.attack_paths.sink.neptune")
 
 
 @pytest.fixture(autouse=True)
