@@ -79,7 +79,7 @@ describe("LaunchStep", () => {
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
-    it("defaults to run now and locks schedule mode outside Cloud", async () => {
+    it("defaults to daily schedule mode and locks advanced cadence outside Cloud", async () => {
       // Given
       const onFooterChange = vi.fn();
       seedConnectedProvider();
@@ -94,19 +94,20 @@ describe("LaunchStep", () => {
 
       // Then
       expect(screen.getByText("Account Connected!")).toBeInTheDocument();
-      expect(screen.getByRole("radio", { name: "Run now" })).toBeChecked();
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
-      ).toBeDisabled();
+      ).toBeChecked();
+      expect(screen.getByRole("radio", { name: "Run now" })).not.toBeChecked();
       expect(
-        screen.queryByRole("combobox", { name: /repeats/i }),
-      ).not.toBeInTheDocument();
+        screen.getByRole("radio", { name: "On a schedule" }),
+      ).toBeEnabled();
+      expect(screen.getByRole("combobox", { name: /repeats/i })).toBeDisabled();
 
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
-      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Launch scan");
+      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Save");
     });
 
-    it("launches only an on-demand scan and never creates a legacy daily schedule", async () => {
+    it("saves a legacy daily schedule by default", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -127,9 +128,43 @@ describe("LaunchStep", () => {
       });
 
       // Then
-      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
-      const sentFormData = scanOnDemandMock.mock.calls[0]?.[0] as FormData;
+      await waitFor(() => expect(scheduleDailyMock).toHaveBeenCalledTimes(1));
+      const sentFormData = scheduleDailyMock.mock.calls[0]?.[0] as FormData;
       expect(sentFormData.get("providerId")).toBe("provider-1");
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("launches only an on-demand scan when run now is selected", async () => {
+      // Given
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      const onFooterChange = vi.fn();
+      seedConnectedProvider();
+
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={onClose}
+          onFooterChange={onFooterChange}
+        />,
+      );
+      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+
+      // When
+      await user.click(screen.getByRole("radio", { name: "Run now" }));
+      await waitFor(() =>
+        expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe(
+          "Launch scan",
+        ),
+      );
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
       expect(scheduleDailyMock).not.toHaveBeenCalled();
       expect(updateScheduleMock).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalledTimes(1);

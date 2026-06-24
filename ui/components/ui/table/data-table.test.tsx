@@ -139,7 +139,10 @@ describe("DataTable", () => {
       // Then
       expect(nameHeader).not.toHaveClass("sticky");
       expect(nameCell).not.toHaveClass("sticky");
+      expect(nameHeader).toHaveClass("pr-6");
+      expect(nameCell).toHaveClass("pr-6");
       expect(actionsHeaderElement).not.toHaveClass("sticky");
+      expect(actionsHeaderElement).not.toHaveClass("pr-6");
       expect(actionsHeaderElement).not.toHaveClass("right-0");
       expect(actionsHeaderElement).not.toHaveClass("z-20");
       expect(actionsHeaderElement).toHaveClass("bg-bg-neutral-tertiary");
@@ -159,6 +162,7 @@ describe("DataTable", () => {
       expect(actionsHeaderElement).not.toHaveClass("after:rounded-r-full");
       expect(actionsHeaderElement.querySelector("div")).not.toBeInTheDocument();
       expect(actionsCell).toHaveClass("sticky");
+      expect(actionsCell).not.toHaveClass("pr-6");
       expect(actionsCell).toHaveClass("right-0");
       expect(actionsCell).toHaveClass("z-20");
       expect(actionsCell).toHaveClass("bg-bg-neutral-secondary");
