@@ -13,6 +13,16 @@ export const SCANS_PROVIDER_FILTER_FIELD = {
   PROVIDER_GROUPS_IN: FILTER_FIELD.PROVIDER_GROUPS,
 } as const;
 
+/** Scans-only filter fields not shared with other views. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const SCANS_EXTRA_FIELD = {
+  STATE: "state__in",
+  TRIGGER: "trigger",
+} as const;
+
+type ScansExtraField =
+  (typeof SCANS_EXTRA_FIELD)[keyof typeof SCANS_EXTRA_FIELD];
+
 /**
  * URL filter param keys the scans view supports, e.g. `filter[state__in]`.
  * Provider scope (scans filters accounts by provider id) including provider
@@ -20,6 +30,5 @@ export const SCANS_PROVIDER_FILTER_FIELD = {
  */
 export type ScansFilterParam = FilterParam<
   | (typeof SCANS_PROVIDER_FILTER_FIELD)[keyof typeof SCANS_PROVIDER_FILTER_FIELD]
-  | "state__in"
-  | "trigger"
+  | ScansExtraField
 >;

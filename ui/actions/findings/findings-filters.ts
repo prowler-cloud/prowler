@@ -1,5 +1,21 @@
 import { FILTER_FIELD, FilterParam } from "@/types/filters";
 
+/** Findings-only filter fields not shared with other views. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const FINDINGS_EXTRA_FIELD = {
+  DELTA_IN: "delta__in",
+  SCAN_EXACT: "scan",
+  SCAN_ID: "scan_id",
+  SCAN_ID_IN: "scan_id__in",
+  INSERTED_AT: "inserted_at",
+  INSERTED_AT_GTE: "inserted_at__gte",
+  INSERTED_AT_LTE: "inserted_at__lte",
+  MUTED: "muted",
+} as const;
+
+type FindingsExtraField =
+  (typeof FINDINGS_EXTRA_FIELD)[keyof typeof FINDINGS_EXTRA_FIELD];
+
 /**
  * URL filter param keys the findings view supports, e.g. `filter[severity__in]`.
  * Composed from the shared fields it uses plus a few findings-only extras
@@ -20,13 +36,5 @@ export type FindingsFilterParam = FilterParam<
       | "CATEGORY"
       | "RESOURCE_GROUPS"
       | "SCAN"]
-  // findings-only extras
-  | "delta__in"
-  | "scan"
-  | "scan_id"
-  | "scan_id__in"
-  | "inserted_at"
-  | "inserted_at__gte"
-  | "inserted_at__lte"
-  | "muted"
+  | FindingsExtraField
 >;
