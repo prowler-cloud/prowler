@@ -102,6 +102,11 @@ describe("LaunchStep", () => {
         screen.getByRole("radio", { name: "On a schedule" }),
       ).toBeEnabled();
       expect(screen.getByRole("combobox", { name: /repeats/i })).toBeDisabled();
+      expect(
+        screen.getByText(
+          "Prowler Open Source only supports daily scheduled scans. A daily scan will run automatically once the account is connected.",
+        ),
+      ).toBeVisible();
 
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
       expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Save");

@@ -117,5 +117,10 @@ describe("ScanScheduleFields", () => {
     expect(screen.getByText("Repeats").parentElement).not.toHaveTextContent(
       "Available in Prowler Cloud",
     );
+    expect(
+      screen.getByText(
+        "Prowler Open Source only supports daily scheduled scans. A daily scan will run automatically once the account is connected.",
+      ),
+    ).toBeVisible();
   });
 });
