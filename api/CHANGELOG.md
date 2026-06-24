@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.33.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Handle KISA ISMS-P 2023 compliance framework for the Azure provider [(#10811)](https://github.com/prowler-cloud/prowler/pull/10811)
+
+---
+
 ## [1.32.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed

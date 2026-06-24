@@ -110,7 +110,6 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("ccc_"), CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
         (lambda name: name == "c5_azure", AzureC5),
-        (lambda name: name.startswith("csa_"), AzureCSA),
         (lambda name: name.startswith("kisa"), AzureKISAISMSP),
     ],
     "gcp": [
