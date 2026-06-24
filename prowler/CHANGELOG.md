@@ -2,11 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.31.1] (Prowler UNRELEASED)
+## [5.32.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
+
+---
+
+## [5.31.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
