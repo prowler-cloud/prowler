@@ -152,7 +152,13 @@ class Test_Adapt_Legacy_To_Universal:
         sample = next(r for r in universal.requirements if r.config_requirements)
         entry = sample.config_requirements[0]
         assert isinstance(entry, Compliance_Requirement_ConfigConstraint)
-        assert set(entry.dict()) == {"Check", "Provider", "ConfigKey", "Operator", "Value"}
+        assert set(entry.dict()) == {
+            "Check",
+            "Provider",
+            "ConfigKey",
+            "Operator",
+            "Value",
+        }
         assert entry.Provider is None
 
     def test_requirements_without_constraints_are_none_in_universal(self):
