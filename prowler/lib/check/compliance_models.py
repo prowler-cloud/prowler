@@ -341,6 +341,40 @@ class Compliance_Requirement_ConfigConstraint(BaseModel):
     # (single-provider frameworks).
     Provider: Optional[str] = None
 
+    @root_validator
+    # noqa: F841 - since vulture raises unused variable 'cls'
+    def validate_value_matches_operator(cls, values):  # noqa: F841
+        """Ensure ``Value``'s type is consistent with ``Operator``.
+
+        Without this, a mistyped value (e.g. ``gte`` with a list, or ``subset``
+        with a scalar) is not rejected at load time and ``_check_operator``
+        silently treats it as *not satisfied*, forcing the requirement to a
+        spurious ``[CONFIG NOT VALID]`` FAIL. Validating here turns that into a
+        clear error when the framework is loaded.
+        """
+        operator = values.get("Operator")
+        value = values.get("Value")
+        # If Operator/Value failed their own validation they are absent here.
+        if operator is None or value is None:
+            return values
+        if operator in ("in", "subset", "superset"):
+            if not isinstance(value, list):
+                raise ValueError(
+                    f"operator '{operator}' requires a list Value, got {type(value).__name__}"
+                )
+        elif operator in ("lte", "gte"):
+            # bool is an int subclass but is never a valid numeric threshold.
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(
+                    f"operator '{operator}' requires a numeric Value, got {value!r}"
+                )
+        elif operator == "eq":
+            if not isinstance(value, (bool, int, float, str)):
+                raise ValueError(
+                    f"operator 'eq' requires a scalar Value, got {type(value).__name__}"
+                )
+        return values
+
 
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
@@ -740,7 +774,10 @@ class UniversalComplianceRequirement(BaseModel):
     name: Optional[str] = None
     attributes: dict = Field(default_factory=dict)
     checks: dict[str, list[str]] = Field(default_factory=dict)
-    config_requirements: Optional[list[dict]] = None
+    # Typed with the same constraint model as legacy so the operator/value
+    # validation also covers universal frameworks. evaluate_config_constraints
+    # accepts both dicts and model objects, so downstream consumers are unaffected.
+    config_requirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
     tactics: Optional[list] = None
     sub_techniques: Optional[list] = None
     platforms: Optional[list] = None

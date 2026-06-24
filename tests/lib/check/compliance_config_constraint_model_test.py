@@ -54,6 +54,29 @@ class Test_Compliance_Requirement_ConfigConstraint:
                 Check="c", ConfigKey="k", Operator="between", Value=1
             )
 
+    @pytest.mark.parametrize(
+        "operator,value",
+        [
+            # numeric operators reject non-numeric / boolean values
+            ("gte", [1, 2]),
+            ("lte", ["45"]),
+            ("gte", True),
+            # set/list operators reject scalars
+            ("subset", 5),
+            ("superset", "x"),
+            ("in", 1),
+            # eq rejects lists
+            ("eq", [1, 2]),
+        ],
+    )
+    def test_value_type_inconsistent_with_operator_rejected(self, operator, value):
+        # A mistyped Value would otherwise be silently treated as "not satisfied"
+        # at runtime, forcing a spurious [CONFIG NOT VALID] FAIL.
+        with pytest.raises(ValidationError):
+            Compliance_Requirement_ConfigConstraint(
+                Check="c", ConfigKey="k", Operator=operator, Value=value
+            )
+
     def test_boolean_value_not_coerced_to_int(self):
         # ``mute_non_default_regions == false`` must stay a bool, not become 0.
         c = Compliance_Requirement_ConfigConstraint(
@@ -123,14 +146,14 @@ class Test_Adapt_Legacy_To_Universal:
         assert legacy_with == universal_with
         assert universal_with, "expected at least one requirement with constraints"
 
-        # The constraint payload survives as a list of dicts with the same keys
-        # (``Provider`` is carried through too, ``None`` for single-provider
-        # frameworks like CIS AWS).
+        # The constraint payload survives as the typed constraint model with the
+        # same fields (``Provider`` is carried through too, ``None`` for
+        # single-provider frameworks like CIS AWS).
         sample = next(r for r in universal.requirements if r.config_requirements)
         entry = sample.config_requirements[0]
-        assert isinstance(entry, dict)
-        assert set(entry) == {"Check", "Provider", "ConfigKey", "Operator", "Value"}
-        assert entry["Provider"] is None
+        assert isinstance(entry, Compliance_Requirement_ConfigConstraint)
+        assert set(entry.dict()) == {"Check", "Provider", "ConfigKey", "Operator", "Value"}
+        assert entry.Provider is None
 
     def test_requirements_without_constraints_are_none_in_universal(self):
         legacy = Compliance(**_load_cis())
