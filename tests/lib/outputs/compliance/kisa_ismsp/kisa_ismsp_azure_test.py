@@ -37,10 +37,7 @@ class TestAzureKISAISMSP:
         assert output_data.Location == ""
         assert output_data.Description == KISA_ISMSP_AZURE.Description
         assert output_data.Requirements_Id == KISA_ISMSP_AZURE.Requirements[0].Id
-        assert (
-            output_data.Requirements_Name
-            == KISA_ISMSP_AZURE.Requirements[0].Name
-        )
+        assert output_data.Requirements_Name == KISA_ISMSP_AZURE.Requirements[0].Name
         assert (
             output_data.Requirements_Description
             == KISA_ISMSP_AZURE.Requirements[0].Description
