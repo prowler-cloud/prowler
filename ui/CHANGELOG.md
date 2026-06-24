@@ -4,10 +4,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.32.0] (Prowler UNRELEASED)
 
-### 🚀 Added
-
-- `BILLING_CLOUD_ENABLE` runtime flag on the UI public-config island, consumed by Prowler Cloud to gate billing surfaces [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-
 ### 🔄 Changed
 
 - Sentry, Google Tag Manager, and PostHog now load only when their `UI_SENTRY_ENABLE` / `UI_GOOGLE_TAG_MANAGER_ENABLE` / `UI_POSTHOG_ENABLE` flag is `"true"` (default off); a deployment that previously set only `UI_SENTRY_DSN` or `UI_GOOGLE_TAG_MANAGER_ID` must now also set the matching enable flag to keep the integration active [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)

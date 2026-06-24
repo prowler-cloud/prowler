@@ -93,7 +93,7 @@ describe("getRuntimeConfigClient", () => {
     // When
     const config = getRuntimeConfigClient();
 
-    // Then - exactly the nine allowlisted keys, nothing else
+    // Then - exactly the allowlisted keys, nothing else
     expect(Object.keys(config).sort()).toEqual(
       [
         "apiBaseUrl",
