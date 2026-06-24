@@ -2,15 +2,13 @@ import os
 import time
 from glob import glob
 
-from celery.utils.log import get_task_logger
-from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
-from django.db import OperationalError
-from tasks.utils import batched
-
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
 from api.models import Finding, Integration, Provider
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
+from celery.utils.log import get_task_logger
+from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
+from django.db import OperationalError
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.csv.csv import CSV
@@ -24,6 +22,7 @@ from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
 )
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
+from tasks.utils import batched
 
 logger = get_task_logger(__name__)
 
