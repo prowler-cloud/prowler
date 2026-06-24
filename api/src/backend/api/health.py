@@ -12,15 +12,13 @@ from __future__ import annotations
 import logging
 import threading
 import time
-
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from contextlib import suppress
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import redis
-
 from config.version import API_VERSION, RELEASE_ID
 from django.conf import settings
 from django.db import connections
@@ -86,11 +84,7 @@ class HealthJSONRenderer(JSONRenderer):
 
 
 def _now_iso() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .isoformat(timespec="milliseconds")
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def _measure(name: str, check_fn) -> tuple[dict[str, Any], float]:

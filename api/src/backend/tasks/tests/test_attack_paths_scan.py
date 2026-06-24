@@ -1,16 +1,9 @@
 from contextlib import nullcontext
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
 import pytest
-from django_celery_results.models import TaskResult
-from tasks.jobs.attack_paths import findings as findings_module
-from tasks.jobs.attack_paths import indexes as indexes_module
-from tasks.jobs.attack_paths import internet as internet_module
-from tasks.jobs.attack_paths import sync as sync_module
-from tasks.jobs.attack_paths.scan import run as attack_paths_run
-
 from api.models import (
     AttackPathsScan,
     Finding,
@@ -22,8 +15,13 @@ from api.models import (
     StatusChoices,
     Task,
 )
+from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
-
+from tasks.jobs.attack_paths import findings as findings_module
+from tasks.jobs.attack_paths import indexes as indexes_module
+from tasks.jobs.attack_paths import internet as internet_module
+from tasks.jobs.attack_paths import sync as sync_module
+from tasks.jobs.attack_paths.scan import run as attack_paths_run
 
 SYNC_RESULT_EMPTY = {
     "nodes": 0,
@@ -2569,7 +2567,7 @@ class TestCleanupStaleAttackPathsScans:
             provider=provider,
             scan=scan,
             state=StateChoices.EXECUTING,
-            started_at=started_at or datetime.now(tz=timezone.utc),
+            started_at=started_at or datetime.now(tz=UTC),
         )
 
         task_result = None
@@ -2662,7 +2660,7 @@ class TestCleanupStaleAttackPathsScans:
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
-        old_start = datetime.now(tz=timezone.utc) - timedelta(hours=49)
+        old_start = datetime.now(tz=UTC) - timedelta(hours=49)
         ap_scan, task_result = self._create_executing_scan(
             tenant, provider, started_at=old_start, worker="live-worker@host"
         )
@@ -2880,7 +2878,7 @@ class TestCleanupStaleAttackPathsScans:
         provider.save()
 
         # Old scan with no Task/TaskResult
-        old_start = datetime.now(tz=timezone.utc) - timedelta(hours=49)
+        old_start = datetime.now(tz=UTC) - timedelta(hours=49)
         ap_scan = AttackPathsScan.objects.create(
             tenant_id=tenant.id,
             provider=provider,
@@ -2956,7 +2954,7 @@ class TestCleanupStaleAttackPathsScans:
             provider=provider,
             scan=parent_scan,
             state=StateChoices.SCHEDULED,
-            started_at=datetime.now(tz=timezone.utc) - timedelta(minutes=age_minutes),
+            started_at=datetime.now(tz=UTC) - timedelta(minutes=age_minutes),
         )
 
         task_result = None

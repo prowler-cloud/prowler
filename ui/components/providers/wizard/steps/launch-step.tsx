@@ -25,6 +25,11 @@ import {
 import { ToastAction, useToast } from "@/components/ui";
 import { EntityInfo } from "@/components/ui/entities";
 import {
+  type ActionErrorResult,
+  getActionErrorMessage,
+  hasActionError,
+} from "@/lib/action-errors";
+import {
   getScanScheduleCapability,
   getScheduleFormDefaults,
   scheduleFormSchema,
@@ -88,17 +93,19 @@ export function LaunchStep({
   const capability = capabilityProp ?? getScanScheduleCapability(isCloud());
   const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
   const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+  const isDailyLegacy = capability === SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY;
   const isBlocked = capability === SCAN_SCHEDULE_CAPABILITY.BLOCKED;
+  const canUseScheduleMode = isAdvanced || isDailyLegacy;
   const [isLaunching, setIsLaunching] = useState(false);
   const [mode, setMode] = useState<LaunchMode>(
-    isAdvanced ? LAUNCH_MODE.SCHEDULE : LAUNCH_MODE.NOW,
+    canUseScheduleMode ? LAUNCH_MODE.SCHEDULE : LAUNCH_MODE.NOW,
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: getScheduleFormDefaults(),
   });
 
-  const isScheduleMode = isAdvanced && mode === LAUNCH_MODE.SCHEDULE;
+  const isScheduleMode = canUseScheduleMode && mode === LAUNCH_MODE.SCHEDULE;
   const isLimitBlocked = mode === LAUNCH_MODE.NOW && isScanLimitReached;
   const isActionBlocked =
     isLaunching ||
@@ -124,12 +131,12 @@ export function LaunchStep({
   })();
 
   useEffect(() => {
-    if (!isAdvanced && mode !== LAUNCH_MODE.NOW) {
+    if (!canUseScheduleMode && mode !== LAUNCH_MODE.NOW) {
       setMode(LAUNCH_MODE.NOW);
     }
-  }, [isAdvanced, mode]);
+  }, [canUseScheduleMode, mode]);
 
-  const launchOnDemandScan = async (): Promise<{ error?: unknown } | null> => {
+  const launchOnDemandScan = async (): Promise<ActionErrorResult | null> => {
     if (!providerId || isBlocked) return null;
     const formData = new FormData();
     formData.set("providerId", providerId);
@@ -144,12 +151,12 @@ export function LaunchStep({
     setIsLaunching(true);
     const scanResult = await launchOnDemandScan();
 
-    if (scanResult?.error) {
+    if (hasActionError(scanResult)) {
       setIsLaunching(false);
       toast({
         variant: "destructive",
         title: "Unable to launch scan",
-        description: String(scanResult.error),
+        description: getActionErrorMessage(scanResult),
       });
       return;
     }
@@ -322,10 +329,10 @@ export function LaunchStep({
             <RadioGroupItem
               value={LAUNCH_MODE.SCHEDULE}
               aria-label="On a schedule"
-              disabled={!isAdvanced}
+              disabled={!canUseScheduleMode}
             />
             On a schedule
-            {!isAdvanced &&
+            {!canUseScheduleMode &&
               !isBlocked &&
               (isManualOnly ? (
                 <CloudFeatureBadge label="Requires subscription" size="sm" />
@@ -336,7 +343,7 @@ export function LaunchStep({
         </RadioGroup>
       </Field>
 
-      {!isAdvanced && !isBlocked && (
+      {isManualOnly && !isBlocked && (
         <p className="text-text-neutral-secondary text-sm">
           Scheduled scans are not available for this account. Run now to get
           immediate findings.
@@ -356,6 +363,8 @@ export function LaunchStep({
           disabled={isLaunching || !providerId}
           showLaunchInitialScan
           showNextScheduledCopy
+          canUseAdvancedSchedule={isAdvanced}
+          showCloudUpgradeBadge={isDailyLegacy}
         />
       )}
     </div>

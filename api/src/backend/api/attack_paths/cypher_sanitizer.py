@@ -22,9 +22,7 @@ Label-injection pipeline:
 import re
 
 from rest_framework.exceptions import ValidationError
-
 from tasks.jobs.attack_paths.config import get_provider_label
-
 
 # Step 1 - String / comment protection
 # Single combined regex: strings first, then line comments

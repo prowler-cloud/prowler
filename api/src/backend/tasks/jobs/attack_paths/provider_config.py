@@ -9,8 +9,8 @@ instead of working on serialised list values. Both Neo4j and Neptune sinks
 write the same shape and queries are portable across them.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 from tasks.jobs.attack_paths import aws
 

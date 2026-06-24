@@ -17,16 +17,13 @@ added to the catalog.
 
 import json
 import time
-
 from collections import defaultdict
 from typing import Any
 
 import neo4j
-
-from celery.utils.log import get_task_logger
-
 from api.attack_paths import database as graph_database
 from api.attack_paths import sink as sink_module
+from celery.utils.log import get_task_logger
 from tasks.jobs.attack_paths.config import (
     PROVIDER_CONFIGS,
     PROVIDER_ISOLATION_PROPERTIES,

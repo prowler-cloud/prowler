@@ -1,9 +1,8 @@
+from api.db_utils import rls_transaction
+from api.models import Finding, MuteRule
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from tasks.utils import batched
-
-from api.db_utils import rls_transaction
-from api.models import Finding, MuteRule
 
 logger = get_task_logger(__name__)
 

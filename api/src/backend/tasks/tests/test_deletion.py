@@ -1,11 +1,10 @@
 from unittest.mock import MagicMock, call, patch
 
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
-from tasks.jobs.deletion import delete_provider, delete_tenant
-
 from api.attack_paths import database as graph_database
 from api.models import Provider, Tenant, TenantComplianceSummary
+from django.core.exceptions import ObjectDoesNotExist
+from tasks.jobs.deletion import delete_provider, delete_tenant
 
 
 @pytest.mark.django_db

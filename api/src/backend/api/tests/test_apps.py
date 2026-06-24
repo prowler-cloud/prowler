@@ -4,11 +4,9 @@ import types
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-from django.conf import settings
-
 import api
 import api.apps as api_apps_module
+import pytest
 from api.apps import (
     PRIVATE_KEY_FILE,
     PUBLIC_KEY_FILE,
@@ -16,6 +14,7 @@ from api.apps import (
     VERIFYING_KEY_ENV,
     ApiConfig,
 )
+from django.conf import settings
 
 
 @pytest.fixture(autouse=True)

@@ -17,23 +17,21 @@ import datetime
 import json
 import logging
 import threading
-
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import Any, Callable, Iterator
+from typing import Any
 from urllib.parse import urlsplit
 
 import neo4j
 import neo4j.exceptions
-
+from api.attack_paths.retryable_session import RetryableSession
+from api.attack_paths.sink.base import SinkDatabase
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from botocore.session import Session as BotoSession
+from config.env import env
 from django.conf import settings
 from neo4j.auth_management import AuthManagers, ExpiringAuth
-
-from api.attack_paths.retryable_session import RetryableSession
-from api.attack_paths.sink.base import SinkDatabase
-from config.env import env
 
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
@@ -446,7 +444,7 @@ def neptune_auth_provider(region: str, https_url: str) -> Callable[[], ExpiringA
     def _provider() -> ExpiringAuth:
         token = _NeptuneAuthToken(region, https_url)
         expires_at = (
-            datetime.datetime.now(datetime.timezone.utc)
+            datetime.datetime.now(datetime.UTC)
             + datetime.timedelta(minutes=SIGV4_TOKEN_LIFETIME_MINUTES)
         ).timestamp()
         return ExpiringAuth(auth=token, expires_at=expires_at)

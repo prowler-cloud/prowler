@@ -1,14 +1,13 @@
 import uuid
 from functools import wraps
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import DatabaseError, connection, transaction
-from rest_framework_json_api.serializers import ValidationError
-
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY, rls_transaction
 from api.exceptions import ProviderDeletedException
 from api.models import Provider, Scan
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import DatabaseError, connection, transaction
+from rest_framework_json_api.serializers import ValidationError
 
 
 def set_tenant(func=None, *, keep_tenant=False):

@@ -8,14 +8,11 @@ sink_module`.
 """
 
 import threading
-
 from enum import StrEnum, auto
 
-from django.conf import settings
-
-from api.models import AttackPathsScan
 from api.attack_paths.sink.base import SinkDatabase
-
+from api.models import AttackPathsScan
+from django.conf import settings
 
 # Backend names
 

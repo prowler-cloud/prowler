@@ -248,14 +248,14 @@ describe("DataTableRowActions", () => {
     await user.click(screen.getByText("View Scan Jobs"));
 
     // Then: navigates with the key the scans filter bar binds to
-    // (provider_uid__in), URL-encoded, so the provider is pre-selected.
+    // (provider__in, by id), URL-encoded, so the provider is pre-selected.
     expect(pushMock).toHaveBeenCalledWith(
-      "/scans?filter%5Bprovider_uid__in%5D=111111111111",
+      "/scans?filter%5Bprovider__in%5D=provider-1",
     );
   });
 
-  it("URL-encodes provider UIDs that contain unsafe characters (e.g. GitHub)", async () => {
-    // Given a GitHub provider whose UID is a URL.
+  it("links to scan jobs by provider id even when the uid contains unsafe chars", async () => {
+    // Given a GitHub provider whose UID is a URL with unsafe chars.
     const user = userEvent.setup();
     const row = createRow(true);
     (
@@ -278,9 +278,9 @@ describe("DataTableRowActions", () => {
     await user.click(screen.getByRole("button"));
     await user.click(screen.getByText("View Scan Jobs"));
 
-    // Then the ':' and '/' are encoded instead of leaking into the URL raw.
+    // Then the link carries the provider id, never the raw uid.
     expect(pushMock).toHaveBeenCalledWith(
-      "/scans?filter%5Bprovider_uid__in%5D=https%3A%2F%2Fgithub.com%2Fprowler-cloud%2Fprowler",
+      "/scans?filter%5Bprovider__in%5D=provider-1",
     );
   });
 

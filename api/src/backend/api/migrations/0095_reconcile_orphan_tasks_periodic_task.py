@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 TASK_NAME = "reconcile-orphan-tasks"
 INTERVAL_MINUTES = 2
 

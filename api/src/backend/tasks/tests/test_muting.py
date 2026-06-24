@@ -1,13 +1,12 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
-from tasks.jobs.muting import mute_historical_findings
-
 from api.models import Finding, MuteRule
+from django.core.exceptions import ObjectDoesNotExist
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
+from tasks.jobs.muting import mute_historical_findings
 
 
 @pytest.mark.django_db
@@ -162,7 +161,7 @@ class TestMuteHistoricalFindings:
                     "Description": f"Muted description {i}",
                 },
                 muted=True,
-                muted_at=datetime.now(timezone.utc),
+                muted_at=datetime.now(UTC),
                 muted_reason="Already muted",
             )
             muted_uids.append(finding.uid)

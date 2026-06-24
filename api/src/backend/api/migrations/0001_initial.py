@@ -1,26 +1,13 @@
 import uuid
 from functools import partial
 
+import api.rls
 import django.contrib.auth.models
 import django.contrib.postgres.indexes
 import django.contrib.postgres.search
 import django.core.validators
 import django.db.models.deletion
 import django.utils.timezone
-from django.conf import settings
-from django.db import migrations, models
-from psqlextra.backend.migrations.operations.add_default_partition import (
-    PostgresAddDefaultPartition,
-)
-from psqlextra.backend.migrations.operations.create_partitioned_model import (
-    PostgresCreatePartitionedModel,
-)
-from psqlextra.manager.manager import PostgresManager
-from psqlextra.models.partitioned import PostgresPartitionedModel
-from psqlextra.types import PostgresPartitioningMethod
-from uuid6 import uuid7
-
-import api.rls
 from api.db_utils import (
     DB_PROWLER_PASSWORD,
     DB_PROWLER_USER,
@@ -53,6 +40,18 @@ from api.models import (
     StateChoices,
     StatusChoices,
 )
+from django.conf import settings
+from django.db import migrations, models
+from psqlextra.backend.migrations.operations.add_default_partition import (
+    PostgresAddDefaultPartition,
+)
+from psqlextra.backend.migrations.operations.create_partitioned_model import (
+    PostgresCreatePartitionedModel,
+)
+from psqlextra.manager.manager import PostgresManager
+from psqlextra.models.partitioned import PostgresPartitionedModel
+from psqlextra.types import PostgresPartitioningMethod
+from uuid6 import uuid7
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
 

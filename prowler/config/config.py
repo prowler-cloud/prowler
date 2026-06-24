@@ -49,7 +49,7 @@ class _MutableTimestamp:
 
 timestamp = _MutableTimestamp(datetime.today())
 timestamp_utc = _MutableTimestamp(datetime.now(timezone.utc))
-prowler_version = "5.31.0"
+prowler_version = "5.32.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -289,6 +289,11 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
     Returns:
         dict: The configuration dictionary for the specified provider.
     """
+    # Imported lazily to avoid an import cycle: schemas may eventually want to
+    # import from prowler.config.config (e.g. for shared constants).
+    from prowler.config.schema.registry import SCHEMAS
+    from prowler.config.schema.validator import validate_provider_config
+
     try:
         with open(config_file_path, "r", encoding=encoding_format_utf_8) as f:
             config_file = yaml.safe_load(f)
@@ -314,7 +319,11 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
             else:
                 config = {}
 
-            return config
+            return validate_provider_config(
+                provider=provider,
+                raw=config,
+                schema_cls=SCHEMAS.get(provider),
+            )
 
     except FileNotFoundError as error:
         logger.error(

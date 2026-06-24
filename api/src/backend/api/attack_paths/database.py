@@ -13,18 +13,17 @@ routes to ingest. Everything else routes to the configured sink.
 """
 
 import atexit  # noqa: F401 - kept for tests that patch api.attack_paths.database.atexit
-
 from contextlib import AbstractContextManager
 from typing import Any
 from uuid import UUID
 
 import neo4j  # noqa: F401 - kept for tests that patch api.attack_paths.database.neo4j
-
-from django.conf import settings  # noqa: F401 - kept for tests that patch ...database.settings
-
 from api.attack_paths import ingest
 from api.attack_paths import sink as sink_module
 from config.env import env
+from django.conf import (
+    settings,  # noqa: F401 - kept for tests that patch ...database.settings
+)
 
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
 

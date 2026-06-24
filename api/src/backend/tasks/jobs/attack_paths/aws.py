@@ -2,22 +2,21 @@
 # (https://github.com/cartography-cncf/cartography), which is licensed under the Apache 2.0 License.
 
 import time
-
 from typing import Any
 
 import aioboto3
 import boto3
 import botocore
 import neo4j
-
+from api.models import (
+    AttackPathsScan as ProwlerAPIAttackPathsScan,
+)
+from api.models import (
+    Provider as ProwlerAPIProvider,
+)
 from cartography.config import Config as CartographyConfig
 from cartography.intel import aws as cartography_aws
 from celery.utils.log import get_task_logger
-
-from api.models import (
-    AttackPathsScan as ProwlerAPIAttackPathsScan,
-    Provider as ProwlerAPIProvider,
-)
 from prowler.providers.common.provider import Provider as ProwlerSDKProvider
 from tasks.jobs.attack_paths import db_utils, utils
 

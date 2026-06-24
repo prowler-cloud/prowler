@@ -1,11 +1,11 @@
-from typing import Callable
+from collections.abc import Callable
 from uuid import UUID
 
 from config.env import env
 from tasks.jobs.attack_paths.provider_config import (  # noqa: F401  (re-exported)
     AWS_CONFIG,
-    NormalizedList,
     PROVIDER_CONFIGS,
+    NormalizedList,
     ProviderConfig,
 )
 

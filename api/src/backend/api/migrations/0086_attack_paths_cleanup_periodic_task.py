@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 TASK_NAME = "attack-paths-cleanup-stale-scans"
 INTERVAL_HOURS = 1
 

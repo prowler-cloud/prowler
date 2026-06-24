@@ -9,7 +9,6 @@ hierarchy; sink-internal behavior is exercised in `test_sink.py`.
 
 from unittest.mock import MagicMock, patch
 
-
 import api.attack_paths.database as db_module
 
 

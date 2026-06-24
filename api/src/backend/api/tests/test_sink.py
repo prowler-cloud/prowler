@@ -6,10 +6,7 @@ builds dual writer/reader Bolt drivers.
 """
 
 import json
-
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 # Prime patch-target resolution. `api.attack_paths.sink/__init__.py` doesn't
 # eagerly import these submodules (they're loaded on demand inside the
@@ -18,6 +15,7 @@ import pytest
 # of the package before any decorator runs.
 import api.attack_paths.sink.neo4j  # noqa: F401
 import api.attack_paths.sink.neptune  # noqa: F401
+import pytest
 
 
 @pytest.fixture(autouse=True)

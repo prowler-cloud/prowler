@@ -1,7 +1,6 @@
+from api.db_utils import DB_PROWLER_USER
 from django.conf import settings
 from django.db import migrations
-
-from api.db_utils import DB_PROWLER_USER
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
 

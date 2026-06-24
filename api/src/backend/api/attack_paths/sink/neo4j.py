@@ -8,18 +8,16 @@ path while phase-1 drains tenant DBs.
 import atexit
 import logging
 import threading
-
+from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 import neo4j
 import neo4j.exceptions
-
-from django.conf import settings
-
 from api.attack_paths.retryable_session import RetryableSession
 from api.attack_paths.sink.base import SinkDatabase
 from config.env import env
+from django.conf import settings
 
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False

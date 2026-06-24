@@ -1,23 +1,10 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 from allauth.socialaccount.models import SocialLogin
-from django.conf import settings
-from django.db import connection as django_connection
-from django.db import connections as django_connections
-from django.urls import reverse
-from django_celery_results.models import TaskResult
-from rest_framework import status
-from rest_framework.test import APIClient
-from tasks.jobs.backfill import (
-    backfill_resource_scan_summaries,
-    aggregate_scan_category_summaries,
-    aggregate_scan_resource_group_summaries,
-)
-
 from api.attack_paths import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
@@ -60,8 +47,20 @@ from api.models import (
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
+from django.conf import settings
+from django.db import connection as django_connection
+from django.db import connections as django_connections
+from django.urls import reverse
+from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
+from rest_framework import status
+from rest_framework.test import APIClient
+from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
+    backfill_resource_scan_summaries,
+)
 
 TODAY = str(datetime.today().date())
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
@@ -468,7 +467,7 @@ def invitations_fixture(create_test_user, tenants_fixture):
         email="testing@prowler.com",
         state=Invitation.State.EXPIRED,
         token="TESTING1234568",
-        expires_at=datetime.now(timezone.utc) - timedelta(days=1),
+        expires_at=datetime.now(UTC) - timedelta(days=1),
         inviter=user,
         tenant=tenant,
     )
@@ -715,7 +714,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
     tenant, *_ = tenants_fixture
     provider, provider2, *_ = providers_fixture
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     scan1 = Scan.objects.create(
         name="Scan 1",
@@ -1608,7 +1607,7 @@ def api_keys_fixture(tenants_fixture, create_test_user):
         name="Test API Key 2",
         tenant_id=tenant.id,
         entity=user,
-        expiry_date=datetime.now(timezone.utc) + timedelta(days=60),
+        expiry_date=datetime.now(UTC) + timedelta(days=60),
     )
 
     # Revoked API key
@@ -1932,10 +1931,10 @@ def provider_compliance_scores_fixture(
     provider1, provider2, *_ = providers_fixture
     scan1, _, scan3 = scans_fixture
 
-    scan1.completed_at = datetime.now(timezone.utc) - timedelta(hours=1)
+    scan1.completed_at = datetime.now(UTC) - timedelta(hours=1)
     scan1.save()
     scan3.state = StateChoices.COMPLETED
-    scan3.completed_at = datetime.now(timezone.utc)
+    scan3.completed_at = datetime.now(UTC)
     scan3.save()
 
     scores = [

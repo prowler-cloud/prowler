@@ -1,10 +1,7 @@
 import random
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from math import ceil
 from uuid import uuid4
-
-from django.core.management.base import BaseCommand
-from tqdm import tqdm
 
 from api.db_utils import rls_transaction
 from api.models import (
@@ -16,7 +13,9 @@ from api.models import (
     Scan,
     StatusChoices,
 )
+from django.core.management.base import BaseCommand
 from prowler.lib.check.models import CheckMetadata
+from tqdm import tqdm
 
 
 class Command(BaseCommand):
@@ -116,7 +115,7 @@ class Command(BaseCommand):
                 trigger="manual",
                 state="executing",
                 progress=0,
-                started_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
             )
         scan_state = "completed"
 
@@ -272,10 +271,8 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"Failed to populate test data: {e}"))
             scan_state = "failed"
         finally:
-            scan.completed_at = datetime.now(timezone.utc)
-            scan.duration = int(
-                (datetime.now(timezone.utc) - scan.started_at).total_seconds()
-            )
+            scan.completed_at = datetime.now(UTC)
+            scan.duration = int((datetime.now(UTC) - scan.started_at).total_seconds())
             scan.progress = 100
             scan.state = scan_state
             scan.unique_resource_count = num_resources

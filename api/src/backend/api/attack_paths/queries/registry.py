@@ -4,7 +4,6 @@ from api.attack_paths.queries.aws import AWS_QUERIES
 from api.attack_paths.queries.aws_deprecated import AWS_DEPRECATED_QUERIES
 from api.attack_paths.queries.types import AttackPathsQueryDefinition
 
-
 # Query definitions for scans synced with the current schema.
 _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
     "aws": AWS_QUERIES,

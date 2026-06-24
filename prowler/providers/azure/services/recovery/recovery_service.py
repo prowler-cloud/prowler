@@ -52,6 +52,7 @@ class Recovery(AzureService):
         """
         logger.info("Recovery - Getting Recovery Services vaults...")
         vaults_dict: dict[str, dict[str, BackupVault]] = {}
+        subscription_id = "unknown"
         try:
             vaults_dict: dict[str, dict[str, BackupVault]] = {}
             for subscription_id, client in self.clients.items():
@@ -66,21 +67,33 @@ class Recovery(AzureService):
                     vaults_dict[subscription_id][vault_obj.id] = vault_obj
         except Exception as error:
             logger.error(
-                f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription_id} -- "
+                f"{error.__class__.__name__}"
+                f"[{error.__traceback__.tb_lineno}]: {error}"
             )
         return vaults_dict
 
 
 class RecoveryBackup(AzureService):
+    """
+    Service wrapper for Azure Recovery Services backup data.
+
+    Collects the backup protected items and backup policies for each Recovery
+    Services vault discovered by the Recovery service.
+    """
+
     def __init__(
-        self, provider: AzureProvider, vaults: dict[str, dict[str, BackupVault]]
+        self,
+        provider: AzureProvider,
+        vaults: dict[str, dict[str, BackupVault]],
     ):
         super().__init__(RecoveryServicesBackupClient, provider)
         for subscription_id, vaults in vaults.items():
             for vault in vaults.values():
-                vault.backup_protected_items = self._get_backup_protected_items(
+                protected_items = self._get_backup_protected_items(
                     subscription_id=subscription_id, vault=vault
                 )
+                vault.backup_protected_items = protected_items
                 vault.backup_policies = self._get_backup_policies(
                     subscription_id=subscription_id, vault=vault
                 )
@@ -102,19 +115,22 @@ class RecoveryBackup(AzureService):
             )
             for item in backup_protected_items:
                 item_properties = getattr(item, "properties", None)
+                workload_type = None
+                backup_policy_id = None
+                if item_properties:
+                    workload_type = item_properties.workload_type
+                    backup_policy_id = item_properties.policy_id
                 backup_protected_items_dict[item.id] = BackupItem(
                     id=item.id,
                     name=item.name,
-                    workload_type=(
-                        item_properties.workload_type if item_properties else None
-                    ),
-                    backup_policy_id=(
-                        item_properties.policy_id if item_properties else None
-                    ),
+                    workload_type=workload_type,
+                    backup_policy_id=backup_policy_id,
                 )
         except Exception as error:
             logger.error(
-                f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription_id} -- "
+                f"{error.__class__.__name__}"
+                f"[{error.__traceback__.tb_lineno}]: {error}"
             )
         return backup_protected_items_dict
 
@@ -126,40 +142,44 @@ class RecoveryBackup(AzureService):
         """
         logger.info("Recovery - Getting backup policies...")
         backup_policies_dict: dict[str, BackupPolicy] = {}
-        unique_backup_policies: set[str] = set()
         try:
-            for item in vault.backup_protected_items.values():
-                if item.backup_policy_id:
-                    unique_backup_policies.add(item.backup_policy_id)
-            for policy_id in unique_backup_policies:
-                policy = self.clients[subscription_id].protection_policies.get(
-                    vault_name=vault.name,
-                    resource_group_name=vault.id.split("/")[4],
-                    policy_name=policy_id.split("/")[-1],
-                )
-                backup_policies_dict[policy_id] = BackupPolicy(
+            client = self.clients[subscription_id]
+            backup_policies = client.backup_policies.list(
+                vault_name=vault.name,
+                resource_group_name=vault.id.split("/")[4],
+            )
+            for policy in backup_policies:
+                retention_days = self._get_backup_policy_retention_days(policy)
+                backup_policies_dict[policy.id] = BackupPolicy(
                     id=policy.id,
                     name=policy.name,
-                    retention_days=getattr(
-                        getattr(
-                            getattr(
-                                getattr(
-                                    getattr(policy, "properties", None),
-                                    "retention_policy",
-                                    None,
-                                ),
-                                "daily_schedule",
-                                None,
-                            ),
-                            "retention_duration",
-                            None,
-                        ),
-                        "count",
-                        None,
-                    ),
+                    retention_days=retention_days,
                 )
         except Exception as error:
             logger.error(
-                f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription_id} -- "
+                f"{error.__class__.__name__}"
+                f"[{error.__traceback__.tb_lineno}]: {error}"
             )
         return backup_policies_dict
+
+    @staticmethod
+    def _get_backup_policy_retention_days(policy) -> Optional[int]:
+        """Return the daily retention duration count for a backup policy."""
+        return getattr(
+            getattr(
+                getattr(
+                    getattr(
+                        getattr(policy, "properties", None),
+                        "retention_policy",
+                        None,
+                    ),
+                    "daily_schedule",
+                    None,
+                ),
+                "retention_duration",
+                None,
+            ),
+            "count",
+            None,
+        )

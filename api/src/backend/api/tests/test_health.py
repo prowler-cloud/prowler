@@ -7,15 +7,12 @@ Cover the IETF response envelope, status code mapping (200 / 503), the
 from unittest.mock import patch
 
 import pytest
-
+from api import health
 from config import version as config_version
 from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-
-from api import health
-
 
 HEALTH_MEDIA_TYPE = "application/health+json"
 

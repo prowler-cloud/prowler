@@ -5,7 +5,6 @@ from api.attack_paths.queries.types import (
 )
 from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 
-
 # Custom Attack Path Queries
 
 AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
