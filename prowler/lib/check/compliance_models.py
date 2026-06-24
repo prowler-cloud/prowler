@@ -342,7 +342,7 @@ class Compliance_Requirement_ConfigConstraint(BaseModel):
     Provider: Optional[str] = None
 
     @root_validator
-    # noqa: F841 - since vulture raises unused variable 'cls'
+    @classmethod
     def validate_value_matches_operator(cls, values):  # noqa: F841
         """Ensure ``Value``'s type is consistent with ``Operator``.
 
