@@ -122,7 +122,7 @@ jobs:
 
       - name: Run tests with pytest
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: uv run pytest --durations=50 --cov=./src/backend --cov-report=xml src/backend
+        run: uv run pytest --cov=./src/backend --cov-report=xml src/backend
 
       - name: Upload coverage reports to Codecov
         if: steps.check-changes.outputs.any_changed == 'true'
