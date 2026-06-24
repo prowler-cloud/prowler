@@ -19,7 +19,7 @@ LAMBDA_FUNCTION_RUNTIME = "nodejs4.3"
 LAMBDA_FUNCTION_ARN = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{LAMBDA_FUNCTION_NAME}"
 LAMBDA_FUNCTION_CODE_WITH_SECRETS = """
 def lambda_handler(event, context):
-        db_password = "test-password"
+        db_password = "Tr0ub4dor3xKq9vLmZ"
         print("custom log event")
         return event
 """
@@ -126,7 +126,7 @@ class Test_awslambda_function_no_secrets_in_code:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in Lambda function {LAMBDA_FUNCTION_NAME} code -> lambda_function.py: Secret Keyword on line 3."
+                == f"Potential secret found in Lambda function {LAMBDA_FUNCTION_NAME} code -> lambda_function.py: Generic Password on line 3."
             )
             assert result[0].resource_tags == []
 

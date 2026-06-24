@@ -159,7 +159,7 @@ class Test_blockstorage_volume_metadata_sensitive_data:
                 is_bootable=False,
                 is_multiattach=False,
                 attachments=[],
-                metadata={"db_password": "supersecret123"},
+                metadata={"db_password": "Tr0ub4dor3xKq9vLmZ"},
                 availability_zone="nova",
                 snapshot_id="",
                 source_volume_id="",
@@ -204,7 +204,9 @@ class Test_blockstorage_volume_metadata_sensitive_data:
                 is_bootable=False,
                 is_multiattach=False,
                 attachments=[],
-                metadata={"api_key": "sk-1234567890"},
+                metadata={
+                    "api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+                },
                 availability_zone="nova",
                 snapshot_id="",
                 source_volume_id="",
@@ -255,7 +257,9 @@ class Test_blockstorage_volume_metadata_sensitive_data:
                 is_bootable=False,
                 is_multiattach=False,
                 attachments=[],
-                metadata={"ssh_key": "-----BEGIN RSA PRIVATE KEY-----"},
+                metadata={
+                    "ssh_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCUzlT9QGi8ZSr5\nk+LTRz/1TaiCCs6o1icW4cur0Q0hdBnbRJXUdjlQsgzmBvCBNkGHI8hb/RUPssvc\nDLU5kOQ3Wp2KgtbphhZ2PfpuJrzwHL1ejcJkRxegm/aTdmpoQKcxGeehAfHbmlLA\nxdfn6wPDfGji973yiRH56JRukJAaqF50HC2a/AVNC5HtZoVlbQ+WvVbYVUnPxNkv\nPpc53PjrBgWiTtdMONEqJ3jDiaqfUBt+TZYF0CFc9HgjnUniRX28OukDyLu+idOz\nFKyZxMXtqexkAvQLDW1PATpZgVQ7hJoCD8UVTXAtcgzPq5fA6AR2URiECHI6ZyL0\nUmixKfMNAgMBAAECggEAJRzp5wjdpmEgDQOkjpfGXJ6sAJUD8mmI8cTKeJWIzhdo\nDH8oVEdRJ65kl6lS6hMXWEZlJgYyrsnj3MPBnjQkKycbRCy6P59s8jwmfbsFI+iz\nFUZLXZm6i5jicGhYBRzc5hrlIYu73863RXOClAnSFDsu6K6rzfYASQFIJeRBwJfs\njqXinuun/h2zGjpiY+TtNsa8c+nC7f3sGsTzNJugDvBPWQzsnAMzXJqiyharre4V\no157XIOvdC0joIp8j/Ib1ZtMfz1K1LcgBgw0szSieIw0Rq8yQ0Ek7GtLh43jG+ap\nvcSEesTD1p4mjPXoWkPG8KYd4iwGedZaePfheVcKKQKBgQDNE03SWv18AH0d4fpB\nlFAtRybCfSvMORzBrt2oilz8wDmK+Zga5o+phCnM8v3eJy1v8BvIQ9RvwQA2uVgZ\nr701wNMpVrTsMujk83oVRhimZLk6Hyw07wmMgEHX7+izkm2Lk4Lk7Zol3VRfnWG6\nmIcUk7xB1yAs3mudsfx0VO0QyQKBgQC5wfdqCLj2hZk4sMZu8Bth+BHKChGItmDk\nAW7aNt+gaPyoryOJoi2OUO8ud8EyuqXiuslSk2pPtjvLhCppkoq6V8kmPAUzaxFk\n4nDEAxT9Un8IJ0j2ebv+koQKsBWjssbVSjrZgIcYIDK1QblgbCp2FSE3ima+V8ip\nOdNjiatWJQKBgEX8lox5nRSanhh6rIuA8DPjmmi5ix7xRs0avm7seXuQppK1R6G2\nmcTCY/mb2+Pa/vi6uuCHtZJGDaqfal+pyCr2GZp8CtapMS4hocJs37C5ozUguld+\nVIXsp4voRkQybsw5lWxHYloVxNu0vEuQDlmJabAWmNZ3OcbhnUSeTyFxAoGAFtkZ\n0owCHChwoT11Gt4jsBgwL/avE27DWigm92Y6eWOQeDsalupAyjmAQenu9Itqrgml\ni6egMu/KSQ0Xnmas86CqmC5XwWxQ9mS31BRA96u2/ky+t7pfej+RSDNCZiEuPbvk\noy4g78G+GvdbktWbH20X6dn3K0Bm6RG4w4yCa5UCgYBs0zAVs0DZmM8SUZJA/HuQ\nN6a1vKKns7xKw5N3SmX1KbDhx5LSZXfbUo2+QktE7iRf9G2f1o0q8kz9l/4AGXi1\nKJNUHupWoaQzGNrzAb27TUtFA0ocMG8KnqxjANWox5oPJS9OU5tw5H5dxeI/Senc\nkYW6eCnRzPcmBqex6Vuw4w==\n-----END PRIVATE KEY-----\n"
+                },
                 availability_zone="nova",
                 snapshot_id="",
                 source_volume_id="",
@@ -323,7 +327,7 @@ class Test_blockstorage_volume_metadata_sensitive_data:
                 is_bootable=False,
                 is_multiattach=False,
                 attachments=[],
-                metadata={"admin_password": "secret123"},
+                metadata={"admin_password": "Tr0ub4dor3xKq9vLmZ"},
                 availability_zone="nova",
                 snapshot_id="",
                 source_volume_id="",
@@ -371,7 +375,7 @@ class Test_blockstorage_volume_metadata_sensitive_data:
                 metadata={
                     "environment": "production",
                     "application": "web-app",
-                    "db_password": "supersecret123",
+                    "db_password": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
                     "region": "us-east",
                 },
                 availability_zone="nova",

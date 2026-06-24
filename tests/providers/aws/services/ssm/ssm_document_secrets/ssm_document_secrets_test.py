@@ -33,7 +33,7 @@ class Test_ssm_documents_secrets:
                 arn=document_arn,
                 name=document_name,
                 region=AWS_REGION_US_EAST_1,
-                content={"db_password": "test-password"},
+                content={"db_password": "Tr0ub4dor3xKq9vLmZ"},
                 account_owners=[],
             )
         }
@@ -56,7 +56,7 @@ class Test_ssm_documents_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in SSM Document {document_name} -> Secret Keyword on line 2."
+                == f"Potential secret found in SSM Document {document_name} -> Generic Password on line 2."
             )
 
     def test_document_no_secrets(self):

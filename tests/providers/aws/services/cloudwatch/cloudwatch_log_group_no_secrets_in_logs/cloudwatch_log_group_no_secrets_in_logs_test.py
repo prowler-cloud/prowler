@@ -132,7 +132,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             logEvents=[
                 {
                     "timestamp": timestamp,
-                    "message": "password = password123",
+                    "message": 'password = "Tr0ub4dor3xKq9vLmZ"',
                 }
             ],
         )
@@ -174,7 +174,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secrets found in log group test in log stream test stream at {dttimestamp} - Secret Keyword on line 1."
+                == f"Potential secrets found in log group test in log stream test stream at {dttimestamp} - Generic Password on line 1."
             )
             assert result[0].resource_id == "test"
             assert (

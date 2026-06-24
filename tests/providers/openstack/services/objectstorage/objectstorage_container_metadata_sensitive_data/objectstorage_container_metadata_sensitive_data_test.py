@@ -157,7 +157,7 @@ class Test_objectstorage_container_metadata_sensitive_data:
                 history_location="",
                 sync_to="",
                 sync_key="",
-                metadata={"db_password": "supersecret123"},
+                metadata={"db_password": "Tr0ub4dor3xKq9vLmZ"},
             )
         ]
 
@@ -217,7 +217,7 @@ class Test_objectstorage_container_metadata_sensitive_data:
                 history_location="",
                 sync_to="",
                 sync_key="",
-                metadata={"admin_password": "secret123"},
+                metadata={"admin_password": "Tr0ub4dor3xKq9vLmZ"},
             ),
         ]
 

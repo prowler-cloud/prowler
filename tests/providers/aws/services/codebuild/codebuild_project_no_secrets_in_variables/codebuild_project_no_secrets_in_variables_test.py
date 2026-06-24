@@ -202,7 +202,11 @@ class Test_codebuild_project_no_secrets_in_variables:
                 environment_variables=[
                     {
                         "name": "AWS_ACCESS_KEY_ID",
-                        "value": "AKIAIOSFODNN7EXAMPLE",
+                        # Realistic fake secret that Kingfisher detects. The classic
+                        # "AKIAIOSFODNN7EXAMPLE" placeholder is suppressed by
+                        # Kingfisher and its AWS Access Key rule is not enabled, so a
+                        # detectable provider secret is used instead.
+                        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
                         "type": "PLAINTEXT",
                     }
                 ],
@@ -231,9 +235,18 @@ class Test_codebuild_project_no_secrets_in_variables:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            # The JWT paired with a "KEY" variable name yields both a
+            # JWT and a Generic API Key finding; order is non-deterministic.
+            assert result[0].status_extended.startswith(
+                "CodeBuild project SensitiveProject has sensitive environment plaintext credentials in variables:"
+            )
             assert (
-                result[0].status_extended
-                == "CodeBuild project SensitiveProject has sensitive environment plaintext credentials in variables: AWS Access Key in variable AWS_ACCESS_KEY_ID."
+                "JSON Web Token (base64url-encoded) in variable AWS_ACCESS_KEY_ID"
+                in result[0].status_extended
+            )
+            assert (
+                "Generic API Key in variable AWS_ACCESS_KEY_ID"
+                in result[0].status_extended
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
@@ -373,12 +386,12 @@ class Test_codebuild_project_no_secrets_in_variables:
                 environment_variables=[
                     {
                         "name": "AWS_DUMB_ACCESS_KEY",
-                        "value": "AKIAIOSFODNN7EXAMPLE",
+                        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
                         "type": "PLAINTEXT",
                     },
                     {
                         "name": "AWS_ACCESS_KEY_ID",
-                        "value": "AKIAIOSFODNN7EXAMPLE",
+                        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
                         "type": "PLAINTEXT",
                     },
                 ],
@@ -409,10 +422,21 @@ class Test_codebuild_project_no_secrets_in_variables:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == "CodeBuild project SensitiveProject has sensitive environment plaintext credentials in variables: AWS Access Key in variable AWS_ACCESS_KEY_ID."
+            # AWS_DUMB_ACCESS_KEY is excluded, so only AWS_ACCESS_KEY_ID is
+            # scanned; its JWT + "KEY" name yields both a JWT and a
+            # Generic API Key finding with non-deterministic order.
+            assert result[0].status_extended.startswith(
+                "CodeBuild project SensitiveProject has sensitive environment plaintext credentials in variables:"
             )
+            assert (
+                "JSON Web Token (base64url-encoded) in variable AWS_ACCESS_KEY_ID"
+                in result[0].status_extended
+            )
+            assert (
+                "Generic API Key in variable AWS_ACCESS_KEY_ID"
+                in result[0].status_extended
+            )
+            assert "AWS_DUMB_ACCESS_KEY" not in result[0].status_extended
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
@@ -434,12 +458,12 @@ class Test_codebuild_project_no_secrets_in_variables:
                 environment_variables=[
                     {
                         "name": "AWS_DUMB_ACCESS_KEY",
-                        "value": "AKIAIOSFODNN7EXAMPLE",
+                        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
                         "type": "PLAINTEXT",
                     },
                     {
                         "name": "AWS_ACCESS_KEY_ID",
-                        "value": "AKIAIOSFODNN7EXAMPLE",
+                        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
                         "type": "PLAINTEXT",
                     },
                 ],
@@ -468,10 +492,21 @@ class Test_codebuild_project_no_secrets_in_variables:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == "CodeBuild project SensitiveProject has sensitive environment plaintext credentials in variables: AWS Access Key in variable AWS_DUMB_ACCESS_KEY, AWS Access Key in variable AWS_ACCESS_KEY_ID."
+            # Both variables hold a JWT and have "KEY" in their name, so
+            # each yields a JWT and a Generic API Key finding; order is
+            # non-deterministic.
+            assert result[0].status_extended.startswith(
+                "CodeBuild project SensitiveProject has sensitive environment plaintext credentials in variables:"
             )
+            for var_name in ("AWS_DUMB_ACCESS_KEY", "AWS_ACCESS_KEY_ID"):
+                assert (
+                    f"JSON Web Token (base64url-encoded) in variable {var_name}"
+                    in result[0].status_extended
+                )
+                assert (
+                    f"Generic API Key in variable {var_name}"
+                    in result[0].status_extended
+                )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
