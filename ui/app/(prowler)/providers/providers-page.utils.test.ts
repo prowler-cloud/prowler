@@ -1010,8 +1010,10 @@ describe("loadProvidersAccountsViewData", () => {
     );
   });
 
-  it("falls back to scan-based detection when /schedules is unavailable (OSS)", async () => {
-    // Given — /schedules errors, but provider-1 has a materialized scheduled scan.
+  it("does not infer provider schedules from materialized scans when /schedules is unavailable", async () => {
+    // Given — /schedules errors, and provider-1 still has a materialized
+    // scheduled scan. That scan is historical execution state, not schedule
+    // configuration.
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
     providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     scansActionsMock.getScans.mockResolvedValue({
@@ -1034,9 +1036,9 @@ describe("loadProvidersAccountsViewData", () => {
       isCloud: false,
     });
 
-    // Then — scan-based path still flags the provider; no throw from the error.
+    // Then — only provider scan_* fields or /schedules can mark a schedule.
     expect(findProviderRow(viewData.rows, "provider-1")?.hasSchedule).toBe(
-      true,
+      false,
     );
     expect(findProviderRow(viewData.rows, "provider-2")?.hasSchedule).toBe(
       false,

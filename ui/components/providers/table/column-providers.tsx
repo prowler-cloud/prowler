@@ -258,12 +258,7 @@ export function getColumnProviders(
           );
         }
 
-        return (
-          <LinkToScans
-            hasSchedule={row.original.hasSchedule}
-            schedule={row.original.scheduleSummary}
-          />
-        );
+        return <LinkToScans schedule={row.original.scheduleSummary} />;
       },
       enableSorting: false,
     },
