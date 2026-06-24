@@ -22,6 +22,7 @@ import { FormButtons } from "@/components/ui/form";
 import { toast, ToastAction } from "@/components/ui/toast";
 import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
+  buildScheduleAttributesFromProvider,
   getScanScheduleCapability,
   getScheduleFormDefaults,
   getScheduleFormValues,
@@ -123,10 +124,25 @@ function LaunchScanForm({
     .filter((provider) => provider.attributes.connection.connected !== true)
     .map((provider) => provider.id);
 
+  const getProviderScheduleAttributes = (id: string) => {
+    const selectedProvider = providers.find((provider) => provider.id === id);
+
+    return selectedProvider
+      ? buildScheduleAttributesFromProvider(selectedProvider.attributes)
+      : undefined;
+  };
+
   const loadSchedule = async (id: string) => {
     requestedProviderRef.current = id;
     if (!id) {
       setScheduleLoad(SCHEDULE_LOAD_STATE.IDLE);
+      return;
+    }
+
+    const providerScheduleAttributes = getProviderScheduleAttributes(id);
+    if (providerScheduleAttributes) {
+      scheduleForm.reset(getScheduleFormValues(providerScheduleAttributes));
+      setScheduleLoad(SCHEDULE_LOAD_STATE.LOADED);
       return;
     }
 

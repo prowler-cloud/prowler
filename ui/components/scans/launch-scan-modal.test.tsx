@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   getScheduleMock,
@@ -191,6 +191,10 @@ describe("LaunchScanModal", () => {
     vi.clearAllMocks();
     searchParamsValue.current = "";
     scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("shows a searchable provider selector", () => {
@@ -448,6 +452,64 @@ describe("LaunchScanModal", () => {
       expect(toastMock).toHaveBeenCalledWith(
         expect.objectContaining({ title: "Scan schedule saved" }),
       );
+    });
+
+    it("keeps the upcoming local hour when provider scan fields say there is no schedule", async () => {
+      // Given
+      const user = userEvent.setup();
+      vi.setSystemTime(new Date(2026, 5, 10, 11, 59, 0, 0));
+      getScheduleMock.mockResolvedValue({
+        data: {
+          type: "schedules",
+          id: provider.id,
+          attributes: {
+            scan_enabled: true,
+            scan_frequency: "DAILY",
+            scan_hour: 0,
+            scan_timezone: "UTC",
+            scan_interval_hours: null,
+            scan_day_of_week: null,
+            scan_day_of_month: null,
+          },
+        },
+      });
+      const providerWithoutSchedule = {
+        ...provider,
+        attributes: {
+          ...provider.attributes,
+          scan_enabled: true,
+          scan_frequency: "DAILY" as const,
+          scan_hour: null,
+          scan_timezone: "UTC",
+          scan_interval_hours: null,
+          scan_day_of_week: null,
+          scan_day_of_month: null,
+          next_scan_at: null,
+          last_scan_at: null,
+        },
+      };
+
+      render(
+        <LaunchScanModal
+          open
+          onOpenChange={vi.fn()}
+          providers={[providerWithoutSchedule]}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+        />,
+      );
+
+      // When
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+
+      // Then
+      expect(
+        await screen.findByRole("combobox", { name: "Scan Time" }),
+      ).toHaveTextContent("12:00pm");
+      expect(
+        screen.getByRole("combobox", { name: "Scan Time" }),
+      ).not.toHaveTextContent("12:00am");
+      expect(getScheduleMock).not.toHaveBeenCalled();
     });
 
     it("launches the initial scan when the checkbox is checked", async () => {
