@@ -103,10 +103,6 @@ def _install_compliance_catalog_test_cache() -> None:
     import prowler.lib.check.compliance_models as compliance_models
     from prowler.lib.check.models import CheckMetadata
 
-    framework_cache: dict[str, dict] = {}
-    checks_cache: dict[str, dict] = {}
-    path_cache: dict[str, object] = {}
-
     original_bulk_frameworks = (
         compliance_models.get_bulk_compliance_frameworks_universal
     )
@@ -114,19 +110,19 @@ def _install_compliance_catalog_test_cache() -> None:
     original_load = compliance_models.load_compliance_framework_universal
 
     def cached_bulk_frameworks(provider):
-        if provider not in framework_cache:
-            framework_cache[provider] = original_bulk_frameworks(provider)
-        return framework_cache[provider]
+        if provider not in _COMPLIANCE_FRAMEWORK_CACHE:
+            _COMPLIANCE_FRAMEWORK_CACHE[provider] = original_bulk_frameworks(provider)
+        return _COMPLIANCE_FRAMEWORK_CACHE[provider]
 
     def cached_get_bulk(provider):
-        if provider not in checks_cache:
-            checks_cache[provider] = original_get_bulk(provider)
-        return checks_cache[provider]
+        if provider not in _COMPLIANCE_CHECKS_CACHE:
+            _COMPLIANCE_CHECKS_CACHE[provider] = original_get_bulk(provider)
+        return _COMPLIANCE_CHECKS_CACHE[provider]
 
     def cached_load(path):
-        if path not in path_cache:
-            path_cache[path] = original_load(path)
-        return path_cache[path]
+        if path not in _COMPLIANCE_PATH_CACHE:
+            _COMPLIANCE_PATH_CACHE[path] = original_load(path)
+        return _COMPLIANCE_PATH_CACHE[path]
 
     compliance_models.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
     compliance_models.load_compliance_framework_universal = cached_load
@@ -139,7 +135,36 @@ def _install_compliance_catalog_test_cache() -> None:
     api_compliance.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
 
 
+# Module-scoped so the ``_compliance_cache_guard`` fixture below can reset them.
+# Keeping them out of ``_install_compliance_catalog_test_cache``'s local scope is
+# what makes the caches resettable between tests; the wrappers above close over
+# these names, and the original loaders stay referenced so patched behaviour is
+# still honoured.
+_COMPLIANCE_FRAMEWORK_CACHE: dict[str, dict] = {}
+_COMPLIANCE_CHECKS_CACHE: dict[str, dict] = {}
+_COMPLIANCE_PATH_CACHE: dict[str, object] = {}
+
+
 _install_compliance_catalog_test_cache()
+
+
+@pytest.fixture(autouse=True)
+def _compliance_cache_guard(request):
+    """Reset the compliance catalog caches after any test that used ``monkeypatch``.
+
+    The session-wide caches in ``_install_compliance_catalog_test_cache`` let the
+    read-only, parametrized compliance tests parse the ~100 catalog JSONs once
+    instead of dozens of times. A test that swaps a loader (or mutates a returned
+    object) could otherwise leak that state into later tests through the shared
+    dicts. Using ``monkeypatch`` as the opt-in signal keeps the full speed-up for
+    catalog-reading tests while giving patching tests a clean slate afterwards;
+    the next test simply repopulates the caches from disk.
+    """
+    yield
+    if "monkeypatch" in request.fixturenames:
+        _COMPLIANCE_FRAMEWORK_CACHE.clear()
+        _COMPLIANCE_CHECKS_CACHE.clear()
+        _COMPLIANCE_PATH_CACHE.clear()
 
 
 def today_after_n_days(n_days: int) -> str:
