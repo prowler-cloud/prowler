@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 from typing import Optional, Tuple
-=======
 from math import isfinite
->>>>>>> 4e00cfd1b (fix(api): avoid mutating API key manager during auth (#11686))
 from uuid import UUID
 
 from cryptography.fernet import InvalidToken

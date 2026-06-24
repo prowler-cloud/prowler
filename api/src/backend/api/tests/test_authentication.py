@@ -1,21 +1,18 @@
 import time
+
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
+
+from django.db.models.query import QuerySet
 from django.test import RequestFactory
 from rest_framework.exceptions import AuthenticationFailed
 
 from api.authentication import SSEAuthentication, TenantAPIKeyAuthentication
 from api.db_router import MainRouter
 from api.models import TenantAPIKey
-<<<<<<< HEAD
-=======
-from django.db.models.query import QuerySet
-from django.test import RequestFactory
-from rest_framework.exceptions import AuthenticationFailed
->>>>>>> 4e00cfd1b (fix(api): avoid mutating API key manager during auth (#11686))
 
 
 @pytest.mark.django_db
