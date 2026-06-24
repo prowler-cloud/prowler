@@ -25,6 +25,15 @@ from api.models import (
 from prowler.lib.check.models import Severity
 
 
+SYNC_RESULT_EMPTY = {
+    "nodes": 0,
+    "child_nodes": 0,
+    "relationships": 0,
+    "structural_relationships": 0,
+    "item_relationships": 0,
+}
+
+
 @pytest.mark.django_db
 class TestAttackPathsRun:
     # Patching with decorators as we got a `SyntaxError: too many statically nested blocks` error if we use context managers
@@ -41,7 +50,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch(
         "tasks.jobs.attack_paths.scan.sync.sync_graph",
-        return_value={"nodes": 0, "relationships": 0},
+        return_value=SYNC_RESULT_EMPTY,
     )
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph", return_value=0)
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
@@ -176,12 +185,12 @@ class TestAttackPathsRun:
             attack_paths_scan, StateChoices.COMPLETED, ingestion_result
         )
         mock_set_provider_graph_data_ready.assert_called_once_with(
-            attack_paths_scan, False
+            attack_paths_scan, False, "neo4j"
         )
         mock_set_graph_data_ready.assert_called_once_with(attack_paths_scan, True)
         # is_migrated is flipped to True only after the sync succeeds, so reads
         # don't switch to the new catalog/sink before the graph is live.
-        mock_set_scan_migrated.assert_called_once_with(attack_paths_scan, True)
+        mock_set_scan_migrated.assert_called_once_with(attack_paths_scan, True, "neo4j")
 
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
@@ -500,7 +509,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch(
         "tasks.jobs.attack_paths.scan.sync.sync_graph",
-        return_value={"nodes": 0, "relationships": 0},
+        return_value=SYNC_RESULT_EMPTY,
     )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
@@ -596,8 +605,8 @@ class TestAttackPathsRun:
                 attack_paths_run(str(tenant.id), str(scan.id), "task-456")
 
         assert mock_set_provider_graph_data_ready.call_args_list == [
-            call(attack_paths_scan, False),
-            call(attack_paths_scan, True),
+            call(attack_paths_scan, False, "neo4j"),
+            call(attack_paths_scan, True, "neo4j"),
         ]
 
     @patch(
@@ -710,7 +719,7 @@ class TestAttackPathsRun:
 
         # Only called with False (gate), never with True (no recovery for partial data)
         mock_set_provider_graph_data_ready.assert_called_once_with(
-            attack_paths_scan, False
+            attack_paths_scan, False, "neo4j"
         )
 
     @patch(
@@ -733,7 +742,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch(
         "tasks.jobs.attack_paths.scan.sync.sync_graph",
-        return_value={"nodes": 0, "relationships": 0},
+        return_value=SYNC_RESULT_EMPTY,
     )
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
@@ -833,11 +842,11 @@ class TestAttackPathsRun:
         ]
         # set_provider_graph_data_ready only called once with False (the gate)
         mock_set_provider_graph_data_ready.assert_called_once_with(
-            attack_paths_scan, False
+            attack_paths_scan, False, "neo4j"
         )
         # is_migrated is flipped once after the sync and is not touched again by
         # the failure-recovery branch
-        mock_set_scan_migrated.assert_called_once_with(attack_paths_scan, True)
+        mock_set_scan_migrated.assert_called_once_with(attack_paths_scan, True, "neo4j")
 
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
@@ -855,7 +864,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch(
         "tasks.jobs.attack_paths.scan.sync.sync_graph",
-        return_value={"nodes": 0, "relationships": 0},
+        return_value=SYNC_RESULT_EMPTY,
     )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
@@ -2109,6 +2118,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan is not None
         assert attack_paths_scan.graph_data_ready is False
         assert attack_paths_scan.is_migrated is False
+        assert attack_paths_scan.sink_backend == "neo4j"
 
     def test_create_attack_paths_scan_inherits_true_from_previous(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -2130,6 +2140,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
             state=StateChoices.COMPLETED,
             graph_data_ready=True,
             is_migrated=True,
+            sink_backend="neptune",
         )
 
         new_scan = Scan.objects.create(
@@ -2152,6 +2163,61 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.graph_data_ready is True
         # is_migrated tracks the data being served: inherited from the ready scan
         assert attack_paths_scan.is_migrated is True
+        assert attack_paths_scan.sink_backend == "neptune"
+
+    def test_create_attack_paths_scan_prefers_active_sink_ready_scan(
+        self, tenants_fixture, providers_fixture, scans_fixture, settings
+    ):
+        from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
+
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            is_migrated=False,
+            sink_backend="neo4j",
+        )
+        AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            is_migrated=True,
+            sink_backend="neptune",
+        )
+
+        new_scan = Scan.objects.create(
+            name="New Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            tenant_id=tenant.id,
+        )
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            attack_paths_scan = create_attack_paths_scan(
+                str(tenant.id), str(new_scan.id), provider.id
+            )
+
+        assert attack_paths_scan is not None
+        assert attack_paths_scan.graph_data_ready is True
+        assert attack_paths_scan.is_migrated is False
+        assert attack_paths_scan.sink_backend == "neo4j"
 
     def test_create_attack_paths_scan_inherits_is_migrated_false_from_legacy_ready(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -2174,6 +2240,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
             state=StateChoices.COMPLETED,
             graph_data_ready=True,
             is_migrated=False,
+            sink_backend="neo4j",
         )
 
         new_scan = Scan.objects.create(
@@ -2196,6 +2263,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.graph_data_ready is True
         # Reads stay on the legacy catalog/backend until this scan's own sync
         assert attack_paths_scan.is_migrated is False
+        assert attack_paths_scan.sink_backend == "neo4j"
 
     def test_create_attack_paths_scan_inherits_false_when_no_previous_ready(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -2216,6 +2284,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
             scan=scan,
             state=StateChoices.FAILED,
             graph_data_ready=False,
+            sink_backend="neptune",
         )
 
         new_scan = Scan.objects.create(
@@ -2237,6 +2306,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan is not None
         assert attack_paths_scan.graph_data_ready is False
         assert attack_paths_scan.is_migrated is False
+        assert attack_paths_scan.sink_backend == "neo4j"
 
     def test_set_graph_data_ready_updates_field(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -2343,7 +2413,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.state == StateChoices.FAILED
         assert attack_paths_scan.graph_data_ready is True
 
-    def test_set_provider_graph_data_ready_updates_all_scans_for_provider(
+    def test_set_provider_graph_data_ready_updates_all_scans_for_provider_sink(
         self, tenants_fixture, providers_fixture, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import set_provider_graph_data_ready
@@ -2371,6 +2441,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
             scan=scan_a,
             state=StateChoices.COMPLETED,
             graph_data_ready=True,
+            sink_backend="neptune",
         )
         new_ap_scan = AttackPathsScan.objects.create(
             tenant_id=tenant.id,
@@ -2378,6 +2449,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
             scan=scan_b,
             state=StateChoices.EXECUTING,
             graph_data_ready=True,
+            sink_backend="neptune",
         )
 
         with patch(
@@ -2390,6 +2462,48 @@ class TestAttackPathsDbUtilsGraphDataReady:
         new_ap_scan.refresh_from_db()
         assert old_ap_scan.graph_data_ready is False
         assert new_ap_scan.graph_data_ready is False
+
+    def test_set_provider_graph_data_ready_preserves_other_sink_scans(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import set_provider_graph_data_ready
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        legacy_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neo4j",
+        )
+        neptune_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.EXECUTING,
+            graph_data_ready=True,
+            sink_backend="neptune",
+        )
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            set_provider_graph_data_ready(neptune_scan, False)
+
+        legacy_scan.refresh_from_db()
+        neptune_scan.refresh_from_db()
+        assert legacy_scan.graph_data_ready is True
+        assert neptune_scan.graph_data_ready is False
 
     def test_set_provider_graph_data_ready_does_not_affect_other_providers(
         self, tenants_fixture, providers_fixture, scans_fixture

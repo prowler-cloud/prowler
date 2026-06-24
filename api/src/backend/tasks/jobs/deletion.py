@@ -6,6 +6,7 @@ from tasks.jobs.queries import (
 )
 
 from api.attack_paths import database as graph_database
+from api.attack_paths import sink as sink_module
 from api.db_router import MainRouter
 from api.db_utils import batch_delete, rls_transaction
 from api.models import (
@@ -77,6 +78,12 @@ def delete_provider(tenant_id: str, pk: str):
                 "id", flat=True
             )
         )
+        attack_paths_sink_backends = list(
+            AttackPathsScan.all_objects.filter(provider=instance)
+            .values_list("sink_backend", flat=True)
+            .distinct()
+            .order_by("sink_backend")
+        )
 
         deletion_steps = [
             ("Scan Summaries", ScanSummary.all_objects.filter(scan__provider=instance)),
@@ -98,7 +105,13 @@ def delete_provider(tenant_id: str, pk: str):
     # Delete the Attack Paths' graph data related to the provider from the tenant database
     tenant_database_name = graph_database.get_database_name(tenant_id)
     try:
-        graph_database.drop_subgraph(tenant_database_name, str(pk))
+        if attack_paths_sink_backends:
+            for sink_backend in attack_paths_sink_backends:
+                sink_module.get_backend_for_name(sink_backend).drop_subgraph(
+                    tenant_database_name, str(pk)
+                )
+        else:
+            graph_database.drop_subgraph(tenant_database_name, str(pk))
 
     except graph_database.GraphDatabaseQueryException as gdb_error:
         logger.error(f"Error deleting Provider graph data: {gdb_error}")

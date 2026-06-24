@@ -13,6 +13,7 @@ from api.attack_paths.sink.factory import (
     SinkBackend,
     close,
     get_backend,
+    get_backend_for_name,
     get_backend_for_scan,
     init,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "SinkBackend",
     "close",
     "get_backend",
+    "get_backend_for_name",
     "get_backend_for_scan",
     "init",
 ]

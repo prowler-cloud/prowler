@@ -145,7 +145,7 @@ def test_execute_query_serializes_graph(
         definition,
         parameters,
         provider_id=provider_id,
-        scan=MagicMock(is_migrated=False),
+        scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
     )
 
     sink_backend_stub.execute_read_query.assert_called_once_with(
@@ -181,7 +181,7 @@ def test_execute_query_wraps_graph_errors(
                 definition,
                 parameters,
                 provider_id="test-provider-123",
-                scan=MagicMock(is_migrated=False),
+                scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
             )
 
     mock_logger.error.assert_called_once()
@@ -214,7 +214,7 @@ def test_execute_query_raises_permission_denied_on_read_only(
             definition,
             parameters,
             provider_id="test-provider-123",
-            scan=MagicMock(is_migrated=False),
+            scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
         )
 
 
@@ -468,7 +468,7 @@ def test_execute_custom_query_serializes_graph(
         "db-tenant-test",
         "MATCH (n) RETURN n",
         provider_id,
-        scan=MagicMock(is_migrated=False),
+        scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
     )
 
     sink_backend_stub.execute_read_query.assert_called_once()
@@ -480,6 +480,27 @@ def test_execute_custom_query_serializes_graph(
     assert result["relationships"][0]["label"] == "OWNS"
     assert result["truncated"] is False
     assert result["total_nodes"] == 2
+
+
+def test_execute_custom_query_adds_timeout_for_neptune_scan(sink_backend_stub):
+    graph_result = MagicMock()
+    graph_result.nodes = []
+    graph_result.relationships = []
+    sink_backend_stub.execute_read_query.return_value = graph_result
+
+    with patch(
+        "api.attack_paths.views_helpers.sink_module.get_backend_for_scan",
+        return_value=sink_backend_stub,
+    ):
+        views_helpers.execute_custom_query(
+            "db-tenant-test",
+            "MATCH (n) RETURN n",
+            "provider-1",
+            scan=MagicMock(is_migrated=True, sink_backend="neptune"),
+        )
+
+    cypher = sink_backend_stub.execute_read_query.call_args[0][1]
+    assert cypher.startswith("USING QUERY:TIMEOUTMILLISECONDS")
 
 
 def test_execute_custom_query_raises_permission_denied_on_write(sink_backend_stub):
@@ -494,7 +515,7 @@ def test_execute_custom_query_raises_permission_denied_on_write(sink_backend_stu
             "db-tenant-test",
             "CREATE (n) RETURN n",
             "provider-1",
-            scan=MagicMock(is_migrated=False),
+            scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
         )
 
 
@@ -508,7 +529,7 @@ def test_execute_custom_query_wraps_graph_errors(sink_backend_stub):
                 "db-tenant-test",
                 "MATCH (n) RETURN n",
                 "provider-1",
-                scan=MagicMock(is_migrated=False),
+                scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
             )
 
     mock_logger.error.assert_called_once()
@@ -695,16 +716,20 @@ def test_execute_read_query_rejects_apoc_real_create(mock_neo4j_session, cypher)
 
 @pytest.fixture
 def mock_schema_session():
-    """Mock get_session for cartography schema tests."""
+    """Mock the routed sink backend session for cartography schema tests."""
     mock_result = MagicMock()
     mock_session = MagicMock()
     mock_session.run.return_value = mock_result
+    mock_backend = MagicMock()
 
     with patch(
-        "api.attack_paths.views_helpers.graph_database.get_session"
-    ) as mock_get_session:
-        mock_get_session.return_value.__enter__ = MagicMock(return_value=mock_session)
-        mock_get_session.return_value.__exit__ = MagicMock(return_value=False)
+        "api.attack_paths.views_helpers.sink_module.get_backend_for_scan",
+        return_value=mock_backend,
+    ):
+        mock_backend.get_session.return_value.__enter__ = MagicMock(
+            return_value=mock_session
+        )
+        mock_backend.get_session.return_value.__exit__ = MagicMock(return_value=False)
         yield mock_session, mock_result
 
 
@@ -715,7 +740,9 @@ def test_get_cartography_schema_returns_urls(mock_schema_session):
         "module_version": "0.129.0",
     }
 
-    result = views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
+    result = views_helpers.get_cartography_schema(
+        "db-tenant-test", "provider-123", MagicMock(sink_backend="neo4j")
+    )
 
     mock_session.run.assert_called_once()
     assert result["id"] == "aws-0.129.0"
@@ -731,7 +758,9 @@ def test_get_cartography_schema_returns_none_when_no_data(mock_schema_session):
     _, mock_result = mock_schema_session
     mock_result.single.return_value = None
 
-    result = views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
+    result = views_helpers.get_cartography_schema(
+        "db-tenant-test", "provider-123", MagicMock(sink_backend="neo4j")
+    )
 
     assert result is None
 
@@ -753,21 +782,29 @@ def test_get_cartography_schema_extracts_provider(
         "module_version": "1.0.0",
     }
 
-    result = views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
+    result = views_helpers.get_cartography_schema(
+        "db-tenant-test", "provider-123", MagicMock(sink_backend="neo4j")
+    )
 
     assert result["id"] == f"{expected_provider}-1.0.0"
     assert result["provider"] == expected_provider
 
 
 def test_get_cartography_schema_wraps_database_error():
+    mock_backend = MagicMock()
+    mock_backend.get_session.side_effect = graph_database.GraphDatabaseQueryException(
+        "boom"
+    )
     with (
         patch(
-            "api.attack_paths.views_helpers.graph_database.get_session",
-            side_effect=graph_database.GraphDatabaseQueryException("boom"),
+            "api.attack_paths.views_helpers.sink_module.get_backend_for_scan",
+            return_value=mock_backend,
         ),
         patch("api.attack_paths.views_helpers.logger") as mock_logger,
     ):
         with pytest.raises(APIException):
-            views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
+            views_helpers.get_cartography_schema(
+                "db-tenant-test", "provider-123", MagicMock(sink_backend="neo4j")
+            )
 
     mock_logger.error.assert_called_once()

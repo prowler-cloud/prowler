@@ -104,22 +104,20 @@ def get_backend() -> SinkDatabase:
 
 
 def get_backend_for_scan(scan: AttackPathsScan) -> SinkDatabase:
-    """Route reads by the scan's schema version.
+    """Route reads by the sink that stores this scan's graph."""
+    raw_backend = getattr(scan, "sink_backend", SinkBackend.NEO4J.value)
+    if not isinstance(raw_backend, str):
+        raw_backend = SinkBackend.NEO4J.value
+    return get_backend_for_name(raw_backend)
 
-    Migrated scans live in the current sink (whichever the cluster is
-    configured for). Pre-cutover scans live in the legacy Neo4j tenant DB
-    regardless of the current setting, so they need the Neo4j backend even
-    when the active sink is Neptune.
 
-    # TODO: drop after Neptune cutover
-    """
-    if scan.is_migrated:
+def get_backend_for_name(name: SinkBackend | str) -> SinkDatabase:
+    """Return the backend named by persisted scan metadata."""
+    resolved = SinkBackend(name)
+    if resolved is _resolve_setting():
         return get_backend()
 
-    if _resolve_setting() is SinkBackend.NEPTUNE:
-        return _build_backend_cached(SinkBackend.NEO4J)
-
-    return get_backend()
+    return _build_backend_cached(resolved)
 
 
 def _build_backend_cached(name: SinkBackend) -> SinkDatabase:

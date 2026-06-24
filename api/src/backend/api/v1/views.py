@@ -2877,13 +2877,22 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        active_sink_backend = django_settings.ATTACK_PATHS_SINK_DATABASE
 
         latest_per_provider = queryset.annotate(
+            active_sink_rank=Case(
+                When(sink_backend=active_sink_backend, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
             latest_scan_rank=Window(
                 expression=RowNumber(),
                 partition_by=[F("provider_id")],
-                order_by=[F("inserted_at").desc()],
-            )
+                order_by=[
+                    F("active_sink_rank").asc(),
+                    F("inserted_at").desc(),
+                ],
+            ),
         ).filter(latest_scan_rank=1)
 
         page = self.paginate_queryset(latest_per_provider)
@@ -3102,7 +3111,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         provider_id = str(attack_paths_scan.provider_id)
 
         schema = attack_paths_views_helpers.get_cartography_schema(
-            database_name, provider_id
+            database_name, provider_id, attack_paths_scan
         )
         if not schema:
             return Response(

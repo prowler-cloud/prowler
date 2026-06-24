@@ -39,8 +39,8 @@ Pipeline steps:
 
 7. Sync the temp database into the tenant database:
    - Drop the old provider subgraph (matched by dynamic _Provider_{uuid} label).
-     graph_data_ready is set to False for all scans of this provider while
-     the swap happens so the API doesn't serve partial data.
+     graph_data_ready is set to False for scans of this provider in the
+     target sink while the swap happens so the API doesn't serve partial data.
    - Copy nodes and relationships in batches. Every synced node gets a
      _ProviderResource label and dynamic _Tenant_{uuid} / _Provider_{uuid}
      isolation labels, plus a _provider_element_id property for MERGE keys.
@@ -74,7 +74,6 @@ from tasks.jobs.attack_paths import (
     findings,
     indexes,
     internet,
-    legacy_drain,
     sync,
     utils,
 )
@@ -282,8 +281,12 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
                 indexes.create_findings_indexes(tenant_neo4j_session)
                 indexes.create_sync_indexes(tenant_neo4j_session)
 
+        target_sink_backend = settings.ATTACK_PATHS_SINK_DATABASE
+
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
-        db_utils.set_provider_graph_data_ready(attack_paths_scan, False)
+        db_utils.set_provider_graph_data_ready(
+            attack_paths_scan, False, target_sink_backend
+        )
         provider_gated = True
 
         t0 = time.perf_counter()
@@ -327,21 +330,12 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"~{rate:.0f} elem/s"
         )
         sync_completed = True
-        # TODO: drop after Neptune cutover
-        # Flip is_migrated only now: the new schema is live in the active sink,
-        # so reads can switch to the current catalog/backend. The reader gate is
-        # already closed (set_provider_graph_data_ready(False) above), so the
-        # switch is atomic from the API's view.
-        db_utils.set_scan_migrated(attack_paths_scan, True)
+        # Flip metadata only now: the new schema is live in the target sink, so
+        # reads can switch to the current catalog/backend. The target-sink gate
+        # is already closed, so the switch is atomic from the API's view.
+        db_utils.set_scan_migrated(attack_paths_scan, True, target_sink_backend)
         db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
-
-        # TODO: drop after Neptune cutover
-        if settings.ATTACK_PATHS_SINK_DATABASE == "neptune":
-            legacy_drain.drain_legacy_neo4j_for_provider(
-                tenant_id=str(prowler_api_provider.tenant_id),
-                provider_id=str(prowler_api_provider.id),
-            )
 
         logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
         graph_database.clear_cache(tenant_database_name)
@@ -370,7 +364,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             if sync_completed:
                 db_utils.set_graph_data_ready(attack_paths_scan, True)
             elif provider_gated and not subgraph_dropped:
-                db_utils.set_provider_graph_data_ready(attack_paths_scan, True)
+                db_utils.set_provider_graph_data_ready(
+                    attack_paths_scan, True, target_sink_backend
+                )
 
         except Exception:
             logger.error(

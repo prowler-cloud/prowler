@@ -41,7 +41,7 @@ def get_queries_for_provider(
     """Get all attack path queries for a provider.
 
     `is_migrated` selects the catalog: True for scans synced with the current
-    schema, False for pre-cutover scans still in the legacy Neo4j tenant DB.
+    schema, False for pre-cutover scans still using the legacy graph shape.
     # TODO: drop the `is_migrated` parameter after Neptune cutover
     """
     catalog = _QUERY_DEFINITIONS if is_migrated else _DEPRECATED_QUERY_DEFINITIONS
