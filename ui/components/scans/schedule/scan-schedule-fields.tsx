@@ -268,8 +268,7 @@ export function ScanScheduleFields({
           </p>
         ) : (
           <p className="text-text-neutral-secondary text-sm">
-            Prowler Open Source only supports daily scheduled scans. A daily
-            scan will run automatically once the account is connected.
+            A daily scan will run automatically once the account is connected.
           </p>
         ))}
 
