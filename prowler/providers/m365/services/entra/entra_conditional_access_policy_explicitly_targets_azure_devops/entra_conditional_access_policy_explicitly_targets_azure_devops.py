@@ -26,7 +26,9 @@ class entra_conditional_access_policy_explicitly_targets_azure_devops(Check):
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
-        report.status_extended = "No enabled Conditional Access Policy explicitly targets Azure DevOps."
+        report.status_extended = (
+            "No enabled Conditional Access Policy explicitly targets Azure DevOps."
+        )
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state != ConditionalAccessPolicyState.ENABLED:
