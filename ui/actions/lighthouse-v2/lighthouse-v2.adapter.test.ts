@@ -1,0 +1,168 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  buildLighthouseV2ConfigurationPayload,
+  mapLighthouseV2Configuration,
+  mapLighthouseV2Message,
+  mapLighthouseV2Model,
+  mapLighthouseV2Provider,
+  validateLighthouseV2ConfigurationInput,
+} from "./lighthouse-v2.adapter";
+
+describe("lighthouse-v2.adapter", () => {
+  describe("when mapping Cloud JSON:API resources", () => {
+    it("should map configuration attributes to UI fields", () => {
+      // Given
+      const resource: Parameters<typeof mapLighthouseV2Configuration>[0] = {
+        id: "config-1",
+        type: "lighthouse-ai-configurations",
+        attributes: {
+          provider_type: "bedrock",
+          base_url: null,
+          default_model: "anthropic.claude",
+          business_context: "Production AWS account",
+          connected: true,
+          connection_last_checked_at: "2026-06-24T10:00:00Z",
+          inserted_at: "2026-06-24T09:00:00Z",
+          updated_at: "2026-06-24T10:00:00Z",
+        },
+      };
+
+      // When
+      const config = mapLighthouseV2Configuration(resource);
+
+      // Then
+      expect(config).toEqual({
+        id: "config-1",
+        providerType: "bedrock",
+        baseUrl: null,
+        defaultModel: "anthropic.claude",
+        businessContext: "Production AWS account",
+        connected: true,
+        connectionLastCheckedAt: "2026-06-24T10:00:00Z",
+        insertedAt: "2026-06-24T09:00:00Z",
+        updatedAt: "2026-06-24T10:00:00Z",
+      });
+    });
+
+    it("should map supported provider and model payloads", () => {
+      // Given
+      const provider = {
+        id: "openai",
+        type: "lighthouse-supported-providers",
+        attributes: { name: "OpenAI" },
+      };
+      const model = {
+        id: "gpt-5.5",
+        type: "lighthouse-supported-models",
+        attributes: {
+          max_input_tokens: 100000,
+          max_output_tokens: 8192,
+          supports_function_calling: true,
+          supports_vision: false,
+          supports_reasoning: true,
+        },
+      };
+
+      // When / Then
+      expect(mapLighthouseV2Provider(provider)).toEqual({
+        id: "openai",
+        name: "OpenAI",
+      });
+      expect(mapLighthouseV2Model(model)).toEqual({
+        id: "gpt-5.5",
+        maxInputTokens: 100000,
+        maxOutputTokens: 8192,
+        supportsFunctionCalling: true,
+        supportsVision: false,
+        supportsReasoning: true,
+      });
+    });
+
+    it("should map message parts from backend names", () => {
+      // Given
+      const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
+        id: "message-1",
+        type: "lighthouse-messages",
+        attributes: {
+          role: "assistant",
+          model: "gpt-5.5",
+          token_usage: { input: 10 },
+          inserted_at: "2026-06-24T10:01:00Z",
+          parts: [
+            {
+              id: "part-1",
+              type: "lighthouse-parts",
+              attributes: {
+                part_type: "text",
+                content: { text: "Done" },
+                tool_call_outcome: null,
+                inserted_at: "2026-06-24T10:01:00Z",
+                updated_at: "2026-06-24T10:01:00Z",
+              },
+            },
+          ],
+        },
+      };
+
+      // When
+      const message = mapLighthouseV2Message(resource);
+
+      // Then
+      expect(message.parts[0]).toMatchObject({
+        id: "part-1",
+        type: "text",
+        content: { text: "Done" },
+      });
+    });
+  });
+
+  describe("when building Cloud payloads", () => {
+    it("should use Cloud Bedrock credential keys", () => {
+      // Given
+      const input = {
+        providerType: "bedrock" as const,
+        defaultModel: "anthropic.claude",
+        businessContext: "Production AWS account",
+        credentials: {
+          aws_access_key_id: "AKIA0000000000000000",
+          aws_secret_access_key: "a".repeat(40),
+          aws_region_name: "us-east-1",
+        },
+      };
+
+      // When
+      const payload = buildLighthouseV2ConfigurationPayload(input);
+
+      // Then
+      expect(payload.data).toMatchObject({
+        type: "lighthouse-ai-configurations",
+        attributes: {
+          provider_type: "bedrock",
+          credentials: {
+            aws_access_key_id: "AKIA0000000000000000",
+            aws_secret_access_key: "a".repeat(40),
+            aws_region_name: "us-east-1",
+          },
+        },
+      });
+    });
+
+    it("should require base_url for OpenAI-compatible configurations", () => {
+      // Given
+      const input = {
+        providerType: "openai-compatible" as const,
+        credentials: { api_key: "provider-key" },
+      };
+
+      // When
+      const result = validateLighthouseV2ConfigurationInput(input);
+
+      // Then
+      expect(result).toEqual({
+        success: false,
+        error: "Base URL is required for OpenAI-compatible providers.",
+      });
+    });
+  });
+});

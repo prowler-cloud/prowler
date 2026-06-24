@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-import { SelectModel } from "@/components/lighthouse/select-model";
-import type { LighthouseProvider } from "@/types/lighthouse";
+import { SelectModel } from "@/components/lighthouse-v1/select-model";
+import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 function SelectModelContent() {
   const searchParams = useSearchParams();
@@ -26,6 +26,10 @@ function SelectModelContent() {
 }
 
 export default function SelectModelPage() {
+  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+    redirect("/lighthouse/config");
+  }
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <SelectModelContent />

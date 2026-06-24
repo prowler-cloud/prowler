@@ -10,13 +10,13 @@ import React, { useEffect, useState } from "react";
 import {
   getTenantConfig,
   updateTenantConfig,
-} from "@/actions/lighthouse/lighthouse";
-import { DeleteLLMProviderForm } from "@/components/lighthouse/forms/delete-llm-provider-form";
-import { WorkflowConnectLLM } from "@/components/lighthouse/workflow";
+} from "@/actions/lighthouse-v1/lighthouse";
+import { DeleteLLMProviderForm } from "@/components/lighthouse-v1/forms/delete-llm-provider-form";
+import { WorkflowConnectLLM } from "@/components/lighthouse-v1/workflow";
 import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { NavigationHeader } from "@/components/ui";
-import type { LighthouseProvider } from "@/types/lighthouse";
+import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 interface ConnectLLMLayoutProps {
   children: React.ReactNode;

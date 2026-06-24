@@ -1,10 +1,12 @@
 "use client";
 
 import { Divider } from "@heroui/divider";
+import { Bot, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { InfoIcon, ProwlerShort } from "@/components/icons";
+import { LighthouseV2SidebarChat } from "@/components/lighthouse-v2/navigation";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
@@ -16,6 +18,11 @@ import { CollapsibleMenu } from "@/components/ui/sidebar/collapsible-menu";
 import { MenuItem } from "@/components/ui/sidebar/menu-item";
 import { useAuth } from "@/hooks";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
+import {
+  SIDEBAR_NAVIGATION_MODE,
+  type SidebarNavigationMode,
+  useSidebar,
+} from "@/hooks/use-sidebar";
 import { getMenuList } from "@/lib/menu-list";
 import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
 import { cn } from "@/lib/utils";
@@ -63,6 +70,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   );
   const isScansPage = pathname.startsWith("/scans");
   const { apiDocsUrl } = useRuntimeConfig();
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const navigationMode = useSidebar((state) => state.navigationMode);
+  const setNavigationMode = useSidebar((state) => state.setNavigationMode);
 
   const menuList = getMenuList({
     pathname,
@@ -109,42 +119,54 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         </Tooltip>
       </div>
 
+      {isCloudEnv && (
+        <SidebarNavigationModeToggle
+          isOpen={isOpen}
+          value={navigationMode}
+          onChange={setNavigationMode}
+        />
+      )}
+
       {/* Menu Items */}
       <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full [&>div>div[style]]:block!">
-          <nav className="mt-2 w-full lg:mt-6">
-            <ul className="mx-2 flex flex-col items-start gap-1 pb-4">
-              {filteredMenuList.map((group, groupIndex) => (
-                <li key={groupIndex} className="w-full">
-                  {group.menus.map((menu, menuIndex) => (
-                    <div key={menuIndex} className="w-full">
-                      {menu.submenus && menu.submenus.length > 0 ? (
-                        <CollapsibleMenu
-                          icon={menu.icon}
-                          label={menu.label}
-                          submenus={menu.submenus}
-                          defaultOpen={menu.defaultOpen}
-                          isOpen={isOpen}
-                        />
-                      ) : (
-                        <MenuItem
-                          href={menu.href}
-                          label={menu.label}
-                          icon={menu.icon}
-                          active={menu.active}
-                          target={menu.target}
-                          tooltip={menu.tooltip}
-                          isOpen={isOpen}
-                          highlight={menu.highlight}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </ScrollArea>
+        {isCloudEnv && navigationMode === SIDEBAR_NAVIGATION_MODE.CHAT ? (
+          <LighthouseV2SidebarChat isOpen={isOpen} />
+        ) : (
+          <ScrollArea className="h-full [&>div>div[style]]:block!">
+            <nav className="mt-2 w-full lg:mt-6">
+              <ul className="mx-2 flex flex-col items-start gap-1 pb-4">
+                {filteredMenuList.map((group, groupIndex) => (
+                  <li key={groupIndex} className="w-full">
+                    {group.menus.map((menu, menuIndex) => (
+                      <div key={menuIndex} className="w-full">
+                        {menu.submenus && menu.submenus.length > 0 ? (
+                          <CollapsibleMenu
+                            icon={menu.icon}
+                            label={menu.label}
+                            submenus={menu.submenus}
+                            defaultOpen={menu.defaultOpen}
+                            isOpen={isOpen}
+                          />
+                        ) : (
+                          <MenuItem
+                            href={menu.href}
+                            label={menu.label}
+                            icon={menu.icon}
+                            active={menu.active}
+                            target={menu.target}
+                            tooltip={menu.tooltip}
+                            isOpen={isOpen}
+                            highlight={menu.highlight}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </ScrollArea>
+        )}
       </div>
 
       {/* Footer */}
@@ -190,6 +212,74 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
     </div>
   );
 };
+
+function SidebarNavigationModeToggle({
+  isOpen,
+  value,
+  onChange,
+}: {
+  isOpen: boolean;
+  value: SidebarNavigationMode;
+  onChange: (value: SidebarNavigationMode) => void;
+}) {
+  const modes = [
+    {
+      value: SIDEBAR_NAVIGATION_MODE.BROWSE,
+      label: "Browse",
+      icon: LayoutDashboard,
+    },
+    {
+      value: SIDEBAR_NAVIGATION_MODE.CHAT,
+      label: "Chat",
+      icon: Bot,
+    },
+  ] as const;
+
+  return (
+    <div className={cn("mt-3 shrink-0 px-2", !isOpen && "flex justify-center")}>
+      <div
+        className={cn(
+          "border-border-neutral-secondary bg-bg-neutral-secondary flex rounded-[8px] border p-1",
+          isOpen ? "w-full" : "flex-col",
+        )}
+      >
+        {modes.map((mode) => {
+          const Icon = mode.icon;
+          const active = value === mode.value;
+          const button = (
+            <button
+              key={mode.value}
+              type="button"
+              aria-label={mode.label}
+              className={cn(
+                "flex h-8 items-center justify-center rounded-[6px] px-2 text-sm transition-colors",
+                isOpen ? "min-w-0 flex-1 gap-2" : "w-8",
+                active
+                  ? "bg-bg-neutral-tertiary text-text-neutral-primary"
+                  : "text-text-neutral-secondary hover:text-text-neutral-primary",
+              )}
+              onClick={() => onChange(mode.value)}
+            >
+              <Icon className="size-4 shrink-0" />
+              {isOpen && <span className="truncate">{mode.label}</span>}
+            </button>
+          );
+
+          if (isOpen) {
+            return button;
+          }
+
+          return (
+            <Tooltip key={mode.value} delayDuration={100}>
+              <TooltipTrigger asChild>{button}</TooltipTrigger>
+              <TooltipContent side="right">{mode.label}</TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function LaunchScanButtonContent({ isOpen }: { isOpen: boolean }) {
   return (

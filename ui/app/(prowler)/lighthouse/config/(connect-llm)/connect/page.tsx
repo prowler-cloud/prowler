@@ -1,11 +1,11 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-import { ConnectLLMProvider } from "@/components/lighthouse/connect-llm-provider";
-import { SelectBedrockAuthMethod } from "@/components/lighthouse/select-bedrock-auth-method";
-import type { LighthouseProvider } from "@/types/lighthouse";
+import { ConnectLLMProvider } from "@/components/lighthouse-v1/connect-llm-provider";
+import { SelectBedrockAuthMethod } from "@/components/lighthouse-v1/select-bedrock-auth-method";
+import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 export const BEDROCK_AUTH_MODES = {
   IAM: "iam",
@@ -43,6 +43,10 @@ function ConnectContent() {
 }
 
 export default function ConnectLLMProviderPage() {
+  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+    redirect("/lighthouse/config");
+  }
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <ConnectContent />
