@@ -1,14 +1,12 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
-import pytest
 
 import neo4j
 import neo4j.exceptions
-
-from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
-
+import pytest
 from api.attack_paths import database as graph_database
 from api.attack_paths import views_helpers
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from tasks.jobs.attack_paths.config import (
     PROVIDER_ELEMENT_ID_PROPERTY,
     get_provider_label,

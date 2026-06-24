@@ -417,17 +417,19 @@ class TestIsBuiltinProvider:
 
 
 class TestInitProvidersParserBuiltinDependencyFailure:
-    """Tests the critical behavior fix: when a built-in provider's arguments
-    module exists but its imports fail (e.g. boto3 not installed), we must
-    fail loudly with a clear message — not silently fall through to entry
-    points as if the provider were external."""
+    """Selective fail-loud: init captures failures silently, enforce emits
+    warning for non-invoked and exits for the invoked broken provider."""
 
+    @patch("sys.argv", ["prowler", "aws"])
     @patch("prowler.providers.common.arguments.Provider.is_builtin")
     @patch("prowler.providers.common.arguments.import_module")
     def test_builtin_with_missing_transitive_dep_fails_loudly(
         self, mock_import, mock_is_builtin
     ):
-        from prowler.providers.common.arguments import init_providers_parser
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
 
         mock_is_builtin.return_value = True
         mock_import.side_effect = ImportError("No module named 'boto3'")
@@ -435,14 +437,14 @@ class TestInitProvidersParserBuiltinDependencyFailure:
         parser = MagicMock()
         parser._providers = ["aws"]
 
-        with (
-            patch(
-                "prowler.providers.common.arguments.Provider.get_available_providers",
-                return_value=["aws"],
-            ),
-            pytest.raises(SystemExit),
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws"],
         ):
             init_providers_parser(parser)
+            assert "aws" in parser._builtin_load_failures
+            with pytest.raises(SystemExit):
+                enforce_invoked_provider_loaded(parser)
 
     @patch("prowler.providers.common.arguments.Provider.is_builtin")
     @patch("prowler.providers.common.arguments.Provider._load_ep_provider")
@@ -465,6 +467,290 @@ class TestInitProvidersParserBuiltinDependencyFailure:
             init_providers_parser(parser)
 
         ext_cls.init_parser.assert_called_once_with(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_unrelated_builtin_failure_does_not_abort_when_other_provider_invoked(
+        self, mock_import, mock_is_builtin
+    ):
+        """Broken stackit + invoked aws → warning, no abort."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            init_providers_parser(parser)
+            assert "stackit" in parser._builtin_load_failures
+            enforce_invoked_provider_loaded(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
+
+    @patch("sys.argv", ["prowler", "-h"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_no_provider_invoked_failure_does_not_abort(
+        self, mock_import, mock_is_builtin
+    ):
+        """`prowler -h` + broken built-in → warning, help still renders."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'stackit.objectstorage'")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["stackit"],
+        ):
+            init_providers_parser(parser)
+            enforce_invoked_provider_loaded(parser)
+
+    @patch("sys.argv", ["prowler", "microsoft365"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_microsoft365_alias_still_triggers_fail_loud(
+        self, mock_import, mock_is_builtin
+    ):
+        """Alias `microsoft365 → m365` must be normalised before matching."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'msgraph'")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["m365"],
+        ):
+            init_providers_parser(parser)
+            with pytest.raises(SystemExit):
+                enforce_invoked_provider_loaded(parser)
+
+    @patch("sys.argv", ["prowler", "oci"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_oci_alias_still_triggers_fail_loud(
+        self, mock_import, mock_is_builtin
+    ):
+        """Alias `oci → oraclecloud` must be normalised before matching."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'oci'")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["oraclecloud"],
+        ):
+            init_providers_parser(parser)
+            with pytest.raises(SystemExit):
+                enforce_invoked_provider_loaded(parser)
+
+    @patch("sys.argv", ["prowler", "--output-directory", "stackit"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_flag_value_matching_provider_name_not_treated_as_invoked(
+        self, mock_import, mock_is_builtin
+    ):
+        """Flag-first invocation → invoked is 'aws' (default), not the flag's value."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            init_providers_parser(parser)
+            enforce_invoked_provider_loaded(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_invoked_builtin_non_import_error_fails_loudly(
+        self, mock_import, mock_is_builtin
+    ):
+        """Non-ImportError in invoked provider → still fail-loud."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = RuntimeError("Unexpected error in aws init_parser")
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws"],
+        ):
+            init_providers_parser(parser)
+            with pytest.raises(SystemExit):
+                enforce_invoked_provider_loaded(parser)
+
+    @patch("sys.argv", ["prowler", "aws"])
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_unrelated_builtin_non_import_error_does_not_abort(
+        self, mock_import, mock_is_builtin
+    ):
+        """Non-ImportError in unrelated provider → warning, no abort."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        mock_is_builtin.return_value = True
+        aws_module = MagicMock()
+
+        def import_side_effect(module_path):
+            if "stackit" in module_path:
+                raise RuntimeError("Unexpected error in stackit init_parser")
+            return aws_module
+
+        mock_import.side_effect = import_side_effect
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["aws", "stackit"],
+        ):
+            init_providers_parser(parser)
+            enforce_invoked_provider_loaded(parser)
+
+        aws_module.init_parser.assert_called_once_with(parser)
+
+
+class TestParseArgsOverrideAlignment:
+    """Regression: `parse(args=...)` overrides sys.argv AFTER __init__ ran;
+    the selective fail-loud must read argv at enforce time, not init time."""
+
+    def test_enforce_reads_current_sys_argv_not_init_time_sys_argv(self):
+        """Init with argv=['prowler','-h'] (no provider) captures stackit
+        failure silently. Enforce with argv=['prowler','stackit'] must
+        fail-loud — proving alignment under parse(args=...)."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        def import_side_effect(path):
+            if "stackit" in path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return MagicMock()
+
+        parser = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.arguments.Provider.is_builtin",
+                return_value=True,
+            ),
+            patch(
+                "prowler.providers.common.arguments.Provider.get_available_providers",
+                return_value=["aws", "stackit"],
+            ),
+            patch(
+                "prowler.providers.common.arguments.import_module",
+                side_effect=import_side_effect,
+            ),
+        ):
+            # Phase 1: __init__ with ambient argv = ['prowler', '-h']
+            with patch("sys.argv", ["prowler", "-h"]):
+                init_providers_parser(parser)
+            # Failure captured silently — no SystemExit during init
+            assert "stackit" in parser._builtin_load_failures
+
+            # Phase 2: parse(args=...) overrode sys.argv → stackit invoked
+            with patch("sys.argv", ["prowler", "stackit"]):
+                with pytest.raises(SystemExit):
+                    enforce_invoked_provider_loaded(parser)
+
+    def test_enforce_reads_current_sys_argv_for_no_invocation(self):
+        """Inverse: init's argv invokes stackit, but parse(args=['prowler',
+        '-h']) overrides. Enforce must NOT fail-loud."""
+        from prowler.providers.common.arguments import (
+            enforce_invoked_provider_loaded,
+            init_providers_parser,
+        )
+
+        def import_side_effect(path):
+            if "stackit" in path:
+                raise ImportError("No module named 'stackit.objectstorage'")
+            return MagicMock()
+
+        parser = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.arguments.Provider.is_builtin",
+                return_value=True,
+            ),
+            patch(
+                "prowler.providers.common.arguments.Provider.get_available_providers",
+                return_value=["aws", "stackit"],
+            ),
+            patch(
+                "prowler.providers.common.arguments.import_module",
+                side_effect=import_side_effect,
+            ),
+        ):
+            # Phase 1: __init__ with ambient argv pretending stackit invoked
+            with patch("sys.argv", ["prowler", "stackit"]):
+                init_providers_parser(parser)
+            assert "stackit" in parser._builtin_load_failures
+
+            # Phase 2: parse(args=['prowler', '-h']) overrode sys.argv →
+            # no provider invoked anymore → enforce must NOT exit
+            with patch("sys.argv", ["prowler", "-h"]):
+                enforce_invoked_provider_loaded(parser)
 
 
 class TestInitGlobalProviderBuiltinDependencyFailure:
@@ -502,18 +788,22 @@ class TestInitGlobalProviderBuiltinDependencyFailure:
         assert cls is None
 
     @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
     @patch("prowler.providers.common.provider.Provider.get_available_providers")
-    def test_get_providers_help_text_builtin_path(self, mock_providers, mock_import):
+    def test_get_providers_help_text_builtin_path(
+        self, mock_providers, mock_is_builtin, mock_import
+    ):
         """get_providers_help_text reads _cli_help_text from a built-in provider module."""
         import types
 
         mock_providers.return_value = ["fakebuiltin"]
+        mock_is_builtin.return_value = True
 
         mock_cls = type(
-            "FakeBuiltinProvider", (Provider,), {"_cli_help_text": "Built-in Help"}
+            "FakebuiltinProvider", (Provider,), {"_cli_help_text": "Built-in Help"}
         )
         mock_module = types.ModuleType("fake_module")
-        mock_module.FakeBuiltinProvider = mock_cls
+        mock_module.FakebuiltinProvider = mock_cls
         mock_import.return_value = mock_module
 
         help_text = Provider.get_providers_help_text()
@@ -2137,3 +2427,340 @@ class TestComplianceTableDispatch:
 
         mock_generic.assert_called_once()
         Provider._global = None
+
+
+# ===========================================================================
+# 12. Provider.get_class — Public side-effect-free class resolver
+# ===========================================================================
+
+
+class TestGetClass:
+    """Tests for Provider.get_class(provider) — the public, side-effect-free
+    class resolver that unblocks the Django API and other callers that need
+    a provider class without triggering CLI side-effects (sys.exit, global
+    provider mutation)."""
+
+    # -----------------------------------------------------------------------
+    # T1: Built-in provider resolves to correct class
+    # -----------------------------------------------------------------------
+
+    def test_get_class_builtin_returns_correct_class(self):
+        """get_class('aws') returns AwsProvider — identity check."""
+        from prowler.providers.aws.aws_provider import AwsProvider
+
+        cls = Provider.get_class("aws")
+
+        assert cls is AwsProvider
+
+    # -----------------------------------------------------------------------
+    # T2: External entry-point provider resolves
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_get_class_external_ep_returns_class(self, mock_is_builtin, mock_ep):
+        """get_class resolves an external entry-point provider and returns that class."""
+        mock_is_builtin.return_value = False
+        mock_ep.return_value = [
+            _make_entry_point(
+                "fakeexternal", "pkg:FakeExternalProvider", "prowler.providers"
+            ),
+        ]
+        mock_ep.return_value[0].load.return_value = FakeExternalProvider
+
+        cls = Provider.get_class("fakeexternal")
+
+        assert cls is FakeExternalProvider
+
+    # -----------------------------------------------------------------------
+    # T3: Unknown provider raises, does NOT call sys.exit
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_get_class_unknown_raises_and_does_not_sys_exit(
+        self, mock_is_builtin, mock_ep
+    ):
+        """get_class raises for an unknown provider and never calls sys.exit."""
+        mock_is_builtin.return_value = False
+        mock_ep.return_value = []
+
+        # Assert ImportError specifically to enforce the public API contract
+        # (not a broad Exception). SystemExit belongs in init_global_provider's
+        # wrapper, not in the pure resolver.
+        with pytest.raises(ImportError):
+            Provider.get_class("totally_unknown_xyz_provider")
+
+    # -----------------------------------------------------------------------
+    # T4: get_class is PURE for built-ins — no collision warning, no EP call
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.logger")
+    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_get_class_builtin_with_ep_shadow_is_pure(
+        self, mock_is_builtin, mock_import, mock_load_ep, mock_logger
+    ):
+        """get_class for a built-in with a same-named EP is PURE:
+        - returns the built-in class
+        - does NOT emit a collision warning
+        - does NOT call _load_ep_provider (so _ep_providers cache stays empty for
+          this key, proving no side-effect)
+        """
+        import types
+
+        mock_is_builtin.return_value = True
+        mock_load_ep.return_value = FakeExternalProvider  # plug-in shadow present
+
+        fake_module = types.ModuleType("fake_builtin_module")
+        fake_builtin_cls = type("AwsProvider", (Provider,), {"_type": "aws"})
+        fake_module.AwsProvider = fake_builtin_cls
+        mock_import.return_value = fake_module
+
+        cls = Provider.get_class("aws")
+
+        # Built-in class returned
+        assert cls is fake_builtin_cls
+        # No collision warning emitted — that is now init_global_provider's job
+        warning_msgs = [
+            call.args[0]
+            for call in mock_logger.warning.call_args_list
+            if call.args and "IGNORED" in call.args[0]
+        ]
+        assert not warning_msgs, (
+            "get_class must NOT emit a collision warning; "
+            "init_global_provider owns that responsibility"
+        )
+        # _load_ep_provider must NOT have been called for the built-in path
+        mock_load_ep.assert_not_called()
+        # _ep_providers cache must not contain 'aws' (no side-effect)
+        assert "aws" not in Provider._ep_providers
+
+    # -----------------------------------------------------------------------
+    # T4b: Built-in module missing its expected class raises ImportError
+    #      and does NOT fall back to a same-named entry point
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_get_class_builtin_missing_class_raises_importerror(
+        self, mock_is_builtin, mock_import, mock_load_ep
+    ):
+        """When is_builtin is True but the module does not define the expected
+        provider class, get_class raises ImportError and does NOT fall back to a
+        same-named entry point — falling back would contradict is_builtin and
+        silently return a foreign class."""
+        import types
+
+        mock_is_builtin.return_value = True
+        # Module imports fine but lacks the expected `<Name>Provider` attribute.
+        empty_module = types.ModuleType("empty_builtin_module")
+        mock_import.return_value = empty_module
+
+        with pytest.raises(ImportError):
+            Provider.get_class("aws")
+
+        # Must NOT fall back to entry points for a (broken) built-in.
+        mock_load_ep.assert_not_called()
+
+    # -----------------------------------------------------------------------
+    # T4c: Entry point resolving to a non-Provider class raises ImportError
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_get_class_external_ep_not_provider_subclass_raises_importerror(
+        self, mock_is_builtin, mock_ep
+    ):
+        """When an entry point resolves to an object that is not a Provider
+        subclass, get_class raises ImportError instead of returning it, so the
+        public contract (a Provider subclass) is enforced rather than trusted."""
+
+        class NotAProvider:
+            pass
+
+        mock_is_builtin.return_value = False
+        mock_ep.return_value = [
+            _make_entry_point("rogue", "pkg:NotAProvider", "prowler.providers"),
+        ]
+        mock_ep.return_value[0].load.return_value = NotAProvider
+
+        with pytest.raises(ImportError):
+            Provider.get_class("rogue")
+
+    # -----------------------------------------------------------------------
+    # T4d: Contract — every built-in provider stays resolvable via get_class
+    # -----------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        "provider",
+        [
+            name
+            for name in Provider.get_available_providers()
+            if Provider.is_builtin(name)
+        ],
+    )
+    def test_get_class_resolves_every_builtin_provider(self, provider):
+        """Contract test over all built-in providers: each one must remain
+        resolvable through get_class and return a Provider subclass whose name
+        follows the `{Capitalized}Provider` convention. This pins the naming
+        convention as the built-in resolution contract, so a future provider
+        that breaks it fails here instead of silently at runtime in a caller
+        (e.g. the API)."""
+        cls = Provider.get_class(provider)
+
+        assert isinstance(cls, type) and issubclass(cls, Provider)
+        assert cls.__name__ == f"{provider.capitalize()}Provider"
+
+    # -----------------------------------------------------------------------
+    # T5: Regression — init_global_provider still resolves external correctly
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    def test_init_global_provider_still_resolves_external_via_get_class(
+        self, mock_load_ep, mock_config
+    ):
+        """Regression: init_global_provider continues to work for external providers
+        after the class-resolution block is delegated to get_class.
+
+        'fakepure' is not a built-in, so is_builtin() returns False and get_class
+        takes the entry-point path. This verifies the FakePureContractProvider path
+        (pure from_cli_args returning an instance) still works — i.e.,
+        init_global_provider correctly wires the returned instance as global provider.
+        """
+        mock_load_ep.return_value = FakePureContractProvider
+        mock_config.return_value = {}
+
+        args = Namespace(
+            provider="fakepure",
+            fixer_config="config.yaml",
+            config_file="config.yaml",
+        )
+
+        Provider._global = None
+        Provider.init_global_provider(args)
+
+        assert isinstance(Provider._global, FakePureContractProvider)
+        Provider._global = None
+
+    # -----------------------------------------------------------------------
+    # T6: Regression — get_providers_help_text returns same text after refactor
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.Provider.get_available_providers")
+    def test_get_providers_help_text_identical_after_refactor_external(
+        self, mock_providers, mock_load_ep
+    ):
+        """get_providers_help_text returns identical _cli_help_text for an external
+        provider both before and after the refactor to use get_class internally."""
+        mock_providers.return_value = ["fakeexternal"]
+        mock_load_ep.return_value = FakeExternalProvider
+
+        help_text = Provider.get_providers_help_text()
+
+        # Must match the known _cli_help_text on FakeExternalProvider
+        assert help_text["fakeexternal"] == "Fake External Provider"
+
+    @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    @patch("prowler.providers.common.provider.Provider.get_available_providers")
+    def test_get_providers_help_text_identical_after_refactor_builtin(
+        self, mock_providers, mock_is_builtin, mock_import
+    ):
+        """get_providers_help_text returns identical _cli_help_text for a built-in
+        provider both before and after the refactor to use get_class internally.
+        is_builtin is mocked to True so get_class takes the built-in import path."""
+        import types
+
+        mock_providers.return_value = ["fakebuiltin"]
+        mock_is_builtin.return_value = True
+        mock_cls = type(
+            "FakebuiltinProvider", (Provider,), {"_cli_help_text": "Built-in Help"}
+        )
+        mock_module = types.ModuleType("fake_module")
+        mock_module.FakebuiltinProvider = mock_cls
+        mock_import.return_value = mock_module
+
+        help_text = Provider.get_providers_help_text()
+
+        assert help_text["fakebuiltin"] == "Built-in Help"
+
+    # -----------------------------------------------------------------------
+    # T7: init_global_provider emits collision warning (not get_class)
+    # -----------------------------------------------------------------------
+
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_init_global_provider_emits_collision_warning_for_builtin_ep_shadow(
+        self, mock_is_builtin, mock_import, mock_entry_points, mock_config, caplog
+    ):
+        """init_global_provider (not get_class) emits the collision warning
+        when a built-in provider has a same-named entry-point plug-in registered.
+
+        This is the counterpart to test_get_class_builtin_with_ep_shadow_is_pure:
+        the warning responsibility moved OUT of get_class and INTO
+        init_global_provider, so users still see the message on CLI invocation
+        but prowler --help and API calls (which never hit init_global_provider)
+        do not spuriously emit it. The shadow is detected by entry-point name
+        only — the plug-in is never loaded to warn.
+        """
+        import logging
+        import types
+
+        mock_is_builtin.return_value = True
+        shadow_ep = MagicMock()
+        shadow_ep.name = "aws"  # plug-in shadowing the built-in name
+        mock_entry_points.return_value = [shadow_ep]
+
+        fake_module = types.ModuleType("fake_builtin_module")
+        fake_module.AwsProvider = MagicMock(side_effect=lambda **_kw: None)
+        mock_import.return_value = fake_module
+        mock_config.return_value = {}
+
+        args = Namespace(
+            provider="aws",
+            fixer_config="config.yaml",
+            config_file="config.yaml",
+            aws_retries_max_attempts=3,
+            role=None,
+            session_duration=None,
+            external_id=None,
+            role_session_name=None,
+            mfa=None,
+            profile=None,
+            region=None,
+            excluded_region=None,
+            organizations_role=None,
+            scan_unused_services=False,
+            resource_tag=None,
+            resource_arn=None,
+            mutelist_file=None,
+        )
+
+        Provider._global = None
+        with caplog.at_level(logging.WARNING, logger="prowler"):
+            try:
+                Provider.init_global_provider(args)
+            except BaseException:
+                # AwsProvider mock is fake; dispatch may fail — only the
+                # warning emitted BEFORE dispatch matters here.
+                pass
+        Provider._global = None
+
+        collision_warnings = [
+            r.message
+            for r in caplog.records
+            if "Plug-in provider 'aws'" in r.message and "IGNORED" in r.message
+        ]
+        assert collision_warnings, (
+            "init_global_provider must emit the collision warning when a "
+            "same-named EP plug-in exists for a built-in provider"
+        )
+        # Shadow detected by name only — the plug-in is never loaded to warn.
+        shadow_ep.load.assert_not_called()

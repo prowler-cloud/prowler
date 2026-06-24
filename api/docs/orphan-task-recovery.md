@@ -65,6 +65,7 @@ All settings have safe defaults; override via environment variables.
 | Env var | Default | Purpose |
 | --- | --- | --- |
 | `DJANGO_CELERY_WORKER_PREFETCH_MULTIPLIER` | `1` | Tasks reserved per worker process. |
+| `DJANGO_CELERY_WORKER_CONCURRENCY` | unset | Optional Celery prefork pool size. When unset, Celery uses its CPU-based default. Set this on worker containers to bound idle memory on hosts with many CPUs. |
 | `DJANGO_CELERY_WORKER_SOFT_SHUTDOWN_TIMEOUT` | `60` | Seconds the worker drains/re-queues on `SIGTERM` before force-kill. |
 | `DJANGO_CELERY_TASK_TIME_LIMIT` | `21600` (6h) | Hard limit for most tasks; connection checks are capped at 120s. |
 | `DJANGO_CELERY_TASK_SOFT_TIME_LIMIT` | hard - 600 | Soft limit; raises `SoftTimeLimitExceeded` for cleanup. |

@@ -1,23 +1,22 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
+from api.uuid_utils import (
+    datetime_from_uuid7,
+    datetime_to_uuid7,
+    transform_into_uuid7,
+    uuid7_end,
+    uuid7_range,
+    uuid7_start,
+)
 from dateutil.relativedelta import relativedelta
 from rest_framework_json_api.serializers import ValidationError
 from uuid6 import UUID
 
-from api.uuid_utils import (
-    transform_into_uuid7,
-    datetime_to_uuid7,
-    datetime_from_uuid7,
-    uuid7_start,
-    uuid7_end,
-    uuid7_range,
-)
-
 
 def test_transform_into_uuid7_valid():
-    uuid_v7 = datetime_to_uuid7(datetime.now(timezone.utc))
+    uuid_v7 = datetime_to_uuid7(datetime.now(UTC))
     transformed_uuid = transform_into_uuid7(uuid_v7)
     assert transformed_uuid == UUID(hex=uuid_v7.hex.upper())
     assert transformed_uuid.version == 7
@@ -33,8 +32,8 @@ def test_transform_into_uuid7_invalid_version():
 @pytest.mark.parametrize(
     "input_datetime",
     [
-        datetime(2024, 9, 11, 7, 20, 27, tzinfo=timezone.utc),
-        datetime(2023, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        datetime(2024, 9, 11, 7, 20, 27, tzinfo=UTC),
+        datetime(2023, 1, 1, 0, 0, 0, tzinfo=UTC),
     ],
 )
 def test_datetime_to_uuid7(input_datetime):
@@ -48,8 +47,8 @@ def test_datetime_to_uuid7(input_datetime):
 @pytest.mark.parametrize(
     "input_datetime",
     [
-        datetime(2024, 9, 11, 7, 20, 27, tzinfo=timezone.utc),
-        datetime(2023, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        datetime(2024, 9, 11, 7, 20, 27, tzinfo=UTC),
+        datetime(2023, 1, 1, 0, 0, 0, tzinfo=UTC),
     ],
 )
 def test_datetime_from_uuid7(input_datetime):
@@ -65,7 +64,7 @@ def test_datetime_from_uuid7_invalid():
 
 
 def test_uuid7_start():
-    dt = datetime.now(timezone.utc)
+    dt = datetime.now(UTC)
     uuid = datetime_to_uuid7(dt)
     start_uuid = uuid7_start(uuid)
     expected_dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -76,7 +75,7 @@ def test_uuid7_start():
 
 @pytest.mark.parametrize("months_offset", [0, 1, 10, 30, 60])
 def test_uuid7_end(months_offset):
-    dt = datetime.now(timezone.utc)
+    dt = datetime.now(UTC)
     uuid = datetime_to_uuid7(dt)
     end_uuid = uuid7_end(uuid, months_offset)
     expected_dt = dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -87,7 +86,7 @@ def test_uuid7_end(months_offset):
 
 
 def test_uuid7_range():
-    dt_now = datetime.now(timezone.utc)
+    dt_now = datetime.now(UTC)
     uuid_list = [
         datetime_to_uuid7(dt_now),
         datetime_to_uuid7(dt_now.replace(year=2023)),

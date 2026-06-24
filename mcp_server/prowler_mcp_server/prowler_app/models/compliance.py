@@ -2,7 +2,6 @@
 
 from typing import Any, Literal
 
-from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -10,6 +9,8 @@ from pydantic import (
     SerializerFunctionWrapHandler,
     model_serializer,
 )
+
+from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 
 
 class ComplianceRequirementAttribute(MinimalSerializerMixin, BaseModel):

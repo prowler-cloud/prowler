@@ -14,16 +14,29 @@ const scansActionsMock = vi.hoisted(() => ({
   getScans: vi.fn(),
 }));
 
+const schedulesActionsMock = vi.hoisted(() => ({
+  getSchedules: vi.fn(),
+}));
+
 vi.mock("@/actions/providers", () => providersActionsMock);
 vi.mock(
   "@/actions/organizations/organizations",
   () => organizationsActionsMock,
 );
 vi.mock("@/actions/scans", () => scansActionsMock);
+vi.mock("@/actions/schedules", () => schedulesActionsMock);
 
 import { SearchParamsProps } from "@/types";
 import { ProvidersApiResponse } from "@/types/providers";
-import { ProvidersProviderRow } from "@/types/providers-table";
+import {
+  isProvidersOrganizationRow,
+  ProvidersProviderRow,
+} from "@/types/providers-table";
+import {
+  SCHEDULE_FREQUENCY,
+  type ScheduleAttributes,
+  type ScheduleProps,
+} from "@/types/schedules";
 
 import {
   buildProvidersTableRows,
@@ -155,6 +168,33 @@ const toProviderRow = (
     ...overrides?.relationships,
   },
 });
+
+const buildSchedule = (
+  providerId: string,
+  overrides: Partial<ScheduleAttributes> = {},
+): ScheduleProps => ({
+  type: "schedules",
+  id: providerId,
+  attributes: {
+    scan_enabled: true,
+    scan_frequency: SCHEDULE_FREQUENCY.DAILY,
+    scan_hour: 9,
+    scan_timezone: "Europe/Madrid",
+    scan_interval_hours: null,
+    scan_day_of_week: null,
+    scan_day_of_month: null,
+    ...overrides,
+  },
+  relationships: {
+    provider: { data: { type: "providers", id: providerId } },
+  },
+});
+
+const findProviderRow = (
+  rows: { id: string }[],
+  providerId: string,
+): ProvidersProviderRow | undefined =>
+  rows.find((row) => row.id === providerId) as ProvidersProviderRow | undefined;
 
 describe("buildProvidersTableRows", () => {
   it("returns a flat providers table for OSS", () => {
@@ -606,13 +646,73 @@ describe("buildProvidersTableRows", () => {
 
     // Then
     expect(rows).toHaveLength(1);
-    expect(rows[0].rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
-    expect(rows[0].subRows).toHaveLength(2);
+    const orgRow = rows[0];
+    expect(isProvidersOrganizationRow(orgRow)).toBe(true);
+    if (!isProvidersOrganizationRow(orgRow)) {
+      throw new Error("Expected organization row");
+    }
+    expect(orgRow.subRows).toHaveLength(2);
     expect(
-      rows[0].subRows?.every(
+      orgRow.subRows?.every(
         (row) => row.rowType === PROVIDERS_ROW_TYPE.PROVIDER,
       ),
     ).toBe(true);
+    expect(orgRow.providerIds).toEqual(["provider-1", "provider-2"]);
+  });
+
+  it("keeps organization relationship provider ids even when providers are not in the visible page", () => {
+    // Given
+    const providers = [
+      toProviderRow(providersResponse.data[0], {
+        relationships: {
+          ...providersResponse.data[0].relationships,
+          organization: {
+            data: null,
+          },
+        },
+      }),
+    ];
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-1",
+          type: "organizations",
+          attributes: {
+            name: "Large Organization",
+            org_type: "aws",
+            external_id: "o-large",
+            metadata: {},
+            root_external_id: "r-large",
+          },
+          relationships: {
+            providers: {
+              data: [
+                { type: "providers", id: "provider-1" },
+                { type: "providers", id: "provider-not-in-page" },
+              ],
+            },
+            organizational_units: {
+              data: [],
+            },
+          },
+        },
+      ],
+      organizationUnits: [],
+      isCloud: true,
+    });
+
+    // Then
+    expect(rows).toHaveLength(1);
+    const orgRow = rows[0];
+    expect(isProvidersOrganizationRow(orgRow)).toBe(true);
+    if (!isProvidersOrganizationRow(orgRow)) {
+      throw new Error("Expected organization row");
+    }
+    expect(orgRow.subRows).toHaveLength(1);
+    expect(orgRow.providerIds).toEqual(["provider-1", "provider-not-in-page"]);
   });
 });
 
@@ -750,5 +850,198 @@ describe("loadProvidersAccountsViewData", () => {
     expect(
       viewData.rows.every((row) => row.rowType === PROVIDERS_ROW_TYPE.PROVIDER),
     ).toBe(true);
+  });
+
+  it("surfaces the real cadence (not a hardcoded label) from a configured schedule with no materialized scan yet", async () => {
+    // Given — provider-1 has a WEEKLY schedule but the backend has not yet
+    // created a Scan row (the gap between configuring and the first fire).
+    providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
+    schedulesActionsMock.getSchedules.mockResolvedValue({
+      data: [
+        buildSchedule("provider-1", {
+          scan_frequency: SCHEDULE_FREQUENCY.WEEKLY,
+          scan_hour: 9,
+          scan_day_of_week: 1,
+        }),
+      ],
+    });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: false,
+    });
+
+    // Then — the row carries the Weekly cadence, not "Daily".
+    const providerRow = findProviderRow(viewData.rows, "provider-1");
+    expect(providerRow?.hasSchedule).toBe(true);
+    expect(providerRow?.scheduleSummary?.cadence).toBe("Weekly on Monday");
+    expect(findProviderRow(viewData.rows, "provider-2")?.hasSchedule).toBe(
+      false,
+    );
+    expect(
+      findProviderRow(viewData.rows, "provider-2")?.scheduleSummary,
+    ).toBeUndefined();
+  });
+
+  it("uses provider schedule attributes as authoritative when scan_hour is null", async () => {
+    // Given — provider-1 still has a materialized scheduled scan row, but the
+    // provider payload says the schedule was removed.
+    providersActionsMock.getProviders.mockResolvedValue({
+      ...providersResponse,
+      data: [
+        {
+          ...providersResponse.data[0],
+          attributes: {
+            ...providersResponse.data[0].attributes,
+            scan_enabled: true,
+            scan_frequency: SCHEDULE_FREQUENCY.DAILY,
+            scan_hour: null,
+            scan_timezone: "UTC",
+            scan_interval_hours: null,
+            scan_day_of_week: null,
+            scan_day_of_month: null,
+            next_scan_at: null,
+            last_scan_at: null,
+          },
+        },
+        providersResponse.data[1],
+      ],
+    });
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    scansActionsMock.getScans.mockResolvedValue({
+      data: [
+        {
+          type: "scans",
+          id: "scan-1",
+          attributes: { trigger: "scheduled", state: "scheduled" },
+          relationships: {
+            provider: { data: { type: "providers", id: "provider-1" } },
+          },
+        },
+      ],
+    });
+    schedulesActionsMock.getSchedules.mockResolvedValue({
+      data: [buildSchedule("provider-1", { scan_hour: 9 })],
+    });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: false,
+    });
+
+    // Then
+    const providerRow = findProviderRow(viewData.rows, "provider-1");
+    expect(providerRow?.hasSchedule).toBe(false);
+    expect(providerRow?.scheduleSummary).toBeUndefined();
+    expect(providerRow?.lastScanAt).toBeNull();
+  });
+
+  it("builds provider schedule and last scan values from the provider payload", async () => {
+    // Given
+    providersActionsMock.getProviders.mockResolvedValue({
+      ...providersResponse,
+      data: [
+        {
+          ...providersResponse.data[0],
+          attributes: {
+            ...providersResponse.data[0].attributes,
+            scan_enabled: true,
+            scan_frequency: SCHEDULE_FREQUENCY.MONTHLY,
+            scan_hour: 8,
+            scan_timezone: "Europe/Madrid",
+            scan_interval_hours: null,
+            scan_day_of_week: null,
+            scan_day_of_month: 24,
+            next_scan_at: "2026-06-24T06:00:00Z",
+            last_scan_at: "2026-06-23T06:00:00Z",
+          },
+        },
+        providersResponse.data[1],
+      ],
+    });
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
+    schedulesActionsMock.getSchedules.mockResolvedValue({ error: "Not found" });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: false,
+    });
+
+    // Then
+    const providerRow = findProviderRow(viewData.rows, "provider-1");
+    expect(providerRow?.hasSchedule).toBe(true);
+    expect(providerRow?.scheduleSummary?.cadence).toBe("Monthly on the 24th");
+    expect(providerRow?.scheduleSummary?.nextScanAt).toBe(
+      "2026-06-24T06:00:00Z",
+    );
+    expect(providerRow?.lastScanAt).toBe("2026-06-23T06:00:00Z");
+  });
+
+  it("ignores paused or unconfigured schedules", async () => {
+    // Given — provider-1 paused (disabled), provider-2 never configured.
+    providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
+    schedulesActionsMock.getSchedules.mockResolvedValue({
+      data: [
+        buildSchedule("provider-1", { scan_enabled: false, scan_hour: 9 }),
+        buildSchedule("provider-2", { scan_enabled: true, scan_hour: null }),
+      ],
+    });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: false,
+    });
+
+    // Then
+    expect(findProviderRow(viewData.rows, "provider-1")?.hasSchedule).toBe(
+      false,
+    );
+    expect(findProviderRow(viewData.rows, "provider-2")?.hasSchedule).toBe(
+      false,
+    );
+  });
+
+  it("does not infer provider schedules from materialized scans when /schedules is unavailable", async () => {
+    // Given — /schedules errors, and provider-1 still has a materialized
+    // scheduled scan. That scan is historical execution state, not schedule
+    // configuration.
+    providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    scansActionsMock.getScans.mockResolvedValue({
+      data: [
+        {
+          type: "scans",
+          id: "scan-1",
+          attributes: { trigger: "scheduled", state: "scheduled" },
+          relationships: {
+            provider: { data: { type: "providers", id: "provider-1" } },
+          },
+        },
+      ],
+    });
+    schedulesActionsMock.getSchedules.mockResolvedValue({ error: "Not found" });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: false,
+    });
+
+    // Then — only provider scan_* fields or /schedules can mark a schedule.
+    expect(findProviderRow(viewData.rows, "provider-1")?.hasSchedule).toBe(
+      false,
+    );
+    expect(findProviderRow(viewData.rows, "provider-2")?.hasSchedule).toBe(
+      false,
+    );
   });
 });

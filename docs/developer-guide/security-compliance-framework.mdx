@@ -38,7 +38,7 @@ Before adding a new framework, complete the following checks:
 - **Verify the framework is not already supported.** Inspect `prowler/compliance/` and every `prowler/compliance/<provider>/` for an existing JSON file matching the name and version.
 - **Confirm the required checks exist.** Every requirement that can be automated must point to one or more existing Prowler checks. For each missing check, implement it first by following the [Prowler Checks](/developer-guide/checks) guide.
 - **Review a reference framework.** Use an existing framework with a similar structure as your template:
-  - Universal: `prowler/compliance/dora.json`, `prowler/compliance/csa_ccm_4.0.json`.
+  - Universal: `prowler/compliance/dora_2022_2554.json`, `prowler/compliance/csa_ccm_4.0.json`.
   - Legacy: `prowler/compliance/aws/cis_2.0_aws.json` (canonical CIS shape), `prowler/compliance/aws/ccc_aws.json`, `prowler/compliance/aws/ens_rd2022_aws.json`, `prowler/compliance/aws/nist_800_53_revision_5_aws.json`.
 
 ## Universal Compliance Framework
@@ -51,9 +51,9 @@ Place the file at the top level of the compliance directory:
 prowler/compliance/<framework_name>.json
 ```
 
-Examples in the repository: `prowler/compliance/csa_ccm_4.0.json`, `prowler/compliance/dora.json`.
+Examples in the repository: `prowler/compliance/csa_ccm_4.0.json`, `prowler/compliance/dora_2022_2554.json`.
 
-The file is auto-discovered — there is **no** need to register it in any `__init__.py`, modify `prowler/lib/outputs/`, or update any other Python module. The framework key Prowler CLI accepts via `--compliance` is the basename of the JSON file without `.json` (`dora.json` → `dora`).
+The file is auto-discovered — there is **no** need to register it in any `__init__.py`, modify `prowler/lib/outputs/`, or update any other Python module. The framework key Prowler CLI accepts via `--compliance` is the basename of the JSON file without `.json` (`dora_2022_2554.json` → `dora_2022_2554`).
 
 ### Top-level structure
 
@@ -70,7 +70,7 @@ The file is auto-discovered — there is **no** need to register it in any `__in
 }
 ```
 
-A `provider` field at the top level is **optional**. The framework's effective provider list is derived by `ComplianceFramework.get_providers()` (`compliance_models.py:739`) from the union of all keys appearing in `requirement.checks` across all requirements; the explicit `provider` field is used **only as a fallback** when no requirement carries any `checks` key. This is what enables a single file (e.g. `dora.json`) to cover AWS today and add Azure / GCP / etc. tomorrow without restructuring.
+A `provider` field at the top level is **optional**. The framework's effective provider list is derived by `ComplianceFramework.get_providers()` (`compliance_models.py:739`) from the union of all keys appearing in `requirement.checks` across all requirements; the explicit `provider` field is used **only as a fallback** when no requirement carries any `checks` key. This is what enables a single file (e.g. `dora_2022_2554.json`) to cover AWS today and add Azure / GCP / etc. tomorrow without restructuring.
 
 Provider keys inside `requirement.checks` must match the directory names under `prowler/providers/`. The valid keys at present are: `aws`, `azure`, `gcp`, `m365`, `kubernetes`, `iac`, `github`, `googleworkspace`, `alibabacloud`, `cloudflare`, `mongodbatlas`, `nhn`, `openstack`, `oraclecloud`, `llm`. Comparison in `supports_provider()` is case-insensitive, but lowercase is the convention used everywhere in the repository.
 
@@ -493,7 +493,7 @@ Before opening a PR, validate the JSON loads cleanly against the model and that 
 
 ### 1. Schema validation
 
-For **universal** frameworks, load the file and inspect what was parsed. The framework key inside `bulk` is the **basename of the JSON file** (without `.json`); for `prowler/compliance/dora.json` that key is `dora`, for `prowler/compliance/aws/cis_5.0_aws.json` it is `cis_5.0_aws`.
+For **universal** frameworks, load the file and inspect what was parsed. The framework key inside `bulk` is the **basename of the JSON file** (without `.json`); for `prowler/compliance/dora_2022_2554.json` that key is `dora_2022_2554`, for `prowler/compliance/aws/cis_5.0_aws.json` it is `cis_5.0_aws`.
 
 ```python
 from prowler.lib.check.compliance_models import (
@@ -619,7 +619,7 @@ The following issues are the most common when contributing a compliance framewor
 
 Use the following files as templates when modeling a new contribution.
 
-- `prowler/compliance/dora.json` — universal schema, single-provider populated (AWS), ready to extend with more providers.
+- `prowler/compliance/dora_2022_2554.json` — universal schema, single-provider populated (AWS), ready to extend with more providers.
 - `prowler/compliance/csa_ccm_4.0.json` — universal schema, multi-provider populated (AWS, Azure, GCP, AlibabaCloud, OracleCloud).
 - `prowler/compliance/aws/cis_2.0_aws.json` — legacy CIS attribute shape.
 - `prowler/compliance/aws/nist_800_53_revision_5_aws.json` — legacy generic attribute shape.

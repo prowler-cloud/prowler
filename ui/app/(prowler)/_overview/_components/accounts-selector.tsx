@@ -17,28 +17,24 @@ import {
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { type AccountFilterKey, FilterType } from "@/types/filters";
 import {
   getProviderDisplayName,
   type ProviderProps,
   type ProviderType,
 } from "@/types/providers";
 
-const ACCOUNT_SELECTOR_FILTER = {
-  PROVIDER_ID: "provider_id__in",
-  PROVIDER_UID: "provider_uid__in",
-} as const;
-
-type AccountSelectorFilter =
-  (typeof ACCOUNT_SELECTOR_FILTER)[keyof typeof ACCOUNT_SELECTOR_FILTER];
-
 /** Common props shared by both batch and instant modes. */
 interface AccountsSelectorBaseProps {
   providers: ProviderProps[];
   search?: MultiSelectSearchProp;
-  filterKey?: AccountSelectorFilter;
+  filterKey?: AccountFilterKey;
   id?: string;
   disabledValues?: string[];
   closeOnSelect?: boolean;
+  placeholder?: string;
+  emptySelectionLabel?: string;
+  clearSelectionLabel?: string;
 }
 
 /** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
@@ -72,7 +68,7 @@ export function AccountsSelector({
   providers,
   onBatchChange,
   selectedValues,
-  filterKey = ACCOUNT_SELECTOR_FILTER.PROVIDER_ID,
+  filterKey = FilterType.PROVIDER_ID,
   id = "accounts-selector",
   disabledValues = [],
   search = {
@@ -80,6 +76,9 @@ export function AccountsSelector({
     emptyMessage: "No Providers found.",
   },
   closeOnSelect = false,
+  placeholder = "All Providers",
+  emptySelectionLabel = "All selected",
+  clearSelectionLabel = "Select All",
 }: AccountsSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
@@ -92,7 +91,7 @@ export function AccountsSelector({
 
   const visibleProviders = providers;
   const getProviderValue = (provider: ProviderProps) =>
-    filterKey === ACCOUNT_SELECTOR_FILTER.PROVIDER_UID
+    filterKey === FilterType.PROVIDER_UID
       ? provider.attributes.uid
       : provider.id;
   const disabledValuesSet = new Set(disabledValues);
@@ -170,7 +169,7 @@ export function AccountsSelector({
         onOpenChange={closeOnSelect ? setSelectorOpen : undefined}
       >
         <MultiSelectTrigger id={id} aria-labelledby={labelId}>
-          {selectedLabel() || <MultiSelectValue placeholder="All Providers" />}
+          {selectedLabel() || <MultiSelectValue placeholder={placeholder} />}
         </MultiSelectTrigger>
         <MultiSelectContent search={search}>
           {visibleProviders.length > 0 ? (
@@ -194,7 +193,9 @@ export function AccountsSelector({
                   }
                 }}
               >
-                {selectedIds.length === 0 ? "All selected" : "Select All"}
+                {selectedIds.length === 0
+                  ? emptySelectionLabel
+                  : clearSelectionLabel}
               </div>
               {visibleProviders.map((p) => {
                 const value = getProviderValue(p);

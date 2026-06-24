@@ -1,11 +1,10 @@
 from unittest.mock import Mock, patch
 
 import pytest
+from api.models import Provider
 from conftest import get_api_tokens, get_authorization_header
 from django.urls import reverse
 from rest_framework.test import APIClient
-
-from api.models import Provider
 
 
 @patch("api.v1.views.Task.objects.get")
