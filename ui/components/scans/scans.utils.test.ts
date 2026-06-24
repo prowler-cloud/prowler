@@ -7,11 +7,13 @@ import {
   type ScanAttributes,
   type ScanProps,
   type ScanTrigger,
+  type ScheduleProps,
 } from "@/types";
 
 import {
   appendPendingScheduleRowsToPage,
   buildPendingScheduleRows,
+  buildScheduledTabRows,
   formatScanDuration,
   getScanAlias,
   getScanFindingsSummary,
@@ -21,6 +23,7 @@ import {
   getScanScheduleLabel,
   getScanStatusLabel,
   getScanTriggerFilterOptions,
+  mapScheduleToScanRow,
 } from "./scans.utils";
 
 const makeScan = (
@@ -393,5 +396,90 @@ describe("buildPendingScheduleRows", () => {
     });
 
     expect(rows).toHaveLength(0);
+  });
+
+  describe("mapScheduleToScanRow", () => {
+    const makeSchedule = (
+      attributes: Partial<ScheduleProps["attributes"]> = {},
+    ): ScheduleProps => ({
+      type: "schedules",
+      id: "p1",
+      attributes: {
+        ...weeklySchedule,
+        next_scan_at: "2026-06-15T00:00:00Z",
+        last_scan_at: "2026-06-01T10:00:00Z",
+        ...attributes,
+      },
+      relationships: {
+        provider: { data: { type: "providers", id: "p1" } },
+      },
+    });
+
+    it("maps a configured schedule to a Scheduled-tab row", () => {
+      const row = mapScheduleToScanRow(makeSchedule(), makeProvider("p1"), now);
+
+      expect(row.id).toBe("schedule-p1");
+      expect(row.attributes.trigger).toBe("scheduled");
+      expect(row.attributes.state).toBe("scheduled");
+      expect(row.attributes.scheduled_at).toBe("2026-06-15T00:00:00Z");
+      expect(row.pendingSchedule?.summary).toBe(
+        "Weekly on Monday @ 9:00am (Europe/Madrid)",
+      );
+      expect(row.pendingSchedule?.cadence).toBe("Weekly on Monday");
+      expect(row.pendingSchedule?.lastScanAt).toBe("2026-06-01T10:00:00Z");
+      expect(row.providerInfo?.uid).toBe("uid-p1");
+      // The schedule id IS the provider id.
+      expect(row.relationships.provider.data?.id).toBe("p1");
+    });
+
+    it("leaves providerInfo undefined when the provider is missing from included", () => {
+      const row = mapScheduleToScanRow(makeSchedule(), undefined, now);
+
+      expect(row.providerInfo).toBeUndefined();
+    });
+
+    it("shows no next run for a paused schedule", () => {
+      const row = mapScheduleToScanRow(
+        makeSchedule({ scan_enabled: false, next_scan_at: null }),
+        makeProvider("p1"),
+        now,
+      );
+
+      expect(row.attributes.scheduled_at).toBeNull();
+      expect(row.pendingSchedule?.nextScanAt).toBeNull();
+    });
+  });
+
+  describe("buildScheduledTabRows", () => {
+    const schedule: ScheduleProps = {
+      type: "schedules",
+      id: "p1",
+      attributes: {
+        ...weeklySchedule,
+        next_scan_at: "2026-06-15T00:00:00Z",
+        last_scan_at: null,
+      },
+      relationships: { provider: { data: { type: "providers", id: "p1" } } },
+    };
+
+    it("maps schedule data and passes meta through verbatim", () => {
+      const meta = makeMeta({ page: 1, pages: 3, count: 25 });
+
+      const result = buildScheduledTabRows(
+        { data: [schedule], included: [makeProvider("p1")], meta },
+        now,
+      );
+
+      expect(result.data.map((row) => row.id)).toEqual(["schedule-p1"]);
+      expect(result.data[0].providerInfo?.uid).toBe("uid-p1");
+      expect(result.meta).toBe(meta);
+    });
+
+    it("returns an empty result on error or missing data", () => {
+      expect(buildScheduledTabRows({ error: "boom" }, now)).toEqual({
+        data: [],
+      });
+      expect(buildScheduledTabRows(null, now)).toEqual({ data: [] });
+    });
   });
 });

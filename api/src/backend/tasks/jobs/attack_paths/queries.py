@@ -1,9 +1,9 @@
 # Cypher query templates for Attack Paths operations
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
-    PROWLER_FINDING_LABEL,
     PROVIDER_ELEMENT_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
+    PROWLER_FINDING_LABEL,
 )
 
 

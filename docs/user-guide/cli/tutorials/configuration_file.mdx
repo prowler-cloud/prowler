@@ -10,6 +10,10 @@ prowler/config/config.yaml
 
 Additionally, you can input a custom configuration file using the `--config-file` argument.
 
+<Note>
+Numeric thresholds enforce hard limits. A value outside the accepted range is dropped with a warning and the check falls back to its built-in default. See [Configuration Value Limits](/developer-guide/configurable-checks#configuration-value-limits) for the exact range of every bounded option (max-days caps, percentages, counts, etc.).
+</Note>
+
 ## AWS
 
 ### Configurable Checks

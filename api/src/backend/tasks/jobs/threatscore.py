@@ -1,13 +1,12 @@
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Provider, StatusChoices
 from celery.utils.log import get_task_logger
+from prowler.lib.check.compliance_models import Compliance
 from tasks.jobs.threatscore_utils import (
     _aggregate_requirement_statistics_from_database,
     _calculate_requirements_data_from_statistics,
 )
-
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.models import Provider, StatusChoices
-from prowler.lib.check.compliance_models import Compliance
 
 logger = get_task_logger(__name__)
 
