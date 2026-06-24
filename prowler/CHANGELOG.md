@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.32.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `--scan-secrets-validate` flag and `secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+### 🔄 Changed
+
+- Replaced the `detect-secrets` library with [Kingfisher](https://github.com/mongodb/kingfisher) as the engine for the secret-scanning checks; scans run fully offline by default and obvious placeholder values are no longer reported as findings [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+---
+
 ## [5.31.0] (Prowler v5.31.0)
 
 ### 🚀 Added
