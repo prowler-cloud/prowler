@@ -42,7 +42,7 @@ export default async function AIChatbot({
     );
 
     if (connectedConfigurations.length === 0) {
-      return redirect("/lighthouse/config");
+      return redirect("/lighthouse/settings");
     }
 
     const modelsEntries = await Promise.all(
@@ -69,26 +69,28 @@ export default async function AIChatbot({
     const chatRouteKey = activeSessionId ?? initialPrompt ?? "new";
 
     return (
-      <div className="h-dvh min-h-0">
+      <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
         <LighthouseV2NavigationModeSync />
-        <LighthouseV2ChatPage
-          key={chatRouteKey}
-          configurations={configurations}
-          modelsByProvider={modelsByProvider}
-          initialSessionId={activeSessionId}
-          initialMessages={
-            "data" in initialMessages ? initialMessages.data : []
-          }
-          initialPrompt={initialPrompt}
-        />
-      </div>
+        <div className="h-[calc(100dvh-6.5rem)] min-h-0">
+          <LighthouseV2ChatPage
+            key={chatRouteKey}
+            configurations={configurations}
+            modelsByProvider={modelsByProvider}
+            initialSessionId={activeSessionId}
+            initialMessages={
+              "data" in initialMessages ? initialMessages.data : []
+            }
+            initialPrompt={initialPrompt}
+          />
+        </div>
+      </ContentLayout>
     );
   }
 
   const hasConfig = await isLighthouseConfigured();
 
   if (!hasConfig) {
-    return redirect("/lighthouse/config");
+    return redirect("/lighthouse/settings");
   }
 
   // Fetch provider configuration with default models
@@ -96,7 +98,7 @@ export default async function AIChatbot({
 
   // Handle errors or missing configuration
   if (providersConfig.errors || !providersConfig.providers) {
-    return redirect("/lighthouse/config");
+    return redirect("/lighthouse/settings");
   }
 
   return (

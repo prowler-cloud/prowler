@@ -16,4 +16,13 @@ describe("Lighthouse page", () => {
     );
     expect(source).toContain("key={chatRouteKey}");
   });
+
+  it("renders the Cloud chat inside the shared application layout", () => {
+    // Given / When / Then
+    expect(source).toContain(
+      '<ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>',
+    );
+    expect(source).toContain('className="h-[calc(100dvh-6.5rem)] min-h-0"');
+    expect(source).not.toContain('className="h-dvh min-h-0 p-4 pr-6"');
+  });
 });

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
   LighthouseV2Configuration,
+  LighthouseV2Message,
   LighthouseV2SupportedModel,
 } from "@/types/lighthouse-v2";
 
@@ -109,15 +110,6 @@ describe("LighthouseV2ChatPage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("uses the neutral page background instead of the global app background token", () => {
-    // Given / When
-    const { container } = renderPage();
-
-    // Then
-    expect(container.firstElementChild).toHaveClass("bg-bg-neutral-primary");
-    expect(container.firstElementChild).not.toHaveClass("bg-background");
-  });
-
   it("does not render provider or model selectors in the chat composer", () => {
     // Given / When
     renderPage();
@@ -126,7 +118,46 @@ describe("LighthouseV2ChatPage", () => {
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Lighthouse settings" }),
-    ).toHaveAttribute("href", "/lighthouse/config");
+    ).toHaveAttribute("href", "/lighthouse/settings");
+  });
+
+  it("uses the tuned scrollbar and bottom fade without a composer separator", () => {
+    // Given / When
+    const { container } = renderPage({
+      initialMessages: [message("message-1", "assistant", "Existing answer")],
+    });
+
+    // Then
+    const conversation = screen.getByRole("log");
+    const scrollViewport = conversation.firstElementChild as HTMLElement;
+    const content = scrollViewport.firstElementChild as HTMLElement;
+    const scrollFade = container.querySelector(
+      '[data-slot="lighthouse-v2-chat-scroll-fade"]',
+    );
+
+    expect(conversation).toHaveClass("h-full", "min-h-0");
+    expect(conversation.parentElement).toHaveClass("flex", "overflow-hidden");
+    expect(scrollViewport).toHaveClass(
+      "minimal-scrollbar",
+      "overflow-x-hidden",
+      "overflow-y-auto",
+    );
+    expect(content).toHaveClass("pb-20");
+    expect(scrollFade).toHaveClass(
+      "pointer-events-none",
+      "absolute",
+      "bottom-0",
+      "right-2",
+      "h-16",
+      "bg-gradient-to-t",
+      "from-bg-neutral-secondary",
+      "to-transparent",
+    );
+    expect(
+      container.querySelector(
+        '[data-slot="lighthouse-v2-chat-composer-panel"]',
+      ),
+    ).not.toHaveClass("border-t");
   });
 
   it("sends messages with the connected default provider and model from configuration", async () => {
@@ -213,5 +244,29 @@ function model(id: string): LighthouseV2SupportedModel {
     supportsFunctionCalling: null,
     supportsVision: null,
     supportsReasoning: null,
+  };
+}
+
+function message(
+  id: string,
+  role: LighthouseV2Message["role"],
+  content: string,
+): LighthouseV2Message {
+  return {
+    id,
+    role,
+    model: null,
+    tokenUsage: null,
+    insertedAt: "2026-06-25T10:00:00Z",
+    parts: [
+      {
+        id: `${id}-part`,
+        type: "text",
+        content,
+        toolCallOutcome: null,
+        insertedAt: "2026-06-25T10:00:00Z",
+        updatedAt: "2026-06-25T10:00:00Z",
+      },
+    ],
   };
 }

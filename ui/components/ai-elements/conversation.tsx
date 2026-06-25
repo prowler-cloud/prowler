@@ -19,19 +19,39 @@ export const Conversation = ({ className, ...props }: ConversationProps) => (
   />
 );
 
-export type ConversationContentProps = ComponentProps<
-  typeof StickToBottom.Content
->;
+type ConversationContentChildren =
+  | ReactNode
+  | ((context: ReturnType<typeof useStickToBottomContext>) => ReactNode);
+
+export type ConversationContentProps = Omit<
+  ComponentProps<"div">,
+  "children" | "ref"
+> & {
+  children?: ConversationContentChildren;
+  scrollClassName?: string;
+};
 
 export const ConversationContent = ({
+  children,
   className,
+  scrollClassName,
   ...props
-}: ConversationContentProps) => (
-  <StickToBottom.Content
-    className={cn("flex flex-col gap-8 p-4", className)}
-    {...props}
-  />
-);
+}: ConversationContentProps) => {
+  const context = useStickToBottomContext();
+  const { contentRef, scrollRef } = context;
+
+  return (
+    <div ref={scrollRef} className={cn("h-full w-full", scrollClassName)}>
+      <div
+        ref={contentRef}
+        className={cn("flex flex-col gap-8 p-4", className)}
+        {...props}
+      >
+        {typeof children === "function" ? children(context) : children}
+      </div>
+    </div>
+  );
+};
 
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
   title?: string;

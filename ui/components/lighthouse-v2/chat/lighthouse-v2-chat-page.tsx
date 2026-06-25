@@ -50,6 +50,8 @@ import {
   type LighthouseV2SupportedModel,
 } from "@/types/lighthouse-v2";
 
+import { Card } from "../../shadcn";
+
 interface LighthouseV2ChatPageProps {
   configurations: LighthouseV2Configuration[];
   modelsByProvider: Record<
@@ -295,21 +297,36 @@ export function LighthouseV2ChatPage({
     messages.length > 0 || Boolean(streamState.assistantText);
 
   return (
-    <section className="bg-bg-neutral-primary flex h-full min-h-0 flex-col">
+    <Card
+      variant="base"
+      className="flex h-full min-h-0 flex-col overflow-hidden"
+    >
       {hasConversation ? (
         <div className="flex min-h-0 flex-1 flex-col">
-          <Conversation className="min-h-0">
-            <ConversationContent className="mx-auto w-full max-w-4xl gap-5 px-4 py-8 md:px-8">
-              {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
-              ))}
-              {streamState.assistantText && (
-                <StreamingAssistantMessage streamState={streamState} />
-              )}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-          <div className="bg-bg-neutral-primary px-4 pb-5 md:px-8">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+            <Conversation className="h-full min-h-0">
+              <ConversationContent
+                className="mx-auto w-full max-w-4xl gap-5 px-4 pt-8 pb-20 md:px-8"
+                scrollClassName="minimal-scrollbar overflow-x-hidden overflow-y-auto"
+              >
+                {messages.map((message) => (
+                  <MessageBubble key={message.id} message={message} />
+                ))}
+                {streamState.assistantText && (
+                  <StreamingAssistantMessage streamState={streamState} />
+                )}
+              </ConversationContent>
+              <ConversationScrollButton className="z-20" />
+            </Conversation>
+            <div
+              data-slot="lighthouse-v2-chat-scroll-fade"
+              className="from-bg-neutral-secondary pointer-events-none absolute right-2 bottom-0 left-0 z-10 h-16 bg-gradient-to-t to-transparent"
+            />
+          </div>
+          <div
+            data-slot="lighthouse-v2-chat-composer-panel"
+            className="bg-bg-neutral-secondary px-4 pb-5 md:px-8"
+          >
             <div className="mx-auto w-full max-w-4xl">
               <LighthouseV2Feedback
                 feedback={feedback}
@@ -397,7 +414,7 @@ export function LighthouseV2ChatPage({
               })}
               <Button type="button" variant="outline" size="icon-sm" asChild>
                 <Link
-                  href="/lighthouse/config"
+                  href="/lighthouse/settings"
                   aria-label="Lighthouse settings"
                 >
                   <Settings className="size-4" />
@@ -407,7 +424,7 @@ export function LighthouseV2ChatPage({
           </div>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 
