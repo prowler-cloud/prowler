@@ -27,7 +27,13 @@ beforeAll(() => {
   });
 });
 
-function ScheduleFieldsHarness() {
+function ScheduleFieldsHarness({
+  canUseAdvancedSchedule = true,
+  showCloudUpgradeBadge = false,
+}: {
+  canUseAdvancedSchedule?: boolean;
+  showCloudUpgradeBadge?: boolean;
+} = {}) {
   const form = useForm<ScheduleFormValues>({
     defaultValues: getScheduleFormDefaults(),
   });
@@ -36,7 +42,8 @@ function ScheduleFieldsHarness() {
     <ScanScheduleFields
       form={form}
       showNextScheduledCopy
-      canUseAdvancedSchedule
+      canUseAdvancedSchedule={canUseAdvancedSchedule}
+      showCloudUpgradeBadge={showCloudUpgradeBadge}
     />
   );
 }
@@ -72,5 +79,43 @@ describe("ScanScheduleFields", () => {
         );
       }),
     ).not.toBeInTheDocument();
+  });
+
+  it("uses ordinal copy for monthly schedules", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<ScheduleFieldsHarness />);
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: /repeats/i }));
+    await user.click(screen.getByRole("option", { name: /monthly/i }));
+
+    // Then
+    expect(getHelperCopy(/Monthly on the 1st/)).toBeInTheDocument();
+    expect(getHelperCopy(/Monthly on the 1st/)).not.toHaveTextContent(
+      /Monthly on day/,
+    );
+  });
+
+  it("shows a single cloud badge beside the Scan Schedule title when advanced controls are locked", () => {
+    // Given
+    render(
+      <ScheduleFieldsHarness
+        canUseAdvancedSchedule={false}
+        showCloudUpgradeBadge
+      />,
+    );
+
+    // Then
+    expect(screen.getAllByText("Available in Prowler Cloud")).toHaveLength(1);
+    expect(screen.getByText("Scan Schedule").parentElement).toHaveTextContent(
+      "Available in Prowler Cloud",
+    );
+    expect(screen.getByText("Scan Time").parentElement).not.toHaveTextContent(
+      "Available in Prowler Cloud",
+    );
+    expect(screen.getByText("Repeats").parentElement).not.toHaveTextContent(
+      "Available in Prowler Cloud",
+    );
   });
 });

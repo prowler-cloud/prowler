@@ -6,11 +6,21 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `--scan-secrets-validate` flag and `secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
+- `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
+- `--scan-secrets-validate` flag and `secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 
 ### 🔄 Changed
 
-- Replaced the `detect-secrets` library with [Kingfisher](https://github.com/mongodb/kingfisher) as the engine for the secret-scanning checks; scans run fully offline by default and obvious placeholder values are no longer reported as findings [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- Replaced the `detect-secrets` library with [Kingfisher](https://github.com/mongodb/kingfisher) as the engine for the secret-scanning checks; scans run fully offline by default and obvious placeholder values are no longer reported as findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+
+---
+
+## [5.31.1] (Prowler v5.31.1)
+
+### 🐞 Fixed
+
+- Alibaba Cloud `ram_password_policy_number` and `cs_kubernetes_cluster_check_weekly` checks not being loaded due to missing implementation and package files [(#11683)](https://github.com/prowler-cloud/prowler/pull/11683)
 
 ---
 
