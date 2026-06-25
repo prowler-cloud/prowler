@@ -1,7 +1,10 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
+from prowler.lib.utils.utils import (
+    annotate_verified_secrets,
+    detect_secrets_scan_batch,
+)
 from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 
 
@@ -14,7 +17,29 @@ class codebuild_project_no_secrets_in_variables(Check):
         secrets_ignore_patterns = codebuild_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-        for project in codebuild_client.projects.values():
+        validate = codebuild_client.audit_config.get("secrets_validate", False)
+        projects = list(codebuild_client.projects.values())
+
+        # Collect every scannable plaintext variable across all projects and scan
+        # them in batched Kingfisher invocations instead of one subprocess per
+        # variable. Findings are keyed by (project index, variable index).
+        def payloads():
+            for project_index, project in enumerate(projects):
+                if project.environment_variables:
+                    for var_index, env_var in enumerate(project.environment_variables):
+                        if (
+                            env_var.type == "PLAINTEXT"
+                            and env_var.name not in sensitive_vars_excluded
+                        ):
+                            yield (project_index, var_index), json.dumps(
+                                {env_var.name: env_var.value}
+                            )
+
+        batch_results = detect_secrets_scan_batch(
+            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+        )
+
+        for project_index, project in enumerate(projects):
             report = Check_Report_AWS(metadata=self.metadata(), resource=project)
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} does not have sensitive environment plaintext credentials."
@@ -22,25 +47,18 @@ class codebuild_project_no_secrets_in_variables(Check):
             all_secrets = []
 
             if project.environment_variables:
-                for env_var in project.environment_variables:
-                    if (
-                        env_var.type == "PLAINTEXT"
-                        and env_var.name not in sensitive_vars_excluded
-                    ):
-                        detect_secrets_output = detect_secrets_scan(
-                            data=json.dumps({env_var.name: env_var.value}),
-                            excluded_secrets=secrets_ignore_patterns,
-                            validate=codebuild_client.audit_config.get(
-                                "secrets_validate", False
-                            ),
-                        )
-                        if detect_secrets_output:
-                            all_secrets.extend(detect_secrets_output)
-                            secrets_info = [
+                for var_index, env_var in enumerate(project.environment_variables):
+                    detect_secrets_output = batch_results.get(
+                        (project_index, var_index)
+                    )
+                    if detect_secrets_output:
+                        all_secrets.extend(detect_secrets_output)
+                        secrets_found.extend(
+                            [
                                 f"{secret['type']} in variable {env_var.name}"
                                 for secret in detect_secrets_output
                             ]
-                            secrets_found.extend(secrets_info)
+                        )
 
             if secrets_found:
                 report.status = "FAIL"

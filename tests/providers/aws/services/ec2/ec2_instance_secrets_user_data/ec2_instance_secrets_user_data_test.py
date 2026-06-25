@@ -365,16 +365,18 @@ class Test_ec2_instance_secrets_user_data:
                 new=EC2(aws_provider),
             ),
             mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.detect_secrets_scan",
-                return_value=[
-                    {
-                        "type": "JSON Web Token (base64url-encoded)",
-                        "line_number": 1,
-                        "filename": "data",
-                        "hashed_secret": "x",
-                        "is_verified": True,
-                    }
-                ],
+                "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.detect_secrets_scan_batch",
+                return_value={
+                    0: [
+                        {
+                            "type": "JSON Web Token (base64url-encoded)",
+                            "line_number": 1,
+                            "filename": "data",
+                            "hashed_secret": "x",
+                            "is_verified": True,
+                        }
+                    ]
+                },
             ),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (

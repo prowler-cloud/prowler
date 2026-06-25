@@ -1,7 +1,10 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
+from prowler.lib.utils.utils import (
+    annotate_verified_secrets,
+    detect_secrets_scan_batch,
+)
 from prowler.providers.aws.services.glue.glue_client import glue_client
 
 
@@ -18,7 +21,23 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
         secrets_ignore_patterns = glue_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-        for job in glue_client.jobs:
+        validate = glue_client.audit_config.get("secrets_validate", False)
+        jobs = list(glue_client.jobs)
+
+        # Collect every default argument across all jobs and scan them in batched
+        # Kingfisher invocations instead of one subprocess per argument. Findings
+        # are keyed by (job index, argument name).
+        def payloads():
+            for job_index, job in enumerate(jobs):
+                if job.arguments:
+                    for arg_name, arg_value in job.arguments.items():
+                        yield (job_index, arg_name), json.dumps({arg_name: arg_value})
+
+        batch_results = detect_secrets_scan_batch(
+            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+        )
+
+        for job_index, job in enumerate(jobs):
             report = Check_Report_AWS(metadata=self.metadata(), resource=job)
             report.status = "PASS"
             report.status_extended = (
@@ -28,14 +47,8 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
             if job.arguments:
                 secrets_found = []
                 all_secrets = []
-                for arg_name, arg_value in job.arguments.items():
-                    detect_secrets_output = detect_secrets_scan(
-                        data=json.dumps({arg_name: arg_value}),
-                        excluded_secrets=secrets_ignore_patterns,
-                        validate=glue_client.audit_config.get(
-                            "secrets_validate", False
-                        ),
-                    )
+                for arg_name in job.arguments:
+                    detect_secrets_output = batch_results.get((job_index, arg_name))
                     if detect_secrets_output:
                         all_secrets.extend(detect_secrets_output)
                         secrets_found.extend(
