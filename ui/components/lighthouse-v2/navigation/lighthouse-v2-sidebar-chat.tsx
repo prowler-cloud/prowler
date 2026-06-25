@@ -2,7 +2,7 @@
 
 import { MessageSquare, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import {
   archiveLighthouseV2Session,
@@ -24,12 +24,9 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
   const router = useRouter();
   const [sessions, setSessions] = useState<LighthouseV2Session[]>([]);
   const [search, setSearch] = useState("");
-  const searchRef = useRef("");
 
-  const refreshSessions = async (nextSearch = searchRef.current) => {
-    const result = await getLighthouseV2Sessions(
-      nextSearch ? { search: nextSearch } : undefined,
-    );
+  const refreshSessions = async () => {
+    const result = await getLighthouseV2Sessions();
     if ("data" in result) {
       setSessions(result.data);
     }
@@ -37,8 +34,6 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    searchRef.current = value;
-    void refreshSessions(value);
   };
 
   const handleNewSession = () => {
@@ -60,7 +55,7 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
 
   useMountEffect(() => {
     void refreshSessions();
-    const refresh = () => void refreshSessions(searchRef.current);
+    const refresh = () => void refreshSessions();
     window.addEventListener(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, refresh);
     return () => {
       window.removeEventListener(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, refresh);

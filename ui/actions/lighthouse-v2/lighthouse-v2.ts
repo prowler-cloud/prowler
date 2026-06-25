@@ -132,14 +132,10 @@ export async function getLighthouseV2SupportedModels(
   );
 }
 
-export async function getLighthouseV2Sessions(params?: {
-  search?: string;
-}): Promise<LighthouseV2ActionResult<LighthouseV2Session[]>> {
-  const url = buildApiUrl("/lighthouse/sessions");
-  if (params?.search) {
-    url.searchParams.set("search", params.search);
-  }
-  return getCollectionFromUrl(url, mapLighthouseV2Session);
+export async function getLighthouseV2Sessions(): Promise<
+  LighthouseV2ActionResult<LighthouseV2Session[]>
+> {
+  return getCollection("/lighthouse/sessions", mapLighthouseV2Session);
 }
 
 export async function getLighthouseV2Session(

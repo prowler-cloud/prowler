@@ -4,16 +4,15 @@ import { Archive, Plus } from "lucide-react";
 
 import { Button } from "@/components/shadcn/button/button";
 import { SearchInput } from "@/components/shadcn/search-input/search-input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import type { LighthouseV2Session } from "@/types/lighthouse-v2";
 
-const SESSION_GROUP_ORDER = [
-  "Today",
-  "Yesterday",
-  "Last 7 days",
-  "Last 30 days",
-  "Older",
-] as const;
+const SESSION_HISTORY_GROUP_LABEL = "Older";
 
 interface LighthouseV2SessionHistoryProps {
   sessions: LighthouseV2Session[];
@@ -36,10 +35,16 @@ export function LighthouseV2SessionHistory({
   onArchiveSession,
   compact = false,
 }: LighthouseV2SessionHistoryProps) {
-  const groups = groupSessionsByDate(sessions);
+  const visibleSessions = filterSessionsBySearch(sessions, search);
+  const groups = groupSessionsByDate(visibleSessions);
 
   return (
-    <aside className={cn("flex min-h-0 flex-col gap-3", compact && "gap-2")}>
+    <aside
+      className={cn(
+        "flex min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden",
+        compact && "gap-2",
+      )}
+    >
       <div className="flex items-center gap-2">
         <SearchInput
           aria-label="Search Lighthouse sessions"
@@ -59,7 +64,7 @@ export function LighthouseV2SessionHistory({
         </Button>
       </div>
 
-      <div className="minimal-scrollbar min-h-0 flex-1 overflow-y-auto">
+      <div className="minimal-scrollbar min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
         {groups.length === 0 ? (
           <div className="text-text-neutral-secondary px-2 py-8 text-center text-sm">
             No chats
@@ -67,43 +72,54 @@ export function LighthouseV2SessionHistory({
         ) : (
           <div className="flex flex-col gap-4">
             {groups.map((group) => (
-              <section key={group.label} className="grid gap-1">
-                <h3 className="text-text-neutral-tertiary px-2 text-xs font-semibold tracking-wide uppercase">
+              <section key={group.label} className="grid min-w-0">
+                <h3 className="text-text-neutral-tertiary px-2 py-1 text-xs font-semibold tracking-wide uppercase">
                   {group.label}
                 </h3>
-                {group.sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className={cn(
-                      "group flex items-center gap-1 rounded-[8px]",
-                      activeSessionId === session.id &&
-                        "bg-bg-neutral-tertiary",
-                    )}
-                  >
-                    <button
-                      type="button"
-                      className="hover:bg-bg-neutral-tertiary flex min-w-0 flex-1 items-center gap-2 rounded-[8px] px-2 py-2 text-left text-sm"
-                      onClick={() => onOpenSession(session.id)}
+                {group.sessions.map((session) => {
+                  const sessionTitle = session.title || "Untitled chat";
+
+                  return (
+                    <div
+                      key={session.id}
+                      className={cn(
+                        "hover:bg-bg-neutral-tertiary group relative flex min-w-0 items-center overflow-hidden rounded-[8px] transition-colors",
+                        activeSessionId === session.id &&
+                          "bg-bg-neutral-tertiary",
+                      )}
                     >
-                      <span className="min-w-0 flex-1 truncate">
-                        {session.title || "Untitled chat"}
-                      </span>
-                      <span className="text-text-neutral-tertiary shrink-0 text-xs">
-                        {formatAgeLabel(session.updatedAt)}
-                      </span>
-                    </button>
-                    <Button
-                      type="button"
-                      aria-label={`Archive ${session.title || "chat"}`}
-                      variant="bare"
-                      size="icon-xs"
-                      className="mr-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                      onClick={() => onArchiveSession(session.id)}
-                    >
-                      <Archive />
-                    </Button>
-                  </div>
-                ))}
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-[8px] px-2 py-2 text-left text-sm"
+                            onClick={() => onOpenSession(session.id)}
+                          >
+                            <span className="min-w-0 flex-1 truncate">
+                              {sessionTitle}
+                            </span>
+                            <span className="text-text-neutral-tertiary min-w-[3.25rem] shrink-0 text-right text-xs whitespace-nowrap transition-opacity group-focus-within:opacity-0 group-hover:opacity-0">
+                              {formatAgeLabel(session.updatedAt)}
+                            </span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          {sessionTitle}
+                        </TooltipContent>
+                      </Tooltip>
+                      <Button
+                        type="button"
+                        aria-label={`Archive ${sessionTitle}`}
+                        variant="bare"
+                        size="icon-xs"
+                        className="hover:text-text-neutral-secondary active:text-text-neutral-secondary absolute top-1/2 right-1 -translate-y-1/2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100"
+                        onClick={() => onArchiveSession(session.id)}
+                      >
+                        <Archive />
+                      </Button>
+                    </div>
+                  );
+                })}
               </section>
             ))}
           </div>
@@ -119,35 +135,35 @@ interface SessionGroup {
 }
 
 function groupSessionsByDate(sessions: LighthouseV2Session[]): SessionGroup[] {
-  const groups = new Map<string, LighthouseV2Session[]>();
+  if (sessions.length === 0) return [];
 
-  sessions.forEach((session) => {
-    const label = getSessionGroupLabel(session.updatedAt);
-    groups.set(label, [...(groups.get(label) ?? []), session]);
-  });
-
-  return SESSION_GROUP_ORDER.filter((label) => groups.has(label)).map(
-    (label) => ({
-      label,
-      sessions: groups.get(label) ?? [],
-    }),
-  );
+  return [
+    {
+      label: SESSION_HISTORY_GROUP_LABEL,
+      sessions,
+    },
+  ];
 }
 
-function getSessionGroupLabel(dateString: string) {
-  const ageInDays = getAgeInDays(dateString);
-  if (ageInDays === 0) return "Today";
-  if (ageInDays === 1) return "Yesterday";
-  if (ageInDays <= 7) return "Last 7 days";
-  if (ageInDays <= 30) return "Last 30 days";
-  return "Older";
+function filterSessionsBySearch(
+  sessions: LighthouseV2Session[],
+  search: string,
+): LighthouseV2Session[] {
+  const normalizedSearch = search.trim().toLocaleLowerCase();
+  if (!normalizedSearch) return sessions;
+
+  return sessions.filter((session) =>
+    (session.title || "Untitled chat")
+      .toLocaleLowerCase()
+      .includes(normalizedSearch),
+  );
 }
 
 function formatAgeLabel(dateString: string) {
   const ageInDays = getAgeInDays(dateString);
   if (ageInDays === 0) return "Today";
-  if (ageInDays === 1) return "1d";
-  return `${ageInDays}d`;
+
+  return ageInDays === 1 ? "1 day" : `${ageInDays} days`;
 }
 
 function getAgeInDays(dateString: string) {
