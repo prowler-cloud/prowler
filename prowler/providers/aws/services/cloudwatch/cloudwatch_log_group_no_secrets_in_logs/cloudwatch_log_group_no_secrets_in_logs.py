@@ -35,9 +35,6 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                         log_stream_secrets_output = detect_secrets_scan(
                             data=log_stream_data,
                             excluded_secrets=secrets_ignore_patterns,
-                            detect_secrets_plugins=logs_client.audit_config.get(
-                                "detect_secrets_plugins",
-                            ),
                             validate=logs_client.audit_config.get(
                                 "secrets_validate", False
                             ),
@@ -75,12 +72,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                                     # Will rescan just this event to get the type of secret and the line number
                                     event_detect_secrets_output = detect_secrets_scan(
                                         data=log_event_data,
-                                        detect_secrets_plugins=logs_client.audit_config.get(
-                                            "detect_secrets_plugins"
-                                        ),
-                                        validate=logs_client.audit_config.get(
-                                            "secrets_validate", False
-                                        ),
+                                        validate=False,
                                     )
                                     if event_detect_secrets_output:
                                         for secret in event_detect_secrets_output:
