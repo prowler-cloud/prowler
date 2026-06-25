@@ -1130,7 +1130,12 @@ class AzureProvider(Provider):
 
         for subscription_id, display_name in self._identity.subscriptions.items():
             try:
-                rg_client = ResourceManagementClient(credentials, subscription_id)
+                rg_client = ResourceManagementClient(
+                    credentials,
+                    subscription_id,
+                    base_url=self._region_config.base_url,
+                    credential_scopes=self._region_config.credential_scopes,
+                )
                 existing_rgs = {
                     rg.name.lower(): rg.name for rg in rg_client.resource_groups.list()
                 }
