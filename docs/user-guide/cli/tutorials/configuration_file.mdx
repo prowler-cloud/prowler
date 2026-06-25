@@ -12,14 +12,20 @@ prowler/config/config.yaml
 
 Additionally, you can input a custom configuration file using the `--config-file` argument.
 
+<Note>
+Numeric thresholds enforce hard limits. A value outside the accepted range is dropped with a warning and the check falls back to its built-in default. See [Configuration Value Limits](/developer-guide/configurable-checks#configuration-value-limits) for the exact range of every bounded option (max-days caps, percentages, counts, etc.).
+</Note>
+
 ## AWS
 
 ### Configurable Checks
+
 The following list includes all the AWS checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
 | `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
+| `acmpca_certificate_authority_pqc_key_algorithm`              | `acmpca_pqc_key_algorithms`                      | List of Strings |
 | `appstream_fleet_maximum_session_duration`                    | `max_session_duration_seconds`                   | Integer         |
 | `appstream_fleet_session_disconnect_timeout`                  | `max_disconnect_timeout_in_seconds`              | Integer         |
 | `appstream_fleet_session_idle_disconnect_timeout`             | `max_idle_disconnect_timeout_in_seconds`         | Integer         |
@@ -57,6 +63,9 @@ The following list includes all the AWS checks with configurable variables that 
 | `elasticache_redis_cluster_backup_enabled`                    | `minimum_snapshot_retention_period`              | Integer         |
 | `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
 | `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
+| `rolesanywhere_trust_anchor_pqc_pki`                          | `rolesanywhere_pqc_pca_key_algorithms`           | List of Strings |
+| `cloudfront_distributions_pqc_tls_enabled`                    | `cloudfront_pqc_min_protocol_versions`           | List of Strings |
+| `apigateway_domain_name_pqc_tls_enabled`                      | `apigateway_pqc_tls_allowed_policies`            | List of Strings |
 | `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
 | `iam_user_access_not_stale_to_sagemaker`                      | `max_unused_sagemaker_access_days`               | Integer         |
 | `iam_user_accesskey_unused`                                   | `max_unused_access_keys_days`                    | Integer         |
@@ -69,6 +78,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `secretsmanager_secret_rotated_periodically`                  | `max_days_secret_unrotated`                      | Integer         |
 | `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
+| `transfer_server_pqc_ssh_kex_enabled`                        | `transfer_pqc_ssh_allowed_policies`              | List of Strings |
 | `dynamodb_table_cross_account_access`                         | `trusted_account_ids`                            | List of Strings |
 | `eventbridge_bus_cross_account_access`                        | `trusted_account_ids`                            | List of Strings |
 | `eventbridge_schema_registry_cross_account_access`            | `trusted_account_ids`                            | List of Strings |

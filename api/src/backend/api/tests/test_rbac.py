@@ -2,10 +2,6 @@ import json
 from unittest.mock import ANY, Mock, patch
 
 import pytest
-from conftest import TEST_PASSWORD, TODAY
-from django.urls import reverse
-from rest_framework import status
-
 from api.models import (
     Membership,
     ProviderGroup,
@@ -16,6 +12,9 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.v1.serializers import TokenSerializer
+from conftest import TEST_PASSWORD, TODAY
+from django.urls import reverse
+from rest_framework import status
 
 
 @pytest.mark.django_db

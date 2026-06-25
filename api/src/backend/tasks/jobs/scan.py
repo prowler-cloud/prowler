@@ -6,34 +6,10 @@ import time
 import uuid
 from collections import defaultdict
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import sentry_sdk
-from celery.utils.log import get_task_logger
-from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
-from config.env import env
-from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
-from django.db import IntegrityError, OperationalError
-from django.db.models import (
-    Case,
-    Count,
-    Exists,
-    IntegerField,
-    Max,
-    Min,
-    OuterRef,
-    Q,
-    Sum,
-    When,
-)
-from django.utils import timezone as django_timezone
-from tasks.jobs.queries import (
-    COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
-    COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
-)
-from tasks.utils import CustomEncoder, batched
-
 from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
 from api.constants import SEVERITY_ORDER
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
@@ -43,7 +19,7 @@ from api.db_utils import (
     psycopg_connection,
     rls_transaction,
 )
-from api.exceptions import ProviderConnectionError
+from api.exceptions import ProviderConnectionError, ProviderDeletedException
 from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
@@ -68,9 +44,32 @@ from api.models import (
 from api.models import StatusChoices as FindingStatus
 from api.utils import initialize_prowler_provider, return_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
+from celery.utils.log import get_task_logger
+from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
+from config.env import env
+from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
+from django.db import DatabaseError, IntegrityError, OperationalError, transaction
+from django.db.models import (
+    Case,
+    Count,
+    Exists,
+    IntegerField,
+    Max,
+    Min,
+    OuterRef,
+    Q,
+    Sum,
+    When,
+)
+from django.utils import timezone as django_timezone
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
+from tasks.jobs.queries import (
+    COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+    COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
+)
+from tasks.utils import CustomEncoder, batched
 
 logger = get_task_logger(__name__)
 
@@ -116,6 +115,20 @@ ATTACK_SURFACE_PROVIDER_COMPATIBILITY = {
 }
 
 _ATTACK_SURFACE_MAPPING_CACHE: dict[str, dict] = {}
+
+
+def _save_scan_instance(
+    scan_instance: Scan, provider_id: str, update_fields: list[str]
+) -> None:
+    try:
+        with transaction.atomic():  # Savepoint for not killing the `rls_transaction`
+            scan_instance.save(update_fields=update_fields)
+    except DatabaseError:
+        if Scan.objects.filter(pk=scan_instance.id).exists():
+            raise
+        raise ProviderDeletedException(
+            f"Provider '{provider_id}' for scan '{scan_instance.id}' was deleted during the scan"
+        ) from None
 
 
 def aggregate_category_counts(
@@ -311,7 +324,7 @@ def _copy_compliance_requirement_rows(
     csv_buffer = io.StringIO()
     writer = csv.writer(csv_buffer)
 
-    datetime_now = datetime.now(tz=timezone.utc)
+    datetime_now = datetime.now(tz=UTC)
     for row in rows:
         writer.writerow(
             [
@@ -783,7 +796,7 @@ def _process_finding_micro_batch(
                     delta = _create_finding_delta(last_status, status)
 
                     if not last_first_seen_at:
-                        last_first_seen_at = datetime.now(tz=timezone.utc)
+                        last_first_seen_at = datetime.now(tz=UTC)
 
                     # Determine if finding should be muted and why
                     # Priority: mutelist processor (highest) > manual mute rules
@@ -814,7 +827,7 @@ def _process_finding_micro_batch(
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
                         muted=is_muted,
-                        muted_at=datetime.now(tz=timezone.utc) if is_muted else None,
+                        muted_at=datetime.now(tz=UTC) if is_muted else None,
                         muted_reason=muted_reason,
                         compliance=finding.compliance,
                         categories=check_metadata.get("categories", []) or [],
@@ -941,7 +954,7 @@ def _process_finding_micro_batch(
                     set(dirty_resources.keys()) | resources_with_new_tag_mappings
                 )
                 if all_resource_uids_to_touch:
-                    now_utc = datetime.now(tz=timezone.utc)
+                    now_utc = datetime.now(tz=UTC)
                     resources_to_bulk_update = []
                     for uid in all_resource_uids_to_touch:
                         # Use the instance from dirty_resources if present (has mutated
@@ -1030,13 +1043,18 @@ def perform_prowler_scan(
     group_resources_cache: dict[str, set] = {}
     start_time = time.time()
     exc = None
+    skip_final_scan_update = False
 
     with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
         scan_instance = Scan.objects.get(pk=scan_id)
         scan_instance.state = StateChoices.EXECUTING
-        scan_instance.started_at = datetime.now(tz=timezone.utc)
-        scan_instance.save(update_fields=["state", "started_at", "updated_at"])
+        scan_instance.started_at = datetime.now(tz=UTC)
+        _save_scan_instance(
+            scan_instance,
+            provider_id,
+            ["state", "started_at", "updated_at"],
+        )
 
     # Find the mutelist processor if it exists
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
@@ -1078,9 +1096,7 @@ def perform_prowler_scan(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )
             finally:
-                provider_instance.connection_last_checked_at = datetime.now(
-                    tz=timezone.utc
-                )
+                provider_instance.connection_last_checked_at = datetime.now(tz=UTC)
                 provider_instance.save(
                     update_fields=[
                         "connected",
@@ -1104,7 +1120,7 @@ def perform_prowler_scan(
 
         # Throttle scan_instance progress writes to avoid hammering the writer:
         # only persist when progress moves by at least `PROGRESS_THROTTLE_DELTA`
-        # OR `PROGRESS_THROTTLE_SECONDS` have elapsed. The final progress (1.0)
+        # OR `PROGRESS_THROTTLE_SECONDS` have elapsed. The final progress (100)
         # always persists in the `finally` block below.
         last_persisted_progress = -1.0
         last_persisted_progress_at = 0.0
@@ -1146,7 +1162,11 @@ def perform_prowler_scan(
             ):
                 with rls_transaction(tenant_id):
                     scan_instance.progress = progress
-                    scan_instance.save(update_fields=["progress", "updated_at"])
+                    _save_scan_instance(
+                        scan_instance,
+                        provider_id,
+                        ["progress", "updated_at"],
+                    )
                 last_persisted_progress = progress
                 last_persisted_progress_at = now
 
@@ -1173,26 +1193,39 @@ def perform_prowler_scan(
                         batch_size=SCAN_DB_BATCH_SIZE,
                     )
 
+    except ProviderDeletedException as e:
+        logger.warning(str(e))
+        exception = e
+        skip_final_scan_update = True
     except Exception as e:
         logger.error(f"Error performing scan {scan_id}: {e}")
         exception = e
         scan_instance.state = StateChoices.FAILED
 
     finally:
-        with rls_transaction(tenant_id):
-            scan_instance.duration = time.time() - start_time
-            scan_instance.completed_at = datetime.now(tz=timezone.utc)
-            scan_instance.unique_resource_count = len(unique_resources)
-            scan_instance.save(
-                update_fields=[
-                    "state",
-                    "duration",
-                    "completed_at",
-                    "unique_resource_count",
-                    "progress",
-                    "updated_at",
-                ]
-            )
+        if not skip_final_scan_update:
+            try:
+                with rls_transaction(tenant_id):
+                    scan_instance.duration = time.time() - start_time
+                    scan_instance.completed_at = datetime.now(tz=UTC)
+                    scan_instance.unique_resource_count = len(unique_resources)
+                    if exception is None:
+                        scan_instance.progress = 100
+                    _save_scan_instance(
+                        scan_instance,
+                        provider_id,
+                        [
+                            "state",
+                            "duration",
+                            "completed_at",
+                            "unique_resource_count",
+                            "progress",
+                            "updated_at",
+                        ],
+                    )
+            except ProviderDeletedException as e:
+                logger.warning(str(e))
+                exception = e
 
     if exception is not None:
         raise exception
@@ -1588,7 +1621,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                         else:
                             requirement_stats["failed_checks"] += 1
 
-            utc_datetime_now = datetime.now(tz=timezone.utc)
+            utc_datetime_now = datetime.now(tz=UTC)
             tenant_id_str = str(tenant_id)
             scan_id_str = str(scan_instance.id)
 
@@ -2073,9 +2106,7 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
 
         summary_timestamp = scan.completed_at
         if django_timezone.is_naive(summary_timestamp):
-            summary_timestamp = django_timezone.make_aware(
-                summary_timestamp, timezone.utc
-            )
+            summary_timestamp = django_timezone.make_aware(summary_timestamp, UTC)
         summary_timestamp = summary_timestamp.replace(
             hour=0, minute=0, second=0, microsecond=0
         )

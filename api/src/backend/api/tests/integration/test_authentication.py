@@ -1,14 +1,13 @@
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
+from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.urls import reverse
 from drf_simple_apikey.crypto import get_crypto
 from rest_framework.test import APIClient
-
-from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
 
 
 @pytest.mark.django_db
@@ -468,7 +467,7 @@ class TestAPIKeyErrors:
             name="Expired Key",
             tenant_id=tenants_fixture[0].id,
             entity=create_test_user,
-            expiry_date=datetime.now(timezone.utc) - timedelta(days=1),
+            expiry_date=datetime.now(UTC) - timedelta(days=1),
         )
 
         api_key_headers = get_api_key_header(raw_key)
@@ -500,7 +499,7 @@ class TestAPIKeyErrors:
         # Create a valid-looking key with non-existent UUID
         crypto = get_crypto()
         fake_uuid = str(uuid4())
-        fake_expiry = (datetime.now(timezone.utc) + timedelta(days=30)).timestamp()
+        fake_expiry = (datetime.now(UTC) + timedelta(days=30)).timestamp()
         payload = {"_pk": fake_uuid, "_exp": fake_expiry}
         encrypted_payload = crypto.generate(payload)
 
@@ -723,7 +722,7 @@ class TestAPIKeyLifecycle:
         assert created_data["attributes"]["revoked"] is False
 
         # Create API key with expiry
-        future_expiry = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
+        future_expiry = (datetime.now(UTC) + timedelta(days=90)).isoformat()
         create_with_expiry_response = client.post(
             reverse("api-key-list"),
             data={
@@ -927,9 +926,9 @@ class TestAPIKeyLifecycle:
         auth_response = client.get(reverse("provider-list"), headers=api_key_headers)
 
         # Must return 401 Unauthorized, not 500 Internal Server Error
-        assert (
-            auth_response.status_code == 401
-        ), f"Expected 401 but got {auth_response.status_code}: {auth_response.json()}"
+        assert auth_response.status_code == 401, (
+            f"Expected 401 but got {auth_response.status_code}: {auth_response.json()}"
+        )
 
         # Verify error message is present
         response_json = auth_response.json()
@@ -1267,7 +1266,7 @@ class TestAPIKeyRLSBypass:
             name="Expired Test Key",
             tenant_id=tenant.id,
             entity=create_test_user,
-            expiry_date=datetime.now(timezone.utc) - timedelta(days=1),
+            expiry_date=datetime.now(UTC) - timedelta(days=1),
         )
 
         api_key_headers = get_api_key_header(raw_key)

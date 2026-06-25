@@ -23,7 +23,6 @@ import {
   EDIT_SCAN_SCHEDULE_STATE,
   EditScanScheduleModal,
   type EditScanScheduleState,
-  type ScanScheduleProvider,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
 import {
   ActionDropdown,
@@ -34,14 +33,23 @@ import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
-import type { ProviderType, ScanProps, ScheduleApiResponse } from "@/types";
+import {
+  type ProviderType,
+  SCAN_JOBS_TAB,
+  type ScanJobsTab,
+  type ScanProps,
+  type ScheduleApiResponse,
+} from "@/types";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
+  type ScanScheduleProvider,
 } from "@/types/schedules";
 
 interface ScanJobsRowActionsProps {
   scan: ScanProps;
+  /** The scan jobs tab this row is rendered in. */
+  tab: ScanJobsTab;
   /**
    * Schedule capability override. Only for Prowler Cloud.
    */
@@ -50,6 +58,7 @@ interface ScanJobsRowActionsProps {
 
 export function ScanJobsRowActions({
   scan,
+  tab,
   capability,
 }: ScanJobsRowActionsProps) {
   const router = useRouter();
@@ -170,7 +179,8 @@ export function ScanJobsRowActions({
   return (
     <div className="flex items-center justify-end">
       <ActionDropdown>
-        {canEditSchedule && (
+        {/* Schedule editing belongs only to the Scheduled tab. */}
+        {tab === SCAN_JOBS_TAB.SCHEDULED && canEditSchedule && (
           <ActionDropdownItem
             icon={<CalendarClock />}
             label="Edit Scan Schedule"
