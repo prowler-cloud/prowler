@@ -95,7 +95,7 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 By default, the secret-scanning checks run fully offline: secrets are detected but never sent anywhere. Setting `secrets_validate` to `True` additionally confirms whether each discovered secret is live by authenticating with it against the corresponding provider API. The discovered secret itself serves as the credential, so Prowler requires no additional permissions to validate it.
 
-`secrets_validate` applies to every AWS secret-scanning check listed above (those that accept `secrets_ignore_patterns`).
+`secrets_validate` applies to every AWS secret-scanning check listed above (those that accept `secrets_ignore_patterns`). The `--scan-secrets-validate` CLI flag is provider-wide: it also enables validation for the secret-scanning checks of other providers, such as the OpenStack metadata checks.
 
 To enable validation through the configuration file, set the value under the `aws` section:
 
@@ -104,7 +104,7 @@ aws:
   secrets_validate: True
 ```
 
-To enable validation for a single scan, use Prowler CLI:
+To enable validation for a single scan (any provider), use Prowler CLI:
 
 ```
 prowler aws --scan-secrets-validate
