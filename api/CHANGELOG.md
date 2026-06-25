@@ -6,7 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
-- CODEX_HERE [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- `scan-perform` no longer reports an error when a provider is deleted during a running scan [(#11696)](https://github.com/prowler-cloud/prowler/pull/11696)
 
 ---
 
