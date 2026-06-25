@@ -6,14 +6,12 @@ never contacts Neo4j. These tests validate the database module behavior itself.
 """
 
 import threading
-
 from unittest.mock import MagicMock, patch
 
+import api.attack_paths.database as db_module
 import neo4j
 import neo4j.exceptions
 import pytest
-
-import api.attack_paths.database as db_module
 
 
 class TestLazyInitialization:

@@ -1,11 +1,10 @@
 from enum import Enum
 
+from api.db_router import MainRouter
+from api.models import Provider, Role, User
 from django.db.models import QuerySet
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
-
-from api.db_router import MainRouter
-from api.models import Provider, Role, User
 
 
 class Permissions(Enum):

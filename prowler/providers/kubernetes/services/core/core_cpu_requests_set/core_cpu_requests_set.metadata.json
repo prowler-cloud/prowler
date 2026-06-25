@@ -1,0 +1,35 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_cpu_requests_set",
+  "CheckTitle": "Pod containers have CPU requests set",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesPod",
+  "Description": "Ensure CPU requests are set for containers to enable proper scheduling and resource guarantees.",
+  "Risk": "Missing CPU requests can lead to scheduling and resource contention issues.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "kubectl set resources deployment/<name> -n <namespace> --containers=<container> --requests=cpu=100m",
+      "NativeIaC": "# Example: set cpu requests in container resources\nresources:\n  requests:\n    cpu: \"100m\"",
+      "Other": "1. Edit the Pod/Deployment manifest and set `resources.requests.cpu` for each container.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define sensible CPU requests to enable efficient scheduling and fair resource allocation.",
+      "Url": "https://hub.prowler.com/check/core_cpu_requests_set"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requests should be tuned per workload and cluster capacity."
+}

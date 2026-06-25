@@ -2,8 +2,9 @@ import { useSearchParams } from "next/navigation";
 
 import { isScanEntity } from "@/lib/helper-filters";
 import {
+  FILTER_FIELD,
   FilterEntity,
-  FilterType,
+  FilterParam,
   ProviderEntity,
   ProviderType,
   ScanEntity,
@@ -16,7 +17,9 @@ interface UseRelatedFiltersProps {
   completedScanIds?: string[];
   scanDetails?: { [key: string]: ScanEntity }[];
   enableScanRelation?: boolean;
-  providerFilterType?: FilterType.PROVIDER | FilterType.PROVIDER_UID;
+  providerFilterType?:
+    | typeof FILTER_FIELD.PROVIDER
+    | typeof FILTER_FIELD.PROVIDER_UID;
 }
 
 /**
@@ -38,15 +41,17 @@ export const useRelatedFilters = ({
   completedScanIds = [],
   scanDetails = [],
   enableScanRelation = false,
-  providerFilterType = FilterType.PROVIDER,
+  providerFilterType = FILTER_FIELD.PROVIDER,
 }: UseRelatedFiltersProps) => {
   const searchParams = useSearchParams();
 
   const providers = providerIds.length > 0 ? providerIds : providerUIDs;
 
-  const providerParam = searchParams.get(`filter[${providerFilterType}]`);
+  const providerParam = searchParams.get(
+    `filter[${providerFilterType}]` satisfies FilterParam,
+  );
   const providerTypeParam = searchParams.get(
-    `filter[${FilterType.PROVIDER_TYPE}]`,
+    `filter[${FILTER_FIELD.PROVIDER_TYPE}]` satisfies FilterParam,
   );
 
   const currentProviders = providerParam ? providerParam.split(",") : [];

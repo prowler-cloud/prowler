@@ -1,23 +1,10 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 from allauth.socialaccount.models import SocialLogin
-from django.conf import settings
-from django.db import connection as django_connection
-from django.db import connections as django_connections
-from django.urls import reverse
-from django_celery_results.models import TaskResult
-from rest_framework import status
-from rest_framework.test import APIClient
-from tasks.jobs.backfill import (
-    backfill_resource_scan_summaries,
-    aggregate_scan_category_summaries,
-    aggregate_scan_resource_group_summaries,
-)
-
 from api.attack_paths import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
@@ -60,14 +47,127 @@ from api.models import (
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
+from django.conf import settings
+from django.db import connection as django_connection
+from django.db import connections as django_connections
+from django.urls import reverse
+from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
+from rest_framework import status
+from rest_framework.test import APIClient
+from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
+    backfill_resource_scan_summaries,
+)
 
 TODAY = str(datetime.today().date())
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
 TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
+
+
+def _install_compliance_catalog_test_cache() -> None:
+    """Memoize the heavy SDK catalog loaders for the whole test session.
+
+    ``get_bulk_compliance_frameworks_universal`` re-reads and Pydantic-validates
+    ~100 compliance JSONs (≈20 MB) and ``CheckMetadata.get_bulk`` re-reads ~1k
+    check metadata files on *every* call. Production amortizes this through the
+    per-process lazy caches (``PROWLER_CHECKS`` / ``PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE``)
+    and ``warm_compliance_caches``, but the test suite parametrizes over every
+    provider and deliberately resets the API-level caches, so the same catalogs
+    were re-parsed dozens of times across the suite (≈3s/call locally, ≈19s under
+    coverage in CI).
+
+    The catalog files are immutable during a run and callers treat the parsed
+    objects as read-only, so caching the result per provider is safe. This is the
+    test-only equivalent of an ``lru_cache`` on the SDK functions, without
+    changing SDK behavior in production.
+
+    A second, lower-level cache memoizes ``load_compliance_framework_universal``
+    **per file path**. ``get_bulk_compliance_frameworks_universal`` parses *every*
+    compliance JSON and only then filters by provider, so a per-provider cache
+    still re-parses all ~100 files on the first load of each provider. The
+    per-path cache makes the first provider parse the files once and every other
+    provider/test reuse the already-parsed ``ComplianceFramework`` objects (only
+    the cheap ``listdir`` + filtering re-runs). ``_load_jsons_from_dir`` calls
+    ``load_compliance_framework_universal`` as a module global, so patching the
+    attribute is picked up without touching the SDK.
+
+    Installed at conftest import time (before test modules are collected) so that
+    even ``from ... import get_bulk_compliance_frameworks_universal`` bindings in
+    the test modules resolve to the cached wrapper.
+    """
+    import prowler.lib.check.compliance_models as compliance_models
+    from prowler.lib.check.models import CheckMetadata
+
+    original_bulk_frameworks = (
+        compliance_models.get_bulk_compliance_frameworks_universal
+    )
+    original_get_bulk = CheckMetadata.get_bulk
+    original_load = compliance_models.load_compliance_framework_universal
+
+    def cached_bulk_frameworks(provider):
+        if provider not in _COMPLIANCE_FRAMEWORK_CACHE:
+            _COMPLIANCE_FRAMEWORK_CACHE[provider] = original_bulk_frameworks(provider)
+        return _COMPLIANCE_FRAMEWORK_CACHE[provider]
+
+    def cached_get_bulk(provider):
+        if provider not in _COMPLIANCE_CHECKS_CACHE:
+            _COMPLIANCE_CHECKS_CACHE[provider] = original_get_bulk(provider)
+        return _COMPLIANCE_CHECKS_CACHE[provider]
+
+    def cached_load(path):
+        if path not in _COMPLIANCE_PATH_CACHE:
+            _COMPLIANCE_PATH_CACHE[path] = original_load(path)
+        return _COMPLIANCE_PATH_CACHE[path]
+
+    compliance_models.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
+    compliance_models.load_compliance_framework_universal = cached_load
+    CheckMetadata.get_bulk = staticmethod(cached_get_bulk)
+
+    # ``api.compliance`` does ``from ... import get_bulk_compliance_frameworks_universal``
+    # so it holds its own binding; patch it too in case it was imported first.
+    import api.compliance as api_compliance
+
+    api_compliance.get_bulk_compliance_frameworks_universal = cached_bulk_frameworks
+
+
+# Module-scoped so the ``_compliance_cache_guard`` fixture below can reset them.
+# Keeping them out of ``_install_compliance_catalog_test_cache``'s local scope is
+# what makes the caches resettable between tests; the wrappers above close over
+# these names, and the original loaders stay referenced so patched behaviour is
+# still honoured.
+_COMPLIANCE_FRAMEWORK_CACHE: dict[str, dict] = {}
+_COMPLIANCE_CHECKS_CACHE: dict[str, dict] = {}
+_COMPLIANCE_PATH_CACHE: dict[str, object] = {}
+
+
+_install_compliance_catalog_test_cache()
+
+
+@pytest.fixture(autouse=True)
+def _compliance_cache_guard(request):
+    """Reset the compliance catalog caches after any test that used ``monkeypatch``.
+
+    The session-wide caches in ``_install_compliance_catalog_test_cache`` let the
+    read-only, parametrized compliance tests parse the ~100 catalog JSONs once
+    instead of dozens of times. A test that swaps a loader (or mutates a returned
+    object) could otherwise leak that state into later tests through the shared
+    dicts. Using ``monkeypatch`` as the opt-in signal keeps the full speed-up for
+    catalog-reading tests while giving patching tests a clean slate afterwards;
+    the next test simply repopulates the caches from disk.
+    """
+    yield
+    if "monkeypatch" in request.fixturenames:
+        _COMPLIANCE_FRAMEWORK_CACHE.clear()
+        _COMPLIANCE_CHECKS_CACHE.clear()
+        _COMPLIANCE_PATH_CACHE.clear()
+        import api.compliance as api_compliance
+
+        api_compliance.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
 
 
 def today_after_n_days(n_days: int) -> str:
@@ -468,7 +568,7 @@ def invitations_fixture(create_test_user, tenants_fixture):
         email="testing@prowler.com",
         state=Invitation.State.EXPIRED,
         token="TESTING1234568",
-        expires_at=datetime.now(timezone.utc) - timedelta(days=1),
+        expires_at=datetime.now(UTC) - timedelta(days=1),
         inviter=user,
         tenant=tenant,
     )
@@ -715,7 +815,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
     tenant, *_ = tenants_fixture
     provider, provider2, *_ = providers_fixture
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     scan1 = Scan.objects.create(
         name="Scan 1",
@@ -1608,7 +1708,7 @@ def api_keys_fixture(tenants_fixture, create_test_user):
         name="Test API Key 2",
         tenant_id=tenant.id,
         entity=user,
-        expiry_date=datetime.now(timezone.utc) + timedelta(days=60),
+        expiry_date=datetime.now(UTC) + timedelta(days=60),
     )
 
     # Revoked API key
@@ -1902,10 +2002,10 @@ def provider_compliance_scores_fixture(
     provider1, provider2, *_ = providers_fixture
     scan1, _, scan3 = scans_fixture
 
-    scan1.completed_at = datetime.now(timezone.utc) - timedelta(hours=1)
+    scan1.completed_at = datetime.now(UTC) - timedelta(hours=1)
     scan1.save()
     scan3.state = StateChoices.COMPLETED
-    scan3.completed_at = datetime.now(timezone.utc)
+    scan3.completed_at = datetime.now(UTC)
     scan3.save()
 
     scores = [

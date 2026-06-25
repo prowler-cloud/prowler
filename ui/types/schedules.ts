@@ -1,4 +1,4 @@
-import type { ProviderProps } from "./providers";
+import type { ProviderProps, ProviderType } from "./providers";
 
 export const SCHEDULE_FREQUENCY = {
   DAILY: "DAILY",
@@ -26,17 +26,21 @@ export const SCHEDULE_WEEKDAY_LABELS = [
  * the runtime environment (Cloud vs non-Cloud); the prowler-cloud overlay
  * computes a billing-aware capability and injects it via the `capability` prop.
  *
- * - `ADVANCED`: full scheduling through the new `/schedules/{providerId}` API
- *   (Prowler Cloud, subscribed/paid).
+ * - `ADVANCED`: full scheduling through the new schedules API —
+ *   `/schedules/{providerId}` for a single provider, `/schedules/bulk` for the
+ *   organization flow (Prowler Cloud, subscribed/paid).
  * - `DAILY_LEGACY`: Prowler OSS / non-Cloud. Only the legacy `Daily` schedule
  *   (`/schedules/daily`) plus optional on-demand scans are allowed.
  * - `MANUAL_ONLY`: Prowler Cloud trial/onboarding. No schedules at all, only a
  *   manual on-demand scan subject to the account quota.
+ * - `BLOCKED`: Prowler Cloud account over the scan limit. No scan or schedule
+ *   action is available.
  */
 export const SCAN_SCHEDULE_CAPABILITY = {
   ADVANCED: "ADVANCED",
   DAILY_LEGACY: "DAILY_LEGACY",
   MANUAL_ONLY: "MANUAL_ONLY",
+  BLOCKED: "BLOCKED",
 } as const;
 
 export type ScanScheduleCapability =
@@ -85,6 +89,39 @@ export interface ScheduleUpdatePayload {
   scan_interval_hours: number | null;
   scan_day_of_week: number | null;
   scan_day_of_month: number | null;
+}
+
+/** Per-provider failure, as returned by `/schedules/bulk`: `{ id, error }`. */
+export interface SchedulesBulkFailure {
+  id: string;
+  error: string;
+}
+
+export interface SchedulesBulkAttributes {
+  /** Provider ids whose schedule was committed (already excludes failures). */
+  updated?: string[];
+  failed?: SchedulesBulkFailure[];
+}
+
+export interface SchedulesBulkData {
+  type: "schedules-bulk";
+  id?: string;
+  attributes?: SchedulesBulkAttributes;
+}
+
+export interface SchedulesBulkResponse {
+  data?: SchedulesBulkData;
+  error?: unknown;
+  errors?: unknown;
+  status?: number;
+}
+
+/** Minimal provider identity needed to render and target schedule actions. */
+export interface ScanScheduleProvider {
+  providerId: string;
+  providerType: ProviderType;
+  providerUid: string;
+  providerAlias: string | null;
 }
 
 export interface ScheduleFormValues {

@@ -7,6 +7,8 @@ through cloud infrastructure relationships.
 
 from typing import Any, Literal
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.attack_paths import (
     AttackPathCartographySchema,
     AttackPathQuery,
@@ -14,7 +16,6 @@ from prowler_mcp_server.prowler_app.models.attack_paths import (
     AttackPathScansListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class AttackPathsTools(BaseTool):
