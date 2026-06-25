@@ -160,114 +160,6 @@ def hash_sha512(string: str) -> str:
     return sha512(string.encode(encoding_format_utf_8)).hexdigest()[0:9]
 
 
-def detect_secrets_scan(
-    data: str = None,
-    file=None,
-    excluded_secrets: list[str] = None,
-    detect_secrets_plugins: dict = None,
-    confidence: str = default_secrets_confidence,
-    validate: bool = False,
-) -> list[dict[str, str]]:
-    """detect_secrets_scan scans the data or file for secrets using Kingfisher.
-
-    By default the scan runs fully offline (`--no-validate`, `--no-update-check`):
-    no network calls are made, so the scanned data is never sent anywhere.
-    Kingfisher's built-in ruleset is used at "low" confidence so its generic
-    keyword rules fire (see ``default_secrets_confidence``).
-
-    When ``validate`` is True, Kingfisher additionally checks whether each
-    discovered secret is live by authenticating with it against the provider's
-    API (the secret itself is used as the credential; no extra permissions are
-    required). This makes outbound network calls and the discovered credential
-    is exercised against the provider, so it must be explicitly opted in.
-
-    Args:
-        data (str): The data to scan for secrets.
-        file (str): The file to scan for secrets.
-        excluded_secrets (list): A list of regex patterns; any finding whose
-            source line matches one of them is excluded from the results.
-        detect_secrets_plugins (dict): Deprecated. Kept for backwards
-            compatibility with existing call sites; ignored by Kingfisher.
-        confidence (str): Minimum Kingfisher confidence to report ("low",
-            "medium" or "high"). Defaults to ``default_secrets_confidence``.
-        validate (bool): When True, validate discovered secrets against the
-            provider APIs (live check). Makes outbound network calls. Defaults
-            to False (fully offline).
-    Returns:
-        list[dict] | None: A list of findings, each with ``filename``,
-            ``line_number``, ``type``, ``hashed_secret`` and ``is_verified``
-            keys, or ``None`` when no secrets are found or an error occurs.
-            ``is_verified`` is True only when ``validate`` is True and the
-            secret was confirmed live.
-    Examples:
-        >>> detect_secrets_scan(data='password = "Tr0ub4dor&3xKq9vLmZ"')
-        [{'filename': '/tmp/...', 'line_number': 1, 'type': 'Generic Password', 'hashed_secret': '...', 'is_verified': False}]
-    """
-    if detect_secrets_plugins is not None:
-        logger.debug(
-            "detect_secrets_plugins is deprecated and ignored when scanning with Kingfisher."
-        )
-
-    temp_data_file = None
-    temp_output_file = None
-    try:
-        if file:
-            scan_path = file
-        else:
-            # Ensure a trailing newline: Kingfisher does not scan the final line
-            # of a file when it is not newline-terminated, and serialized payloads
-            # (JSON dumps, joined log events, state-machine definitions) often are
-            # not. Appending "\n" does not change line numbers or secret content.
-            content = data if data.endswith("\n") else data + "\n"
-            temp_data_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-            temp_data_file.write(bytes(content, encoding="raw_unicode_escape"))
-            temp_data_file.close()
-            scan_path = temp_data_file.name
-
-        temp_output_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
-        temp_output_file.close()
-
-        command = _build_kingfisher_command(
-            [scan_path], temp_output_file.name, confidence, validate
-        )
-        process = subprocess.run(command, capture_output=True, text=True)
-        if process.returncode not in _kingfisher_success_exit_codes:
-            logger.error(
-                f"Error scanning for secrets: Kingfisher exited with code "
-                f"{process.returncode}: {process.stderr.strip()[:500]}"
-            )
-            return None
-
-        with open(temp_output_file.name, encoding=encoding_format_utf_8) as f:
-            output = f.read()
-        kingfisher_output = json.loads(output) if output.strip() else {}
-
-        # Read source lines once to apply excluded_secrets against the full line
-        # (preserving detect-secrets' should_exclude_line semantics).
-        source_lines = []
-        if excluded_secrets:
-            with open(scan_path, encoding=encoding_format_utf_8, errors="replace") as f:
-                source_lines = f.read().splitlines()
-
-        findings = []
-        for entry in kingfisher_output.get("findings", []):
-            line_number = entry.get("finding", {}).get("line")
-            if excluded_secrets and line_number and line_number <= len(source_lines):
-                line_text = source_lines[line_number - 1]
-                if any(re.search(pattern, line_text) for pattern in excluded_secrets):
-                    continue
-            findings.append(_finding_to_dict(entry, scan_path))
-
-        return findings or None
-    except Exception as e:
-        logger.error(f"Error scanning for secrets: {e}")
-        return None
-    finally:
-        for temp_file in (temp_data_file, temp_output_file):
-            if temp_file and os.path.exists(temp_file.name):
-                os.remove(temp_file.name)
-
-
 def _scan_batch_chunk(
     chunk: list,
     excluded_secrets: list,
@@ -350,14 +242,22 @@ def detect_secrets_scan_batch(
     validate: bool = False,
     chunk_size: int = default_secrets_batch_chunk_size,
 ) -> dict:
-    """Scan many in-memory payloads in chunked, single Kingfisher invocations.
+    """Scan many payloads with Kingfisher in chunked subprocess invocations.
 
-    Each payload is written to its own file and scanned with ``--no-dedup`` so
-    per-payload results match calling ``detect_secrets_scan`` on each payload
-    individually. Payloads are processed in chunks (writing each to disk and
-    releasing it as it is consumed) to bound peak temp-disk and memory use while
-    amortizing the per-process spawn cost across many fragments. This is the
-    batched equivalent of looping ``detect_secrets_scan`` per fragment.
+    This is the scan entry point used by every secret check. Each payload is
+    written to its own file and scanned with ``--no-dedup`` so per-payload
+    results match scanning each payload on its own. Payloads are processed in
+    chunks (writing each to disk and releasing it as it is consumed) to bound
+    peak temp-disk and memory use while amortizing the per-process spawn cost
+    across many fragments.
+
+    By default the scan runs fully offline (``--no-validate``,
+    ``--no-update-check``): no network calls are made, so the scanned data is
+    never sent anywhere. When ``validate`` is True, Kingfisher additionally
+    checks whether each discovered secret is live by authenticating with it
+    against the provider's API (the secret itself is the credential; no extra
+    permissions are required). That makes outbound network calls, so it must be
+    explicitly opted in.
 
     Args:
         payloads: a mapping ``{key: data}`` or any iterable of ``(key, data)``
@@ -370,7 +270,8 @@ def detect_secrets_scan_batch(
         chunk_size (int): payloads scanned per Kingfisher invocation.
     Returns:
         dict mapping each key that produced findings to its list of finding
-        dicts (same shape as ``detect_secrets_scan``). Keys with no findings are
+        dicts, each with ``filename``, ``line_number``, ``type``,
+        ``hashed_secret`` and ``is_verified`` keys. Keys with no findings are
         omitted.
     """
     items = payloads.items() if hasattr(payloads, "items") else payloads

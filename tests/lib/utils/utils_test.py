@@ -4,10 +4,9 @@ from datetime import datetime
 from time import mktime
 
 import pytest
-from mock import Mock, patch
+from mock import patch
 
 from prowler.lib.utils.utils import (
-    detect_secrets_scan,
     detect_secrets_scan_batch,
     file_exists,
     get_file_permissions,
@@ -107,114 +106,6 @@ class Test_utils_validate_ip_address:
     def test_validate_ip_address(self):
         assert validate_ip_address("88.26.151.198")
         assert not validate_ip_address("Not an IP")
-
-
-class Test_detect_secrets_scan:
-    def test_detect_secrets_scan_data(self):
-        data = 'password = "Tr0ub4dor3xKq9vLmZ"'
-        secrets_detected = detect_secrets_scan(data=data, excluded_secrets=[])
-        assert type(secrets_detected) is list
-        assert len(secrets_detected) == 1
-        assert "filename" in secrets_detected[0]
-        assert "hashed_secret" in secrets_detected[0]
-        assert "is_verified" in secrets_detected[0]
-        assert secrets_detected[0]["line_number"] == 1
-        assert secrets_detected[0]["type"] == "Generic Password"
-
-    def test_detect_secrets_scan_no_secrets_data(self):
-        data = ""
-        assert detect_secrets_scan(data=data) is None
-
-    def test_detect_secrets_scan_file_with_secrets(self):
-        temp_data_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-        temp_data_file.write(b'password = "Tr0ub4dor3xKq9vLmZ"\n')
-        temp_data_file.seek(0)
-        secrets_detected = detect_secrets_scan(
-            file=temp_data_file.name, excluded_secrets=[]
-        )
-        assert type(secrets_detected) is list
-        assert len(secrets_detected) == 1
-        assert "filename" in secrets_detected[0]
-        assert "hashed_secret" in secrets_detected[0]
-        assert "is_verified" in secrets_detected[0]
-        assert secrets_detected[0]["line_number"] == 1
-        assert secrets_detected[0]["type"] == "Generic Password"
-        os.remove(temp_data_file.name)
-
-    def test_detect_secrets_scan_file_no_secrets(self):
-        temp_data_file = tempfile.NamedTemporaryFile(delete=False)
-        temp_data_file.write(b"no secrets")
-        temp_data_file.seek(0)
-        assert detect_secrets_scan(file=temp_data_file.name) is None
-        os.remove(temp_data_file.name)
-
-    def test_detect_secrets_using_regex(self):
-        data = "MYSQL_ALLOW_EMPTY_PASSWORD=password"
-        secrets_detected = detect_secrets_scan(
-            data=data, excluded_secrets=[".*password"]
-        )
-        assert secrets_detected is None
-
-    def test_detect_secrets_using_regex_file(self):
-        temp_data_file = tempfile.NamedTemporaryFile(delete=False)
-        temp_data_file.write(b"MYSQL_ALLOW_EMPTY_PASSWORD=password")
-        temp_data_file.seek(0)
-        secrets_detected = detect_secrets_scan(
-            file=temp_data_file.name, excluded_secrets=[".*password"]
-        )
-        assert secrets_detected is None
-        os.remove(temp_data_file.name)
-
-    def test_detect_secrets_secrets_using_regex(self):
-        # Two secrets on separate lines; exclude the line with the
-        # ALLOW_EMPTY_PASSWORD key, leaving only the MYSQL_PASSWORD secret.
-        data = (
-            'MYSQL_ALLOW_EMPTY_PASSWORD="Tr0ub4dor3xKq9vLmZ"\n'
-            'MYSQL_PASSWORD="Xy9zPq2wKmRtVbN4Lm"'
-        )
-        secrets_detected = detect_secrets_scan(
-            data=data, excluded_secrets=[".*ALLOW_EMPTY_PASSWORD.*"]
-        )
-        assert type(secrets_detected) is list
-        assert len(secrets_detected) == 1
-        assert "filename" in secrets_detected[0]
-        assert "hashed_secret" in secrets_detected[0]
-        assert "is_verified" in secrets_detected[0]
-        assert secrets_detected[0]["line_number"] == 2
-        assert secrets_detected[0]["type"] == "Generic Password"
-
-    def test_detect_secrets_scan_offline_by_default(self):
-        # By default the scan is fully offline: --no-validate is passed and no
-        # validation flags are added.
-        with (
-            patch(
-                "prowler.lib.utils.utils.get_kingfisher_binary",
-                return_value="kingfisher",
-            ),
-            patch("prowler.lib.utils.utils.subprocess.run") as mock_run,
-        ):
-            mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
-            detect_secrets_scan(data="password = 'value'")
-            command = mock_run.call_args[0][0]
-            assert "--no-validate" in command
-            assert "--validation-timeout" not in command
-
-    def test_detect_secrets_scan_validate_enabled(self):
-        # With validate=True, --no-validate is dropped and conservative
-        # validation flags are added.
-        with (
-            patch(
-                "prowler.lib.utils.utils.get_kingfisher_binary",
-                return_value="kingfisher",
-            ),
-            patch("prowler.lib.utils.utils.subprocess.run") as mock_run,
-        ):
-            mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
-            detect_secrets_scan(data="password = 'value'", validate=True)
-            command = mock_run.call_args[0][0]
-            assert "--no-validate" not in command
-            assert "--validation-timeout" in command
-            assert "--validation-retries" in command
 
 
 class Test_detect_secrets_scan_batch:
