@@ -330,8 +330,16 @@ function LaunchScanForm({
 
       {isBlocked && (
         <p className="text-text-error-primary text-sm">
-          You have reached your scan limit, so additional scans are not
-          available right now.
+          You have exceeded the usage limit of one provider. You can add more
+          providers and run unlimited scans by adding a subscription.{" "}
+          <Link
+            href="https://cloud.prowler.com/billing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Manage Billing
+          </Link>
         </p>
       )}
 

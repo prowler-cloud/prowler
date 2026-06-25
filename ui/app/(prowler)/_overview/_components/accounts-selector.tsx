@@ -17,7 +17,7 @@ import {
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { type AccountFilterKey, FilterType } from "@/types/filters";
+import { type AccountFilterKey, FILTER_FIELD } from "@/types/filters";
 import {
   getProviderDisplayName,
   type ProviderProps,
@@ -68,7 +68,7 @@ export function AccountsSelector({
   providers,
   onBatchChange,
   selectedValues,
-  filterKey = FilterType.PROVIDER_ID,
+  filterKey = FILTER_FIELD.PROVIDER_ID,
   id = "accounts-selector",
   disabledValues = [],
   search = {
@@ -91,7 +91,7 @@ export function AccountsSelector({
 
   const visibleProviders = providers;
   const getProviderValue = (provider: ProviderProps) =>
-    filterKey === FilterType.PROVIDER_UID
+    filterKey === FILTER_FIELD.PROVIDER_UID
       ? provider.attributes.uid
       : provider.id;
   const disabledValuesSet = new Set(disabledValues);

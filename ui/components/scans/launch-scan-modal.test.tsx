@@ -591,7 +591,7 @@ describe("LaunchScanModal", () => {
       );
 
       expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+      expect(screen.getByText(/exceeded the usage limit/i)).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /launch scan/i }),
       ).toBeDisabled();
@@ -610,7 +610,7 @@ describe("LaunchScanModal", () => {
       );
 
       expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+      expect(screen.getByText(/exceeded the usage limit/i)).toBeInTheDocument();
 
       await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
       await user.click(screen.getByRole("button", { name: /launch scan/i }));

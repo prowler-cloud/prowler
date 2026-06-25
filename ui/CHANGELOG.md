@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.32.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
+
+---
+
 ## [1.31.1] (Prowler v5.31.1)
 
 ### 🔄 Changed
