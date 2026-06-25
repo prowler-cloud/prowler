@@ -11,6 +11,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Organization row actions in the profile page are aligned in fixed columns and the Active indicator now sits next to the organization name [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
+- Sentry, Google Tag Manager, and PostHog now load their `UI_*` config only when the matching enable flag (`UI_SENTRY_ENABLE` / `UI_GOOGLE_TAG_MANAGER_ENABLE` / `UI_POSTHOG_ENABLE`) is `"true"` (default off); the deprecated legacy names (`NEXT_PUBLIC_*`, `POSTHOG_KEY`/`POSTHOG_HOST`) still activate without the flag [(#11682)](https://github.com/prowler-cloud/prowler/pull/11682)
 
 ---
 
@@ -44,11 +45,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Controlled `402` and `403` Server Action error messages for alert seed and mutation flows [(#11629)](https://github.com/prowler-cloud/prowler/pull/11629)
-- `BILLING_CLOUD_ENABLE` runtime flag on the UI public-config island, consumed by Prowler Cloud to gate billing surfaces [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-
-### 🔄 Changed
-
-- Sentry, Google Tag Manager, and PostHog now load only when their `UI_SENTRY_ENABLE` / `UI_GOOGLE_TAG_MANAGER_ENABLE` / `UI_POSTHOG_ENABLE` flag is `"true"` (default off); a deployment that previously set only `UI_SENTRY_DSN` or `UI_GOOGLE_TAG_MANAGER_ID` must now also set the matching enable flag to keep the integration active [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 
 ### 🐞 Fixed
 
