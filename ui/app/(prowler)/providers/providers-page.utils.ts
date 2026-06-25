@@ -1,8 +1,10 @@
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import {
   listOrganizationsSafe,
   listOrganizationUnitsSafe,
 } from "@/actions/organizations/organizations";
 import { getAllProviders, getProviders } from "@/actions/providers";
+import { PROVIDERS_FILTER_PARAM } from "@/actions/providers/providers-filters";
 import { getSchedules } from "@/actions/schedules";
 import {
   extractFiltersAndQuery,
@@ -484,13 +486,12 @@ export async function loadProvidersAccountsViewData({
 
   // Map provider_type__in (used by ProviderTypeSelector) to provider__in (API param)
   const providerTypeFilter =
-    providerFilters[`filter[${PROVIDERS_PAGE_FILTER.PROVIDER_TYPE}]`];
+    providerFilters[PROVIDERS_FILTER_PARAM.PROVIDER_TYPE];
   if (providerTypeFilter) {
-    providerFilters[`filter[${PROVIDERS_PAGE_FILTER.PROVIDER}]`] =
-      providerTypeFilter;
+    providerFilters[PROVIDERS_FILTER_PARAM.PROVIDER] = providerTypeFilter;
   }
 
-  delete providerFilters[`filter[${PROVIDERS_PAGE_FILTER.PROVIDER_TYPE}]`];
+  delete providerFilters[PROVIDERS_FILTER_PARAM.PROVIDER_TYPE];
 
   const emptyOrganizationsResponse: OrganizationListResponse = {
     data: [],
@@ -502,6 +503,7 @@ export async function loadProvidersAccountsViewData({
   const [
     providersResponse,
     allProvidersResponse,
+    allProviderGroupsResponse,
     schedulesResponse,
     organizationsResponse,
     organizationUnitsResponse,
@@ -518,6 +520,8 @@ export async function loadProvidersAccountsViewData({
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
     // TODO: Replace with a dedicated lightweight endpoint when available.
     resolveActionResult(getAllProviders()),
+    // Unfiltered fetch for the Provider Group selector dropdown.
+    resolveActionResult(getAllProviderGroups()),
     // Fetch configured schedules as a fallback when provider scan_* fields are
     // absent (best-effort: typically empty in OSS).
     resolveActionResult(getSchedules()),
@@ -546,6 +550,7 @@ export async function loadProvidersAccountsViewData({
     filters: createProvidersFilters(),
     metadata: providersResponse?.meta,
     providers: allProvidersResponse?.data ?? [],
+    providerGroups: allProviderGroupsResponse?.data ?? [],
     rows,
   };
 }

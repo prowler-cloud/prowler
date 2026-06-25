@@ -9,6 +9,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add `Scan Config` menu item under the Configuration menu (only available in Prowler Cloud) [(#11695)](https://github.com/prowler-cloud/prowler/pull/11695)
 - Scan configuration management page (`/scan-config`) to create, edit, and manage scan configs with live YAML validation against the server JSON Schema (only available in Prowler Cloud) [(#11695)](https://github.com/prowler-cloud/prowler/pull/11695)
 - Surface an "invalid scan configuration" note on compliance requirements that fail solely because the applied scan config does not meet them [(#11695)](https://github.com/prowler-cloud/prowler/pull/11695)
+- Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
 
 ---
 
