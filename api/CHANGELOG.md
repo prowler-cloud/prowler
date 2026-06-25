@@ -10,6 +10,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.32.1] (Prowler v5.31.1)
+
+### 🐞 Fixed
+
+- API key auth no longer mutates `TenantAPIKey.objects` during admin DB lookups [(#11686)](https://github.com/prowler-cloud/prowler/pull/11686)
+
+---
+
 ## [1.32.0] (Prowler v5.31.0)
 
 ### 🚀 Added

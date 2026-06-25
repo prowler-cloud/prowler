@@ -1,11 +1,14 @@
+from math import isfinite
 from uuid import UUID
 
 from api.db_router import MainRouter
 from api.models import TenantAPIKey, TenantAPIKeyManager
 from cryptography.fernet import InvalidToken
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from drf_simple_apikey.backends import APIKeyAuthentication as BaseAPIKeyAuth
 from drf_simple_apikey.crypto import get_crypto
+from drf_simple_apikey.settings import package_settings
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
@@ -21,18 +24,49 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
     def _authenticate_credentials(self, request, key):
         """
         Override to use admin connection, bypassing RLS during authentication.
-        Delegates to parent after temporarily routing model queries to admin DB.
         """
-        # Temporarily point the model's manager to admin database
-        original_objects = self.model.objects
-        self.model.objects = self.model.objects.using(MainRouter.admin_db)
+        try:
+            payload = self.key_crypto.decrypt(key)
+        except ValueError:
+            raise AuthenticationFailed("Invalid API Key.")
+
+        if not isinstance(payload, dict):
+            raise AuthenticationFailed("Invalid API Key.")
+
+        payload_pk = payload.get("_pk")
+        payload_exp = payload.get("_exp")
+        if (
+            not isinstance(payload_pk, str)
+            or isinstance(payload_exp, bool)
+            or not isinstance(payload_exp, (int, float))
+            or not isfinite(payload_exp)
+        ):
+            raise AuthenticationFailed("Invalid API Key.")
 
         try:
-            # Call parent method which will now use admin database
-            return super()._authenticate_credentials(request, key)
-        finally:
-            # Restore original manager
-            self.model.objects = original_objects
+            api_key_pk = UUID(payload_pk)
+        except ValueError:
+            raise AuthenticationFailed("Invalid API Key.")
+
+        if payload_exp < timezone.now().timestamp():
+            raise AuthenticationFailed("API Key has already expired.")
+
+        try:
+            api_key = self.model.objects.using(MainRouter.admin_db).get(id=api_key_pk)
+        except ObjectDoesNotExist:
+            raise AuthenticationFailed("No entity matching this api key.")
+
+        if api_key.revoked:
+            raise AuthenticationFailed("This API Key has been revoked.")
+
+        client_ip = request.META.get(package_settings.IP_ADDRESS_HEADER)
+        if api_key.blacklisted_ips and client_ip in api_key.blacklisted_ips:
+            raise AuthenticationFailed("Access denied from blacklisted IP.")
+
+        if api_key.whitelisted_ips and client_ip not in api_key.whitelisted_ips:
+            raise AuthenticationFailed("Access restricted to specific IP addresses.")
+
+        return api_key.entity, key
 
     def authenticate(self, request: Request):
         prefixed_key = self.get_key(request)
