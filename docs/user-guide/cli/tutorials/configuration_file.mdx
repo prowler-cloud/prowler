@@ -91,7 +91,7 @@ The following list includes all the AWS checks with configurable variables that 
 
 ### Resource Scan Limit
 
-<VersionBadge version="5.29.0" />
+<VersionBadge version="5.32.0" />
 
 Some AWS services accumulate large numbers of resources (EBS snapshots, backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages). Scanning every resource increases scan time, cost, API throttling, and finding volume. By default, Prowler scans every resource. Configure a positive resource scan limit to cap how many resources Prowler analyzes for these high-volume AWS resource paths.
 
