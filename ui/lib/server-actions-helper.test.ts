@@ -123,6 +123,53 @@ describe("server-actions-helper", () => {
         .calls[0]?.[0];
       expect(isErrorAlreadyReported(capturedError)).toBe(true);
     });
+
+    it("should fingerprint server errors by pathname without query string", async () => {
+      // Given
+      const response = new Response(
+        JSON.stringify({ message: "backend down" }),
+        {
+          status: 500,
+          statusText: "Internal Server Error",
+        },
+      );
+      Object.defineProperty(response, "url", {
+        value: "https://api.prowler.test/api/v1/providers?tenant=123",
+      });
+
+      // When
+      await expect(handleApiResponse(response)).rejects.toThrow("backend down");
+
+      // Then
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          fingerprint: ["api-server-error", "500", "/api/v1/providers"],
+        }),
+      );
+    });
+
+    it("should fingerprint unexpected client failures by pathname without query string", async () => {
+      // Given
+      const response = new Response(
+        JSON.stringify({ message: "Unexpected API contract failure" }),
+        { status: 429, statusText: "Too Many Requests" },
+      );
+      Object.defineProperty(response, "url", {
+        value: "https://api.prowler.test/api/v1/scans?page=2",
+      });
+
+      // When
+      await handleApiResponse(response);
+
+      // Then
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          fingerprint: ["api-client-contract-error", "429", "/api/v1/scans"],
+        }),
+      );
+    });
   });
 
   describe("handleApiError", () => {
@@ -159,6 +206,7 @@ describe("server-actions-helper", () => {
           }),
         }),
       );
+      expect(isErrorAlreadyReported(error)).toBe(true);
       expect(result).toEqual({ error: "Request failed unexpectedly" });
     });
 

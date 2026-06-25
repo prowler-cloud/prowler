@@ -41,15 +41,15 @@ type SentryEventSource =
   (typeof SENTRY_EVENT_SOURCE)[keyof typeof SENTRY_EVENT_SOURCE];
 type SentryPolicyTagValue = string | number | boolean | null | undefined;
 
-interface SentryEventPolicyOptions {
+export interface SentryEventPolicyOptions {
   source?: SentryEventSource;
 }
 
-interface SentryEventHint {
+export interface SentryEventHint {
   originalException?: unknown;
 }
 
-interface SentryPolicyEvent {
+export interface SentryPolicyEvent {
   tags?: Record<string, SentryPolicyTagValue>;
 }
 

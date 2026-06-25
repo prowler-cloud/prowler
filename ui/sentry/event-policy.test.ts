@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import type {
+  SentryEventHint,
+  SentryEventPolicyOptions,
+  SentryPolicyEvent,
+} from "./event-policy";
 import {
   applySentryEventPolicy,
   isErrorAlreadyReported,
@@ -10,12 +15,14 @@ describe("applySentryEventPolicy", () => {
   describe("when events are actionable", () => {
     it("should keep error events", () => {
       // Given
-      const event = { level: "error", message: "Unexpected failure" };
+      const event = {
+        level: "error",
+        message: "Unexpected failure",
+      } satisfies SentryPolicyEvent & { level: string; message: string };
+      const options: SentryEventPolicyOptions = { source: "client" };
 
       // When
-      const result = applySentryEventPolicy(event, undefined, {
-        source: "client",
-      });
+      const result = applySentryEventPolicy(event, undefined, options);
 
       // Then
       expect(result).toBe(event);
@@ -206,7 +213,7 @@ describe("applySentryEventPolicy", () => {
     it("should drop AbortError events", () => {
       // Given
       const event = { level: "error", message: "The operation was aborted" };
-      const hint = {
+      const hint: SentryEventHint = {
         originalException: new DOMException("Aborted", "AbortError"),
       };
 

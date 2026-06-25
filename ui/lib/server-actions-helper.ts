@@ -20,6 +20,7 @@ const KNOWN_NON_ACTIONABLE_CLIENT_ERROR_MESSAGES = [
   "already exists",
   "duplicate",
 ] as const;
+const UNKNOWN_URL_PATH_FINGERPRINT = "unknown-url-path";
 
 /**
  * Helper function to handle API responses consistently
@@ -89,7 +90,7 @@ export const handleApiResponse = async (
         fingerprint: [
           "api-server-error",
           response.status.toString(),
-          response.url,
+          getSentryFingerprintUrlPath(response.url),
         ],
       });
       markErrorAsReported(serverError);
@@ -170,6 +171,7 @@ export const handleApiError = (error: unknown): { error: string } => {
           },
         },
       });
+      markErrorAsReported(error);
     } else {
       // Capture non-Error objects
       Sentry.captureMessage(
@@ -185,6 +187,7 @@ export const handleApiError = (error: unknown): { error: string } => {
           },
         },
       );
+      markErrorAsReported(error);
     }
   }
 
@@ -238,9 +241,21 @@ function captureUnexpectedApiClientFailure(
     fingerprint: [
       "api-client-contract-error",
       response.status.toString(),
-      response.url,
+      getSentryFingerprintUrlPath(response.url),
     ],
   });
+}
+
+function getSentryFingerprintUrlPath(url: string) {
+  if (url.trim() === "") {
+    return UNKNOWN_URL_PATH_FINGERPRINT;
+  }
+
+  try {
+    return new URL(url).pathname || UNKNOWN_URL_PATH_FINGERPRINT;
+  } catch {
+    return UNKNOWN_URL_PATH_FINGERPRINT;
+  }
 }
 
 function hasStructuredApiErrors(errorsArray: unknown[] | undefined) {
