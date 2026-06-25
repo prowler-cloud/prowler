@@ -1,7 +1,11 @@
 from json import dumps, loads
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import annotate_verified_secrets, detect_secrets_scan
+from prowler.lib.utils.utils import (
+    annotate_verified_secrets,
+    detect_secrets_scan,
+    detect_secrets_scan_batch,
+)
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     convert_to_cloudwatch_timestamp_format,
 )
@@ -15,6 +19,29 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
             secrets_ignore_patterns = logs_client.audit_config.get(
                 "secrets_ignore_patterns", []
             )
+            validate = logs_client.audit_config.get("secrets_validate", False)
+
+            # Scan every (log group, log stream) in batched Kingfisher
+            # invocations instead of one subprocess per stream. The payloads are
+            # yielded lazily so only a chunk's worth is ever written to disk /
+            # held in memory at a time, which matters for accounts with very
+            # large numbers of log groups/streams.
+            def stream_payloads():
+                for log_group in logs_client.log_groups.values():
+                    if not log_group.log_streams:
+                        continue
+                    for log_stream_name, events in log_group.log_streams.items():
+                        yield (
+                            (log_group.name, log_stream_name),
+                            "\n".join(dumps(event["message"]) for event in events),
+                        )
+
+            batch_results = detect_secrets_scan_batch(
+                stream_payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+            )
+
             for log_group in logs_client.log_groups.values():
                 report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
                 report.status = "PASS"
@@ -25,66 +52,54 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                 all_secrets = []
                 if log_group.log_streams:
                     for log_stream_name in log_group.log_streams:
+                        log_stream_secrets_output = batch_results.get(
+                            (log_group.name, log_stream_name)
+                        )
+                        if not log_stream_secrets_output:
+                            continue
                         log_stream_secrets = {}
-                        log_stream_data = "\n".join(
-                            [
-                                dumps(event["message"])
-                                for event in log_group.log_streams[log_stream_name]
+                        all_secrets.extend(log_stream_secrets_output)
+                        for secret in log_stream_secrets_output:
+                            flagged_event = log_group.log_streams[log_stream_name][
+                                secret["line_number"] - 1
                             ]
-                        )
-                        log_stream_secrets_output = detect_secrets_scan(
-                            data=log_stream_data,
-                            excluded_secrets=secrets_ignore_patterns,
-                            validate=logs_client.audit_config.get(
-                                "secrets_validate", False
-                            ),
-                        )
-
-                        if log_stream_secrets_output:
-                            all_secrets.extend(log_stream_secrets_output)
-                            for secret in log_stream_secrets_output:
-                                flagged_event = log_group.log_streams[log_stream_name][
-                                    secret["line_number"] - 1
-                                ]
-                                cloudwatch_timestamp = (
-                                    convert_to_cloudwatch_timestamp_format(
-                                        flagged_event["timestamp"]
-                                    )
+                            cloudwatch_timestamp = (
+                                convert_to_cloudwatch_timestamp_format(
+                                    flagged_event["timestamp"]
                                 )
-                                if (
-                                    cloudwatch_timestamp
-                                    not in log_stream_secrets.keys()
-                                ):
-                                    log_stream_secrets[cloudwatch_timestamp] = (
-                                        SecretsDict()
-                                    )
+                            )
+                            if cloudwatch_timestamp not in log_stream_secrets.keys():
+                                log_stream_secrets[cloudwatch_timestamp] = SecretsDict()
 
-                                try:
-                                    log_event_data = dumps(
-                                        loads(flagged_event["message"]), indent=2
-                                    )
-                                except Exception:
-                                    log_event_data = dumps(
-                                        flagged_event["message"], indent=2
-                                    )
-                                if len(log_event_data.split("\n")) > 1:
-                                    # Can get more informative output if there is more than 1 line.
-                                    # Will rescan just this event to get the type of secret and the line number
-                                    event_detect_secrets_output = detect_secrets_scan(
-                                        data=log_event_data,
-                                        validate=False,
-                                    )
-                                    if event_detect_secrets_output:
-                                        for secret in event_detect_secrets_output:
-                                            log_stream_secrets[
-                                                cloudwatch_timestamp
-                                            ].add_secret(
-                                                secret["line_number"], secret["type"]
-                                            )
-                                else:
-                                    log_stream_secrets[cloudwatch_timestamp].add_secret(
-                                        1, secret["type"]
-                                    )
+                            try:
+                                log_event_data = dumps(
+                                    loads(flagged_event["message"]), indent=2
+                                )
+                            except Exception:
+                                log_event_data = dumps(
+                                    flagged_event["message"], indent=2
+                                )
+                            if len(log_event_data.split("\n")) > 1:
+                                # Can get more informative output if there is more than 1 line.
+                                # Will rescan just this event to get the type of secret and the line number.
+                                # Validation is disabled here: this rescan only resolves line numbers
+                                # for display and must not re-authenticate the secret.
+                                event_detect_secrets_output = detect_secrets_scan(
+                                    data=log_event_data,
+                                    validate=False,
+                                )
+                                if event_detect_secrets_output:
+                                    for event_secret in event_detect_secrets_output:
+                                        log_stream_secrets[
+                                            cloudwatch_timestamp
+                                        ].add_secret(
+                                            event_secret["line_number"],
+                                            event_secret["type"],
+                                        )
+                            else:
+                                log_stream_secrets[cloudwatch_timestamp].add_secret(
+                                    1, secret["type"]
+                                )
                         if log_stream_secrets:
                             secrets_string = "; ".join(
                                 [
