@@ -4,10 +4,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.31.1] (Prowler v5.31.1)
 
-### 🚀 Added
-
-- Lighthouse now keeps the legacy OSS experience under `lighthouse-v1` and enables Cloud-only Lighthouse v2 UI for config, chat sessions, streaming, cancellation, history, and Browse/Chat navigation [(#11690)](https://github.com/prowler-cloud/prowler/pull/11690)
-
 ### 🔄 Changed
 
 - Schedule Scans provider table and launch flows now use provider schedule fields, restore OSS daily scheduling, default to the next local scan hour, and clarify provider selection in launch scan [(#11684)](https://github.com/prowler-cloud/prowler/pull/11684)
