@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.32.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- CODEX_HERE [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+---
+
 ## [1.32.1] (Prowler v5.31.1)
 
 ### 🐞 Fixed
