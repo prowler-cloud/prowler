@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
@@ -68,6 +69,13 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   createLighthouseV2Session: createSessionMock,
   getLighthouseV2Messages: getMessagesMock,
   sendLighthouseV2Message: sendMessageMock,
+}));
+
+// Streamdown pulls in shiki/wasm syntax highlighting that doesn't run under
+// jsdom; render its text passthrough so message bodies are still assertable.
+vi.mock("streamdown", () => ({
+  Streamdown: ({ children }: { children: ReactNode }) => <>{children}</>,
+  defaultRehypePlugins: { katex: undefined, harden: undefined },
 }));
 
 const configurations: LighthouseV2Configuration[] = [

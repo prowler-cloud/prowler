@@ -294,7 +294,10 @@ describe("LighthouseV2ConfigPage", () => {
       name: /Business context/i,
     });
     await user.clear(businessContext);
-    await user.type(businessContext, "a".repeat(1001));
+    // Paste the whole string in one event instead of 1001 keystrokes, which
+    // re-renders the watched form on every character and times out under load.
+    await user.click(businessContext);
+    await user.paste("a".repeat(1001));
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     // Then

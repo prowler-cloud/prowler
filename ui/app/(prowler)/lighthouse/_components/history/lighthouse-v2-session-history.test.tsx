@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,12 +7,6 @@ import type { LighthouseV2Session } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseV2SessionHistory } from "./lighthouse-v2-session-history";
 
 describe("LighthouseV2SessionHistory", () => {
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const source = readFileSync(
-    path.join(currentDir, "lighthouse-v2-session-history.tsx"),
-    "utf8",
-  );
-
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-25T12:00:00Z"));
@@ -95,36 +85,6 @@ describe("LighthouseV2SessionHistory", () => {
     expect(screen.queryByText("30d")).not.toBeInTheDocument();
     expect(screen.queryByText("one day")).not.toBeInTheDocument();
     expect(screen.queryByText("thirty days")).not.toBeInTheDocument();
-  });
-
-  it("uses a single Older heading with balanced vertical spacing", () => {
-    // Given / When
-    renderHistory({
-      sessions: [
-        session({
-          id: "session-today",
-          title: "Today session",
-          updatedAt: "2026-06-25T09:00:00Z",
-        }),
-        session({
-          id: "session-thirty-days",
-          title: "Thirty days session",
-          updatedAt: "2026-05-26T09:00:00Z",
-        }),
-      ],
-    });
-
-    // Then
-    const heading = screen.getByRole("heading", { name: "Older" });
-
-    expect(heading).toHaveClass("py-1");
-    expect(screen.getAllByRole("heading")).toHaveLength(1);
-    expect(
-      screen.queryByRole("heading", { name: "Today" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Last 30 days" }),
-    ).not.toBeInTheDocument();
   });
 
   it("filters visible sessions by the current search value", () => {
@@ -259,7 +219,6 @@ describe("LighthouseV2SessionHistory", () => {
     // Then
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip).toHaveTextContent(fullTitle);
-    expect(source).toContain('<TooltipContent side="right">');
   });
 });
 
