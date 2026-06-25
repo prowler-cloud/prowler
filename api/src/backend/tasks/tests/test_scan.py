@@ -8,8 +8,6 @@ from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
-<<<<<<< HEAD
-=======
 from api.db_router import MainRouter
 from api.exceptions import ProviderConnectionError, ProviderDeletedException
 from api.models import (
@@ -23,9 +21,6 @@ from api.models import (
     StateChoices,
     StatusChoices,
 )
-from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
->>>>>>> 2b7db8869 (fix(api): handle deleted scans during progress saves (#11696))
 from tasks.jobs.scan import (
     _ATTACK_SURFACE_MAPPING_CACHE,
     _aggregate_findings_by_region,
@@ -47,19 +42,6 @@ from tasks.jobs.scan import (
 )
 from tasks.utils import CustomEncoder
 
-from api.db_router import MainRouter
-from api.exceptions import ProviderConnectionError
-from api.models import (
-    Finding,
-    MuteRule,
-    Provider,
-    Resource,
-    ResourceScanSummary,
-    Scan,
-    ScanSummary,
-    StateChoices,
-    StatusChoices,
-)
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 
@@ -4678,8 +4660,9 @@ class TestScanIsFullScope:
         # If the SDK adds a new filter, this test still passes via the
         # introspection-driven derivation; if it adds a non-filter kwarg
         # (e.g. provider-like), keep the exclusion list in sync in models.py.
-        from prowler.lib.scan.scan import Scan as ProwlerScan
         import inspect
+
+        from prowler.lib.scan.scan import Scan as ProwlerScan
 
         expected = tuple(
             name

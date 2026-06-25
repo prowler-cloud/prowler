@@ -14,7 +14,7 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
-from django.db import IntegrityError, OperationalError
+from django.db import DatabaseError, IntegrityError, OperationalError, transaction
 from django.db.models import (
     Case,
     Count,
@@ -68,27 +68,6 @@ from api.models import (
 from api.models import StatusChoices as FindingStatus
 from api.utils import initialize_prowler_provider, return_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
-<<<<<<< HEAD
-=======
-from celery.utils.log import get_task_logger
-from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
-from config.env import env
-from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
-from django.db import DatabaseError, IntegrityError, OperationalError, transaction
-from django.db.models import (
-    Case,
-    Count,
-    Exists,
-    IntegerField,
-    Max,
-    Min,
-    OuterRef,
-    Q,
-    Sum,
-    When,
-)
-from django.utils import timezone as django_timezone
->>>>>>> 2b7db8869 (fix(api): handle deleted scans during progress saves (#11696))
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
@@ -1071,17 +1050,12 @@ def perform_prowler_scan(
         provider_instance = Provider.objects.get(pk=provider_id)
         scan_instance = Scan.objects.get(pk=scan_id)
         scan_instance.state = StateChoices.EXECUTING
-<<<<<<< HEAD
         scan_instance.started_at = datetime.now(tz=timezone.utc)
-        scan_instance.save(update_fields=["state", "started_at", "updated_at"])
-=======
-        scan_instance.started_at = datetime.now(tz=UTC)
         _save_scan_instance(
             scan_instance,
             provider_id,
             ["state", "started_at", "updated_at"],
         )
->>>>>>> 2b7db8869 (fix(api): handle deleted scans during progress saves (#11696))
 
     # Find the mutelist processor if it exists
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
@@ -1232,27 +1206,11 @@ def perform_prowler_scan(
         scan_instance.state = StateChoices.FAILED
 
     finally:
-<<<<<<< HEAD
-        with rls_transaction(tenant_id):
-            scan_instance.duration = time.time() - start_time
-            scan_instance.completed_at = datetime.now(tz=timezone.utc)
-            scan_instance.unique_resource_count = len(unique_resources)
-            scan_instance.save(
-                update_fields=[
-                    "state",
-                    "duration",
-                    "completed_at",
-                    "unique_resource_count",
-                    "progress",
-                    "updated_at",
-                ]
-            )
-=======
         if not skip_final_scan_update:
             try:
                 with rls_transaction(tenant_id):
                     scan_instance.duration = time.time() - start_time
-                    scan_instance.completed_at = datetime.now(tz=UTC)
+                    scan_instance.completed_at = datetime.now(tz=timezone.utc)
                     scan_instance.unique_resource_count = len(unique_resources)
                     if exception is None:
                         scan_instance.progress = 100
@@ -1271,7 +1229,6 @@ def perform_prowler_scan(
             except ProviderDeletedException as e:
                 logger.warning(str(e))
                 exception = e
->>>>>>> 2b7db8869 (fix(api): handle deleted scans during progress saves (#11696))
 
     if exception is not None:
         raise exception
