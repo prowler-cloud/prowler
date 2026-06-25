@@ -9,6 +9,7 @@ import {
   PROVIDER_WIZARD_STEP,
 } from "@/types/provider-wizard";
 
+import { WIZARD_FOOTER_ACTION_TYPE } from "../steps/footer-controls";
 import type { ProviderWizardInitialData } from "../types";
 import { useProviderWizardController } from "./use-provider-wizard-controller";
 
@@ -237,7 +238,7 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("closes the wizard after a successful connection test in update mode", async () => {
+  it("moves to launch step after a successful connection test in update mode", async () => {
     // Given
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
@@ -265,10 +266,55 @@ describe("useProviderWizardController", () => {
       result.current.handleTestSuccess();
     });
 
-    // Credential rotation skips the launch/schedule step.
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(refreshMock).toHaveBeenCalledTimes(1);
-    expect(result.current.currentStep).not.toBe(PROVIDER_WIZARD_STEP.LAUNCH);
+    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.LAUNCH);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it("does not rerender when setting a semantically unchanged footer config", () => {
+    // Given
+    const onOpenChange = vi.fn();
+    let renderCount = 0;
+    const { result } = renderHook(() => {
+      renderCount += 1;
+
+      return useProviderWizardController({
+        open: true,
+        onOpenChange,
+      });
+    });
+
+    const firstFooterConfig = {
+      showBack: true,
+      backLabel: "Back",
+      onBack: vi.fn(),
+      showAction: true,
+      actionLabel: "Next",
+      actionDisabled: false,
+      actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      onAction: vi.fn(),
+    };
+
+    act(() => {
+      result.current.setFooterConfig(firstFooterConfig);
+    });
+    const renderCountAfterFirstUpdate = renderCount;
+    const footerConfigAfterFirstUpdate = result.current.resolvedFooterConfig;
+
+    // When
+    act(() => {
+      result.current.setFooterConfig({
+        ...firstFooterConfig,
+        onBack: vi.fn(),
+        onAction: vi.fn(),
+      });
+    });
+
+    // Then
+    expect(renderCount).toBe(renderCountAfterFirstUpdate);
+    expect(result.current.resolvedFooterConfig).toBe(
+      footerConfigAfterFirstUpdate,
+    );
   });
 
   it("does not override launch footer config in the controller", () => {

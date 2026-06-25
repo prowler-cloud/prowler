@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
 import { isCloud } from "@/lib/shared/env";
@@ -48,6 +54,32 @@ const EMPTY_FOOTER_CONFIG: WizardFooterConfig = {
   actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
 };
 
+function isSameFooterConfig(
+  current: WizardFooterConfig,
+  next: WizardFooterConfig,
+) {
+  return (
+    current.showBack === next.showBack &&
+    current.backLabel === next.backLabel &&
+    Boolean(current.backDisabled) === Boolean(next.backDisabled) &&
+    Boolean(current.showSecondaryAction) ===
+      Boolean(next.showSecondaryAction) &&
+    (current.secondaryActionLabel ?? "") ===
+      (next.secondaryActionLabel ?? "") &&
+    Boolean(current.secondaryActionDisabled) ===
+      Boolean(next.secondaryActionDisabled) &&
+    current.secondaryActionVariant === next.secondaryActionVariant &&
+    current.secondaryActionType === next.secondaryActionType &&
+    (current.secondaryActionFormId ?? "") ===
+      (next.secondaryActionFormId ?? "") &&
+    current.showAction === next.showAction &&
+    current.actionLabel === next.actionLabel &&
+    Boolean(current.actionDisabled) === Boolean(next.actionDisabled) &&
+    current.actionType === next.actionType &&
+    (current.actionFormId ?? "") === (next.actionFormId ?? "")
+  );
+}
+
 interface UseProviderWizardControllerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -82,8 +114,9 @@ export function useProviderWizardController({
   const [orgCurrentStep, setOrgCurrentStep] = useState<OrgWizardStep>(
     ORG_WIZARD_STEP.SETUP,
   );
-  const [footerConfig, setFooterConfig] =
+  const [footerConfig, setFooterConfigState] =
     useState<WizardFooterConfig>(EMPTY_FOOTER_CONFIG);
+  const footerConfigRef = useRef<WizardFooterConfig>(EMPTY_FOOTER_CONFIG);
   const [providerTypeHint, setProviderTypeHint] = useState<ProviderType | null>(
     null,
   );
@@ -123,7 +156,8 @@ export function useProviderWizardController({
       );
       setOrgCurrentStep(orgInitialData.targetStep);
       setOrgSetupPhase(orgInitialData.targetPhase);
-      setFooterConfig(EMPTY_FOOTER_CONFIG);
+      footerConfigRef.current = EMPTY_FOOTER_CONFIG;
+      setFooterConfigState(EMPTY_FOOTER_CONFIG);
       setProviderTypeHint(null);
       return;
     }
@@ -146,7 +180,8 @@ export function useProviderWizardController({
       );
       setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS);
       setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-      setFooterConfig(EMPTY_FOOTER_CONFIG);
+      footerConfigRef.current = EMPTY_FOOTER_CONFIG;
+      setFooterConfigState(EMPTY_FOOTER_CONFIG);
       setProviderTypeHint(initialProviderType);
       setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
       return;
@@ -157,7 +192,8 @@ export function useProviderWizardController({
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setFooterConfig(EMPTY_FOOTER_CONFIG);
+    footerConfigRef.current = EMPTY_FOOTER_CONFIG;
+    setFooterConfigState(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   }, [
@@ -194,7 +230,8 @@ export function useProviderWizardController({
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setFooterConfig(EMPTY_FOOTER_CONFIG);
+    footerConfigRef.current = EMPTY_FOOTER_CONFIG;
+    setFooterConfigState(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
@@ -220,13 +257,24 @@ export function useProviderWizardController({
   };
 
   const handleTestSuccess = () => {
-    if (
-      useProviderWizardStore.getState().mode === PROVIDER_WIZARD_MODE.UPDATE
-    ) {
-      handleClose();
+    setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
+  };
+
+  const updateFooterConfig: Dispatch<SetStateAction<WizardFooterConfig>> = (
+    nextFooterConfig,
+  ) => {
+    const currentFooterConfig = footerConfigRef.current;
+    const resolvedNextFooterConfig =
+      typeof nextFooterConfig === "function"
+        ? nextFooterConfig(currentFooterConfig)
+        : nextFooterConfig;
+
+    if (isSameFooterConfig(currentFooterConfig, resolvedNextFooterConfig)) {
       return;
     }
-    setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
+
+    footerConfigRef.current = resolvedNextFooterConfig;
+    setFooterConfigState(resolvedNextFooterConfig);
   };
 
   const openOrganizationsFlow = () => {
@@ -236,7 +284,8 @@ export function useProviderWizardController({
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setFooterConfig(EMPTY_FOOTER_CONFIG);
+    footerConfigRef.current = EMPTY_FOOTER_CONFIG;
+    setFooterConfigState(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
@@ -245,7 +294,8 @@ export function useProviderWizardController({
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
-    setFooterConfig(EMPTY_FOOTER_CONFIG);
+    footerConfigRef.current = EMPTY_FOOTER_CONFIG;
+    setFooterConfigState(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
@@ -274,7 +324,7 @@ export function useProviderWizardController({
     providerTypeHint,
     resolvedFooterConfig,
     setCurrentStep,
-    setFooterConfig,
+    setFooterConfig: updateFooterConfig,
     setOrgCurrentStep,
     setOrgSetupPhase,
     setProviderTypeHint,

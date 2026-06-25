@@ -15,6 +15,35 @@ import {
   WizardFooterConfig,
 } from "./footer-controls";
 
+type ConnectStepUiState = {
+  showBack: boolean;
+  showAction: boolean;
+  actionLabel: string;
+  actionDisabled: boolean;
+  isLoading: boolean;
+};
+
+const CONNECT_STEP_INITIAL_UI_STATE: ConnectStepUiState = {
+  showBack: false,
+  showAction: false,
+  actionLabel: "Next",
+  actionDisabled: true,
+  isLoading: false,
+};
+
+function isSameConnectStepUiState(
+  current: ConnectStepUiState,
+  next: ConnectStepUiState,
+) {
+  return (
+    current.showBack === next.showBack &&
+    current.showAction === next.showAction &&
+    current.actionLabel === next.actionLabel &&
+    current.actionDisabled === next.actionDisabled &&
+    current.isLoading === next.isLoading
+  );
+}
+
 interface ConnectStepProps {
   onNext: () => void;
   onSelectOrganizations: () => void;
@@ -31,13 +60,7 @@ export function ConnectStep({
   const { setProvider, setVia, setSecretId, setMode } =
     useProviderWizardStore();
   const backHandlerRef = useRef<(() => void) | null>(null);
-  const [uiState, setUiState] = useState({
-    showBack: false,
-    showAction: false,
-    actionLabel: "Next",
-    actionDisabled: true,
-    isLoading: false,
-  });
+  const [uiState, setUiState] = useState(CONNECT_STEP_INITIAL_UI_STATE);
 
   const formId = "provider-wizard-connect-form";
 
@@ -52,6 +75,16 @@ export function ConnectStep({
     setSecretId(null);
     setMode(PROVIDER_WIZARD_MODE.ADD);
     onNext();
+  };
+
+  const handleUiStateChange = (nextUiState: ConnectStepUiState) => {
+    setUiState((currentUiState) => {
+      if (isSameConnectStepUiState(currentUiState, nextUiState)) {
+        return currentUiState;
+      }
+
+      return nextUiState;
+    });
   };
 
   useEffect(() => {
@@ -75,7 +108,7 @@ export function ConnectStep({
       onSuccess={handleSuccess}
       onSelectOrganizations={onSelectOrganizations}
       onProviderTypeChange={onProviderTypeChange}
-      onUiStateChange={setUiState}
+      onUiStateChange={handleUiStateChange}
       onBackHandlerChange={(handler) => {
         backHandlerRef.current = handler;
       }}

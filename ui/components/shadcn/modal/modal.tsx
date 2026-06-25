@@ -65,6 +65,11 @@ export const Modal = ({
             )}
           </DialogHeader>
         )}
+        {!title && description && (
+          <DialogDescription className="sr-only">
+            {description}
+          </DialogDescription>
+        )}
         {children}
       </DialogContent>
     </Dialog>
