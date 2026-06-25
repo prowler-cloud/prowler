@@ -1,8 +1,5 @@
 "use server";
 
-import { auth } from "@/auth.config";
-import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
-import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type {
   LighthouseV2Configuration,
   LighthouseV2ConfigurationInput,
@@ -15,7 +12,9 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
   LighthouseV2Task,
-} from "@/types/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_types";
+import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 import {
   buildLighthouseV2CancelRunPayload,
@@ -150,6 +149,10 @@ export async function getLighthouseV2Session(
 export async function createLighthouseV2Session(
   title?: string | null,
 ): Promise<LighthouseV2ActionResult<LighthouseV2Session>> {
+  // Intentionally NOT revalidating "/lighthouse": the page is force-dynamic
+  // (nothing to revalidate) and revalidating the active route mid-submit would
+  // re-run the server component and remount the chat, killing the live stream.
+  // The sidebar refreshes client-side via notifyLighthouseV2SessionsChanged().
   return mutateSingle(
     "/lighthouse/sessions",
     {
@@ -157,7 +160,7 @@ export async function createLighthouseV2Session(
       body: JSON.stringify(buildLighthouseV2SessionCreatePayload(title)),
     },
     mapLighthouseV2Session,
-    "/lighthouse",
+    "",
   );
 }
 
@@ -215,18 +218,9 @@ export async function sendLighthouseV2Message(
       return toErrorResult(document);
     }
 
-    const streamPath =
-      typeof document.meta?.stream_url === "string"
-        ? document.meta.stream_url
-        : undefined;
-    const streamUrl = streamPath
-      ? await getAuthenticatedLighthouseV2StreamUrl(streamPath)
-      : undefined;
-
     return {
       data: {
         task: mapLighthouseV2Task(document.data),
-        streamUrl,
       },
       meta: document.meta,
     };
@@ -248,19 +242,6 @@ export async function cancelLighthouseV2Run(
     mapLighthouseV2Task,
     "/lighthouse",
   );
-}
-
-export async function getAuthenticatedLighthouseV2StreamUrl(
-  streamPath: string,
-): Promise<string | undefined> {
-  const session = await auth();
-  if (!session?.accessToken) {
-    return undefined;
-  }
-
-  const streamUrl = new URL(streamPath, getRequiredApiBaseUrl());
-  streamUrl.searchParams.set("access_token", session.accessToken);
-  return streamUrl.toString();
 }
 
 async function getCollection<TResource, TOutput>(

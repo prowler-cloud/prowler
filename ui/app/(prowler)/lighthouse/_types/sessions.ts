@@ -74,5 +74,4 @@ export interface LighthouseV2Task {
 
 export interface LighthouseV2SendMessageResult {
   task: LighthouseV2Task;
-  streamUrl?: string;
 }
