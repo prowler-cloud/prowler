@@ -298,6 +298,39 @@ class TestPerformScan:
         mock_logger_error.assert_not_called()
         assert not Scan.objects.filter(pk=scan_id).exists()
 
+    def test_perform_prowler_scan_sets_final_progress_when_progress_updates_are_throttled(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+        provider_id = str(provider.id)
+
+        with (
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider",
+                return_value=MagicMock(),
+            ),
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_DELTA", 200),
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_SECONDS", 3600),
+        ):
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(99, []), (100, [])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.COMPLETED
+        assert scan.progress == 100
+
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
         [

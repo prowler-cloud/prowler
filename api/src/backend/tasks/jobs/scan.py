@@ -128,7 +128,7 @@ def _save_scan_instance(
             raise
         raise ProviderDeletedException(
             f"Provider '{provider_id}' for scan '{scan_instance.id}' was deleted during the scan"
-        )
+        ) from None
 
 
 def aggregate_category_counts(
@@ -1120,7 +1120,7 @@ def perform_prowler_scan(
 
         # Throttle scan_instance progress writes to avoid hammering the writer:
         # only persist when progress moves by at least `PROGRESS_THROTTLE_DELTA`
-        # OR `PROGRESS_THROTTLE_SECONDS` have elapsed. The final progress (1.0)
+        # OR `PROGRESS_THROTTLE_SECONDS` have elapsed. The final progress (100)
         # always persists in the `finally` block below.
         last_persisted_progress = -1.0
         last_persisted_progress_at = 0.0
@@ -1209,6 +1209,8 @@ def perform_prowler_scan(
                     scan_instance.duration = time.time() - start_time
                     scan_instance.completed_at = datetime.now(tz=UTC)
                     scan_instance.unique_resource_count = len(unique_resources)
+                    if exception is None:
+                        scan_instance.progress = 100
                     _save_scan_instance(
                         scan_instance,
                         provider_id,
