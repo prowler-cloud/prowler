@@ -5,7 +5,6 @@ import {
 } from "@/actions/organizations/organizations";
 import { getAllProviders, getProviders } from "@/actions/providers";
 import { PROVIDERS_FILTER_PARAM } from "@/actions/providers/providers-filters";
-import { getScans } from "@/actions/scans";
 import { getSchedules } from "@/actions/schedules";
 import {
   extractFiltersAndQuery,
@@ -13,6 +12,7 @@ import {
 } from "@/lib/helper-filters";
 import {
   buildProviderScheduleSummary,
+  buildScheduleAttributesFromProvider,
   buildSchedulesByProviderId,
   isScheduleConfigured,
 } from "@/lib/schedules";
@@ -35,7 +35,7 @@ import {
   ProvidersTableRow,
   ProvidersTableRowsInput,
 } from "@/types/providers-table";
-import { SCAN_TRIGGER, ScanProps, ScanScheduleSummary } from "@/types/scans";
+import { ScanScheduleSummary } from "@/types/scans";
 import { ScheduleAttributes } from "@/types/schedules";
 
 const PROVIDERS_STATUS_MAPPING = [
@@ -116,26 +116,6 @@ const createProviderGroupLookup = (
   return lookup;
 };
 
-const ACTIVE_SCAN_STATES = new Set(["scheduled", "available", "executing"]);
-
-const buildScheduledProviderIds = (scans: ScanProps[]): Set<string> => {
-  const scheduled = new Set<string>();
-
-  for (const scan of scans) {
-    if (
-      scan.attributes.trigger === SCAN_TRIGGER.SCHEDULED &&
-      ACTIVE_SCAN_STATES.has(scan.attributes.state)
-    ) {
-      const providerId = scan.relationships.provider?.data?.id;
-      if (providerId) {
-        scheduled.add(providerId);
-      }
-    }
-  }
-
-  return scheduled;
-};
-
 // A schedule is backed by the Provider row itself, so its `/schedules` entry
 // exists before the first scheduled Scan is materialized — only enabled,
 // configured ones carry a displayable cadence summary.
@@ -147,17 +127,33 @@ const buildProviderScheduleSummaryFor = (
     ? buildProviderScheduleSummary(attributes, now)
     : undefined;
 
+const getProviderLastScanAt = (
+  provider: ProvidersApiResponse["data"][number],
+): string | null => {
+  if (
+    Object.prototype.hasOwnProperty.call(provider.attributes, "last_scan_at")
+  ) {
+    return provider.attributes.last_scan_at ?? null;
+  }
+
+  return provider.attributes.connection.last_checked_at ?? null;
+};
+
 const enrichProviders = (
   providersResponse: ProvidersApiResponse | undefined,
-  scanScheduledProviderIds: Set<string>,
   schedulesByProviderId: Record<string, ScheduleAttributes>,
 ): ProvidersProviderRow[] => {
   const providerGroupLookup = createProviderGroupLookup(providersResponse);
   const now = new Date();
 
   return (providersResponse?.data ?? []).map((provider) => {
+    const providerScheduleAttributes = buildScheduleAttributesFromProvider(
+      provider.attributes,
+    );
+    const scheduleAttributes =
+      providerScheduleAttributes ?? schedulesByProviderId[provider.id];
     const scheduleSummary = buildProviderScheduleSummaryFor(
-      schedulesByProviderId[provider.id],
+      scheduleAttributes,
       now,
     );
 
@@ -169,11 +165,11 @@ const enrichProviders = (
           (providerGroup: { id: string }) =>
             providerGroupLookup.get(providerGroup.id) ?? "Unknown Group",
         ) ?? [],
-      // A fired scheduled scan OR a configured schedule that hasn't fired yet.
-      hasSchedule:
-        scanScheduledProviderIds.has(provider.id) ||
-        scheduleSummary !== undefined,
+      // Provider scan_* fields are authoritative when present; otherwise we
+      // only fall back to the /schedules resource, never materialized scans.
+      hasSchedule: scheduleSummary !== undefined,
       scheduleSummary,
+      lastScanAt: getProviderLastScanAt(provider),
     };
   });
 };
@@ -508,7 +504,6 @@ export async function loadProvidersAccountsViewData({
     providersResponse,
     allProvidersResponse,
     allProviderGroupsResponse,
-    scansResponse,
     schedulesResponse,
     organizationsResponse,
     organizationUnitsResponse,
@@ -527,18 +522,8 @@ export async function loadProvidersAccountsViewData({
     resolveActionResult(getAllProviders()),
     // Unfiltered fetch for the Provider Group selector dropdown.
     resolveActionResult(getAllProviderGroups()),
-    // Fetch active scheduled scans to flag providers whose schedule has fired.
-    resolveActionResult(
-      getScans({
-        pageSize: 500,
-        filters: {
-          "filter[trigger]": SCAN_TRIGGER.SCHEDULED,
-          "filter[state__in]": "scheduled,available",
-        },
-      }),
-    ),
-    // Fetch configured schedules to also flag providers whose schedule has not
-    // fired yet (best-effort: absent in OSS, where the helper yields no ids).
+    // Fetch configured schedules as a fallback when provider scan_* fields are
+    // absent (best-effort: typically empty in OSS).
     resolveActionResult(getSchedules()),
     isCloud
       ? listOrganizationsSafe()
@@ -548,18 +533,11 @@ export async function loadProvidersAccountsViewData({
       : Promise.resolve(emptyOrganizationUnitsResponse),
   ]);
 
-  const scanScheduledProviderIds = buildScheduledProviderIds(
-    scansResponse?.data ?? [],
-  );
   const schedulesByProviderId = buildSchedulesByProviderId(schedulesResponse);
 
   const orgs = organizationsResponse?.data ?? [];
   const ous = organizationUnitsResponse?.data ?? [];
-  const providers = enrichProviders(
-    providersResponse,
-    scanScheduledProviderIds,
-    schedulesByProviderId,
-  );
+  const providers = enrichProviders(providersResponse, schedulesByProviderId);
 
   const rows = buildProvidersTableRows({
     isCloud,

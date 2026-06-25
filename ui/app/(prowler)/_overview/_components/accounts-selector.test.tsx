@@ -147,7 +147,22 @@ describe("AccountsSelector", () => {
       placeholder: "Search Providers...",
       emptyMessage: "No Providers found.",
     });
+    expect(screen.getByText("All Providers")).toBeInTheDocument();
     expect(screen.getByText("Production AWS")).toBeInTheDocument();
+  });
+
+  it("supports contextual placeholder and empty-selection copy", () => {
+    render(
+      <AccountsSelector
+        providers={providers}
+        placeholder="Select a Provider"
+        emptySelectionLabel="No provider selected"
+        clearSelectionLabel="Clear provider selection"
+      />,
+    );
+
+    expect(screen.getByText("Select a Provider")).toBeInTheDocument();
+    expect(screen.getByText("No provider selected")).toBeInTheDocument();
   });
 
   it("allows disabling search explicitly", () => {
