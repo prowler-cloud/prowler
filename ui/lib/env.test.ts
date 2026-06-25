@@ -58,7 +58,9 @@ describe("lib/env gated integration validation", () => {
     "UI_GOOGLE_TAG_MANAGER_ID",
     "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
     "UI_POSTHOG_ENABLE",
+    "UI_POSTHOG_KEY",
     "POSTHOG_KEY",
+    "UI_POSTHOG_HOST",
     "POSTHOG_HOST",
   ] as const;
 
@@ -105,18 +107,38 @@ describe("lib/env gated integration validation", () => {
     );
   });
 
-  it("throws on POSTHOG_HOST when PostHog is enabled with only the key", async () => {
+  it("throws on UI_POSTHOG_HOST when PostHog is enabled with only the key", async () => {
     vi.stubEnv("UI_POSTHOG_ENABLE", "true");
-    vi.stubEnv("POSTHOG_KEY", "phc_key");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
 
-    await expect(import("@/lib/env")).rejects.toThrow("POSTHOG_HOST");
+    await expect(import("@/lib/env")).rejects.toThrow("UI_POSTHOG_HOST");
   });
 
   it("resolves when PostHog is enabled with both key and host", async () => {
     vi.stubEnv("UI_POSTHOG_ENABLE", "true");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
+    vi.stubEnv("UI_POSTHOG_HOST", "https://eu.i.posthog.com");
+
+    await expect(import("@/lib/env")).resolves.toBeDefined();
+  });
+
+  it("resolves when the legacy Sentry DSN is set without the enable flag", async () => {
+    // Legacy names stay backward compatible: they activate without the flag.
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
+
+    await expect(import("@/lib/env")).resolves.toBeDefined();
+  });
+
+  it("resolves when the legacy PostHog names are set without the enable flag", async () => {
     vi.stubEnv("POSTHOG_KEY", "phc_key");
     vi.stubEnv("POSTHOG_HOST", "https://eu.i.posthog.com");
 
     await expect(import("@/lib/env")).resolves.toBeDefined();
+  });
+
+  it("throws on a partial legacy PostHog config set without the enable flag", async () => {
+    vi.stubEnv("POSTHOG_KEY", "phc_key");
+
+    await expect(import("@/lib/env")).rejects.toThrow("POSTHOG_HOST");
   });
 });

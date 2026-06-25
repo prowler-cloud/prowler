@@ -18,7 +18,9 @@ const GATED_ENV_VARS = [
   "UI_GOOGLE_TAG_MANAGER_ID",
   "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
   "UI_POSTHOG_ENABLE",
+  "UI_POSTHOG_KEY",
   "POSTHOG_KEY",
+  "UI_POSTHOG_HOST",
   "POSTHOG_HOST",
 ] as const;
 
@@ -63,11 +65,10 @@ describe("readGatedEnv", () => {
     ).toBe("https://legacy.example");
   });
 
-  it("returns null when disabled even if the value is set", () => {
-    // Given
+  it("ignores the primary (new) value when disabled and no legacy is set", () => {
+    // Given - the new UI_* name only counts when the enable flag is "true"
     vi.stubEnv("UI_SENTRY_ENABLE", "false");
     vi.stubEnv("UI_SENTRY_DSN", "https://dsn.example");
-    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://legacy.example");
 
     // When / Then
     expect(
@@ -79,7 +80,38 @@ describe("readGatedEnv", () => {
     ).toBeNull();
   });
 
-  it("returns null when the enable flag is unset", () => {
+  it("returns the legacy value when disabled (legacy ignores the enable flag)", () => {
+    // Given - legacy names stay backward compatible: they work without the flag
+    vi.stubEnv("UI_SENTRY_ENABLE", "false");
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://legacy.example");
+
+    // When / Then
+    expect(
+      readGatedEnv(
+        "UI_SENTRY_ENABLE",
+        "UI_SENTRY_DSN",
+        "NEXT_PUBLIC_SENTRY_DSN",
+      ),
+    ).toBe("https://legacy.example");
+  });
+
+  it("returns the legacy value when disabled even if the new value is also set", () => {
+    // Given - new value is ignored without the flag; legacy still activates
+    vi.stubEnv("UI_SENTRY_ENABLE", "false");
+    vi.stubEnv("UI_SENTRY_DSN", "https://dsn.example");
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://legacy.example");
+
+    // When / Then
+    expect(
+      readGatedEnv(
+        "UI_SENTRY_ENABLE",
+        "UI_SENTRY_DSN",
+        "NEXT_PUBLIC_SENTRY_DSN",
+      ),
+    ).toBe("https://legacy.example");
+  });
+
+  it("returns null when the enable flag is unset and only the new name is set", () => {
     // Given
     vi.stubEnv("UI_SENTRY_DSN", "https://dsn.example");
 
@@ -136,23 +168,48 @@ describe("assertGatedIntegrations", () => {
     expect(() => assertGatedIntegrations()).toThrow("UI_GOOGLE_TAG_MANAGER_ID");
   });
 
-  it("requires BOTH POSTHOG_KEY and POSTHOG_HOST when PostHog is enabled", () => {
+  it("requires BOTH UI_POSTHOG_KEY and UI_POSTHOG_HOST when PostHog is enabled", () => {
     // Given - key set, host missing
     vi.stubEnv("UI_POSTHOG_ENABLE", "true");
-    vi.stubEnv("POSTHOG_KEY", "phc_key");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
 
     // When / Then
-    expect(() => assertGatedIntegrations()).toThrow("POSTHOG_HOST");
+    expect(() => assertGatedIntegrations()).toThrow("UI_POSTHOG_HOST");
   });
 
   it("does not throw when PostHog is enabled with both key and host", () => {
     // Given
     vi.stubEnv("UI_POSTHOG_ENABLE", "true");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
+    vi.stubEnv("UI_POSTHOG_HOST", "https://eu.i.posthog.com");
+
+    // When / Then
+    expect(() => assertGatedIntegrations()).not.toThrow();
+  });
+
+  it("accepts the legacy Sentry DSN without the enable flag", () => {
+    // Given - backward compat: legacy presence activates without the flag
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://legacy.example");
+
+    // When / Then
+    expect(() => assertGatedIntegrations()).not.toThrow();
+  });
+
+  it("accepts the legacy PostHog names without the enable flag", () => {
+    // Given - both legacy names present, no UI_POSTHOG_ENABLE
     vi.stubEnv("POSTHOG_KEY", "phc_key");
     vi.stubEnv("POSTHOG_HOST", "https://eu.i.posthog.com");
 
     // When / Then
     expect(() => assertGatedIntegrations()).not.toThrow();
+  });
+
+  it("throws when a partial legacy PostHog config is set without the enable flag", () => {
+    // Given - one legacy name present; the full legacy set is then required
+    vi.stubEnv("POSTHOG_KEY", "phc_key");
+
+    // When / Then
+    expect(() => assertGatedIntegrations()).toThrow("POSTHOG_HOST");
   });
 });
 
@@ -186,6 +243,18 @@ describe("warnGatedIntegrationsMisconfig", () => {
   it("does not warn when nothing is configured", () => {
     // Given
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    // When
+    warnGatedIntegrationsMisconfig();
+
+    // Then
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("does not warn when only a legacy name is set without the enable flag", () => {
+    // Given - legacy stays backward compatible, so it loads and is not a misconfig
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://legacy.example");
 
     // When
     warnGatedIntegrationsMisconfig();
