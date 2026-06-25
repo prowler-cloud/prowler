@@ -1,9 +1,12 @@
 "use client";
 
+import { format } from "date-fns";
 import {
   ArrowRight,
   BookOpen,
   Bot,
+  Check,
+  Copy,
   FileCheck2,
   Loader2,
   Network,
@@ -11,9 +14,9 @@ import {
   ShieldAlert,
   Square,
   UserRound,
+  Wrench,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 
 import {
@@ -21,23 +24,26 @@ import {
   createLighthouseV2Session,
   getLighthouseV2Messages,
   sendLighthouseV2Message,
-} from "@/actions/lighthouse-v2/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_actions";
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtHeader,
+  ChainOfThoughtStep,
+} from "@/app/(prowler)/lighthouse/_components/ai-elements/chain-of-thought";
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import { LighthouseIcon } from "@/components/icons/Icons";
-import { Button } from "@/components/shadcn/button/button";
-import { Textarea } from "@/components/shadcn/textarea/textarea";
-import { useMountEffect } from "@/hooks/use-mount-effect";
+} from "@/app/(prowler)/lighthouse/_components/ai-elements/conversation";
 import {
   createInitialLighthouseV2StreamState,
+  LIGHTHOUSE_V2_STREAM_STATUS,
   type LighthouseV2StreamState,
   reduceLighthouseV2Event,
-} from "@/lib/lighthouse-v2/event-reducer";
-import { notifyLighthouseV2SessionsChanged } from "@/lib/lighthouse-v2/session-events";
-import { cn } from "@/lib/utils";
+} from "@/app/(prowler)/lighthouse/_lib/event-reducer";
+import { notifyLighthouseV2SessionsChanged } from "@/app/(prowler)/lighthouse/_lib/session-events";
+import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
 import {
   LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PART_TYPE,
@@ -48,9 +54,13 @@ import {
   type LighthouseV2ProviderType,
   type LighthouseV2SSEEvent,
   type LighthouseV2SupportedModel,
-} from "@/types/lighthouse-v2";
-
-import { Card } from "../../shadcn";
+} from "@/app/(prowler)/lighthouse/_types";
+import { LighthouseIcon } from "@/components/icons/Icons";
+import { Card } from "@/components/shadcn";
+import { Button } from "@/components/shadcn/button/button";
+import { Textarea } from "@/components/shadcn/textarea/textarea";
+import { useMountEffect } from "@/hooks/use-mount-effect";
+import { cn } from "@/lib/utils";
 
 interface LighthouseV2ChatPageProps {
   configurations: LighthouseV2Configuration[];
@@ -60,6 +70,8 @@ interface LighthouseV2ChatPageProps {
   >;
   initialSessionId?: string;
   initialMessages: LighthouseV2Message[];
+  initialActiveTaskId?: string | null;
+  initialStreamUrl?: string;
   initialPrompt?: string;
 }
 
@@ -91,9 +103,10 @@ export function LighthouseV2ChatPage({
   modelsByProvider,
   initialSessionId,
   initialMessages,
+  initialActiveTaskId,
+  initialStreamUrl,
   initialPrompt,
 }: LighthouseV2ChatPageProps) {
-  const router = useRouter();
   const eventSourceRef = useRef<EventSource | null>(null);
   const initialPromptSentRef = useRef(false);
   const connectedConfigurations = configurations.filter(
@@ -113,23 +126,27 @@ export function LighthouseV2ChatPage({
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [blockedByConflict, setBlockedByConflict] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSubmittedText, setLastSubmittedText] = useState<string | null>(
     null,
   );
   const [streamState, setStreamState] = useState<LighthouseV2StreamState>(() =>
-    createInitialLighthouseV2StreamState(),
+    createInitialLighthouseV2StreamState(initialActiveTaskId ?? null),
   );
 
   const canSend =
     selectedConfiguration?.connected === true &&
     !streamState.activeTaskId &&
-    !blockedByConflict;
+    !blockedByConflict &&
+    !isSubmitting;
 
-  const refreshMessages = async (sessionId: string) => {
+  const refreshMessages = async (sessionId: string): Promise<boolean> => {
     const result = await getLighthouseV2Messages(sessionId);
     if ("data" in result) {
       setMessages(result.data);
+      return true;
     }
+    return false;
   };
 
   const closeStream = () => {
@@ -148,7 +165,13 @@ export function LighthouseV2ChatPage({
     ) {
       closeStream();
       setBlockedByConflict(false);
-      await refreshMessages(sessionId);
+      if (event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR) {
+        setFeedback(event.detail || "Agent run failed.");
+      }
+      const refreshed = await refreshMessages(sessionId);
+      if (refreshed) {
+        setStreamState(createInitialLighthouseV2StreamState());
+      }
       notifyLighthouseV2SessionsChanged();
     }
   };
@@ -191,13 +214,19 @@ export function LighthouseV2ChatPage({
         applyEvent(parseStreamEvent(event, LIGHTHOUSE_V2_SSE_EVENT.ERROR));
       }
     });
+    // The browser fires `onerror` both on a transient drop (it auto-reconnects)
+    // and on a non-retryable failure such as a 401/404 on the SSE GET. Only the
+    // latter leaves the source CLOSED, so surface a connection error there and
+    // treat everything else as a reconnect.
     source.onerror = () => {
-      closeStream();
+      if (eventSourceRef.current !== source) return;
+      if (source.readyState === EventSource.CLOSED) {
+        closeStream();
+        setFeedback("Unable to connect to the response stream.");
+      }
       setStreamState((current) =>
         reduceLighthouseV2Event(current, { type: "disconnect" }),
       );
-      void refreshMessages(sessionId);
-      setFeedback("Stream disconnected. Messages were refreshed.");
     };
   };
 
@@ -215,7 +244,14 @@ export function LighthouseV2ChatPage({
 
     setActiveSessionId(result.data.id);
     notifyLighthouseV2SessionsChanged();
-    router.push(`/lighthouse?session=${encodeURIComponent(result.data.id)}`);
+    // Update the URL in place (not router.push) so the force-dynamic server
+    // component is NOT re-run mid-submit. A re-run would change `key` in
+    // page.tsx and remount this component, tearing down the open EventSource.
+    window.history.replaceState(
+      null,
+      "",
+      `/lighthouse?session=${encodeURIComponent(result.data.id)}`,
+    );
     return result.data.id;
   };
 
@@ -223,39 +259,54 @@ export function LighthouseV2ChatPage({
     const trimmedText = text.trim();
     if (!trimmedText || !canSend) return;
 
-    const sessionId = await ensureSession(trimmedText);
-    if (!sessionId) return;
+    setIsSubmitting(true);
+    try {
+      const sessionId = await ensureSession(trimmedText);
+      if (!sessionId) return;
 
-    setFeedback(null);
-    setBlockedByConflict(false);
-    setLastSubmittedText(trimmedText);
-    setInput("");
-    setMessages((current) => [
-      ...current,
-      buildOptimisticMessage("user", trimmedText),
-    ]);
+      const provisionalTaskId = `pending-${Date.now()}`;
+      setFeedback(null);
+      setBlockedByConflict(false);
+      setLastSubmittedText(trimmedText);
+      setInput("");
+      setMessages((current) => [
+        ...current,
+        buildOptimisticMessage("user", trimmedText),
+      ]);
+      setStreamState(createInitialLighthouseV2StreamState(provisionalTaskId));
 
-    const result = await sendLighthouseV2Message({
-      sessionId,
-      text: trimmedText,
-      provider: selectedProvider,
-      model: selectedModel || null,
-    });
+      // Subscribe to the same-origin SSE proxy BEFORE sending the message: the
+      // backend has no replay buffer, so the listener must be attached before
+      // the worker starts emitting.
+      startStream(buildLighthouseV2StreamUrl(sessionId), sessionId);
 
-    if ("error" in result) {
-      setFeedback(result.error);
-      if (result.status === 409) {
-        setBlockedByConflict(true);
-        await refreshMessages(sessionId);
+      const result = await sendLighthouseV2Message({
+        sessionId,
+        text: trimmedText,
+        provider: selectedProvider,
+        model: selectedModel || null,
+      });
+
+      if ("error" in result) {
+        closeStream();
+        setStreamState(createInitialLighthouseV2StreamState());
+        setFeedback(result.error);
+        if (result.status === 409) {
+          setBlockedByConflict(true);
+          await refreshMessages(sessionId);
+        }
+        return;
       }
-      return;
-    }
 
-    setStreamState(createInitialLighthouseV2StreamState(result.data.task.id));
-    if (result.data.streamUrl) {
-      startStream(result.data.streamUrl, sessionId);
+      setStreamState((current) =>
+        current.activeTaskId === provisionalTaskId
+          ? { ...current, activeTaskId: result.data.task.id }
+          : current,
+      );
+      notifyLighthouseV2SessionsChanged();
+    } finally {
+      setIsSubmitting(false);
     }
-    notifyLighthouseV2SessionsChanged();
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -283,6 +334,10 @@ export function LighthouseV2ChatPage({
   };
 
   useMountEffect(() => {
+    if (initialSessionId && initialActiveTaskId && initialStreamUrl) {
+      startStream(initialStreamUrl, initialSessionId);
+    }
+
     return () => closeStream();
   });
 
@@ -293,8 +348,11 @@ export function LighthouseV2ChatPage({
     }
   });
 
-  const hasConversation =
-    messages.length > 0 || Boolean(streamState.assistantText);
+  const hasLiveAssistantActivity =
+    Boolean(streamState.activeTaskId) ||
+    Boolean(streamState.assistantText) ||
+    streamState.toolCalls.length > 0;
+  const hasConversation = messages.length > 0 || hasLiveAssistantActivity;
 
   return (
     <Card
@@ -312,7 +370,7 @@ export function LighthouseV2ChatPage({
                 {messages.map((message) => (
                   <MessageBubble key={message.id} message={message} />
                 ))}
-                {streamState.assistantText && (
+                {hasLiveAssistantActivity && (
                   <StreamingAssistantMessage streamState={streamState} />
                 )}
               </ConversationContent>
@@ -525,30 +583,59 @@ function LighthouseV2Composer({
 
 function MessageBubble({ message }: { message: LighthouseV2Message }) {
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
+  const textParts = message.parts.filter(
+    (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT,
+  );
+  const toolCallCount = message.parts.filter(
+    (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TOOL_CALL,
+  ).length;
+  const messageText = textParts
+    .map((part) => getTextContent(part.content))
+    .filter(Boolean)
+    .join("\n\n");
+
   return (
     <article
-      className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}
+      className={cn(
+        "group flex gap-3",
+        isUser ? "justify-end" : "justify-start",
+      )}
     >
       {!isUser && <Bot className="text-text-neutral-tertiary mt-1 size-5" />}
       <div
         className={cn(
-          "max-w-[min(760px,85%)] rounded-[8px] px-4 py-3 text-sm",
-          isUser
-            ? "bg-button-primary text-black"
-            : "bg-bg-neutral-tertiary text-text-neutral-primary",
+          "flex max-w-[min(760px,85%)] flex-col gap-1",
+          isUser ? "items-end" : "items-start",
         )}
       >
-        {message.parts.map((part) => (
-          <div key={part.id || `${message.id}-${part.type}`}>
-            {part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT ? (
-              <p className="whitespace-pre-wrap">
-                {getTextContent(part.content)}
-              </p>
-            ) : (
-              <p className="text-text-neutral-secondary text-xs">{part.type}</p>
-            )}
-          </div>
-        ))}
+        <div
+          className={cn(
+            "rounded-[8px] px-4 py-3 text-sm",
+            isUser
+              ? "bg-button-primary text-black"
+              : "bg-bg-neutral-tertiary text-text-neutral-primary",
+          )}
+        >
+          {toolCallCount > 0 && (
+            <p className="text-text-neutral-secondary mb-2 flex items-center gap-1.5 text-xs">
+              <Wrench className="size-3.5" />
+              {toolCallCount} {toolCallCount === 1 ? "tool" : "tools"} called
+            </p>
+          )}
+          {textParts.map((part) => (
+            <p
+              key={part.id || `${message.id}-text`}
+              className="whitespace-pre-wrap"
+            >
+              {getTextContent(part.content)}
+            </p>
+          ))}
+        </div>
+        <MessageMeta
+          isUser={isUser}
+          text={messageText}
+          insertedAt={message.insertedAt}
+        />
       </div>
       {isUser && (
         <UserRound className="text-text-neutral-tertiary mt-1 size-5" />
@@ -557,35 +644,154 @@ function MessageBubble({ message }: { message: LighthouseV2Message }) {
   );
 }
 
+function MessageMeta({
+  isUser,
+  text,
+  insertedAt,
+}: {
+  isUser: boolean;
+  text: string;
+  insertedAt: string;
+}) {
+  // Copy is always shown; the timestamp only reveals on hover over the message.
+  // Agent footer reads left-to-right ([copy] [time]); user footer mirrors it.
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-1 px-1",
+        isUser && "flex-row-reverse",
+      )}
+    >
+      <CopyMessageButton text={text} />
+      <time
+        dateTime={insertedAt}
+        className="text-text-neutral-tertiary text-xs opacity-0 transition-opacity group-hover:opacity-100"
+      >
+        {formatMessageTimestamp(insertedAt)}
+      </time>
+    </div>
+  );
+}
+
+function CopyMessageButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard can reject (e.g. permissions); nothing to recover.
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Copy message"
+      onClick={handleCopy}
+      className="text-text-neutral-tertiary hover:text-text-neutral-primary size-6"
+    >
+      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+    </Button>
+  );
+}
+
+function formatMessageTimestamp(insertedAt: string): string {
+  const date = new Date(insertedAt);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return format(date, "EEEE h:mm a");
+}
+
 function StreamingAssistantMessage({
   streamState,
 }: {
   streamState: LighthouseV2StreamState;
 }) {
+  const hasActivity =
+    Boolean(streamState.activeTaskId) || streamState.toolCalls.length > 0;
+
   return (
     <article className="flex justify-start gap-3">
       <Bot className="text-text-neutral-tertiary mt-1 size-5" />
       <div className="bg-bg-neutral-tertiary text-text-neutral-primary max-w-[min(760px,85%)] rounded-[8px] px-4 py-3 text-sm">
-        <p className="whitespace-pre-wrap">{streamState.assistantText}</p>
-        {streamState.toolCalls.length > 0 && (
-          <div className="mt-3 grid gap-1">
-            {streamState.toolCalls.map((toolCall) => (
-              <div
-                key={toolCall.id}
-                className="text-text-neutral-secondary flex items-center gap-2 text-xs"
-              >
-                {toolCall.status === "running" && (
-                  <Loader2 className="size-3 animate-spin" />
-                )}
-                <span>{toolCall.name}</span>
-                {toolCall.outcome && <span>{toolCall.outcome}</span>}
-              </div>
-            ))}
-          </div>
+        {hasActivity && <StreamingActivity streamState={streamState} />}
+        {streamState.assistantText && (
+          <p className={cn("whitespace-pre-wrap", hasActivity && "mt-3")}>
+            {streamState.assistantText}
+          </p>
         )}
       </div>
     </article>
   );
+}
+
+function StreamingActivity({
+  streamState,
+}: {
+  streamState: LighthouseV2StreamState;
+}) {
+  const hasAssistantText = Boolean(streamState.assistantText);
+  const hasToolCalls = streamState.toolCalls.length > 0;
+  const isDisconnected =
+    streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED;
+  const thinkingStatus =
+    hasAssistantText || hasToolCalls ? "complete" : "active";
+
+  return (
+    <ChainOfThought className="max-w-none space-y-0">
+      <ChainOfThoughtHeader className="text-text-neutral-secondary">
+        <span className={cn(!isDisconnected && "animate-pulse")}>
+          {getActivityHeader(streamState)}
+        </span>
+      </ChainOfThoughtHeader>
+      <ChainOfThoughtContent className="mt-2 space-y-2">
+        <ChainOfThoughtStep
+          label="Preparing response"
+          status={thinkingStatus}
+        />
+        {isDisconnected && (
+          <ChainOfThoughtStep label="Reconnecting stream" status="active" />
+        )}
+        {streamState.toolCalls.map((toolCall) => (
+          <ChainOfThoughtStep
+            key={toolCall.id}
+            description={
+              toolCall.outcome && toolCall.outcome.toLowerCase() !== "success"
+                ? toolCall.outcome
+                : undefined
+            }
+            icon={toolCall.status === "running" ? Loader2 : undefined}
+            label={getToolCallLabel(toolCall)}
+            status={toolCall.status === "running" ? "active" : "complete"}
+          />
+        ))}
+      </ChainOfThoughtContent>
+    </ChainOfThought>
+  );
+}
+
+function getActivityHeader(streamState: LighthouseV2StreamState): string {
+  if (streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED) {
+    return "Reconnecting";
+  }
+  if (streamState.toolCalls.some((toolCall) => toolCall.status === "running")) {
+    return "Using tools";
+  }
+  return "Thinking";
+}
+
+function getToolCallLabel(
+  toolCall: LighthouseV2StreamState["toolCalls"][number],
+): string {
+  return `${toolCall.status === "running" ? "Calling" : "Called"} ${
+    toolCall.name
+  }`;
 }
 
 function parseStreamEvent(
