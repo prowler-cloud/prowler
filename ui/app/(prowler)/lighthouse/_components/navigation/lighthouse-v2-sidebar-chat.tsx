@@ -7,7 +7,9 @@ import { useState } from "react";
 import {
   archiveLighthouseV2Session,
   getLighthouseV2Sessions,
-} from "@/actions/lighthouse-v2/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_actions";
+import { LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT } from "@/app/(prowler)/lighthouse/_lib/session-events";
+import type { LighthouseV2Session } from "@/app/(prowler)/lighthouse/_types";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
@@ -15,8 +17,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import { LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT } from "@/lib/lighthouse-v2/session-events";
-import type { LighthouseV2Session } from "@/types/lighthouse-v2";
 
 import { LighthouseV2SessionHistory } from "../history";
 

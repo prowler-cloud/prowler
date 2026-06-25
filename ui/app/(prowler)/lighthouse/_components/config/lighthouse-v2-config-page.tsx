@@ -28,7 +28,17 @@ import {
   deleteLighthouseV2Configuration,
   testLighthouseV2ConfigurationConnection,
   updateLighthouseV2Configuration,
-} from "@/actions/lighthouse-v2/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_actions";
+import {
+  LIGHTHOUSE_V2_PROVIDER_TYPE,
+  type LighthouseV2Configuration,
+  type LighthouseV2ConfigurationInput,
+  type LighthouseV2ConfigurationUpdateInput,
+  type LighthouseV2Credentials,
+  type LighthouseV2ProviderType,
+  type LighthouseV2SupportedModel,
+  type LighthouseV2SupportedProvider,
+} from "@/app/(prowler)/lighthouse/_types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
@@ -45,16 +55,6 @@ import {
 } from "@/components/shadcn/select/select";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { cn } from "@/lib/utils";
-import {
-  LIGHTHOUSE_V2_PROVIDER_TYPE,
-  type LighthouseV2Configuration,
-  type LighthouseV2ConfigurationInput,
-  type LighthouseV2ConfigurationUpdateInput,
-  type LighthouseV2Credentials,
-  type LighthouseV2ProviderType,
-  type LighthouseV2SupportedModel,
-  type LighthouseV2SupportedProvider,
-} from "@/types/lighthouse-v2";
 
 interface LighthouseV2ConfigPageProps {
   configurations: LighthouseV2Configuration[];

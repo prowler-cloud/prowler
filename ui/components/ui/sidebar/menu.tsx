@@ -4,8 +4,8 @@ import { Divider } from "@heroui/divider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { LighthouseV2SidebarChat } from "@/app/(prowler)/lighthouse/_components/navigation";
 import { InfoIcon, ProwlerShort } from "@/components/icons";
-import { LighthouseV2SidebarChat } from "@/components/lighthouse-v2/navigation";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,

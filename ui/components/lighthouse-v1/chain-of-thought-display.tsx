@@ -10,7 +10,7 @@ import {
   ChainOfThoughtContent,
   ChainOfThoughtHeader,
   ChainOfThoughtStep,
-} from "@/components/ai-elements/chain-of-thought";
+} from "@/components/lighthouse-v1/ai-elements/chain-of-thought";
 import {
   CHAIN_OF_THOUGHT_ACTIONS,
   type ChainOfThoughtEvent,

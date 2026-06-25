@@ -11,7 +11,7 @@ import {
   type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
   type LighthouseV2Task,
-} from "@/types/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_types";
 
 export interface JsonApiResource<TAttributes> {
   id: string;

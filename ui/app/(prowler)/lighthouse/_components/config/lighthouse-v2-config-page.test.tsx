@@ -6,7 +6,7 @@ import type {
   LighthouseV2Configuration,
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
-} from "@/types/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_types";
 
 import { LighthouseV2ConfigPage } from "./lighthouse-v2-config-page";
 
@@ -30,7 +30,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/actions/lighthouse-v2/lighthouse-v2", () => ({
+vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   createLighthouseV2Configuration: createConfigurationMock,
   deleteLighthouseV2Configuration: deleteConfigurationMock,
   testLighthouseV2ConfigurationConnection: testConnectionMock,

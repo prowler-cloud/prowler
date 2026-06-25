@@ -4,18 +4,18 @@ import {
   getLighthouseV2Configurations,
   getLighthouseV2SupportedModels,
   getLighthouseV2SupportedProviders,
-} from "@/actions/lighthouse-v2/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_actions";
+import { LighthouseV2ConfigPage } from "@/app/(prowler)/lighthouse/_components/config";
+import type {
+  LighthouseV2ProviderType,
+  LighthouseV2SupportedModel,
+} from "@/app/(prowler)/lighthouse/_types";
 import {
   LighthouseSettings,
   LLMProvidersTable,
 } from "@/components/lighthouse-v1";
-import { LighthouseV2ConfigPage } from "@/components/lighthouse-v2/config";
 import { ContentLayout } from "@/components/ui";
 import { isCloud } from "@/lib/shared/env";
-import type {
-  LighthouseV2ProviderType,
-  LighthouseV2SupportedModel,
-} from "@/types/lighthouse-v2";
 
 export const dynamic = "force-dynamic";
 

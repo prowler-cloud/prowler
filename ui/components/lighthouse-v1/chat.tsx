@@ -10,7 +10,7 @@ import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
+} from "@/components/lighthouse-v1/ai-elements/conversation";
 import {
   PromptInput,
   PromptInputBody,
@@ -18,7 +18,7 @@ import {
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputTools,
-} from "@/components/ai-elements/prompt-input";
+} from "@/components/lighthouse-v1/ai-elements/prompt-input";
 import {
   ERROR_PREFIX,
   MESSAGE_ROLES,

@@ -3,6 +3,7 @@
 import { Archive, Plus } from "lucide-react";
 import { useState } from "react";
 
+import type { LighthouseV2Session } from "@/app/(prowler)/lighthouse/_types";
 import { Button } from "@/components/shadcn/button/button";
 import { Modal } from "@/components/shadcn/modal";
 import { SearchInput } from "@/components/shadcn/search-input/search-input";
@@ -12,7 +13,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
-import type { LighthouseV2Session } from "@/types/lighthouse-v2";
 
 const SESSION_HISTORY_GROUP_LABEL = "Older";
 

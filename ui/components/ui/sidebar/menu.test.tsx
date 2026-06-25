@@ -34,7 +34,7 @@ vi.mock("@/lib/menu-list", () => ({
   getMenuList: () => [],
 }));
 
-vi.mock("@/components/lighthouse-v2/navigation", () => ({
+vi.mock("@/app/(prowler)/lighthouse/_components/navigation", () => ({
   LighthouseV2SidebarChat: () => <div data-testid="lighthouse-chat-sidebar" />,
 }));
 

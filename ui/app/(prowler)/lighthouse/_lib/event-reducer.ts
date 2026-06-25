@@ -1,7 +1,7 @@
 import {
   LIGHTHOUSE_V2_SSE_EVENT,
   type LighthouseV2SSEEvent,
-} from "@/types/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_types";
 
 export const LIGHTHOUSE_V2_STREAM_STATUS = {
   IDLE: "idle",

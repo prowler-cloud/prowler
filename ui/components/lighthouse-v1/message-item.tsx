@@ -6,7 +6,10 @@
 import { Copy, RotateCcw } from "lucide-react";
 import { defaultRehypePlugins, Streamdown } from "streamdown";
 
-import { Action, Actions } from "@/components/ai-elements/actions";
+import {
+  Action,
+  Actions,
+} from "@/components/lighthouse-v1/ai-elements/actions";
 import { ChainOfThoughtDisplay } from "@/components/lighthouse-v1/chain-of-thought-display";
 import {
   extractChainOfThoughtEvents,

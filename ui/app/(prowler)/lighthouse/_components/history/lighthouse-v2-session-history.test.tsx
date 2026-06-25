@@ -6,7 +6,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { LighthouseV2Session } from "@/types/lighthouse-v2";
+import type { LighthouseV2Session } from "@/app/(prowler)/lighthouse/_types";
 
 import { LighthouseV2SessionHistory } from "./lighthouse-v2-session-history";
 

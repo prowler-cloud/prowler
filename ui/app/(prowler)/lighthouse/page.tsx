@@ -7,18 +7,20 @@ import {
 import {
   getLighthouseV2Configurations,
   getLighthouseV2Messages,
+  getLighthouseV2Session,
   getLighthouseV2SupportedModels,
-} from "@/actions/lighthouse-v2/lighthouse-v2";
-import { LighthouseIcon } from "@/components/icons/Icons";
-import { Chat } from "@/components/lighthouse-v1";
-import { LighthouseV2ChatPage } from "@/components/lighthouse-v2/chat";
-import { LighthouseV2NavigationModeSync } from "@/components/lighthouse-v2/navigation";
-import { ContentLayout } from "@/components/ui";
-import { isCloud } from "@/lib/shared/env";
+} from "@/app/(prowler)/lighthouse/_actions";
+import { LighthouseV2ChatPage } from "@/app/(prowler)/lighthouse/_components/chat";
+import { LighthouseV2NavigationModeSync } from "@/app/(prowler)/lighthouse/_components/navigation";
+import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
 import type {
   LighthouseV2ProviderType,
   LighthouseV2SupportedModel,
-} from "@/types/lighthouse-v2";
+} from "@/app/(prowler)/lighthouse/_types";
+import { LighthouseIcon } from "@/components/icons/Icons";
+import { Chat } from "@/components/lighthouse-v1";
+import { ContentLayout } from "@/components/ui";
+import { isCloud } from "@/lib/shared/env";
 
 export const dynamic = "force-dynamic";
 
@@ -63,9 +65,20 @@ export default async function AIChatbot({
       LighthouseV2ProviderType,
       LighthouseV2SupportedModel[]
     >;
-    const initialMessages = activeSessionId
-      ? await getLighthouseV2Messages(activeSessionId)
-      : { data: [] };
+    const [initialMessages, activeSession] = activeSessionId
+      ? await Promise.all([
+          getLighthouseV2Messages(activeSessionId),
+          getLighthouseV2Session(activeSessionId),
+        ])
+      : [{ data: [] }, undefined];
+    const initialActiveTaskId =
+      activeSession && "data" in activeSession
+        ? (activeSession.data.activeTaskId ?? null)
+        : null;
+    const initialStreamUrl =
+      activeSessionId && initialActiveTaskId
+        ? buildLighthouseV2StreamUrl(activeSessionId)
+        : undefined;
     const chatRouteKey = activeSessionId ?? initialPrompt ?? "new";
 
     return (
@@ -80,6 +93,8 @@ export default async function AIChatbot({
             initialMessages={
               "data" in initialMessages ? initialMessages.data : []
             }
+            initialActiveTaskId={initialActiveTaskId}
+            initialStreamUrl={initialStreamUrl}
             initialPrompt={initialPrompt}
           />
         </div>
