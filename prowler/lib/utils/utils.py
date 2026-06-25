@@ -9,6 +9,7 @@ except ImportError:
     pass
 
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -37,6 +38,11 @@ default_secrets_confidence = "low"
 # 205 (validated findings).
 _kingfisher_success_exit_codes = (0, 200, 205)
 
+# Number of payloads scanned per Kingfisher invocation in batch mode. Bounds
+# peak temp-disk and memory while still amortizing the per-process spawn cost
+# across many fragments (see detect_secrets_scan_batch).
+default_secrets_batch_chunk_size = 500
+
 
 @lru_cache(maxsize=1)
 def get_kingfisher_binary() -> str:
@@ -44,6 +50,60 @@ def get_kingfisher_binary() -> str:
     from kingfisher import get_binary_path
 
     return get_binary_path()
+
+
+def _build_kingfisher_command(
+    scan_paths: list,
+    output_path: str,
+    confidence: str,
+    validate: bool,
+    no_dedup: bool = False,
+) -> list:
+    """Build the Kingfisher ``scan`` command shared by single and batch scans."""
+    command = [
+        get_kingfisher_binary(),
+        "scan",
+        *scan_paths,
+        "--format",
+        "json",
+        "--output",
+        output_path,
+        "--no-update-check",
+        "--confidence",
+        confidence,
+    ]
+    if validate:
+        # Live-validate discovered secrets against provider APIs. Use
+        # conservative defaults (short timeout, no retries) to limit the blast
+        # radius of the outbound calls.
+        command += ["--validation-timeout", "5", "--validation-retries", "0"]
+    else:
+        command.append("--no-validate")
+    if no_dedup:
+        # Report every occurrence (one per file) so batched results match
+        # scanning each payload individually.
+        command.append("--no-dedup")
+    return command
+
+
+def _finding_to_dict(entry: dict, fallback_filename: str) -> dict:
+    """Convert a Kingfisher finding entry into Prowler's finding dict shape."""
+    rule = entry.get("rule", {})
+    finding = entry.get("finding", {})
+    snippet = finding.get("snippet", "") or ""
+    return {
+        "filename": finding.get("path", fallback_filename),
+        "line_number": finding.get("line"),
+        "type": rule.get("name"),
+        # Non-security identifier for the matched secret (matches the
+        # detect-secrets output shape); not used for security.
+        "hashed_secret": (
+            sha1(snippet.encode(), usedforsecurity=False).hexdigest()
+            if snippet
+            else None
+        ),
+        "is_verified": finding.get("validation", {}).get("status") == "Active",
+    }
 
 
 def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
@@ -167,30 +227,9 @@ def detect_secrets_scan(
         temp_output_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
         temp_output_file.close()
 
-        command = [
-            get_kingfisher_binary(),
-            "scan",
-            scan_path,
-            "--format",
-            "json",
-            "--output",
-            temp_output_file.name,
-            "--no-update-check",
-            "--confidence",
-            confidence,
-        ]
-        if validate:
-            # Live-validate discovered secrets against provider APIs. Use
-            # conservative defaults (short timeout, no retries) to limit the
-            # blast radius of the outbound calls.
-            command += [
-                "--validation-timeout",
-                "5",
-                "--validation-retries",
-                "0",
-            ]
-        else:
-            command.append("--no-validate")
+        command = _build_kingfisher_command(
+            [scan_path], temp_output_file.name, confidence, validate
+        )
         process = subprocess.run(command, capture_output=True, text=True)
         if process.returncode not in _kingfisher_success_exit_codes:
             logger.error(
@@ -212,32 +251,12 @@ def detect_secrets_scan(
 
         findings = []
         for entry in kingfisher_output.get("findings", []):
-            rule = entry.get("rule", {})
-            finding = entry.get("finding", {})
-            line_number = finding.get("line")
-
+            line_number = entry.get("finding", {}).get("line")
             if excluded_secrets and line_number and line_number <= len(source_lines):
                 line_text = source_lines[line_number - 1]
                 if any(re.search(pattern, line_text) for pattern in excluded_secrets):
                     continue
-
-            snippet = finding.get("snippet", "") or ""
-            findings.append(
-                {
-                    "filename": finding.get("path", scan_path),
-                    "line_number": line_number,
-                    "type": rule.get("name"),
-                    # Non-security identifier for the matched secret (matches
-                    # the detect-secrets output shape); not used for security.
-                    "hashed_secret": (
-                        sha1(snippet.encode(), usedforsecurity=False).hexdigest()
-                        if snippet
-                        else None
-                    ),
-                    "is_verified": finding.get("validation", {}).get("status")
-                    == "Active",
-                }
-            )
+            findings.append(_finding_to_dict(entry, scan_path))
 
         return findings or None
     except Exception as e:
@@ -247,6 +266,123 @@ def detect_secrets_scan(
         for temp_file in (temp_data_file, temp_output_file):
             if temp_file and os.path.exists(temp_file.name):
                 os.remove(temp_file.name)
+
+
+def _scan_batch_chunk(
+    chunk: list,
+    excluded_secrets: list,
+    confidence: str,
+    validate: bool,
+    results: dict,
+) -> None:
+    """Scan one chunk of ``(key, data)`` payloads in a single Kingfisher call.
+
+    Writes each payload to its own file in a temp directory, scans the whole
+    directory once (``--no-dedup`` so per-file results match individual scans),
+    maps findings back to their key by file path, and appends them to
+    ``results``. The temp directory is always removed.
+    """
+    if not chunk:
+        return
+    tmp_dir = tempfile.mkdtemp()
+    temp_output_file = None
+    try:
+        index_to_key = {}
+        for index, (key, data) in enumerate(chunk):
+            content = data if data.endswith("\n") else data + "\n"
+            name = str(index)
+            with open(os.path.join(tmp_dir, name), "wb") as fh:
+                fh.write(bytes(content, encoding="raw_unicode_escape"))
+            index_to_key[name] = key
+
+        temp_output_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
+        temp_output_file.close()
+        command = _build_kingfisher_command(
+            [tmp_dir], temp_output_file.name, confidence, validate, no_dedup=True
+        )
+        process = subprocess.run(command, capture_output=True, text=True)
+        if process.returncode not in _kingfisher_success_exit_codes:
+            logger.error(
+                f"Error scanning for secrets: Kingfisher exited with code "
+                f"{process.returncode}: {process.stderr.strip()[:500]}"
+            )
+            return
+
+        with open(temp_output_file.name, encoding=encoding_format_utf_8) as f:
+            output = f.read()
+        kingfisher_output = json.loads(output) if output.strip() else {}
+
+        source_lines_cache = {}
+        for entry in kingfisher_output.get("findings", []):
+            finding = entry.get("finding", {})
+            name = os.path.basename(finding.get("path", ""))
+            key = index_to_key.get(name)
+            if key is None:
+                continue
+            line_number = finding.get("line")
+            if excluded_secrets and line_number:
+                if name not in source_lines_cache:
+                    with open(
+                        os.path.join(tmp_dir, name),
+                        encoding=encoding_format_utf_8,
+                        errors="replace",
+                    ) as f:
+                        source_lines_cache[name] = f.read().splitlines()
+                lines = source_lines_cache[name]
+                if line_number <= len(lines) and any(
+                    re.search(pattern, lines[line_number - 1])
+                    for pattern in excluded_secrets
+                ):
+                    continue
+            results.setdefault(key, []).append(_finding_to_dict(entry, name))
+    except Exception as e:
+        logger.error(f"Error scanning for secrets: {e}")
+    finally:
+        if temp_output_file and os.path.exists(temp_output_file.name):
+            os.remove(temp_output_file.name)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+def detect_secrets_scan_batch(
+    payloads,
+    excluded_secrets: list[str] = None,
+    confidence: str = default_secrets_confidence,
+    validate: bool = False,
+    chunk_size: int = default_secrets_batch_chunk_size,
+) -> dict:
+    """Scan many in-memory payloads in chunked, single Kingfisher invocations.
+
+    Each payload is written to its own file and scanned with ``--no-dedup`` so
+    per-payload results match calling ``detect_secrets_scan`` on each payload
+    individually. Payloads are processed in chunks (writing each to disk and
+    releasing it as it is consumed) to bound peak temp-disk and memory use while
+    amortizing the per-process spawn cost across many fragments. This is the
+    batched equivalent of looping ``detect_secrets_scan`` per fragment.
+
+    Args:
+        payloads: a mapping ``{key: data}`` or any iterable of ``(key, data)``
+            pairs. ``key`` is any hashable the caller uses to map findings back
+            to its source (e.g. a variable name or a ``(resource, stream)``).
+        excluded_secrets (list): regex patterns; a finding whose source line
+            matches one is excluded.
+        confidence (str): minimum Kingfisher confidence ("low"/"medium"/"high").
+        validate (bool): live-validate discovered secrets (outbound calls).
+        chunk_size (int): payloads scanned per Kingfisher invocation.
+    Returns:
+        dict mapping each key that produced findings to its list of finding
+        dicts (same shape as ``detect_secrets_scan``). Keys with no findings are
+        omitted.
+    """
+    items = payloads.items() if hasattr(payloads, "items") else payloads
+    results = {}
+    chunk = []
+    for key, data in items:
+        chunk.append((key, data))
+        if len(chunk) >= chunk_size:
+            _scan_batch_chunk(chunk, excluded_secrets, confidence, validate, results)
+            chunk = []
+    _scan_batch_chunk(chunk, excluded_secrets, confidence, validate, results)
+    return results
 
 
 def annotate_verified_secrets(report, secrets: list) -> None:

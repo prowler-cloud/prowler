@@ -8,6 +8,7 @@ from mock import Mock, patch
 
 from prowler.lib.utils.utils import (
     detect_secrets_scan,
+    detect_secrets_scan_batch,
     file_exists,
     get_file_permissions,
     hash_sha512,
@@ -214,6 +215,49 @@ class Test_detect_secrets_scan:
             assert "--no-validate" not in command
             assert "--validation-timeout" in command
             assert "--validation-retries" in command
+
+
+class Test_detect_secrets_scan_batch:
+    def test_batch_returns_findings_per_key(self):
+        results = detect_secrets_scan_batch(
+            {
+                "a": 'password = "Tr0ub4dor3xKq9vLmZ"',
+                "b": "just a normal config = value",
+            }
+        )
+        assert "a" in results
+        assert results["a"][0]["type"] == "Generic Password"
+        # keys without findings are omitted
+        assert "b" not in results
+
+    def test_batch_no_dedup_reports_identical_secret_in_each_key(self):
+        # The same secret in two payloads must be reported for both (matches
+        # scanning each payload individually).
+        secret = "token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+        results = detect_secrets_scan_batch({"a": secret, "b": secret})
+        assert "a" in results
+        assert "b" in results
+
+    def test_batch_excluded_secrets_filters(self):
+        results = detect_secrets_scan_batch(
+            {"a": 'DB_ALLOW_EMPTY_PASSWORD = "Tr0ub4dor3xKq9vLmZ"'},
+            excluded_secrets=[".*ALLOW_EMPTY_PASSWORD.*"],
+        )
+        assert results == {}
+
+    def test_batch_chunking_maps_all_keys(self):
+        payloads = {f"k{i}": f'password = "S3cr3tV4lu3xy{i}z"' for i in range(5)}
+        results = detect_secrets_scan_batch(payloads, chunk_size=2)
+        assert sorted(results.keys()) == ["k0", "k1", "k2", "k3", "k4"]
+
+    def test_batch_empty_payloads(self):
+        assert detect_secrets_scan_batch({}) == {}
+
+    def test_batch_accepts_iterable_of_pairs(self):
+        results = detect_secrets_scan_batch(
+            iter([("x", 'password = "Tr0ub4dor3xKq9vLmZ"')])
+        )
+        assert "x" in results
 
 
 class Test_hash_sha512:
