@@ -3,7 +3,6 @@ from json import dumps, loads
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
     annotate_verified_secrets,
-    detect_secrets_scan,
     detect_secrets_scan_batch,
 )
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
@@ -15,107 +14,126 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 class cloudwatch_log_group_no_secrets_in_logs(Check):
     def execute(self):
         findings = []
-        if logs_client.log_groups:
-            secrets_ignore_patterns = logs_client.audit_config.get(
-                "secrets_ignore_patterns", []
-            )
-            validate = logs_client.audit_config.get("secrets_validate", False)
+        if not logs_client.log_groups:
+            return findings
 
-            # Scan every (log group, log stream) in batched Kingfisher
-            # invocations instead of one subprocess per stream. The payloads are
-            # yielded lazily so only a chunk's worth is ever written to disk /
-            # held in memory at a time, which matters for accounts with very
-            # large numbers of log groups/streams.
-            def stream_payloads():
-                for log_group in logs_client.log_groups.values():
-                    if not log_group.log_streams:
-                        continue
-                    for log_stream_name, events in log_group.log_streams.items():
-                        yield (
-                            (log_group.name, log_stream_name),
-                            "\n".join(dumps(event["message"]) for event in events),
-                        )
+        secrets_ignore_patterns = logs_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
+        validate = logs_client.audit_config.get("secrets_validate", False)
 
-            batch_results = detect_secrets_scan_batch(
-                stream_payloads(),
-                excluded_secrets=secrets_ignore_patterns,
-                validate=validate,
-            )
-
+        # Phase 1: batch-scan every (log group, log stream). Payloads are yielded
+        # lazily so only a chunk is written/held at a time, which matters for
+        # accounts with very large numbers of log groups/streams.
+        def stream_payloads():
             for log_group in logs_client.log_groups.values():
-                report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
-                report.status = "PASS"
-                report.status_extended = (
-                    f"No secrets found in {log_group.name} log group."
-                )
-                log_group_secrets = []
-                all_secrets = []
-                if log_group.log_streams:
-                    for log_stream_name in log_group.log_streams:
-                        log_stream_secrets_output = batch_results.get(
-                            (log_group.name, log_stream_name)
-                        )
-                        if not log_stream_secrets_output:
-                            continue
-                        log_stream_secrets = {}
-                        all_secrets.extend(log_stream_secrets_output)
-                        for secret in log_stream_secrets_output:
-                            flagged_event = log_group.log_streams[log_stream_name][
-                                secret["line_number"] - 1
-                            ]
-                            cloudwatch_timestamp = (
-                                convert_to_cloudwatch_timestamp_format(
-                                    flagged_event["timestamp"]
-                                )
-                            )
-                            if cloudwatch_timestamp not in log_stream_secrets.keys():
-                                log_stream_secrets[cloudwatch_timestamp] = SecretsDict()
+                if not log_group.log_streams:
+                    continue
+                for log_stream_name, events in log_group.log_streams.items():
+                    yield (
+                        (log_group.name, log_stream_name),
+                        "\n".join(dumps(event["message"]) for event in events),
+                    )
 
-                            try:
-                                log_event_data = dumps(
-                                    loads(flagged_event["message"]), indent=2
-                                )
-                            except Exception:
-                                log_event_data = dumps(
-                                    flagged_event["message"], indent=2
-                                )
-                            if len(log_event_data.split("\n")) > 1:
-                                # Can get more informative output if there is more than 1 line.
-                                # Will rescan just this event to get the type of secret and the line number.
-                                # Validation is disabled here: this rescan only resolves line numbers
-                                # for display and must not re-authenticate the secret.
-                                event_detect_secrets_output = detect_secrets_scan(
-                                    data=log_event_data,
-                                    validate=False,
-                                )
-                                if event_detect_secrets_output:
-                                    for event_secret in event_detect_secrets_output:
-                                        log_stream_secrets[
-                                            cloudwatch_timestamp
-                                        ].add_secret(
-                                            event_secret["line_number"],
-                                            event_secret["type"],
-                                        )
-                            else:
-                                log_stream_secrets[cloudwatch_timestamp].add_secret(
-                                    1, secret["type"]
-                                )
-                        if log_stream_secrets:
-                            secrets_string = "; ".join(
-                                [
-                                    f"at {timestamp} - {log_stream_secrets[timestamp].to_string()}"
-                                    for timestamp in log_stream_secrets
-                                ]
+        stream_results = detect_secrets_scan_batch(
+            stream_payloads(),
+            excluded_secrets=secrets_ignore_patterns,
+            validate=validate,
+        )
+
+        # Phase 2: plan the per-timestamp secrets for each flagged stream and
+        # collect the multiline events to rescan. Each multiline event is
+        # rescanned once (keyed by timestamp) to resolve per-line detail; the
+        # rescans are batched in Phase 3 instead of one subprocess per event.
+        stream_plans = {}  # (group, stream) -> {timestamp: {"multiline", "types"}}
+        rescan_payloads = {}  # (group, stream, timestamp) -> multiline event data
+        for log_group in logs_client.log_groups.values():
+            for log_stream_name in log_group.log_streams or {}:
+                stream_secrets = stream_results.get((log_group.name, log_stream_name))
+                if not stream_secrets:
+                    continue
+                events = log_group.log_streams[log_stream_name]
+                plan = {}
+                for secret in stream_secrets:
+                    flagged_event = events[secret["line_number"] - 1]
+                    cloudwatch_timestamp = convert_to_cloudwatch_timestamp_format(
+                        flagged_event["timestamp"]
+                    )
+                    try:
+                        log_event_data = dumps(
+                            loads(flagged_event["message"]), indent=2
+                        )
+                    except Exception:
+                        log_event_data = dumps(flagged_event["message"], indent=2)
+                    multiline = len(log_event_data.split("\n")) > 1
+                    if cloudwatch_timestamp not in plan:
+                        plan[cloudwatch_timestamp] = {
+                            "multiline": multiline,
+                            "types": [],
+                        }
+                    if multiline:
+                        # More informative output is possible with more than one
+                        # line: the event is rescanned to get the type and line
+                        # number of each secret.
+                        rescan_payloads[
+                            (log_group.name, log_stream_name, cloudwatch_timestamp)
+                        ] = log_event_data
+                    else:
+                        plan[cloudwatch_timestamp]["types"].append(secret["type"])
+                stream_plans[(log_group.name, log_stream_name)] = plan
+
+        # Phase 3: one batched rescan for all multiline flagged events. Validation
+        # is never enabled here: this rescan only resolves line numbers for
+        # display and must not re-authenticate the secret.
+        rescan_results = (
+            detect_secrets_scan_batch(rescan_payloads) if rescan_payloads else {}
+        )
+
+        # Phase 4: assemble one report per log group.
+        for log_group in logs_client.log_groups.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
+            report.status = "PASS"
+            report.status_extended = f"No secrets found in {log_group.name} log group."
+            log_group_secrets = []
+            all_secrets = []
+            for log_stream_name in log_group.log_streams or {}:
+                stream_secrets = stream_results.get((log_group.name, log_stream_name))
+                if not stream_secrets:
+                    continue
+                all_secrets.extend(stream_secrets)
+                log_stream_secrets = {}
+                for cloudwatch_timestamp, entry in stream_plans[
+                    (log_group.name, log_stream_name)
+                ].items():
+                    secrets_dict = SecretsDict()
+                    if entry["multiline"]:
+                        for event_secret in rescan_results.get(
+                            (log_group.name, log_stream_name, cloudwatch_timestamp),
+                            [],
+                        ):
+                            secrets_dict.add_secret(
+                                event_secret["line_number"], event_secret["type"]
                             )
-                            log_group_secrets.append(
-                                f"in log stream {log_stream_name} {secrets_string}"
-                            )
-                if log_group_secrets:
-                    secrets_string = "; ".join(log_group_secrets)
-                    report.status = "FAIL"
-                    report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}."
-                    annotate_verified_secrets(report, all_secrets)
-                findings.append(report)
+                    else:
+                        for secret_type in entry["types"]:
+                            secrets_dict.add_secret(1, secret_type)
+                    log_stream_secrets[cloudwatch_timestamp] = secrets_dict
+                if log_stream_secrets:
+                    secrets_string = "; ".join(
+                        [
+                            f"at {timestamp} - {log_stream_secrets[timestamp].to_string()}"
+                            for timestamp in log_stream_secrets
+                        ]
+                    )
+                    log_group_secrets.append(
+                        f"in log stream {log_stream_name} {secrets_string}"
+                    )
+            if log_group_secrets:
+                secrets_string = "; ".join(log_group_secrets)
+                report.status = "FAIL"
+                report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}."
+                annotate_verified_secrets(report, all_secrets)
+            findings.append(report)
         return findings
 
 
