@@ -33,8 +33,16 @@ export async function getRuntimePublicConfig(): Promise<RuntimePublicConfig> {
     ),
     apiBaseUrl: readEnv("UI_API_BASE_URL", "NEXT_PUBLIC_API_BASE_URL"),
     apiDocsUrl: readEnv("UI_API_DOCS_URL", "NEXT_PUBLIC_API_DOCS_URL"),
-    posthogKey: readGatedEnv("UI_POSTHOG_ENABLE", "POSTHOG_KEY"),
-    posthogHost: readGatedEnv("UI_POSTHOG_ENABLE", "POSTHOG_HOST"),
+    posthogKey: readGatedEnv(
+      "UI_POSTHOG_ENABLE",
+      "UI_POSTHOG_KEY",
+      "POSTHOG_KEY",
+    ),
+    posthogHost: readGatedEnv(
+      "UI_POSTHOG_ENABLE",
+      "UI_POSTHOG_HOST",
+      "POSTHOG_HOST",
+    ),
     reoDevClientId: readEnv("REO_DEV_CLIENT_ID"),
     billingCloudEnable: readBoolEnv("BILLING_CLOUD_ENABLE"),
   };

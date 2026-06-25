@@ -47,8 +47,12 @@ declare global {
       SENTRY_AUTH_TOKEN?: string;
 
       UI_POSTHOG_ENABLE?: "true" | "false";
+      /** @deprecated use UI_POSTHOG_KEY */
       POSTHOG_KEY?: string;
+      UI_POSTHOG_KEY?: string;
+      /** @deprecated use UI_POSTHOG_HOST */
       POSTHOG_HOST?: string;
+      UI_POSTHOG_HOST?: string;
       // TODO Reserved runtime public config (registered now; no UI consumer yet)
       REO_DEV_CLIENT_ID?: string;
 
