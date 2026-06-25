@@ -369,6 +369,14 @@
   },
   {
     "section": "dependencies",
+    "name": "ajv",
+    "from": "8.17.1",
+    "to": "8.18.0",
+    "strategy": "installed",
+    "generatedAt": "2026-06-25T07:13:59.855Z"
+  },
+  {
+    "section": "dependencies",
     "name": "class-variance-authority",
     "from": "0.7.1",
     "to": "0.7.1",

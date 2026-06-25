@@ -13,6 +13,11 @@ import {
   TopFailedResult,
 } from "@/types/compliance";
 
+// Note shown when a requirement fails only because the applied scan config
+// does not satisfy its requirements, even though every finding passed.
+export const INVALID_CONFIG_NOTE =
+  "Marked as FAIL because the applied scan configuration does not meet this requirement, even though all findings passed.";
+
 // Type for the internal map used in getTopFailedSections
 interface FailedSectionData {
   total: number;

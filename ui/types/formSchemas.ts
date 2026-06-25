@@ -722,3 +722,29 @@ export const mutedFindingsConfigFormSchema = z.object({
     }),
   id: z.string().optional(),
 });
+
+// The schema-driven (ranges/enums/types) validation lives in the editor via
+// `validateScanConfigPayload(yamlString, schema)` in `lib/yaml.ts`. Here we
+// only enforce the form-level shape: a name and a YAML string that parses.
+export const scanConfigFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be at most 100 characters" }),
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { message: "Configuration is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+      }
+    }),
+  provider_ids: z.array(z.string().uuid()).optional().default([]),
+  id: z.string().optional(),
+});
