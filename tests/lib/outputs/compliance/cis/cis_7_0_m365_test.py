@@ -60,4 +60,6 @@ class TestCIS7_0_M365:
             for check in req["Checks"]
             if check not in existing
         }
-        assert not unknown, f"Framework references unknown M365 checks: {sorted(unknown)}"
+        assert (
+            not unknown
+        ), f"Framework references unknown M365 checks: {sorted(unknown)}"
