@@ -3,6 +3,7 @@ from datetime import timedelta
 from config.custom_logging import LOGGING  # noqa
 from config.env import BASE_DIR, env  # noqa
 from config.settings.celery import *  # noqa
+from config.settings.eventstream import *  # noqa
 from config.settings.partitions import *  # noqa
 from config.settings.sentry import *  # noqa
 from config.settings.social_login import *  # noqa
@@ -44,9 +45,11 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "rest_framework.authtoken",
     "drf_simple_apikey",
+    "django_eventstream",
 ]
 
 MIDDLEWARE = [
+    "api.middleware.CloseDBConnectionsMiddleware",
     "django_guid.middleware.guid_middleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -136,6 +139,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 DJANGO_GUID = {
     "GUID_HEADER_NAME": "Transaction-ID",

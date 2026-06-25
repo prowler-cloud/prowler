@@ -4,6 +4,7 @@ import os
 import threading
 
 from config.env import env
+from uvicorn_worker import UvicornWorker
 
 # Ensure the environment variable for Django settings is set
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.django.production")
@@ -12,18 +13,45 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.django.production")
 import django  # noqa: E402
 
 django.setup()
+
 from api.compliance import warm_compliance_caches  # noqa: E402
-from config.django.production import LOGGING as DJANGO_LOGGERS, DEBUG  # noqa: E402
 from config.custom_logging import BackendLogger  # noqa: E402
+from config.django.production import DEBUG  # noqa: E402
+from config.django.production import LOGGING as DJANGO_LOGGERS  # noqa: E402
 
 BIND_ADDRESS = env("DJANGO_BIND_ADDRESS", default="127.0.0.1")
 PORT = env("DJANGO_PORT", default=8080)
+
+
+class ProwlerUvicornWorker(UvicornWorker):
+    CONFIG_KWARGS = {
+        # Keep-alive idle timeout. Must exceed the load balancer idle timeout.
+        "timeout_keep_alive": env.int("GUNICORN_KEEPALIVE", default=75),
+        "loop": "uvloop",
+        "lifespan": "off",  # Django ASGIHandler doesn't handle lifespan scopes
+    }
+
+
+# Required so SSE endpoints can keep the event loop alive while waiting for events
+worker_class = env(
+    "DJANGO_WORKER_CLASS",
+    default="config.guniconf.ProwlerUvicornWorker",
+)
 
 # Server settings
 bind = f"{BIND_ADDRESS}:{PORT}"
 
 workers = env.int("DJANGO_WORKERS", default=multiprocessing.cpu_count() * 2 + 1)
 reload = DEBUG
+
+# Preload the application before forking workers in production: the app is
+# imported once in the master and workers fork from it. In development, disable
+# preload so the server restarts on code changes.
+preload_app = not DEBUG
+
+# Worker timeout in seconds. Increased from the default 30s to handle requests
+# that may take longer, such as complex API operations.
+timeout = env.int("GUNICORN_TIMEOUT", default=120)
 
 # Logging
 logconfig_dict = DJANGO_LOGGERS

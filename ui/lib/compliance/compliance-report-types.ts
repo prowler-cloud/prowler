@@ -178,7 +178,7 @@ export const pickLatestCisPerProvider = (
  * ``isOcsfSupported``.
  */
 const OCSF_SUPPORTED_COMPLIANCE_IDS: ReadonlySet<string> = new Set([
-  "dora",
+  "dora_2022_2554",
   "csa_ccm_4.0",
 ]);
 

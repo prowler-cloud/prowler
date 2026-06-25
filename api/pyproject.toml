@@ -14,7 +14,7 @@ dev = [
   "pytest-env==1.1.3",
   "pytest-randomly==3.15.0",
   "pytest-xdist==3.6.1",
-  "ruff==0.5.0",
+  "ruff==0.15.11",
   "tqdm==4.67.1",
   "vulture==2.14",
   "prek==0.3.9"
@@ -41,7 +41,9 @@ dependencies = [
   "drf-spectacular==0.27.2",
   "drf-spectacular-jsonapi==0.5.1",
   "defusedxml==0.7.1",
-  "gunicorn==23.0.0",
+  "django-eventstream==5.3.3",
+  "gunicorn==26.0.0",
+  "uvloop==0.22.1",
   "lxml==6.1.0",
   "prowler @ git+https://github.com/prowler-cloud/prowler.git@master",
   "psycopg2-binary==2.9.9",
@@ -60,7 +62,8 @@ dependencies = [
   "gevent (==25.9.1)",
   "werkzeug (==3.1.7)",
   "sqlparse (==0.5.5)",
-  "fonttools (==4.62.1)"
+  "fonttools (==4.62.1)",
+  "uvicorn-worker (==0.4.0)",
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
@@ -68,7 +71,24 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.31.0"
+version = "1.33.0"
+
+# Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
+# target-version tracks this project's lowest supported Python.
+[tool.ruff]
+src = ["src"]
+target-version = "py311"
+
+[tool.ruff.lint]
+# Defaults (E4/E7/E9, F) plus import sorting, modern-syntax upgrades, and
+# comprehension lints — all mechanically auto-fixable. flake8-bugbear (B) is a
+# good next step but needs manual cleanup (e.g. B904 raise-from), so it is left
+# out of the shared baseline for now.
+extend-select = [
+  "I",  # isort — import ordering (prek's isort hook covers only the SDK)
+  "UP",  # pyupgrade — modern syntax for the min supported Python
+  "C4"  # flake8-comprehensions
+]
 
 [tool.uv]
 # Transitive pins matching master to avoid silent drift; bump deliberately.
@@ -79,7 +99,7 @@ constraint-dependencies = [
   "aiobotocore==2.25.1",
   "aiofiles==24.1.0",
   "aiohappyeyeballs==2.6.1",
-  "aiohttp==3.13.5",
+  "aiohttp==3.14.0",
   "aioitertools==0.13.0",
   "aiosignal==1.4.0",
   "alibabacloud-actiontrail20200706==2.4.1",
@@ -124,9 +144,8 @@ constraint-dependencies = [
   "astroid==3.2.4",
   "async-timeout==5.0.1",
   "attrs==25.4.0",
-  "authlib==1.6.9",
+  "authlib==1.6.12",
   "autopep8==2.3.2",
-  "awsipranges==0.3.3",
   "azure-cli-core==2.83.0",
   "azure-cli-telemetry==1.1.0",
   "azure-common==1.1.28",
@@ -209,6 +228,7 @@ constraint-dependencies = [
   "django-celery-results==2.6.0",
   "django-cors-headers==4.4.0",
   "django-environ==0.11.2",
+  "django-eventstream==5.3.3",
   "django-filter==24.3",
   "django-guid==3.5.0",
   "django-postgres-extra==2.0.9",
@@ -253,7 +273,7 @@ constraint-dependencies = [
   "grpc-google-iam-v1==0.14.3",
   "grpcio==1.76.0",
   "grpcio-status==1.76.0",
-  "gunicorn==23.0.0",
+  "gunicorn==26.0.0",
   "h11==0.16.0",
   "h2==4.3.0",
   "hpack==4.1.0",
@@ -262,8 +282,8 @@ constraint-dependencies = [
   "httpx==0.28.1",
   "humanfriendly==10.0",
   "hyperframe==6.1.0",
-  "iamdata==0.1.202602021",
-  "idna==3.11",
+  "iamdata==0.1.202605131",
+  "idna==3.15",
   "importlib-metadata==8.7.1",
   "inflection==0.5.1",
   "iniconfig==2.3.0",
@@ -315,7 +335,7 @@ constraint-dependencies = [
   "neo4j==6.1.0",
   "nest-asyncio==1.6.0",
   "nltk==3.9.4",
-  "numpy==2.0.2",
+  "numpy==2.2.6",
   "oauthlib==3.3.1",
   "oci==2.169.0",
   "openai==1.109.1",
@@ -344,7 +364,7 @@ constraint-dependencies = [
   "psutil==7.2.2",
   "psycopg2-binary==2.9.9",
   "py-deviceid==0.1.1",
-  "py-iam-expand==0.1.0",
+  "py-iam-expand==0.3.0",
   "py-ocsf-models==0.8.1",
   "pyasn1==0.6.3",
   "pyasn1-modules==0.4.2",
@@ -390,7 +410,7 @@ constraint-dependencies = [
   "rpds-py==0.30.0",
   "rsa==4.9.1",
   "ruamel-yaml==0.19.1",
-  "ruff==0.5.0",
+  "ruff==0.15.11",
   "s3transfer==0.14.0",
   "scaleway==2.10.3",
   "scaleway-core==2.10.3",
@@ -420,6 +440,8 @@ constraint-dependencies = [
   "uritemplate==4.2.0",
   "urllib3==2.7.0",
   "uuid6==2024.7.10",
+  "uvicorn==0.49.0",
+  "uvloop==0.22.1",
   "vine==5.1.0",
   "vulture==2.14",
   "wcwidth==0.5.3",

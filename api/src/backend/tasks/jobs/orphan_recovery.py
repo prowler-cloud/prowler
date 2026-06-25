@@ -21,7 +21,7 @@ This is the shared engine behind both the periodic Beat watchdog and the
 import ast
 import json
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from celery import current_app, states
@@ -213,7 +213,7 @@ def _reconcile_task_results(
 ) -> dict:
     from django_celery_results.models import TaskResult
 
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(minutes=grace_minutes)
+    cutoff = datetime.now(tz=UTC) - timedelta(minutes=grace_minutes)
     candidates = list(
         TaskResult.objects.filter(status__in=IN_FLIGHT_STATES, date_created__lt=cutoff)
         .exclude(worker__isnull=True)
@@ -278,7 +278,7 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
     name = task_result.task_name
     args_repr = task_result.task_args
     kwargs_repr = task_result.task_kwargs
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     # Drop any future broker redelivery of the stale message.
     revoke_task(task_result, terminate=False)

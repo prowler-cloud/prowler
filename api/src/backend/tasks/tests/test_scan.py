@@ -3,11 +3,26 @@ import json
 import re
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
+from api.db_router import MainRouter
+from api.exceptions import ProviderConnectionError
+from api.models import (
+    Finding,
+    MuteRule,
+    Provider,
+    Resource,
+    ResourceScanSummary,
+    Scan,
+    ScanSummary,
+    StateChoices,
+    StatusChoices,
+)
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 from tasks.jobs.scan import (
     _ATTACK_SURFACE_MAPPING_CACHE,
     _aggregate_findings_by_region,
@@ -28,22 +43,6 @@ from tasks.jobs.scan import (
     update_provider_compliance_scores,
 )
 from tasks.utils import CustomEncoder
-
-from api.db_router import MainRouter
-from api.exceptions import ProviderConnectionError
-from api.models import (
-    Finding,
-    MuteRule,
-    Provider,
-    Resource,
-    ResourceScanSummary,
-    Scan,
-    ScanSummary,
-    StateChoices,
-    StatusChoices,
-)
-from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
 
 
 @contextmanager
@@ -1335,9 +1334,9 @@ class TestPerformScan:
             )
 
             # Capture time before and after scan
-            before_scan = datetime.now(timezone.utc)
+            before_scan = datetime.now(UTC)
             perform_prowler_scan(tenant_id, scan_id, provider_id, [])
-            after_scan = datetime.now(timezone.utc)
+            after_scan = datetime.now(UTC)
 
         # Verify muted_at is within the scan time window
         finding_db = Finding.objects.get(uid=finding_uid)
@@ -1473,7 +1472,7 @@ class TestProcessFindingMicroBatch:
             partition="aws-old",
         )
 
-        previous_first_seen = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        previous_first_seen = datetime(2024, 1, 1, tzinfo=UTC)
 
         finding = FakeFinding(
             uid="finding-muted",
@@ -2123,7 +2122,7 @@ class TestCreateComplianceRequirements:
                 tags={},
                 check_id=existing_finding.check_id,
                 check_metadata={"CheckId": existing_finding.check_id},
-                first_seen_at=datetime.now(timezone.utc),
+                first_seen_at=datetime.now(UTC),
                 muted=False,
             )
             resource = existing_finding.resources.first()
@@ -2313,7 +2312,7 @@ class TestComplianceRequirementCopy:
     def test_persist_compliance_requirement_rows_fallback(
         self, mock_copy, mock_rls_transaction, mock_bulk_create
     ):
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
         row = {
             "id": uuid.uuid4(),
             "tenant_id": str(uuid.uuid4()),
@@ -2394,7 +2393,7 @@ class TestComplianceRequirementCopy:
 
         tenant_id = str(uuid.uuid4())
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         rows = [
             {
@@ -2644,10 +2643,10 @@ class TestComplianceRequirementCopy:
             # Note: inserted_at is intentionally missing
         }
 
-        before_call = datetime.now(timezone.utc)
+        before_call = datetime.now(UTC)
         with patch.object(MainRouter, "admin_db", "admin"):
             _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
-        after_call = datetime.now(timezone.utc)
+        after_call = datetime.now(UTC)
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert len(csv_rows) == 1
@@ -2811,7 +2810,7 @@ class TestComplianceRequirementCopy:
             {
                 "id": uuid.uuid4(),
                 "tenant_id": tenant_id,
-                "inserted_at": datetime.now(timezone.utc),
+                "inserted_at": datetime.now(UTC),
                 "compliance_id": "test",
                 "framework": "Test",
                 "version": "1.0",
@@ -2846,7 +2845,7 @@ class TestComplianceRequirementCopy:
         row = {
             "id": uuid.uuid4(),
             "tenant_id": tenant_id,
-            "inserted_at": datetime.now(timezone.utc),
+            "inserted_at": datetime.now(UTC),
             "compliance_id": "test",
             "framework": "Test",
             "version": "1.0",
@@ -2886,7 +2885,7 @@ class TestComplianceRequirementCopy:
         """Test ORM fallback with multiple rows."""
         tenant_id = str(uuid.uuid4())
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         rows = [
             {
@@ -2968,7 +2967,7 @@ class TestComplianceRequirementCopy:
         tenant_id = str(uuid.uuid4())
         row_id = uuid.uuid4()
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         row = {
             "id": row_id,
@@ -3674,19 +3673,19 @@ class TestAggregateFindingsByRegion:
         scan_id = str(uuid.uuid4())
         modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
 
-        # Mock findings with resources
-        mock_finding1 = MagicMock()
-        mock_finding1.check_id = "check1"
-        mock_finding1.status = "FAIL"
-        mock_finding1.compliance = {modeled_threatscore_compliance_id: ["req1", "req2"]}
-
-        mock_resource1 = MagicMock()
-        mock_resource1.region = "us-east-1"
-        mock_finding1.small_resources = [mock_resource1]
+        # (check_id, status, resource_regions, compliance) tuples
+        finding_rows = [
+            (
+                "check1",
+                "FAIL",
+                ["us-east-1"],
+                {modeled_threatscore_compliance_id: ["req1", "req2"]},
+            )
+        ]
 
         mock_queryset = MagicMock()
-        mock_queryset.only.return_value = mock_queryset
-        mock_queryset.prefetch_related.return_value = [mock_finding1]
+        mock_queryset.values_list.return_value = mock_queryset
+        mock_queryset.iterator.return_value = finding_rows
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
@@ -3699,6 +3698,12 @@ class TestAggregateFindingsByRegion:
                 tenant_id, scan_id, modeled_threatscore_compliance_id
             )
         )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
 
         # Verify structure of check_status_by_region
         assert isinstance(check_status_by_region, dict)
@@ -3719,27 +3724,15 @@ class TestAggregateFindingsByRegion:
         scan_id = str(uuid.uuid4())
         modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
 
-        # First finding with PASS status
-        mock_finding1 = MagicMock()
-        mock_finding1.check_id = "check1"
-        mock_finding1.status = "PASS"
-        mock_finding1.compliance = {}
-        mock_resource1 = MagicMock()
-        mock_resource1.region = "us-east-1"
-        mock_finding1.small_resources = [mock_resource1]
-
-        # Second finding with FAIL status for same check/region
-        mock_finding2 = MagicMock()
-        mock_finding2.check_id = "check1"
-        mock_finding2.status = "FAIL"
-        mock_finding2.compliance = {}
-        mock_resource2 = MagicMock()
-        mock_resource2.region = "us-east-1"
-        mock_finding2.small_resources = [mock_resource2]
+        # Same check/region: PASS first, then FAIL — FAIL must win
+        finding_rows = [
+            ("check1", "PASS", ["us-east-1"], {}),
+            ("check1", "FAIL", ["us-east-1"], {}),
+        ]
 
         mock_queryset = MagicMock()
-        mock_queryset.only.return_value = mock_queryset
-        mock_queryset.prefetch_related.return_value = [mock_finding1, mock_finding2]
+        mock_queryset.values_list.return_value = mock_queryset
+        mock_queryset.iterator.return_value = finding_rows
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
@@ -3750,6 +3743,12 @@ class TestAggregateFindingsByRegion:
         check_status_by_region, _ = _aggregate_findings_by_region(
             tenant_id, scan_id, modeled_threatscore_compliance_id
         )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
 
         # FAIL should override PASS
         assert check_status_by_region["us-east-1"]["check1"] == "FAIL"
@@ -3765,8 +3764,8 @@ class TestAggregateFindingsByRegion:
         modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
 
         mock_queryset = MagicMock()
-        mock_queryset.only.return_value = mock_queryset
-        mock_queryset.prefetch_related.return_value = []
+        mock_queryset.values_list.return_value = mock_queryset
+        mock_queryset.iterator.return_value = []
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
@@ -3777,6 +3776,12 @@ class TestAggregateFindingsByRegion:
         _aggregate_findings_by_region(
             tenant_id, scan_id, modeled_threatscore_compliance_id
         )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
 
         # Verify filter was called with muted=False
         mock_findings_filter.assert_called_once_with(
@@ -3796,27 +3801,25 @@ class TestAggregateFindingsByRegion:
         scan_id = str(uuid.uuid4())
         modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
 
-        # Finding with PASS status
-        mock_finding1 = MagicMock()
-        mock_finding1.check_id = "check1"
-        mock_finding1.status = "PASS"
-        mock_finding1.compliance = {modeled_threatscore_compliance_id: ["req1"]}
-        mock_resource1 = MagicMock()
-        mock_resource1.region = "us-east-1"
-        mock_finding1.small_resources = [mock_resource1]
-
-        # Finding with FAIL status
-        mock_finding2 = MagicMock()
-        mock_finding2.check_id = "check2"
-        mock_finding2.status = "FAIL"
-        mock_finding2.compliance = {modeled_threatscore_compliance_id: ["req1"]}
-        mock_resource2 = MagicMock()
-        mock_resource2.region = "us-east-1"
-        mock_finding2.small_resources = [mock_resource2]
+        # PASS and FAIL findings mapped to the same ThreatScore requirement
+        finding_rows = [
+            (
+                "check1",
+                "PASS",
+                ["us-east-1"],
+                {modeled_threatscore_compliance_id: ["req1"]},
+            ),
+            (
+                "check2",
+                "FAIL",
+                ["us-east-1"],
+                {modeled_threatscore_compliance_id: ["req1"]},
+            ),
+        ]
 
         mock_queryset = MagicMock()
-        mock_queryset.only.return_value = mock_queryset
-        mock_queryset.prefetch_related.return_value = [mock_finding1, mock_finding2]
+        mock_queryset.values_list.return_value = mock_queryset
+        mock_queryset.iterator.return_value = finding_rows
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
@@ -3827,6 +3830,12 @@ class TestAggregateFindingsByRegion:
         _, findings_count_by_compliance = _aggregate_findings_by_region(
             tenant_id, scan_id, modeled_threatscore_compliance_id
         )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
 
         # Verify compliance counts
         normalized_id = re.sub(
@@ -3850,27 +3859,15 @@ class TestAggregateFindingsByRegion:
         scan_id = str(uuid.uuid4())
         modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
 
-        # Finding in us-east-1
-        mock_finding1 = MagicMock()
-        mock_finding1.check_id = "check1"
-        mock_finding1.status = "FAIL"
-        mock_finding1.compliance = {}
-        mock_resource1 = MagicMock()
-        mock_resource1.region = "us-east-1"
-        mock_finding1.small_resources = [mock_resource1]
-
-        # Finding in us-west-2
-        mock_finding2 = MagicMock()
-        mock_finding2.check_id = "check1"
-        mock_finding2.status = "PASS"
-        mock_finding2.compliance = {}
-        mock_resource2 = MagicMock()
-        mock_resource2.region = "us-west-2"
-        mock_finding2.small_resources = [mock_resource2]
+        # One finding per region
+        finding_rows = [
+            ("check1", "FAIL", ["us-east-1"], {}),
+            ("check1", "PASS", ["us-west-2"], {}),
+        ]
 
         mock_queryset = MagicMock()
-        mock_queryset.only.return_value = mock_queryset
-        mock_queryset.prefetch_related.return_value = [mock_finding1, mock_finding2]
+        mock_queryset.values_list.return_value = mock_queryset
+        mock_queryset.iterator.return_value = finding_rows
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
@@ -3882,6 +3879,12 @@ class TestAggregateFindingsByRegion:
             tenant_id, scan_id, modeled_threatscore_compliance_id
         )
 
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
         # Verify both regions are present with correct statuses
         assert "us-east-1" in check_status_by_region
         assert "us-west-2" in check_status_by_region
@@ -3890,17 +3893,26 @@ class TestAggregateFindingsByRegion:
 
     @patch("tasks.jobs.scan.Finding.all_objects.filter")
     @patch("tasks.jobs.scan.rls_transaction")
-    def test_aggregate_findings_by_region_empty_findings(
+    def test_aggregate_findings_by_region_multi_region_finding(
         self, mock_rls_transaction, mock_findings_filter
     ):
-        """Test with no findings - should return empty dicts."""
+        """A finding with multiple resource_regions is tallied in every region."""
         tenant_id = str(uuid.uuid4())
         scan_id = str(uuid.uuid4())
         modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
 
+        finding_rows = [
+            (
+                "check1",
+                "FAIL",
+                ["us-east-1", "eu-west-1"],
+                {modeled_threatscore_compliance_id: ["req1"]},
+            )
+        ]
+
         mock_queryset = MagicMock()
-        mock_queryset.only.return_value = mock_queryset
-        mock_queryset.prefetch_related.return_value = []
+        mock_queryset.values_list.return_value = mock_queryset
+        mock_queryset.iterator.return_value = finding_rows
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
@@ -3913,6 +3925,92 @@ class TestAggregateFindingsByRegion:
                 tenant_id, scan_id, modeled_threatscore_compliance_id
             )
         )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
+        normalized_id = re.sub(
+            r"[^a-z0-9]", "", modeled_threatscore_compliance_id.lower()
+        )
+        for region in ("us-east-1", "eu-west-1"):
+            assert check_status_by_region[region]["check1"] == "FAIL"
+            req_stats = findings_count_by_compliance[region][normalized_id]["req1"]
+            assert req_stats == {"total": 1, "pass": 0}
+
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_findings_by_region_skips_empty_regions(
+        self, mock_rls_transaction, mock_findings_filter
+    ):
+        """A finding with no denormalized regions contributes nothing."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+
+        finding_rows = [
+            ("check1", "FAIL", [], {modeled_threatscore_compliance_id: ["req1"]}),
+            ("check2", "PASS", None, {}),
+        ]
+
+        mock_queryset = MagicMock()
+        mock_queryset.values_list.return_value = mock_queryset
+        mock_queryset.iterator.return_value = finding_rows
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        check_status_by_region, findings_count_by_compliance = (
+            _aggregate_findings_by_region(
+                tenant_id, scan_id, modeled_threatscore_compliance_id
+            )
+        )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
+
+        assert check_status_by_region == {}
+        assert findings_count_by_compliance == {}
+
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_findings_by_region_empty_findings(
+        self, mock_rls_transaction, mock_findings_filter
+    ):
+        """Test with no findings - should return empty dicts."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+
+        mock_queryset = MagicMock()
+        mock_queryset.values_list.return_value = mock_queryset
+        mock_queryset.iterator.return_value = []
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        check_status_by_region, findings_count_by_compliance = (
+            _aggregate_findings_by_region(
+                tenant_id, scan_id, modeled_threatscore_compliance_id
+            )
+        )
+
+        # Streaming query contract: column-scoped values_list + iterator
+        mock_queryset.values_list.assert_called_once_with(
+            "check_id", "status", "resource_regions", "compliance"
+        )
+        mock_queryset.iterator.assert_called_once()
 
         assert check_status_by_region == {}
         assert findings_count_by_compliance == {}
@@ -4362,7 +4460,7 @@ class TestUpdateProviderComplianceScores:
         scan_id = str(scan.id)
 
         scan.state = StateChoices.COMPLETED
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         connection = MagicMock()
@@ -4439,7 +4537,7 @@ class TestUpdateProviderComplianceScores:
         scan_id = str(scan.id)
 
         scan.state = StateChoices.COMPLETED
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         connection = MagicMock()
@@ -4492,8 +4590,9 @@ class TestScanIsFullScope:
         # If the SDK adds a new filter, this test still passes via the
         # introspection-driven derivation; if it adds a non-filter kwarg
         # (e.g. provider-like), keep the exclusion list in sync in models.py.
-        from prowler.lib.scan.scan import Scan as ProwlerScan
         import inspect
+
+        from prowler.lib.scan.scan import Scan as ProwlerScan
 
         expected = tuple(
             name

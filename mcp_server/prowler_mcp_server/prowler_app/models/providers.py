@@ -2,8 +2,9 @@
 
 from typing import Any, Literal
 
-from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 from pydantic import BaseModel
+
+from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 
 
 class SimplifiedProvider(MinimalSerializerMixin, BaseModel):

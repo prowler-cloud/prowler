@@ -69,8 +69,9 @@ const COMPLIANCE_LOGOS = [
   ["c5", C5Logo],
   ["ccc", CCCLogo],
   ["csa", CSALogo],
-  // DORA — universal framework (`prowler/compliance/dora.json`). The
-  // compliance_id is just `dora`, no provider suffix.
+  // DORA — universal framework (`prowler/compliance/dora_2022_2554.json`).
+  // The compliance_id is `dora_2022_2554`; the `dora` keyword still matches
+  // it via `includes`, with no provider suffix.
   ["dora", DORALogo],
   ["secnumcloud", ANSSILogo],
   ["okta", OktaLogo],

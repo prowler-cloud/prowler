@@ -1,14 +1,12 @@
 import logging
 import os
 import sys
-
 from pathlib import Path
-
-from django.apps import AppConfig
-from django.conf import settings
 
 from config.custom_logging import BackendLogger
 from config.env import env
+from django.apps import AppConfig
+from django.conf import settings
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -30,8 +28,10 @@ class ApiConfig(AppConfig):
     name = "api"
 
     def ready(self):
-        from api import schema_extensions  # noqa: F401
-        from api import signals  # noqa: F401
+        from api import (
+            schema_extensions,  # noqa: F401
+            signals,  # noqa: F401
+        )
 
         # Generate required cryptographic keys if not present, but only if:
         #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app

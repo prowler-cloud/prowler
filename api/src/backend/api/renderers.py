@@ -1,9 +1,8 @@
 from contextlib import nullcontext
 
+from api.db_utils import rls_transaction
 from rest_framework.renderers import BaseRenderer
 from rest_framework_json_api.renderers import JSONRenderer
-
-from api.db_utils import rls_transaction
 
 
 class PlainTextRenderer(BaseRenderer):

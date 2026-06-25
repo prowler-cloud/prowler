@@ -15,12 +15,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'mcp_server/pyproject.toml'
-      - 'mcp_server/uv.lock'
-      - '.github/workflows/mcp-security.yml'
-      - '.github/actions/osv-scanner/**'
-      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,7 +24,6 @@ permissions: {}
 
 jobs:
   mcp-security-scans:
-    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

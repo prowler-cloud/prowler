@@ -359,6 +359,13 @@
                   "user-guide/providers/okta/getting-started-okta",
                   "user-guide/providers/okta/authentication"
                 ]
+              },
+              {
+                "group": "Linode",
+                "pages": [
+                  "user-guide/providers/linode/getting-started-linode",
+                  "user-guide/providers/linode/authentication"
+                ]
               }
             ]
           },
@@ -395,7 +402,8 @@
               "developer-guide/lighthouse-architecture",
               "developer-guide/mcp-server",
               "developer-guide/ai-skills",
-              "developer-guide/prowler-studio"
+              "developer-guide/prowler-studio",
+              "developer-guide/server-sent-events"
             ]
           },
           {
@@ -416,6 +424,7 @@
             "group": "Miscellaneous",
             "pages": [
               "developer-guide/documentation",
+              "developer-guide/environment-variables",
               {
                 "group": "Testing",
                 "pages": [

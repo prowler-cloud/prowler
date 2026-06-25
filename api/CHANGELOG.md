@@ -2,7 +2,70 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.31.0] (Prowler UNRELEASED)
+## [1.32.1] (Prowler v5.31.1)
+
+### 🐞 Fixed
+
+- API key auth no longer mutates `TenantAPIKey.objects` during admin DB lookups [(#11686)](https://github.com/prowler-cloud/prowler/pull/11686)
+
+---
+
+## [1.32.0] (Prowler v5.31.0)
+
+### 🚀 Added
+
+- Provider group filters for API endpoints that support cloud provider filtering, including exact and `__in` variants [(#11573)](https://github.com/prowler-cloud/prowler/pull/11573)
+- Provider filters for `GET /api/v1/compliance-overviews`, `/metadata`, and `/requirements`, using latest completed scans per matching provider [(#11587)](https://github.com/prowler-cloud/prowler/pull/11587)
+- Server-Sent Events (SSE) infrastructure for the API: a base viewset, a tenant-aware channel manager, and channel-name helpers backed by `django-eventstream` over Valkey Pub/Sub and served through the Gunicorn ASGI worker, so feature endpoints can stream events to clients over a single long-lived connection [(#11556)](https://github.com/prowler-cloud/prowler/pull/11556)
+- `DJANGO_CELERY_WORKER_CONCURRENCY` to configure Celery workers concurrency. Unset for default behaviour [(#11075)](https://github.com/prowler-cloud/prowler/pull/11075)
+
+### 🔄 Changed
+
+- Gunicorn worker timeout raised from the 30s default to 120s, so long-running requests are no longer killed prematurely [(#11631)](https://github.com/prowler-cloud/prowler/pull/11631)
+- Sentry now drops ASGI's `RequestAborted` errors from health-check probe disconnects on `/health/live` [(#11632)](https://github.com/prowler-cloud/prowler/pull/11632)
+- Gunicorn keep-alive timeout now exceeds the load balancer idle timeout, stopping 502s from reused connections [(#11647)](https://github.com/prowler-cloud/prowler/pull/11647)
+- API runs under the Uvicorn worker so keep-alive outlives the load balancer idle timeout, fixing Gunicorn's intermittent 502s [(#11663)](https://github.com/prowler-cloud/prowler/pull/11663)
+- SAML logins no longer wipe a user's roles when the IdP does not send the `userType` attribute; existing roles are kept, and when `userType` names a role that does not exist it is now created with read-only access (visibility over all providers, no management permissions) instead of no permissions at all [(#11520)](https://github.com/prowler-cloud/prowler/pull/11520)
+
+### 🐞 Fixed
+
+- Database connections no longer leak under the ASGI worker, which previously exhausted the read replica's connection slots and caused 500s on read endpoints [(#11640)](https://github.com/prowler-cloud/prowler/pull/11640)
+
+### 🔐 Security
+
+- `aiohttp` to 3.14.0 and `idna` to 3.15, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- Container base image to `python:3.12.13-slim-bookworm` and `trivy` to 0.71.0, patching OS and Go module CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- `trivy` binary bumped to 0.71.0 patching embedded `golang.org/x/crypto`, `golang.org/x/net`, and Go `stdlib` CVEs [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
+---
+
+## [1.31.3] (Prowler v5.30.3)
+
+### 🔐 Security
+
+- SAML logins now link to an existing account only when the asserted email domain matches the ACS endpoint and the user is already a member of that domain's tenant, fixing a cross-tenant account takeover [(GHSA-h8m9-jgf8-vwvp)](https://github.com/prowler-cloud/prowler/security/advisories/GHSA-h8m9-jgf8-vwvp)
+
+---
+
+## [1.31.2] (Prowler v5.30.2)
+
+### 🔄 Changed
+
+- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes so it runs faster and its peak memory no longer grows with the number of regions and frameworks [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
+
+---
+
+## [1.31.1] (Prowler v5.30.1)
+
+### 🐞 Fixed
+
+- `compliance-overviews/attributes` now resolves the provider from the scan, so multi-provider universal frameworks (e.g. CSA CCM) return the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
+- Attack Paths: `drop_subgraph` now deletes relationships first and then nodes in batches, using less memory on Neo4j when clearing a dense provider graph [(#11557)](https://github.com/prowler-cloud/prowler/pull/11557)
+- OCI scans now use API key credentials with the configured region instead of falling back to `/home/prowler/.oci/config` [(#11558)](https://github.com/prowler-cloud/prowler/pull/11558)
+
+---
+
+## [1.31.0] (Prowler v5.30.0)
 
 ### 🚀 Added
 
@@ -19,11 +82,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
 - Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
-- Compliance catalog now warms in a background thread after each worker forks, and `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the Gunicorn worker timeout [(#4554)](https://github.com/prowler-cloud/prowler-cloud/pull/4554)
+- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#11530)](https://github.com/prowler-cloud/prowler/pull/11530)
 
 ### 🔐 Security
 
-- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) flagged by osv-scanner in `api/uv.lock` [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
+- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
 
 ---
 

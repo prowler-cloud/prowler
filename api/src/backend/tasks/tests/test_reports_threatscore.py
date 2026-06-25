@@ -2,6 +2,7 @@ import io
 from unittest.mock import Mock
 
 import pytest
+from api.models import StatusChoices
 from reportlab.platypus import Image, PageBreak, Paragraph, Table
 from tasks.jobs.reports import (
     FRAMEWORK_REGISTRY,
@@ -9,8 +10,6 @@ from tasks.jobs.reports import (
     RequirementData,
     ThreatScoreReportGenerator,
 )
-
-from api.models import StatusChoices
 
 # =============================================================================
 # Fixtures
