@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from api.db_router import MainRouter
-from api.exceptions import ProviderConnectionError
+from api.exceptions import ProviderConnectionError, ProviderDeletedException
 from api.models import (
     Finding,
     MuteRule,
@@ -261,6 +261,75 @@ class TestPerformScan:
         provider.refresh_from_db()
         assert provider.connected is False
         assert isinstance(provider.connection_last_checked_at, datetime)
+
+    def test_perform_prowler_scan_provider_deleted_during_progress_update(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+        provider_id = str(provider.id)
+
+        def scan_results():
+            Provider.objects.filter(pk=provider_id).delete()
+            yield 50, []
+
+        with (
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider",
+                return_value=MagicMock(),
+            ),
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan.logger.error") as mock_logger_error,
+        ):
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = scan_results()
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            with pytest.raises(ProviderDeletedException):
+                perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        mock_logger_error.assert_not_called()
+        assert not Scan.objects.filter(pk=scan_id).exists()
+
+    def test_perform_prowler_scan_sets_final_progress_when_progress_updates_are_throttled(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+        provider_id = str(provider.id)
+
+        with (
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider",
+                return_value=MagicMock(),
+            ),
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_DELTA", 200),
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_SECONDS", 3600),
+        ):
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(99, []), (100, [])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.COMPLETED
+        assert scan.progress == 100
 
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
