@@ -29,13 +29,6 @@ import {
 } from "@/components/ai-elements/conversation";
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/shadcn/button/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn/select/select";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import {
@@ -104,17 +97,13 @@ export function LighthouseV2ChatPage({
   const connectedConfigurations = configurations.filter(
     (configuration) => configuration.connected === true,
   );
-  const initialProvider =
-    connectedConfigurations[0]?.providerType ??
-    configurations[0]?.providerType ??
-    LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI;
-  const [selectedProvider, setSelectedProvider] =
-    useState<LighthouseV2ProviderType>(initialProvider);
-  const [selectedModel, setSelectedModel] = useState(
-    connectedConfigurations[0]?.defaultModel ??
-      modelsByProvider[initialProvider]?.[0]?.id ??
-      "",
-  );
+  const selectedConfiguration = connectedConfigurations[0] ?? configurations[0];
+  const selectedProvider =
+    selectedConfiguration?.providerType ?? LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI;
+  const selectedModel =
+    selectedConfiguration?.defaultModel ??
+    modelsByProvider[selectedProvider]?.[0]?.id ??
+    "";
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     initialSessionId ?? null,
   );
@@ -129,24 +118,10 @@ export function LighthouseV2ChatPage({
     createInitialLighthouseV2StreamState(),
   );
 
-  const selectedConfiguration = configurations.find(
-    (configuration) => configuration.providerType === selectedProvider,
-  );
-  const providerModels = modelsByProvider[selectedProvider] ?? [];
   const canSend =
     selectedConfiguration?.connected === true &&
     !streamState.activeTaskId &&
     !blockedByConflict;
-
-  const handleProviderChange = (provider: LighthouseV2ProviderType) => {
-    const nextConfig = configurations.find(
-      (configuration) => configuration.providerType === provider,
-    );
-    setSelectedProvider(provider);
-    setSelectedModel(
-      nextConfig?.defaultModel ?? modelsByProvider[provider]?.[0]?.id ?? "",
-    );
-  };
 
   const refreshMessages = async (sessionId: string) => {
     const result = await getLighthouseV2Messages(sessionId);
@@ -316,7 +291,7 @@ export function LighthouseV2ChatPage({
     messages.length > 0 || Boolean(streamState.assistantText);
 
   return (
-    <section className="bg-background flex h-full min-h-0 flex-col">
+    <section className="bg-bg-neutral-primary flex h-full min-h-0 flex-col">
       {hasConversation ? (
         <div className="flex min-h-0 flex-1 flex-col">
           <Conversation className="min-h-0">
@@ -330,7 +305,7 @@ export function LighthouseV2ChatPage({
             </ConversationContent>
             <ConversationScrollButton />
           </Conversation>
-          <div className="bg-background px-4 pb-5 md:px-8">
+          <div className="bg-bg-neutral-primary px-4 pb-5 md:px-8">
             <div className="mx-auto w-full max-w-4xl">
               <LighthouseV2Feedback
                 feedback={feedback}
@@ -346,18 +321,12 @@ export function LighthouseV2ChatPage({
               />
               <LighthouseV2Composer
                 canSend={canSend}
-                configurations={configurations}
                 input={input}
                 isStreaming={Boolean(streamState.activeTaskId)}
-                models={providerModels}
                 selectedConfigurationConnected={
                   selectedConfiguration?.connected === true
                 }
-                selectedModel={selectedModel}
-                selectedProvider={selectedProvider}
                 onInputChange={setInput}
-                onProviderChange={handleProviderChange}
-                onModelChange={setSelectedModel}
                 onStop={handleStop}
                 onSubmit={handleSubmit}
                 onSubmitText={submitMessage}
@@ -392,18 +361,12 @@ export function LighthouseV2ChatPage({
               />
               <LighthouseV2Composer
                 canSend={canSend}
-                configurations={configurations}
                 input={input}
                 isStreaming={Boolean(streamState.activeTaskId)}
-                models={providerModels}
                 selectedConfigurationConnected={
                   selectedConfiguration?.connected === true
                 }
-                selectedModel={selectedModel}
-                selectedProvider={selectedProvider}
                 onInputChange={setInput}
-                onProviderChange={handleProviderChange}
-                onModelChange={setSelectedModel}
                 onStop={handleStop}
                 onSubmit={handleSubmit}
                 onSubmitText={submitMessage}
@@ -471,16 +434,10 @@ function LighthouseV2Feedback({
 
 interface LighthouseV2ComposerProps {
   canSend: boolean;
-  configurations: LighthouseV2Configuration[];
   input: string;
   isStreaming: boolean;
-  models: LighthouseV2SupportedModel[];
   selectedConfigurationConnected: boolean;
-  selectedModel: string;
-  selectedProvider: LighthouseV2ProviderType;
   onInputChange: (value: string) => void;
-  onModelChange: (value: string) => void;
-  onProviderChange: (provider: LighthouseV2ProviderType) => void;
   onStop: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
@@ -488,23 +445,17 @@ interface LighthouseV2ComposerProps {
 
 function LighthouseV2Composer({
   canSend,
-  configurations,
   input,
   isStreaming,
-  models,
   selectedConfigurationConnected,
-  selectedModel,
-  selectedProvider,
   onInputChange,
-  onModelChange,
-  onProviderChange,
   onStop,
   onSubmit,
   onSubmitText,
 }: LighthouseV2ComposerProps) {
   return (
     <form
-      className="border-border-neutral-secondary bg-bg-neutral-primary flex min-h-[150px] w-full flex-col rounded-[8px] border shadow-xs"
+      className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-[150px] w-full flex-col rounded-[8px] border shadow-xs"
       onSubmit={onSubmit}
     >
       <Textarea
@@ -527,47 +478,7 @@ function LighthouseV2Composer({
           }
         }}
       />
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Select
-            value={selectedProvider}
-            onValueChange={(value) =>
-              onProviderChange(value as LighthouseV2ProviderType)
-            }
-          >
-            <SelectTrigger size="sm" iconSize="sm" className="h-8 w-[150px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {configurations.map((configuration) => (
-                <SelectItem
-                  key={configuration.providerType}
-                  value={configuration.providerType}
-                  disabled={configuration.connected !== true}
-                >
-                  {configuration.providerType}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={selectedModel} onValueChange={onModelChange}>
-            <SelectTrigger size="sm" iconSize="sm" className="h-8 w-[220px]">
-              <SelectValue placeholder="Model" />
-            </SelectTrigger>
-            <SelectContent width="wide">
-              {models.map((model) => (
-                <SelectItem key={model.id} value={model.id}>
-                  {model.id}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button type="button" variant="outline" size="icon-sm" asChild>
-            <Link href="/lighthouse/config" aria-label="Lighthouse settings">
-              <Settings className="size-4" />
-            </Link>
-          </Button>
-        </div>
+      <div className="flex items-center justify-end px-3 pb-3">
         {isStreaming ? (
           <Button
             type="button"
