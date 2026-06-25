@@ -150,7 +150,6 @@ export function LighthouseV2ConfigPage({
     modelsByProvider[selectedProviderDefinition.id]
       ? modelsByProvider[selectedProviderDefinition.id]
       : [];
-  const readiness = getReadinessSummary(providers, localConfigurations);
 
   const handleConfigurationSaved = (
     configuration: LighthouseV2Configuration,
@@ -183,121 +182,55 @@ export function LighthouseV2ConfigPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-      <LighthouseV2ReadinessHeader readiness={readiness} />
-
+    <Card
+      variant="base"
+      padding="none"
+      role="region"
+      aria-label="Lighthouse settings"
+      className="min-h-[calc(100dvh-6.5rem)] w-full gap-0 overflow-hidden"
+    >
       {feedback && (
-        <LighthouseV2Feedback
-          feedback={feedback}
-          onRefreshStatus={() => router.refresh()}
-          onClose={() => setFeedback(null)}
-        />
+        <div className="border-border-neutral-secondary border-b px-4 py-4 md:px-5">
+          <LighthouseV2Feedback
+            feedback={feedback}
+            onRefreshStatus={() => router.refresh()}
+            onClose={() => setFeedback(null)}
+          />
+        </div>
       )}
 
-      <div className="grid min-h-0 gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
-        <LighthouseV2ProviderRail
-          configurations={localConfigurations}
-          providers={providers}
-          selectedProvider={selectedProvider}
-          onSelectProvider={(provider) => {
-            setSelectedProvider(provider);
-            setFeedback(null);
-          }}
-        />
-
-        <LighthouseV2ConfigurationForm
-          key={selectedProvider}
-          configuration={selectedConfig}
-          models={selectedModels}
-          provider={selectedProviderDefinition}
-          onConfigurationSaved={handleConfigurationSaved}
-          onConfigurationDeleted={handleConfigurationDeleted}
-          onFeedback={setFeedback}
-        />
-      </div>
-    </div>
-  );
-}
-
-function LighthouseV2ReadinessHeader({
-  readiness,
-}: {
-  readiness: ReadinessSummary;
-}) {
-  const ready =
-    readiness.connected > 0
-      ? "Ready for chat"
-      : readiness.failed > 0
-        ? "Needs attention"
-        : "Setup required";
-
-  return (
-    <section className="border-border-neutral-secondary bg-bg-neutral-secondary rounded-[12px] border px-4 py-4 md:px-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-11 shrink-0 items-center justify-center rounded-[10px] border">
-            <ShieldCheck className="text-text-success-primary size-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-text-neutral-primary text-lg font-semibold">
-                Lighthouse readiness
-              </h2>
-              <Badge variant={readiness.connected > 0 ? "success" : "warning"}>
-                {ready}
-              </Badge>
-            </div>
-            <p className="text-text-neutral-secondary mt-1 max-w-3xl text-sm">
-              Manage the model providers Lighthouse can use for Cloud analysis.
-              Connected providers are available in chat; failed or untested
-              providers stay blocked until tested cleanly.
-            </p>
-          </div>
+      <div className="grid min-h-0 gap-0 xl:grid-cols-[320px_auto_minmax(0,1fr)]">
+        <div className="min-w-0 p-4 md:p-5">
+          <LighthouseV2ProviderRail
+            configurations={localConfigurations}
+            providers={providers}
+            selectedProvider={selectedProvider}
+            onSelectProvider={(provider) => {
+              setSelectedProvider(provider);
+              setFeedback(null);
+            }}
+          />
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:min-w-[360px]">
-          <ReadinessMetric
-            label="connected"
-            value={readiness.connected}
-            status={CONNECTION_STATUS.CONNECTED}
-          />
-          <ReadinessMetric
-            label="failed"
-            value={readiness.failed}
-            status={CONNECTION_STATUS.FAILED}
-          />
-          <ReadinessMetric
-            label="not tested"
-            value={readiness.notTested}
-            status={CONNECTION_STATUS.NOT_TESTED}
+        <div
+          data-slot="settings-separator"
+          aria-hidden="true"
+          className="border-border-neutral-secondary border-t xl:border-t-0 xl:border-l"
+        />
+
+        <div className="min-w-0">
+          <LighthouseV2ConfigurationForm
+            key={selectedProvider}
+            configuration={selectedConfig}
+            models={selectedModels}
+            provider={selectedProviderDefinition}
+            onConfigurationSaved={handleConfigurationSaved}
+            onConfigurationDeleted={handleConfigurationDeleted}
+            onFeedback={setFeedback}
           />
         </div>
       </div>
-    </section>
-  );
-}
-
-function ReadinessMetric({
-  label,
-  value,
-  status,
-}: {
-  label: string;
-  value: number;
-  status: ConnectionStatus;
-}) {
-  return (
-    <div className="border-border-neutral-secondary bg-bg-neutral-tertiary rounded-[10px] border px-3 py-2">
-      <div className="flex items-center gap-2">
-        <StatusDot status={status} />
-        <span className="text-text-neutral-primary text-lg leading-none font-semibold">
-          {value}
-        </span>
-      </div>
-      <p className="text-text-neutral-secondary mt-1 text-xs">
-        {value} {label}
-      </p>
-    </div>
+    </Card>
   );
 }
 
@@ -539,7 +472,7 @@ function LighthouseV2ConfigurationForm({
   };
 
   return (
-    <section className="border-border-neutral-secondary bg-bg-neutral-secondary min-w-0 rounded-[12px] border">
+    <section className="min-w-0">
       <div className="border-border-neutral-secondary flex flex-col gap-4 border-b px-4 py-4 md:flex-row md:items-start md:justify-between md:px-5">
         <div className="flex min-w-0 gap-3">
           <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-12 shrink-0 items-center justify-center rounded-[10px] border">
@@ -1008,47 +941,6 @@ function StatusBadge({ status }: { status: ConnectionStatus }) {
       <CircleDashed />
       Not tested
     </Badge>
-  );
-}
-
-function StatusDot({ status }: { status: ConnectionStatus }) {
-  return (
-    <span
-      className={cn(
-        "size-2 rounded-full",
-        status === CONNECTION_STATUS.CONNECTED && "bg-bg-pass",
-        status === CONNECTION_STATUS.FAILED && "bg-bg-fail",
-        status === CONNECTION_STATUS.NOT_TESTED && "bg-text-neutral-tertiary",
-      )}
-    />
-  );
-}
-
-interface ReadinessSummary {
-  connected: number;
-  failed: number;
-  notTested: number;
-}
-
-function getReadinessSummary(
-  providers: LighthouseV2SupportedProvider[],
-  configurations: LighthouseV2Configuration[],
-): ReadinessSummary {
-  return providers.reduce(
-    (summary, provider) => {
-      const config = configurations.find(
-        (item) => item.providerType === provider.id,
-      );
-      const status = getConnectionStatus(config);
-      if (status === CONNECTION_STATUS.CONNECTED) {
-        return { ...summary, connected: summary.connected + 1 };
-      }
-      if (status === CONNECTION_STATUS.FAILED) {
-        return { ...summary, failed: summary.failed + 1 };
-      }
-      return { ...summary, notTested: summary.notTested + 1 };
-    },
-    { connected: 0, failed: 0, notTested: 0 },
   );
 }
 

@@ -108,19 +108,40 @@ describe("LighthouseV2ConfigPage", () => {
     updateConfigurationMock.mockResolvedValue({ data: configurations[0] });
   });
 
-  it("renders provider readiness, statuses, and the active provider", () => {
+  it("renders provider statuses and the active provider without the readiness summary card", () => {
     // Given / When
-    renderPage();
+    const { container } = renderPage();
 
     // Then
     expect(
-      screen.getByRole("heading", { name: "Lighthouse readiness" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("1 connected")).toBeInTheDocument();
-    expect(screen.getByText("1 failed")).toBeInTheDocument();
-    expect(screen.getByText("1 not tested")).toBeInTheDocument();
+      screen.queryByRole("heading", { name: "Lighthouse readiness" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("1 connected")).not.toBeInTheDocument();
+    expect(screen.queryByText("1 failed")).not.toBeInTheDocument();
+    expect(screen.queryByText("1 not tested")).not.toBeInTheDocument();
 
     const openAIProvider = screen.getByRole("button", { name: "OpenAI" });
+    const settingsCard = screen.getByRole("region", {
+      name: "Lighthouse settings",
+    });
+    const settingsSeparator = container.querySelector(
+      '[data-slot="settings-separator"]',
+    );
+
+    expect(settingsCard).toHaveAttribute("data-slot", "card");
+    expect(settingsCard).toHaveClass(
+      "min-h-[calc(100dvh-6.5rem)]",
+      "w-full",
+      "gap-0",
+      "overflow-hidden",
+    );
+    expect(settingsCard).not.toHaveClass("mx-auto", "max-w-7xl");
+    expect(settingsSeparator).toHaveClass(
+      "border-t",
+      "xl:border-t-0",
+      "xl:border-l",
+    );
+    expect(settingsCard).toContainElement(openAIProvider);
     expect(openAIProvider).toHaveAttribute("aria-pressed", "true");
     expect(within(openAIProvider).getByText("Connected")).toBeInTheDocument();
 
