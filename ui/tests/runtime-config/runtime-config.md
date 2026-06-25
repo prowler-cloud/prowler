@@ -2,8 +2,7 @@
 
 **Suite ID:** `RUNTIME-CONFIG-E2E`
 **Feature:** Runtime resolution of public client config via an inert JSON data
-island injected into `<head>` (Sentry, GTM, API base/docs URL, the
-`billingCloudEnable` flag, and reserved keys). Each third-party integration
+island injected into `<head>` (Sentry, GTM, API base/docs URL, and reserved keys). Each third-party integration
 resolves to a value only when its `UI_*_ENABLE` flag is `"true"`, so a disabled
 integration is exposed as `null`.
 
