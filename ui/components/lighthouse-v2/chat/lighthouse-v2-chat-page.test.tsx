@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
   LighthouseV2Configuration,
@@ -105,6 +105,10 @@ describe("LighthouseV2ChatPage", () => {
     });
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("uses the neutral page background instead of the global app background token", () => {
     // Given / When
     const { container } = renderPage();
@@ -147,6 +151,43 @@ describe("LighthouseV2ChatPage", () => {
     );
     expect(createSessionMock).toHaveBeenCalledWith("Summarize findings");
     expect(pushMock).toHaveBeenCalledWith("/lighthouse?session=session-1");
+  });
+
+  it("closes an active stream when the chat unmounts", async () => {
+    // Given
+    const user = userEvent.setup();
+    const closeMock = vi.fn();
+    const eventSourceMock = vi.fn(function MockEventSource(
+      this: Record<string, unknown>,
+    ) {
+      this.addEventListener = vi.fn();
+      this.close = closeMock;
+    });
+    vi.stubGlobal("EventSource", eventSourceMock);
+    sendMessageMock.mockResolvedValue({
+      data: {
+        task: {
+          id: "task-1",
+          name: "lighthouse-run",
+          state: "executing",
+        },
+        streamUrl: "/api/stream",
+      },
+    });
+    const { unmount } = renderPage({ initialSessionId: "session-1" });
+
+    // When
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+    await waitFor(() =>
+      expect(eventSourceMock).toHaveBeenCalledWith("/api/stream"),
+    );
+    unmount();
+
+    // Then
+    expect(closeMock).toHaveBeenCalledTimes(1);
   });
 });
 

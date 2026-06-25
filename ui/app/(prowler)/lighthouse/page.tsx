@@ -66,11 +66,13 @@ export default async function AIChatbot({
     const initialMessages = activeSessionId
       ? await getLighthouseV2Messages(activeSessionId)
       : { data: [] };
+    const chatRouteKey = activeSessionId ?? initialPrompt ?? "new";
 
     return (
       <div className="h-dvh min-h-0">
         <LighthouseV2NavigationModeSync />
         <LighthouseV2ChatPage
+          key={chatRouteKey}
           configurations={configurations}
           modelsByProvider={modelsByProvider}
           initialSessionId={activeSessionId}

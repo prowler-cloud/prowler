@@ -281,6 +281,10 @@ export function LighthouseV2ChatPage({
   };
 
   useMountEffect(() => {
+    return () => closeStream();
+  });
+
+  useMountEffect(() => {
     if (initialPrompt && !initialPromptSentRef.current) {
       initialPromptSentRef.current = true;
       void submitMessage(initialPrompt);
