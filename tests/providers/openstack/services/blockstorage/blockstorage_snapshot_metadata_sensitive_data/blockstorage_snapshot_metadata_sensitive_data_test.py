@@ -2,6 +2,7 @@
 
 from unittest import mock
 
+from prowler.lib.check.models import Severity
 from prowler.providers.openstack.services.blockstorage.blockstorage_service import (
     SnapshotResource,
 )
@@ -352,3 +353,57 @@ class Test_blockstorage_snapshot_metadata_sensitive_data:
             # Verify the secret is correctly attributed to 'db_password' key
             assert "in metadata key 'db_password'" in result[0].status_extended
             assert result[0].resource_id == "snap-6"
+
+    def test_snapshot_verified_secret_escalates_to_critical(self):
+        """Test that a confirmed live secret escalates the finding to CRITICAL (FAIL)."""
+        blockstorage_client = mock.MagicMock()
+        blockstorage_client.audit_config = {"secrets_validate": True}
+        blockstorage_client.snapshots = [
+            SnapshotResource(
+                id="snap-verified",
+                name="Verified Secret",
+                status="available",
+                size=50,
+                volume_id="vol-1",
+                metadata={"api_key": "placeholder"},
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.blockstorage.blockstorage_snapshot_metadata_sensitive_data.blockstorage_snapshot_metadata_sensitive_data.blockstorage_client",
+                new=blockstorage_client,
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.blockstorage.blockstorage_snapshot_metadata_sensitive_data.blockstorage_snapshot_metadata_sensitive_data.detect_secrets_scan_batch",
+                return_value={
+                    0: [
+                        {
+                            "type": "JSON Web Token (base64url-encoded)",
+                            "line_number": 2,
+                            "filename": "data",
+                            "hashed_secret": "x",
+                            "is_verified": True,
+                        }
+                    ]
+                },
+            ) as mock_scan,
+        ):
+            from prowler.providers.openstack.services.blockstorage.blockstorage_snapshot_metadata_sensitive_data.blockstorage_snapshot_metadata_sensitive_data import (
+                blockstorage_snapshot_metadata_sensitive_data,
+            )
+
+            check = blockstorage_snapshot_metadata_sensitive_data()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].check_metadata.Severity == Severity.critical
+            assert "confirmed to be live" in result[0].status_extended
+            assert mock_scan.call_args.kwargs.get("validate") is True

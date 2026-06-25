@@ -1,6 +1,10 @@
 from unittest import mock
 
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
 
 
 class Test_codebuild_project_no_secrets_in_variables:
@@ -252,6 +256,82 @@ class Test_codebuild_project_no_secrets_in_variables:
             assert result[0].resource_id == "SensitiveProject"
             assert result[0].resource_arn == project_arn
             assert result[0].resource_tags == []
+
+    def test_project_with_verified_secret(self):
+        from prowler.lib.check.models import Severity
+
+        codebuild_client = mock.MagicMock()
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Project
+
+        project_arn = f"arn:aws:codebuild:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:project/SensitiveProject"
+        codebuild_client.projects = {
+            project_arn: Project(
+                name="SensitiveProject",
+                arn=project_arn,
+                region=AWS_REGION_US_EAST_1,
+                last_invoked_time=None,
+                buildspec=None,
+                environment_variables=[
+                    {
+                        "name": "EXAMPLE_VAR",
+                        "value": "ExampleValue",
+                        "type": "PLAINTEXT",
+                    }
+                ],
+                tags=[],
+            )
+        }
+
+        codebuild_client.audit_config = {
+            "excluded_sensitive_environment_variables": [],
+            "secrets_validate": True,
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(
+                    audit_config={"secrets_validate": True}
+                ),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+                codebuild_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+                codebuild_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.detect_secrets_scan_batch",
+                return_value={
+                    (0, 0): [
+                        {
+                            "type": "JSON Web Token (base64url-encoded)",
+                            "line_number": 1,
+                            "filename": "data",
+                            "hashed_secret": "x",
+                            "is_verified": True,
+                        }
+                    ]
+                },
+            ) as mock_scan,
+        ):
+            from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
+                codebuild_project_no_secrets_in_variables,
+            )
+
+            check = codebuild_project_no_secrets_in_variables()
+            result = check.execute()
+
+            # The check must forward secrets_validate from the config to the scan.
+            assert mock_scan.call_args.kwargs.get("validate") is True
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].check_metadata.Severity == Severity.critical
+            assert "confirmed to be live" in result[0].status_extended
+            assert result[0].resource_id == "SensitiveProject"
 
     def test_project_with_sensitive_plaintext_credentials_exluded(self):
         codebuild_client = mock.MagicMock

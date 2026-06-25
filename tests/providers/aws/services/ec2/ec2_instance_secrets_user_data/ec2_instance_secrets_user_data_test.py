@@ -352,7 +352,8 @@ class Test_ec2_instance_secrets_user_data:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+            audit_config={"secrets_validate": True},
         )
 
         with (
@@ -377,7 +378,7 @@ class Test_ec2_instance_secrets_user_data:
                         }
                     ]
                 },
-            ),
+            ) as mock_scan,
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
@@ -386,6 +387,8 @@ class Test_ec2_instance_secrets_user_data:
             check = ec2_instance_secrets_user_data()
             result = check.execute()
 
+            # The check must forward secrets_validate from the config to the scan.
+            assert mock_scan.call_args.kwargs.get("validate") is True
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].check_metadata.Severity == Severity.critical
