@@ -394,6 +394,14 @@ class AWSProviderConfig(ProviderConfigBase):
 
     # --- Secrets ---------------------------------------------------------
     secrets_ignore_patterns: Optional[list[str]] = None
+    secrets_validate: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Validate discovered secrets against the provider APIs (live check). "
+            "Makes outbound network calls that authenticate with the discovered "
+            "secret. Disabled by default."
+        ),
+    )
     max_days_secret_unused: Optional[int] = Field(
         default=None,
         ge=7,
