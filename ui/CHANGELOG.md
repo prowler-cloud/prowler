@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.32.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Add `Scan Config` menu item under the Configuration menu (only available in Prowler Cloud) [(#11695)](https://github.com/prowler-cloud/prowler/pull/11695)
+
+---
+
 ## [1.31.1] (Prowler v5.31.1)
 
 ### 🔄 Changed
