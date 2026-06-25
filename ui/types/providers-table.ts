@@ -1,4 +1,4 @@
-import { MetaDataProps } from "./components";
+import { MetaDataProps, ProviderGroup } from "./components";
 import { FilterOption } from "./filters";
 import {
   OrganizationResource,
@@ -86,6 +86,7 @@ export interface ProvidersAccountsViewData {
   filters: FilterOption[];
   metadata?: MetaDataProps;
   providers: ProviderProps[];
+  providerGroups: ProviderGroup[];
   rows: ProvidersTableRow[];
 }
 

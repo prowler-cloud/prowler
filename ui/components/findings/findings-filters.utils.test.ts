@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ProviderGroup } from "@/types/components";
 import { ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
@@ -7,6 +8,19 @@ import {
   buildFindingsFilterChips,
   getFindingsFilterDisplayValue,
 } from "./findings-filters.utils";
+
+const providerGroups: ProviderGroup[] = [
+  {
+    type: "provider-groups",
+    id: "group-1",
+    attributes: { name: "Production", inserted_at: "", updated_at: "" },
+    relationships: {
+      providers: { meta: { count: 0 }, data: [] },
+      roles: { meta: { count: 0 }, data: [] },
+    },
+    links: { self: "" },
+  },
+];
 
 function makeProvider(
   overrides: Partial<ProviderProps> & { id: string },
@@ -96,6 +110,24 @@ describe("getFindingsFilterDisplayValue", () => {
         { providers },
       ),
     ).toBe("missing-provider");
+  });
+
+  it("shows the provider group name for provider_groups filters instead of the raw group id", () => {
+    expect(
+      getFindingsFilterDisplayValue("filter[provider_groups__in]", "group-1", {
+        providerGroups,
+      }),
+    ).toBe("Production");
+  });
+
+  it("keeps the raw value when the provider group cannot be resolved", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[provider_groups__in]",
+        "missing-group",
+        { providerGroups },
+      ),
+    ).toBe("missing-group");
   });
 
   it("shows the resolved scan badge label for scan filters instead of formatting the raw scan id", () => {
@@ -226,6 +258,22 @@ describe("buildFindingsFilterChips", () => {
         label: "Delta",
         value: "new",
         displayValue: "New",
+      },
+    ]);
+  });
+
+  it("labels provider group chips and resolves their names", () => {
+    const chips = buildFindingsFilterChips(
+      { "filter[provider_groups__in]": ["group-1"] },
+      { providerGroups },
+    );
+
+    expect(chips).toEqual([
+      {
+        key: "filter[provider_groups__in]",
+        label: "Provider Group",
+        value: "group-1",
+        displayValue: "Production",
       },
     ]);
   });
