@@ -1,8 +1,10 @@
 "use client";
 
 import { Archive, Plus } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
+import { Modal } from "@/components/shadcn/modal";
 import { SearchInput } from "@/components/shadcn/search-input/search-input";
 import {
   Tooltip,
@@ -35,8 +37,23 @@ export function LighthouseV2SessionHistory({
   onArchiveSession,
   compact = false,
 }: LighthouseV2SessionHistoryProps) {
+  const [sessionPendingArchive, setSessionPendingArchive] =
+    useState<LighthouseV2Session | null>(null);
   const visibleSessions = filterSessionsBySearch(sessions, search);
   const groups = groupSessionsByDate(visibleSessions);
+
+  const handleArchiveModalOpenChange = (open: boolean) => {
+    if (!open) {
+      setSessionPendingArchive(null);
+    }
+  };
+
+  const handleConfirmArchive = () => {
+    if (!sessionPendingArchive) return;
+
+    onArchiveSession(sessionPendingArchive.id);
+    setSessionPendingArchive(null);
+  };
 
   return (
     <aside
@@ -113,7 +130,7 @@ export function LighthouseV2SessionHistory({
                         variant="bare"
                         size="icon-xs"
                         className="hover:text-text-neutral-secondary active:text-text-neutral-secondary absolute top-1/2 right-1 -translate-y-1/2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100"
-                        onClick={() => onArchiveSession(session.id)}
+                        onClick={() => setSessionPendingArchive(session)}
                       >
                         <Archive />
                       </Button>
@@ -125,6 +142,34 @@ export function LighthouseV2SessionHistory({
           </div>
         )}
       </div>
+
+      <Modal
+        open={Boolean(sessionPendingArchive)}
+        onOpenChange={handleArchiveModalOpenChange}
+        title="Are you absolutely sure?"
+        description="This action cannot be undone. This will archive this chat and remove it from your chat history."
+        size="md"
+      >
+        <div className="flex w-full justify-end gap-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            onClick={() => setSessionPendingArchive(null)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="lg"
+            onClick={handleConfirmArchive}
+          >
+            <Archive />
+            Archive
+          </Button>
+        </div>
+      </Modal>
     </aside>
   );
 }

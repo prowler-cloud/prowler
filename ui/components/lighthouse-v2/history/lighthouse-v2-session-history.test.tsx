@@ -192,6 +192,48 @@ describe("LighthouseV2SessionHistory", () => {
     );
   });
 
+  it("opens a confirmation modal before archiving a session", async () => {
+    // Given
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    const onArchiveSession = vi.fn();
+    renderHistory({
+      onArchiveSession,
+      sessions: [
+        session({
+          id: "session-today",
+          title: "Threat model review",
+          updatedAt: "2026-06-25T09:00:00Z",
+        }),
+      ],
+    });
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Archive Threat model review" }),
+    );
+
+    // Then
+    expect(onArchiveSession).not.toHaveBeenCalled();
+    const dialog = screen.getByRole("dialog", {
+      name: "Are you absolutely sure?",
+    });
+    expect(
+      within(dialog).getByText(
+        "This action cannot be undone. This will archive this chat and remove it from your chat history.",
+      ),
+    ).toBeInTheDocument();
+
+    // When
+    await user.click(within(dialog).getByRole("button", { name: "Archive" }));
+
+    // Then
+    expect(onArchiveSession).toHaveBeenCalledWith("session-today");
+    expect(
+      screen.queryByRole("dialog", { name: "Are you absolutely sure?" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows the full trimmed title in a right-side tooltip", async () => {
     // Given
     const fullTitle =
