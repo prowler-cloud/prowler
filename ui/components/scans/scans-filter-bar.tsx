@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/shadcn";
 import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import { FilterType } from "@/types/filters";
 import type { ProviderProps } from "@/types/providers";
 
 import {
@@ -46,8 +47,8 @@ export function ScansFilterBar({
     <>
       <ProviderAccountSelectors
         providers={providers}
-        accountFilterKey="provider_uid__in"
-        accountValue="uid"
+        accountFilterKey={FilterType.PROVIDER}
+        accountValue="id"
         paramsToDeleteOnChange={["page", "scanId"]}
         providerSelectorClassName={filterItemClass}
         accountSelectorClassName={filterItemClass}

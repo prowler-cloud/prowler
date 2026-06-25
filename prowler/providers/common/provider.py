@@ -587,6 +587,16 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif arguments.provider == "linode":
+                    # Credentials are read from the LINODE_TOKEN env var by the
+                    # provider itself; there are no credential CLI flags to
+                    # avoid leaking secrets.
+                    provider_class(
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                        regions=getattr(arguments, "region", None),
+                    )
                 else:
                     # Dynamic fallback: any external/custom provider.
                     # Honor the from_cli_args type hint (-> Provider): if the

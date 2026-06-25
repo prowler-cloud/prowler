@@ -5,10 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from api.sse.utils import tenant_id_from_channel
 from django_eventstream.channelmanager import DefaultChannelManager
 from rest_framework.request import Request
-
-from api.sse.utils import tenant_id_from_channel
 
 if TYPE_CHECKING:
     from api.models import User
@@ -41,7 +40,7 @@ class SSEChannelManager(DefaultChannelManager):
             if tenant_id_from_channel(channel) == request_tenant_id
         }
 
-    def can_read_channel(self, user: "User | None", channel: str) -> bool:
+    def can_read_channel(self, user: User | None, channel: str) -> bool:
         """Re-verify tenant membership once the stream is established.
 
         Args:

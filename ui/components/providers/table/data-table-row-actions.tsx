@@ -24,7 +24,6 @@ import {
   EDIT_SCAN_SCHEDULE_STATE,
   EditScanScheduleModal,
   type EditScanScheduleState,
-  type ScanScheduleProvider,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
 import {
   ActionDropdown,
@@ -49,6 +48,7 @@ import {
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
+  type ScanScheduleProvider,
   type ScheduleApiResponse,
 } from "@/types/schedules";
 
@@ -64,6 +64,10 @@ interface DataTableRowActionsProps {
   isRowSelected: boolean;
   /** IDs of all selected providers that have credentials (testable) */
   testableProviderIds: string[];
+  /** IDs of all selected providers that can receive schedule updates. */
+  selectedScheduleProviderIds?: string[];
+  /** Visible selected providers used as modal reference rows. */
+  selectedScheduleProviders?: ScanScheduleProvider[];
   /** Callback to clear the row selection after bulk operation */
   onClearSelection: () => void;
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
@@ -91,28 +95,56 @@ function collectTestableChildProviderIds(rows: ProvidersTableRow[]): string[] {
   return ids;
 }
 
+function collectChildScheduleProviders(
+  rows: ProvidersTableRow[],
+): ScanScheduleProvider[] {
+  const providers: ScanScheduleProvider[] = [];
+
+  for (const row of rows) {
+    if (row.rowType === PROVIDERS_ROW_TYPE.PROVIDER) {
+      providers.push({
+        providerId: row.id,
+        providerType: row.attributes.provider,
+        providerUid: row.attributes.uid,
+        providerAlias: row.attributes.alias,
+      });
+      continue;
+    }
+
+    providers.push(...collectChildScheduleProviders(row.subRows));
+  }
+
+  return providers;
+}
+
 interface OrgGroupDropdownActionsProps {
   rowData: ProvidersOrganizationRow;
   loading: boolean;
+  canEditSchedule: boolean;
   hasSelection: boolean;
   testableProviderIds: string[];
   childTestableIds: string[];
+  scheduleProviderCount: number;
   onClearSelection: () => void;
   onBulkTest: (ids: string[]) => Promise<void>;
   onTestChildConnections: () => Promise<void>;
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
+  onOpenScheduleEditor: () => void;
 }
 
 function OrgGroupDropdownActions({
   rowData,
   loading,
+  canEditSchedule,
   hasSelection,
   testableProviderIds,
   childTestableIds,
+  scheduleProviderCount,
   onClearSelection,
   onBulkTest,
   onTestChildConnections,
   onOpenOrganizationWizard,
+  onOpenScheduleEditor,
 }: OrgGroupDropdownActionsProps) {
   const [isDeleteOrgOpen, setIsDeleteOrgOpen] = useState(false);
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
@@ -191,6 +223,14 @@ function OrgGroupDropdownActions({
               />
             </>
           )}
+          {isOrgKind && canEditSchedule && (
+            <ActionDropdownItem
+              icon={<CalendarClock />}
+              label="Edit Scan Schedule"
+              onSelect={() => onOpenScheduleEditor()}
+              disabled={scheduleProviderCount === 0}
+            />
+          )}
           <ActionDropdownItem
             icon={<Rocket />}
             label={loading ? "Testing..." : `Test Connections (${testCount})`}
@@ -226,6 +266,8 @@ export function DataTableRowActions({
   hasSelection,
   isRowSelected,
   testableProviderIds,
+  selectedScheduleProviderIds = [],
+  selectedScheduleProviders = [],
   onClearSelection,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
@@ -266,6 +308,10 @@ export function DataTableRowActions({
   const childTestableIds = isOrganizationRow
     ? collectTestableChildProviderIds(rowData.subRows)
     : [];
+  const childScheduleProviders = isOrganizationRow
+    ? collectChildScheduleProviders(rowData.subRows)
+    : [];
+  const childScheduleProviderIds = isOrganizationRow ? rowData.providerIds : [];
 
   const handleBulkTest = async (ids: string[]) => {
     if (ids.length === 0) return;
@@ -329,8 +375,17 @@ export function DataTableRowActions({
     await handleBulkTest(childTestableIds);
   };
 
-  const openScheduleEditor = async () => {
-    if (!providerId) {
+  const openScheduleEditor = async (
+    targetProviders: ScanScheduleProvider[] = scheduleProvider
+      ? [scheduleProvider]
+      : [],
+    targetProviderIds: string[] = targetProviders.map(
+      (target) => target.providerId,
+    ),
+  ) => {
+    const targetProviderId = targetProviderIds[0];
+
+    if (!targetProviderId) {
       setScheduleState({
         kind: EDIT_SCAN_SCHEDULE_STATE.ERROR,
         message: "Provider ID is not available.",
@@ -342,7 +397,7 @@ export function DataTableRowActions({
     setScheduleState({ kind: EDIT_SCAN_SCHEDULE_STATE.LOADING });
     setIsScheduleOpen(true);
 
-    const response = (await getSchedule(providerId)) as
+    const response = (await getSchedule(targetProviderId)) as
       | ScheduleApiResponse
       | { error?: string };
 
@@ -367,38 +422,81 @@ export function DataTableRowActions({
   if (hasSelection && isRowSelected) {
     const bulkCount =
       testableProviderIds.length > 1 ? ` (${testableProviderIds.length})` : "";
+    const selectedScheduleProviderCount = selectedScheduleProviderIds.length;
 
     return (
-      <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown>
-          <ActionDropdownItem
-            icon={<Rocket />}
-            label={loading ? "Testing..." : `Test Connection${bulkCount}`}
-            onSelect={(e) => {
-              e.preventDefault();
-              handleTestConnection();
-            }}
-            disabled={testableProviderIds.length === 0 || loading}
-          />
-        </ActionDropdown>
-      </div>
+      <>
+        <EditScanScheduleModal
+          open={isScheduleOpen}
+          onOpenChange={setIsScheduleOpen}
+          providers={selectedScheduleProviders}
+          providerIds={selectedScheduleProviderIds}
+          targetName="Selected providers"
+          state={scheduleState}
+          onSaved={onClearSelection}
+        />
+        <div className="relative flex items-center justify-end gap-2">
+          <ActionDropdown>
+            {canEditSchedule && selectedScheduleProviderCount > 0 && (
+              <ActionDropdownItem
+                icon={<CalendarClock />}
+                label={`Edit Scan Schedule (${selectedScheduleProviderCount})`}
+                onSelect={() =>
+                  void openScheduleEditor(
+                    selectedScheduleProviders,
+                    selectedScheduleProviderIds,
+                  )
+                }
+              />
+            )}
+            <ActionDropdownItem
+              icon={<Rocket />}
+              label={loading ? "Testing..." : `Test Connection${bulkCount}`}
+              onSelect={(e) => {
+                e.preventDefault();
+                handleTestConnection();
+              }}
+              disabled={testableProviderIds.length === 0 || loading}
+            />
+          </ActionDropdown>
+        </div>
+      </>
     );
   }
 
   // Organization / Organization Unit row actions
   if (isProvidersOrganizationRow(rowData) && orgGroupKind) {
     return (
-      <OrgGroupDropdownActions
-        rowData={rowData}
-        loading={loading}
-        hasSelection={hasSelection}
-        testableProviderIds={testableProviderIds}
-        childTestableIds={childTestableIds}
-        onClearSelection={onClearSelection}
-        onBulkTest={handleBulkTest}
-        onTestChildConnections={handleTestChildConnections}
-        onOpenOrganizationWizard={onOpenOrganizationWizard}
-      />
+      <>
+        <EditScanScheduleModal
+          open={isScheduleOpen}
+          onOpenChange={setIsScheduleOpen}
+          providers={childScheduleProviders}
+          providerIds={childScheduleProviderIds}
+          targetName={rowData.name}
+          targetId={rowData.externalId ?? undefined}
+          state={scheduleState}
+        />
+        <OrgGroupDropdownActions
+          rowData={rowData}
+          loading={loading}
+          canEditSchedule={canEditSchedule}
+          hasSelection={hasSelection}
+          testableProviderIds={testableProviderIds}
+          childTestableIds={childTestableIds}
+          scheduleProviderCount={childScheduleProviderIds.length}
+          onClearSelection={onClearSelection}
+          onBulkTest={handleBulkTest}
+          onTestChildConnections={handleTestChildConnections}
+          onOpenOrganizationWizard={onOpenOrganizationWizard}
+          onOpenScheduleEditor={() =>
+            void openScheduleEditor(
+              childScheduleProviders,
+              childScheduleProviderIds,
+            )
+          }
+        />
+      </>
     );
   }
 
@@ -461,12 +559,11 @@ export function DataTableRowActions({
             icon={<Timer />}
             label="View Scan Jobs"
             onSelect={() => {
-              // Use the same key the scans filter bar binds to
-              // (`provider_uid__in`) so the provider is pre-selected in the UI,
-              // and URLSearchParams to encode UIDs that contain URL-unsafe chars
-              // (e.g. GitHub UIDs like https://github.com/org/repo).
+              // Same key the scans filter bar binds to (`provider__in`, by id) so
+              // the provider is pre-selected and the filter works on every tab,
+              // including Scheduled (whose endpoint only accepts provider id).
               const params = new URLSearchParams({
-                "filter[provider_uid__in]": providerUid,
+                "filter[provider__in]": providerId,
               });
               router.push(`/scans?${params.toString()}`);
             }}

@@ -45,18 +45,41 @@ coverage-html: ## Show Test Coverage
 	coverage html && \
 	open htmlcov/index.html
 
-##@ Linting
-format: ## Format Code
-	@echo "Running black..."
-	black .
+##@ Code Quality
+# `make` is the single entrypoint and mirrors CI exactly (uv run + same flags):
+#   SDK (prowler/, util/) -> flake8 + black + pylint
+#   API & MCP server      -> ruff (rules live in each project's pyproject.toml)
+# `format` applies fixes (incl. ruff's import/upgrade autofixes); `lint` only
+# verifies and is what CI gates on.
+.PHONY: format format-sdk format-api format-mcp lint lint-sdk lint-api lint-mcp
 
-lint: ## Lint Code
-	@echo "Running flake8..."
-	flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude .venv,contrib
-	@echo "Running black... "
-	black --check .
-	@echo "Running pylint..."
-	pylint --disable=W,C,R,E -j 0 prowler util
+format: format-sdk format-api format-mcp ## Format & autofix all components (SDK, API, MCP)
+
+lint: lint-sdk lint-api lint-mcp ## Lint all components (SDK, API, MCP) — mirrors CI
+
+format-sdk: ## Format SDK code (black)
+	uv run black --exclude "\.venv|api|ui|skills|mcp_server" .
+
+lint-sdk: ## Lint SDK code (flake8, black --check, pylint)
+	uv run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude .venv,contrib,ui,api,skills,mcp_server
+	uv run black --exclude "\.venv|api|ui|skills|mcp_server" --check .
+	uv run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/
+
+format-api: ## Format & autofix API code (ruff)
+	cd api && uv run ruff check . --exclude contrib --fix
+	cd api && uv run ruff format . --exclude contrib
+
+lint-api: ## Lint API code (ruff check + format --check)
+	cd api && uv run ruff check . --exclude contrib
+	cd api && uv run ruff format --check . --exclude contrib
+
+format-mcp: ## Format & autofix MCP server code (ruff)
+	cd mcp_server && uv run ruff check . --fix
+	cd mcp_server && uv run ruff format .
+
+lint-mcp: ## Lint MCP server code (ruff check + format --check)
+	cd mcp_server && uv run ruff check .
+	cd mcp_server && uv run ruff format --check .
 
 ##@ PyPI
 pypi-clean: ## Delete the distribution files

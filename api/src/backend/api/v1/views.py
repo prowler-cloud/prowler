@@ -7,7 +7,7 @@ import time
 import uuid
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
@@ -16,100 +16,6 @@ from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
-from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain, states
-from celery.result import AsyncResult
-from config.custom_logging import BackendLogger
-from config.env import env
-from config.version import RELEASE_ID
-from config.settings.social_login import (
-    GITHUB_OAUTH_CALLBACK_URL,
-    GOOGLE_OAUTH_CALLBACK_URL,
-)
-from dj_rest_auth.registration.views import SocialLoginView
-from django.conf import settings as django_settings
-from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
-from django.contrib.postgres.search import SearchQuery
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import transaction
-from django.db.models import (
-    BooleanField,
-    Case,
-    CharField,
-    Count,
-    DecimalField,
-    Exists,
-    ExpressionWrapper,
-    F,
-    IntegerField,
-    Max,
-    Min,
-    OuterRef,
-    Prefetch,
-    Q,
-    QuerySet,
-    Subquery,
-    Sum,
-    Value,
-    When,
-    Window,
-)
-from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, Coalesce, RowNumber
-from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.utils.dateparse import parse_date
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_control
-from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
-from drf_spectacular.settings import spectacular_settings
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (
-    OpenApiParameter,
-    OpenApiResponse,
-    extend_schema,
-    extend_schema_view,
-)
-from drf_spectacular.views import SpectacularAPIView
-from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
-from rest_framework import permissions, status
-from rest_framework.decorators import action
-from rest_framework.exceptions import (
-    MethodNotAllowed,
-    NotFound,
-    PermissionDenied,
-    ValidationError,
-)
-from rest_framework.generics import GenericAPIView, get_object_or_404
-from rest_framework.permissions import SAFE_METHODS
-from rest_framework_json_api import filters as jsonapi_filters
-from rest_framework_json_api.views import RelationshipView, Response
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
-from tasks.beat import schedule_provider_scan
-from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
-from tasks.tasks import (
-    backfill_compliance_summaries_task,
-    backfill_scan_resource_summaries_task,
-    check_integration_connection_task,
-    check_lighthouse_connection_task,
-    check_lighthouse_provider_connection_task,
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    jira_integration_task,
-    mute_historical_findings_task,
-    perform_scan_task,
-    reaggregate_all_finding_group_summaries_task,
-    refresh_lighthouse_provider_models_task,
-)
-
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
@@ -328,12 +234,105 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
+from celery import chain, states
+from celery.result import AsyncResult
+from config.custom_logging import BackendLogger
+from config.env import env
+from config.settings.social_login import (
+    GITHUB_OAUTH_CALLBACK_URL,
+    GOOGLE_OAUTH_CALLBACK_URL,
+)
+from config.version import RELEASE_ID
+from dj_rest_auth.registration.views import SocialLoginView
+from django.conf import settings as django_settings
+from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
+from django.contrib.postgres.search import SearchQuery
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
+from django.db.models import (
+    BooleanField,
+    Case,
+    CharField,
+    Count,
+    DecimalField,
+    Exists,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Max,
+    Min,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+    Subquery,
+    Sum,
+    Value,
+    When,
+    Window,
+)
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Coalesce, RowNumber
+from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.dateparse import parse_date
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
+from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
+from drf_spectacular.settings import spectacular_settings
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
+from drf_spectacular.views import SpectacularAPIView
+from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAssumeRoleError,
     AWSCredentialsError,
 )
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
+)
+from rest_framework import permissions, status
+from rest_framework.decorators import action
+from rest_framework.exceptions import (
+    MethodNotAllowed,
+    NotFound,
+    PermissionDenied,
+    ValidationError,
+)
+from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.permissions import SAFE_METHODS
+from rest_framework_json_api import filters as jsonapi_filters
+from rest_framework_json_api.views import RelationshipView, Response
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.export import get_s3_client
+from tasks.tasks import (
+    backfill_compliance_summaries_task,
+    backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
+    check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    jira_integration_task,
+    mute_historical_findings_task,
+    perform_scan_task,
+    reaggregate_all_finding_group_summaries_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -3350,9 +3349,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             date_filters = {}
             if exact:
                 date = parse_date(exact)
-                datetime_start = datetime.combine(
-                    date, datetime.min.time(), tzinfo=timezone.utc
-                )
+                datetime_start = datetime.combine(date, datetime.min.time(), tzinfo=UTC)
                 datetime_end = datetime_start + timedelta(days=1)
                 date_filters["scan_id__gte"] = uuid7_start(
                     datetime_to_uuid7(datetime_start)
@@ -3364,7 +3361,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 if gte:
                     date_start = parse_date(gte)
                     datetime_start = datetime.combine(
-                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                        date_start, datetime.min.time(), tzinfo=UTC
                     )
                     date_filters["scan_id__gte"] = uuid7_start(
                         datetime_to_uuid7(datetime_start)
@@ -3374,7 +3371,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     datetime_end = datetime.combine(
                         date_end + timedelta(days=1),
                         datetime.min.time(),
-                        tzinfo=timezone.utc,
+                        tzinfo=UTC,
                     )
                     date_filters["scan_id__lt"] = uuid7_start(
                         datetime_to_uuid7(datetime_end)
@@ -3418,7 +3415,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             groups__isnull=False,
         ).values_list("groups", flat=True)
         groups = sorted(
-            set(g for groups_list in all_groups if groups_list for g in groups_list)
+            {g for groups_list in all_groups if groups_list for g in groups_list}
         )
 
         result = {
@@ -3488,7 +3485,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             groups__isnull=False,
         ).values_list("groups", flat=True)
         groups = sorted(
-            set(g for groups_list in all_groups if groups_list for g in groups_list)
+            {g for groups_list in all_groups if groups_list for g in groups_list}
         )
 
         result = {
@@ -3915,9 +3912,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             date_filters = {}
             if exact:
                 date = parse_date(exact)
-                datetime_start = datetime.combine(
-                    date, datetime.min.time(), tzinfo=timezone.utc
-                )
+                datetime_start = datetime.combine(date, datetime.min.time(), tzinfo=UTC)
                 datetime_end = datetime_start + timedelta(days=1)
                 date_filters["scan_id__gte"] = uuid7_start(
                     datetime_to_uuid7(datetime_start)
@@ -3929,7 +3924,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 if gte:
                     date_start = parse_date(gte)
                     datetime_start = datetime.combine(
-                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                        date_start, datetime.min.time(), tzinfo=UTC
                     )
                     date_filters["scan_id__gte"] = uuid7_start(
                         datetime_to_uuid7(datetime_start)
@@ -3939,7 +3934,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     datetime_end = datetime.combine(
                         date_end + timedelta(days=1),
                         datetime.min.time(),
-                        tzinfo=timezone.utc,
+                        tzinfo=UTC,
                     )
                     date_filters["scan_id__lt"] = uuid7_start(
                         datetime_to_uuid7(datetime_end)

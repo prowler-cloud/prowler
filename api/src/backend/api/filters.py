@@ -1,19 +1,4 @@
-from datetime import date, datetime, timedelta, timezone
-
-from dateutil.parser import parse
-from django.conf import settings
-from django.db.models import F, Q
-from django_filters.rest_framework import (
-    BaseInFilter,
-    BooleanFilter,
-    CharFilter,
-    ChoiceFilter,
-    DateFilter,
-    FilterSet,
-    UUIDFilter,
-)
-from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
-from rest_framework_json_api.serializers import ValidationError
+from datetime import UTC, date, datetime, timedelta
 
 from api.constants import SEVERITY_ORDER
 from api.db_utils import (
@@ -68,6 +53,20 @@ from api.uuid_utils import (
     uuid7_start,
 )
 from api.v1.serializers import TaskBase
+from dateutil.parser import parse
+from django.conf import settings
+from django.db.models import F, Q
+from django_filters.rest_framework import (
+    BaseInFilter,
+    BooleanFilter,
+    CharFilter,
+    ChoiceFilter,
+    DateFilter,
+    FilterSet,
+    UUIDFilter,
+)
+from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
+from rest_framework_json_api.serializers import ValidationError
 
 
 class CustomDjangoFilterBackend(DjangoFilterBackend):
@@ -598,12 +597,12 @@ class ResourceFilter(ProviderRelationshipFilterSet):
         gte_date = (
             parse(self.data.get("updated_at__gte")).date()
             if self.data.get("updated_at__gte")
-            else datetime.now(timezone.utc).date()
+            else datetime.now(UTC).date()
         )
         lte_date = (
             parse(self.data.get("updated_at__lte")).date()
             if self.data.get("updated_at__lte")
-            else datetime.now(timezone.utc).date()
+            else datetime.now(UTC).date()
         )
 
         if abs(lte_date - gte_date) > timedelta(
@@ -748,9 +747,9 @@ class FindingFilter(CommonFindingFilters):
         lte_date = cleaned.get("inserted_at__lte") or exact_date
 
         if gte_date is None:
-            gte_date = datetime.now(timezone.utc).date()
+            gte_date = datetime.now(UTC).date()
         if lte_date is None:
-            lte_date = datetime.now(timezone.utc).date()
+            lte_date = datetime.now(UTC).date()
 
         if abs(lte_date - gte_date) > timedelta(
             days=settings.FINDINGS_MAX_DAYS_IN_RANGE
@@ -844,7 +843,7 @@ class FindingFilter(CommonFindingFilters):
     def maybe_date_to_datetime(value):
         dt = value
         if isinstance(value, date):
-            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=UTC)
         return dt
 
 
@@ -933,9 +932,9 @@ class FindingGroupFilter(CommonFindingFilters):
         lte_date = cleaned.get("inserted_at__lte") or exact_date
 
         if gte_date is None:
-            gte_date = datetime.now(timezone.utc).date()
+            gte_date = datetime.now(UTC).date()
         if lte_date is None:
-            lte_date = datetime.now(timezone.utc).date()
+            lte_date = datetime.now(UTC).date()
 
         if abs(lte_date - gte_date) > timedelta(
             days=settings.FINDINGS_MAX_DAYS_IN_RANGE
@@ -977,7 +976,7 @@ class FindingGroupFilter(CommonFindingFilters):
         """Convert date to datetime if needed."""
         dt = value
         if isinstance(value, date):
-            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=UTC)
         return dt
 
 
@@ -1091,9 +1090,9 @@ class FindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
         lte_date = cleaned.get("inserted_at__lte") or exact_date
 
         if gte_date is None:
-            gte_date = datetime.now(timezone.utc).date()
+            gte_date = datetime.now(UTC).date()
         if lte_date is None:
-            lte_date = datetime.now(timezone.utc).date()
+            lte_date = datetime.now(UTC).date()
 
         if abs(lte_date - gte_date) > timedelta(
             days=settings.FINDINGS_MAX_DAYS_IN_RANGE
@@ -1132,7 +1131,7 @@ class FindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     def _maybe_date_to_datetime(value):
         dt = value
         if isinstance(value, date):
-            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=UTC)
         return dt
 
 

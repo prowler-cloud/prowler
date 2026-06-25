@@ -1,6 +1,5 @@
-from api.attack_paths.queries.types import AttackPathsQueryDefinition
 from api.attack_paths.queries.aws import AWS_QUERIES
-
+from api.attack_paths.queries.types import AttackPathsQueryDefinition
 
 # Query definitions organized by provider
 _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {

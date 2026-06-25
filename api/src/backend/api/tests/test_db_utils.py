@@ -1,14 +1,8 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from unittest.mock import MagicMock, patch
 
 import pytest
-from django.conf import settings
-from django.db import DEFAULT_DB_ALIAS, OperationalError
-from freezegun import freeze_time
-from psycopg2 import sql as psycopg2_sql
-from rest_framework_json_api.serializers import ValidationError
-
 from api.db_utils import (
     POSTGRES_TENANT_VAR,
     PostgresEnumMigration,
@@ -23,6 +17,11 @@ from api.db_utils import (
     update_objects_in_batches,
 )
 from api.models import Provider
+from django.conf import settings
+from django.db import DEFAULT_DB_ALIAS, OperationalError
+from freezegun import freeze_time
+from psycopg2 import sql as psycopg2_sql
+from rest_framework_json_api.serializers import ValidationError
 
 
 @pytest.fixture
@@ -94,18 +93,16 @@ class TestEnumToChoices:
 class TestOneWeekFromNow:
     def test_one_week_from_now(self):
         with patch("api.db_utils.datetime") as mock_datetime:
-            mock_datetime.now.return_value = datetime(2023, 1, 1, tzinfo=timezone.utc)
-            expected_result = datetime(2023, 1, 8, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = datetime(2023, 1, 1, tzinfo=UTC)
+            expected_result = datetime(2023, 1, 8, tzinfo=UTC)
 
             result = one_week_from_now()
             assert result == expected_result
 
     def test_one_week_from_now_with_timezone(self):
         with patch("api.db_utils.datetime") as mock_datetime:
-            mock_datetime.now.return_value = datetime(
-                2023, 6, 15, 12, 0, tzinfo=timezone.utc
-            )
-            expected_result = datetime(2023, 6, 22, 12, 0, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = datetime(2023, 6, 15, 12, 0, tzinfo=UTC)
+            expected_result = datetime(2023, 6, 22, 12, 0, tzinfo=UTC)
 
             result = one_week_from_now()
             assert result == expected_result
@@ -939,9 +936,9 @@ class TestPostgresEnumMigration:
 
         mock_cursor.execute.assert_called_once()
         query_arg = mock_cursor.execute.call_args[0][0]
-        assert isinstance(
-            query_arg, psycopg2_sql.Composable
-        ), "create_enum_type must pass a psycopg2.sql.Composable, not a raw string."
+        assert isinstance(query_arg, psycopg2_sql.Composable), (
+            "create_enum_type must pass a psycopg2.sql.Composable, not a raw string."
+        )
         # Verify the composed SQL structure: CREATE TYPE <Identifier> AS ENUM (<Literals>)
         parts = query_arg.seq
         assert parts[0] == psycopg2_sql.SQL("CREATE TYPE ")
@@ -962,9 +959,9 @@ class TestPostgresEnumMigration:
 
         mock_cursor.execute.assert_called_once()
         query_arg = mock_cursor.execute.call_args[0][0]
-        assert isinstance(
-            query_arg, psycopg2_sql.Composable
-        ), "drop_enum_type must pass a psycopg2.sql.Composable, not a raw string."
+        assert isinstance(query_arg, psycopg2_sql.Composable), (
+            "drop_enum_type must pass a psycopg2.sql.Composable, not a raw string."
+        )
         # Verify the composed SQL structure: DROP TYPE <Identifier>
         parts = query_arg.seq
         assert parts[0] == psycopg2_sql.SQL("DROP TYPE ")

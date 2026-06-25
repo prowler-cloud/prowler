@@ -32,6 +32,7 @@ export interface CustomDropdownFilterProps {
 export enum FilterType {
   SCAN = "scan__in",
   PROVIDER = "provider__in",
+  PROVIDER_ID = "provider_id__in",
   PROVIDER_UID = "provider_uid__in",
   PROVIDER_TYPE = "provider_type__in",
   REGION = "region__in",
@@ -45,6 +46,15 @@ export enum FilterType {
   CATEGORY = "category__in",
   RESOURCE_GROUPS = "resource_groups__in",
 }
+
+/**
+ * Filter keys the account selectors accept: a provider id (`provider__in` /
+ * `provider_id__in`) or the cloud account uid (`provider_uid__in`).
+ */
+export type AccountFilterKey =
+  | FilterType.PROVIDER
+  | FilterType.PROVIDER_ID
+  | FilterType.PROVIDER_UID;
 
 /**
  * Controls the filter dispatch behavior of DataTableFilterCustom.
