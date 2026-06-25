@@ -50,8 +50,13 @@ class Test_evaluate_config_constraints:
             CONSTRAINTS, {"max_unused_access_keys_days": 120}
         )
         assert is_ok is False
+        # Product-facing message: names the check, the applied value, what the
+        # requirement needs and how to fix it, in plain language.
+        assert reason.startswith(CONFIG_NOT_VALID_PREFIX)
+        assert "iam_user_accesskey_unused" in reason
         assert "max_unused_access_keys_days" in reason
-        assert "120" in reason
+        assert "set to 120" in reason
+        assert "45 or lower" in reason
 
     def test_gte_operator(self):
         c = [{"Check": "c", "ConfigKey": "k", "Operator": "gte", "Value": 10}]
@@ -149,7 +154,9 @@ class Test_evaluate_config_constraints:
         ]
         is_ok, reason = evaluate_config_constraints(constraints, {"k1": 45, "k2": 90})
         assert is_ok is False
-        assert "b.k2" in reason
+        # The first violation (check "b", key "k2", applied 90) is the one reported.
+        assert "k2" in reason
+        assert "set to 90" in reason
 
 
 class Test_provider_scoping:
@@ -352,11 +359,14 @@ class Test_apply_config_status:
     def test_compliant_keeps_finding(self):
         assert apply_config_status("PASS", "ext", (True, "")) == ("PASS", "ext")
 
-    def test_invalid_config_forces_fail_and_prefixes_reason(self):
-        status, extended = apply_config_status("PASS", "ext", (False, "bad config"))
+    def test_invalid_config_forces_fail_and_prepends_reason(self):
+        # The reason already carries the full product-facing message; it is
+        # prepended verbatim to the finding's extended status.
+        reason = f"{CONFIG_NOT_VALID_PREFIX} bad config"
+        status, extended = apply_config_status("PASS", "ext", (False, reason))
         assert status == "FAIL"
         assert extended.startswith(CONFIG_NOT_VALID_PREFIX)
-        assert "bad config" in extended
+        assert reason in extended
         assert "ext" in extended
 
 
@@ -371,8 +381,13 @@ class Test_get_effective_status:
 
 class Test_get_scan_audit_config:
     def test_returns_empty_without_global_provider(self):
-        # No global provider set in this unit-test context → safe empty mapping.
-        assert get_scan_audit_config() == {}
+        # No global provider set → get_global_provider() returns None →
+        # ``None.audit_config`` raises AttributeError → safe empty mapping.
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=None,
+        ):
+            assert get_scan_audit_config() == {}
 
 
 class Test_get_scan_provider_type:

@@ -51,11 +51,11 @@ class Test_ENS_AWS_Config_Requirements:
         rows = _rows_for(_REQUIREMENT_ID, findings, {"mute_non_default_regions": True})
         assert rows, f"expected a row for requirement {_REQUIREMENT_ID}"
         assert all(r.Status == "FAIL" for r in rows)
-        assert all("CONFIG NOT VALID" in r.StatusExtended for r in rows)
+        assert all("Configuration not valid" in r.StatusExtended for r in rows)
 
     def test_default_config_keeps_finding_status(self):
         findings = [_finding("config_recorder_all_regions_enabled", "PASS")]
         rows = _rows_for(_REQUIREMENT_ID, findings, {})
         assert rows
         assert all(r.Status == "PASS" for r in rows)
-        assert all("CONFIG NOT VALID" not in r.StatusExtended for r in rows)
+        assert all("Configuration not valid" not in r.StatusExtended for r in rows)

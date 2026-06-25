@@ -349,7 +349,7 @@ class Compliance_Requirement_ConfigConstraint(BaseModel):
         Without this, a mistyped value (e.g. ``gte`` with a list, or ``subset``
         with a scalar) is not rejected at load time and ``_check_operator``
         silently treats it as *not satisfied*, forcing the requirement to a
-        spurious ``[CONFIG NOT VALID]`` FAIL. Validating here turns that into a
+        spurious config-not-valid FAIL. Validating here turns that into a
         clear error when the framework is loaded.
         """
         operator = values.get("Operator")

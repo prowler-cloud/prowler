@@ -60,7 +60,7 @@ class Test_CIS_Azure_Subset_Constraint:
         )
         assert rows, f"expected a row for requirement {_REQUIREMENT_ID}"
         assert all(r.Status == "FAIL" for r in rows)
-        assert all("CONFIG NOT VALID" in r.StatusExtended for r in rows)
+        assert all("Configuration not valid" in r.StatusExtended for r in rows)
 
     def test_secure_allowlist_keeps_pass(self):
         rows = _rows_for(

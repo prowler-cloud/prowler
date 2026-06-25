@@ -4,7 +4,7 @@ OCSF is the universal output path every framework renders through, so it is the
 natural place to exercise the requirement-level config override end to end across
 all operators. When a requirement's configurable check ran with a config too
 loose to trust, the Compliance status must be FAIL (even on a PASS finding) and
-the message must carry the ``[CONFIG NOT VALID]`` prefix. The Check status keeps
+the message must carry the ``Configuration not valid`` marker. The Check status keeps
 the real finding status.
 """
 
@@ -173,7 +173,7 @@ class Test_OCSF_Config_Requirements:
     def test_violating_config_fails_requirement(self, check, constraint, bad, ok):
         cf = _run(check, constraint, bad)
         assert cf.compliance.status_id == ComplianceStatusID.Fail
-        assert "[CONFIG NOT VALID]" in cf.message
+        assert "Configuration not valid" in cf.message
 
     @pytest.mark.parametrize(
         "check,constraint,bad,ok",
@@ -183,7 +183,7 @@ class Test_OCSF_Config_Requirements:
     def test_valid_config_keeps_pass(self, check, constraint, bad, ok):
         cf = _run(check, constraint, ok)
         assert cf.compliance.status_id == ComplianceStatusID.Pass
-        assert "[CONFIG NOT VALID]" not in cf.message
+        assert "Configuration not valid" not in cf.message
 
     def test_absent_config_assumes_default_ok(self):
         check, constraint, _bad, _ok = _CASES[0]

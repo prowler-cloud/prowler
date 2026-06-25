@@ -17,9 +17,72 @@ lives in one place.
 
 from typing import Any, Optional
 
-# Prefix prepended to a finding's ``status_extended`` when its requirement's
-# config constraints are not satisfied and the status is forced to FAIL.
-CONFIG_NOT_VALID_PREFIX = "[CONFIG NOT VALID]"
+# Leading sentence of the message prepended to a finding's ``status_extended``
+# when its requirement's config constraints are not satisfied and the status is
+# forced to FAIL. It opens every config-not-valid message, so it doubles as a
+# stable marker for detecting the case programmatically.
+CONFIG_NOT_VALID_PREFIX = "Configuration not valid for this requirement."
+
+
+def _format_value(value: Any) -> str:
+    """Render a constraint value for a user-facing message (lists comma-joined)."""
+    if isinstance(value, (list, tuple, set)):
+        return ", ".join(str(item) for item in value)
+    return str(value)
+
+
+def _describe_violation(
+    check: Any, config_key: Any, applied: Any, operator: str, expected: Any
+) -> str:
+    """Return a product-friendly explanation of why a config violates a constraint.
+
+    The message names the check and config key, the value the scan applied, what
+    the requirement needs, and how to fix it, in plain language rather than the
+    operator/value pair.
+
+    Args:
+        check: the check the requirement maps to (e.g. ``iam_user_accesskey_unused``).
+        config_key: the config option that was too loose (e.g. ``max_unused_access_keys_days``).
+        applied: the value the scan actually applied.
+        operator: the constraint operator (``lte``/``gte``/``eq``/``in``/``subset``/``superset``).
+        expected: the value the requirement expects.
+
+    Returns:
+        A full, human-readable message ending with an actionable fix.
+    """
+    applied_str = _format_value(applied)
+    expected_str = _format_value(expected)
+    needs, fix = {
+        "lte": (
+            f"a value of {expected_str} or lower",
+            f"Update it to {expected_str} or lower.",
+        ),
+        "gte": (
+            f"a value of {expected_str} or higher",
+            f"Update it to {expected_str} or higher.",
+        ),
+        "eq": (
+            f"it set to {expected_str}",
+            f"Update it to {expected_str}.",
+        ),
+        "in": (
+            f"it set to one of {expected_str}",
+            f"Update it to one of {expected_str}.",
+        ),
+        "subset": (
+            f"it limited to {expected_str}",
+            f"Remove any value that is not in {expected_str}.",
+        ),
+        "superset": (
+            f"it to include {expected_str}",
+            f"Make sure it includes {expected_str}.",
+        ),
+    }.get(operator, (f"a different value (expected {operator} {expected_str})", ""))
+    message = (
+        f"{CONFIG_NOT_VALID_PREFIX} The check {check} has {config_key} set to "
+        f"{applied_str}, but the requirement needs {needs}."
+    )
+    return f"{message} {fix}".strip()
 
 
 def _check_operator(applied: Any, operator: str, expected: Any) -> bool:
@@ -118,10 +181,7 @@ def evaluate_config_constraints(
 
         applied = audit_config[config_key]
         if not _check_operator(applied, operator, expected):
-            reason = (
-                f"config not valid for requirement: {check}.{config_key}="
-                f"{applied!r} does not satisfy {operator} {expected!r}"
-            )
+            reason = _describe_violation(check, config_key, applied, operator, expected)
             return False, reason
 
     return True, ""
@@ -286,7 +346,7 @@ def apply_config_status(
         return status, status_extended
     return (
         "FAIL",
-        f"{CONFIG_NOT_VALID_PREFIX} {config_status[1]}. {status_extended}",
+        f"{config_status[1]} {status_extended}".strip(),
     )
 
 

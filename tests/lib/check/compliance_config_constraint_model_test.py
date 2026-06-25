@@ -71,7 +71,7 @@ class Test_Compliance_Requirement_ConfigConstraint:
     )
     def test_value_type_inconsistent_with_operator_rejected(self, operator, value):
         # A mistyped Value would otherwise be silently treated as "not satisfied"
-        # at runtime, forcing a spurious [CONFIG NOT VALID] FAIL.
+        # at runtime, forcing a spurious config-not-valid FAIL.
         with pytest.raises(ValidationError):
             Compliance_Requirement_ConfigConstraint(
                 Check="c", ConfigKey="k", Operator=operator, Value=value

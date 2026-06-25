@@ -49,14 +49,14 @@ class Test_CIS_AWS_Config_Requirements:
         rows = _rows_for("2.11", findings, {"max_unused_access_keys_days": 120})
         assert rows, "expected a row for requirement 2.11"
         assert all(r.Status == "FAIL" for r in rows)
-        assert all("CONFIG NOT VALID" in r.StatusExtended for r in rows)
+        assert all("Configuration not valid" in r.StatusExtended for r in rows)
 
     def test_valid_config_keeps_finding_status(self):
         findings = [_finding("iam_user_accesskey_unused", "PASS")]
         rows = _rows_for("2.11", findings, {"max_unused_access_keys_days": 45})
         assert rows
         assert all(r.Status == "PASS" for r in rows)
-        assert all("CONFIG NOT VALID" not in r.StatusExtended for r in rows)
+        assert all("Configuration not valid" not in r.StatusExtended for r in rows)
 
     def test_absent_config_assumes_default_ok(self):
         findings = [_finding("iam_user_accesskey_unused", "PASS")]
@@ -80,7 +80,7 @@ class Test_CIS_AWS_Config_Requirements:
         rows = _rows_for("5.16", findings, {"mute_non_default_regions": True})
         assert rows, "expected a row for requirement 5.16"
         assert all(r.Status == "FAIL" for r in rows)
-        assert all("CONFIG NOT VALID" in r.StatusExtended for r in rows)
+        assert all("Configuration not valid" in r.StatusExtended for r in rows)
 
     def test_region_mute_constraint_default_passes(self):
         findings = [_finding("securityhub_enabled", "PASS")]

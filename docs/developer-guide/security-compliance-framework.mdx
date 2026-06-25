@@ -541,7 +541,7 @@ All evaluation lives in one shared module, `prowler/lib/check/compliance_config_
 2. For each requirement that declares constraints, `evaluate_config_constraints()` walks the list and returns `(is_compliant, reason)`. The requirement is compliant when **every** explicitly-set key satisfies its constraint.
 3. A constraint tagged with a `Provider` that does **not** match the provider being scanned (resolved via `get_scan_provider_type()`) is **skipped**. This scopes a universal framework's constraints to the right provider, so a guardrail authored for an AWS check never affects a GCP or Azure scan of the same requirement. Untagged constraints (legacy single-provider frameworks) always apply.
 4. A constraint whose `ConfigKey` is **not present** in `audit_config` is **skipped** — the check's built-in default is assumed to already match what the requirement expects. This is why nothing changes for the default configuration.
-5. When a constraint is violated, the finding's status is overridden to `FAIL` and `status_extended` is prefixed with `[CONFIG NOT VALID]` plus the reason (via `apply_config_status()`). For the table generators, `get_effective_status()` applies the same FAIL roll-up so per-section counts stay consistent.
+5. When a constraint is violated, the finding's status is overridden to `FAIL` and a plain-language explanation is prepended to `status_extended` (via `apply_config_status()`). The message opens with `Configuration not valid for this requirement.` and names the check, the value the scan applied, what the requirement needs and how to fix it. For the table generators, `get_effective_status()` applies the same FAIL roll-up so per-section counts stay consistent.
 
 <Warning>
 Guardrails only ever make a result **stricter** (they can turn PASS into FAIL); they never relax a real FAIL into PASS. A requirement with no constraints, or whose keys all use defaults, is reported exactly as before.
@@ -622,12 +622,13 @@ With a loosened config, the affected requirement's findings report:
 
 ```text
 Status:         FAIL
-StatusExtended: [CONFIG NOT VALID] config not valid for requirement:
-                iam_user_accesskey_unused.max_unused_access_keys_days=120
-                does not satisfy lte 45. <original status_extended>
+StatusExtended: Configuration not valid for this requirement. The check
+                iam_user_accesskey_unused has max_unused_access_keys_days set
+                to 120, but the requirement needs a value of 45 or lower.
+                Update it to 45 or lower. <original status_extended>
 ```
 
-The `[CONFIG NOT VALID]` prefix appears identically across the CSV, OCSF, and console-table outputs.
+The same `Configuration not valid for this requirement.` message appears identically across the CSV, OCSF, and console-table outputs.
 
 ### Authoring guidelines
 
