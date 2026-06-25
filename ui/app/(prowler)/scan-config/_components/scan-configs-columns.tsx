@@ -13,7 +13,7 @@ export const createScanConfigsColumns = (
   onDelete: (config: ScanConfigData) => void,
 ): ColumnDef<ScanConfigData>[] => [
   {
-    accessorKey: "name",
+    accessorKey: "attributes.name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
@@ -26,7 +26,7 @@ export const createScanConfigsColumns = (
     ),
   },
   {
-    accessorKey: "providers_count",
+    id: "providers_count",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Accounts" />
     ),
@@ -47,7 +47,7 @@ export const createScanConfigsColumns = (
     enableSorting: false,
   },
   {
-    accessorKey: "updated_at",
+    accessorKey: "attributes.updated_at",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Updated" />
     ),

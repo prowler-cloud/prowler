@@ -23,16 +23,20 @@ export interface ScanConfigErrors {
   general?: string;
 }
 
+export interface ScanConfigRequestAttributes {
+  name: string;
+  configuration: Record<string, unknown>;
+  provider_ids: string[];
+}
+
+export interface ScanConfigRequestData {
+  type: "scan-configs";
+  id?: string;
+  attributes: ScanConfigRequestAttributes;
+}
+
 export interface ScanConfigRequestBody {
-  data: {
-    type: "scan-configs";
-    id?: string;
-    attributes: {
-      name: string;
-      configuration: Record<string, unknown>;
-      provider_ids: string[];
-    };
-  };
+  data: ScanConfigRequestData;
 }
 
 export type ScanConfigActionState = {

@@ -745,6 +745,6 @@ export const scanConfigFormSchema = z.object({
         });
       }
     }),
-  provider_ids: z.array(z.string().uuid()).optional().default([]),
+  provider_ids: z.array(z.uuid()).optional().default([]),
   id: z.string().optional(),
 });

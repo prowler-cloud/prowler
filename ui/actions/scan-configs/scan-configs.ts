@@ -2,6 +2,7 @@
 
 import yaml from "js-yaml";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { scanConfigFormSchema } from "@/types/formSchemas";
@@ -14,6 +15,10 @@ import {
 } from "@/types/scan-configs";
 
 const SCAN_CONFIG_PATH = "/scan-config";
+
+// Scan Config IDs are UUIDs. Validate before interpolating into request URLs so
+// a malformed/crafted value can't inject path segments (SSRF / path injection).
+const scanConfigIdSchema = z.uuid();
 
 const parseConfiguration = (value: string): Record<string, unknown> => {
   // Backend (YamlOrJsonField) accepts either a YAML string or a JSON object.
@@ -132,6 +137,11 @@ export const updateScanConfig = async (
   if (!id) {
     return { errors: { general: "Scan Config ID is required for update" } };
   }
+  const idResult = scanConfigIdSchema.safeParse(String(id));
+  if (!idResult.success) {
+    return { errors: { general: "Invalid Scan Config ID" } };
+  }
+  const validId = idResult.data;
   const headers = await getAuthHeaders({ contentType: true });
   const formDataObject = {
     name: formData.get("name"),
@@ -166,11 +176,11 @@ export const updateScanConfig = async (
   }
 
   try {
-    const url = new URL(`${apiBaseUrl}/scan-configs/${id}`);
+    const url = new URL(`${apiBaseUrl}/scan-configs/${validId}`);
     const bodyData: ScanConfigRequestBody = {
       data: {
         type: "scan-configs",
-        id: String(id),
+        id: validId,
         attributes: {
           name,
           configuration: parsedConfig,
@@ -262,8 +272,10 @@ export const listScanConfigs = async (): Promise<ScanConfigData[]> => {
 export const getScanConfig = async (
   id: string,
 ): Promise<ScanConfigData | undefined> => {
+  const idResult = scanConfigIdSchema.safeParse(id);
+  if (!idResult.success) return undefined;
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/scan-configs/${id}`);
+  const url = new URL(`${apiBaseUrl}/scan-configs/${idResult.data}`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -288,8 +300,12 @@ export const deleteScanConfig = async (
   if (!id) {
     return { errors: { general: "Scan Config ID is required for deletion" } };
   }
+  const idResult = scanConfigIdSchema.safeParse(String(id));
+  if (!idResult.success) {
+    return { errors: { general: "Invalid Scan Config ID" } };
+  }
   try {
-    const url = new URL(`${apiBaseUrl}/scan-configs/${id}`);
+    const url = new URL(`${apiBaseUrl}/scan-configs/${idResult.data}`);
     const response = await fetch(url.toString(), {
       method: "DELETE",
       headers,
