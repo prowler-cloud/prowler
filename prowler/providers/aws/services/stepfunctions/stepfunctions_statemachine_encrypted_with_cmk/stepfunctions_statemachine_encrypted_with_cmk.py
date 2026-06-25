@@ -9,7 +9,7 @@ from prowler.providers.aws.services.stepfunctions.stepfunctions_service import (
 )
 
 
-class stepfunctions_statemachine_encryption_at_rest_enabled(Check):
+class stepfunctions_statemachine_encrypted_with_cmk(Check):
     """Ensure Step Functions state machines are encrypted at rest with a customer-managed KMS key.
 
     This check evaluates whether each AWS Step Functions state machine uses a

@@ -96,13 +96,13 @@ def create_state_machine(name, encryption_configuration):
     ],
 )
 @mock_aws(config={"stepfunctions": {"execute_state_machine": True}})
-def test_stepfunctions_statemachine_encryption_at_rest(
+def test_stepfunctions_statemachine_encrypted_with_cmk(
     state_machines,
     expected_count,
     expected_status,
     expected_status_extended,
 ):
-    """Test stepfunctions_statemachine_encryption_at_rest_enabled check across multiple scenarios.
+    """Test stepfunctions_statemachine_encrypted_with_cmk check across multiple scenarios.
 
     Parametrized test cases cover:
     - No state machines present (empty findings).
@@ -121,14 +121,14 @@ def test_stepfunctions_statemachine_encryption_at_rest(
     stepfunctions_client.state_machines = state_machines
 
     with patch(
-        "prowler.providers.aws.services.stepfunctions.stepfunctions_statemachine_encryption_at_rest_enabled.stepfunctions_statemachine_encryption_at_rest_enabled.stepfunctions_client",
+        "prowler.providers.aws.services.stepfunctions.stepfunctions_statemachine_encrypted_with_cmk.stepfunctions_statemachine_encrypted_with_cmk.stepfunctions_client",
         new=stepfunctions_client,
     ):
-        from prowler.providers.aws.services.stepfunctions.stepfunctions_statemachine_encryption_at_rest_enabled.stepfunctions_statemachine_encryption_at_rest_enabled import (
-            stepfunctions_statemachine_encryption_at_rest_enabled,
+        from prowler.providers.aws.services.stepfunctions.stepfunctions_statemachine_encrypted_with_cmk.stepfunctions_statemachine_encrypted_with_cmk import (
+            stepfunctions_statemachine_encrypted_with_cmk,
         )
 
-        check = stepfunctions_statemachine_encryption_at_rest_enabled()
+        check = stepfunctions_statemachine_encrypted_with_cmk()
         result = check.execute()
 
         assert len(result) == expected_count

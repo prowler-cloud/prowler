@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "stepfunctions_statemachine_encryption_at_rest_enabled",
+  "CheckID": "stepfunctions_statemachine_encrypted_with_cmk",
   "CheckTitle": "Step Functions state machine is encrypted at rest with a customer-managed KMS key",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
@@ -29,7 +29,7 @@
     },
     "Recommendation": {
       "Text": "Configure each Step Functions state machine to use a **customer-managed KMS key** for encryption at rest. Assign a least-privilege key policy, enable **automatic key rotation**, and grant the execution role `kms:GenerateDataKey` and `kms:Decrypt`. Monitor key usage via CloudTrail.",
-      "Url": "https://hub.prowler.com/check/stepfunctions_statemachine_encryption_at_rest_enabled"
+      "Url": "https://hub.prowler.com/check/stepfunctions_statemachine_encrypted_with_cmk"
     }
   },
   "Categories": [
