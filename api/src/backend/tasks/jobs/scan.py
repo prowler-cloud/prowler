@@ -14,7 +14,7 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
-from django.db import IntegrityError, OperationalError
+from django.db import DatabaseError, IntegrityError, OperationalError, transaction
 from django.db.models import (
     Case,
     Count,
@@ -43,7 +43,7 @@ from api.db_utils import (
     psycopg_connection,
     rls_transaction,
 )
-from api.exceptions import ProviderConnectionError
+from api.exceptions import ProviderConnectionError, ProviderDeletedException
 from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
@@ -116,6 +116,20 @@ ATTACK_SURFACE_PROVIDER_COMPATIBILITY = {
 }
 
 _ATTACK_SURFACE_MAPPING_CACHE: dict[str, dict] = {}
+
+
+def _save_scan_instance(
+    scan_instance: Scan, provider_id: str, update_fields: list[str]
+) -> None:
+    try:
+        with transaction.atomic():  # Savepoint for not killing the `rls_transaction`
+            scan_instance.save(update_fields=update_fields)
+    except DatabaseError:
+        if Scan.objects.filter(pk=scan_instance.id).exists():
+            raise
+        raise ProviderDeletedException(
+            f"Provider '{provider_id}' for scan '{scan_instance.id}' was deleted during the scan"
+        ) from None
 
 
 def aggregate_category_counts(
@@ -1030,13 +1044,18 @@ def perform_prowler_scan(
     group_resources_cache: dict[str, set] = {}
     start_time = time.time()
     exc = None
+    skip_final_scan_update = False
 
     with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
         scan_instance = Scan.objects.get(pk=scan_id)
         scan_instance.state = StateChoices.EXECUTING
         scan_instance.started_at = datetime.now(tz=timezone.utc)
-        scan_instance.save(update_fields=["state", "started_at", "updated_at"])
+        _save_scan_instance(
+            scan_instance,
+            provider_id,
+            ["state", "started_at", "updated_at"],
+        )
 
     # Find the mutelist processor if it exists
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
@@ -1104,7 +1123,7 @@ def perform_prowler_scan(
 
         # Throttle scan_instance progress writes to avoid hammering the writer:
         # only persist when progress moves by at least `PROGRESS_THROTTLE_DELTA`
-        # OR `PROGRESS_THROTTLE_SECONDS` have elapsed. The final progress (1.0)
+        # OR `PROGRESS_THROTTLE_SECONDS` have elapsed. The final progress (100)
         # always persists in the `finally` block below.
         last_persisted_progress = -1.0
         last_persisted_progress_at = 0.0
@@ -1146,7 +1165,11 @@ def perform_prowler_scan(
             ):
                 with rls_transaction(tenant_id):
                     scan_instance.progress = progress
-                    scan_instance.save(update_fields=["progress", "updated_at"])
+                    _save_scan_instance(
+                        scan_instance,
+                        provider_id,
+                        ["progress", "updated_at"],
+                    )
                 last_persisted_progress = progress
                 last_persisted_progress_at = now
 
@@ -1173,26 +1196,39 @@ def perform_prowler_scan(
                         batch_size=SCAN_DB_BATCH_SIZE,
                     )
 
+    except ProviderDeletedException as e:
+        logger.warning(str(e))
+        exception = e
+        skip_final_scan_update = True
     except Exception as e:
         logger.error(f"Error performing scan {scan_id}: {e}")
         exception = e
         scan_instance.state = StateChoices.FAILED
 
     finally:
-        with rls_transaction(tenant_id):
-            scan_instance.duration = time.time() - start_time
-            scan_instance.completed_at = datetime.now(tz=timezone.utc)
-            scan_instance.unique_resource_count = len(unique_resources)
-            scan_instance.save(
-                update_fields=[
-                    "state",
-                    "duration",
-                    "completed_at",
-                    "unique_resource_count",
-                    "progress",
-                    "updated_at",
-                ]
-            )
+        if not skip_final_scan_update:
+            try:
+                with rls_transaction(tenant_id):
+                    scan_instance.duration = time.time() - start_time
+                    scan_instance.completed_at = datetime.now(tz=timezone.utc)
+                    scan_instance.unique_resource_count = len(unique_resources)
+                    if exception is None:
+                        scan_instance.progress = 100
+                    _save_scan_instance(
+                        scan_instance,
+                        provider_id,
+                        [
+                            "state",
+                            "duration",
+                            "completed_at",
+                            "unique_resource_count",
+                            "progress",
+                            "updated_at",
+                        ],
+                    )
+            except ProviderDeletedException as e:
+                logger.warning(str(e))
+                exception = e
 
     if exception is not None:
         raise exception
