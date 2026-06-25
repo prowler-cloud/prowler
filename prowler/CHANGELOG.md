@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
 - `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
 - `stepfunctions_statemachine_encrypted_with_cmk` check for AWS provider, verifying that each Step Functions state machine uses a customer-managed KMS key for encryption at rest rather than the default AWS-owned key [(#11538)](https://github.com/prowler-cloud/prowler/pull/11538)
+- GDPR compliance framework for Azure provider, mapping Articles 25, 30 and 32 to existing Azure checks [(#11590)](https://github.com/prowler-cloud/prowler/pull/11590)
 
 ---
 
@@ -73,7 +74,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `rolesanywhere_trust_anchor_pqc_pki` check and new `rolesanywhere` service for AWS provider to verify IAM Roles Anywhere trust anchors are backed by a post-quantum (ML-DSA) PKI [(#11319)](https://github.com/prowler-cloud/prowler/pull/11319)
 - Kubernetes core checks for container CPU limits, CPU requests, memory limits, memory requests, fixed image tags, liveness probes, and readiness probes [(#11373)](https://github.com/prowler-cloud/prowler/pull/11373)
 - `recovery_vault_backup_policy_retention_adequate` check for Azure provider, verifying Recovery Services backup policies retain daily backups for at least 30 days [(#11047)](https://github.com/prowler-cloud/prowler/pull/11047)
-- GDPR compliance framework for Azure provider, mapping Articles 25, 30 and 32 to existing Azure checks [(#11590)](https://github.com/prowler-cloud/prowler/pull/11590)
 
 ### 🔄 Changed
 
