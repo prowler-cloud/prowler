@@ -150,6 +150,12 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     tenant_database_name = graph_database.get_database_name(
         prowler_api_provider.tenant_id
     )
+    target_sink_backend = settings.ATTACK_PATHS_SINK_DATABASE
+    target_description = (
+        f"tenant Neo4j database {tenant_database_name}"
+        if target_sink_backend == "neo4j"
+        else f"{target_sink_backend} sink"
+    )
 
     # While creating the Cartography configuration, attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     tmp_cartography_config = CartographyConfig(
@@ -177,7 +183,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     scan_t0 = time.perf_counter()
     logger.info(
         f"Starting Attack Paths scan ({attack_paths_scan.id}) for "
-        f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
+        f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id} "
+        f"(staging=Neo4j database {tmp_database_name}, target={target_description})"
     )
 
     subgraph_dropped = False
@@ -186,7 +193,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     try:
         logger.info(
-            f"Creating Neo4j database {tmp_cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
+            f"Creating staging Neo4j database {tmp_cartography_config.neo4j_database} "
+            f"for tenant {prowler_api_provider.tenant_id}"
         )
 
         graph_database.create_database(tmp_cartography_config.neo4j_database)
@@ -258,18 +266,20 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 97)
 
         logger.info(
-            f"Clearing Neo4j cache for database {tmp_cartography_config.neo4j_database}"
+            f"Clearing Neo4j cache for staging database {tmp_cartography_config.neo4j_database}"
         )
         graph_database.clear_cache(tmp_cartography_config.neo4j_database)
 
+        t0 = time.perf_counter()
         logger.info(
-            f"Ensuring tenant database {tenant_database_name}, and its indexes, exists for tenant {prowler_api_provider.tenant_id}"
+            f"Preparing target {target_description} for tenant {prowler_api_provider.tenant_id}"
         )
         graph_database.create_database(tenant_database_name)
         # Sink-side index creation: Neptune auto-manages indexes and rejects
         # `CREATE INDEX`, so only run it when the sink is Neo4j
         # The temp ingest DB is always Neo4j and is always indexed above
-        if settings.ATTACK_PATHS_SINK_DATABASE != "neptune":
+        if target_sink_backend != "neptune":
+            logger.info(f"Ensuring indexes exist for {target_description}")
             with graph_database.get_session(
                 tenant_database_name
             ) as tenant_neo4j_session:
@@ -278,10 +288,16 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
                 )
                 indexes.create_findings_indexes(tenant_neo4j_session)
                 indexes.create_sync_indexes(tenant_neo4j_session)
+        else:
+            logger.info("Skipping tenant database indexes for neptune sink")
+        logger.info(
+            f"Prepared target {target_description} in {time.perf_counter() - t0:.3f}s"
+        )
 
-        target_sink_backend = settings.ATTACK_PATHS_SINK_DATABASE
-
-        logger.info(f"Deleting existing provider graph in {tenant_database_name}")
+        logger.info(
+            f"Deleting existing provider graph from {target_description} "
+            f"(tenant={prowler_api_provider.tenant_id}, provider={prowler_api_provider.id})"
+        )
         db_utils.set_provider_graph_data_ready(
             attack_paths_scan, False, target_sink_backend
         )
@@ -293,18 +309,17 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             provider_id=str(prowler_api_provider.id),
         )
         logger.info(
-            f"Deleted existing provider graph in {time.perf_counter() - t0:.3f}s "
-            f"(deleted_nodes={deleted_nodes})"
+            f"Deleted existing provider graph from {target_description} "
+            f"in {time.perf_counter() - t0:.3f}s (deleted_nodes={deleted_nodes})"
         )
         subgraph_dropped = True
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
 
         logger.info(
-            f"Syncing graph for provider {prowler_api_provider.id} "
+            f"Syncing staging graph {tmp_database_name} into {target_description} "
+            f"for provider {prowler_api_provider.id} "
             f"(tenant {prowler_api_provider.tenant_id}, "
-            f"type {prowler_api_provider.provider}) into "
-            f"{settings.ATTACK_PATHS_SINK_DATABASE} sink "
-            f"(staging {tmp_database_name})"
+            f"type {prowler_api_provider.provider})"
         )
         t0 = time.perf_counter()
         sync_result = sync.sync_graph(
@@ -319,7 +334,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         elements = total_nodes + sync_result["relationships"]
         rate = elements / elapsed if elapsed else 0
         logger.info(
-            f"Synced graph in {elapsed:.3f}s — "
+            f"Synced staging graph into {target_description} in {elapsed:.3f}s - "
             f"nodes={total_nodes} (source={sync_result['nodes']}, "
             f"items={sync_result['child_nodes']}), "
             f"relationships={sync_result['relationships']} "
@@ -335,8 +350,11 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
 
-        logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
-        graph_database.clear_cache(tenant_database_name)
+        if target_sink_backend == "neptune":
+            logger.info("Skipping cache clear for neptune sink")
+        else:
+            logger.info(f"Clearing Neo4j cache for target {target_description}")
+            graph_database.clear_cache(tenant_database_name)
 
         logger.info(f"Dropping temporary Neo4j database {tmp_database_name}")
         graph_database.drop_database(tmp_database_name)

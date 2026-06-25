@@ -8,6 +8,7 @@ path while phase-1 drains tenant DBs.
 import atexit
 import logging
 import threading
+import time
 from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
 from typing import Any
@@ -204,15 +205,49 @@ class Neo4jSink(SinkDatabase):
 
         provider_label = get_provider_label(provider_id)
         deleted_nodes = 0
+        deleted_relationships = 0
+        relationship_batches = 0
+        node_batches = 0
+        drop_t0 = time.perf_counter()
+
+        logger.info(
+            "Dropping provider graph from Neo4j sink database %s "
+            "(provider=%s, provider_label=%s)",
+            database,
+            provider_id,
+            provider_label,
+        )
 
         try:
+            logger.info(
+                "Opening Neo4j sink session for provider graph drop "
+                "(database=%s, provider=%s)",
+                database,
+                provider_id,
+            )
             with self.get_session(database) as session:
+                logger.info(
+                    "Opened Neo4j sink session for provider graph drop "
+                    "(database=%s, provider=%s)",
+                    database,
+                    provider_id,
+                )
                 # Phase 1: delete relationships incident to provider nodes in
                 # batches. The undirected pattern matches an edge between two
                 # provider nodes from both ends, so `DISTINCT r` dedupes it to
                 # delete a full batch of unique relationships each round.
                 deleted_count = 1
                 while deleted_count > 0:
+                    next_batch = relationship_batches + 1
+                    logger.info(
+                        "Deleting relationship batch from Neo4j sink database %s "
+                        "(provider=%s, batch=%s, total_rels=%s, elapsed=%.3fs)",
+                        database,
+                        provider_id,
+                        next_batch,
+                        deleted_relationships,
+                        time.perf_counter() - drop_t0,
+                    )
                     result = session.run(
                         f"""
                         MATCH (:`{provider_label}`)-[r]-()
@@ -223,10 +258,34 @@ class Neo4jSink(SinkDatabase):
                         {"batch_size": BATCH_SIZE},
                     )
                     deleted_count = result.single().get("deleted_rels_count", 0)
+                    if deleted_count > 0:
+                        relationship_batches += 1
+                        deleted_relationships += deleted_count
+                        logger.info(
+                            "Deleted relationship batch from Neo4j sink database %s "
+                            "(provider=%s, batch=%s, deleted_rels=%s, "
+                            "total_rels=%s, elapsed=%.3fs)",
+                            database,
+                            provider_id,
+                            relationship_batches,
+                            deleted_count,
+                            deleted_relationships,
+                            time.perf_counter() - drop_t0,
+                        )
 
                 # Phase 2: delete the now relationship-free nodes in batches.
                 deleted_count = 1
                 while deleted_count > 0:
+                    next_batch = node_batches + 1
+                    logger.info(
+                        "Deleting node batch from Neo4j sink database %s "
+                        "(provider=%s, batch=%s, total_nodes=%s, elapsed=%.3fs)",
+                        database,
+                        provider_id,
+                        next_batch,
+                        deleted_nodes,
+                        time.perf_counter() - drop_t0,
+                    )
                     result = session.run(
                         f"""
                         MATCH (n:{PROVIDER_RESOURCE_LABEL}:`{provider_label}`)
@@ -237,13 +296,45 @@ class Neo4jSink(SinkDatabase):
                         {"batch_size": BATCH_SIZE},
                     )
                     deleted_count = result.single().get("deleted_nodes_count", 0)
-                    deleted_nodes += deleted_count
+                    if deleted_count > 0:
+                        node_batches += 1
+                        deleted_nodes += deleted_count
+                        logger.info(
+                            "Deleted node batch from Neo4j sink database %s "
+                            "(provider=%s, batch=%s, deleted_nodes=%s, "
+                            "total_nodes=%s, elapsed=%.3fs)",
+                            database,
+                            provider_id,
+                            node_batches,
+                            deleted_count,
+                            deleted_nodes,
+                            time.perf_counter() - drop_t0,
+                        )
 
         except GraphDatabaseQueryException as exc:
             if exc.code == DATABASE_NOT_FOUND_CODE:
+                logger.info(
+                    "Skipped provider graph drop from Neo4j sink database %s "
+                    "(provider=%s, reason=database_not_found, elapsed=%.3fs)",
+                    database,
+                    provider_id,
+                    time.perf_counter() - drop_t0,
+                )
                 return 0
             raise
 
+        logger.info(
+            "Finished dropping provider graph from Neo4j sink database %s "
+            "(provider=%s, relationship_batches=%s, deleted_rels=%s, "
+            "node_batches=%s, deleted_nodes=%s, elapsed=%.3fs)",
+            database,
+            provider_id,
+            relationship_batches,
+            deleted_relationships,
+            node_batches,
+            deleted_nodes,
+            time.perf_counter() - drop_t0,
+        )
         return deleted_nodes
 
     def has_provider_data(self, database: str, provider_id: str) -> bool:

@@ -17,6 +17,7 @@ import datetime
 import json
 import logging
 import threading
+import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Any
@@ -274,9 +275,37 @@ class NeptuneSink(SinkDatabase):
         )
 
         provider_label = get_provider_label(provider_id)
+        deleted_relationships = 0
+        relationship_batches = 0
+        node_batches = 0
+        drop_t0 = time.perf_counter()
 
+        logger.info(
+            "Dropping provider graph from Neptune sink "
+            "(provider=%s, provider_label=%s)",
+            provider_id,
+            provider_label,
+        )
+
+        logger.info(
+            "Opening Neptune writer session for provider graph drop (provider=%s)",
+            provider_id,
+        )
         with self.get_session() as session:
+            logger.info(
+                "Opened Neptune writer session for provider graph drop (provider=%s)",
+                provider_id,
+            )
             while True:
+                next_batch = relationship_batches + 1
+                logger.info(
+                    "Deleting relationship batch from Neptune sink "
+                    "(provider=%s, batch=%s, total_rels=%s, elapsed=%.3fs)",
+                    provider_id,
+                    next_batch,
+                    deleted_relationships,
+                    time.perf_counter() - drop_t0,
+                )
                 result = session.run(
                     f"""
                     MATCH (:`{provider_label}`)-[r]-()
@@ -290,9 +319,30 @@ class NeptuneSink(SinkDatabase):
                 deleted_rels = (record["deleted_rels_count"] if record else 0) or 0
                 if deleted_rels == 0:
                     break
+                relationship_batches += 1
+                deleted_relationships += deleted_rels
+                logger.info(
+                    "Deleted relationship batch from Neptune sink "
+                    "(provider=%s, batch=%s, deleted_rels=%s, total_rels=%s, "
+                    "elapsed=%.3fs)",
+                    provider_id,
+                    relationship_batches,
+                    deleted_rels,
+                    deleted_relationships,
+                    time.perf_counter() - drop_t0,
+                )
 
             deleted_nodes = 0
             while True:
+                next_batch = node_batches + 1
+                logger.info(
+                    "Deleting node batch from Neptune sink "
+                    "(provider=%s, batch=%s, total_nodes=%s, elapsed=%.3fs)",
+                    provider_id,
+                    next_batch,
+                    deleted_nodes,
+                    time.perf_counter() - drop_t0,
+                )
                 result = session.run(
                     f"""
                     MATCH (n:`{PROVIDER_RESOURCE_LABEL}`:`{provider_label}`)
@@ -306,8 +356,30 @@ class NeptuneSink(SinkDatabase):
                 deleted = (record["deleted_nodes_count"] if record else 0) or 0
                 if deleted == 0:
                     break
+                node_batches += 1
                 deleted_nodes += deleted
+                logger.info(
+                    "Deleted node batch from Neptune sink "
+                    "(provider=%s, batch=%s, deleted_nodes=%s, total_nodes=%s, "
+                    "elapsed=%.3fs)",
+                    provider_id,
+                    node_batches,
+                    deleted,
+                    deleted_nodes,
+                    time.perf_counter() - drop_t0,
+                )
 
+        logger.info(
+            "Finished dropping provider graph from Neptune sink "
+            "(provider=%s, relationship_batches=%s, deleted_rels=%s, "
+            "node_batches=%s, deleted_nodes=%s, elapsed=%.3fs)",
+            provider_id,
+            relationship_batches,
+            deleted_relationships,
+            node_batches,
+            deleted_nodes,
+            time.perf_counter() - drop_t0,
+        )
         return deleted_nodes
 
     def has_provider_data(self, database: str, provider_id: str) -> bool:  # noqa: ARG002
