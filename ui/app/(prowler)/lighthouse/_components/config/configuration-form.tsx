@@ -6,13 +6,10 @@ import {
   KeyRound,
   Loader2,
   PlugZap,
-  RefreshCw,
   Save,
-  ShieldCheck,
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -34,6 +31,7 @@ import {
   type LighthouseV2ConfigFormValues,
   trimToNullable,
 } from "@/app/(prowler)/lighthouse/_lib/config";
+import { formatLastChecked } from "@/app/(prowler)/lighthouse/_lib/format";
 import {
   type LighthouseV2Configuration,
   type LighthouseV2ConfigurationInput,
@@ -55,9 +53,7 @@ import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { cn } from "@/lib/utils";
 
 import { ConfigurationSection } from "./configuration-section";
-import { ConnectionStatusPanel } from "./connection-status-panel";
 import { CredentialFields } from "./credential-fields";
-import { ModelDetails } from "./model-details";
 import { ProviderIcon } from "./provider-icon";
 import { StatusBadge } from "./status-badge";
 
@@ -66,6 +62,7 @@ export function LighthouseV2ConfigurationForm({
   models,
   onConfigurationDeleted,
   onConfigurationSaved,
+  onConfigurationTested,
   onFeedback,
   provider,
 }: {
@@ -73,10 +70,10 @@ export function LighthouseV2ConfigurationForm({
   models: LighthouseV2SupportedModel[];
   onConfigurationDeleted: (configurationId: string) => void;
   onConfigurationSaved: (configuration: LighthouseV2Configuration) => void;
+  onConfigurationTested: (configuration: LighthouseV2Configuration) => void;
   onFeedback: (feedback: FeedbackState | null) => void;
   provider: LighthouseV2SupportedProvider;
 }) {
-  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -91,10 +88,6 @@ export function LighthouseV2ConfigurationForm({
     mode: "onSubmit",
   });
   const businessContext = form.watch("businessContext");
-  const selectedModel = form.watch("defaultModel");
-  const selectedModelDetails = models.find(
-    (model) => model.id === selectedModel,
-  );
   const status = getConnectionStatus(configuration);
 
   const handleSave = async (values: LighthouseV2ConfigFormValues) => {
@@ -152,20 +145,14 @@ export function LighthouseV2ConfigurationForm({
 
     if ("error" in result) {
       onFeedback({
-        title: "Connection check failed to start",
+        title: "Connection check failed",
         description: result.error,
         variant: FEEDBACK_VARIANT.ERROR,
       });
       return;
     }
 
-    onFeedback({
-      title: "Connection check started.",
-      description:
-        "The backend is validating this provider. Refresh status when the task finishes.",
-      variant: FEEDBACK_VARIANT.INFO,
-      showRefreshStatus: true,
-    });
+    onConfigurationTested(result.data);
   };
 
   const handleDelete = async () => {
@@ -191,7 +178,7 @@ export function LighthouseV2ConfigurationForm({
 
   return (
     <section className="min-w-0">
-      <div className="border-border-neutral-secondary flex flex-col gap-4 border-b px-4 py-4 md:flex-row md:items-start md:justify-between md:px-5">
+      <div className="border-border-neutral-secondary flex flex-col gap-4 border-b px-4 py-6 md:flex-row md:items-start md:justify-between md:px-5">
         <div className="flex min-w-0 gap-3">
           <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-12 shrink-0 items-center justify-center rounded-[10px] border">
             <ProviderIcon
@@ -205,6 +192,9 @@ export function LighthouseV2ConfigurationForm({
                 {provider.name}
               </h3>
               <StatusBadge status={status} />
+              <span className="text-text-neutral-tertiary text-xs">
+                {formatLastChecked(configuration?.connectionLastCheckedAt)}
+              </span>
             </div>
             <p className="text-text-neutral-secondary mt-1 max-w-2xl text-sm">
               {configuration
@@ -222,15 +212,7 @@ export function LighthouseV2ConfigurationForm({
             disabled={!configuration || testing}
           >
             {testing ? <Loader2 className="animate-spin" /> : <PlugZap />}
-            Test connection
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.refresh()}
-          >
-            <RefreshCw />
-            Refresh status
+            {testing ? "Testing connection…" : "Test connection"}
           </Button>
         </div>
       </div>
@@ -240,17 +222,6 @@ export function LighthouseV2ConfigurationForm({
         onSubmit={form.handleSubmit(handleSave)}
         noValidate
       >
-        <ConfigurationSection
-          icon={<ShieldCheck className="size-4" />}
-          title="Connection"
-          description="Current backend check result for this provider."
-        >
-          <ConnectionStatusPanel
-            configuration={configuration}
-            status={status}
-          />
-        </ConfigurationSection>
-
         <ConfigurationSection
           icon={<KeyRound className="size-4" />}
           title="Credentials"
@@ -262,7 +233,6 @@ export function LighthouseV2ConfigurationForm({
         >
           <CredentialFields
             errors={form.formState.errors}
-            hasConfiguration={hasConfiguration}
             provider={providerType}
             register={form.register}
           />
@@ -300,7 +270,6 @@ export function LighthouseV2ConfigurationForm({
               </Field>
             )}
           />
-          <ModelDetails model={selectedModelDetails} />
         </ConfigurationSection>
 
         <ConfigurationSection
@@ -339,7 +308,7 @@ export function LighthouseV2ConfigurationForm({
           </Field>
         </ConfigurationSection>
 
-        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5">
+        <div className="flex flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between md:px-5">
           <div className="text-text-neutral-secondary text-sm">
             {configuration
               ? "Saving updates may change chat behavior immediately."

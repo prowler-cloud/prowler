@@ -1,5 +1,6 @@
 "use server";
 
+import { pollTaskUntilSettled } from "@/actions/task/poll";
 import type {
   LighthouseV2Configuration,
   LighthouseV2ConfigurationInput,
@@ -101,16 +102,51 @@ export async function deleteLighthouseV2Configuration(
   );
 }
 
+// Starts the backend connection-check task, polls it to completion (reusing the
+// shared task poller), then returns the re-fetched configuration so the caller
+// can render the authoritative `connected` / `connectionLastCheckedAt` status.
 export async function testLighthouseV2ConfigurationConnection(
   configId: string,
-): Promise<LighthouseV2ActionResult<LighthouseV2Task>> {
-  return mutateSingle(
-    `/lighthouse/config/${encodeURIComponent(configId)}/connection`,
-    { method: "POST" },
-    mapLighthouseV2Task,
-    "/lighthouse/config",
-    false,
-  );
+): Promise<LighthouseV2ActionResult<LighthouseV2Configuration>> {
+  try {
+    const response = await fetch(
+      buildApiUrl(
+        `/lighthouse/config/${encodeURIComponent(configId)}/connection`,
+      ),
+      { method: "POST", headers: await getAuthHeaders({ contentType: false }) },
+    );
+    const document = (await handleApiResponse(
+      response,
+    )) as JsonApiDocument<TaskResource>;
+    if (isErrorDocument(document) || !document.data) {
+      return toErrorResult(document);
+    }
+
+    const settled = await pollTaskUntilSettled(
+      mapLighthouseV2Task(document.data).id,
+      {
+        maxAttempts: 20,
+        delayMs: 3000,
+      },
+    );
+    if (!settled.ok) {
+      return { error: settled.error || "Connection test timed out." };
+    }
+
+    const configurations = await getLighthouseV2Configurations();
+    if ("error" in configurations) {
+      return configurations;
+    }
+    const updated = configurations.data.find(
+      (config) => config.id === configId,
+    );
+    if (!updated) {
+      return { error: "Configuration not found after connection test." };
+    }
+    return { data: updated };
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
 
 export async function getLighthouseV2SupportedProviders(): Promise<

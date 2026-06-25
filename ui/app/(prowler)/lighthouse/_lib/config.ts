@@ -31,7 +31,6 @@ export interface FeedbackState {
   title: string;
   description?: string;
   variant: FeedbackVariant;
-  showRefreshStatus?: boolean;
 }
 
 const lighthouseV2ConfigFormSchemaBase = z.object({
@@ -173,16 +172,4 @@ export function getConnectionStatus(
   if (configuration?.connected === true) return CONNECTION_STATUS.CONNECTED;
   if (configuration?.connected === false) return CONNECTION_STATUS.FAILED;
   return CONNECTION_STATUS.NOT_TESTED;
-}
-
-export function getConnectionStatusLabel(status: ConnectionStatus): string {
-  if (status === CONNECTION_STATUS.CONNECTED) return "Connected";
-  if (status === CONNECTION_STATUS.FAILED) return "Failed";
-  return "Not tested";
-}
-
-export function getAlertVariant(status: ConnectionStatus) {
-  if (status === CONNECTION_STATUS.CONNECTED) return "success";
-  if (status === CONNECTION_STATUS.FAILED) return "error";
-  return "info";
 }

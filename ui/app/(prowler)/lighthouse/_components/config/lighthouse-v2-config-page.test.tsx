@@ -13,21 +13,17 @@ import { LighthouseV2ConfigPage } from "./lighthouse-v2-config-page";
 const {
   createConfigurationMock,
   deleteConfigurationMock,
-  refreshMock,
   testConnectionMock,
   updateConfigurationMock,
 } = vi.hoisted(() => ({
   createConfigurationMock: vi.fn(),
   deleteConfigurationMock: vi.fn(),
-  refreshMock: vi.fn(),
   testConnectionMock: vi.fn(),
   updateConfigurationMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    refresh: refreshMock,
-  }),
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
@@ -90,20 +86,15 @@ describe("LighthouseV2ConfigPage", () => {
   beforeEach(() => {
     createConfigurationMock.mockReset();
     deleteConfigurationMock.mockReset();
-    refreshMock.mockReset();
     testConnectionMock.mockReset();
     updateConfigurationMock.mockReset();
 
     createConfigurationMock.mockResolvedValue({ data: configurations[0] });
     deleteConfigurationMock.mockResolvedValue({ data: true });
+    // The action polls the task internally and resolves with the re-fetched
+    // configuration carrying the authoritative connection status.
     testConnectionMock.mockResolvedValue({
-      data: {
-        id: "task-1",
-        name: "lighthouse-config-connection",
-        state: "PENDING",
-        insertedAt: "2026-06-24T10:01:00Z",
-        completedAt: null,
-      },
+      data: { ...configurations[0], connected: true },
     });
     updateConfigurationMock.mockResolvedValue({ data: configurations[0] });
   });
@@ -310,26 +301,25 @@ describe("LighthouseV2ConfigPage", () => {
     expect(updateConfigurationMock).not.toHaveBeenCalled();
   });
 
-  it("starts a connection test and exposes a refresh status action", async () => {
+  it("tests the connection and reports the resulting status", async () => {
     // Given
     const user = userEvent.setup();
+    testConnectionMock.mockResolvedValue({
+      data: { ...configurations[0], connected: false },
+    });
     renderPage();
 
     // When
     await user.click(screen.getByRole("button", { name: /Test connection/i }));
 
-    // Then
+    // Then: the action is polled to completion and the resulting status shown
     await waitFor(() =>
       expect(testConnectionMock).toHaveBeenCalledWith("config-openai"),
     );
+    expect(await screen.findByText("Connection failed.")).toBeInTheDocument();
     expect(
-      await screen.findByText("Connection check started."),
-    ).toBeInTheDocument();
-
-    await user.click(
-      screen.getAllByRole("button", { name: /Refresh status/i })[0],
-    );
-    expect(refreshMock).toHaveBeenCalledTimes(1);
+      screen.queryByRole("button", { name: /Refresh status/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("confirms before deleting an existing configuration", async () => {

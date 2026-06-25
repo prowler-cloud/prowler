@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -36,7 +35,6 @@ export function LighthouseV2ConfigPage({
   modelsByProvider,
   error,
 }: LighthouseV2ConfigPageProps) {
-  const router = useRouter();
   const [localConfigurations, setLocalConfigurations] =
     useState(configurations);
   const [selectedProvider, setSelectedProvider] =
@@ -63,19 +61,43 @@ export function LighthouseV2ConfigPage({
       ? modelsByProvider[selectedProviderDefinition.id]
       : [];
 
-  const handleConfigurationSaved = (
-    configuration: LighthouseV2Configuration,
-  ) => {
+  const upsertConfiguration = (configuration: LighthouseV2Configuration) => {
     setLocalConfigurations((current) => [
       ...current.filter((config) => config.id !== configuration.id),
       configuration,
     ]);
+  };
+
+  const handleConfigurationSaved = (
+    configuration: LighthouseV2Configuration,
+  ) => {
+    upsertConfiguration(configuration);
     setSelectedProvider(configuration.providerType);
     setFeedback({
       title: "Configuration saved.",
       description: "Lighthouse can use this provider after it tests cleanly.",
       variant: FEEDBACK_VARIANT.SUCCESS,
     });
+  };
+
+  const handleConfigurationTested = (
+    configuration: LighthouseV2Configuration,
+  ) => {
+    upsertConfiguration(configuration);
+    setFeedback(
+      configuration.connected
+        ? {
+            title: "Connection successful.",
+            description: "Lighthouse can send messages with this provider.",
+            variant: FEEDBACK_VARIANT.SUCCESS,
+          }
+        : {
+            title: "Connection failed.",
+            description:
+              "Review the credentials and test the connection again.",
+            variant: FEEDBACK_VARIANT.ERROR,
+          },
+    );
   };
 
   const handleConfigurationDeleted = (configurationId: string) => {
@@ -105,7 +127,6 @@ export function LighthouseV2ConfigPage({
         <div className="border-border-neutral-secondary border-b px-4 py-4 md:px-5">
           <ConfigFeedbackAlert
             feedback={feedback}
-            onRefreshStatus={() => router.refresh()}
             onClose={() => setFeedback(null)}
           />
         </div>
@@ -138,6 +159,7 @@ export function LighthouseV2ConfigPage({
             provider={selectedProviderDefinition}
             onConfigurationSaved={handleConfigurationSaved}
             onConfigurationDeleted={handleConfigurationDeleted}
+            onConfigurationTested={handleConfigurationTested}
             onFeedback={setFeedback}
           />
         </div>

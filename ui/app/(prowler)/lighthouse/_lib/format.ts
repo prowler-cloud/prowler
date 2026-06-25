@@ -28,7 +28,3 @@ export function formatSessionAge(dateString: string): string {
   if (ageInDays === 0) return "Today";
   return ageInDays === 1 ? "1 day" : `${ageInDays} days`;
 }
-
-export function formatTokenLimit(value: number | null): string {
-  return value === null ? "Unknown" : value.toLocaleString();
-}

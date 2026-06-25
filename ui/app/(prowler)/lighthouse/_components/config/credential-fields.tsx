@@ -10,14 +10,12 @@ import { Input } from "@/components/shadcn/input/input";
 
 export function CredentialFields({
   errors,
-  hasConfiguration,
   provider,
   register,
 }: {
   errors: ReturnType<
     typeof useForm<LighthouseV2ConfigFormValues>
   >["formState"]["errors"];
-  hasConfiguration: boolean;
   provider: LighthouseV2ProviderType;
   register: ReturnType<
     typeof useForm<LighthouseV2ConfigFormValues>
@@ -25,12 +23,6 @@ export function CredentialFields({
 }) {
   return (
     <div className="grid gap-4">
-      {hasConfiguration && (
-        <p className="text-text-neutral-secondary text-sm">
-          Leave blank to keep existing credentials.
-        </p>
-      )}
-
       {(provider === LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI ||
         provider === LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE) && (
         <Field>
