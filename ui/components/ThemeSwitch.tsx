@@ -4,16 +4,15 @@ import type { SwitchProps } from "@heroui/switch";
 import { useSwitch } from "@heroui/switch";
 import { useIsSSR } from "@react-aria/ssr";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
-import clsx from "clsx";
 import { useTheme } from "next-themes";
 import { FC } from "react";
-import React from "react";
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 
 import { MoonFilledIcon, SunFilledIcon } from "./icons";
 
@@ -51,7 +50,7 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
       <TooltipTrigger asChild>
         <Component
           {...getBaseProps({
-            className: clsx(
+            className: cn(
               "px-px transition-opacity hover:opacity-80 cursor-pointer",
               className,
               classNames?.base,
@@ -64,7 +63,7 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
           <div
             {...getWrapperProps()}
             className={slots.wrapper({
-              class: clsx(
+              class: cn(
                 [
                   "h-auto w-auto",
                   "bg-transparent",

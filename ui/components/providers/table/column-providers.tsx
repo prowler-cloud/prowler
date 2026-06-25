@@ -26,6 +26,7 @@ import type {
 } from "@/types/schedules";
 
 import { LinkToScans } from "../link-to-scans";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 interface GroupNameChipsProps {

@@ -14,6 +14,7 @@ import {
 } from "@/types/severities";
 
 import { DEFAULT_TIME_RANGE } from "../_constants/time-range.constants";
+
 import { type TimeRange, TimeRangeSelector } from "./time-range-selector";
 
 interface FindingSeverityOverTimeProps {

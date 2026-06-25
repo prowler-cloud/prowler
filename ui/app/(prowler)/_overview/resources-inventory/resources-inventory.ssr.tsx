@@ -5,6 +5,7 @@ import {
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
+
 import { ResourcesInventory } from "./_components/resources-inventory";
 
 export const ResourcesInventorySSR = async ({

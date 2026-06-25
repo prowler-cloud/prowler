@@ -3,7 +3,7 @@
 import type { CardProps } from "@heroui/card";
 import { Card, CardBody } from "@heroui/card";
 import { Icon } from "@iconify/react";
-import React from "react";
+import { forwardRef } from "react";
 
 import { cn } from "@/lib";
 
@@ -14,9 +14,9 @@ export type ActionCardProps = CardProps & {
   description: string;
 };
 
-export const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
+export const ActionCard = forwardRef<HTMLDivElement, ActionCardProps>(
   ({ color, title, icon, description, children, className, ...props }, ref) => {
-    const colors = React.useMemo(() => {
+    const colors = (() => {
       switch (color) {
         case "success":
           return {
@@ -50,7 +50,7 @@ export const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
             icon: "text-default-500",
           };
       }
-    }, [color]);
+    })();
 
     return (
       <Card

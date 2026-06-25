@@ -3,10 +3,8 @@
 import { ExternalLinkIcon, LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import { Button } from "@/components/shadcn";
+import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-
-import { Card, CardContent, CardHeader } from "../../shadcn";
 
 interface LinkCardProps {
   icon: LucideIcon;

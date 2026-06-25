@@ -67,8 +67,7 @@ import {
   type FindingStatus,
   StatusFindingBadge,
 } from "@/components/ui/table/status-finding-badge";
-import { getFailingForLabel } from "@/lib/date-utils";
-import { formatDuration } from "@/lib/date-utils";
+import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import type { ComplianceOverviewData } from "@/types/compliance";
@@ -77,6 +76,7 @@ import type { FindingResourceRow } from "@/types/findings-table";
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
+
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
