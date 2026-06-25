@@ -22,6 +22,7 @@ import { FormButtons } from "@/components/ui/form";
 import { toast, ToastAction } from "@/components/ui/toast";
 import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
+  buildScheduleAttributesFromProvider,
   getScanScheduleCapability,
   getScheduleFormDefaults,
   getScheduleFormValues,
@@ -123,10 +124,25 @@ function LaunchScanForm({
     .filter((provider) => provider.attributes.connection.connected !== true)
     .map((provider) => provider.id);
 
+  const getProviderScheduleAttributes = (id: string) => {
+    const selectedProvider = providers.find((provider) => provider.id === id);
+
+    return selectedProvider
+      ? buildScheduleAttributesFromProvider(selectedProvider.attributes)
+      : undefined;
+  };
+
   const loadSchedule = async (id: string) => {
     requestedProviderRef.current = id;
     if (!id) {
       setScheduleLoad(SCHEDULE_LOAD_STATE.IDLE);
+      return;
+    }
+
+    const providerScheduleAttributes = getProviderScheduleAttributes(id);
+    if (providerScheduleAttributes) {
+      scheduleForm.reset(getScheduleFormValues(providerScheduleAttributes));
+      setScheduleLoad(SCHEDULE_LOAD_STATE.LOADED);
       return;
     }
 
@@ -279,6 +295,9 @@ function LaunchScanForm({
           }
           selectedValues={providerId ? [providerId] : []}
           closeOnSelect
+          placeholder="Select a Provider"
+          emptySelectionLabel="No provider selected"
+          clearSelectionLabel="Clear provider selection"
         />
         {providerError && <FieldError>{providerError}</FieldError>}
       </Field>
@@ -311,8 +330,16 @@ function LaunchScanForm({
 
       {isBlocked && (
         <p className="text-text-error-primary text-sm">
-          You have reached your scan limit, so additional scans are not
-          available right now.
+          You have exceeded the usage limit of one provider. You can add more
+          providers and run unlimited scans by adding a subscription.{" "}
+          <Link
+            href="https://cloud.prowler.com/billing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Manage Billing
+          </Link>
         </p>
       )}
 
@@ -365,7 +392,11 @@ function LaunchScanForm({
         }
         loadingText={isScheduleMode ? "Saving..." : "Launching..."}
         isDisabled={
-          isSubmitting || !providers.length || isScheduleLoading || isBlocked
+          isSubmitting ||
+          !providers.length ||
+          isScheduleLoading ||
+          isBlocked ||
+          (isScheduleMode && !providerId)
         }
         rightIcon={<Rocket className="size-4" />}
       />
