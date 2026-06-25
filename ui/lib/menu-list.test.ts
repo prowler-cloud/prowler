@@ -25,10 +25,16 @@ const getTopLevelLabels = () =>
   );
 
 const getConfigurationLabels = () =>
-  getMenuList({ pathname: "/lighthouse/config", apiDocsUrl: null })
+  getMenuList({ pathname: "/lighthouse/settings", apiDocsUrl: null })
     .flatMap((group) => group.menus)
     .find((menu) => menu.label === "Configuration")
     ?.submenus?.map((submenu) => submenu.label) ?? [];
+
+const getConfigurationSubmenu = (label: string) =>
+  getMenuList({ pathname: "/lighthouse/settings", apiDocsUrl: null })
+    .flatMap((group) => group.menus)
+    .flatMap((menu) => menu.submenus ?? [])
+    .find((submenu) => submenu.label === label);
 
 describe("getMenuList", () => {
   afterEach(() => {
@@ -128,9 +134,11 @@ describe("getMenuList", () => {
     // When
     const labels = getTopLevelLabels();
     const configLabels = getConfigurationLabels();
+    const lighthouseSettings = getConfigurationSubmenu("Lighthouse AI");
 
     // Then
     expect(labels).not.toContain("Lighthouse AI");
     expect(configLabels).toContain("Lighthouse AI");
+    expect(lighthouseSettings?.href).toBe("/lighthouse/settings");
   });
 });

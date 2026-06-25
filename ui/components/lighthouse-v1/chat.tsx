@@ -367,7 +367,7 @@ export const Chat = ({
             </CardHeader>
             <CardContent>
               <CustomLink
-                href="/lighthouse/config"
+                href="/lighthouse/settings"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
                 target="_self"
                 size="sm"

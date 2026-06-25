@@ -54,7 +54,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
     await updateTenantConfig({
       default_provider: provider,
     });
-    router.push("/lighthouse/config");
+    router.push("/lighthouse/settings");
   };
 
   if (!provider) {
@@ -78,7 +78,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
       <NavigationHeader
         title={isEditMode ? "Configure LLM Provider" : "Connect LLM Provider"}
         icon="icon-park-outline:close-small"
-        href="/lighthouse/config"
+        href="/lighthouse/settings"
       />
       <Spacer y={8} />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">

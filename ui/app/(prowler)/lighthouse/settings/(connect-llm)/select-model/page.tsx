@@ -20,14 +20,14 @@ function SelectModelContent() {
     <SelectModel
       provider={provider}
       mode={mode}
-      onSelect={() => router.push("/lighthouse/config")}
+      onSelect={() => router.push("/lighthouse/settings")}
     />
   );
 }
 
 export default function SelectModelPage() {
   if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
-    redirect("/lighthouse/config");
+    redirect("/lighthouse/settings");
   }
 
   return (

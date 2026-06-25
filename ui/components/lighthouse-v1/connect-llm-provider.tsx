@@ -223,7 +223,7 @@ export const ConnectLLMProvider = ({
 
       // Navigate to model selection on success
       router.push(
-        `/lighthouse/config/select-model?provider=${provider}${isEditMode ? "&mode=edit" : ""}`,
+        `/lighthouse/settings/select-model?provider=${provider}${isEditMode ? "&mode=edit" : ""}`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -431,7 +431,7 @@ export const ConnectLLMProvider = ({
         )}
 
         <FormButtons
-          onCancel={() => router.push("/lighthouse/config")}
+          onCancel={() => router.push("/lighthouse/settings")}
           submitText={isLoading ? getLoadingText() : getSubmitText()}
           loadingText={getLoadingText()}
           isDisabled={!isFormValid || isLoading}

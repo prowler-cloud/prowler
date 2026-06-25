@@ -49,7 +49,7 @@ export const DeleteLLMProviderForm = ({
       });
 
       setIsOpen(false);
-      router.push("/lighthouse/config");
+      router.push("/lighthouse/settings");
     }
   }
 

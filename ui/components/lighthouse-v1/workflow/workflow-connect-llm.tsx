@@ -15,13 +15,13 @@ const steps = [
     title: "Enter Credentials",
     description:
       "Enter your API key and configure connection settings for the LLM provider.",
-    href: "/lighthouse/config/connect",
+    href: "/lighthouse/settings/connect",
   },
   {
     title: "Select Default Model",
     description:
       "Choose the default model to use for AI-powered features in Prowler.",
-    href: "/lighthouse/config/select-model",
+    href: "/lighthouse/settings/select-model",
   },
 ];
 
@@ -31,8 +31,8 @@ const ROUTE_CONFIG: Record<
     stepIndex: number;
   }
 > = {
-  "/lighthouse/config/connect": { stepIndex: 0 },
-  "/lighthouse/config/select-model": { stepIndex: 1 },
+  "/lighthouse/settings/connect": { stepIndex: 0 },
+  "/lighthouse/settings/select-model": { stepIndex: 1 },
 };
 
 export const WorkflowConnectLLM = () => {

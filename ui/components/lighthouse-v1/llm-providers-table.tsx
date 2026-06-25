@@ -217,7 +217,7 @@ export const LLMProvidersTable = () => {
                     asChild
                   >
                     <Link
-                      href={`/lighthouse/config/connect?provider=${provider.id}`}
+                      href={`/lighthouse/settings/connect?provider=${provider.id}`}
                     >
                       Connect
                     </Link>
@@ -232,7 +232,7 @@ export const LLMProvidersTable = () => {
                     asChild
                   >
                     <Link
-                      href={`/lighthouse/config/connect?provider=${provider.id}&mode=edit`}
+                      href={`/lighthouse/settings/connect?provider=${provider.id}&mode=edit`}
                     >
                       Configure
                     </Link>

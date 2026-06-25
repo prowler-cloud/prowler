@@ -122,7 +122,7 @@ export const LighthouseBannerClient = ({
   const message = isConfigured
     ? "Use Lighthouse to review your findings and gain insights"
     : "Enable Lighthouse to secure your cloud with AI insights";
-  const href = isConfigured ? "/lighthouse" : "/lighthouse/config";
+  const href = isConfigured ? "/lighthouse" : "/lighthouse/settings";
 
   return <AnimatedGradientCard message={message} href={href} />;
 };
