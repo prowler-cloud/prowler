@@ -20,7 +20,7 @@ from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
 from time import mktime
-from typing import Any, Optional
+from typing import Any, Iterable, Mapping, Optional, Union
 
 from colorama import Style
 
@@ -42,6 +42,10 @@ _kingfisher_success_exit_codes = (0, 200, 205)
 # peak temp-disk and memory while still amortizing the per-process spawn cost
 # across many fragments (see detect_secrets_scan_batch).
 default_secrets_batch_chunk_size = 500
+
+# Wall-clock cap (seconds) for a single Kingfisher subprocess, so a hung binary
+# cannot block the audit indefinitely.
+default_secrets_scan_timeout = 300
 
 
 @lru_cache(maxsize=1)
@@ -192,7 +196,12 @@ def _scan_batch_chunk(
         command = _build_kingfisher_command(
             [tmp_dir], temp_output_file.name, confidence, validate, no_dedup=True
         )
-        process = subprocess.run(command, capture_output=True, text=True)
+        process = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=default_secrets_scan_timeout,
+        )
         if process.returncode not in _kingfisher_success_exit_codes:
             logger.error(
                 f"Error scanning for secrets: Kingfisher exited with code "
@@ -236,8 +245,8 @@ def _scan_batch_chunk(
 
 
 def detect_secrets_scan_batch(
-    payloads,
-    excluded_secrets: list[str] = None,
+    payloads: Union[Mapping[Any, str], Iterable[tuple[Any, str]]],
+    excluded_secrets: Optional[list[str]] = None,
     confidence: str = default_secrets_confidence,
     validate: bool = False,
     chunk_size: int = default_secrets_batch_chunk_size,
