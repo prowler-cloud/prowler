@@ -29,9 +29,6 @@ class cloudformation_stack_outputs_find_secrets(Check):
                 detect_secrets_output = detect_secrets_scan(
                     data=data,
                     excluded_secrets=secrets_ignore_patterns,
-                    detect_secrets_plugins=cloudformation_client.audit_config.get(
-                        "detect_secrets_plugins",
-                    ),
                     validate=cloudformation_client.audit_config.get(
                         "secrets_validate", False
                     ),

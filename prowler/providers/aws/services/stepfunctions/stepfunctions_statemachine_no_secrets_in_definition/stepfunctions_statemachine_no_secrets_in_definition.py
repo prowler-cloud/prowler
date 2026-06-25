@@ -22,9 +22,6 @@ class stepfunctions_statemachine_no_secrets_in_definition(Check):
                 detect_secrets_output = detect_secrets_scan(
                     data=state_machine.definition,
                     excluded_secrets=secrets_ignore_patterns,
-                    detect_secrets_plugins=stepfunctions_client.audit_config.get(
-                        "detect_secrets_plugins",
-                    ),
                     validate=stepfunctions_client.audit_config.get(
                         "secrets_validate", False
                     ),

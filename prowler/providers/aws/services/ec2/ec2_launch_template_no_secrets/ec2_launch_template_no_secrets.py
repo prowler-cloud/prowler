@@ -46,9 +46,6 @@ class ec2_launch_template_no_secrets(Check):
                 version_secrets = detect_secrets_scan(
                     data=user_data,
                     excluded_secrets=secrets_ignore_patterns,
-                    detect_secrets_plugins=ec2_client.audit_config.get(
-                        "detect_secrets_plugins"
-                    ),
                     validate=ec2_client.audit_config.get("secrets_validate", False),
                 )
 

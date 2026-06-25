@@ -35,9 +35,6 @@ class blockstorage_snapshot_metadata_sensitive_data(Check):
                 detect_secrets_output = detect_secrets_scan(
                     data=metadata_json,
                     excluded_secrets=secrets_ignore_patterns,
-                    detect_secrets_plugins=blockstorage_client.audit_config.get(
-                        "detect_secrets_plugins"
-                    ),
                     validate=blockstorage_client.audit_config.get(
                         "secrets_validate", False
                     ),

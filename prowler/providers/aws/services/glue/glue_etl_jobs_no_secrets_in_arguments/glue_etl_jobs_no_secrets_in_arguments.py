@@ -32,9 +32,6 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
                     detect_secrets_output = detect_secrets_scan(
                         data=json.dumps({arg_name: arg_value}),
                         excluded_secrets=secrets_ignore_patterns,
-                        detect_secrets_plugins=glue_client.audit_config.get(
-                            "detect_secrets_plugins",
-                        ),
                         validate=glue_client.audit_config.get(
                             "secrets_validate", False
                         ),

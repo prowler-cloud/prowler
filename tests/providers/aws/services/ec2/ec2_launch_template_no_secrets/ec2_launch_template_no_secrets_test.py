@@ -214,7 +214,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
-        ec2_client.audit_config = {"detect_secrets_plugins": None}
+        ec2_client.audit_config = {}
 
         with (
             mock.patch(
@@ -292,7 +292,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
-        ec2_client.audit_config = {"detect_secrets_plugins": None}
+        ec2_client.audit_config = {}
 
         with (
             mock.patch(
@@ -360,7 +360,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
-        ec2_client.audit_config = {"detect_secrets_plugins": None}
+        ec2_client.audit_config = {}
 
         with (
             mock.patch(
@@ -508,7 +508,7 @@ class Test_ec2_launch_template_no_secrets:
             launch_template_secrets,
             launch_template_no_secrets,
         ]
-        ec2_client.audit_config = {"detect_secrets_plugins": None}
+        ec2_client.audit_config = {}
 
         with (
             mock.patch(

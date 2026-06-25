@@ -37,9 +37,6 @@ class objectstorage_container_metadata_sensitive_data(Check):
                 detect_secrets_output = detect_secrets_scan(
                     data=metadata_json,
                     excluded_secrets=secrets_ignore_patterns,
-                    detect_secrets_plugins=objectstorage_client.audit_config.get(
-                        "detect_secrets_plugins"
-                    ),
                     validate=objectstorage_client.audit_config.get(
                         "secrets_validate", False
                     ),
