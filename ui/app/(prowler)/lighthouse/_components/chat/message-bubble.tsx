@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Check, Copy, UserRound, Wrench } from "lucide-react";
+import { Bot, Check, Copy, UserRound } from "lucide-react";
 import { useState } from "react";
 
 import { formatMessageTimestamp } from "@/app/(prowler)/lighthouse/_lib/format";
@@ -9,21 +9,19 @@ import {
   LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PART_TYPE,
   type LighthouseV2Message,
+  type LighthouseV2Part,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 
 import { MessageMarkdown } from "./message-markdown";
+import { ToolCalls } from "./tool-call-part";
 
 export function MessageBubble({ message }: { message: LighthouseV2Message }) {
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
-  const textParts = message.parts.filter(
-    (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT,
-  );
-  const toolCallCount = message.parts.filter(
-    (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TOOL_CALL,
-  ).length;
-  const messageText = textParts
+  // Text-only join feeds the copy button; tool calls are rendered separately.
+  const messageText = message.parts
+    .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
     .map((part) => getTextContent(part.content))
     .filter(Boolean)
     .join("\n\n");
@@ -50,18 +48,12 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
               : "bg-bg-neutral-tertiary text-text-neutral-primary",
           )}
         >
-          {toolCallCount > 0 && (
-            <p className="text-text-neutral-secondary mb-2 flex items-center gap-1.5 text-xs">
-              <Wrench className="size-3.5" />
-              {toolCallCount} {toolCallCount === 1 ? "tool" : "tools"} called
-            </p>
-          )}
-          {/* User text stays plain to preserve HTML-like tags; assistant text
-              renders as markdown. */}
+          {/* User text stays plain to preserve HTML-like tags; assistant
+              renders parts in order so tool calls sit between text blocks. */}
           {isUser ? (
             <p className="whitespace-pre-wrap">{messageText}</p>
           ) : (
-            <MessageMarkdown text={messageText} />
+            <AssistantParts parts={message.parts} />
           )}
         </div>
         <MessageMeta
@@ -74,6 +66,28 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
         <UserRound className="text-text-neutral-tertiary mt-1 size-5" />
       )}
     </article>
+  );
+}
+
+function AssistantParts({ parts }: { parts: LighthouseV2Part[] }) {
+  // Tool calls collapse into one disclosure (the "work"); text is the answer.
+  const toolParts = parts.filter(
+    (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TOOL_CALL,
+  );
+  const textParts = parts.filter(
+    (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT,
+  );
+
+  return (
+    <div className="space-y-3">
+      <ToolCalls parts={toolParts} />
+      {textParts.map((part, index) => {
+        const text = getTextContent(part.content);
+        return text ? (
+          <MessageMarkdown key={part.id || `text-${index}`} text={text} />
+        ) : null;
+      })}
+    </div>
   );
 }
 

@@ -12,6 +12,7 @@ import {
   LIGHTHOUSE_V2_STREAM_STATUS,
   type LighthouseV2StreamState,
 } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
+import { formatToolName } from "@/app/(prowler)/lighthouse/_lib/tool-calls";
 import { cn } from "@/lib/utils";
 
 import { MessageMarkdown } from "./message-markdown";
@@ -97,7 +98,7 @@ function getActivityHeader(streamState: LighthouseV2StreamState): string {
 function getToolCallLabel(
   toolCall: LighthouseV2StreamState["toolCalls"][number],
 ): string {
-  return `${toolCall.status === "running" ? "Calling" : "Called"} ${
-    toolCall.name
-  }`;
+  return `${toolCall.status === "running" ? "Calling" : "Called"} ${formatToolName(
+    toolCall.name,
+  )}`;
 }

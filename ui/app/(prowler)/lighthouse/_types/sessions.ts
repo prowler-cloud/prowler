@@ -35,6 +35,17 @@ export interface LighthouseV2Part {
   updatedAt: string | null;
 }
 
+// Normalized shape of a TOOL_CALL part's `content`. The backend persists this
+// blob in snake_case (tool_call_id, tool_name, ...); `getToolCallContent`
+// maps it to this camelCase form so the UI never touches the raw keys.
+export interface LighthouseV2ToolCallContent {
+  toolCallId: string;
+  toolName: string;
+  arguments: unknown;
+  result: unknown;
+  outcome: string | null;
+}
+
 export interface LighthouseV2Message {
   id: string;
   role: LighthouseV2MessageRole;
