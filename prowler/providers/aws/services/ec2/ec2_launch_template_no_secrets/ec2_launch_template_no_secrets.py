@@ -20,9 +20,13 @@ class ec2_launch_template_no_secrets(Check):
         validate = ec2_client.audit_config.get("secrets_validate", False)
         templates = list(ec2_client.launch_templates)
 
+        # Track versions whose User Data cannot be decoded so the template is
+        # surfaced (MANUAL) instead of silently claiming no secrets were found.
+        undecodable_versions = {}
+
         # Collect the decoded User Data of every (template, version) and scan it
         # all in batched Kingfisher invocations instead of one subprocess per
-        # version. Versions whose User Data cannot be decoded are skipped.
+        # version. Versions whose User Data cannot be decoded are recorded above.
         def payloads():
             for template_index, template in enumerate(templates):
                 for version_index, version in enumerate(template.versions):
@@ -40,10 +44,16 @@ class ec2_launch_template_no_secrets(Check):
                         logger.warning(
                             f"{template.region} -- Unable to decode User Data in EC2 Launch Template {template.name} version {version.version_number}: {error}"
                         )
+                        undecodable_versions.setdefault(template_index, []).append(
+                            version.version_number
+                        )
                         continue
                     except Exception as error:
                         logger.error(
                             f"{template.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        undecodable_versions.setdefault(template_index, []).append(
+                            version.version_number
                         )
                         continue
                     yield (template_index, version_index), user_data
@@ -72,10 +82,14 @@ class ec2_launch_template_no_secrets(Check):
                         f"Version {version.version_number}: {secrets_string}"
                     )
 
+            undecodable = undecodable_versions.get(template_index, [])
             if len(versions_with_secrets) > 0:
                 report.status = "FAIL"
                 report.status_extended = f"Potential secret found in User Data for EC2 Launch Template {template.name} in template versions: {', '.join(versions_with_secrets)}."
                 annotate_verified_secrets(report, all_secrets)
+            elif undecodable:
+                report.status = "MANUAL"
+                report.status_extended = f"Could not decode User Data for EC2 Launch Template {template.name} versions: {', '.join(str(version_number) for version_number in undecodable)}; manual review is required to scan for secrets."
             else:
                 report.status = "PASS"
                 report.status_extended = f"No secrets found in User Data of any version for EC2 Launch Template {template.name}."

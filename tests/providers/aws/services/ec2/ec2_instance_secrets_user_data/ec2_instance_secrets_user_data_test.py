@@ -426,4 +426,6 @@ class Test_ec2_instance_secrets_user_data:
             check = ec2_instance_secrets_user_data()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not decode User Data" in result[0].status_extended

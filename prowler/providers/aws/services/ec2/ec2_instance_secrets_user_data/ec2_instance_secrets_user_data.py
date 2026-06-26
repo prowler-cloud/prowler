@@ -22,9 +22,9 @@ class ec2_instance_secrets_user_data(Check):
 
         # Collect the decoded User Data of each non-terminated instance and scan
         # it all in batched Kingfisher invocations instead of one subprocess each.
-        # Instances whose User Data cannot be decoded are skipped (no report),
+        # Instances whose User Data cannot be decoded are undecodable (no report),
         # matching the original per-resource behavior.
-        skipped = set()
+        undecodable = set()
 
         def payloads():
             for index, instance in enumerate(instances):
@@ -42,13 +42,13 @@ class ec2_instance_secrets_user_data(Check):
                     logger.warning(
                         f"{instance.region} -- Unable to decode user data in EC2 instance {instance.id}: {error}"
                     )
-                    skipped.add(index)
+                    undecodable.add(index)
                     continue
                 except Exception as error:
                     logger.error(
                         f"{instance.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    skipped.add(index)
+                    undecodable.add(index)
                     continue
                 yield index, user_data
 
@@ -57,10 +57,13 @@ class ec2_instance_secrets_user_data(Check):
         )
 
         for index, instance in enumerate(instances):
-            if instance.state == "terminated" or index in skipped:
+            if instance.state == "terminated":
                 continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
-            if instance.user_data:
+            if index in undecodable:
+                report.status = "MANUAL"
+                report.status_extended = f"Could not decode User Data for EC2 instance {instance.id}; manual review is required to scan for secrets."
+            elif instance.user_data:
                 detect_secrets_output = batch_results.get(index)
                 if detect_secrets_output:
                     secrets_string = ", ".join(

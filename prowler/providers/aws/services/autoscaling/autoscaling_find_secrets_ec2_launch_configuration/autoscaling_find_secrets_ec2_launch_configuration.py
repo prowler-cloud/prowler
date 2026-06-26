@@ -24,9 +24,9 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
 
         # Collect the decoded User Data of each launch configuration and scan it
         # all in batched Kingfisher invocations instead of one subprocess each.
-        # Configurations whose User Data cannot be decoded are skipped (no report),
+        # Configurations whose User Data cannot be decoded are undecodable (no report),
         # matching the original per-resource behavior.
-        skipped = set()
+        undecodable = set()
 
         def payloads():
             for index, configuration in enumerate(configurations):
@@ -44,13 +44,13 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     logger.warning(
                         f"{configuration.region} -- Unable to decode user data in autoscaling launch configuration {configuration.name}: {error}"
                     )
-                    skipped.add(index)
+                    undecodable.add(index)
                     continue
                 except Exception as error:
                     logger.error(
                         f"{configuration.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    skipped.add(index)
+                    undecodable.add(index)
                     continue
                 yield index, user_data
 
@@ -59,11 +59,12 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
         )
 
         for index, configuration in enumerate(configurations):
-            if index in skipped:
-                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=configuration)
 
-            if configuration.user_data:
+            if index in undecodable:
+                report.status = "MANUAL"
+                report.status_extended = f"Could not decode User Data for autoscaling {configuration.name}; manual review is required to scan for secrets."
+            elif configuration.user_data:
                 has_secrets = batch_results.get(index)
                 if has_secrets:
                     report.status = "FAIL"

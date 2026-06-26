@@ -670,10 +670,10 @@ class Test_ec2_launch_template_no_secrets:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
             assert (
-                result[0].status_extended
-                == f"No secrets found in User Data of any version for EC2 Launch Template {launch_template_name}."
+                f"Could not decode User Data for EC2 Launch Template {launch_template_name}"
+                in result[0].status_extended
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
