@@ -115,6 +115,14 @@ function ResourceSkeletonRow({
       <TableCell className={cellClassName}>
         <Skeleton className="size-8 rounded-md" />
       </TableCell>
+      {/* Triage */}
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-8 w-28 rounded-lg" />
+      </TableCell>
+      {/* Notes */}
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-5 w-16 rounded" />
+      </TableCell>
     </TableRow>
   );
 }

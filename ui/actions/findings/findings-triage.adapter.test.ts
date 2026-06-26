@@ -1,0 +1,335 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  FINDING_TRIAGE_AUTOMATION_STATUS_VALUES,
+  FINDING_TRIAGE_DISABLED_REASON,
+  FINDING_TRIAGE_MANUAL_STATUS_VALUES,
+  FINDING_TRIAGE_STATUS,
+  FINDING_TRIAGE_STATUS_LABELS,
+} from "@/types/findings-triage";
+
+import {
+  adaptFindingTriageDetailResponse,
+  adaptFindingTriageSummariesResponse,
+} from "./findings-triage.adapter";
+import {
+  allProvisionalTriageStatusFindings,
+  findingTriageDetailResponse,
+  flatFindingWithAcceptedRiskTriage,
+  flatFindingWithNotePresenceOnly,
+  flatFindingWithUnderReviewTriage,
+  flatPassFindingWithoutPersistedTriage,
+  relationshipFindingWithIncludedTriage,
+} from "./findings-triage.fixtures";
+
+const expectNoRawTransportKeys = (value: Record<string, unknown>) => {
+  expect(value).not.toHaveProperty("attributes");
+  expect(value).not.toHaveProperty("relationships");
+  expect(value).not.toHaveProperty("included");
+  expect(value).not.toHaveProperty("triage_status");
+  expect(value).not.toHaveProperty("triage_has_note");
+  expect(value).not.toHaveProperty("triage_note");
+  expect(value).not.toHaveProperty("current_note");
+  expect(value).not.toHaveProperty("source");
+  expect(value).not.toHaveProperty("updated_by");
+  expect(value).not.toHaveProperty("inserted_at");
+  expect(value).not.toHaveProperty("updated_at");
+};
+
+describe("provisional findings triage contract fixtures", () => {
+  it("should document every triage status the provisional contract can return", () => {
+    // Given
+    const input = {
+      data: allProvisionalTriageStatusFindings,
+    };
+
+    // When
+    const result = adaptFindingTriageSummariesResponse(input, {
+      canEdit: true,
+    });
+
+    // Then
+    expect(result).toHaveLength(7);
+    expect(result.map((summary) => summary.status)).toEqual([
+      FINDING_TRIAGE_STATUS.OPEN,
+      FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      FINDING_TRIAGE_STATUS.REMEDIATING,
+      FINDING_TRIAGE_STATUS.RESOLVED,
+      FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+      FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
+      FINDING_TRIAGE_STATUS.REOPENED,
+    ]);
+    expect(result.map((summary) => summary.label)).toEqual([
+      "Open",
+      "Under Review",
+      "Remediating",
+      "Resolved",
+      "Risk Accepted",
+      "False Positive",
+      "Reopened",
+    ]);
+    expect(result[0].label).toBe(
+      FINDING_TRIAGE_STATUS_LABELS[FINDING_TRIAGE_STATUS.OPEN],
+    );
+  });
+
+  it("should model table note presence without requiring note previews", () => {
+    // Given
+    const input = {
+      data: [flatFindingWithNotePresenceOnly],
+    };
+
+    // When
+    const [summary] = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expect(summary).toEqual(
+      expect.objectContaining({
+        findingId: "finding-note-presence-1",
+        findingUid: "prowler-finding-note-presence-uid-1",
+        hasVisibleNote: true,
+      }),
+    );
+    expect(JSON.stringify(summary)).not.toContain("triage_note");
+    expect(JSON.stringify(summary)).not.toContain("current_note");
+  });
+
+  it("should model modal note detail as a separate detail payload", () => {
+    // Given / When
+    const detail = adaptFindingTriageDetailResponse(
+      findingTriageDetailResponse,
+    );
+
+    // Then
+    expect(detail.noteBody).toBe("Current note visible only inside the modal.");
+    expect(detail.hasVisibleNote).toBe(true);
+    expect(detail.maxNoteLength).toBe(300);
+  });
+
+  it("should model disabled non-paying state through adapter options only", () => {
+    // Given
+    const input = {
+      data: [flatFindingWithUnderReviewTriage],
+    };
+
+    // When
+    const [summary] = adaptFindingTriageSummariesResponse(input, {
+      canEdit: false,
+      disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+    });
+
+    // Then
+    expect(summary.canEdit).toBe(false);
+    expect(summary.disabledReason).toBe(
+      FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+    );
+    expect(summary.billingHref).toBe("/billing");
+  });
+});
+
+describe("adaptFindingTriageSummariesResponse", () => {
+  it("should return [] when the provisional API response is malformed", () => {
+    // Given
+    const input = { meta: { count: 0 } };
+
+    // When
+    const result = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expect(result).toEqual([]);
+  });
+
+  it("should normalize flat provisional finding fields into domain triage summaries", () => {
+    // Given
+    const input = {
+      data: [flatFindingWithUnderReviewTriage],
+    };
+
+    // When
+    const result = adaptFindingTriageSummariesResponse(input, {
+      canEdit: true,
+    });
+
+    // Then
+    expect(result).toEqual([
+      expect.objectContaining({
+        findingId: "finding-1",
+        findingUid: "prowler-finding-uid-1",
+        status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+        label: "Under Review",
+        hasVisibleNote: true,
+        hasPersistedStatus: true,
+        canEdit: true,
+        billingHref: "/billing",
+        mutelistShortcutStatuses: [
+          FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+          FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
+        ],
+      }),
+    ]);
+  });
+
+  it("should fallback from scan status when no persisted triage status exists", () => {
+    // Given
+    const input = {
+      data: [flatPassFindingWithoutPersistedTriage],
+    };
+
+    // When
+    const result = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+        hasVisibleNote: false,
+        hasPersistedStatus: false,
+      }),
+    );
+  });
+
+  it("should preserve included note presence when flat status and relationship triage coexist", () => {
+    // Given
+    const input = {
+      data: [
+        {
+          id: "finding-mixed-1",
+          type: "findings",
+          attributes: {
+            finding_id: "finding-mixed-1",
+            uid: "prowler-finding-mixed-uid-1",
+            status: "FAIL",
+            triage_status: "open",
+          },
+          relationships: {
+            triage: {
+              data: {
+                type: "finding-triage",
+                id: "triage-mixed-1",
+              },
+            },
+          },
+        },
+      ],
+      included: [
+        {
+          id: "triage-mixed-1",
+          type: "finding-triage",
+          attributes: {
+            status: "under_review",
+            has_note: true,
+          },
+        },
+      ],
+    };
+
+    // When
+    const [summary] = adaptFindingTriageSummariesResponse(input, {
+      canEdit: true,
+    });
+
+    // Then
+    expect(summary.status).toBe(FINDING_TRIAGE_STATUS.OPEN);
+    expect(summary.hasVisibleNote).toBe(true);
+  });
+
+  it("should normalize future relationship/included triage resources without component changes", () => {
+    // Given
+    const input = relationshipFindingWithIncludedTriage;
+
+    // When
+    const result = adaptFindingTriageSummariesResponse(input, {
+      canEdit: false,
+      disabledReason: "cloud_only",
+    });
+
+    // Then
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        findingId: "finding-relationship-1",
+        findingUid: "prowler-finding-relationship-uid-1",
+        status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
+        label: "False Positive",
+        hasVisibleNote: true,
+        hasPersistedStatus: true,
+        canEdit: false,
+        disabledReason: "cloud_only",
+      }),
+    );
+  });
+
+  it("should keep raw provisional fields out of table component DTOs", () => {
+    // Given
+    const input = {
+      data: [flatFindingWithAcceptedRiskTriage],
+    };
+
+    // When
+    const [summary] = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expectNoRawTransportKeys(summary as unknown as Record<string, unknown>);
+    expect(JSON.stringify(summary)).not.toContain("Accepted risk note body");
+  });
+
+  it("should expose manual status choices without automation-owned statuses", () => {
+    // Given / When / Then
+    expect(FINDING_TRIAGE_MANUAL_STATUS_VALUES).toEqual([
+      FINDING_TRIAGE_STATUS.OPEN,
+      FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      FINDING_TRIAGE_STATUS.REMEDIATING,
+      FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+      FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
+    ]);
+    expect(FINDING_TRIAGE_AUTOMATION_STATUS_VALUES).toEqual([
+      FINDING_TRIAGE_STATUS.RESOLVED,
+      FINDING_TRIAGE_STATUS.REOPENED,
+    ]);
+    expect(FINDING_TRIAGE_MANUAL_STATUS_VALUES).not.toContain(
+      FINDING_TRIAGE_STATUS.RESOLVED,
+    );
+    expect(FINDING_TRIAGE_MANUAL_STATUS_VALUES).not.toContain(
+      FINDING_TRIAGE_STATUS.REOPENED,
+    );
+  });
+});
+
+describe("adaptFindingTriageDetailResponse", () => {
+  it("should normalize provisional detail payloads into modal DTOs", () => {
+    // Given
+    const input = findingTriageDetailResponse;
+
+    // When
+    const detail = adaptFindingTriageDetailResponse(input, {
+      canEdit: true,
+    });
+
+    // Then
+    expect(detail).toEqual(
+      expect.objectContaining({
+        findingId: "finding-1",
+        findingUid: "prowler-finding-uid-1",
+        status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+        label: "Risk Accepted",
+        hasVisibleNote: true,
+        hasPersistedStatus: true,
+        canEdit: true,
+        noteBody: "Current note visible only inside the modal.",
+        maxNoteLength: 300,
+        privacyCopy: "This note is only visible to your team.",
+      }),
+    );
+  });
+
+  it("should keep raw provisional fields out of modal component DTOs", () => {
+    // Given
+    const input = findingTriageDetailResponse;
+
+    // When
+    const detail = adaptFindingTriageDetailResponse(input);
+
+    // Then
+    expectNoRawTransportKeys(detail as unknown as Record<string, unknown>);
+  });
+});

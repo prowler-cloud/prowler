@@ -13,12 +13,18 @@ import { getRegionFlag } from "@/lib/region-flags";
 import { FindingProps, ProviderType } from "@/types";
 
 import { FindingDetailDrawer } from "./finding-detail-drawer";
+import type { FindingTriageUpdateHandler } from "./finding-note-modal";
+import {
+  FindingNotesCell,
+  FindingTriageStatusCell,
+} from "./finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
 
 interface GetStandaloneFindingColumnsOptions {
   includeUpdatedAt?: boolean;
   openFindingId?: string | null;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
 }
 
 const getFindingsData = (row: { original: FindingProps }) => {
@@ -68,6 +74,7 @@ function FindingTitleCell({
 export function getStandaloneFindingColumns({
   includeUpdatedAt = false,
   openFindingId = null,
+  onTriageUpdateAction,
 }: GetStandaloneFindingColumnsOptions = {}): ColumnDef<FindingProps>[] {
   const columns: ColumnDef<FindingProps>[] = [
     {
@@ -241,6 +248,56 @@ export function getStandaloneFindingColumns({
       },
     });
   }
+
+  columns.push(
+    {
+      id: "triage",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Triage" />
+      ),
+      cell: ({ row }) => (
+        <FindingTriageStatusCell
+          triage={row.original.triage}
+          onTriageUpdateAction={onTriageUpdateAction}
+        />
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "notes",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Notes" />
+      ),
+      cell: ({ row }) => {
+        const resourceName = getResourceData(row, "name");
+        const providerAlias = getProviderData(row, "alias");
+        const providerType = getProviderData(row, "provider");
+
+        return (
+          <FindingNotesCell
+            triage={row.original.triage}
+            findingContext={{
+              title: row.original.attributes.check_metadata.checktitle,
+              resource:
+                typeof resourceName === "string" && resourceName !== "-"
+                  ? resourceName
+                  : undefined,
+              provider:
+                typeof providerAlias === "string" && providerAlias !== "-"
+                  ? providerAlias
+                  : undefined,
+              providerType:
+                typeof providerType === "string" && providerType !== "-"
+                  ? (providerType as ProviderType)
+                  : undefined,
+            }}
+            onTriageUpdateAction={onTriageUpdateAction}
+          />
+        );
+      },
+      enableSorting: false,
+    },
+  );
 
   return columns;
 }

@@ -19,6 +19,9 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/components/shadcn", () => ({
+  Button: ({ children, ...props }: { children: ReactNode }) => (
+    <button {...props}>{children}</button>
+  ),
   Checkbox: ({
     "aria-label": ariaLabel,
     onCheckedChange,
@@ -34,6 +37,9 @@ vi.mock("@/components/shadcn", () => ({
       onChange={(event) => onCheckedChange?.(event.target.checked)}
       {...props}
     />
+  ),
+  Textarea: (props: InputHTMLAttributes<HTMLTextAreaElement>) => (
+    <textarea {...props} />
   ),
 }));
 
@@ -76,6 +82,44 @@ vi.mock("./notification-indicator", () => ({
     notificationIndicatorMock(props);
     return null;
   },
+}));
+
+vi.mock("@/components/shadcn/modal", () => ({
+  Modal: ({
+    children,
+    open,
+    title,
+  }: {
+    children: ReactNode;
+    open: boolean;
+    title?: string;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label={title}>
+        {children}
+      </div>
+    ) : null,
+}));
+
+vi.mock("@/components/shadcn/select/select", () => ({
+  Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({
+    children,
+    disabled,
+    "aria-label": ariaLabel,
+  }: {
+    children: ReactNode;
+    disabled?: boolean;
+    "aria-label"?: string;
+  }) => (
+    <button aria-label={ariaLabel} disabled={disabled}>
+      {children}
+    </button>
+  ),
 }));
 
 vi.mock("@/components/shadcn/tooltip", () => ({
@@ -248,6 +292,27 @@ function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
 // ---------------------------------------------------------------------------
 
 describe("column-finding-groups — accessibility of check title cell", () => {
+  it("should not expose triage and notes columns on group-level rows", () => {
+    // Given
+    const columns = getColumnFindingGroups({
+      rowSelection: {},
+      selectableRowCount: 1,
+      onDrillDown: vi.fn(),
+    });
+
+    // When
+    const columnIds = columns.map(
+      (column) =>
+        (column as { id?: string; accessorKey?: string }).id ??
+        (column as { id?: string; accessorKey?: string }).accessorKey,
+    );
+
+    // Then
+    expect(columnIds).not.toContain("triage");
+    expect(columnIds).not.toContain("notes");
+    expect(columnIds.at(-1)).toBe("actions");
+  });
+
   it("should not expose an impacted providers column", () => {
     // Given
     const columns = getColumnFindingGroups({

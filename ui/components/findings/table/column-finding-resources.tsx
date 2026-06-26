@@ -25,7 +25,12 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
 
+import type { FindingTriageUpdateHandler } from "./finding-note-modal";
 import { canMuteFindingResource } from "./finding-resource-selection";
+import {
+  FindingNotesCell,
+  FindingTriageStatusCell,
+} from "./finding-triage-cells";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   type DeltaType,
@@ -141,11 +146,13 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 interface GetColumnFindingResourcesOptions {
   rowSelection: RowSelectionState;
   selectableRowCount: number;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
 }
 
 export function getColumnFindingResources({
   rowSelection,
   selectableRowCount,
+  onTriageUpdateAction,
 }: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -312,11 +319,45 @@ export function getColumnFindingResources({
       },
       enableSorting: false,
     },
-    // Actions column — mute only
+    // Actions column — utility actions are kept before final data columns.
     {
       id: "actions",
       header: () => <div className="w-10" />,
       cell: ({ row }) => <ResourceRowActions row={row} />,
+      enableSorting: false,
+    },
+    // Triage
+    {
+      id: "triage",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Triage" />
+      ),
+      cell: ({ row }) => (
+        <FindingTriageStatusCell
+          triage={row.original.triage}
+          onTriageUpdateAction={onTriageUpdateAction}
+        />
+      ),
+      enableSorting: false,
+    },
+    // Notes
+    {
+      id: "notes",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Notes" />
+      ),
+      cell: ({ row }) => (
+        <FindingNotesCell
+          triage={row.original.triage}
+          findingContext={{
+            title: row.original.checkId,
+            resource: row.original.resourceName,
+            provider: row.original.providerAlias,
+            providerType: row.original.providerType,
+          }}
+          onTriageUpdateAction={onTriageUpdateAction}
+        />
+      ),
       enableSorting: false,
     },
   ];
