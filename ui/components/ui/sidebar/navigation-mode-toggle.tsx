@@ -1,8 +1,9 @@
 "use client";
 
-import { Bot, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { LighthouseIcon } from "@/components/icons/Icons";
 import {
   Tooltip,
   TooltipContent,
@@ -27,13 +28,13 @@ export function SidebarNavigationModeToggle({
   const modes = [
     {
       value: SIDEBAR_NAVIGATION_MODE.BROWSE,
-      label: "Browse",
+      label: "Home",
       icon: LayoutDashboard,
     },
     {
       value: SIDEBAR_NAVIGATION_MODE.CHAT,
       label: "Chat",
-      icon: Bot,
+      icon: LighthouseIcon,
     },
   ] as const;
 

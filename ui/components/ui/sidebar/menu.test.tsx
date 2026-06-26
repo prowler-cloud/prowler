@@ -128,7 +128,7 @@ describe("SidebarNavigationModeToggle", () => {
     expect(pushMock).toHaveBeenCalledWith("/lighthouse");
   });
 
-  it("does not navigate when Browse mode is selected", async () => {
+  it("does not navigate when Home mode is selected", async () => {
     // Given
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -142,7 +142,7 @@ describe("SidebarNavigationModeToggle", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Browse" }));
+    await user.click(screen.getByRole("button", { name: "Home" }));
 
     // Then
     expect(onChange).toHaveBeenCalledWith(SIDEBAR_NAVIGATION_MODE.BROWSE);
