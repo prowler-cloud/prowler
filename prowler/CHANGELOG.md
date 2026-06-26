@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
+- FedRAMP 20x Key Security Indicators (`FedRAMP-20x-KSI`, compliance stems `fedramp_20x_ksi_{aws,azure,gcp,kubernetes,m365}`) aligned to FedRAMP Consolidated Rules for 2026 version `2026.06.24.01` (46 indicators from [FedRAMP/rules](https://github.com/FedRAMP/rules); Class A uses a seven-KSI subset per FRC-CLA-MFR while Classes B/C apply the full catalog) [(#11701)](https://github.com/prowler-cloud/prowler/pull/11701)
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
 - `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
 - `stepfunctions_statemachine_encrypted_with_cmk` check for AWS provider, verifying that each Step Functions state machine uses a customer-managed KMS key for encryption at rest rather than the default AWS-owned key [(#11538)](https://github.com/prowler-cloud/prowler/pull/11538)
@@ -19,10 +20,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
-
-### 🐞 Fixed
-
 - Azure PostgreSQL flexible server collection no longer drops the remaining servers in a subscription when one server fails to collect; the `connection_throttle.enable` parameter (removed in PostgreSQL 16+) is treated as absent only when the Azure SDK reports it as not found, so unexpected lookup failures are not silently reported as throttling disabled [(#11595)](https://github.com/prowler-cloud/prowler/pull/11595)
+
+### ⚠️ Removed
+
+- Phase One pilot FedRAMP 20x KSI Low frameworks (`FedRAMP-20x-KSI-Low` / `fedramp_20x_ksi_low_{aws,azure,gcp}`, version `25.05C` with category-level requirements). Use `fedramp_20x_ksi_{provider}` (`FedRAMP-20x-KSI`, `2026.06.24.01`) instead. Breaking change for CLI `--compliance fedramp_20x_ksi_low_*` and stored API `compliance_id` values.
 
 ---
 
