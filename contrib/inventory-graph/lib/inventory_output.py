@@ -16,7 +16,6 @@ from typing import Optional
 from prowler.lib.logger import logger
 from lib.models import ConnectivityGraph
 
-
 # ---------------------------------------------------------------------------
 # JSON output
 # ---------------------------------------------------------------------------

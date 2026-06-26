@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.postgresqlflexibleservers import PostgreSQLManagementClient
@@ -58,6 +59,8 @@ class PostgreSQL(AzureService):
                             subscription, resource_group, postgresql_server.name
                         )
                         location = server_details.location
+                        backup = getattr(server_details, "backup", None)
+                        ha = getattr(server_details, "high_availability", None)
                         flexible_servers[subscription].append(
                             Server(
                                 id=postgresql_server.id,
@@ -73,6 +76,10 @@ class PostgreSQL(AzureService):
                                 connection_throttling=connection_throttling,
                                 log_retention_days=log_retention_days,
                                 firewall=firewall,
+                                geo_redundant_backup=getattr(
+                                    backup, "geo_redundant_backup", None
+                                ),
+                                high_availability_mode=getattr(ha, "mode", None),
                             )
                         )
                     except Exception as error:
@@ -158,12 +165,19 @@ class PostgreSQL(AzureService):
                 )
             return admin_list
         except Exception as e:
-            logger.error(f"Error getting Entra ID admins for {server_name}: {e}")
+            if "authentication is not enabled" in str(e):
+                # Expected when the server uses PostgreSQL authentication only
+                # (Entra/Azure AD auth disabled); not an error.
+                logger.warning(
+                    f"Entra ID authentication is not enabled for {server_name}; skipping Entra ID admins."
+                )
+            else:
+                logger.error(f"Error getting Entra ID admins for {server_name}: {e}")
             return []
 
     def _get_connection_throttling(
         self, subscription: str, resouce_group_name: str, server_name: str
-    ) -> str | None:
+    ) -> Optional[str]:
         """Get the ``connection_throttle.enable`` setting for a flexible server.
 
         The ``connection_throttle.enable`` server parameter was removed in
@@ -255,6 +269,8 @@ class Server:
     log_checkpoints: str
     log_connections: str
     log_disconnections: str
-    connection_throttling: str | None
-    log_retention_days: str
+    connection_throttling: Optional[str]
+    log_retention_days: Optional[str]
     firewall: list[Firewall]
+    geo_redundant_backup: Optional[str] = None
+    high_availability_mode: Optional[str] = None

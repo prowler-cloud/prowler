@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "acmpca_certificate_authority_pqc_key_algorithm",
+  "CheckTitle": "AWS Private CA certificate authorities use a post-quantum (ML-DSA) key algorithm",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "acmpca",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsAcmPcaCertificateAuthority",
+  "ResourceGroup": "security",
+  "Description": "**AWS Private Certificate Authorities (Private CAs)** are assessed for use of a **post-quantum digital signature key algorithm** (`ML_DSA_44`, `ML_DSA_65`, `ML_DSA_87`). CAs that still issue certificates with RSA or ECC algorithms produce signatures vulnerable to forgery once a cryptographically relevant quantum computer is available.",
+  "Risk": "RSA and ECC signatures can be broken by Shor's algorithm on a sufficiently large quantum computer. A compromised CA private key would let an attacker issue arbitrary certificates trusted across the PKI, undermining identity and code-signing controls. Migrating CAs to **ML-DSA** (NIST FIPS 204) provides quantum-resistant signatures so issued certificates retain integrity in the post-quantum era.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/privateca/latest/userguide/PcaTerms.html",
+    "https://aws.amazon.com/about-aws/whats-new/2025/11/aws-private-ca-post-quantum-digital-certificates/",
+    "https://aws.amazon.com/blogs/security/post-quantum-ml-dsa-code-signing-with-aws-private-ca-and-aws-kms/",
+    "https://csrc.nist.gov/pubs/fips/204/final"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws acm-pca create-certificate-authority --certificate-authority-configuration '{\"KeyAlgorithm\":\"ML_DSA_65\",\"SigningAlgorithm\":\"ML_DSA_65\",\"Subject\":{...}}' --certificate-authority-type SUBORDINATE",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ACMPCA::CertificateAuthority\n    Properties:\n      Type: SUBORDINATE\n      KeyAlgorithm: ML_DSA_65        # FIX: post-quantum signature algorithm\n      SigningAlgorithm: ML_DSA_65\n      Subject:\n        CommonName: example-pqc-ca\n```",
+      "Other": "Existing CAs cannot have their key algorithm changed; create a new CA with KeyAlgorithm = ML_DSA_44 / ML_DSA_65 / ML_DSA_87, re-issue certificates from it, and decommission the legacy CA once dependent workloads have rotated.",
+      "Terraform": "```hcl\nresource \"aws_acmpca_certificate_authority\" \"<example_resource_name>\" {\n  type = \"SUBORDINATE\"\n  certificate_authority_configuration {\n    key_algorithm     = \"ML_DSA_65\" # FIX: post-quantum signature algorithm\n    signing_algorithm = \"ML_DSA_65\"\n    subject {\n      common_name = \"example-pqc-ca\"\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Create new Private CAs with a **post-quantum key algorithm** (`ML_DSA_44`, `ML_DSA_65`, or `ML_DSA_87`) and migrate workloads off legacy RSA/ECC CAs. Plan crypto-agility for your PKI so that quantum-resistant trust anchors can be rolled out before threat actors gain access to a cryptographically relevant quantum computer.",
+      "Url": "https://hub.prowler.com/check/acmpca_certificate_authority_pqc_key_algorithm"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

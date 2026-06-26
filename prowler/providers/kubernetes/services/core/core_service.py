@@ -27,45 +27,11 @@ class Core(KubernetesService):
             for namespace in self.namespaces:
                 pods = self.client.list_namespaced_pod(namespace)
                 for pod in pods.items:
-                    pod_containers = {}
-                    containers = pod.spec.containers if pod.spec.containers else []
-                    init_containers = (
-                        pod.spec.init_containers if pod.spec.init_containers else []
-                    )
-                    ephemeral_containers = (
+                    containers = self._build_containers(pod.spec.containers)
+                    init_containers = self._build_containers(pod.spec.init_containers)
+                    ephemeral_containers = self._build_containers(
                         pod.spec.ephemeral_containers
-                        if pod.spec.ephemeral_containers
-                        else []
                     )
-                    for container in (
-                        containers + init_containers + ephemeral_containers
-                    ):
-                        pod_containers[container.name] = Container(
-                            name=container.name,
-                            image=container.image,
-                            command=container.command if container.command else None,
-                            ports=(
-                                [
-                                    {"containerPort": port.container_port}
-                                    for port in container.ports
-                                ]
-                                if container.ports
-                                else None
-                            ),
-                            env=(
-                                [
-                                    {"name": env.name, "value": env.value}
-                                    for env in container.env
-                                ]
-                                if container.env
-                                else None
-                            ),
-                            security_context=(
-                                container.security_context.to_dict()
-                                if container.security_context
-                                else {}
-                            ),
-                        )
                     self.pods[pod.metadata.uid] = Pod(
                         name=pod.metadata.name,
                         uid=pod.metadata.uid,
@@ -85,12 +51,55 @@ class Core(KubernetesService):
                             if pod.spec.security_context
                             else {}
                         ),
-                        containers=pod_containers,
+                        containers=containers,
+                        init_containers=init_containers,
+                        ephemeral_containers=ephemeral_containers,
                     )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    @staticmethod
+    def _build_containers(containers) -> dict:
+        pod_containers = {}
+        for container in containers or []:
+            pod_containers[container.name] = Container(
+                name=container.name,
+                image=container.image,
+                command=container.command if container.command else None,
+                ports=(
+                    [{"containerPort": port.container_port} for port in container.ports]
+                    if container.ports
+                    else None
+                ),
+                env=(
+                    [{"name": env.name, "value": env.value} for env in container.env]
+                    if container.env
+                    else None
+                ),
+                security_context=(
+                    container.security_context.to_dict()
+                    if container.security_context
+                    else {}
+                ),
+                resources=(
+                    container.resources.to_dict()
+                    if getattr(container, "resources", None)
+                    else None
+                ),
+                liveness_probe=(
+                    container.liveness_probe.to_dict()
+                    if getattr(container, "liveness_probe", None)
+                    else None
+                ),
+                readiness_probe=(
+                    container.readiness_probe.to_dict()
+                    if getattr(container, "readiness_probe", None)
+                    else None
+                ),
+            )
+        return pod_containers
 
     def _list_config_maps(self):
         try:
@@ -156,6 +165,9 @@ class Container(BaseModel):
     ports: Optional[List[dict]]
     env: Optional[List[dict]]
     security_context: dict
+    resources: Optional[dict] = None
+    liveness_probe: Optional[dict] = None
+    readiness_probe: Optional[dict] = None
 
 
 class Pod(BaseModel):
@@ -174,6 +186,8 @@ class Pod(BaseModel):
     host_network: Optional[bool]
     security_context: Optional[dict]
     containers: Optional[dict]
+    init_containers: Optional[dict] = None
+    ephemeral_containers: Optional[dict] = None
 
 
 class ConfigMap(BaseModel):

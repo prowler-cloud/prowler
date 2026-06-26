@@ -21,6 +21,7 @@
 - Admin user authentication required (admin.auth.setup setup)
 - Environment variables configured for : E2E_AWS_PROVIDER_ACCOUNT_ID,E2E_AWS_PROVIDER_ACCESS_KEY and E2E_AWS_PROVIDER_SECRET_KEY
 - Remove any existing AWS provider with the same Account ID before starting the test
+- Create a connected AWS provider without launching a preparatory scan
 - This test must be run serially and never in parallel with other tests, as it requires the Account ID Provider to be already registered.
 
 ### Flow Steps
@@ -55,5 +56,5 @@
 
 - The scans view is tabbed (In Progress / Completed / Scheduled) and `/scans` defaults to Completed. Each empty tab renders an empty-state card instead of a table, so page-loaded checks assert the tabs shell, not the table.
 - The table may take a short time to reflect the new scan; assertions look for a row containing the account ID.
-- Provider cleanup performed before each test to ensure clean state
+- Provider cleanup and provider connection setup are performed before each test to ensure clean state
 - Tests should run serially to avoid state conflicts.

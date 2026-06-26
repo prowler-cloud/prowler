@@ -1,11 +1,10 @@
 from typing import Any
 from uuid import uuid4
 
+from api.db_utils import DB_USER, POSTGRES_TENANT_VAR
 from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
 from django.db.backends.ddl_references import Statement, Table
-
-from api.db_utils import DB_USER, POSTGRES_TENANT_VAR
 
 
 class Tenant(models.Model):

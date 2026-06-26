@@ -1,19 +1,18 @@
-from datetime import datetime, timedelta, timezone
-
-from celery import states
-from celery.utils.log import get_task_logger
-from config.django.base import ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES
-from tasks.jobs.attack_paths.db_utils import (
-    _mark_scan_finished,
-    recover_graph_data_ready,
-)
-from tasks.jobs.orphan_recovery import is_worker_alive as _is_worker_alive
-from tasks.jobs.orphan_recovery import revoke_task as _revoke_task
+from datetime import UTC, datetime, timedelta
 
 from api.attack_paths import database as graph_database
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.models import AttackPathsScan, StateChoices
+from celery import states
+from celery.utils.log import get_task_logger
+from config.django.base import ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES
+from tasks.jobs.attack_paths.db_utils import (
+    mark_scan_finished,
+    recover_graph_data_ready,
+)
+from tasks.jobs.orphan_recovery import is_worker_alive as _is_worker_alive
+from tasks.jobs.orphan_recovery import revoke_task as _revoke_task
 
 logger = get_task_logger(__name__)
 
@@ -30,7 +29,7 @@ def cleanup_stale_attack_paths_scans() -> dict:
        age plus the parent `Scan` no longer being in flight.
     """
     threshold = timedelta(minutes=ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     cutoff = now - threshold
 
     cleaned_up: list[str] = []
@@ -88,7 +87,7 @@ def _cleanup_stale_executing_scans(cutoff: datetime) -> list[str]:
             else:
                 reason = "Worker dead — cleaned up by periodic task"
         else:
-            # No worker recorded — time-based heuristic only
+            # No worker recorded, time-based heuristic only
             if scan.started_at and scan.started_at >= cutoff:
                 continue
             reason = (
@@ -161,7 +160,7 @@ def _cleanup_scan(scan, task_result, reason: str) -> bool:
     """
     scan_id_str = str(scan.id)
 
-    # 1. Drop temp Neo4j database
+    # Drop temp Neo4j database
     tmp_db_name = graph_database.get_database_name(scan.id, temporary=True)
     try:
         graph_database.drop_database(tmp_db_name)
@@ -175,7 +174,7 @@ def _cleanup_scan(scan, task_result, reason: str) -> bool:
     # Mark `TaskResult` as `FAILURE` (not RLS-protected, outside lock)
     if task_result:
         task_result.status = states.FAILURE
-        task_result.date_done = datetime.now(tz=timezone.utc)
+        task_result.date_done = datetime.now(tz=UTC)
         task_result.save(update_fields=["status", "date_done"])
 
     recover_graph_data_ready(fresh_scan)
@@ -201,7 +200,7 @@ def _cleanup_scheduled_scan(scan, task_result, reason: str) -> bool:
 
     if task_result:
         task_result.status = states.FAILURE
-        task_result.date_done = datetime.now(tz=timezone.utc)
+        task_result.date_done = datetime.now(tz=UTC)
         task_result.save(update_fields=["status", "date_done"])
 
     logger.info(f"Cleaned up scheduled scan {scan_id_str}: {reason}")
@@ -226,6 +225,6 @@ def _finalize_failed_scan(scan, expected_state: str, reason: str):
             logger.info(f"Scan {scan_id_str} is now {fresh_scan.state}, skipping")
             return None
 
-        _mark_scan_finished(fresh_scan, StateChoices.FAILED, {"global_error": reason})
+        mark_scan_finished(fresh_scan, StateChoices.FAILED, {"global_error": reason})
 
     return fresh_scan
