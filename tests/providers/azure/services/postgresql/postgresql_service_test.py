@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
+
 from prowler.providers.azure.services.postgresql.postgresql_service import (
     EntraIdAdmin,
     Firewall,
@@ -202,7 +204,9 @@ class Test_PostgreSQL_Service_Resilience:
 
         def configurations_get(resource_group, server_name, key):
             if key == "connection_throttle.enable" and server_name == "prd":
-                raise Exception(
+                # Azure raises ResourceNotFoundError (ConfigurationNotExists)
+                # when the parameter does not exist on the server.
+                raise ResourceNotFoundError(
                     "(ConfigurationNotExists) The configuration "
                     "'connection_throttle.enable' does not exist for prd server "
                     "version 18."
@@ -220,6 +224,41 @@ class Test_PostgreSQL_Service_Resilience:
         assert prd_server.connection_throttling is None
         dev_server = next(s for s in servers[AZURE_SUBSCRIPTION_ID] if s.name == "dev")
         assert dev_server.connection_throttling == "ON"
+
+    def test_unexpected_throttling_error_is_not_silently_collected(self):
+        # An unexpected failure reading "connection_throttle.enable" (e.g. a
+        # permission, throttling, or transient SDK error) must NOT be turned
+        # into connection_throttling=None: that would make the downstream check
+        # report the server as having throttling disabled, hiding a collection
+        # failure as a security finding. Only ResourceNotFoundError (the
+        # parameter genuinely missing) is treated as "not enabled"; anything
+        # else isolates to that server, which is dropped rather than fabricated.
+        ok = _make_server("ok")
+        denied = _make_server("denied")
+
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = [ok, denied]
+        server_details = MagicMock()
+        server_details.location = "westeurope"
+        mock_client.servers.get.return_value = server_details
+        mock_client.administrators.list_by_server.return_value = []
+        mock_client.firewall_rules.list_by_server.return_value = []
+
+        def configurations_get(resource_group, server_name, key):
+            if key == "connection_throttle.enable" and server_name == "denied":
+                raise HttpResponseError("(AuthorizationFailed) permission denied")
+            return MagicMock(value="ON")
+
+        mock_client.configurations.get.side_effect = configurations_get
+
+        postgresql = self._build_service_with_client(mock_client)
+        servers = postgresql._get_flexible_servers()
+
+        collected = servers[AZURE_SUBSCRIPTION_ID]
+        # The server whose throttling lookup failed unexpectedly is dropped,
+        # not collected with a fabricated connection_throttling=None.
+        assert [server.name for server in collected] == ["ok"]
+        assert all(server.connection_throttling is not None for server in collected)
 
     def test_one_server_hard_failure_does_not_drop_others(self):
         # A failure unrelated to a guarded getter (here, fetching the server

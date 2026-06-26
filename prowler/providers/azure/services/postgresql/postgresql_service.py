@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.postgresqlflexibleservers import PostgreSQLManagementClient
 
 from prowler.lib.logger import logger
@@ -161,18 +162,42 @@ class PostgreSQL(AzureService):
             return []
 
     def _get_connection_throttling(
-        self, subscription, resouce_group_name, server_name
+        self, subscription: str, resouce_group_name: str, server_name: str
     ) -> str | None:
+        """Get the ``connection_throttle.enable`` setting for a flexible server.
+
+        The ``connection_throttle.enable`` server parameter was removed in
+        PostgreSQL 16+, so it no longer exists on newer flexible servers. When
+        the parameter is genuinely absent the Azure SDK raises
+        ``ResourceNotFoundError`` (error code ``ConfigurationNotExists``); that
+        case is treated as "not enabled" and ``None`` is returned so collection
+        of the server can continue.
+
+        Any other error (permissions, throttling, transient SDK failures) is
+        intentionally left to propagate: returning ``None`` for those would make
+        the downstream check report the server as having connection throttling
+        disabled, silently turning a collection failure into a security finding.
+
+        Args:
+            subscription: Azure subscription identifier.
+            resouce_group_name: Resource group containing the server.
+            server_name: PostgreSQL flexible server name.
+
+        Returns:
+            The uppercased throttling value, or ``None`` when the parameter does
+            not exist on the server.
+
+        Raises:
+            ResourceNotFoundError is handled; any other exception propagates to
+            the caller so it can be surfaced as a collection failure.
+        """
         client = self.clients[subscription]
         try:
             connection_throttling = client.configurations.get(
                 resouce_group_name, server_name, "connection_throttle.enable"
             )
             return connection_throttling.value.upper()
-        except Exception:
-            # The "connection_throttle.enable" server parameter was removed in
-            # PostgreSQL 16+, so it no longer exists on newer flexible servers.
-            # Treat its absence as "not enabled" rather than failing collection.
+        except ResourceNotFoundError:
             return None
 
     def _get_log_retention_days(self, subscription, resouce_group_name, server_name):
