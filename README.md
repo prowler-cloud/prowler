@@ -123,27 +123,27 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 613 | 86 | 46 | 19 | Official | UI, API, CLI |
-| Azure | 190 | 22 | 20 | 16 | Official | UI, API, CLI |
-| GCP | 109 | 20 | 18 | 12 | Official | UI, API, CLI |
-| Kubernetes | 90 | 7 | 7 | 11 | Official | UI, API, CLI |
-| GitHub | 24 | 3 | 1 | 5 | Official | UI, API, CLI |
-| M365 | 107 | 10 | 4 | 10 | Official | UI, API, CLI |
-| OCI | 52 | 14 | 4 | 10 | Official | UI, API, CLI |
-| Alibaba Cloud | 63 | 9 | 5 | 9 | Official | UI, API, CLI |
-| Cloudflare | 29 | 3 | 1 | 5 | Official | UI, API, CLI |
+| AWS | 615 | 86 | 47 | 19 | Official | UI, API, CLI |
+| Azure | 190 | 22 | 21 | 16 | Official | UI, API, CLI |
+| GCP | 109 | 20 | 19 | 12 | Official | UI, API, CLI |
+| Kubernetes | 90 | 7 | 8 | 11 | Official | UI, API, CLI |
+| GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
+| M365 | 109 | 10 | 6 | 10 | Official | UI, API, CLI |
+| OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
+| Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
+| Cloudflare | 29 | 3 | 2 | 5 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 1 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | Image | N/A | N/A | N/A | N/A | Official | CLI, API |
-| Google Workspace | 65 | 11 | 2 | 6 | Official | UI, API, CLI |
-| OpenStack | 34 | 5 | 0 | 9 | Official | UI, API, CLI |
-| Vercel | 26 | 6 | 0 | 8 | Official | UI, API, CLI |
-| Okta | 29 | 8 | 1 | 2 | Official | UI, API, CLI |
-| Linode [Contact us](https://prowler.com/contact) | 10 | 3 | 0 | 4 | Unofficial | CLI |
-| Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 0 | 1 | Unofficial | CLI |
-| StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 0 | 3 | Unofficial | CLI |
-| NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
+| Google Workspace | 65 | 11 | 3 | 6 | Official | UI, API, CLI |
+| OpenStack | 34 | 5 | 1 | 9 | Official | UI, API, CLI |
+| Vercel | 26 | 6 | 1 | 8 | Official | UI, API, CLI |
+| Okta | 29 | 8 | 2 | 2 | Official | UI, API, CLI |
+| Linode [Contact us](https://prowler.com/contact) | 10 | 3 | 1 | 4 | Unofficial | CLI |
+| Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 1 | 1 | Unofficial | CLI |
+| StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 1 | 3 | Unofficial | CLI |
+| NHN | 6 | 2 | 2 | 0 | Unofficial | CLI |
 
 > [!Note]
 > The numbers in the table are updated periodically.
