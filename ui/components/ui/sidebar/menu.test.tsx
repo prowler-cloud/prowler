@@ -65,7 +65,7 @@ describe("Menu", () => {
 
     expect(launchScanLink).toHaveAttribute("href", "/scans?launchScan=true");
     expect(launchScanWrapper).toHaveClass("flex", "justify-center");
-    expect(launchScanLink).toHaveClass("h-14", "w-[180px]", "p-1");
+    expect(launchScanLink).toHaveClass("h-14", "w-full", "p-1");
     expect(launchScanLink).not.toHaveClass("h-8", "h-9", "h-10");
     expect(screen.getByText("Scan")).toHaveClass("text-xl", "leading-8");
     expect(screen.getByText("Scan")).not.toHaveClass("text-2xl", "font-bold");
