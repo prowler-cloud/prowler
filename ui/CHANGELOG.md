@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.32.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Findings triage UI scaffolding with adapter-based DTOs and finding-level note/status controls [(#11704)](https://github.com/prowler-cloud/prowler/pull/11704)
+
+---
+
 ## [1.31.1] (Prowler v5.31.1)
 
 ### 🔄 Changed
