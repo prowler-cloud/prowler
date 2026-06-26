@@ -397,6 +397,19 @@ export interface DORARequirement extends Requirement {
   article_title: DORAAttributesMetadata["ArticleTitle"];
 }
 
+export interface CISControlsAttributesMetadata {
+  Section: string;
+  Function: string | null;
+  AssetType: string | null;
+  ImplementationGroups: string[] | null;
+}
+
+export interface CISControlsRequirement extends Requirement {
+  function?: string;
+  asset_type?: string;
+  implementation_groups?: string[];
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -421,6 +434,7 @@ export interface AttributesItemData {
         | ASDEssentialEightAttributesMetadata[]
         | OktaIDaaSStigAttributesMetadata[]
         | DORAAttributesMetadata[]
+        | CISControlsAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure
