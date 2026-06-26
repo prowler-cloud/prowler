@@ -13,6 +13,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Microsoft 365 Foundations Benchmark v7.0.0 compliance framework for the M365 provider [(#11699)](https://github.com/prowler-cloud/prowler/pull/11699)
 - `waf_regional_webacl_logging_enabled` check for AWS provider, verifying that each AWS WAF Classic Regional Web ACL has logging enabled to a Kinesis Data Firehose stream [(#11539)](https://github.com/prowler-cloud/prowler/pull/11539)
 
+### 🐞 Fixed
+
+- Azure PostgreSQL flexible server collection no longer drops the remaining servers in a subscription when one server fails to collect; the `connection_throttle.enable` parameter (removed in PostgreSQL 16+) is treated as absent only when the Azure SDK reports it as not found, so unexpected lookup failures are not silently reported as throttling disabled [(#11595)](https://github.com/prowler-cloud/prowler/pull/11595)
+
 ---
 
 ## [5.31.1] (Prowler v5.31.1)
@@ -136,7 +140,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- Azure PostgreSQL flexible server collection no longer drops the remaining servers in a subscription when one server fails to collect; the `connection_throttle.enable` parameter (removed in PostgreSQL 16+) is treated as absent only when the Azure SDK reports it as not found, so unexpected lookup failures are not silently reported as throttling disabled [(#11595)](https://github.com/prowler-cloud/prowler/pull/11595)
 - `load_and_validate_config_file` now unwraps namespaced config for every built-in and external provider, and no longer leaks the full file as the provider's config when the file is namespaced [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 - `entra_users_mfa_capable` no longer flags pre-provisioned users with future `employeeHireDate`; future-hire date comparisons now tolerate naive datetimes [(#11511)](https://github.com/prowler-cloud/prowler/pull/11511)
 - M365 Admin Center group enumeration now follows Microsoft Graph pagination so group-scoped checks include groups beyond the first page [(#11510)](https://github.com/prowler-cloud/prowler/pull/11510)
