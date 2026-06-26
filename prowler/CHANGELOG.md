@@ -286,6 +286,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
 - 8 Gmail attachment safety and spoofing protection checks for Google Workspace provider using the Cloud Identity Policy API [(#10980)](https://github.com/prowler-cloud/prowler/pull/10980)
 - `bedrock_prompt_encrypted_with_cmk` check for AWS provider [(#10905)](https://github.com/prowler-cloud/prowler/pull/10905)
+- Azure provider now supports `--azure-resource-group` to scope resource-level checks to specific resource groups across all accessible subscriptions [(#10657)](https://github.com/prowler-cloud/prowler/pull/10657)
+
 
 ### 🔄 Changed
 
