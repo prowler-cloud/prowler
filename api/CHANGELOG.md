@@ -4,10 +4,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.32.2] (Prowler UNRELEASED)
 
-### 🚀 Added
-
-- Compliance report (OCSF JSON) download for the `cis_controls_8.1` universal framework [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
-
 ### 🐞 Fixed
 
 - `scan-perform` no longer reports an error when a provider is deleted during a running scan [(#11696)](https://github.com/prowler-cloud/prowler/pull/11696)
