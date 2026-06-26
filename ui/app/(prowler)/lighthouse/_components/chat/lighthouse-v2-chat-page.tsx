@@ -22,7 +22,10 @@ import {
   buildOptimisticMessage,
   buildSessionTitle,
 } from "@/app/(prowler)/lighthouse/_lib/messages";
-import { notifyLighthouseV2SessionsChanged } from "@/app/(prowler)/lighthouse/_lib/session-events";
+import {
+  LIGHTHOUSE_V2_NEW_CHAT_EVENT,
+  notifyLighthouseV2SessionsChanged,
+} from "@/app/(prowler)/lighthouse/_lib/session-events";
 import { parseStreamEvent } from "@/app/(prowler)/lighthouse/_lib/stream-event-parser";
 import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
 import {
@@ -303,6 +306,27 @@ export function LighthouseV2ChatPage({
       initialPromptSentRef.current = true;
       void submitMessage(initialPrompt);
     }
+  });
+
+  // The sidebar "+" can't rely on routing to reset the latest conversation (its
+  // URL was set via replaceState, invisible to Next's router), so reset in place.
+  useMountEffect(() => {
+    const resetToNewChat = () => {
+      closeStream();
+      setActiveSessionId(null);
+      setMessages([]);
+      setInput("");
+      setFeedback(null);
+      setBlockedByConflict(false);
+      setIsSubmitting(false);
+      setLastSubmittedText(null);
+      setStreamState(createInitialLighthouseV2StreamState());
+      window.history.replaceState(null, "", "/lighthouse");
+    };
+
+    window.addEventListener(LIGHTHOUSE_V2_NEW_CHAT_EVENT, resetToNewChat);
+    return () =>
+      window.removeEventListener(LIGHTHOUSE_V2_NEW_CHAT_EVENT, resetToNewChat);
   });
 
   const hasLiveAssistantActivity =

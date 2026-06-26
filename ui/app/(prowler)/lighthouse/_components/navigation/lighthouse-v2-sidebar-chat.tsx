@@ -8,7 +8,10 @@ import {
   archiveLighthouseV2Session,
   getLighthouseV2Sessions,
 } from "@/app/(prowler)/lighthouse/_actions";
-import { LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT } from "@/app/(prowler)/lighthouse/_lib/session-events";
+import {
+  LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
+  notifyLighthouseV2NewChat,
+} from "@/app/(prowler)/lighthouse/_lib/session-events";
 import type { LighthouseV2Session } from "@/app/(prowler)/lighthouse/_types";
 import { Button } from "@/components/shadcn/button/button";
 import {
@@ -37,6 +40,8 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
   };
 
   const handleNewSession = () => {
+    // Reset an already-open chat in place, then route (covers other pages too).
+    notifyLighthouseV2NewChat();
     router.push("/lighthouse");
   };
 
