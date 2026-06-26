@@ -185,8 +185,10 @@ class OCSFComplianceOutput:
             for check_id in all_checks:
                 check_req_map.setdefault(check_id, []).append(req)
 
+        # Scope constraints to this output's provider (e.g. an Azure constraint
+        # must not affect an AWS output).
         requirement_config_status = build_requirement_config_status(
-            framework.requirements
+            framework.requirements, provider_type=self._provider
         )
 
         for finding in findings:
@@ -288,6 +290,7 @@ class OCSFComplianceOutput:
                     requirements=[requirement.id],
                     control=requirement.description,
                     status_id=compliance_status,
+                    # Nested Check preserves the raw check result.
                     checks=[
                         Check(
                             uid=finding.check_id,
@@ -355,8 +358,10 @@ class OCSFComplianceOutput:
                 severity=finding_severity.name,
                 status_id=event_status.value,
                 status=event_status.name,
-                status_code=finding.status,
-                status_detail=finding.status_extended,
+                # Effective status, so the top-level never contradicts the
+                # nested compliance status.
+                status_code=effective_status,
+                status_detail=message,
                 time=time_value,
                 time_dt=(
                     finding.timestamp

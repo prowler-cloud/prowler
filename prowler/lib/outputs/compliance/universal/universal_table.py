@@ -186,7 +186,7 @@ def _render_grouped(
             effective_status = get_effective_status(
                 finding.status,
                 resolve_requirement_config_status(
-                    req, audit_config, config_status_cache
+                    req, audit_config, config_status_cache, provider_type=provider
                 ),
             )
             for group_key in _get_group_key(req, group_by):
@@ -288,7 +288,7 @@ def _render_split(
             effective_status = get_effective_status(
                 finding.status,
                 resolve_requirement_config_status(
-                    req, audit_config, config_status_cache
+                    req, audit_config, config_status_cache, provider_type=provider
                 ),
             )
             for group_key in _get_group_key(req, group_by):
@@ -418,7 +418,7 @@ def _render_scored(
             effective_status = get_effective_status(
                 finding.status,
                 resolve_requirement_config_status(
-                    req, audit_config, config_status_cache
+                    req, audit_config, config_status_cache, provider_type=provider
                 ),
             )
             for group_key in _get_group_key(req, group_by):

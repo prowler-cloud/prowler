@@ -170,6 +170,79 @@ class ISO27001_2013_Requirement_Attribute(BaseModel):
     Check_Summary: str
 
 
+# Base Compliance Model
+class Compliance_Requirement_ConfigConstraint(BaseModel):
+    """A constraint a requirement places on a configurable check's config.
+
+    Declares that the configurable check ``Check`` must have run with
+    ``ConfigKey`` satisfying ``Operator`` ``Value`` for the requirement's
+    result to be trusted. Example: ``max_unused_access_keys_days <= 45``.
+
+    ``Provider`` scopes the constraint to a single provider. It is required for
+    universal (multi-provider) frameworks, where the same requirement maps
+    checks across providers and a constraint must only apply when that provider
+    is the one being scanned. Single-provider frameworks may omit it (the
+    framework's provider is already the one being scanned).
+
+    Operators:
+    - ``lte``/``gte``/``eq``: scalar comparisons (e.g. a max-age or min-retention
+      threshold, or a boolean toggle).
+    - ``in``: the applied scalar must be one of ``Value`` (a list).
+    - ``subset``: the applied list must be a subset of ``Value`` — for allowlist
+      configs (e.g. ``recommended_minimal_tls_versions``); widening the allowlist
+      with a weaker value (e.g. TLS ``1.0``) breaks the constraint.
+    - ``superset``: the applied list must be a superset of ``Value`` — for
+      denylist configs (e.g. ``insecure_key_algorithms``); removing a forbidden
+      value from the denylist breaks the constraint.
+    """
+
+    Check: str
+    ConfigKey: str
+    Operator: Literal["lte", "gte", "eq", "in", "subset", "superset"]
+    # ``bool`` must precede ``int`` so pydantic v1 keeps booleans (e.g. a
+    # ``mute_non_default_regions == false`` constraint) instead of coercing
+    # them to 0/1.
+    Value: Union[bool, int, float, str, list[Any]]
+    # Provider this constraint applies to (e.g. ``aws``), matched
+    # case-insensitively. ``None`` applies whenever the requirement runs
+    # (single-provider frameworks).
+    Provider: Optional[str] = None
+
+    @root_validator
+    @classmethod
+    def validate_value_matches_operator(cls, values):  # noqa: F841
+        """Ensure ``Value``'s type is consistent with ``Operator``.
+
+        Without this, a mistyped value (e.g. ``gte`` with a list, or ``subset``
+        with a scalar) is not rejected at load time and ``_check_operator``
+        silently treats it as *not satisfied*, forcing the requirement to a
+        spurious config-not-valid FAIL. Validating here turns that into a
+        clear error when the framework is loaded.
+        """
+        operator = values.get("Operator")
+        value = values.get("Value")
+        # If Operator/Value failed their own validation they are absent here.
+        if operator is None or value is None:
+            return values
+        if operator in ("in", "subset", "superset"):
+            if not isinstance(value, list):
+                raise ValueError(
+                    f"operator '{operator}' requires a list Value, got {type(value).__name__}"
+                )
+        elif operator in ("lte", "gte"):
+            # bool is an int subclass but is never a valid numeric threshold.
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(
+                    f"operator '{operator}' requires a numeric Value, got {value!r}"
+                )
+        elif operator == "eq":
+            if not isinstance(value, (bool, int, float, str)):
+                raise ValueError(
+                    f"operator 'eq' requires a scalar Value, got {type(value).__name__}"
+                )
+        return values
+
+
 # MITRE Requirement Attribute for AWS
 class Mitre_Requirement_Attribute_AWS(BaseModel):
     """MITRE Requirement Attribute"""
@@ -217,6 +290,9 @@ class Mitre_Requirement(BaseModel):
         list[Mitre_Requirement_Attribute_GCP],
     ]
     Checks: list[str]
+    # MITRE checks may also declare config constraints; without this field
+    # Pydantic silently drops them during parsing.
+    ConfigRequirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
 
 
 # KISA-ISMS-P Requirement Attribute
@@ -301,79 +377,6 @@ class STIG_Requirement_Attribute(BaseModel):
     CCI: Optional[list[str]] = None
     CheckText: Optional[str] = None
     FixText: Optional[str] = None
-
-
-# Base Compliance Model
-class Compliance_Requirement_ConfigConstraint(BaseModel):
-    """A constraint a requirement places on a configurable check's config.
-
-    Declares that the configurable check ``Check`` must have run with
-    ``ConfigKey`` satisfying ``Operator`` ``Value`` for the requirement's
-    result to be trusted. Example: ``max_unused_access_keys_days <= 45``.
-
-    ``Provider`` scopes the constraint to a single provider. It is required for
-    universal (multi-provider) frameworks, where the same requirement maps
-    checks across providers and a constraint must only apply when that provider
-    is the one being scanned. Single-provider frameworks may omit it (the
-    framework's provider is already the one being scanned).
-
-    Operators:
-    - ``lte``/``gte``/``eq``: scalar comparisons (e.g. a max-age or min-retention
-      threshold, or a boolean toggle).
-    - ``in``: the applied scalar must be one of ``Value`` (a list).
-    - ``subset``: the applied list must be a subset of ``Value`` — for allowlist
-      configs (e.g. ``recommended_minimal_tls_versions``); widening the allowlist
-      with a weaker value (e.g. TLS ``1.0``) breaks the constraint.
-    - ``superset``: the applied list must be a superset of ``Value`` — for
-      denylist configs (e.g. ``insecure_key_algorithms``); removing a forbidden
-      value from the denylist breaks the constraint.
-    """
-
-    Check: str
-    ConfigKey: str
-    Operator: Literal["lte", "gte", "eq", "in", "subset", "superset"]
-    # ``bool`` must precede ``int`` so pydantic v1 keeps booleans (e.g. a
-    # ``mute_non_default_regions == false`` constraint) instead of coercing
-    # them to 0/1.
-    Value: Union[bool, int, float, str, list[Any]]
-    # Provider this constraint applies to (e.g. ``aws``), matched
-    # case-insensitively. ``None`` applies whenever the requirement runs
-    # (single-provider frameworks).
-    Provider: Optional[str] = None
-
-    @root_validator
-    @classmethod
-    def validate_value_matches_operator(cls, values):  # noqa: F841
-        """Ensure ``Value``'s type is consistent with ``Operator``.
-
-        Without this, a mistyped value (e.g. ``gte`` with a list, or ``subset``
-        with a scalar) is not rejected at load time and ``_check_operator``
-        silently treats it as *not satisfied*, forcing the requirement to a
-        spurious config-not-valid FAIL. Validating here turns that into a
-        clear error when the framework is loaded.
-        """
-        operator = values.get("Operator")
-        value = values.get("Value")
-        # If Operator/Value failed their own validation they are absent here.
-        if operator is None or value is None:
-            return values
-        if operator in ("in", "subset", "superset"):
-            if not isinstance(value, list):
-                raise ValueError(
-                    f"operator '{operator}' requires a list Value, got {type(value).__name__}"
-                )
-        elif operator in ("lte", "gte"):
-            # bool is an int subclass but is never a valid numeric threshold.
-            if isinstance(value, bool) or not isinstance(value, (int, float)):
-                raise ValueError(
-                    f"operator '{operator}' requires a numeric Value, got {value!r}"
-                )
-        elif operator == "eq":
-            if not isinstance(value, (bool, int, float, str)):
-                raise ValueError(
-                    f"operator 'eq' requires a scalar Value, got {type(value).__name__}"
-                )
-        return values
 
 
 # TODO: move this to compliance folder
@@ -971,6 +974,11 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
             # For MITRE, promote special fields and store raw attributes
             raw_attrs = [attr.dict() for attr in req.Attributes]
             attrs = {"_raw_attributes": raw_attrs}
+            config_requirements = (
+                [c.dict() for c in req.ConfigRequirements]
+                if getattr(req, "ConfigRequirements", None)
+                else None
+            )
             universal_requirements.append(
                 UniversalComplianceRequirement(
                     id=req.Id,
@@ -978,6 +986,7 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
                     name=req.Name,
                     attributes=attrs,
                     checks=req_checks,
+                    config_requirements=config_requirements,
                     tactics=req.Tactics,
                     sub_techniques=req.SubTechniques,
                     platforms=req.Platforms,
