@@ -14,6 +14,7 @@ const textareaVariants = cva(
           "border-border-input-primary bg-bg-input-primary dark:bg-input/30 hover:bg-bg-neutral-tertiary dark:hover:bg-input/50 focus:border-border-input-primary-press focus:ring-1 focus:ring-inset focus:ring-border-input-primary-press placeholder:text-text-neutral-tertiary",
         ghost:
           "border-transparent bg-transparent hover:bg-bg-neutral-tertiary focus:bg-bg-neutral-tertiary placeholder:text-text-neutral-tertiary",
+        soft: "border-transparent bg-bg-neutral-tertiary placeholder:text-text-neutral-tertiary",
       },
       textareaSize: {
         default: "min-h-16 px-4 py-3",
