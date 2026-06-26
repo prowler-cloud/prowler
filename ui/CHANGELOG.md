@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
 
+### 🔄 Changed
+
+- Sentry, Google Tag Manager, and PostHog now load their `UI_*` config only when the matching enable flag (`UI_SENTRY_ENABLE` / `UI_GOOGLE_TAG_MANAGER_ENABLE` / `UI_POSTHOG_ENABLE`) is `"true"` (default off); the deprecated legacy names (`NEXT_PUBLIC_*`, `POSTHOG_KEY`/`POSTHOG_HOST`) still activate without the flag [(#11682)](https://github.com/prowler-cloud/prowler/pull/11682)
+
 ---
 
 ## [1.31.1] (Prowler v5.31.1)
