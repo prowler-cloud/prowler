@@ -169,6 +169,9 @@
         "aws": [
           "config_recorder_all_regions_enabled",
           "resourceexplorer2_indexes_found"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
         ]
       }
     },
@@ -918,6 +921,9 @@
           "exchange_user_mailbox_auditing_enabled",
           "purview_audit_log_search_enabled"
         ],
+        "mongodbatlas": [
+          "projects_auditing_enabled"
+        ],
         "oraclecloud": [
           "objectstorage_bucket_logging_enabled"
         ]
@@ -1073,6 +1079,11 @@
           "ec2_securitygroup_default_restrict_traffic",
           "ec2_securitygroup_with_many_ingress_egress_rules"
         ],
+        "azure": [
+          "network_subnet_nsg_associated",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted"
+        ],
         "gcp": [
           "compute_firewall_rdp_access_from_the_internet_allowed",
           "compute_firewall_ssh_access_from_the_internet_allowed"
@@ -1189,6 +1200,9 @@
         ],
         "openstack": [
           "compute_instance_key_based_authentication"
+        ],
+        "oraclecloud": [
+          "compute_instance_legacy_metadata_endpoint_disabled"
         ]
       }
     },
@@ -1235,6 +1249,12 @@
         ],
         "m365": [
           "exchange_shared_mailbox_sign_in_disabled"
+        ],
+        "nhn": [
+          "compute_instance_login_user"
+        ],
+        "oraclecloud": [
+          "identity_tenancy_admin_users_no_api_keys"
         ],
         "scaleway": [
           "iam_api_keys_no_root_owned"
@@ -1686,8 +1706,26 @@
           "directoryservice_radius_server_security_protocol",
           "directoryservice_supported_mfa_radius_enabled"
         ],
+        "azure": [
+          "entra_user_with_vm_access_has_mfa",
+          "entra_security_defaults_enabled",
+          "entra_non_privileged_user_has_mfa"
+        ],
         "gcp": [
           "compute_project_os_login_2fa_enabled"
+        ],
+        "github": [
+          "organization_members_mfa_required"
+        ],
+        "linode": [
+          "administration_user_2fa_enabled"
+        ],
+        "m365": [
+          "entra_users_mfa_enabled",
+          "entra_legacy_authentication_blocked"
+        ],
+        "mongodbatlas": [
+          "organizations_mfa_required"
         ]
       }
     },
@@ -1706,6 +1744,9 @@
         ]
       },
       "checks": {
+        "alibabacloud": [
+          "ram_user_mfa_enabled_console_access"
+        ],
         "aws": [
           "iam_administrator_access_with_mfa",
           "iam_root_hardware_mfa_enabled",
@@ -1717,17 +1758,30 @@
           "entra_privileged_user_has_mfa",
           "entra_user_with_vm_access_has_mfa"
         ],
+        "github": [
+          "organization_members_mfa_required"
+        ],
         "googleworkspace": [
           "security_2sv_hardware_keys_admins"
+        ],
+        "linode": [
+          "administration_user_2fa_enabled"
         ],
         "m365": [
           "entra_admin_users_mfa_enabled",
           "entra_admin_users_phishing_resistant_mfa_enabled",
           "entra_break_glass_account_fido2_security_key_registered"
         ],
+        "mongodbatlas": [
+          "organizations_mfa_required"
+        ],
         "okta": [
           "application_admin_console_mfa_required",
           "application_admin_console_phishing_resistant_authentication"
+        ],
+        "vercel": [
+          "team_saml_sso_enforced",
+          "team_saml_sso_enabled"
         ]
       }
     },
@@ -2023,6 +2077,9 @@
         ]
       },
       "checks": {
+        "aws": [
+          "inspector2_is_enabled"
+        ],
         "azure": [
           "network_public_ip_shodan"
         ]
@@ -2249,6 +2306,9 @@
         ],
         "m365": [
           "exchange_user_mailbox_auditing_enabled"
+        ],
+        "mongodbatlas": [
+          "projects_auditing_enabled"
         ]
       }
     },
@@ -2287,7 +2347,14 @@
           "IG3"
         ]
       },
-      "checks": {}
+      "checks": {
+        "azure": [
+          "app_http_logs_enabled"
+        ],
+        "gcp": [
+          "compute_loadbalancer_logging_enabled"
+        ]
+      }
     },
     {
       "id": "8.8",
@@ -2329,6 +2396,9 @@
         "gcp": [
           "logging_sink_created"
         ],
+        "m365": [
+          "purview_audit_log_search_enabled"
+        ],
         "okta": [
           "systemlog_streaming_enabled"
         ]
@@ -2365,6 +2435,9 @@
         ],
         "kubernetes": [
           "apiserver_audit_log_maxage_set"
+        ],
+        "m365": [
+          "exchange_user_mailbox_auditing_enabled"
         ],
         "oraclecloud": [
           "audit_log_retention_period_365_days"
@@ -2481,8 +2554,18 @@
         ]
       },
       "checks": {
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled"
+        ],
+        "aws": [
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_multi_region_enabled_logging_management_events"
+        ],
         "azure": [
           "monitor_diagnostic_settings_exists"
+        ],
+        "gcp": [
+          "iam_audit_logs_enabled"
         ],
         "m365": [
           "purview_audit_log_search_enabled"
@@ -2744,6 +2827,9 @@
         ]
       },
       "checks": {
+        "azure": [
+          "vm_trusted_launch_enabled"
+        ],
         "openstack": [
           "image_secure_boot_enabled"
         ],
@@ -2808,6 +2894,11 @@
         "azure": [
           "defender_ensure_mcas_is_enabled",
           "defender_ensure_wdatp_is_enabled"
+        ],
+        "m365": [
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_safe_attachments_policy_enabled",
+          "defender_zap_for_teams_enabled"
         ]
       }
     },
@@ -3073,6 +3164,12 @@
         ],
         "openstack": [
           "compute_instance_isolated_private_network"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "integration_instance_access_restricted",
+          "objectstorage_bucket_not_publicly_accessible"
         ]
       }
     },
@@ -3291,7 +3388,16 @@
           "IG3"
         ]
       },
-      "checks": {}
+      "checks": {
+        "alibabacloud": [
+          "securitycenter_all_assets_agent_installed",
+          "ecs_instance_endpoint_protection_installed"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_wdatp_is_enabled"
+        ]
+      }
     },
     {
       "id": "13.3",
@@ -3452,7 +3558,12 @@
           "IG3"
         ]
       },
-      "checks": {}
+      "checks": {
+        "azure": [
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_defender_for_server_is_on"
+        ]
+      }
     },
     {
       "id": "13.8",
@@ -4214,7 +4325,11 @@
           "IG3"
         ]
       },
-      "checks": {}
+      "checks": {
+        "aws": [
+          "ssmincidents_enabled_with_plans"
+        ]
+      }
     },
     {
       "id": "17.5",
