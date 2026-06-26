@@ -42,9 +42,6 @@ class ApiConfig(AppConfig):
         ):
             self._ensure_crypto_keys()
 
-        # Neo4j driver is created lazily on first use (see api.attack_paths.database).
-        # App init never contacts Neo4j, so a Neo4j outage cannot block API startup.
-
     def _ensure_crypto_keys(self):
         """
         Orchestrator method that ensures all required cryptographic keys are present.
