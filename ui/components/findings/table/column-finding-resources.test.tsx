@@ -1,9 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+} from "react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/shadcn", () => ({
+  Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button {...props}>{children}</button>
+  ),
   Checkbox: ({
     "aria-label": ariaLabel,
     onCheckedChange,
@@ -73,6 +80,38 @@ vi.mock("@/components/shadcn/spinner/spinner", () => ({
   Spinner: () => null,
 }));
 
+vi.mock("@/components/shadcn/select/select", () => ({
+  Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({
+    children,
+    disabled,
+    "aria-label": ariaLabel,
+  }: {
+    children: ReactNode;
+    disabled?: boolean;
+    "aria-label"?: string;
+  }) => (
+    <button aria-label={ariaLabel} disabled={disabled}>
+      {children}
+    </button>
+  ),
+  SelectValue: ({ children }: { children?: ReactNode }) => (
+    <span>{children}</span>
+  ),
+}));
+
+vi.mock("@/components/shadcn/tooltip", () => ({
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => (
+    <span>{children}</span>
+  ),
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
 vi.mock("@/components/ui/entities", () => ({
   DateWithTime: () => null,
 }));
@@ -120,8 +159,33 @@ vi.mock("./notification-indicator", () => ({
 }));
 
 import type { FindingResourceRow } from "@/types";
+import {
+  FINDING_TRIAGE_DISABLED_REASON,
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
 
 import { getColumnFindingResources } from "./column-finding-resources";
+
+function makeTriageSummary(
+  overrides?: Partial<FindingTriageSummary>,
+): FindingTriageSummary {
+  return {
+    findingId: "finding-1",
+    findingUid: "prowler-finding-uid-1",
+    status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+    label: "Under Review",
+    hasVisibleNote: false,
+    hasPersistedStatus: true,
+    canEdit: true,
+    billingHref: "/billing",
+    mutelistShortcutStatuses: [
+      FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+      FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
+    ],
+    ...overrides,
+  };
+}
 
 function makeResource(
   overrides?: Partial<FindingResourceRow>,
@@ -151,6 +215,281 @@ function makeResource(
 }
 
 describe("column-finding-resources", () => {
+  it("should render Triage and Notes as the last visible data columns", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+
+    // When
+    const columnIds = columns.map(
+      (column) =>
+        (column as { id?: string; accessorKey?: string }).id ??
+        (column as { id?: string; accessorKey?: string }).accessorKey,
+    );
+
+    // Then
+    expect(columnIds.slice(-3)).toEqual(["actions", "triage", "notes"]);
+  });
+
+  it("should render the current triage status label", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const triageColumn = columns.find(
+      (col) => (col as { id?: string }).id === "triage",
+    );
+    if (!triageColumn?.cell) {
+      throw new Error("triage column not found");
+    }
+    const CellComponent = triageColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              triage: makeTriageSummary({
+                status: FINDING_TRIAGE_STATUS.REMEDIATING,
+                label: "Remediating",
+              }),
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: /triage status/i }),
+    ).toHaveTextContent("Remediating");
+  });
+
+  it("should render note presence only without exposing note preview metadata", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const notesColumn = columns.find(
+      (col) => (col as { id?: string }).id === "notes",
+    );
+    if (!notesColumn?.cell) {
+      throw new Error("notes column not found");
+    }
+    const CellComponent = notesColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              triage: makeTriageSummary({ hasVisibleNote: true }),
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then
+    expect(screen.getByLabelText("Note exists")).toBeInTheDocument();
+    expect(screen.queryByText("Sensitive note body")).not.toBeInTheDocument();
+    expect(screen.queryByText(/author/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/timestamp/i)).not.toBeInTheDocument();
+  });
+
+  it("should disable Add note when no update handler is wired", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const notesColumn = columns.find(
+      (col) => (col as { id?: string }).id === "notes",
+    );
+    if (!notesColumn?.cell) {
+      throw new Error("notes column not found");
+    }
+    const CellComponent = notesColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              triage: makeTriageSummary({ hasVisibleNote: false }),
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then
+    expect(screen.getByRole("button", { name: "Add note" })).toBeDisabled();
+  });
+
+  it("should enable Add note when an update handler is wired", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+      onTriageUpdateAction: vi.fn(),
+    });
+    const notesColumn = columns.find(
+      (col) => (col as { id?: string }).id === "notes",
+    );
+    if (!notesColumn?.cell) {
+      throw new Error("notes column not found");
+    }
+    const CellComponent = notesColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              triage: makeTriageSummary({ hasVisibleNote: false }),
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then
+    expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
+  });
+
+  it("should keep Add note available so non-paying users can open the disabled modal upsell", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const notesColumn = columns.find(
+      (col) => (col as { id?: string }).id === "notes",
+    );
+    if (!notesColumn?.cell) {
+      throw new Error("notes column not found");
+    }
+    const CellComponent = notesColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              triage: makeTriageSummary({
+                canEdit: false,
+                hasVisibleNote: false,
+                disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+              }),
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then
+    expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
+  });
+
+  it("should disable editable triage control when no update handler is wired", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const triageColumn = columns.find(
+      (col) => (col as { id?: string }).id === "triage",
+    );
+    if (!triageColumn?.cell) {
+      throw new Error("triage column not found");
+    }
+    const CellComponent = triageColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              triage: makeTriageSummary({ canEdit: true }),
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText("Editing is currently unavailable."),
+    ).toBeInTheDocument();
+  });
+
+  it("should disable non-paying Cloud triage control with only-in-Cloud tooltip copy", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const triageColumn = columns.find(
+      (col) => (col as { id?: string }).id === "triage",
+    );
+    if (!triageColumn?.cell) {
+      throw new Error("triage column not found");
+    }
+    const CellComponent = triageColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              triage: makeTriageSummary({
+                canEdit: false,
+                disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+              }),
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText("This feature is only in Cloud."),
+    ).toBeInTheDocument();
+  });
+
   it("should pass delta to NotificationIndicator for resource rows", () => {
     const columns = getColumnFindingResources({
       rowSelection: {},

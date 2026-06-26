@@ -1,3 +1,4 @@
+import { adaptFindingTriageSummariesResponse } from "@/actions/findings/findings-triage.adapter";
 import type {
   FindingGroupRow,
   FindingResourceRow,
@@ -6,6 +7,7 @@ import type {
   Severity,
 } from "@/types";
 import { FINDINGS_ROW_TYPE } from "@/types";
+import { FINDING_TRIAGE_DISABLED_REASON } from "@/types/findings-triage";
 
 /**
  * API response shape for a finding group (JSON:API).
@@ -72,6 +74,7 @@ export function adaptFindingGroupsResponse(
   }
 
   const data = (apiResponse as { data: FindingGroupApiItem[] }).data;
+
   return data.map((item) => ({
     id: item.id,
     rowType: FINDINGS_ROW_TYPE.GROUP,
@@ -146,6 +149,9 @@ interface FindingGroupResourceAttributes {
   first_seen_at: string | null;
   last_seen_at: string | null;
   muted_reason?: string | null;
+  finding_uid?: string;
+  triage_status?: string;
+  triage_has_note?: boolean;
 }
 
 interface FindingGroupResourceApiItem {
@@ -172,7 +178,15 @@ export function adaptFindingGroupResourcesResponse(
   }
 
   const data = (apiResponse as { data: FindingGroupResourceApiItem[] }).data;
-  return data.map((item) => ({
+  const canEditTriage = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const triageSummaries = adaptFindingTriageSummariesResponse(apiResponse, {
+    canEdit: canEditTriage,
+    disabledReason: canEditTriage
+      ? undefined
+      : FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+  });
+
+  return data.map((item, index) => ({
     id: item.id,
     rowType: FINDINGS_ROW_TYPE.RESOURCE,
     findingId: item.attributes.finding_id || item.id,
@@ -194,5 +208,6 @@ export function adaptFindingGroupResourcesResponse(
     mutedReason: item.attributes.muted_reason || undefined,
     firstSeenAt: item.attributes.first_seen_at,
     lastSeenAt: item.attributes.last_seen_at,
+    triage: triageSummaries[index],
   }));
 }
