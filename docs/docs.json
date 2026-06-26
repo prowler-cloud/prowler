@@ -396,6 +396,7 @@
               "developer-guide/provider",
               "developer-guide/services",
               "developer-guide/checks",
+              "developer-guide/secret-scanning-checks",
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",

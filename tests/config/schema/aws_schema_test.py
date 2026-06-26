@@ -129,47 +129,6 @@ class Test_AWS_Enums:
         assert _validate({"ecr_repository_vulnerability_minimum_severity": level}) == {}
 
 
-class Test_AWS_Detect_Secrets_Plugins:
-    def test_plugin_without_limit(self):
-        out = _validate({"detect_secrets_plugins": [{"name": "AWSKeyDetector"}]})
-        assert out == {"detect_secrets_plugins": [{"name": "AWSKeyDetector"}]}
-
-    def test_plugin_with_limit(self):
-        out = _validate(
-            {
-                "detect_secrets_plugins": [
-                    {"name": "Base64HighEntropyString", "limit": 6.0}
-                ]
-            }
-        )
-        assert out == {
-            "detect_secrets_plugins": [
-                {"name": "Base64HighEntropyString", "limit": 6.0}
-            ]
-        }
-
-    def test_plugin_missing_name_drops_whole_field(self):
-        # ``name`` is required by the upstream library.
-        out = _validate({"detect_secrets_plugins": [{"limit": 6.0}]})
-        assert out == {}
-
-    def test_extra_plugin_kwargs_pass_through(self):
-        # Plugins can have arbitrary extra params (extra="allow" on the
-        # nested model). They must round-trip.
-        out = _validate(
-            {
-                "detect_secrets_plugins": [
-                    {"name": "Custom", "my_param": "abc", "other": 42}
-                ]
-            }
-        )
-        assert out == {
-            "detect_secrets_plugins": [
-                {"name": "Custom", "my_param": "abc", "other": 42}
-            ]
-        }
-
-
 class Test_AWS_Booleans:
     @pytest.mark.parametrize(
         "key",
@@ -214,9 +173,5 @@ class Test_AWS_Full_Default_Config_Round_Trips:
             "threat_detection_enumeration_threshold": 0.3,
             "threat_detection_llm_jacking_threshold": 0.4,
             "ec2_high_risk_ports": [25, 110, 8088],
-            "detect_secrets_plugins": [
-                {"name": "AWSKeyDetector"},
-                {"name": "Base64HighEntropyString", "limit": 6.0},
-            ],
         }
         assert _validate(raw) == raw
