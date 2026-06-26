@@ -113,7 +113,7 @@ describe("LighthouseV2ConfigPage", () => {
 
     const openAIProvider = screen.getByRole("button", { name: "OpenAI" });
     const settingsCard = screen.getByRole("region", {
-      name: "Lighthouse settings",
+      name: "Lighthouse AI settings",
     });
     const settingsSeparator = container.querySelector(
       '[data-slot="settings-separator"]',

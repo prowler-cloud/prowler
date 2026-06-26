@@ -75,7 +75,8 @@ export function LighthouseV2ConfigPage({
     setSelectedProvider(configuration.providerType);
     setFeedback({
       title: "Configuration saved.",
-      description: "Lighthouse can use this provider after it tests cleanly.",
+      description:
+        "Lighthouse AI can use this provider after it tests cleanly.",
       variant: FEEDBACK_VARIANT.SUCCESS,
     });
   };
@@ -88,7 +89,7 @@ export function LighthouseV2ConfigPage({
       configuration.connected
         ? {
             title: "Connection successful.",
-            description: "Lighthouse can send messages with this provider.",
+            description: "Lighthouse AI can send messages with this provider.",
             variant: FEEDBACK_VARIANT.SUCCESS,
           }
         : {
@@ -106,7 +107,7 @@ export function LighthouseV2ConfigPage({
     );
     setFeedback({
       title: "Configuration removed.",
-      description: "This provider is no longer available for Lighthouse.",
+      description: "This provider is no longer available for Lighthouse AI.",
       variant: FEEDBACK_VARIANT.INFO,
     });
   };
@@ -120,7 +121,7 @@ export function LighthouseV2ConfigPage({
       variant="base"
       padding="none"
       role="region"
-      aria-label="Lighthouse settings"
+      aria-label="Lighthouse AI settings"
       className="min-h-[calc(100dvh-6.5rem)] w-full gap-0 overflow-hidden"
     >
       {feedback && (

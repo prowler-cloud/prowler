@@ -12,10 +12,10 @@ export function LighthouseV2EmptyState({ error }: { error?: string }) {
         </div>
         <div>
           <h2 className="text-text-neutral-primary text-xl font-semibold">
-            No Lighthouse providers available
+            No Lighthouse AI providers available
           </h2>
           <p className="text-text-neutral-secondary mt-2 text-sm">
-            Cloud did not return supported providers for Lighthouse
+            Cloud did not return supported providers for Lighthouse AI
             configuration.
           </p>
         </div>

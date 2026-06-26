@@ -199,7 +199,7 @@ export function LighthouseV2ConfigurationForm({
             <p className="text-text-neutral-secondary mt-1 max-w-2xl text-sm">
               {configuration
                 ? "Stored provider configuration. Rotate credentials only when needed."
-                : "Create provider configuration before Lighthouse can use this model family."}
+                : "Create provider configuration before Lighthouse AI can use this model family."}
             </p>
           </div>
         </div>
@@ -275,7 +275,7 @@ export function LighthouseV2ConfigurationForm({
         <ConfigurationSection
           icon={<Bot className="size-4" />}
           title="Business context"
-          description="Short operational context Lighthouse should consider while answering."
+          description="Short operational context Lighthouse AI should consider while answering."
         >
           <Field>
             <div className="flex items-center justify-between gap-3">
@@ -335,8 +335,8 @@ export function LighthouseV2ConfigurationForm({
       <Modal
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Delete Lighthouse configuration?"
-        description={`This removes ${provider.name} from Lighthouse. Existing chat history stays available, but this provider cannot be used until configured again.`}
+        title="Delete Lighthouse AI configuration?"
+        description={`This removes ${provider.name} from Lighthouse AI. Existing chat history stays available, but this provider cannot be used until configured again.`}
         size="md"
       >
         <div className="flex justify-end gap-2">

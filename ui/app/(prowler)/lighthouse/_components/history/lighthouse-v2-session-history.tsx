@@ -62,7 +62,7 @@ export function LighthouseV2SessionHistory({
     >
       <div className="flex items-center gap-2">
         <SearchInput
-          aria-label="Search Lighthouse sessions"
+          aria-label="Search Lighthouse AI sessions"
           value={search}
           placeholder="Chat history"
           size={compact ? "sm" : "default"}

@@ -76,7 +76,7 @@ export function ChatEmptyState({
         </div>
         <div className="flex max-w-4xl flex-wrap items-center justify-center gap-2">
           <span className="text-text-neutral-secondary basis-full text-center text-sm font-medium">
-            Try Lighthouse for...
+            Try Lighthouse AI for...
           </span>
           {LIGHTHOUSE_V2_SUGGESTIONS.map((suggestion) => {
             const Icon = suggestion.icon;
@@ -94,7 +94,10 @@ export function ChatEmptyState({
             );
           })}
           <Button type="button" variant="outline" size="icon-sm" asChild>
-            <Link href="/lighthouse/settings" aria-label="Lighthouse settings">
+            <Link
+              href="/lighthouse/settings"
+              aria-label="Lighthouse AI settings"
+            >
               <Settings className="size-4" />
             </Link>
           </Button>

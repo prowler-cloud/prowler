@@ -88,13 +88,13 @@ export const LighthouseSettings = () => {
       } else {
         toast({
           title: "Success",
-          description: "Lighthouse settings saved successfully",
+          description: "Lighthouse AI settings saved successfully",
         });
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save Lighthouse settings: " + String(error),
+        description: "Failed to save Lighthouse AI settings: " + String(error),
         variant: "destructive",
       });
     } finally {

@@ -120,8 +120,8 @@ export const LighthouseBannerClient = ({
   isConfigured: boolean;
 }) => {
   const message = isConfigured
-    ? "Use Lighthouse to review your findings and gain insights"
-    : "Enable Lighthouse to secure your cloud with AI insights";
+    ? "Use Lighthouse AI to review your findings and gain insights"
+    : "Enable Lighthouse AI to secure your cloud with AI insights";
   const href = isConfigured ? "/lighthouse" : "/lighthouse/settings";
 
   return <AnimatedGradientCard message={message} href={href} />;

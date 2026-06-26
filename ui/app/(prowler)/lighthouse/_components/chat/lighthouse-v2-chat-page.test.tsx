@@ -162,7 +162,7 @@ describe("LighthouseV2ChatPage", () => {
     // Then
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Lighthouse settings" }),
+      screen.getByRole("link", { name: "Lighthouse AI settings" }),
     ).toHaveAttribute("href", "/lighthouse/settings");
   });
 

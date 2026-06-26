@@ -416,7 +416,7 @@ function toErrorResult<TData>(
   document: JsonApiDocument<TData>,
 ): Extract<LighthouseV2ActionResult<never>, { error: string }> {
   return {
-    error: document.error ?? "Unexpected Lighthouse response.",
+    error: document.error ?? "Unexpected Lighthouse AI response.",
     errors: document.errors,
     status: document.status,
   };
