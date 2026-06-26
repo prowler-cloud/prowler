@@ -44,7 +44,6 @@ class Exchange(M365Service):
         self.mailbox_audit_properties = []
         self.shared_mailboxes = []
         self.application_access_policies = None
-        self.mailboxes = None
 
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -58,9 +57,9 @@ class Exchange(M365Service):
                 self.mailbox_audit_properties = self._get_mailbox_audit_properties()
                 self.shared_mailboxes = self._get_shared_mailboxes()
                 self.application_access_policies = (
-    self._get_application_access_policies()
-)
-                self.mailboxes = self._get_mailboxes()
+                    self._get_application_access_policies()
+                )
+            self.powershell.close()
             self.powershell.close()
 
         # Fetch license count via Graph API
@@ -369,7 +368,7 @@ class Exchange(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return shared_mailboxes
-    
+
     def _get_application_access_policies(self):
         """
         Get Exchange Online Application Access Policies.
@@ -377,16 +376,12 @@ class Exchange(M365Service):
         Returns:
             list[ApplicationAccessPolicy]: List of application access policies.
         """
-        logger.info(
-            "Microsoft365 - Getting application access policies..."
-        )
+        logger.info("Microsoft365 - Getting application access policies...")
 
         application_access_policies = []
 
         try:
-            policies_data = (
-                self.powershell.get_application_access_policies()
-            )
+            policies_data = self.powershell.get_application_access_policies()
 
             if not policies_data:
                 return application_access_policies
@@ -606,6 +601,7 @@ class SharedMailbox(BaseModel):
     external_directory_object_id: str
     identity: str
 
+
 class ApplicationAccessPolicy(BaseModel):
     """
     Model for Exchange Online Application Access Policy.
@@ -615,21 +611,3 @@ class ApplicationAccessPolicy(BaseModel):
     app_id: str
     access_right: str
     description: str
-
-class Mailbox(BaseModel):
-    """
-    Model for an Exchange Online recipient-facing mailbox.
-
-    Attributes:
-        identity: The unique identity of the mailbox in Exchange.
-        name: Display name of the mailbox.
-        primary_smtp_address: The primary SMTP address used for outbound mail
-            and the From: header. This is the address the check evaluates.
-        recipient_type_details: The mailbox type (e.g., UserMailbox,
-            SharedMailbox, RoomMailbox, EquipmentMailbox).
-    """
-
-    identity: str
-    name: str
-    primary_smtp_address: str
-    recipient_type_details: str
