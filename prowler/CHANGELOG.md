@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
 - `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
 - `stepfunctions_statemachine_encrypted_with_cmk` check for AWS provider, verifying that each Step Functions state machine uses a customer-managed KMS key for encryption at rest rather than the default AWS-owned key [(#11538)](https://github.com/prowler-cloud/prowler/pull/11538)
