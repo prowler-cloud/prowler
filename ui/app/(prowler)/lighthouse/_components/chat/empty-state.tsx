@@ -1,19 +1,13 @@
 "use client";
 
-import {
-  BookOpen,
-  FileCheck2,
-  Network,
-  Settings,
-  ShieldAlert,
-} from "lucide-react";
-import Link from "next/link";
+import { BookOpen, FileCheck2, Network, ShieldAlert } from "lucide-react";
 import { type FormEvent } from "react";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/shadcn/button/button";
 
 import { ChatComposerPanel } from "./composer";
+import { DecryptedText } from "./decrypted-text";
 
 const LIGHTHOUSE_V2_SUGGESTIONS = [
   {
@@ -62,10 +56,22 @@ export function ChatEmptyState({
         <LighthouseIcon className="size-12" />
         <div className="space-y-2 text-center">
           <h1 className="text-text-neutral-primary text-3xl font-semibold">
-            What do you want to know today?
+            <DecryptedText
+              text="What do you want to know today?"
+              animateOn="view"
+              sequential
+              speed={40}
+              encryptedClassName="text-text-neutral-tertiary"
+            />
           </h1>
           <p className="text-text-neutral-secondary text-base italic">
-            Understand and secure your cloud.
+            <DecryptedText
+              text="Understand and secure your cloud."
+              animateOn="view"
+              sequential
+              speed={40}
+              encryptedClassName="text-text-neutral-tertiary"
+            />
           </p>
         </div>
         <div className="w-full max-w-4xl">
@@ -93,14 +99,6 @@ export function ChatEmptyState({
               </Button>
             );
           })}
-          <Button type="button" variant="outline" size="icon-sm" asChild>
-            <Link
-              href="/lighthouse/settings"
-              aria-label="Lighthouse AI settings"
-            >
-              <Settings className="size-4" />
-            </Link>
-          </Button>
         </div>
       </div>
     </div>
