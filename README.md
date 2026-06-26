@@ -83,16 +83,35 @@ prowler dashboard
 
 ## Attack Paths
 
-Attack Paths automatically extends every completed AWS scan with a Neo4j graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan and therefore requires:
+Attack Paths automatically extends every completed AWS scan with a graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan.
 
-- An accessible Neo4j instance (the Docker Compose files already ships a `neo4j` service).
-- The following environment variables so Django and Celery can connect:
+Two graph backends are supported as the long-lived sink:
 
-  | Variable | Description | Default |
-  | --- | --- | --- |
-  | `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
-  | `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
-  | `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+- **Neo4j** (default; the Docker Compose files already ship a `neo4j` service).
+- **Amazon Neptune** (cloud-managed; opt-in).
+
+Select the sink with `ATTACK_PATHS_SINK_DATABASE` (`neo4j` or `neptune`; default `neo4j`).
+
+> Note: Cartography ingestion always uses a temporary Neo4j database, regardless of the configured sink. The `NEO4J_*` variables below must remain set even when `ATTACK_PATHS_SINK_DATABASE=neptune`.
+
+### Neo4j sink
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
+| `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
+| `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+
+### Neptune sink
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `NEPTUNE_WRITER_ENDPOINT` | Bolt host for the Neptune writer instance. Required when sink is `neptune`. | _empty_ |
+| `NEPTUNE_READER_ENDPOINT` | Optional reader endpoint for read-only queries. Falls back to the writer when unset. | _empty_ |
+| `NEPTUNE_PORT` | Bolt port exposed by Neptune. | `8182` |
+| `AWS_REGION` | Region the Neptune cluster lives in. Required when sink is `neptune`. | _empty_ |
+
+Neptune authenticates with SigV4 using the standard boto3 credential chain. The worker's IAM role (or `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) supplies the credentials. There is no Neptune password variable.
 
 Every AWS provider scan will enqueue an Attack Paths ingestion job automatically. Other cloud providers will be added in future iterations.
 
