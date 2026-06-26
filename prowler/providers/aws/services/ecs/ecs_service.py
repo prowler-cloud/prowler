@@ -1,9 +1,16 @@
+from datetime import datetime
+from itertools import zip_longest
 from re import sub
 from typing import Optional
 
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.resource_limit import (
+    get_resource_scan_limit,
+    iter_limited_paginator_items,
+    limit_resources,
+)
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -12,39 +19,83 @@ class ECS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
+        # Task definition ARNs are listed first, then only the selected subset
+        # is described and exposed for checks.
         self.task_definitions = {}
+        self._task_definition_arns = None
+        self.task_definition_limit = get_resource_scan_limit(
+            self.audit_config, "max_ecs_task_definitions"
+        )
         self.services = {}
         self.clusters = {}
         self.task_sets = {}
-        self.__threading_call__(self._list_task_definitions)
-        self.__threading_call__(
-            self._describe_task_definition, self.task_definitions.values()
-        )
+        for _ in self._load_task_definitions_for_analysis():
+            pass
         self.__threading_call__(self._list_clusters)
         self.__threading_call__(self._describe_clusters, self.clusters.values())
         self.__threading_call__(self._describe_services, self.clusters.values())
 
-    def _list_task_definitions(self, regional_client):
+    def _list_task_definition_arns(self) -> list:
+        """List task definition ARNs newest-first, memoized.
+
+        AWS returns ``list_task_definitions(sort=DESC)`` results per region.
+        Prowler limits the task definitions it describes and exposes to checks.
+        """
+        if self._task_definition_arns is not None:
+            return self._task_definition_arns
         logger.info("ECS - Listing Task Definitions...")
-        try:
-            list_ecs_paginator = regional_client.get_paginator("list_task_definitions")
-            for page in list_ecs_paginator.paginate():
-                for task_definition in page["taskDefinitionArns"]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(task_definition, self.audit_resources)
-                    ):
-                        self.task_definitions[task_definition] = TaskDefinition(
-                            # we want the family name without the revision
-                            name=sub(":.*", "", task_definition.split("/")[-1]),
-                            arn=task_definition,
-                            revision=task_definition.split(":")[-1],
-                            region=regional_client.region,
-                            environment_variables=[],
-                        )
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        arns_by_region = []
+        for region, regional_client in self.regional_clients.items():
+            try:
+                list_ecs_paginator = regional_client.get_paginator(
+                    "list_task_definitions"
+                )
+                regional_arns = []
+                for task_definition in iter_limited_paginator_items(
+                    list_ecs_paginator,
+                    "taskDefinitionArns",
+                    None,
+                    item_filter=lambda task_definition: not self.audit_resources
+                    or is_resource_filtered(task_definition, self.audit_resources),
+                    sort="DESC",
+                ):
+                    regional_arns.append((task_definition, region))
+                arns_by_region.append(regional_arns)
+            except Exception as error:
+                logger.error(
+                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        arns = []
+        for task_definition_batch in zip_longest(*arns_by_region):
+            for task_definition in task_definition_batch:
+                if task_definition:
+                    arns.append(task_definition)
+        self._task_definition_arns = arns
+        return arns
+
+    def _load_task_definitions_for_analysis(self):
+        """Yield task definitions lazily, describing each one on demand.
+
+        Resources already fetched are memoized in ``self.task_definitions`` and
+        reused across checks (checks run sequentially, so no locking is needed).
+        The configured resource limit bounds ``describe_task_definition`` calls.
+        """
+        for arn, region in limit_resources(
+            self._list_task_definition_arns(), self.task_definition_limit
+        ):
+            task_definition = self.task_definitions.get(arn)
+            if task_definition is None:
+                task_definition = TaskDefinition(
+                    # we want the family name without the revision
+                    name=sub(":.*", "", arn.split("/")[-1]),
+                    arn=arn,
+                    revision=arn.split(":")[-1],
+                    region=region,
+                    environment_variables=[],
+                )
+                self._describe_task_definition(task_definition)
+                self.task_definitions[arn] = task_definition
+            yield task_definition
 
     def _describe_task_definition(self, task_definition):
         logger.info("ECS - Describing Task Definition...")
@@ -84,6 +135,9 @@ class ECS(AWSService):
                     )
                 )
             task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
+            task_definition.registered_at = response["taskDefinition"].get(
+                "registeredAt"
+            )
             task_definition.tags = response.get("tags")
             task_definition.network_mode = response["taskDefinition"].get(
                 "networkMode", "bridge"
@@ -208,6 +262,7 @@ class TaskDefinition(BaseModel):
     region: str
     container_definitions: list[ContainerDefinition] = []
     pid_mode: Optional[str]
+    registered_at: Optional[datetime] = None
     tags: Optional[list] = []
     network_mode: Optional[str]
 

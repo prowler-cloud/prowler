@@ -10,6 +10,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
 - `stepfunctions_statemachine_encrypted_with_cmk` check for AWS provider, verifying that each Step Functions state machine uses a customer-managed KMS key for encryption at rest rather than the default AWS-owned key [(#11538)](https://github.com/prowler-cloud/prowler/pull/11538)
 
+### 🔄 Changed
+
+- AWS scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages now support configurable resource analysis limits via `aws.max_scanned_resources_per_service`; limits are disabled by default and only positive values cap analyzed resources [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
+
 ---
 
 ## [5.31.1] (Prowler v5.31.1)
