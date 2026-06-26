@@ -86,7 +86,11 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
         # is never enabled here: this rescan only resolves line numbers for
         # display and must not re-authenticate the secret.
         rescan_results = (
-            detect_secrets_scan_batch(rescan_payloads) if rescan_payloads else {}
+            detect_secrets_scan_batch(
+                rescan_payloads, excluded_secrets=secrets_ignore_patterns
+            )
+            if rescan_payloads
+            else {}
         )
 
         # Phase 4: assemble one report per log group.
