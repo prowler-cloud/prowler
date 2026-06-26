@@ -1,10 +1,17 @@
 "use client";
 
-import { ArrowRight, Square } from "lucide-react";
+import { CornerDownLeft, Settings } from "lucide-react";
+import Link from "next/link";
 import { type FormEvent } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 
 interface ChatComposerPanelProps {
   feedback: string | null;
@@ -69,6 +76,8 @@ interface ChatComposerProps {
   isStreaming: boolean;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
+  // Kept on the contract but unused for now: the backend can't cancel a run yet,
+  // so the stop control is replaced by a non-interactive spinner.
   onStop: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
@@ -80,13 +89,12 @@ function ChatComposer({
   isStreaming,
   selectedConfigurationConnected,
   onInputChange,
-  onStop,
   onSubmit,
   onSubmitText,
 }: ChatComposerProps) {
   return (
     <form
-      className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-[150px] w-full flex-col rounded-[8px] border shadow-xs"
+      className="border-border-neutral-secondary bg-bg-neutral-tertiary has-[textarea:focus]:border-border-input-primary-press flex min-h-[150px] w-full flex-col overflow-hidden rounded-[8px] border shadow-xs transition-all"
       onSubmit={onSubmit}
     >
       <Textarea
@@ -99,9 +107,9 @@ function ChatComposer({
             ? "Ask a question"
             : "Connect a provider first"
         }
-        variant="ghost"
+        variant="soft"
         textareaSize="lg"
-        className="min-h-[104px] flex-1 rounded-b-none border-0 hover:bg-transparent focus:bg-transparent focus:ring-0"
+        className="min-h-[104px] flex-1"
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -109,26 +117,51 @@ function ChatComposer({
           }
         }}
       />
-      <div className="flex items-center justify-end px-3 pb-3">
+      <div className="flex items-center justify-between px-3 pb-3">
+        <Button type="button" variant="outline" size="icon-sm" asChild>
+          <Link href="/lighthouse/settings" aria-label="Lighthouse AI settings">
+            <Settings className="size-4" />
+          </Link>
+        </Button>
         {isStreaming ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            onClick={onStop}
+          <div
+            className="flex size-8 items-center justify-center"
+            role="status"
+            aria-label="Generating response"
           >
-            <Square className="size-4" />
-          </Button>
+            <Spinner className="size-4" />
+          </div>
         ) : (
-          <Button
-            type="submit"
-            size="icon-sm"
-            disabled={!canSend || !input.trim()}
-          >
-            <ArrowRight className="size-4" />
-          </Button>
+          <ChatSendButton canSend={canSend} hasText={input.trim().length > 0} />
         )}
       </div>
     </form>
   );
+}
+
+function ChatSendButton({
+  canSend,
+  hasText,
+}: {
+  canSend: boolean;
+  hasText: boolean;
+}) {
+  const sendButton = (
+    <Button type="submit" size="icon-sm" disabled={!canSend || !hasText}>
+      <CornerDownLeft className="size-4" />
+    </Button>
+  );
+
+  if (canSend && !hasText) {
+    return (
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <span className="inline-flex cursor-not-allowed">{sendButton}</span>
+        </TooltipTrigger>
+        <TooltipContent side="top">Type something</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return sendButton;
 }
