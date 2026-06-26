@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard } from "lucide-react";
+import { Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
@@ -29,7 +29,7 @@ export function SidebarNavigationModeToggle({
     {
       value: SIDEBAR_NAVIGATION_MODE.BROWSE,
       label: "Home",
-      icon: LayoutDashboard,
+      icon: Home,
     },
     {
       value: SIDEBAR_NAVIGATION_MODE.CHAT,
@@ -46,10 +46,10 @@ export function SidebarNavigationModeToggle({
   };
 
   return (
-    <div className={cn("mt-3 shrink-0 px-2", !isOpen && "flex justify-center")}>
+    <div className={cn("mt-4 shrink-0 px-2", !isOpen && "flex justify-center")}>
       <div
         className={cn(
-          "border-border-neutral-secondary bg-bg-neutral-secondary flex rounded-[8px] border p-1",
+          "border-border-input-primary bg-bg-input-primary dark:bg-input/30 flex gap-1 rounded-lg border p-1",
           isOpen ? "w-full" : "flex-col",
         )}
       >
@@ -62,11 +62,14 @@ export function SidebarNavigationModeToggle({
               type="button"
               aria-label={mode.label}
               className={cn(
-                "flex h-8 items-center justify-center rounded-[6px] px-2 text-sm transition-colors",
-                isOpen ? "min-w-0 flex-1 gap-2" : "w-8",
+                "flex h-8 items-center justify-center rounded-[6px] border px-2 text-sm transition-all duration-200 ease-out",
+                isOpen ? "min-w-0 gap-2" : "w-8",
+                // The active segment grows (~55%) and gains a bordered, shadowed
+                // "thumb"; the inactive one shrinks (~45%) and stays flat.
                 active
-                  ? "bg-bg-neutral-tertiary text-text-neutral-primary"
-                  : "text-text-neutral-secondary hover:text-text-neutral-primary",
+                  ? "border-border-input-primary bg-bg-neutral-primary text-text-neutral-primary shadow-md"
+                  : "text-text-neutral-secondary hover:text-text-neutral-primary border-transparent",
+                isOpen && (active ? "flex-[11]" : "flex-[9]"),
               )}
               onClick={() => handleModeChange(mode.value)}
             >

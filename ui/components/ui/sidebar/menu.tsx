@@ -92,7 +92,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
               <Button
                 type="button"
                 aria-label="Launch Scan"
-                className={cn(isOpen ? "h-14 w-[180px] p-1" : "w-14")}
+                className={cn(isOpen ? "h-14 w-full p-1" : "w-14")}
                 variant="default"
                 size="default"
                 onClick={openLaunchScanModal}
@@ -102,7 +102,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
             ) : (
               <Button
                 asChild
-                className={cn(isOpen ? "h-14 w-[180px] p-1" : "w-14")}
+                className={cn(isOpen ? "h-14 w-full p-1" : "w-14")}
                 variant="default"
                 size="default"
               >
