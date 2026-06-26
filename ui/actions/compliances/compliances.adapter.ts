@@ -10,7 +10,7 @@ export type { ComplianceOverviewsResponse, EnrichedComplianceOverview };
 
 /**
  * Formats framework name for display by replacing hyphens with spaces
- * e.g., "FedRAMP-20x-KSI-Low" -> "FedRAMP 20x KSI Low"
+ * e.g., "FedRAMP-20x-KSI" -> "FedRAMP 20x KSI"
  */
 function formatFrameworkName(framework: string): string {
   return framework.replace(/-/g, " ");
