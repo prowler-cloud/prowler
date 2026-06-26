@@ -12,6 +12,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
 - CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
 
+### 🔄 Changed
+
+- Compliance framework display example updated for FedRAMP 20x KSI (`FedRAMP-20x-KSI`) after replacing Phase One pilot Low frameworks [(#11701)](https://github.com/prowler-cloud/prowler/pull/11701)
+
 ---
 
 ## [1.31.1] (Prowler v5.31.1)
