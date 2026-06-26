@@ -117,6 +117,42 @@ class Test_Cloudflare_Schema:
         assert _validate("cloudflare", {"max_retries": -1}) == {}
 
 
+class Test_Okta_Schema:
+    def test_full_rate_limit_config_round_trip(self):
+        raw = {
+            "okta_requests_per_second": 4.0,
+            "okta_max_retries": 5,
+            "okta_request_timeout": 300,
+        }
+        assert _validate("okta", raw) == raw
+
+    def test_requests_per_second_zero_allowed(self):
+        # 0 is documented as "disable throttling" in config.yaml.
+        assert _validate("okta", {"okta_requests_per_second": 0}) == {
+            "okta_requests_per_second": 0
+        }
+
+    def test_requests_per_second_sub_one_allowed(self):
+        assert _validate("okta", {"okta_requests_per_second": 0.5}) == {
+            "okta_requests_per_second": 0.5
+        }
+
+    def test_requests_per_second_negative_dropped(self):
+        assert _validate("okta", {"okta_requests_per_second": -1}) == {}
+
+    def test_max_retries_zero_allowed(self):
+        assert _validate("okta", {"okta_max_retries": 0}) == {"okta_max_retries": 0}
+
+    def test_max_retries_out_of_range_dropped(self):
+        assert _validate("okta", {"okta_max_retries": -1}) == {}
+        assert _validate("okta", {"okta_max_retries": 11}) == {}
+
+    def test_non_numeric_value_dropped(self):
+        # A typo'd string must not flow through to the limiter (it would crash
+        # the `> 0` comparison during provider init).
+        assert _validate("okta", {"okta_requests_per_second": "fast"}) == {}
+
+
 class Test_Vercel_Schema:
     def test_owner_percentage_in_range(self):
         assert _validate("vercel", {"max_owner_percentage": 20}) == {

@@ -13,6 +13,7 @@ from prowler.config.schema.github import GitHubProviderConfig
 from prowler.config.schema.kubernetes import KubernetesProviderConfig
 from prowler.config.schema.m365 import M365ProviderConfig
 from prowler.config.schema.mongodbatlas import MongoDBAtlasProviderConfig
+from prowler.config.schema.okta import OktaProviderConfig
 from prowler.config.schema.vercel import VercelProviderConfig
 
 SCHEMAS: dict[str, type[ProviderConfigBase]] = {
@@ -25,4 +26,5 @@ SCHEMAS: dict[str, type[ProviderConfigBase]] = {
     "mongodbatlas": MongoDBAtlasProviderConfig,
     "cloudflare": CloudflareProviderConfig,
     "vercel": VercelProviderConfig,
+    "okta": OktaProviderConfig,
 }
