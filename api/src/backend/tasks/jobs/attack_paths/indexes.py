@@ -1,5 +1,6 @@
 import neo4j
 from cartography.client.core.tx import run_write_query
+from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
@@ -30,14 +31,34 @@ SYNC_INDEX_STATEMENTS = [
 
 
 def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
-    """Create indexes for Prowler findings and resource lookups."""
+    """Create indexes for Prowler findings and resource lookups.
+
+    Runs `CREATE INDEX`, so the caller must only invoke this against a Neo4j
+    session (the temp ingest DB or a Neo4j sink). Neptune auto-manages indexes
+    and rejects `CREATE INDEX`, so callers skip it for the Neptune sink.
+    """
     logger.info("Creating indexes for Prowler Findings node types")
     for statement in FINDINGS_INDEX_STATEMENTS:
         run_write_query(neo4j_session, statement)
 
 
+def create_cartography_indexes(neo4j_session: neo4j.Session, config) -> None:
+    """Create Cartography's standard indexes for the session's database.
+
+    Runs `CREATE INDEX`, so the caller must only invoke this against a Neo4j
+    session (the temp ingest DB or a Neo4j sink). Neptune auto-manages indexes
+    and rejects `CREATE INDEX`, so callers skip it for the Neptune sink.
+    """
+    cartography_create_indexes.run(neo4j_session, config)
+
+
 def create_sync_indexes(neo4j_session: neo4j.Session) -> None:
-    """Create indexes for provider resource sync operations."""
+    """Create indexes for provider resource sync operations.
+
+    Runs `CREATE INDEX`, so the caller must only invoke this against a Neo4j
+    session (the temp ingest DB or a Neo4j sink). Neptune auto-manages indexes
+    and rejects `CREATE INDEX`, so callers skip it for the Neptune sink.
+    """
     logger.info("Ensuring ProviderResource indexes exist")
     for statement in SYNC_INDEX_STATEMENTS:
         neo4j_session.run(statement)
