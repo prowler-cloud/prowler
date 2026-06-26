@@ -93,3 +93,6 @@ trustPolicyExclude:
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true
+minimumReleaseAgeExclude:
+  # Renovate security update: js-yaml@4.2.0
+  - js-yaml@4.2.0
