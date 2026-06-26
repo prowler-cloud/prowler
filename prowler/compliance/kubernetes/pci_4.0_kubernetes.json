@@ -8268,6 +8268,14 @@
       "Checks": [
         "apiserver_audit_log_maxage_set"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxage_set",
+          "ConfigKey": "audit_log_maxage",
+          "Operator": "gte",
+          "Value": 365
+        }
+      ],
       "Attributes": [
         {
           "Section": "10.5.1: Audit log history is retained and available for analysis.",
@@ -10054,6 +10062,14 @@
       "Checks": [
         "apiserver_audit_log_maxage_set"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxage_set",
+          "ConfigKey": "audit_log_maxage",
+          "Operator": "gte",
+          "Value": 365
+        }
+      ],
       "Attributes": [
         {
           "Section": "3.3.1.3: Sensitive authentication data (SAD) is not stored after authorization.",
@@ -10249,6 +10265,14 @@
       "Name": "API Server",
       "Checks": [
         "apiserver_audit_log_maxage_set"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxage_set",
+          "ConfigKey": "audit_log_maxage",
+          "Operator": "gte",
+          "Value": 365
+        }
       ],
       "Attributes": [
         {
@@ -13003,6 +13027,14 @@
       "Name": "API Server",
       "Checks": [
         "apiserver_audit_log_maxage_set"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxage_set",
+          "ConfigKey": "audit_log_maxage",
+          "Operator": "gte",
+          "Value": 365
+        }
       ],
       "Attributes": [
         {

@@ -4403,6 +4403,14 @@
       "Checks": [
         "securityhub_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "10.2.1.1: Audit logs are implemented to support the detection of anomalies and suspicious activity, and the forensic analysis of events. ",
@@ -9281,6 +9289,14 @@
       "Checks": [
         "securityhub_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "10.4.1.1: Audit logs are reviewed to identify anomalies or suspicious activity. ",
@@ -9362,6 +9378,14 @@
       "Name": "securityhub",
       "Checks": [
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -9459,6 +9483,14 @@
       "Checks": [
         "securityhub_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "10.4.2: Audit logs are reviewed to identify anomalies or suspicious activity. ",
@@ -9550,6 +9582,14 @@
       "Name": "cloudwatch",
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ],
       "Attributes": [
         {
@@ -10179,6 +10219,14 @@
       "Checks": [
         "securityhub_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "10.6.3: Time-synchronization mechanisms support consistent time settings across all systems. ",
@@ -10343,6 +10391,14 @@
       "Checks": [
         "securityhub_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "10.7.1: Failures of critical security control systems are detected, reported, and responded to promptly. ",
@@ -10450,6 +10506,14 @@
       "Name": "securityhub",
       "Checks": [
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -10625,6 +10689,14 @@
       "Checks": [
         "guardduty_is_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "11.5.1.1: Network intrusions and unexpected file changes are detected and responded to. ",
@@ -10652,6 +10724,14 @@
       "Name": "guardduty",
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -11445,6 +11525,14 @@
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
+      ],
       "Attributes": [
         {
           "Section": "3.2.1: Storage of account data is kept to a minimum. ",
@@ -11566,6 +11654,14 @@
       "Name": "cloudwatch",
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ],
       "Attributes": [
         {
@@ -11689,6 +11785,14 @@
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
+      ],
       "Attributes": [
         {
           "Section": "3.3.1.3: Sensitive authentication data (SAD) is not stored after authorization. ",
@@ -11811,6 +11915,14 @@
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
+      ],
       "Attributes": [
         {
           "Section": "3.3.2: Sensitive authentication data (SAD) is not stored after authorization. ",
@@ -11932,6 +12044,14 @@
       "Name": "cloudwatch",
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ],
       "Attributes": [
         {
@@ -13573,6 +13693,17 @@
       "Checks": [
         "acm_certificates_with_secure_key_algorithms"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
+      ],
       "Attributes": [
         {
           "Section": "3.7.1: Where cryptography is used to protect stored account data, key management processes and procedures covering all aspects of the key lifecycle are defined and implemented. ",
@@ -15000,6 +15131,14 @@
       "Name": "cloudwatch",
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365
+        }
       ],
       "Attributes": [
         {
@@ -22504,6 +22643,14 @@
       "Checks": [
         "securityhub_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "A3.3.1: PCI DSS is incorporated into business-as-usual (BAU) activities. ",
@@ -22999,6 +23146,14 @@
       "Name": "securityhub",
       "Checks": [
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {

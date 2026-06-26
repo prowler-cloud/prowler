@@ -82,7 +82,6 @@ def _to_neo4j_dict(
 
 
 # Public API
-# ----------
 
 
 def analysis(
@@ -196,7 +195,6 @@ def load_findings(
 
 
 # Findings Streaming (Generator-based)
-# -------------------------------------
 
 
 def stream_findings_with_resources(
@@ -275,7 +273,6 @@ def _fetch_findings_batch(
 
 
 # Batch Enrichment
-# -----------------
 
 
 def _enrich_batch_with_resources(

@@ -46,6 +46,10 @@ When adding a new configurable check to Prowler, update the following files:
 
 For a complete list of checks that already support configuration, see the [Configuration File Tutorial](/user-guide/cli/tutorials/configuration_file).
 
+<Note>
+Because a configurable check's verdict depends on the `audit_config` value it reads, a compliance requirement can lose meaning if the scan ran with a looser threshold than the control demands. Compliance frameworks can guard against this with **configuration guardrails**: a requirement declares the strictest configuration it tolerates and is forced to FAIL when the scan's config falls short. See [Configuration Guardrails for Requirements](/developer-guide/security-compliance-framework#configuration-guardrails-for-requirements).
+</Note>
+
 ## Adding a Parameter to the Provider Schema
 
 Most providers have a typed Pydantic schema in `prowler/config/schema/`, registered in `prowler/config/schema/registry.py`. When a config is loaded and the provider has a registered schema, `validate_provider_config` checks each user-supplied key against it, logs a warning, and drops any field that fails validation. The consumer's `.get(key, default)` then falls back to the built-in default. Providers without a registered schema are passed through unchanged.

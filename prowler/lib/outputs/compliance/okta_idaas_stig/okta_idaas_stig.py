@@ -2,6 +2,11 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 
 
 def get_okta_idaas_stig_table(
@@ -24,12 +29,28 @@ def get_okta_idaas_stig_table(
     sections = {}
     section_seen = {}
     provider = ""
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
             if compliance.Framework == "Okta-IDaaS-STIG":
                 provider = compliance.Provider
+                # A configurable check that passed with a too-loose config is
+                # forced to FAIL (source of truth: framework ConfigRequirements).
+                effective_status = finding.status
+                for requirement in compliance.Requirements:
+                    if finding.check_id in requirement.Checks:
+                        config_status = resolve_requirement_config_status(
+                            requirement, audit_config, config_status_cache
+                        )
+                        if (
+                            get_effective_status(finding.status, config_status)
+                            == "FAIL"
+                        ):
+                            effective_status = "FAIL"
+                            break
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         section = attribute.Section
@@ -42,10 +63,10 @@ def get_okta_idaas_stig_table(
                         if finding.muted:
                             if index not in muted_count:
                                 muted_count.append(index)
-                        elif finding.status == "FAIL":
+                        elif effective_status == "FAIL":
                             if index not in fail_count:
                                 fail_count.append(index)
-                        elif finding.status == "PASS":
+                        elif effective_status == "PASS":
                             if index not in pass_count:
                                 pass_count.append(index)
 
@@ -55,9 +76,9 @@ def get_okta_idaas_stig_table(
                             section_seen[section].add(index)
                             if finding.muted:
                                 sections[section]["Muted"] += 1
-                            elif finding.status == "FAIL":
+                            elif effective_status == "FAIL":
                                 sections[section]["FAIL"] += 1
-                            elif finding.status == "PASS":
+                            elif effective_status == "PASS":
                                 sections[section]["PASS"] += 1
 
     sections = dict(sorted(sections.items()))
