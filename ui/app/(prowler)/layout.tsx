@@ -11,6 +11,7 @@ import {
   OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
+import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
 import { Toaster } from "@/components/ui/toast";
@@ -76,7 +77,9 @@ export default async function RootLayout({
 
   return (
     <html suppressHydrationWarning lang="en">
-      <head />
+      <head>
+        <RuntimePublicConfig />
+      </head>
       <body
         suppressHydrationWarning
         className={cn(

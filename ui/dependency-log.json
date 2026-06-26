@@ -2,10 +2,10 @@
   {
     "section": "dependencies",
     "name": "@ai-sdk/react",
-    "from": "2.0.111",
-    "to": "3.0.207",
+    "from": "3.0.207",
+    "to": "3.0.205",
     "strategy": "installed",
-    "generatedAt": "2026-06-15T07:44:51.977Z"
+    "generatedAt": "2026-06-17T11:28:12.866Z"
   },
   {
     "section": "dependencies",
@@ -362,10 +362,18 @@
   {
     "section": "dependencies",
     "name": "ai",
-    "from": "5.0.109",
-    "to": "6.0.205",
+    "from": "6.0.205",
+    "to": "6.0.203",
     "strategy": "installed",
-    "generatedAt": "2026-06-15T07:44:51.977Z"
+    "generatedAt": "2026-06-17T11:28:12.866Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "ajv",
+    "from": "8.17.1",
+    "to": "8.18.0",
+    "strategy": "installed",
+    "generatedAt": "2026-06-25T07:13:59.855Z"
   },
   {
     "section": "dependencies",

@@ -28,7 +28,9 @@ import {
   getTourTargetSelector,
 } from "@/lib/tours/use-driver-tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
+import type { ProviderGroup } from "@/types/components";
 import type { ProvidersTableRow } from "@/types/providers-table";
+import type { ScanScheduleCapability } from "@/types/schedules";
 
 const addProviderFlow = getFlowById("add-provider")!;
 
@@ -50,7 +52,11 @@ interface ProvidersAccountsViewProps {
   filters: FilterOption[];
   metadata?: MetaDataProps;
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   rows: ProvidersTableRow[];
+  /** Cloud overlay seam for provider-creation scan launch. */
+  scanScheduleCapability?: ScanScheduleCapability;
+  isScanLimitReached?: boolean;
 }
 
 export function ProvidersAccountsView({
@@ -58,7 +64,10 @@ export function ProvidersAccountsView({
   filters,
   metadata,
   providers,
+  providerGroups = [],
   rows,
+  scanScheduleCapability,
+  isScanLimitReached,
 }: ProvidersAccountsViewProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -135,6 +144,7 @@ export function ProvidersAccountsView({
           <ProvidersFilters
             filters={filters}
             providers={providers}
+            providerGroups={providerGroups}
             actions={
               <>
                 <MutedFindingsConfigButton />
@@ -146,6 +156,7 @@ export function ProvidersAccountsView({
             isCloud={isCloud}
             metadata={metadata}
             rows={rows}
+            scanScheduleCapability={scanScheduleCapability}
             onOpenProviderWizard={openProviderWizard}
             onOpenOrganizationWizard={openOrganizationWizard}
           />
@@ -157,6 +168,8 @@ export function ProvidersAccountsView({
         initialData={providerWizardInitialData}
         orgInitialData={orgWizardInitialData}
         refreshOnClose={false}
+        scanScheduleCapability={scanScheduleCapability}
+        isScanLimitReached={isScanLimitReached}
       />
     </>
   );

@@ -797,6 +797,10 @@ def execute(
                 is_finding_muted_args["org_domain"] = (
                     global_provider.identity.org_domain
                 )
+            elif global_provider.type == "linode":
+                is_finding_muted_args["account_id"] = (
+                    global_provider.identity.account_id
+                )
             elif not is_builtin_provider(global_provider.type):
                 # External/custom provider — delegate identity args
                 is_finding_muted_args = global_provider.get_mutelist_finding_args()

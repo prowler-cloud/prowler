@@ -29,6 +29,7 @@ overrides:
   qs: 6.15.2
   express-rate-limit: 8.5.1
   uuid: 11.1.1
+  dompurify: 3.4.10
 
 importers:
 
@@ -172,6 +173,9 @@ importers:
       ai:
         specifier: 6.0.203
         version: 6.0.203(zod@4.4.3)
+      ajv:
+        specifier: 8.18.0
+        version: 8.18.0
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -5593,8 +5597,8 @@ packages:
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
 
-  dompurify@3.4.2:
-    resolution: {integrity: sha512-lHeS9SA/IKeIFFyYciHBr2n0v1VMPlSj843HdLOwjb2OxNwdq9Xykxqhk+FE42MzAdHvInbAolSE4mhahPpjXA==}
+  dompurify@3.4.10:
+    resolution: {integrity: sha512-0xzNv0e7oYC6yyuOGZIABPM4qtg3QxLFniDNPP4ZP90wR8Yq3zgwpRbrNiT4N3IKqDbbYFEJLV+JWEs19aZ//w==}
 
   dotenv-expand@12.0.3:
     resolution: {integrity: sha512-uc47g4b+4k/M/SeaW1y4OApx+mtLWl92l5LMPP0GNXctZqELk+YGgOPIIC5elYmUH4OuoK3JLhuRUYegeySiFA==}
@@ -8624,7 +8628,7 @@ snapshots:
     dependencies:
       '@ai-sdk/provider': 3.0.10
       '@standard-schema/spec': 1.1.0
-      eventsource-parser: 3.1.0
+      eventsource-parser: 3.0.6
       zod: 4.4.3
 
   '@ai-sdk/provider@3.0.10':
@@ -15168,7 +15172,7 @@ snapshots:
       '@babel/runtime': 7.28.6
       csstype: 3.2.3
 
-  dompurify@3.4.2:
+  dompurify@3.4.10:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -16682,7 +16686,7 @@ snapshots:
       d3-sankey: 0.12.3
       dagre-d3-es: 7.0.14
       dayjs: 1.11.19
-      dompurify: 3.4.2
+      dompurify: 3.4.10
       es-toolkit: 1.46.1
       katex: 0.16.27
       khroma: 2.1.0

@@ -313,8 +313,8 @@ export function MultiSelectContent({
 
   const widthClasses =
     width === "wide"
-      ? "w-[min(max(var(--radix-popover-trigger-width),24rem),calc(100vw-2rem))] max-w-[32rem]"
-      : "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))] max-w-[24rem]";
+      ? "w-[calc(100vw-2rem)] sm:w-max sm:min-w-[min(max(var(--radix-popover-trigger-width),24rem),32rem)] sm:max-w-[32rem]"
+      : "w-[calc(100vw-2rem)] sm:w-max sm:min-w-[min(var(--radix-popover-trigger-width),22rem)] sm:max-w-[22rem]";
 
   function handleSearchValueChange(searchValue: string) {
     if (!canSearch || !searchValue.trim()) return;
@@ -426,7 +426,7 @@ export function MultiSelectItem({
         onSelect?.(value);
       }}
     >
-      <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+      <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap">
         {children}
       </span>
       <CheckIcon

@@ -1,4 +1,5 @@
 import { ProviderProps, ProvidersApiResponse, ScanProps } from "@/types";
+import { ProviderGroup } from "@/types/components";
 import { FilterEntity } from "@/types/filters";
 import {
   getProviderDisplayName,
@@ -117,6 +118,19 @@ export function getScanEntityLabel(scan: ScanEntity): string {
 
   if (providerLabel && scanName) return `${providerLabel} - ${scanName}`;
   return providerLabel || scanName;
+}
+
+/**
+ * Resolves the display name for a provider group filter value, falling back to
+ * the raw id when the group can't be resolved. Shared by the findings and
+ * resources filter utils so their chips stay in sync.
+ */
+export function getProviderGroupDisplayValue(
+  groupId: string,
+  groups: ProviderGroup[],
+): string {
+  const group = groups.find((item) => item.id === groupId);
+  return group?.attributes.name || groupId;
 }
 
 /**

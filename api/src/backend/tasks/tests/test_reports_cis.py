@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
+from api.models import StatusChoices
 from reportlab.platypus import Image, LongTable, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
 from tasks.jobs.reports.cis import (
@@ -8,8 +9,6 @@ from tasks.jobs.reports.cis import (
     _normalize_profile,
     _profile_badge_text,
 )
-
-from api.models import StatusChoices
 
 # =============================================================================
 # Fixtures

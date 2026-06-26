@@ -2,11 +2,10 @@
 
 import uuid
 
+import api.rls
 import django.core.validators
 import django.db.models.deletion
 from django.db import migrations, models
-
-import api.rls
 
 
 class Migration(migrations.Migration):

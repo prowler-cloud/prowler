@@ -8,6 +8,7 @@ import {
   Puzzle,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   SquareChartGantt,
   Tag,
   Timer,
@@ -30,9 +31,15 @@ import { GroupProps } from "@/types";
 
 interface MenuListOptions {
   pathname: string;
+  // Passed in (not read here) so the island isn't read during SSR — that would
+  // cause a hydration mismatch. See useRuntimeConfig.
+  apiDocsUrl?: string | null;
 }
 
-export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
+export const getMenuList = ({
+  pathname,
+  apiDocsUrl = null,
+}: MenuListOptions): GroupProps[] => {
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   return [
@@ -125,6 +132,15 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: VolumeX,
               active: pathname === "/mutelist",
             },
+            {
+              href: "/scan-config",
+              label: "Scan Config",
+              icon: SlidersHorizontal,
+              active: isCloudEnv && pathname.startsWith("/scan-config"),
+              highlight: true,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
+            },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/roles", label: "Roles", icon: UserCog },
@@ -164,10 +180,9 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: DocIcon,
             },
             {
-              href:
-                process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-                  ? "https://api.prowler.com/api/v1/docs"
-                  : `${process.env.NEXT_PUBLIC_API_DOCS_URL}`,
+              href: isCloudEnv
+                ? "https://api.prowler.com/api/v1/docs"
+                : (apiDocsUrl ?? ""),
               target: "_blank",
               label: "API reference",
               icon: APIdocIcon,

@@ -1,10 +1,9 @@
 from collections import defaultdict
 
+from api.models import StatusChoices
 from celery.utils.log import get_task_logger
 from reportlab.lib.units import inch
 from reportlab.platypus import Image, PageBreak, Paragraph, Spacer, Table, TableStyle
-
-from api.models import StatusChoices
 
 from .base import (
     BaseComplianceReportGenerator,

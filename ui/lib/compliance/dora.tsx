@@ -77,6 +77,7 @@ export const mapComplianceData = (
       description,
       status: finalStatus,
       check_ids: checks,
+      invalid_config: requirementData.attributes.invalid_config || false,
       ...getStatusCounters(finalStatus),
       pillar: attrs.Pillar,
       article: attrs.Article,
@@ -133,6 +134,7 @@ export const toAccordionItems = (
               type=""
               name={requirement.name}
               status={requirement.status as FindingStatus}
+              invalidConfig={requirement.invalid_config}
             />
           ),
           content: (

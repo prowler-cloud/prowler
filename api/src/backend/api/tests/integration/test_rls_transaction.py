@@ -1,10 +1,9 @@
 """Tests for rls_transaction retry and fallback logic."""
 
 import pytest
+from api.db_utils import rls_transaction
 from django.db import DEFAULT_DB_ALIAS
 from rest_framework_json_api.serializers import ValidationError
-
-from api.db_utils import rls_transaction
 
 
 @pytest.mark.django_db
