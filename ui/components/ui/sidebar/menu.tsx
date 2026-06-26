@@ -83,8 +83,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Launch Scan Button */}
-      <div className="flex shrink-0 justify-center px-2">
+      {/* Launch Scan Button — mt-1 aligns its top with the main content panel
+          (navbar 72px + py-4 = 88px), matching the fixed-height logo block. */}
+      <div className="mt-1 flex shrink-0 justify-center px-2">
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             {isScansPage ? (
