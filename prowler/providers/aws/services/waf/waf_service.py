@@ -168,9 +168,7 @@ class WAFRegional(AWSService):
         )
         self.__threading_call__(self._list_web_acls)
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
-        self.__threading_call__(
-            self._get_logging_configuration, self.web_acls.values()
-        )
+        self.__threading_call__(self._get_logging_configuration, self.web_acls.values())
         self.__threading_call__(self._list_resources_for_web_acl)
 
     def _list_rules(self, regional_client):
