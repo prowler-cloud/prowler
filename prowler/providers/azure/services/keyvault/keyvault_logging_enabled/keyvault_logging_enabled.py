@@ -19,9 +19,9 @@ class keyvault_logging_enabled(Check):
                     has_audit = False
                     has_all_logs = False
                     for log in diagnostic_setting.logs:
-                        if log.category_group == "audit" and log.enabled:
+                        if (log.category_group == "audit" or log.category == "AuditEvent") and log.enabled:
                             has_audit = True
-                        if log.category_group == "allLogs" and log.enabled:
+                        if (log.category_group == "allLogs" or log.category == "AuditEvent") and log.enabled:
                             has_all_logs = True
                     if has_audit and has_all_logs:
                         report.status = "PASS"
