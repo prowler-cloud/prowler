@@ -43,7 +43,7 @@ class Exchange(M365Service):
         self.role_assignment_policies = []
         self.mailbox_audit_properties = []
         self.shared_mailboxes = []
-        self.mailboxes = None
+        self.application_access_policies = None
 
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -56,7 +56,10 @@ class Exchange(M365Service):
                 self.role_assignment_policies = self._get_role_assignment_policies()
                 self.mailbox_audit_properties = self._get_mailbox_audit_properties()
                 self.shared_mailboxes = self._get_shared_mailboxes()
-                self.mailboxes = self._get_mailboxes()
+                self.application_access_policies = (
+                    self._get_application_access_policies()
+                )
+            self.powershell.close()
             self.powershell.close()
 
         # Fetch license count via Graph API
@@ -366,6 +369,51 @@ class Exchange(M365Service):
             )
         return shared_mailboxes
 
+    def _get_application_access_policies(self):
+        """
+        Get Exchange Online Application Access Policies.
+
+        Returns:
+            list[ApplicationAccessPolicy]: List of application access policies.
+        """
+        logger.info("Microsoft365 - Getting application access policies...")
+
+        application_access_policies = []
+
+        try:
+            policies_data = self.powershell.get_application_access_policies()
+
+            if not policies_data:
+                return application_access_policies
+
+            if isinstance(policies_data, dict):
+                policies_data = [policies_data]
+
+            for policy in policies_data:
+                if policy:
+                    application_access_policies.append(
+                        ApplicationAccessPolicy(
+                            identity=policy.get("Identity", ""),
+                            app_id=policy.get("AppId", ""),
+                            access_right=policy.get(
+                                "AccessRight",
+                                "",
+                            ),
+                            description=policy.get(
+                                "Description",
+                                "",
+                            ),
+                        )
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}"
+                f"[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return application_access_policies
+
     def _get_mailboxes(self) -> Optional[list["Mailbox"]]:
         """
         Get all recipient-facing mailboxes from Exchange Online.
@@ -554,20 +602,12 @@ class SharedMailbox(BaseModel):
     identity: str
 
 
-class Mailbox(BaseModel):
+class ApplicationAccessPolicy(BaseModel):
     """
-    Model for an Exchange Online recipient-facing mailbox.
-
-    Attributes:
-        identity: The unique identity of the mailbox in Exchange.
-        name: Display name of the mailbox.
-        primary_smtp_address: The primary SMTP address used for outbound mail
-            and the From: header. This is the address the check evaluates.
-        recipient_type_details: The mailbox type (e.g., UserMailbox,
-            SharedMailbox, RoomMailbox, EquipmentMailbox).
+    Model for Exchange Online Application Access Policy.
     """
 
     identity: str
-    name: str
-    primary_smtp_address: str
-    recipient_type_details: str
+    app_id: str
+    access_right: str
+    description: str
