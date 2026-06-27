@@ -1,5 +1,4 @@
 import sentry_sdk
-
 from config.env import env
 
 IGNORED_EXCEPTIONS = [
@@ -76,6 +75,8 @@ IGNORED_EXCEPTIONS = [
     # PowerShell Errors in User Authentication
     "Microsoft Teams User Auth connection failed: Please check your permissions and try again.",
     "Exchange Online User Auth connection failed: Please check your permissions and try again.",
+    # ASGI: Client disconnected before the response finished (health-check probes on /health/live)
+    "RequestAborted",
 ]
 
 

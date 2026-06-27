@@ -13,8 +13,8 @@
   "Risk": "If shared drive managers can override organizational defaults, **unauthorized data exposure** can occur when a manager intentionally or accidentally weakens a shared drive's security posture (for example, allowing external members or enabling download for viewers).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7662202",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/manage-shared-drives-as-an-admin",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

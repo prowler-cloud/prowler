@@ -59,6 +59,7 @@ class OraclecloudProvider(Provider):
     """
 
     _type: str = "oraclecloud"
+    sdk_only: bool = False
     _identity: OCIIdentityInfo
     _session: OCISession
     _audit_config: dict
@@ -161,12 +162,14 @@ class OraclecloudProvider(Provider):
 
         # Get regions
         self._regions = self.get_regions_to_audit(region)
-        self._home_region = None
-        if self._regions:
-            self._home_region = next(
-                (region.key for region in self._regions if region.is_home_region),
-                self._regions[0].key,
-            )
+        # Determine the tenancy home region from the full subscription list, independent of
+        # the --region filter, so tenancy-level APIs (e.g. the Audit configuration) always
+        # target the home region instead of a filtered, non-home region.
+        all_subscribed_regions = self.get_regions_to_audit()
+        self._home_region = next(
+            (region.key for region in all_subscribed_regions if region.is_home_region),
+            self._regions[0].key if self._regions else "us-ashburn-1",
+        )
         logger.info(f"Home region is: {self._home_region}")
 
         # Get compartments

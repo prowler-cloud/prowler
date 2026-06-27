@@ -364,7 +364,7 @@ Batch utilities: `api/db_utils.py` (`batch_delete`, `create_objects_in_batches`,
 
 ## Decision tree
 
-```
+```text
 Auto-generated migration?
 ├── Yes → Split it following the rules below
 └── No → Review it against the rules below
@@ -420,7 +420,7 @@ When implementing or debugging migration patterns, query these libraries via `mc
 | django-postgres-extra | `/SectorLabs/django-postgres-extra` | Partitioned models, `PostgresPartitionedModel`, partition management |
 
 **Example queries:**
-```
+```text
 mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_1", query="migration operations AddIndex RunPython atomic")
 mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_1", query="database indexes Meta class concurrently")
 mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="CREATE INDEX CONCURRENTLY partitioned table")

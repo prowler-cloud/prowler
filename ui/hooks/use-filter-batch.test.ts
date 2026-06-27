@@ -62,22 +62,22 @@ describe("useFilterBatch", () => {
       expect(result.current.hasChanges).toBe(false);
     });
 
-    it("should expose filter[delta]=new under the FilterType.DELTA key so the dropdown shows it selected", async () => {
+    it("should expose filter[delta]=new under the FILTER_FIELD.DELTA key so the dropdown shows it selected", async () => {
       // Given — URL from LinkToFindings uses `filter[delta]` (singular), matching the API.
       setSearchParams({
         "filter[status__in]": "FAIL",
         "filter[delta]": "new",
       });
 
-      const { FilterType } = await import("@/types/filters");
+      const { FILTER_FIELD } = await import("@/types/filters");
 
       // When
       const { result } = renderHook(() => useFilterBatch());
 
-      // Then — the Delta dropdown reads via getFilterValue(`filter[${FilterType.DELTA}]`).
+      // Then — the Delta dropdown reads via getFilterValue(`filter[${FILTER_FIELD.DELTA}]`).
       // For the checkbox of "new" to appear checked, that lookup must return ["new"].
       expect(
-        result.current.getFilterValue(`filter[${FilterType.DELTA}]`),
+        result.current.getFilterValue(`filter[${FILTER_FIELD.DELTA}]`),
       ).toEqual(["new"]);
     });
 

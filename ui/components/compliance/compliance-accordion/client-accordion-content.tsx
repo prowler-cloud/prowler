@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -8,9 +9,11 @@ import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
 } from "@/components/findings/table";
+import { Alert, AlertDescription } from "@/components/shadcn";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
+import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
@@ -32,10 +35,12 @@ export const ClientAccordionContent = ({
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
   const searchParams = useSearchParams();
   const pageNumber = searchParams.get("page") || "1";
+  const pageSize = searchParams.get("pageSize") || "10";
   const complianceId = searchParams.get("complianceId");
   const openFindingId = searchParams.get("id");
   const sort = searchParams.get("sort") || FINDINGS_DEFAULT_SORT;
   const loadedPageRef = useRef<string | null>(null);
+  const loadedPageSizeRef = useRef<string | null>(null);
   const loadedSortRef = useRef<string | null>(null);
   const loadedMutedRef = useRef<string | null>(null);
   const isExpandedRef = useRef(false);
@@ -52,11 +57,13 @@ export const ClientAccordionContent = ({
         requirement.check_ids?.length > 0 &&
         requirement.status !== "No findings" &&
         (loadedPageRef.current !== pageNumber ||
+          loadedPageSizeRef.current !== pageSize ||
           loadedSortRef.current !== sort ||
           loadedMutedRef.current !== mutedFilter ||
           !isExpandedRef.current)
       ) {
         loadedPageRef.current = pageNumber;
+        loadedPageSizeRef.current = pageSize;
         loadedSortRef.current = sort;
         loadedMutedRef.current = mutedFilter;
         isExpandedRef.current = true;
@@ -72,6 +79,7 @@ export const ClientAccordionContent = ({
               ...(region && { "filter[region__in]": region }),
             },
             page: parseInt(pageNumber, 10),
+            pageSize: parseInt(pageSize, 10),
             sort: encodedSort,
           });
 
@@ -111,6 +119,7 @@ export const ClientAccordionContent = ({
     requirement,
     scanId,
     pageNumber,
+    pageSize,
     sort,
     region,
     mutedFilter,
@@ -193,6 +202,13 @@ export const ClientAccordionContent = ({
 
   return (
     <div className="w-full">
+      {requirement.invalid_config && (
+        <Alert variant="warning" className="mb-3">
+          <AlertTriangle />
+          <AlertDescription>{INVALID_CONFIG_NOTE}</AlertDescription>
+        </Alert>
+      )}
+
       {renderDetails()}
 
       {checks.length > 0 && (

@@ -1,0 +1,16 @@
+{
+  "services": {
+    "iaas": {
+      "regions": [
+        "eu01",
+        "eu02"
+      ]
+    },
+    "objectstorage": {
+      "regions": [
+        "eu01",
+        "eu02"
+      ]
+    }
+  }
+}

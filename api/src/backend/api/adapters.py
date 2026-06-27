@@ -1,9 +1,15 @@
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from django.db import transaction
-
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
-from api.models import Membership, Role, Tenant, User, UserRoleRelationship
+from api.models import (
+    Membership,
+    Role,
+    SAMLConfiguration,
+    Tenant,
+    User,
+    UserRoleRelationship,
+)
+from django.db import transaction
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -18,7 +24,42 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         # Link existing accounts with the same email address
         email = sociallogin.account.extra_data.get("email")
         if sociallogin.provider.id == "saml":
+            # For SAML, the asserted NameID email cannot be trusted on its own:
+            # any tenant can claim any email domain in its SAML configuration. To
+            # prevent cross-tenant account takeover (GHSA-h8m9-jgf8-vwvp), only link
+            # the incoming SAML session to an existing account when (1) the email
+            # domain matches the tenant whose ACS endpoint is being used and (2) the
+            # existing user is already a member of that tenant.
             email = sociallogin.user.email
+            if not email:
+                return
+
+            domain = email.rsplit("@", 1)[-1].lower()
+            resolver_match = getattr(request, "resolver_match", None)
+            organization_slug = (
+                (resolver_match.kwargs or {}).get("organization_slug", "")
+                if resolver_match
+                else ""
+            ).lower()
+            # The ACS endpoint is scoped per email domain; reject mismatches so an
+            # attacker cannot replay an assertion through another tenant's endpoint.
+            if organization_slug != domain:
+                return
+
+            try:
+                saml_config = SAMLConfiguration.objects.using(MainRouter.admin_db).get(
+                    email_domain=domain
+                )
+            except SAMLConfiguration.DoesNotExist:
+                return
+
+            existing_user = self.get_user_by_email(email)
+            if existing_user and existing_user.is_member_of_tenant(
+                str(saml_config.tenant_id)
+            ):
+                sociallogin.connect(request, existing_user)
+            return
+
         if email:
             existing_user = self.get_user_by_email(email)
             if existing_user:
