@@ -2,6 +2,11 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 
 
 def get_generic_compliance_table(
@@ -15,6 +20,8 @@ def get_generic_compliance_table(
     pass_count = []
     fail_count = []
     muted_count = []
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
@@ -25,13 +32,25 @@ def get_generic_compliance_table(
                 and compliance.Version in compliance_framework.upper()
                 and compliance.Provider.upper() in compliance_framework.upper()
             ):
+                effective_status = finding.status
+                for requirement in compliance.Requirements:
+                    if finding.check_id in requirement.Checks:
+                        config_status = resolve_requirement_config_status(
+                            requirement, audit_config, config_status_cache
+                        )
+                        if (
+                            get_effective_status(finding.status, config_status)
+                            == "FAIL"
+                        ):
+                            effective_status = "FAIL"
+                            break
                 if finding.muted:
                     if index not in muted_count:
                         muted_count.append(index)
                 else:
-                    if finding.status == "FAIL" and index not in fail_count:
+                    if effective_status == "FAIL" and index not in fail_count:
                         fail_count.append(index)
-                    elif finding.status == "PASS" and index not in pass_count:
+                    elif effective_status == "PASS" and index not in pass_count:
                         pass_count.append(index)
     if (
         len(fail_count) + len(pass_count) + len(muted_count) > 1

@@ -493,3 +493,6 @@ okta:
   # Okta Sign-On Policies
   # okta.signon_global_session_idle_timeout_15min
   okta_max_session_idle_minutes: 15
+  # Okta Applications
+  # okta.application_admin_console_session_idle_timeout_15min
+  okta_admin_console_idle_timeout_max_minutes: 15

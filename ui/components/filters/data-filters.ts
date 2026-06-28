@@ -1,5 +1,5 @@
 import { CONNECTION_STATUS_MAPPING } from "@/lib/helper-filters";
-import { FilterOption, FilterType } from "@/types/filters";
+import { FILTER_FIELD, FilterOption } from "@/types/filters";
 import {
   PROVIDER_DISPLAY_NAMES,
   PROVIDER_TYPES,
@@ -64,19 +64,19 @@ export const filterScans = [
 //Static filters for findings
 export const filterFindings = [
   {
-    key: FilterType.SEVERITY,
+    key: FILTER_FIELD.SEVERITY,
     labelCheckboxGroup: "Severity",
     values: ["critical", "high", "medium", "low", "informational"],
     index: 0,
   },
   {
-    key: FilterType.STATUS,
+    key: FILTER_FIELD.STATUS,
     labelCheckboxGroup: "Status",
     values: ["PASS", "FAIL", "MANUAL"],
     index: 1,
   },
   {
-    key: FilterType.DELTA,
+    key: FILTER_FIELD.DELTA,
     labelCheckboxGroup: "Delta",
     values: ["new", "changed"],
     index: 2,

@@ -1,10 +1,18 @@
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import openai
 import pytest
+from api.models import (
+    Integration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    Scan,
+    StateChoices,
+    Task,
+)
 from botocore.exceptions import ClientError
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
@@ -15,8 +23,10 @@ from tasks.jobs.lighthouse_providers import (
 from tasks.tasks import (
     DJANGO_TMP_OUTPUT_DIRECTORY,
     STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    ScanReportRLSTask,
     _cleanup_orphan_scheduled_scans,
     _perform_scan_complete_tasks,
+    _scan_tmp_output_directory,
     check_integrations_task,
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
@@ -27,15 +37,6 @@ from tasks.tasks import (
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
-)
-
-from api.models import (
-    Integration,
-    LighthouseProviderConfiguration,
-    LighthouseProviderModels,
-    Scan,
-    StateChoices,
-    Task,
 )
 
 
@@ -321,6 +322,7 @@ class TestGenerateOutputs:
 
         mock_transformed_stats = {"some": "stats"}
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
                 return_value=mock_transformed_stats,
@@ -439,6 +441,7 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -594,6 +597,7 @@ class TestGenerateOutputs:
         ]
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
             patch(
                 "tasks.tasks.Provider.objects.get",
@@ -668,6 +672,7 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -769,6 +774,38 @@ class TestGenerateOutputs:
                 enabled=True,
             )
             mock_s3_task.assert_called_once()
+
+
+class TestScanReportRLSTaskOnFailure:
+    def test_on_failure_removes_scan_tmp_directory(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_called_once_with(
+            _scan_tmp_output_directory("t-1", "s-1"), ignore_errors=True
+        )
+
+    def test_on_failure_skips_when_missing_kwargs(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_not_called()
 
 
 class TestScanCompleteTasks:
@@ -1079,6 +1116,7 @@ class TestCheckIntegrationsTask:
             enabled=True,
         )
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1111,6 +1149,7 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is generated for AWS providers with SecurityHub integration."""
         # Setup
@@ -1207,6 +1246,7 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1239,6 +1279,7 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for AWS providers without SecurityHub integration."""
         # Setup
@@ -1332,6 +1373,7 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.ScanSummary.objects.filter")
     @patch("tasks.tasks.Provider.objects.get")
     @patch("tasks.tasks.initialize_prowler_provider")
@@ -1360,6 +1402,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider,
         mock_provider_get,
         mock_scan_summary,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for non-AWS providers (e.g., Azure, GCP)."""
         # Setup
@@ -1434,9 +1477,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert (
-                "asff" not in created_writers
-            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "asff" not in created_writers, (
+                "ASFF writer should NOT be created for non-AWS providers"
+            )
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 
@@ -2284,7 +2327,7 @@ class TestPerformScheduledScanTask:
             task_id=task_id,
             task_name="scan-perform-scheduled",
             status="STARTED",
-            date_created=datetime.now(timezone.utc),
+            date_created=datetime.now(UTC),
         )
         Task.objects.create(
             id=task_id, task_runner_task=task_result, tenant_id=tenant_id
@@ -2372,7 +2415,7 @@ class TestPerformScheduledScanTask:
             state=StateChoices.SCHEDULED,
         )
         assert scheduled_scans.count() == 1
-        assert scheduled_scans.first().scheduled_at > datetime.now(timezone.utc)
+        assert scheduled_scans.first().scheduled_at > datetime.now(UTC)
         assert (
             Scan.objects.filter(
                 tenant_id=tenant.id,
@@ -2408,7 +2451,7 @@ class TestPerformScheduledScanTask:
             name="Daily scheduled scan",
             trigger=Scan.TriggerChoices.SCHEDULED,
             state=StateChoices.SCHEDULED,
-            scheduled_at=datetime.now(timezone.utc),
+            scheduled_at=datetime.now(UTC),
             scheduler_task_id=periodic_task.id,
         )
         duplicate_scan = Scan.objects.create(
@@ -2538,7 +2581,7 @@ class TestReaggregateAllFindingGroupSummaries:
         scan_id_today_p1 = uuid.uuid4()
         scan_id_yesterday_p1 = uuid.uuid4()
         scan_id_today_p2 = uuid.uuid4()
-        today = datetime.now(tz=timezone.utc)
+        today = datetime.now(tz=UTC)
         yesterday = today - timedelta(days=1)
 
         mock_outer_group_result = MagicMock()
@@ -2619,7 +2662,7 @@ class TestReaggregateAllFindingGroupSummaries:
         provider_id = uuid.uuid4()
         latest_scan_today = uuid.uuid4()
         earlier_scan_today = uuid.uuid4()
-        today_late = datetime.now(tz=timezone.utc)
+        today_late = datetime.now(tz=UTC)
         today_early = today_late - timedelta(hours=4)
 
         mock_outer_group_result = MagicMock()
@@ -2672,3 +2715,36 @@ class TestReaggregateAllFindingGroupSummaries:
         assert result == {"scans_reaggregated": 0}
         mock_group.assert_not_called()
         mock_chain.assert_not_called()
+
+
+class TestTaskTimeLimits:
+    """The per-task limits in task_annotations must actually take effect.
+
+    Celery applies a "*" annotation after the per-task one, so a "*" entry would
+    silently overwrite every specific limit and cap long scans at the default. The
+    default is set as the global limit instead, and these per-task limits must win.
+    """
+
+    def test_long_running_tasks_exceed_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "scan-perform",
+            "scan-perform-scheduled",
+            "provider-deletion",
+            "tenant-deletion",
+        ):
+            assert celery_app.tasks[name].time_limit > default
+
+    def test_connection_checks_stay_below_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "provider-connection-check",
+            "integration-connection-check",
+            "lighthouse-connection-check",
+            "lighthouse-provider-connection-check",
+        ):
+            assert celery_app.tasks[name].time_limit < default

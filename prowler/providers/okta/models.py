@@ -32,6 +32,12 @@ class OktaSession(BaseModel):
 class OktaIdentityInfo(BaseModel):
     org_domain: str
     client_id: str
+    # Scopes actually granted in the access token (`scp` claim). Used by
+    # services to distinguish "no data" from "no permission" so checks can
+    # surface the missing scope rather than a misleading FAIL. Empty when
+    # decoding the token was not possible — callers must treat empty as
+    # "unknown" and fall back to attempting the API call.
+    granted_scopes: list[str] = []
 
 
 class OktaOutputOptions(ProviderOutputOptions):

@@ -1,25 +1,24 @@
 "use client";
 
-import Link from "next/link";
-
-import { Button } from "@/components/shadcn";
+import { StackedCell } from "@/components/shadcn";
+import { formatLocalTimeWithZone } from "@/lib/date-utils";
+import type { ScanScheduleSummary } from "@/types/scans";
 
 interface LinkToScansProps {
-  hasSchedule: boolean;
-  providerUid?: string;
+  schedule?: ScanScheduleSummary;
 }
 
-export const LinkToScans = ({ hasSchedule, providerUid }: LinkToScansProps) => {
-  return (
-    <div className="flex items-center gap-1">
-      <span className="text-text-neutral-secondary text-sm">
-        {hasSchedule ? "Daily" : "None"}
-      </span>
-      <Button asChild variant="link" size="sm" className="text-xs">
-        <Link href={`/scans?filter[provider_uid]=${providerUid}`}>
-          View Jobs
-        </Link>
-      </Button>
-    </div>
-  );
+// Matches the scans table Schedule column: cadence on top, next-run local time
+// underneath. Falls back to None when no configured schedule is present.
+export const LinkToScans = ({ schedule }: LinkToScansProps) => {
+  if (schedule) {
+    return (
+      <StackedCell
+        primary={schedule.cadence ?? schedule.summary}
+        secondary={formatLocalTimeWithZone(schedule.nextScanAt ?? null)}
+      />
+    );
+  }
+
+  return <span className="text-text-neutral-secondary text-sm">None</span>;
 };

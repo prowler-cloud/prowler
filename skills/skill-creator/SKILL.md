@@ -29,7 +29,7 @@ Create a skill when:
 
 ## Skill Structure
 
-```
+```text
 skills/{skill-name}/
 ├── SKILL.md              # Required - main skill file
 ├── assets/               # Optional - templates, schemas, examples
@@ -43,7 +43,7 @@ skills/{skill-name}/
 
 ## SKILL.md Template
 
-```markdown
+````markdown
 ---
 name: {skill-name}
 description: >
@@ -77,7 +77,7 @@ metadata:
 
 - **Templates**: See [assets/](assets/) for {description}
 - **Documentation**: See [references/](references/) for local docs
-```
+````
 
 ---
 
@@ -94,7 +94,7 @@ metadata:
 
 ## Decision: assets/ vs references/
 
-```
+```text
 Need code templates?        → assets/
 Need JSON schemas?          → assets/
 Need example configs?       → assets/
@@ -108,7 +108,7 @@ Link to external guides?    → references/ (with local path)
 
 ## Decision: Prowler-Specific vs Generic
 
-```
+```text
 Patterns apply to ANY project?     → Generic skill (e.g., pytest, typescript)
 Patterns are Prowler-specific?     → prowler-{name} skill
 Generic skill needs Prowler info?  → Add references/ pointing to Prowler docs

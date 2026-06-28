@@ -2,11 +2,10 @@ import json
 from unittest.mock import patch
 
 import pytest
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
-from tasks.beat import schedule_provider_scan
-
 from api.exceptions import ConflictException
 from api.models import Scan
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from tasks.beat import schedule_provider_scan
 
 
 @pytest.mark.django_db

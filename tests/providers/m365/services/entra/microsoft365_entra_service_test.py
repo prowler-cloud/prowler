@@ -412,6 +412,7 @@ class Test_Entra_Service:
                 id="user-1",
                 display_name="User 1",
                 on_premises_sync_enabled=True,
+                employee_hire_date=datetime(2026, 6, 10, tzinfo=timezone.utc),
             ),
             SimpleNamespace(
                 id="user-2",
@@ -536,6 +537,7 @@ class Test_Entra_Service:
             "userType",
             "accountEnabled",
             "onPremisesSyncEnabled",
+            "employeeHireDate",
         }
         with_url_mock.assert_called_once_with("next-link")
         assert users["user-1"].directory_roles_ids == ["role-template-1"]
@@ -549,6 +551,9 @@ class Test_Entra_Service:
         assert users["user-1"].authentication_methods == ["fido2SecurityKey"]
         assert users["user-6"].authentication_methods == ["mobilePhone"]
         assert users["user-2"].authentication_methods == []
+        assert users["user-1"].employee_hire_date == datetime(
+            2026, 6, 10, tzinfo=timezone.utc
+        )
 
     def test__get_users_uses_graph_account_enabled_for_disabled_guests(self):
         """Regression test for https://github.com/prowler-cloud/prowler/issues/10921.
@@ -982,3 +987,188 @@ class Test_Entra_Service:
         assert set(result.keys()) == {"sp-mailbox"}
         assert result["sp-mailbox"].app_id == "app-mailbox"
         assert result["sp-mailbox"].exchange_mailbox_permissions == ["Mail.Read"]
+    def test__resolve_identifiers_for_type_flags_only_404(self):
+        """Only HTTP 404 / Request_ResourceNotFound mark an id as deleted.
+
+        Transient errors (5xx, throttling) and successful resolutions must
+        never be added to the unresolved set — that is the contract the check
+        relies on to avoid false positives during Graph outages.
+        """
+        from msgraph.generated.models.o_data_errors.main_error import MainError
+        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+
+        deleted_by_status = "deleted-status-404"
+        deleted_by_code = "deleted-code-rnf"
+        transient = "transient-503"
+        live = "live-user"
+
+        error_404 = ODataError()
+        error_404.response_status_code = 404
+        error_404.error = None  # status code alone is enough
+
+        error_rnf = ODataError()
+        error_rnf.response_status_code = None
+        error_rnf.error = MainError()
+        error_rnf.error.code = "Request_ResourceNotFound"
+
+        error_503 = ODataError()
+        error_503.response_status_code = 503
+        error_503.error = MainError()
+        error_503.error.code = "ServiceUnavailable"
+
+        user_builders = {
+            deleted_by_status: SimpleNamespace(get=AsyncMock(side_effect=error_404)),
+            deleted_by_code: SimpleNamespace(get=AsyncMock(side_effect=error_rnf)),
+            transient: SimpleNamespace(get=AsyncMock(side_effect=error_503)),
+            live: SimpleNamespace(get=AsyncMock(return_value=SimpleNamespace(id=live))),
+        }
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            users=SimpleNamespace(
+                by_user_id=MagicMock(side_effect=lambda uid: user_builders[uid])
+            )
+        )
+
+        unresolved = set()
+        errored = set()
+        asyncio.run(
+            entra_service._resolve_identifiers_for_type(
+                "user", set(user_builders), unresolved, errored
+            )
+        )
+
+        assert unresolved == {
+            ("user", deleted_by_status),
+            ("user", deleted_by_code),
+        }
+        # The transient 503 must be recorded as errored (unverified), never as
+        # deleted and never silently dropped.
+        assert errored == {("user", transient)}
+
+    def test__resolve_identifiers_for_type_role_uses_role_definitions_endpoint(self):
+        """A deleted role is resolved against the roleDefinitions endpoint."""
+        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+
+        deleted_role = "deleted-role-id"
+
+        error_404 = ODataError()
+        error_404.response_status_code = 404
+        error_404.error = None
+
+        by_role_id = MagicMock(
+            return_value=SimpleNamespace(get=AsyncMock(side_effect=error_404))
+        )
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            role_management=SimpleNamespace(
+                directory=SimpleNamespace(
+                    role_definitions=SimpleNamespace(
+                        by_unified_role_definition_id=by_role_id
+                    )
+                )
+            )
+        )
+
+        unresolved = set()
+        errored = set()
+        asyncio.run(
+            entra_service._resolve_identifiers_for_type(
+                "role", {deleted_role}, unresolved, errored
+            )
+        )
+
+        assert unresolved == {("role", deleted_role)}
+        assert errored == set()
+        by_role_id.assert_called_once_with(deleted_role)
+
+    def test__resolve_directory_object_references_skips_sentinels_and_dedups(self):
+        """End-to-end resolver: sentinels are never queried, ids are deduped
+        across policies, and only deleted ids land in the unresolved set."""
+        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+
+        deleted_user = "deleted-user-id"
+        live_user = "live-user-id"
+        deleted_group = "deleted-group-id"
+        errored_group = "errored-group-id"
+
+        def _user_conditions(**kwargs):
+            base = {
+                "included_users": [],
+                "excluded_users": [],
+                "included_groups": [],
+                "excluded_groups": [],
+                "included_roles": [],
+                "excluded_roles": [],
+            }
+            base.update(kwargs)
+            return SimpleNamespace(**base)
+
+        def _policy(user_conditions):
+            return SimpleNamespace(
+                conditions=SimpleNamespace(user_conditions=user_conditions)
+            )
+
+        policies = {
+            "policy-a": _policy(
+                _user_conditions(
+                    included_users=["All", deleted_user, live_user],
+                    excluded_groups=[deleted_group, errored_group],
+                )
+            ),
+            # Same deleted_user referenced again — must be resolved only once.
+            "policy-b": _policy(
+                _user_conditions(
+                    included_users=[deleted_user],
+                    excluded_users=["GuestsOrExternalUsers"],
+                )
+            ),
+            # Policy without user conditions must be skipped without error.
+            "policy-c": SimpleNamespace(
+                conditions=SimpleNamespace(user_conditions=None)
+            ),
+        }
+
+        error_404 = ODataError()
+        error_404.response_status_code = 404
+        error_404.error = None
+
+        error_503 = ODataError()
+        error_503.response_status_code = 503
+        error_503.error = None
+
+        user_builders = {
+            deleted_user: SimpleNamespace(get=AsyncMock(side_effect=error_404)),
+            live_user: SimpleNamespace(
+                get=AsyncMock(return_value=SimpleNamespace(id=live_user))
+            ),
+        }
+        group_builders = {
+            deleted_group: SimpleNamespace(get=AsyncMock(side_effect=error_404)),
+            errored_group: SimpleNamespace(get=AsyncMock(side_effect=error_503)),
+        }
+        by_user_id = MagicMock(side_effect=lambda uid: user_builders[uid])
+        by_group_id = MagicMock(side_effect=lambda gid: group_builders[gid])
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            users=SimpleNamespace(by_user_id=by_user_id),
+            groups=SimpleNamespace(by_group_id=by_group_id),
+        )
+
+        unresolved, errored = asyncio.run(
+            entra_service._resolve_directory_object_references(policies)
+        )
+
+        assert unresolved == {
+            ("user", deleted_user),
+            ("group", deleted_group),
+        }
+        # The 503 group is unverified, not deleted — it lands in errored.
+        assert errored == {("group", errored_group)}
+        # Sentinels are filtered before any Graph call; only the two real user
+        # ids are queried, and the deduped deleted_user is queried exactly once.
+        queried_users = {call.args[0] for call in by_user_id.call_args_list}
+        assert queried_users == {deleted_user, live_user}
+        assert user_builders[deleted_user].get.await_count == 1

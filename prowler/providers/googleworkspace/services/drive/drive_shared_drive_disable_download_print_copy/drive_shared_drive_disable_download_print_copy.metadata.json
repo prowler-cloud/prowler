@@ -13,8 +13,8 @@
   "Risk": "When viewers and commenters can download, print, or copy shared drive files, they can **bulk-extract sensitive content** — including intellectual property, personally identifiable information, and confidential business documents — using nothing more than read access. This is one of the most direct paths to data exfiltration through Drive.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/7662202",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/drive/manage-shared-drives-as-an-admin",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {
