@@ -7,6 +7,8 @@ from prowler.providers.aws.services.codepipeline.codepipeline_client import (
     codepipeline_client,
 )
 
+HTTP_TIMEOUT = 30
+
 
 class codepipeline_project_repo_private(Check):
     """Checks if AWS CodePipeline source repositories are configured as private.
@@ -87,9 +89,8 @@ class codepipeline_project_repo_private(Check):
             repo_url = repo_url[:-4]
 
         try:
-            context = ssl._create_unverified_context()
             req = urllib.request.Request(repo_url, method="HEAD")
-            response = urllib.request.urlopen(req, context=context)
+            response = urllib.request.urlopen(req, timeout=HTTP_TIMEOUT)
             return not response.geturl().endswith("sign_in")
-        except (urllib.error.HTTPError, urllib.error.URLError):
+        except (urllib.error.URLError, TimeoutError, ssl.SSLError):
             return False

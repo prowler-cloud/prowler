@@ -83,16 +83,35 @@ prowler dashboard
 
 ## Attack Paths
 
-Attack Paths automatically extends every completed AWS scan with a Neo4j graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan and therefore requires:
+Attack Paths automatically extends every completed AWS scan with a graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan.
 
-- An accessible Neo4j instance (the Docker Compose files already ships a `neo4j` service).
-- The following environment variables so Django and Celery can connect:
+Two graph backends are supported as the long-lived sink:
 
-  | Variable | Description | Default |
-  | --- | --- | --- |
-  | `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
-  | `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
-  | `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+- **Neo4j** (default; the Docker Compose files already ship a `neo4j` service).
+- **Amazon Neptune** (cloud-managed; opt-in).
+
+Select the sink with `ATTACK_PATHS_SINK_DATABASE` (`neo4j` or `neptune`; default `neo4j`).
+
+> Note: Cartography ingestion always uses a temporary Neo4j database, regardless of the configured sink. The `NEO4J_*` variables below must remain set even when `ATTACK_PATHS_SINK_DATABASE=neptune`.
+
+### Neo4j sink
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
+| `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
+| `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+
+### Neptune sink
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `NEPTUNE_WRITER_ENDPOINT` | Bolt host for the Neptune writer instance. Required when sink is `neptune`. | _empty_ |
+| `NEPTUNE_READER_ENDPOINT` | Optional reader endpoint for read-only queries. Falls back to the writer when unset. | _empty_ |
+| `NEPTUNE_PORT` | Bolt port exposed by Neptune. | `8182` |
+| `AWS_REGION` | Region the Neptune cluster lives in. Required when sink is `neptune`. | _empty_ |
+
+Neptune authenticates with SigV4 using the standard boto3 credential chain. The worker's IAM role (or `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) supplies the credentials. There is no Neptune password variable.
 
 Every AWS provider scan will enqueue an Attack Paths ingestion job automatically. Other cloud providers will be added in future iterations.
 
@@ -104,26 +123,27 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 600 | 84 | 44 | 18 | Official | UI, API, CLI |
-| Azure | 167 | 22 | 19 | 16 | Official | UI, API, CLI |
-| GCP | 102 | 18 | 17 | 12 | Official | UI, API, CLI |
-| Kubernetes | 83 | 7 | 7 | 11 | Official | UI, API, CLI |
-| GitHub | 24 | 3 | 1 | 5 | Official | UI, API, CLI |
-| M365 | 102 | 10 | 4 | 10 | Official | UI, API, CLI |
-| OCI | 51 | 14 | 4 | 10 | Official | UI, API, CLI |
-| Alibaba Cloud | 63 | 9 | 4 | 9 | Official | UI, API, CLI |
-| Cloudflare | 29 | 3 | 0 | 5 | Official | UI, API, CLI |
+| AWS | 615 | 86 | 47 | 19 | Official | UI, API, CLI |
+| Azure | 190 | 22 | 21 | 16 | Official | UI, API, CLI |
+| GCP | 109 | 20 | 19 | 12 | Official | UI, API, CLI |
+| Kubernetes | 90 | 7 | 8 | 11 | Official | UI, API, CLI |
+| GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
+| M365 | 109 | 10 | 6 | 10 | Official | UI, API, CLI |
+| OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
+| Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
+| Cloudflare | 29 | 3 | 2 | 5 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 1 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | Image | N/A | N/A | N/A | N/A | Official | CLI, API |
-| Google Workspace | 39 | 5 | 2 | 5 | Official | UI, API, CLI |
-| OpenStack | 34 | 5 | 0 | 9 | Official | UI, API, CLI |
-| Vercel | 26 | 6 | 0 | 8 | Official | UI, API, CLI |
-| Okta | 1 | 1 | 0 | 1 | Official | CLI |
-| Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 0 | 1 | Unofficial | CLI |
-| StackIT [Contact us](https://prowler.com/contact) | 4 | 1 | 0 | 1 | Unofficial | CLI |
-| NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
+| Google Workspace | 65 | 11 | 3 | 6 | Official | UI, API, CLI |
+| OpenStack | 34 | 5 | 1 | 9 | Official | UI, API, CLI |
+| Vercel | 26 | 6 | 1 | 8 | Official | UI, API, CLI |
+| Okta | 29 | 8 | 2 | 2 | Official | UI, API, CLI |
+| Linode [Contact us](https://prowler.com/contact) | 10 | 3 | 1 | 4 | Unofficial | CLI |
+| Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 1 | 1 | Unofficial | CLI |
+| StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 1 | 3 | Unofficial | CLI |
+| NHN | 6 | 2 | 2 | 0 | Unofficial | CLI |
 
 > [!Note]
 > The numbers in the table are updated periodically.

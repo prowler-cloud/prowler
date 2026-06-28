@@ -1,6 +1,7 @@
 "use client";
 
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import {
   Select,
   SelectContent,
@@ -9,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/shadcn";
 import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import type { ProviderGroup } from "@/types/components";
+import { FILTER_FIELD } from "@/types/filters";
 import type { ProviderProps } from "@/types/providers";
 
 import {
@@ -18,6 +21,7 @@ import {
 
 interface ScansFilterBarProps {
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   activeTab: ScanJobsTab;
   scheduleType: string;
   scanStatus: string;
@@ -30,6 +34,7 @@ const filterItemClass = "w-full md:w-[calc(50%-0.375rem)] xl:w-60";
 
 export function ScansFilterBar({
   providers,
+  providerGroups = [],
   activeTab,
   scheduleType,
   scanStatus,
@@ -46,12 +51,19 @@ export function ScansFilterBar({
     <>
       <ProviderAccountSelectors
         providers={providers}
-        accountFilterKey="provider_uid__in"
-        accountValue="uid"
+        accountFilterKey={FILTER_FIELD.PROVIDER}
+        accountValue="id"
         paramsToDeleteOnChange={["page", "scanId"]}
         providerSelectorClassName={filterItemClass}
         accountSelectorClassName={filterItemClass}
       />
+
+      <div className={filterItemClass}>
+        <ProviderGroupSelector
+          groups={providerGroups}
+          paramsToDeleteOnChange={["page", "scanId"]}
+        />
+      </div>
 
       {showScheduleTypeFilter && (
         <Select value={scheduleType} onValueChange={onScheduleTypeChange}>

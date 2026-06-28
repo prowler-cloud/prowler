@@ -16,6 +16,7 @@ from prowler.lib.check.compliance_models import (
     Mitre_Requirement_Attribute_Azure,
     Mitre_Requirement_Attribute_GCP,
     Prowler_ThreatScore_Requirement_Attribute,
+    STIG_Requirement_Attribute,
 )
 
 CIS_1_4_AWS = Compliance(
@@ -1252,6 +1253,50 @@ ASD_ESSENTIAL_EIGHT_AWS = Compliance(
                     AuditProcedure="Manual review of M365 macro policy.",
                     AdditionalInformation="ASD Essential Eight ML1 - Restrict Microsoft Office macros - clause 1. Out of AWS infrastructure scope.",
                     References="https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model",
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+OKTA_IDAAS_STIG_OKTA = Compliance(
+    Framework="Okta-IDaaS-STIG",
+    Name="DISA Okta Identity as a Service (IDaaS) STIG V1R2",
+    Version="1R2",
+    Provider="Okta",
+    Description="Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS).",
+    Requirements=[
+        Compliance_Requirement(
+            Id="OKTA-APP-000020",
+            Name="Okta must log out a session after a 15-minute period of inactivity.",
+            Description="A session timeout lock is a temporary action taken when a user stops work and moves away from the immediate vicinity of the information system.",
+            Attributes=[
+                STIG_Requirement_Attribute(
+                    Section="CAT II (Medium)",
+                    Severity="medium",
+                    RuleID="SV-273186r1098825_rule",
+                    StigID="OKTA-APP-000020",
+                    CCI=["CCI-000057", "CCI-001133"],
+                    CheckText="Verify the Global Session Policy logs out a session after 15 minutes of inactivity.",
+                    FixText="From the Admin Console configure the Global Session Policy idle timeout to 15 minutes.",
+                )
+            ],
+            Checks=["signon_global_session_idle_timeout_15min"],
+        ),
+        Compliance_Requirement(
+            Id="OKTA-APP-000650",
+            Name="Okta must enforce a minimum 15-character password length.",
+            Description="The shorter the password, the lower the number of possible combinations that need to be tested before the password is compromised.",
+            Attributes=[
+                STIG_Requirement_Attribute(
+                    Section="CAT II (Medium)",
+                    Severity="medium",
+                    RuleID="SV-273209r1098894_rule",
+                    StigID="OKTA-APP-000650",
+                    CCI=["CCI-000205"],
+                    CheckText="Verify the password policy enforces a minimum length of 15 characters.",
+                    FixText="From the Admin Console set the minimum password length to 15 characters.",
                 )
             ],
             Checks=[],

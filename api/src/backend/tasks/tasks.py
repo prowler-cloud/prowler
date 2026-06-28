@@ -1,13 +1,29 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from shutil import rmtree
 
+from api.compliance import (
+    get_compliance_frameworks,
+    get_prowler_provider_compliance,
+)
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import delete_related_daily_task, rls_transaction
+from api.decorators import handle_provider_deletion, set_tenant
+from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
+from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
 from celery import chain, group, shared_task
 from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.compliance import (
+    process_universal_compliance_frameworks,
+)
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+from prowler.lib.outputs.finding import Finding as FindingOutput
 from tasks.jobs.attack_paths import (
     attack_paths_scan,
     can_provider_run_attack_paths_scan,
@@ -15,13 +31,13 @@ from tasks.jobs.attack_paths import (
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
     backfill_finding_group_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
-    aggregate_scan_category_summaries,
-    aggregate_scan_resource_group_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -67,24 +83,6 @@ from tasks.utils import (
     batched,
     get_next_execution_datetime,
 )
-
-from api.compliance import (
-    get_compliance_frameworks,
-    get_prowler_provider_compliance,
-)
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import delete_related_daily_task, rls_transaction
-from api.decorators import handle_provider_deletion, set_tenant
-from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
-from api.utils import initialize_prowler_provider
-from api.v1.serializers import ScanTaskSerializer
-from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.compliance import (
-    process_universal_compliance_frameworks,
-)
-from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
-from prowler.lib.outputs.finding import Finding as FindingOutput
-
 
 logger = get_task_logger(__name__)
 
@@ -260,7 +258,9 @@ def delete_provider_task(provider_id: str, tenant_id: str):
     return delete_provider(tenant_id=tenant_id, pk=provider_id)
 
 
-@shared_task(base=RLSTask, name="scan-perform", queue="scans")
+# acks_late=False: a re-run would duplicate findings and the task is not auto-recovered,
+# so a crashed scan is dropped rather than redelivered by the broker (as before #11416).
+@shared_task(base=RLSTask, name="scan-perform", queue="scans", acks_late=False)
 @handle_provider_deletion
 def perform_scan_task(
     tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
@@ -304,7 +304,14 @@ def perform_scan_task(
     return result
 
 
-@shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
+# acks_late=False: like scan-perform; a dropped run is re-fired by Beat on the next tick.
+@shared_task(
+    base=RLSTask,
+    bind=True,
+    name="scan-perform-scheduled",
+    queue="scans",
+    acks_late=False,
+)
 @handle_provider_deletion
 def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
@@ -398,7 +405,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         )
     finally:
         with rls_transaction(tenant_id):
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             if next_scan_datetime <= now:
                 interval_delta = timedelta(**{interval.period: interval.every})
                 while next_scan_datetime <= now:
@@ -551,7 +558,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     # Per-framework exporters in `COMPLIANCE_CLASS_MAP` consume the legacy bulk.
     frameworks_bulk = Compliance.get_bulk(provider_type)
-    # Universal-only frameworks (top-level JSONs like `dora.json`) are emitted
+    # Universal-only frameworks (top-level JSONs like `dora_2022_2554.json`) are emitted
     # via `process_universal_compliance_frameworks` below.
     universal_bulk = get_prowler_provider_compliance(provider_type)
     universal_only_names = {
@@ -641,7 +648,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 writer.batch_write_data_to_file(**extra)
                 writer._data.clear()
 
-            # Universal-only frameworks (e.g. `dora.json`).
+            # Universal-only frameworks (e.g. `dora_2022_2554.json`).
             if universal_only_names:
                 process_universal_compliance_frameworks(
                     input_compliance_frameworks=universal_only_names,
@@ -1151,10 +1158,13 @@ def security_hub_integration_task(
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
 
 
+# acks_late=False: Jira sends are not deduplicated and the task is not auto-recovered,
+# so a crashed send is dropped rather than redelivered (avoids duplicate Jira issues).
 @shared_task(
     base=RLSTask,
     name="integration-jira",
     queue="integrations",
+    acks_late=False,
 )
 def jira_integration_task(
     tenant_id: str,

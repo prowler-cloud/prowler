@@ -1,10 +1,9 @@
 import os
 import re
 
+from api.v1.serializer_utils.base import BaseValidateSerializer
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
-
-from api.v1.serializer_utils.base import BaseValidateSerializer
 
 
 class S3ConfigSerializer(BaseValidateSerializer):

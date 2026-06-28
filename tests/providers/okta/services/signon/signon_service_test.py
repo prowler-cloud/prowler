@@ -1,12 +1,14 @@
 from unittest import mock
 
+from prowler.providers.okta.lib.service.pagination import (
+    next_after_cursor as _next_after_cursor,
+)
 from prowler.providers.okta.models import OktaIdentityInfo
 from prowler.providers.okta.services.signon.signon_service import (
     GlobalSessionPolicy,
     GlobalSessionPolicyRule,
     SignInPage,
     Signon,
-    _next_after_cursor,
 )
 from tests.providers.okta.okta_fixtures import (
     OKTA_CLIENT_ID,

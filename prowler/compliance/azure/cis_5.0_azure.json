@@ -1974,7 +1974,9 @@
     {
       "Id": "7.11",
       "Description": "Ensure subnets are associated with network security groups",
-      "Checks": [],
+      "Checks": [
+        "network_subnet_nsg_associated"
+      ],
       "Attributes": [
         {
           "Section": "7 Networking Services",
@@ -2094,7 +2096,9 @@
     {
       "Id": "8.1.1.1",
       "Description": "Ensure Microsoft Defender CSPM is set to 'On'",
-      "Checks": [],
+      "Checks": [
+        "defender_ensure_defender_cspm_is_on"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",
@@ -2610,6 +2614,18 @@
           "References": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications:https://learn.microsoft.com/en-us/azure/defender-for-cloud/how-to-manage-attack-path:https://learn.microsoft.com/en-us/azure/defender-for-cloud/concept-attack-path",
           "DefaultValue": ""
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "defender_attack_path_notifications_properly_configured",
+          "ConfigKey": "defender_attack_path_minimal_risk_level",
+          "Operator": "in",
+          "Value": [
+            "Low",
+            "Medium",
+            "High"
+          ]
+        }
       ]
     },
     {
@@ -2931,7 +2947,9 @@
     {
       "Id": "8.5",
       "Description": "Ensure Azure DDoS Network Protection is enabled on virtual networks",
-      "Checks": [],
+      "Checks": [
+        "network_vnet_ddos_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",
@@ -2999,6 +3017,16 @@
       "Description": "Ensure 'SMB channel encryption' is set to 'AES-256-GCM' or higher for SMB file shares",
       "Checks": [
         "storage_smb_channel_encryption_with_secure_algorithm"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "storage_smb_channel_encryption_with_secure_algorithm",
+          "ConfigKey": "recommended_smb_channel_encryption_algorithms",
+          "Operator": "subset",
+          "Value": [
+            "AES-256-GCM"
+          ]
+        }
       ],
       "Attributes": [
         {
