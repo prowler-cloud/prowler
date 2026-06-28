@@ -375,7 +375,8 @@ class Exchange(M365Service):
         Get Exchange Online Application Access Policies.
 
         Returns:
-            list[ApplicationAccessPolicy]: List of application access policies.
+            Optional[list[ApplicationAccessPolicy]]: List of application access
+            policies, or None if the PowerShell command failed.
         """
         logger.info("Microsoft365 - Getting application access policies...")
 
@@ -384,6 +385,8 @@ class Exchange(M365Service):
         try:
             policies_data = self.powershell.get_application_access_policies()
 
+            if policies_data is None:
+                return None
             if not policies_data:
                 return application_access_policies
 
@@ -412,8 +415,10 @@ class Exchange(M365Service):
                 f"{error.__class__.__name__}"
                 f"[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return None
 
         return application_access_policies
+
     def _get_mailboxes(self) -> Optional[list["Mailbox"]]:
         """
         Get all recipient-facing mailboxes from Exchange Online.

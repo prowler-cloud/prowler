@@ -1377,11 +1377,6 @@ OAuthAppInfo
 
                     if not getattr(sp, "account_enabled", True):
                         continue
-                    if (
-                        getattr(sp, "service_principal_type", "Application")
-                        != "Application"
-                    ):
-                        continue
 
                     raw_owner = getattr(sp, "app_owner_organization_id", None)
                     app_owner_org_id = str(raw_owner).lower() if raw_owner else None
