@@ -977,10 +977,13 @@ export class ProvidersPage extends BasePage {
   ): Promise<void> {
     await this.verifyWizardModalOpen();
 
-    const checkConnectionButton = this.page.getByRole("button", {
-      name: "Check connection",
-      exact: true,
-    });
+    const testConnectionButton = this.page
+      .getByRole("button", {
+        name: "Check connection",
+        exact: true,
+      })
+      .or(this.page.getByRole("button", { name: "Continue", exact: true }))
+      .first();
     const launchStepReady = this.page
       .getByText("Account Connected!", { exact: true })
       .or(this.page.getByText("Loading scan options...", { exact: true }))
@@ -996,7 +999,7 @@ export class ProvidersPage extends BasePage {
     // after authentication; scan execution itself is covered by scans.spec.ts.
     try {
       await Promise.race([
-        checkConnectionButton
+        testConnectionButton
           .or(launchStepReady)
           .or(connectionError)
           .first()
@@ -1028,8 +1031,8 @@ export class ProvidersPage extends BasePage {
     // Provider-add E2E validates credentials and provider persistence only.
     // Launching one scan per provider made CI noisy and overloaded the backend;
     // scan execution itself is covered by scans.spec.ts.
-    if (await checkConnectionButton.isVisible().catch(() => false)) {
-      await checkConnectionButton.click();
+    if (await testConnectionButton.isVisible().catch(() => false)) {
+      await testConnectionButton.click();
       await this.waitForProviderReadyToClose(timeout);
     } else {
       await expect(launchStepReady).toBeVisible({ timeout });
