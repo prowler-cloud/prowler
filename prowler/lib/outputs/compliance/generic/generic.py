@@ -1,4 +1,8 @@
 from prowler.config.config import timestamp
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.compliance.generic.models import GenericComplianceModel
@@ -35,11 +39,24 @@ class GenericCompliance(ComplianceOutput):
             - None
         """
 
+        requirement_config_status = build_requirement_config_status(
+            compliance.Requirements
+        )
+
         def compliance_row(requirement, attribute, finding=None):
             # Read attribute fields defensively: GenericCompliance is the
             # last-resort renderer for any framework, and provider-specific
             # schemas (e.g. CIS, ENS, ISO27001) do not declare the universal
             # Section/SubSection/SubGroup/Service/Type/Comment fields.
+            status, status_extended = (
+                apply_config_status(
+                    finding.status,
+                    finding.status_extended,
+                    requirement_config_status.get(requirement.Id),
+                )
+                if finding
+                else ("MANUAL", "Manual check")
+            )
             return GenericComplianceModel(
                 Provider=(finding.provider if finding else compliance.Provider.lower()),
                 Description=compliance.Description,
@@ -56,8 +73,8 @@ class GenericCompliance(ComplianceOutput):
                 Requirements_Attributes_Service=getattr(attribute, "Service", None),
                 Requirements_Attributes_Type=getattr(attribute, "Type", None),
                 Requirements_Attributes_Comment=getattr(attribute, "Comment", None),
-                Status=finding.status if finding else "MANUAL",
-                StatusExtended=(finding.status_extended if finding else "Manual check"),
+                Status=status,
+                StatusExtended=status_extended,
                 ResourceId=finding.resource_uid if finding else "manual_check",
                 ResourceName=finding.resource_name if finding else "Manual check",
                 CheckId=finding.check_id if finding else "manual",
