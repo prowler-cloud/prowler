@@ -123,7 +123,7 @@ describe("provisional findings triage contract fixtures", () => {
     expect(summary.disabledReason).toBe(
       FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
     );
-    expect(summary.billingHref).toBe("/billing");
+    expect(summary.billingHref).toBe("https://prowler.com/pricing");
   });
 });
 
@@ -229,7 +229,7 @@ describe("adaptFindingTriageSummariesResponse", () => {
         hasVisibleNote: true,
         hasPersistedStatus: true,
         canEdit: true,
-        billingHref: "/billing",
+        billingHref: "https://prowler.com/pricing",
         mutelistShortcutStatuses: [
           FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
           FINDING_TRIAGE_STATUS.FALSE_POSITIVE,

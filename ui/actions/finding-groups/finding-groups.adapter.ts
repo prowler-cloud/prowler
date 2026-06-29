@@ -1,4 +1,5 @@
 import { adaptFindingTriageSummariesResponse } from "@/actions/findings/findings-triage.adapter";
+import { getFindingTriageAdapterOptions } from "@/actions/findings/findings-triage.options";
 import type {
   FindingGroupRow,
   FindingResourceRow,
@@ -201,7 +202,7 @@ export function adaptFindingGroupResourcesResponse(
   );
   const triageSummaries = adaptFindingTriageSummariesResponse(
     { ...apiResponse, data },
-    { canEdit: false },
+    getFindingTriageAdapterOptions(),
   );
 
   return data.map((item, index) => ({

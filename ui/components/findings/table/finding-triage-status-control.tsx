@@ -63,7 +63,7 @@ export function FindingTriageStatusDot({
   return <SelectStatusDot tone={TRIAGE_STATUS_TONE[status]} />;
 }
 
-function TriageStatusSelect({
+function TriageStatusPicker({
   disabled,
   value,
   onValueChange,
@@ -139,7 +139,7 @@ export function FindingTriageStatusControl(
 
   if (props.origin === FINDING_TRIAGE_ORIGIN.MODAL) {
     return (
-      <TriageStatusSelect
+      <TriageStatusPicker
         disabled={!triage.canEdit}
         value={props.value}
         variant="modal"
@@ -208,7 +208,7 @@ export function FindingTriageStatusControl(
 
   return (
     <>
-      <TriageStatusSelect
+      <TriageStatusPicker
         disabled={!canMutateFromTable}
         value={selectedStatus}
         onValueChange={handleTableValueChange}

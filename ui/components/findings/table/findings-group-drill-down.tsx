@@ -8,6 +8,7 @@ import {
 import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
+import { updateFindingTriage } from "@/actions/findings";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Table,
@@ -73,6 +74,7 @@ export function FindingsGroupDrillDown({
     handleMuteComplete,
     handleRowSelectionChange,
     resolveSelectedFindingIds,
+    refresh,
   } = useFindingGroupResourceState({
     group,
     filters,
@@ -82,6 +84,10 @@ export function FindingsGroupDrillDown({
   const columns = getColumnFindingResources({
     rowSelection,
     selectableRowCount,
+    onTriageUpdateAction: async (input) => {
+      await updateFindingTriage(input);
+      refresh();
+    },
   });
 
   const table = useReactTable({

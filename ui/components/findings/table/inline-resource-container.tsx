@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
 import { useImperativeHandle, useRef } from "react";
 
+import { updateFindingTriage } from "@/actions/findings";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -194,6 +195,10 @@ export function InlineResourceContainer({
   const columns = getColumnFindingResources({
     rowSelection,
     selectableRowCount,
+    onTriageUpdateAction: async (input) => {
+      await updateFindingTriage(input);
+      refresh();
+    },
   });
 
   const table = useReactTable({

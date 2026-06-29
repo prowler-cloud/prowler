@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { attachFindingTriageSummariesToResponse } from "@/actions/findings/findings-triage.adapter";
+import { getFindingTriageAdapterOptions } from "@/actions/findings/findings-triage.options";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
@@ -10,12 +11,10 @@ import { handleApiResponse } from "@/lib/server-actions-helper";
 const withFindingTriageSummaries = <T extends { data?: unknown }>(
   response: T | undefined,
 ): T | undefined => {
-  // API/backend entitlement and mutation transport are owned outside this UI
-  // slice. Keep table mutation controls disabled until a real capability +
-  // update handler is wired.
-  return attachFindingTriageSummariesToResponse(response, {
-    canEdit: false,
-  });
+  return attachFindingTriageSummariesToResponse(
+    response,
+    getFindingTriageAdapterOptions(),
+  );
 };
 
 export const getFindings = async ({

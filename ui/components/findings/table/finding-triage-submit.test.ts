@@ -23,7 +23,7 @@ function makeTriageDetail(
     hasVisibleNote: true,
     hasPersistedStatus: true,
     canEdit: true,
-    billingHref: "/billing",
+    billingHref: "https://prowler.com/pricing",
     mutelistShortcutStatuses: [
       FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       FINDING_TRIAGE_STATUS.FALSE_POSITIVE,

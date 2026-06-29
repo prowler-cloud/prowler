@@ -43,6 +43,7 @@ beforeAll(() => {
 });
 
 import {
+  FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,
   type UpdateFindingTriageInput,
@@ -66,7 +67,7 @@ function makeTriageSummary(
     hasVisibleNote: false,
     hasPersistedStatus: true,
     canEdit: true,
-    billingHref: "/billing",
+    billingHref: "https://prowler.com/pricing",
     mutelistShortcutStatuses: [
       FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
@@ -202,6 +203,29 @@ describe("finding triage cells", () => {
     expect(screen.getByLabelText("Note text")).toHaveValue(
       "Loaded existing note",
     );
+  });
+
+  it("should open a disabled billing upsell modal for Cloud-only Add note", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingNotesCell
+        triage={makeTriageSummary({
+          canEdit: false,
+          hasVisibleNote: false,
+          disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+        })}
+        findingContext={{ title: "S3 bucket allows public reads" }}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add note" }));
+
+    // Then
+    expect(screen.getByRole("dialog", { name: "Note" })).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Only in Cloud" })).toBeVisible();
   });
 
   it("should disable Add note when no update handler is wired", async () => {

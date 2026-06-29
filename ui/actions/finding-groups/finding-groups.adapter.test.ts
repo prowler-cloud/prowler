@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
+import {
+  FINDING_TRIAGE_DISABLED_REASON,
+  FINDING_TRIAGE_STATUS,
+} from "@/types/findings-triage";
 
 import {
   adaptFindingGroupResourcesResponse,
@@ -327,7 +330,7 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
         status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
         label: "Under Review",
         hasVisibleNote: true,
-        canEdit: false,
+        canEdit: true,
       }),
     );
     expectNoRawTriageTransportKeys(
@@ -379,9 +382,9 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
     expect(row.triage).toEqual(
       expect.objectContaining({
         canEdit: false,
+        disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
       }),
     );
-    expect(row.triage).not.toHaveProperty("disabledReason");
   });
 
   it("should return mapped rows for valid data", () => {

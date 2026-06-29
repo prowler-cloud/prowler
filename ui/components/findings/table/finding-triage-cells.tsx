@@ -126,8 +126,11 @@ export function FindingNotesCell({
   }
 
   const hasUpdateHandler = Boolean(onTriageUpdateAction);
+  const isCloudOnly =
+    triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY;
   const canOpenNewNoteModal =
-    !triage.hasVisibleNote && triage.canEdit && hasUpdateHandler;
+    !triage.hasVisibleNote &&
+    ((triage.canEdit && hasUpdateHandler) || isCloudOnly);
   const canOpenExistingNoteModal =
     triage.hasVisibleNote &&
     triage.canEdit &&

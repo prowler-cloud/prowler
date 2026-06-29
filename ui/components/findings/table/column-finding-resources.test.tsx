@@ -181,7 +181,7 @@ function makeTriageSummary(
     hasVisibleNote: false,
     hasPersistedStatus: true,
     canEdit: true,
-    billingHref: "/billing",
+    billingHref: "https://prowler.com/pricing",
     mutelistShortcutStatuses: [
       FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
@@ -377,7 +377,7 @@ describe("column-finding-resources", () => {
     expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
   });
 
-  it("should disable Add note for Cloud-only rows when no update handler is wired", () => {
+  it("should enable Add note for Cloud-only rows so users can open the billing upsell modal", () => {
     // Given
     const columns = getColumnFindingResources({
       rowSelection: {},
@@ -411,7 +411,7 @@ describe("column-finding-resources", () => {
     );
 
     // Then
-    expect(screen.getByRole("button", { name: "Add note" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
   });
 
   it("should disable editable triage control when no update handler is wired", () => {

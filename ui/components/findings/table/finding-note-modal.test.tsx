@@ -78,7 +78,7 @@ function makeTriageDetail(
     hasVisibleNote: true,
     hasPersistedStatus: true,
     canEdit: true,
-    billingHref: "/billing",
+    billingHref: "https://prowler.com/pricing",
     mutelistShortcutStatuses: [
       FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
@@ -269,7 +269,7 @@ describe("FindingNoteModal", () => {
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveAttribute("data-disabled", "");
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(routerPushMock).toHaveBeenCalledWith("/billing");
+    expect(routerPushMock).toHaveBeenCalledWith("https://prowler.com/pricing");
     expect(screen.queryByText(/will be muted/i)).not.toBeInTheDocument();
   });
 

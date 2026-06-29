@@ -74,6 +74,7 @@ describe("findings actions triage projection", () => {
         label: "Under Review",
         hasVisibleNote: true,
         canEdit: false,
+        disabledReason: "cloud_only",
       }),
     );
     expect(result?.data[0].triage).not.toHaveProperty("triage_status");
@@ -91,7 +92,7 @@ describe("findings actions triage projection", () => {
     expect(result?.data[0].triage).toEqual(
       expect.objectContaining({
         status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
-        canEdit: false,
+        canEdit: true,
       }),
     );
     expect(result?.data[0].triage).not.toHaveProperty("disabledReason");
