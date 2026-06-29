@@ -83,7 +83,6 @@ export function FindingNoteModal({
         triage,
         selectedStatus,
         noteBody: note,
-        origin: FINDING_TRIAGE_ORIGIN.MODAL,
       });
 
       if (!updateInput) {

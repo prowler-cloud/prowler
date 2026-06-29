@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_NOTE_PRIVACY_COPY,
-  FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
 } from "@/types/findings-triage";
@@ -21,14 +20,9 @@ function makeTriageDetail(
     status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
     label: "Under Review",
     hasVisibleNote: true,
-    hasPersistedStatus: true,
     isMuted: false,
     canEdit: true,
     billingHref: "https://prowler.com/pricing",
-    mutelistShortcutStatuses: [
-      FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-      FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
-    ],
     noteId: "note-1",
     noteBody: "Existing investigation note",
     maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
@@ -47,7 +41,6 @@ describe("buildFindingTriageUpdateInput", () => {
       triage,
       selectedStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       noteBody: "Existing investigation note",
-      origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
 
     // Then
@@ -63,7 +56,6 @@ describe("buildFindingTriageUpdateInput", () => {
       triage,
       selectedStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       noteBody: " Updated existing note ",
-      origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
 
     // Then
@@ -75,7 +67,6 @@ describe("buildFindingTriageUpdateInput", () => {
       noteId: "note-1",
       isMuted: false,
       note: "Updated existing note",
-      origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
   });
 
@@ -94,7 +85,6 @@ describe("buildFindingTriageUpdateInput", () => {
       triage,
       selectedStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       noteBody: " First note ",
-      origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
 
     // Then
@@ -108,7 +98,6 @@ describe("buildFindingTriageUpdateInput", () => {
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       note: "First note",
-      origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
   });
 
@@ -121,7 +110,6 @@ describe("buildFindingTriageUpdateInput", () => {
       triage,
       selectedStatus: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       noteBody: "Existing investigation note",
-      origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
 
     // Then
@@ -134,7 +122,6 @@ describe("buildFindingTriageUpdateInput", () => {
       isMuted: false,
       status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
-      origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
   });
 
@@ -147,7 +134,6 @@ describe("buildFindingTriageUpdateInput", () => {
       triage,
       selectedStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       noteBody: "   ",
-      origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
 
     // Then

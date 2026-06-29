@@ -164,7 +164,6 @@ export function FindingTriageStatusControl(
         status,
         previousStatus: triage.status,
         isMuted: triage.isMuted,
-        origin: "table",
       });
     } catch {
       setTableUpdateError("Could not update triage status.");

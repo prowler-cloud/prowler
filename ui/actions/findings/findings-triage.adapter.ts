@@ -1,12 +1,12 @@
 import {
   FINDING_TRIAGE_BILLING_HREF,
-  FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_STATUS,
   FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageDetail,
   type FindingTriageDisabledReason,
+  type FindingTriageLoadedNote,
   type FindingTriageStatus,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
@@ -35,7 +35,6 @@ interface JsonApiResponse {
 interface NormalizedTriageFields {
   status: FindingTriageStatus;
   hasVisibleNote: boolean;
-  hasPersistedStatus: boolean;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -139,7 +138,6 @@ const normalizeTriageFields = (
         asBoolean(findingAttributes.triage_has_note) ||
         asBoolean(includedAttributes.has_note) ||
         asBoolean(includedAttributes.triage_has_note),
-      hasPersistedStatus: true,
     };
   }
 
@@ -150,14 +148,12 @@ const normalizeTriageFields = (
         hasPositiveCount(includedAttributes.triage_notes_count) ||
         asBoolean(includedAttributes.has_note) ||
         asBoolean(includedAttributes.triage_has_note),
-      hasPersistedStatus: true,
     };
   }
 
   return {
     status: fallbackStatusFromFindingStatus(findingAttributes.status),
     hasVisibleNote: false,
-    hasPersistedStatus: false,
   };
 };
 
@@ -176,14 +172,12 @@ const createSummary = (
     status: triageFields.status,
     label: FINDING_TRIAGE_STATUS_LABELS[triageFields.status],
     hasVisibleNote: triageFields.hasVisibleNote,
-    hasPersistedStatus: triageFields.hasPersistedStatus,
     isMuted:
       typeof attributes.muted === "boolean"
         ? attributes.muted
         : attributes.status === "MUTED",
     canEdit: options.canEdit ?? false,
     billingHref: options.billingHref ?? FINDING_TRIAGE_BILLING_HREF,
-    mutelistShortcutStatuses: FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES,
   };
 
   if (options.disabledReason) {
@@ -215,6 +209,27 @@ export function adaptFindingTriageSummariesResponse(
         options,
       ),
     );
+}
+
+export function adaptLatestFindingTriageNote(
+  apiResponse: unknown,
+): FindingTriageLoadedNote | null {
+  if (!isJsonApiResponse(apiResponse)) {
+    return null;
+  }
+
+  const [latestNote] = toResourceArray(apiResponse.data);
+  const noteId = asString(latestNote?.id);
+  const noteBody = asString(latestNote?.attributes?.body);
+
+  if (!noteId || noteBody === undefined) {
+    return null;
+  }
+
+  return {
+    noteId,
+    noteBody,
+  };
 }
 
 export function attachFindingTriageSummariesToResponse<
@@ -270,7 +285,6 @@ export function adaptFindingTriageDetailResponse(
     {
       status,
       hasVisibleNote: asBoolean(attributes.has_note) || noteBody.length > 0,
-      hasPersistedStatus: data !== undefined,
     },
     options,
   );

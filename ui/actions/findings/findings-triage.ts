@@ -1,6 +1,6 @@
 "use server";
 
-import { adaptLatestFindingTriageNote } from "@/actions/findings/findings-triage-notes.adapter";
+import { adaptLatestFindingTriageNote } from "@/actions/findings/findings-triage.adapter";
 import { createMuteRule } from "@/actions/mute-rules";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
@@ -210,34 +210,19 @@ export async function loadLatestFindingTriageNote(
 }
 
 export async function updateFindingTriage(input: UpdateFindingTriageInput) {
+  let findingUid: string | undefined;
+  let triageUrl: string;
+
   if (input.triageId) {
-    if (input.note && input.notesCount > 0 && input.noteId) {
-      await patchJsonApi(
-        `${apiBaseUrl}/finding-triages/${input.triageId}/notes/${input.noteId}`,
-        buildFindingTriageNoteBody(input.note),
-      );
-    }
-
-    if (input.status || (input.note && input.notesCount === 0)) {
-      const result = await patchJsonApi(
-        `${apiBaseUrl}/finding-triages/${input.triageId}`,
-        buildFindingTriageBody({
-          status: input.status,
-          note: input.notesCount === 0 ? input.note : undefined,
-        }),
-      );
-      await createMuteRuleOrRollback(input);
-      return result;
-    }
-
-    return undefined;
+    triageUrl = `${apiBaseUrl}/finding-triages/${input.triageId}`;
+  } else {
+    findingUid = await resolveFindingUid(input);
+    triageUrl = `${apiBaseUrl}/findings/${encodePathSegment(findingUid)}/triage`;
   }
-
-  const findingUid = await resolveFindingUid(input);
 
   if (input.note && input.notesCount > 0 && input.noteId) {
     const noteResult = await patchJsonApi(
-      `${apiBaseUrl}/findings/${encodePathSegment(findingUid)}/triage/notes/${input.noteId}`,
+      `${triageUrl}/notes/${input.noteId}`,
       buildFindingTriageNoteBody(input.note),
     );
 
@@ -246,8 +231,12 @@ export async function updateFindingTriage(input: UpdateFindingTriageInput) {
     }
   }
 
+  if (!input.status && !(input.note && input.notesCount === 0)) {
+    return undefined;
+  }
+
   const result = await patchJsonApi(
-    `${apiBaseUrl}/findings/${encodePathSegment(findingUid)}/triage`,
+    triageUrl,
     buildFindingTriageBody({
       status: input.status,
       note: input.notesCount === 0 ? input.note : undefined,

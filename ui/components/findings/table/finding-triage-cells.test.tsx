@@ -64,14 +64,9 @@ function makeTriageSummary(
     status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
     label: "Under Review",
     hasVisibleNote: false,
-    hasPersistedStatus: true,
     isMuted: false,
     canEdit: true,
     billingHref: "https://prowler.com/pricing",
-    mutelistShortcutStatuses: [
-      FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-      FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
-    ],
     ...overrides,
   };
 }
@@ -511,7 +506,6 @@ describe("finding triage cells", () => {
         status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
         previousStatus: FINDING_TRIAGE_STATUS.OPEN,
         isMuted: false,
-        origin: "table",
       }),
     );
     expect(statusControl).toHaveTextContent("False Positive");

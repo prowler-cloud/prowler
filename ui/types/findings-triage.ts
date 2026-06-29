@@ -76,12 +76,10 @@ export interface FindingTriageSummary {
   status: FindingTriageStatus;
   label: string;
   hasVisibleNote: boolean;
-  hasPersistedStatus: boolean;
   isMuted: boolean;
   canEdit: boolean;
   disabledReason?: FindingTriageDisabledReason;
   billingHref: string;
-  mutelistShortcutStatuses: readonly FindingTriageStatus[];
 }
 
 export interface FindingTriageDetail extends FindingTriageSummary {
@@ -101,7 +99,6 @@ export interface UpdateFindingTriageInput {
   previousStatus?: FindingTriageStatus;
   isMuted?: boolean;
   note?: string;
-  origin: FindingTriageOrigin;
 }
 
 export interface FindingTriageLoadedNote {

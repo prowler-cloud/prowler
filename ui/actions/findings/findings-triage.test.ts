@@ -60,11 +60,9 @@ describe("findings triage actions", () => {
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       label: "Under Review",
       hasVisibleNote: true,
-      hasPersistedStatus: true,
       isMuted: false,
       canEdit: true,
       billingHref: "https://prowler.com/pricing",
-      mutelistShortcutStatuses: [],
     });
 
     // Then
@@ -99,11 +97,9 @@ describe("findings triage actions", () => {
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       label: "Under Review",
       hasVisibleNote: true,
-      hasPersistedStatus: false,
       isMuted: false,
       canEdit: true,
       billingHref: "https://prowler.com/pricing",
-      mutelistShortcutStatuses: [],
     });
 
     // Then
@@ -139,11 +135,9 @@ describe("findings triage actions", () => {
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       label: "Under Review",
       hasVisibleNote: true,
-      hasPersistedStatus: false,
       isMuted: false,
       canEdit: true,
       billingHref: "https://prowler.com/pricing",
-      mutelistShortcutStatuses: [],
     });
 
     // Then
@@ -172,7 +166,6 @@ describe("findings triage actions", () => {
       notesCount: 0,
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       note: "First note",
-      origin: "modal",
     });
 
     // Then
@@ -207,7 +200,6 @@ describe("findings triage actions", () => {
       notesCount: 1,
       noteId: "note-1",
       note: "Updated note",
-      origin: "modal",
     });
 
     // Then
@@ -241,7 +233,6 @@ describe("findings triage actions", () => {
       noteId: "note-1",
       status: FINDING_TRIAGE_STATUS.REMEDIATING,
       note: "Updated note",
-      origin: "modal",
     });
 
     // Then
@@ -282,7 +273,6 @@ describe("findings triage actions", () => {
       status: FINDING_TRIAGE_STATUS.REMEDIATING,
       previousStatus: FINDING_TRIAGE_STATUS.OPEN,
       note: "Updated note",
-      origin: "modal",
     });
 
     // Then
@@ -321,7 +311,6 @@ describe("findings triage actions", () => {
       notesCount: 1,
       noteId: "note-1",
       note: "Updated note",
-      origin: "modal",
     });
 
     // Then
@@ -345,7 +334,6 @@ describe("findings triage actions", () => {
       notesCount: 0,
       status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-      origin: "table",
     });
 
     // Then
@@ -375,7 +363,6 @@ describe("findings triage actions", () => {
       notesCount: 0,
       status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-      origin: "table",
     });
     await updateFindingTriage({
       findingId: "finding-b",
@@ -384,7 +371,6 @@ describe("findings triage actions", () => {
       notesCount: 0,
       status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-      origin: "table",
     });
 
     // Then
@@ -415,7 +401,6 @@ describe("findings triage actions", () => {
         notesCount: 0,
         status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
         previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-        origin: "table",
       }),
     ).rejects.toThrow("Triage failed");
     expect(createMuteRuleMock).not.toHaveBeenCalled();
@@ -438,7 +423,6 @@ describe("findings triage actions", () => {
         notesCount: 0,
         status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
         previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-        origin: "table",
       }),
     ).rejects.toThrow("Mute failed");
 
@@ -476,7 +460,6 @@ describe("findings triage actions", () => {
         notesCount: 0,
         status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
         previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-        origin: "table",
       }),
     ).rejects.toThrow("Mute failed");
 
@@ -511,7 +494,6 @@ describe("findings triage actions", () => {
       status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       previousStatus: FINDING_TRIAGE_STATUS.OPEN,
       isMuted: true,
-      origin: "table",
     });
 
     // Then
@@ -531,7 +513,6 @@ describe("findings triage actions", () => {
       notesCount: 0,
       status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
       previousStatus: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-      origin: "table",
     });
 
     // Then
@@ -552,7 +533,6 @@ describe("findings triage actions", () => {
       status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       previousStatus: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       note: "First note",
-      origin: "modal",
     });
 
     // Then
@@ -571,7 +551,6 @@ describe("findings triage actions", () => {
       triageId: "triage-1",
       notesCount: 0,
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
-      origin: "table",
     });
 
     // Then
@@ -590,7 +569,6 @@ describe("findings triage actions", () => {
       triageId: null,
       notesCount: 0,
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
-      origin: "table",
     });
 
     // Then
@@ -617,7 +595,6 @@ describe("findings triage actions", () => {
       notesCount: 0,
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       note: "First note",
-      origin: "modal",
     });
 
     // Then

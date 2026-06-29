@@ -1,7 +1,6 @@
 import {
   type FindingTriageDetail,
   type FindingTriageManualStatus,
-  type FindingTriageOrigin,
   type FindingTriageStatus,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
@@ -12,14 +11,12 @@ export interface BuildFindingTriageUpdateInputParams {
   triage: FindingTriageDetail;
   selectedStatus: FindingTriageStatus;
   noteBody: string;
-  origin: FindingTriageOrigin;
 }
 
 export function buildFindingTriageUpdateInput({
   triage,
   selectedStatus,
   noteBody,
-  origin,
 }: BuildFindingTriageUpdateInputParams): UpdateFindingTriageInput | null {
   const trimmedNote = noteBody.trim();
   const statusChanged = selectedStatus !== triage.status;
@@ -57,6 +54,5 @@ export function buildFindingTriageUpdateInput({
     ...(shouldCreateFirstNote || shouldUpdateExistingNote
       ? { note: trimmedNote }
       : {}),
-    origin,
   };
 }

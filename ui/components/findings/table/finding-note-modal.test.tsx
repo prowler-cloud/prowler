@@ -66,14 +66,9 @@ function makeTriageDetail(
     status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
     label: "Under Review",
     hasVisibleNote: true,
-    hasPersistedStatus: true,
     isMuted: false,
     canEdit: true,
     billingHref: "https://prowler.com/pricing",
-    mutelistShortcutStatuses: [
-      FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-      FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
-    ],
     noteId: "note-1",
     noteBody: "Existing investigation note",
     maxNoteLength: 500,
@@ -168,7 +163,6 @@ describe("FindingNoteModal", () => {
       noteId: "note-1",
       isMuted: false,
       note: "Documented owner follow-up.",
-      origin: "modal",
     });
   });
 
@@ -203,7 +197,6 @@ describe("FindingNoteModal", () => {
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       note: "Initial triage note.",
-      origin: "modal",
     });
   });
 
@@ -321,7 +314,6 @@ describe("FindingNoteModal", () => {
         isMuted: false,
         status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
         previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-        origin: "modal",
       }),
     );
   });

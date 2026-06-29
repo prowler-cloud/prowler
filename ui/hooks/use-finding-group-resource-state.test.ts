@@ -161,14 +161,9 @@ describe("useFindingGroupResourceState", () => {
         status: FINDING_TRIAGE_STATUS.OPEN,
         label: "Open",
         hasVisibleNote: false,
-        hasPersistedStatus: true,
         isMuted: true,
         canEdit: true,
         billingHref: "https://prowler.com/pricing",
-        mutelistShortcutStatuses: [
-          FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-          FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
-        ],
       },
     };
 
@@ -200,7 +195,6 @@ describe("useFindingGroupResourceState", () => {
           status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
           previousStatus: FINDING_TRIAGE_STATUS.OPEN,
           isMuted: true,
-          origin: "table",
         },
         async () => undefined,
       );

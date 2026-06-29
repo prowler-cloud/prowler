@@ -11,6 +11,7 @@ import {
 import {
   adaptFindingTriageDetailResponse,
   adaptFindingTriageSummariesResponse,
+  adaptLatestFindingTriageNote,
 } from "./findings-triage.adapter";
 import {
   allProvisionalTriageStatusFindings,
@@ -127,6 +128,39 @@ describe("provisional findings triage contract fixtures", () => {
   });
 });
 
+describe("adaptLatestFindingTriageNote", () => {
+  it("should adapt the newest note from a JSON:API collection", () => {
+    // Given
+    const response = {
+      data: [
+        {
+          id: "note-latest",
+          type: "finding-triage-notes",
+          attributes: {
+            body: "Latest investigation note",
+          },
+        },
+      ],
+    };
+
+    // When
+    const result = adaptLatestFindingTriageNote(response);
+
+    // Then
+    expect(result).toEqual({
+      noteId: "note-latest",
+      noteBody: "Latest investigation note",
+    });
+  });
+
+  it("should return null when the response has no usable note", () => {
+    expect(adaptLatestFindingTriageNote({ data: [] })).toBeNull();
+    expect(
+      adaptLatestFindingTriageNote({ data: [{ id: "note-1" }] }),
+    ).toBeNull();
+  });
+});
+
 describe("adaptFindingTriageSummariesResponse", () => {
   it("should return [] when the provisional API response is malformed", () => {
     // Given
@@ -195,14 +229,12 @@ describe("adaptFindingTriageSummariesResponse", () => {
     expect(result[0]).toEqual(
       expect.objectContaining({
         hasVisibleNote: true,
-        hasPersistedStatus: true,
         status: FINDING_TRIAGE_STATUS.REMEDIATING,
       }),
     );
     expect(result[1]).toEqual(
       expect.objectContaining({
         hasVisibleNote: false,
-        hasPersistedStatus: true,
         status: FINDING_TRIAGE_STATUS.OPEN,
       }),
     );
@@ -258,13 +290,8 @@ describe("adaptFindingTriageSummariesResponse", () => {
         status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
         label: "Under Review",
         hasVisibleNote: true,
-        hasPersistedStatus: true,
         canEdit: true,
         billingHref: "https://prowler.com/pricing",
-        mutelistShortcutStatuses: [
-          FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-          FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
-        ],
       }),
     ]);
   });
@@ -284,7 +311,6 @@ describe("adaptFindingTriageSummariesResponse", () => {
         status: FINDING_TRIAGE_STATUS.RESOLVED,
         label: "Resolved",
         hasVisibleNote: false,
-        hasPersistedStatus: false,
       }),
     );
   });
@@ -352,7 +378,6 @@ describe("adaptFindingTriageSummariesResponse", () => {
         status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
         label: "False Positive",
         hasVisibleNote: true,
-        hasPersistedStatus: true,
         canEdit: false,
         disabledReason: "cloud_only",
       }),
@@ -413,7 +438,6 @@ describe("adaptFindingTriageDetailResponse", () => {
         status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
         label: "Risk Accepted",
         hasVisibleNote: true,
-        hasPersistedStatus: true,
         canEdit: true,
         noteBody: "Current note visible only inside the modal.",
         maxNoteLength: 500,
