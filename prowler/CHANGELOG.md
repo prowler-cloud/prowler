@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `sdk_only` provider property (default `true`) and `Provider.get_app_providers()`, so a provider (built-in or external) stays CLI/SDK-only and hidden from the app unless it declares `sdk_only = False` [(#11427)](https://github.com/prowler-cloud/prowler/pull/11427)
 - `Provider.get_scan_arguments()`, `Provider.get_connection_arguments()` and `Provider.get_credentials_schema()` contract methods, so a provider persisted as a stored uid plus a secret dict can be constructed and validated programmatically (to be consumed by the API in a later change) [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
 - Okta API request throttling to proactively stay under rate limits, configurable via `okta_requests_per_second` in the config file and the `--okta-requests-per-second` CLI flag, plus configurable retries via `okta_max_retries` / `--okta-retries-max-attempts` as a safety net [(#11702)](https://github.com/prowler-cloud/prowler/pull/11702)
+- CIS Microsoft Azure Foundations Benchmark v6.0.0 compliance framework for the Azure provider [(#11708)](https://github.com/prowler-cloud/prowler/pull/11708)
 
 ### 🐞 Fixed
 
