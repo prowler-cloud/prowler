@@ -230,9 +230,12 @@ class Repository(GithubService):
         inactive_approval_count: Optional[int] = None
         any_active_ruleset = False
         any_inactive_ruleset = False
-        # An active ruleset with no bypass actors enforces protection for everyone,
-        # including administrators (the rulesets equivalent of "enforce admins").
+        # A ruleset with no bypass actors applies to everyone, including administrators
+        # (the rulesets equivalent of "enforce admins"). A ruleset that has bypass actors
+        # would not apply to admins even if activated, so it must not drive the
+        # enforce-admins finding in either the active or the inactive case.
         admins_enforced_active = False
+        admins_configured_inactive = False
 
         for ruleset in rulesets:
             if ruleset.get("target") != "branch":
@@ -247,12 +250,15 @@ class Repository(GithubService):
             if not (is_active or is_inactive):
                 continue
 
+            has_no_bypass_actors = not (ruleset.get("bypass_actors") or [])
             if is_active:
                 any_active_ruleset = True
-                if not (ruleset.get("bypass_actors") or []):
+                if has_no_bypass_actors:
                     admins_enforced_active = True
             else:
                 any_inactive_ruleset = True
+                if has_no_bypass_actors:
+                    admins_configured_inactive = True
 
             bucket = active if is_active else inactive
 
@@ -319,7 +325,7 @@ class Repository(GithubService):
 
         if admins_enforced_active:
             result["enforce_admins"] = (None, "ruleset")
-        elif any_inactive_ruleset:
+        elif admins_configured_inactive:
             result["enforce_admins"] = (None, "ruleset_not_active")
 
         return result

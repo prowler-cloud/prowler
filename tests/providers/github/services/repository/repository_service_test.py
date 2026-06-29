@@ -887,3 +887,32 @@ class Test_Repository_BranchProtectionRulesets:
         # Admins can bypass, so the rulesets do not enforce protection for them.
         assert repos[1].default_branch.enforce_admins is False
         assert repos[1].default_branch.enforce_admins_source is None
+
+    def test_inactive_ruleset_with_bypass_actors_is_not_admin_fail_signal(self):
+        # A disabled ruleset that has bypass actors would not apply to admins even if
+        # activated, so it must not raise the enforce-admins ruleset_not_active signal.
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[
+                        {
+                            "actor_id": 1,
+                            "actor_type": "RepositoryRole",
+                            "bypass_mode": "always",
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is False
+        assert repos[1].default_branch.enforce_admins_source is None
+        # The branch is still reported as protected-but-inactive regardless of bypass.
+        assert repos[1].default_branch.protected_source == "ruleset_not_active"
