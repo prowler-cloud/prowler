@@ -28,7 +28,7 @@ export const createScanConfigurationsColumns = (
   {
     id: "providers_count",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Accounts" />
+      <DataTableColumnHeader column={column} title="Providers" />
     ),
     cell: ({ row }) => {
       const count = row.original.attributes.providers?.length ?? 0;
@@ -36,10 +36,10 @@ export const createScanConfigurationsColumns = (
         <span className="text-text-neutral-primary text-sm">
           {count === 0 ? (
             <span className="text-text-neutral-tertiary italic">
-              No accounts
+              No providers
             </span>
           ) : (
-            `${count} ${count === 1 ? "account" : "accounts"}`
+            `${count} ${count === 1 ? "provider" : "providers"}`
           )}
         </span>
       );

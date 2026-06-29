@@ -44,7 +44,7 @@ export function ScanConfigurationsManager({
   const [pendingDelete, setPendingDelete] =
     useState<ScanConfigurationData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [accountFilter, setAccountFilter] = useState<string[]>([]);
+  const [providerFilter, setProviderFilter] = useState<string[]>([]);
   const [nameSearch, setNameSearch] = useState<string>("");
   const { toast } = useToast();
 
@@ -110,9 +110,9 @@ export function ScanConfigurationsManager({
   );
 
   const filteredConfigs = configs.filter((c) => {
-    if (accountFilter.length > 0) {
+    if (providerFilter.length > 0) {
       const attached = c.attributes.providers || [];
-      const overlaps = accountFilter.some((pid) => attached.includes(pid));
+      const overlaps = providerFilter.some((pid) => attached.includes(pid));
       if (!overlaps) return false;
     }
     if (nameSearch) {
@@ -122,17 +122,17 @@ export function ScanConfigurationsManager({
     return true;
   });
 
-  const noMatchForAccount =
-    accountFilter.length > 0 && filteredConfigs.length === 0 && !nameSearch;
+  const noMatchForProvider =
+    providerFilter.length > 0 && filteredConfigs.length === 0 && !nameSearch;
 
-  const hasAnyFilter = accountFilter.length > 0 || nameSearch.length > 0;
+  const hasAnyFilter = providerFilter.length > 0 || nameSearch.length > 0;
 
-  const handleAccountsChange = (_filterKey: string, values: string[]) => {
-    setAccountFilter(values);
+  const handleProvidersChange = (_filterKey: string, values: string[]) => {
+    setProviderFilter(values);
   };
 
   const clearFilters = () => {
-    setAccountFilter([]);
+    setProviderFilter([]);
     setNameSearch("");
   };
 
@@ -147,15 +147,15 @@ export function ScanConfigurationsManager({
               <div className={FILTER_CONTROL_COLUMN_CLASS}>
                 <AccountsSelector
                   providers={richProviders}
-                  onBatchChange={handleAccountsChange}
-                  selectedValues={accountFilter}
+                  onBatchChange={handleProvidersChange}
+                  selectedValues={providerFilter}
                 />
               </div>
               {hasAnyFilter && (
                 <ClearFiltersButton
                   showCount
                   pendingCount={
-                    accountFilter.length + (nameSearch.trim() ? 1 : 0)
+                    providerFilter.length + (nameSearch.trim() ? 1 : 0)
                   }
                   onClear={clearFilters}
                 />
@@ -169,15 +169,15 @@ export function ScanConfigurationsManager({
         />
       </div>
 
-      {noMatchForAccount ? (
+      {noMatchForProvider ? (
         <Card variant="base" className="p-8 text-center">
           <p className="text-default-700 text-sm font-medium">
-            {accountFilter.length === 1
-              ? "No Scan Configuration is attached to this account."
-              : "No Scan Configuration is attached to any of the selected accounts."}
+            {providerFilter.length === 1
+              ? "No Scan Configuration is attached to this provider."
+              : "No Scan Configuration is attached to any of the selected providers."}
           </p>
           <p className="text-default-500 mt-1 text-sm">
-            The next scan{accountFilter.length === 1 ? "" : "s"} will use the
+            The next scan{providerFilter.length === 1 ? "" : "s"} will use the
             built-in defaults shipped with Prowler. Attach a Scan Configuration
             from the editor to override them.
           </p>
@@ -215,8 +215,9 @@ export function ScanConfigurationsManager({
         <div className="flex flex-col gap-4">
           <p className="text-default-600 text-sm">
             Are you sure you want to delete{" "}
-            <strong>{pendingDelete?.attributes.name}</strong>? Attached accounts
-            will fall back to the built-in scan defaults on their next scan.
+            <strong>{pendingDelete?.attributes.name}</strong>? Attached
+            providers will fall back to the built-in scan defaults on their next
+            scan.
           </p>
           <div className="flex w-full justify-end gap-4">
             <Button

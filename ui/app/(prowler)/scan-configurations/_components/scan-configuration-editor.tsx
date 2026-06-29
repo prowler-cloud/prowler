@@ -111,16 +111,9 @@ function ScanConfigurationForm({
   const lockedCount = richProviders.length - selectableProviders.length;
 
   const onSubmit = form.handleSubmit(async (values) => {
-    // zod validates name length and YAML *syntax*; richer schema violations
-    // (ranges/enums) surface through `yamlValidation` and must block here too.
+    // The inline panel already lists every schema/syntax error in real time, so
+    // we don't duplicate them in a toast — just bring the panel into view.
     if (yamlValidation.errors.length > 0) {
-      toast({
-        variant: "destructive",
-        title: "Cannot save",
-        description: `${yamlValidation.errors.length} validation ${
-          yamlValidation.errors.length === 1 ? "error" : "errors"
-        } in the configuration. Fix them before saving.`,
-      });
       errorPanelRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "center",
@@ -154,6 +147,8 @@ function ScanConfigurationForm({
         return;
       }
 
+      // Field-level errors render inline next to each input; only a general
+      // error (no field to anchor it to) falls back to a toast.
       const errors = result?.errors || {};
       if (errors.name) form.setError("name", { message: errors.name });
       if (errors.configuration)
@@ -165,16 +160,6 @@ function ScanConfigurationForm({
           variant: "destructive",
           title: "Oops! Something went wrong",
           description: errors.general,
-        });
-      } else if (errors.configuration || errors.name || errors.provider_ids) {
-        toast({
-          variant: "destructive",
-          title: "Validation failed",
-          description:
-            errors.configuration ||
-            errors.name ||
-            errors.provider_ids ||
-            "Please review the form.",
         });
       }
     } catch (e) {
@@ -261,16 +246,16 @@ function ScanConfigurationForm({
       </Field>
 
       <Field>
-        <FieldLabel>Attach to accounts</FieldLabel>
+        <FieldLabel>Attach to providers</FieldLabel>
         <p className="text-default-500 text-tiny">
-          Pick the cloud accounts that should use this configuration on their
+          Pick the cloud providers that should use this configuration on their
           next scan.
           {lockedCount > 0 && (
             <>
               {" "}
-              {lockedCount} {lockedCount === 1 ? "account is" : "accounts are"}{" "}
-              hidden because they are already attached to another Scan
-              Configuration.
+              {lockedCount}{" "}
+              {lockedCount === 1 ? "provider is" : "providers are"} hidden
+              because they are already attached to another Scan Configuration.
             </>
           )}
         </p>
@@ -288,8 +273,8 @@ function ScanConfigurationForm({
             }
             selectedValues={selectedProviders}
             search={{
-              placeholder: "Search accounts...",
-              emptyMessage: "No accounts found.",
+              placeholder: "Search providers...",
+              emptyMessage: "No providers found.",
             }}
           />
         )}

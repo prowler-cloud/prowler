@@ -723,9 +723,11 @@ export const mutedFindingsConfigFormSchema = z.object({
   id: z.string().optional(),
 });
 
-// The schema-driven (ranges/enums/types) validation lives in the editor via
-// `validateScanConfigurationPayload(yamlString, schema)` in `lib/yaml.ts`. Here
-// we only enforce the form-level shape: a name and a YAML string that parses.
+// The editor owns content validation: live YAML syntax + schema (ranges/enums)
+// checks run through `validateScanConfigurationPayload(yamlString, schema)` in
+// `lib/yaml.ts` and surface in a single inline panel. Here we only enforce the
+// form-level shape (a name and a non-empty configuration) so we don't render the
+// same YAML error twice.
 export const scanConfigurationFormSchema = z.object({
   name: z
     .string()
@@ -735,16 +737,7 @@ export const scanConfigurationFormSchema = z.object({
   configuration: z
     .string()
     .trim()
-    .min(1, { message: "Configuration is required" })
-    .superRefine((val, ctx) => {
-      const yamlValidation = validateYaml(val);
-      if (!yamlValidation.isValid) {
-        ctx.addIssue({
-          code: "custom",
-          message: `Invalid YAML format: ${yamlValidation.error}`,
-        });
-      }
-    }),
+    .min(1, { message: "Configuration is required" }),
   provider_ids: z.array(z.uuid()).optional().default([]),
   id: z.string().optional(),
 });
