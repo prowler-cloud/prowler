@@ -2,6 +2,7 @@ import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -35,9 +36,14 @@ class codebuild_project_no_secrets_in_variables(Check):
                                 {env_var.name: env_var.value}
                             )
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for project_index, project in enumerate(projects):
             report = Check_Report_AWS(metadata=self.metadata(), resource=project)
@@ -45,6 +51,19 @@ class codebuild_project_no_secrets_in_variables(Check):
             report.status_extended = f"CodeBuild project {project.name} does not have sensitive environment plaintext credentials."
             secrets_found = []
             all_secrets = []
+
+            if scan_error and any(
+                env_var.type == "PLAINTEXT"
+                and env_var.name not in sensitive_vars_excluded
+                for env_var in project.environment_variables or []
+            ):
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan CodeBuild project {project.name} environment "
+                    f"variables for secrets: {scan_error}; manual review is required."
+                )
+                findings.append(report)
+                continue
 
             if project.environment_variables:
                 for var_index, env_var in enumerate(project.environment_variables):

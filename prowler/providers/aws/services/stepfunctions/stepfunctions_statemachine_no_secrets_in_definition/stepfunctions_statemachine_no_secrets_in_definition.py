@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -26,9 +27,14 @@ class stepfunctions_statemachine_no_secrets_in_definition(Check):
                 if state_machine.definition:
                     yield index, state_machine.definition
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for index, state_machine in enumerate(state_machines):
             report = Check_Report_AWS(metadata=self.metadata(), resource=state_machine)
@@ -36,6 +42,15 @@ class stepfunctions_statemachine_no_secrets_in_definition(Check):
             report.status_extended = f"No secrets found in Step Functions state machine {state_machine.name} definition."
 
             if state_machine.definition:
+                if scan_error:
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"Could not scan Step Functions state machine "
+                        f"{state_machine.name} definition for secrets: {scan_error}; "
+                        "manual review is required."
+                    )
+                    findings.append(report)
+                    continue
                 detect_secrets_output = batch_results.get(index)
                 if detect_secrets_output:
                     secrets_string = ", ".join(

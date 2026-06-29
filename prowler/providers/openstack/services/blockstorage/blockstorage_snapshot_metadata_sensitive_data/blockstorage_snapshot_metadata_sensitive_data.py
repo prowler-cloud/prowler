@@ -3,6 +3,7 @@ from typing import List
 
 from prowler.lib.check.models import Check, CheckReportOpenStack
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -29,9 +30,14 @@ class blockstorage_snapshot_metadata_sensitive_data(Check):
                 if snapshot.metadata:
                     yield index, json.dumps(dict(snapshot.metadata), indent=2)
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for index, snapshot in enumerate(snapshots):
             report = CheckReportOpenStack(metadata=self.metadata(), resource=snapshot)
@@ -39,6 +45,15 @@ class blockstorage_snapshot_metadata_sensitive_data(Check):
             report.status_extended = f"Snapshot {snapshot.name} ({snapshot.id}) metadata does not contain sensitive data."
 
             if snapshot.metadata:
+                if scan_error:
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"Could not scan snapshot {snapshot.name} ({snapshot.id}) "
+                        f"metadata for secrets: {scan_error}; manual review is "
+                        "required."
+                    )
+                    findings.append(report)
+                    continue
                 original_metadata_keys = list(snapshot.metadata.keys())
                 detect_secrets_output = batch_results.get(index)
                 if detect_secrets_output:

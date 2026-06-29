@@ -429,3 +429,47 @@ class Test_ec2_instance_secrets_user_data:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert "Could not decode User Data" in result[0].status_extended
+
+    @mock_aws
+    def test_scan_failure_reports_manual(self):
+        from prowler.lib.utils.utils import SecretsScanError
+
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        instance = ec2.create_instances(
+            ImageId=EXAMPLE_AMI_ID,
+            MinCount=1,
+            MaxCount=1,
+            UserData='password = "Tr0ub4dor3xKq9vLmZ"',
+        )[0]
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.detect_secrets_scan_batch",
+                side_effect=SecretsScanError("Kingfisher exited with code 1"),
+            ),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
+                ec2_instance_secrets_user_data,
+            )
+
+            check = ec2_instance_secrets_user_data()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not scan" in result[0].status_extended
+            assert result[0].resource_id == instance.id

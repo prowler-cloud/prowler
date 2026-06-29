@@ -16,6 +16,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Replaced the `detect-secrets` library with [Kingfisher](https://github.com/mongodb/kingfisher) as the engine for the secret-scanning checks; scans run fully offline by default and obvious placeholder values are no longer reported as findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Removed the `detect_secrets_plugins` configuration option, which is no longer used by the new secret-scanning engine [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 
+### 🐞 Fixed
+
+- Report secret-scanning checks as `MANUAL` instead of `PASS` when the scanner fails (non-zero exit, timeout, unparseable output or missing binary), so a scanner failure is no longer indistinguishable from "no secrets found" [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Avoid a false `FAIL` in `cloudwatch_log_group_no_secrets_in_logs` when a multiline event's secrets are all removed by `secrets_ignore_patterns` during the rescan [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+
 ---
 
 ## [5.31.1] (Prowler v5.31.1)

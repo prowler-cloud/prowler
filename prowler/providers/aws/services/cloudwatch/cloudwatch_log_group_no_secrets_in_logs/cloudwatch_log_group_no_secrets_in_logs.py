@@ -2,6 +2,7 @@ from json import dumps, loads
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -35,11 +36,18 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                         "\n".join(dumps(event["message"]) for event in events),
                     )
 
-        stream_results = detect_secrets_scan_batch(
-            stream_payloads(),
-            excluded_secrets=secrets_ignore_patterns,
-            validate=validate,
-        )
+        # A scanner failure here must never look like "no secrets": log groups
+        # whose streams could not be scanned are reported MANUAL in Phase 4.
+        stream_scan_error = None
+        try:
+            stream_results = detect_secrets_scan_batch(
+                stream_payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+            )
+        except SecretsScanError as error:
+            stream_results = {}
+            stream_scan_error = error
 
         # Phase 2: plan the per-timestamp secrets for each flagged stream and
         # collect the multiline events to rescan. Each multiline event is
@@ -47,6 +55,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
         # rescans are batched in Phase 3 instead of one subprocess per event.
         stream_plans = {}  # (group, stream) -> {timestamp: {"multiline", "types"}}
         rescan_payloads = {}  # (group, stream, timestamp) -> multiline event data
+        groups_with_rescan = set()  # groups that depend on the Phase 3 rescan
         for log_group in logs_client.log_groups.values():
             for log_stream_name in log_group.log_streams or {}:
                 stream_secrets = stream_results.get((log_group.name, log_stream_name))
@@ -78,6 +87,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                         rescan_payloads[
                             (log_group.name, log_stream_name, cloudwatch_timestamp)
                         ] = log_event_data
+                        groups_with_rescan.add(log_group.name)
                     else:
                         plan[cloudwatch_timestamp]["types"].append(secret["type"])
                 stream_plans[(log_group.name, log_stream_name)] = plan
@@ -85,19 +95,34 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
         # Phase 3: one batched rescan for all multiline flagged events. Validation
         # is never enabled here: this rescan only resolves line numbers for
         # display and must not re-authenticate the secret.
-        rescan_results = (
-            detect_secrets_scan_batch(
-                rescan_payloads, excluded_secrets=secrets_ignore_patterns
-            )
-            if rescan_payloads
-            else {}
-        )
+        # If the rescan fails we know secrets were already found in Phase 1, so
+        # the affected groups must not silently pass; they are reported MANUAL.
+        rescan_scan_error = None
+        rescan_results = {}
+        if rescan_payloads:
+            try:
+                rescan_results = detect_secrets_scan_batch(
+                    rescan_payloads, excluded_secrets=secrets_ignore_patterns
+                )
+            except SecretsScanError as error:
+                rescan_scan_error = error
 
         # Phase 4: assemble one report per log group.
         for log_group in logs_client.log_groups.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
             report.status = "PASS"
             report.status_extended = f"No secrets found in {log_group.name} log group."
+
+            # The stream scan failed: we cannot conclude this group is clean.
+            if stream_scan_error and log_group.log_streams:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan log group {log_group.name} for secrets: "
+                    f"{stream_scan_error}; manual review is required."
+                )
+                findings.append(report)
+                continue
+
             log_group_secrets = []
             all_secrets = []
             for log_stream_name in log_group.log_streams or {}:
@@ -121,7 +146,13 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                     else:
                         for secret_type in entry["types"]:
                             secrets_dict.add_secret(1, secret_type)
-                    log_stream_secrets[cloudwatch_timestamp] = secrets_dict
+                    # Only record the event when at least one non-ignored secret
+                    # remains after the rescan. A multiline event whose secrets
+                    # were all dropped by ``secrets_ignore_patterns`` leaves an
+                    # empty SecretsDict, which must not produce a FAIL with no
+                    # actual secret evidence.
+                    if secrets_dict:
+                        log_stream_secrets[cloudwatch_timestamp] = secrets_dict
                 if log_stream_secrets:
                     secrets_string = "; ".join(
                         [
@@ -132,7 +163,17 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                     log_group_secrets.append(
                         f"in log stream {log_stream_name} {secrets_string}"
                     )
-            if log_group_secrets:
+            # The multiline rescan failed for a group that had flagged secrets:
+            # detail is unavailable, so report MANUAL rather than risk a false
+            # PASS when every flagged event was multiline.
+            if rescan_scan_error and log_group.name in groups_with_rescan:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Secrets were detected in log group {log_group.name} but the "
+                    f"detailed rescan failed: {rescan_scan_error}; manual review "
+                    "is required."
+                )
+            elif log_group_secrets:
                 secrets_string = "; ".join(log_group_secrets)
                 report.status = "FAIL"
                 report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}."

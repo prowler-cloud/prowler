@@ -5,6 +5,7 @@ from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -58,12 +59,28 @@ class ec2_launch_template_no_secrets(Check):
                         continue
                     yield (template_index, version_index), user_data
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for template_index, template in enumerate(templates):
             report = Check_Report_AWS(metadata=self.metadata(), resource=template)
+
+            if scan_error and any(
+                version.template_data.user_data for version in template.versions
+            ):
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan EC2 Launch Template {template.name} User Data "
+                    f"for secrets: {scan_error}; manual review is required."
+                )
+                findings.append(report)
+                continue
 
             versions_with_secrets = []
             all_secrets = []

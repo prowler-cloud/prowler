@@ -2,6 +2,7 @@ import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -33,9 +34,14 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
                     for arg_name, arg_value in job.arguments.items():
                         yield (job_index, arg_name), json.dumps({arg_name: arg_value})
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for job_index, job in enumerate(jobs):
             report = Check_Report_AWS(metadata=self.metadata(), resource=job)
@@ -43,6 +49,15 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
             report.status_extended = (
                 f"No secrets found in Glue job {job.name} default arguments."
             )
+
+            if job.arguments and scan_error:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan Glue job {job.name} default arguments for "
+                    f"secrets: {scan_error}; manual review is required."
+                )
+                findings.append(report)
+                continue
 
             if job.arguments:
                 secrets_found = []

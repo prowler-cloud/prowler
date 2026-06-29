@@ -5,6 +5,7 @@ from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -54,12 +55,26 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     continue
                 yield index, user_data
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for index, configuration in enumerate(configurations):
             report = Check_Report_AWS(metadata=self.metadata(), resource=configuration)
+
+            if scan_error and configuration.user_data:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan autoscaling {configuration.name} User Data for "
+                    f"secrets: {scan_error}; manual review is required."
+                )
+                findings.append(report)
+                continue
 
             if index in undecodable:
                 report.status = "MANUAL"

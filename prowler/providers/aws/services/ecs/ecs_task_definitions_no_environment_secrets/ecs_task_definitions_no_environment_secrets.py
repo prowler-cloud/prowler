@@ -2,6 +2,7 @@ from json import dumps
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -32,11 +33,16 @@ class ecs_task_definitions_no_environment_secrets(Check):
                         }
                         yield (td_index, c_index), dumps(dump_env_vars, indent=2)
 
-        batch_results = detect_secrets_scan_batch(
-            environment_payloads(),
-            excluded_secrets=secrets_ignore_patterns,
-            validate=validate,
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                environment_payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for td_index, task_definition in enumerate(task_definitions):
             report = Check_Report_AWS(
@@ -46,6 +52,19 @@ class ecs_task_definitions_no_environment_secrets(Check):
             report.status = "PASS"
             extended_status_parts = []
             all_secrets = []
+
+            if scan_error and any(
+                container.environment
+                for container in task_definition.container_definitions
+            ):
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan ECS task definition {task_definition.name} with "
+                    f"revision {task_definition.revision} for secrets: {scan_error}; "
+                    "manual review is required."
+                )
+                findings.append(report)
+                continue
 
             for c_index, container in enumerate(task_definition.container_definitions):
                 container_secrets_found = []
