@@ -4,6 +4,7 @@ Kept in its own module so the validator stays free of provider-schema imports
 and callers pay the import cost only when they actually need the registry.
 """
 
+from prowler.config.schema.alibabacloud import AlibabaCloudProviderConfig
 from prowler.config.schema.aws import AWSProviderConfig
 from prowler.config.schema.azure import AzureProviderConfig
 from prowler.config.schema.base import ProviderConfigBase
@@ -13,6 +14,8 @@ from prowler.config.schema.github import GitHubProviderConfig
 from prowler.config.schema.kubernetes import KubernetesProviderConfig
 from prowler.config.schema.m365 import M365ProviderConfig
 from prowler.config.schema.mongodbatlas import MongoDBAtlasProviderConfig
+from prowler.config.schema.okta import OktaProviderConfig
+from prowler.config.schema.openstack import OpenStackProviderConfig
 from prowler.config.schema.vercel import VercelProviderConfig
 
 SCHEMAS: dict[str, type[ProviderConfigBase]] = {
@@ -25,4 +28,7 @@ SCHEMAS: dict[str, type[ProviderConfigBase]] = {
     "mongodbatlas": MongoDBAtlasProviderConfig,
     "cloudflare": CloudflareProviderConfig,
     "vercel": VercelProviderConfig,
+    "okta": OktaProviderConfig,
+    "alibabacloud": AlibabaCloudProviderConfig,
+    "openstack": OpenStackProviderConfig,
 }

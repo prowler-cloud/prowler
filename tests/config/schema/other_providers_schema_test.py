@@ -150,3 +150,64 @@ class Test_Vercel_Schema:
             "secret_suffixes": ["_KEY", "_SECRET", "_TOKEN"],
         }
         assert _validate("vercel", raw) == raw
+
+
+class Test_Okta_Schema:
+    def test_valid_values_round_trip(self):
+        raw = {
+            "okta_max_session_idle_minutes": 15,
+            "okta_max_session_lifetime_minutes": 18 * 60,
+            "okta_admin_console_idle_timeout_max_minutes": 15,
+            "okta_user_inactivity_max_days": 35,
+            "okta_dod_approved_ca_issuer_patterns": [r"\bOU=DoD\b", r"\bOU=ECA\b"],
+        }
+        assert _validate("okta", raw) == raw
+
+    def test_zero_idle_minutes_dropped(self):
+        assert _validate("okta", {"okta_max_session_idle_minutes": 0}) == {}
+
+    def test_negative_inactivity_days_dropped(self):
+        assert _validate("okta", {"okta_user_inactivity_max_days": -1}) == {}
+
+
+class Test_AlibabaCloud_Schema:
+    def test_valid_values_round_trip(self):
+        raw = {
+            "max_cluster_check_days": 7,
+            "max_console_access_days": 90,
+            "min_log_retention_days": 365,
+            "min_rds_audit_retention_days": 180,
+        }
+        assert _validate("alibabacloud", raw) == raw
+
+    def test_zero_cluster_check_days_dropped(self):
+        assert _validate("alibabacloud", {"max_cluster_check_days": 0}) == {}
+
+    def test_console_access_below_min_dropped(self):
+        # 30 is the documented floor; anything below produces false positives.
+        assert _validate("alibabacloud", {"max_console_access_days": 29}) == {}
+
+
+class Test_OpenStack_Schema:
+    def test_valid_values_round_trip(self):
+        raw = {
+            "image_sharing_threshold": 5,
+            "secrets_ignore_patterns": ["AKIA[0-9A-Z]{16}"],
+            "detect_secrets_plugins": [
+                {"name": "Base64HighEntropyString", "limit": 4.5}
+            ],
+        }
+        assert _validate("openstack", raw) == raw
+
+    def test_zero_threshold_dropped(self):
+        assert _validate("openstack", {"image_sharing_threshold": 0}) == {}
+
+    def test_invalid_plugin_entropy_dropped(self):
+        # Reuses the AWS _DetectSecretsPlugin entropy bound (0..10).
+        assert (
+            _validate(
+                "openstack",
+                {"detect_secrets_plugins": [{"name": "X", "limit": 50}]},
+            )
+            == {}
+        )
