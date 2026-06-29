@@ -1508,9 +1508,9 @@ class TestProviderViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -2797,6 +2797,52 @@ class TestProviderGroupViewSet:
 
 @pytest.mark.django_db
 class TestProviderSecretViewSet:
+    @staticmethod
+    def _get_oraclecloud_provider(providers_fixture):
+        return next(
+            provider
+            for provider in providers_fixture
+            if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value
+        )
+
+    @staticmethod
+    def _oraclecloud_secret(**overrides):
+        secret = {
+            "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+            "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+            "key_content": "test-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+        }
+        secret.update(overrides)
+        return secret
+
+    def _create_oraclecloud_secret(
+        self,
+        authenticated_client,
+        providers_fixture,
+        secret,
+        name="OCI Secret",
+    ):
+        provider = self._get_oraclecloud_provider(providers_fixture)
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": name,
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": secret,
+                },
+                "relationships": {
+                    "provider": {"data": {"type": "providers", "id": str(provider.id)}}
+                },
+            }
+        }
+        return authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
     def test_provider_secrets_list(self, authenticated_client, provider_secret_fixture):
         response = authenticated_client.get(reverse("providersecret-list"))
         assert response.status_code == status.HTTP_200_OK
@@ -2932,9 +2978,8 @@ class TestProviderSecretViewSet:
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
-                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-key-content\n-----END RSA PRIVATE KEY-----",
+                    "key_content": "test-key-content",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
                 },
             ),
             # OCI with API key credentials (with key_file)
@@ -2946,7 +2991,18 @@ class TestProviderSecretViewSet:
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
                     "key_file": "/path/to/oci_api_key.pem",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with explicit region filters
+            (
+                Provider.ProviderChoices.ORACLECLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "test-key-content",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "regions": ["us-ashburn-1", "us-phoenix-1"],
                 },
             ),
             # OCI with API key credentials (with passphrase)
@@ -2956,9 +3012,8 @@ class TestProviderSecretViewSet:
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
-                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-encrypted-key\n-----END RSA PRIVATE KEY-----",
+                    "key_content": "test-encrypted-key",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
                     "pass_phrase": "my-secure-passphrase",
                 },
             ),
@@ -3110,6 +3165,160 @@ class TestProviderSecretViewSet:
             str(provider_secret.provider.id)
             == data["data"]["relationships"]["provider"]["data"]["id"]
         )
+
+    def test_provider_secrets_create_oraclecloud_without_regions_stores_neither(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(),
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        provider_secret = ProviderSecret.objects.get()
+        assert "region" not in provider_secret.secret
+        assert "regions" not in provider_secret.secret
+
+    def test_provider_secrets_create_oraclecloud_with_regions_stores_regions(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(regions=["us-ashburn-1", "us-phoenix-1"]),
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        provider_secret = ProviderSecret.objects.get()
+        assert provider_secret.secret["regions"] == ["us-ashburn-1", "us-phoenix-1"]
+        assert "region" not in provider_secret.secret
+
+    def test_provider_secrets_create_oraclecloud_rejects_region_and_regions(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(region="us-ashburn-1", regions=["us-phoenix-1"]),
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["status"] == "400"
+        assert errors[0]["code"] == "invalid"
+        assert errors[0]["source"]["pointer"] == "/data/attributes/secret/region"
+
+    def test_provider_secrets_update_oraclecloud_without_regions_stores_neither(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        create_response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(regions=["us-ashburn-1"]),
+        )
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {"secret": self._oraclecloud_secret()},
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert "region" not in provider_secret.secret
+        assert "regions" not in provider_secret.secret
+
+    def test_provider_secrets_update_oraclecloud_with_regions_stores_regions(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        create_response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(),
+        )
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "secret": self._oraclecloud_secret(
+                        regions=["us-ashburn-1", "us-phoenix-1"]
+                    )
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert provider_secret.secret["regions"] == ["us-ashburn-1", "us-phoenix-1"]
+        assert "region" not in provider_secret.secret
+
+    def test_provider_secrets_update_oraclecloud_rejects_region_and_regions(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        create_response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(),
+        )
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "secret": self._oraclecloud_secret(
+                        region="us-ashburn-1", regions=["us-phoenix-1"]
+                    )
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["status"] == "400"
+        assert errors[0]["code"] == "invalid"
+        assert errors[0]["source"]["pointer"] == "/data/attributes/secret/region"
 
     @pytest.mark.parametrize(
         "attributes, error_code, error_pointer",
@@ -5785,13 +5994,13 @@ class TestAttackPathsScanViewSet:
                     content_type=API_JSON_CONTENT_TYPE,
                 )
                 if i < 10:
-                    assert (
-                        response.status_code == status.HTTP_200_OK
-                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    assert response.status_code == status.HTTP_200_OK, (
+                        f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    )
                 else:
-                    assert (
-                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-                    ), f"Request {i + 1} should be throttled"
+                    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS, (
+                        f"Request {i + 1} should be throttled"
+                    )
 
     # -- Timeout simulation -------------------------------------------------------
 
@@ -5994,9 +6203,9 @@ class TestResourceViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -6588,9 +6797,9 @@ class TestResourceViewSet:
             (e for e in errors if e["source"]["parameter"] == expected_invalid_param),
             None,
         )
-        assert (
-            error is not None
-        ), f"Expected error for parameter '{expected_invalid_param}'"
+        assert error is not None, (
+            f"Expected error for parameter '{expected_invalid_param}'"
+        )
         assert error["code"] == "invalid"
         assert error["status"] == "400"  # Must be string per JSON:API spec
         assert expected_invalid_param in error["detail"]
@@ -7122,16 +7331,16 @@ class TestResourceViewSet:
         # Test with completely malformed token
         client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for malformed token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for malformed token but got {response.status_code}"
+        )
 
         # Test with empty bearer token
         client.credentials(HTTP_AUTHORIZATION="Bearer ")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for empty bearer token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for empty bearer token but got {response.status_code}"
+        )
 
 
 @pytest.mark.django_db
@@ -7266,9 +7475,9 @@ class TestFindingViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -7867,9 +8076,9 @@ class TestJWTFields:
             reverse("token-obtain"), data, format="json"
         )
 
-        assert (
-            response.status_code == status.HTTP_200_OK
-        ), f"Unexpected status code: {response.status_code}"
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Unexpected status code: {response.status_code}"
+        )
 
         access_token = response.data["attributes"]["access"]
         payload = jwt.decode(access_token, options={"verify_signature": False})
@@ -7883,23 +8092,23 @@ class TestJWTFields:
         # Verify expected fields
         for field in expected_fields:
             assert field in payload, f"The field '{field}' is not in the JWT"
-            assert (
-                payload[field] == expected_fields[field]
-            ), f"The value of '{field}' does not match"
+            assert payload[field] == expected_fields[field], (
+                f"The value of '{field}' does not match"
+            )
 
         # Verify time fields are integers
         for time_field in ["exp", "iat", "nbf"]:
             assert time_field in payload, f"The field '{time_field}' is not in the JWT"
-            assert isinstance(
-                payload[time_field], int
-            ), f"The field '{time_field}' is not an integer"
+            assert isinstance(payload[time_field], int), (
+                f"The field '{time_field}' is not an integer"
+            )
 
         # Verify identification fields are non-empty strings
         for id_field in ["jti", "sub", "tenant_id"]:
             assert id_field in payload, f"The field '{id_field}' is not in the JWT"
-            assert (
-                isinstance(payload[id_field], str) and payload[id_field]
-            ), f"The field '{id_field}' is not a valid string"
+            assert isinstance(payload[id_field], str) and payload[id_field], (
+                f"The field '{id_field}' is not a valid string"
+            )
 
 
 @pytest.mark.django_db
@@ -12658,9 +12867,9 @@ class TestIntegrationViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
@@ -14244,9 +14453,9 @@ class TestLighthouseConfigViewSet:
         )
         # Check that API key is masked with asterisks only
         masked_api_key = data["attributes"]["api_key"]
-        assert all(
-            c == "*" for c in masked_api_key
-        ), "API key should contain only asterisks"
+        assert all(c == "*" for c in masked_api_key), (
+            "API key should contain only asterisks"
+        )
 
     @pytest.mark.parametrize(
         "field_name, invalid_value",
@@ -18035,9 +18244,9 @@ class TestFindingGroupViewSet:
         assert len(data) == 2
         for item in data:
             resource = item["attributes"]["resource"]
-            assert (
-                resource["resource_group"] == "storage"
-            ), "resource_group must be 'storage'"
+            assert resource["resource_group"] == "storage", (
+                "resource_group must be 'storage'"
+            )
 
     def test_resources_name_icontains(
         self, authenticated_client, finding_groups_fixture
@@ -18351,12 +18560,12 @@ class TestFindingGroupViewSet:
         assert response_p1.status_code == status.HTTP_200_OK
         p1_check_ids = {item["id"] for item in response_p1.json()["data"]}
         # Provider1 has scan1 with 4 checks
-        assert (
-            len(p1_check_ids) == 4
-        ), f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
-        assert (
-            "cloudtrail_enabled" not in p1_check_ids
-        ), "cloudtrail_enabled should NOT be in provider1"
+        assert len(p1_check_ids) == 4, (
+            f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
+        )
+        assert "cloudtrail_enabled" not in p1_check_ids, (
+            "cloudtrail_enabled should NOT be in provider1"
+        )
 
         # Get finding groups for provider2 only
         response_p2 = authenticated_client.get(
@@ -18366,12 +18575,12 @@ class TestFindingGroupViewSet:
         assert response_p2.status_code == status.HTTP_200_OK
         p2_check_ids = {item["id"] for item in response_p2.json()["data"]}
         # Provider2 has scan2 with 1 check
-        assert (
-            len(p2_check_ids) == 1
-        ), f"Provider2 should have 1 check, got {len(p2_check_ids)}"
-        assert (
-            "cloudtrail_enabled" in p2_check_ids
-        ), "cloudtrail_enabled should be in provider2"
+        assert len(p2_check_ids) == 1, (
+            f"Provider2 should have 1 check, got {len(p2_check_ids)}"
+        )
+        assert "cloudtrail_enabled" in p2_check_ids, (
+            "cloudtrail_enabled should be in provider2"
+        )
 
     # Test provider_type filter actually filters data
     def test_finding_groups_provider_type_filter_actually_filters(
@@ -18394,9 +18603,9 @@ class TestFindingGroupViewSet:
             {"filter[inserted_at]": TODAY, "filter[provider_type]": "gcp"},
         )
         assert response_gcp.status_code == status.HTTP_200_OK
-        assert (
-            len(response_gcp.json()["data"]) == 0
-        ), "GCP filter should return 0 results"
+        assert len(response_gcp.json()["data"]) == 0, (
+            "GCP filter should return 0 results"
+        )
 
     def test_finding_groups_pagination(
         self, authenticated_client, finding_groups_fixture

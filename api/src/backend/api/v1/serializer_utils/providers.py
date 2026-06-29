@@ -296,14 +296,26 @@ from rest_framework_json_api import serializers
                     },
                     "region": {
                         "type": "string",
-                        "description": "The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).",
+                        "description": "Legacy optional single OCI region filter. "
+                        "Deprecated; use regions for explicit scan scope filters.",
+                    },
+                    "regions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional explicit OCI regions to audit. Omit to audit all "
+                        "subscribed OCI regions discovered from the tenancy.",
                     },
                     "pass_phrase": {
                         "type": "string",
                         "description": "The passphrase for the private key, if encrypted.",
                     },
                 },
-                "required": ["user", "fingerprint", "tenancy", "region"],
+                "required": ["user", "fingerprint", "tenancy"],
+                "anyOf": [
+                    {"required": ["key_file"]},
+                    {"required": ["key_content"]},
+                ],
+                "not": {"required": ["region", "regions"]},
             },
             {
                 "type": "object",

@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Controlled `402` and `403` Server Action error messages for alert seed and mutation flows [(#11629)](https://github.com/prowler-cloud/prowler/pull/11629)
 
+### 🔄 Changed
+
+- OCI provider setup no longer requires a region in the credentials form [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
+
 ### 🐞 Fixed
 
 - Attack Paths now shows distinct messages while a scan is queued, running, or building its graph — plus a separate "couldn't load scans" error — instead of always showing "No scans available" [(#11512)](https://github.com/prowler-cloud/prowler/pull/11512)
@@ -22,10 +26,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ---
 
 ## [1.30.1] (Prowler v5.30.1)
-
-### 🔄 Changed
-
-- OCI provider setup no longer requires a region in the credentials form [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
 
 ### 🐞 Fixed
 

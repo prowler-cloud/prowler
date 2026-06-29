@@ -5,6 +5,7 @@ import pytest
 from prowler.providers.oraclecloud.exceptions.exceptions import (
     OCIAuthenticationError,
     OCIInvalidConfigError,
+    OCISetUpSessionError,
 )
 from prowler.providers.oraclecloud.models import OCIIdentityInfo, OCIRegion, OCISession
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
@@ -501,3 +502,105 @@ class TestOraclecloudProviderInit:
 
         assert provider.regions == audited_regions
         assert provider.home_region == "us-ashburn-1"
+
+    def test_init_with_legacy_single_region_preserves_fallback_for_home_region(self):
+        mock_session = OCISession(
+            config={"region": "us-phoenix-1"}, signer=None, profile="DEFAULT"
+        )
+        mock_identity = OCIIdentityInfo(
+            tenancy_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            tenancy_name="test-tenancy",
+            user_id="ocid1.user.oc1..aaaaaaaexample",
+            region="us-phoenix-1",
+            profile="DEFAULT",
+            audited_regions=set(),
+            audited_compartments=[],
+        )
+
+        with (
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.setup_session",
+                return_value=mock_session,
+            ),
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.set_identity",
+                return_value=mock_identity,
+            ),
+            patch("oci.identity.IdentityClient") as mock_identity_client,
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.get_compartments_to_audit",
+                return_value=["ocid1.compartment.oc1..aaaaaaaexample"],
+            ),
+            patch("prowler.providers.common.provider.Provider.set_global_provider"),
+        ):
+            mock_identity_client.return_value.list_region_subscriptions.side_effect = (
+                Exception("discovery failed")
+            )
+
+            provider = OraclecloudProvider(
+                region="us-phoenix-1",
+                config_content={"dummy": True},
+                mutelist_content={"Accounts": {}},
+            )
+
+        assert [region.key for region in provider.regions] == ["us-phoenix-1"]
+        assert provider.home_region == "us-phoenix-1"
+
+
+class TestGetRegionsToAudit:
+    def _provider_with_identity(self):
+        provider = OraclecloudProvider.__new__(OraclecloudProvider)
+        provider._session = OCISession(
+            config={"region": "us-ashburn-1"}, signer=None, profile="DEFAULT"
+        )
+        provider._identity = OCIIdentityInfo(
+            tenancy_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            tenancy_name="test-tenancy",
+            user_id="ocid1.user.oc1..aaaaaaaexample",
+            region="us-ashburn-1",
+            profile="DEFAULT",
+            audited_regions=set(),
+            audited_compartments=[],
+        )
+        return provider
+
+    def test_regionless_scan_raises_when_region_subscription_discovery_fails(self):
+        provider = self._provider_with_identity()
+
+        with patch("oci.identity.IdentityClient") as mock_identity_client:
+            mock_identity_client.return_value.list_region_subscriptions.side_effect = (
+                Exception("discovery failed")
+            )
+
+            with pytest.raises(OCISetUpSessionError) as exc_info:
+                provider.get_regions_to_audit()
+
+        assert "Could not retrieve OCI subscribed regions" in str(exc_info.value)
+
+    def test_single_explicit_region_falls_back_when_region_subscription_discovery_fails(
+        self,
+    ):
+        provider = self._provider_with_identity()
+
+        with patch("oci.identity.IdentityClient") as mock_identity_client:
+            mock_identity_client.return_value.list_region_subscriptions.side_effect = (
+                Exception("discovery failed")
+            )
+
+            regions = provider.get_regions_to_audit("us-phoenix-1")
+
+        assert len(regions) == 1
+        assert regions[0].key == "us-phoenix-1"
+
+    def test_multiple_explicit_regions_raise_when_region_subscription_discovery_fails(
+        self,
+    ):
+        provider = self._provider_with_identity()
+
+        with patch("oci.identity.IdentityClient") as mock_identity_client:
+            mock_identity_client.return_value.list_region_subscriptions.side_effect = (
+                Exception("discovery failed")
+            )
+
+            with pytest.raises(OCISetUpSessionError):
+                provider.get_regions_to_audit({"us-ashburn-1", "us-phoenix-1"})

@@ -168,7 +168,13 @@ class OraclecloudProvider(Provider):
         # Determine the tenancy home region from the full subscription list, independent of
         # the --region filter, so tenancy-level APIs (e.g. the Audit configuration) always
         # target the home region instead of a filtered, non-home region.
-        all_subscribed_regions = self.get_regions_to_audit()
+        try:
+            all_subscribed_regions = self.get_regions_to_audit()
+        except OCISetUpSessionError:
+            if single_region and len(self._regions) == 1:
+                all_subscribed_regions = self._regions
+            else:
+                raise
         self._home_region = next(
             (region.key for region in all_subscribed_regions if region.is_home_region),
             self._regions[0].key if self._regions else "us-ashburn-1",
@@ -568,6 +574,12 @@ class OraclecloudProvider(Provider):
         """
         regions = []
 
+        explicit_regions = None
+        if isinstance(region_set, str):
+            explicit_regions = {region_set}
+        elif region_set:
+            explicit_regions = set(region_set)
+
         # Audit all subscribed regions
         try:
             # Create identity client with proper authentication handling
@@ -584,11 +596,9 @@ class OraclecloudProvider(Provider):
             ).data
 
             # Check if auditing specific region or all
-            regions_check = (
-                region_set
-                if region_set
-                else [sub.region_name for sub in region_subscriptions]
-            )
+            regions_check = explicit_regions or [
+                sub.region_name for sub in region_subscriptions
+            ]
 
             for region_sub in region_subscriptions:
                 if region_sub.region_name in regions_check:
@@ -603,11 +613,21 @@ class OraclecloudProvider(Provider):
                     )
             logger.info(f"Found {len(regions)} subscribed regions")
         except Exception as error:
+            if not explicit_regions or len(explicit_regions) != 1:
+                raise OCISetUpSessionError(
+                    original_exception=error,
+                    message=(
+                        "Could not retrieve OCI subscribed regions. "
+                        "Configure an explicit region to preserve legacy single-region scans, "
+                        "or fix the credentials/permissions required to list region subscriptions."
+                    ),
+                ) from error
+
+            config_region = next(iter(explicit_regions))
             logger.warning(
-                f"Could not retrieve region subscriptions: {error}. Using configured region."
+                f"Could not retrieve region subscriptions: {error}. "
+                f"Using explicitly configured region {config_region}."
             )
-            # Fallback to configured region
-            config_region = self._session.config.get("region", "us-ashburn-1")
             regions.append(
                 OCIRegion(
                     key=config_region,

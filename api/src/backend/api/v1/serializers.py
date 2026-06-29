@@ -1758,7 +1758,12 @@ class OracleCloudProviderSecret(serializers.Serializer):
 
         if has_regions and has_region:
             raise serializers.ValidationError(
-                "Provide either regions or legacy region, not both."
+                {"region": "Provide either regions or legacy region, not both."}
+            )
+
+        if "key_file" not in attrs and "key_content" not in attrs:
+            raise serializers.ValidationError(
+                {"key_file": "Either key_file or key_content must be provided."}
             )
 
         if has_regions:

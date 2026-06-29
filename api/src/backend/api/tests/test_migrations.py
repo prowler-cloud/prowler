@@ -38,7 +38,7 @@ class TestRemoveOraclecloudSecretRegionsMigration:
             },
         )
         migration = import_module(
-            "api.migrations.0096_remove_oraclecloud_secret_regions"
+            "api.migrations.0097_remove_oraclecloud_secret_regions"
         )
         schema_editor = SimpleNamespace(connection=SimpleNamespace(alias="default"))
 
