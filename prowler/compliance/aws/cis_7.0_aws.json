@@ -1406,6 +1406,7 @@
       "Id": "6.1.1",
       "Description": "Ensure EBS volume encryption is enabled in all regions",
       "Checks": [
+        "ec2_ebs_default_encryption",
         "ec2_ebs_volume_encryption"
       ],
       "Attributes": [
