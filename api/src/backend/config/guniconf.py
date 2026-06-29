@@ -101,7 +101,10 @@ def post_fork(_server, worker):
     try:
         graph_database.close_driver()
     except Exception:  # pragma: no cover - best-effort cleanup
-        pass
+        gunicorn_logger.debug(
+            f"Failed to close inherited Neo4j driver in post_fork for worker pid={worker.pid}",
+            exc_info=True,
+        )
     graph_database.init_driver()
     gunicorn_logger.info(f"Attack-paths drivers initialized for worker {worker.pid}")
 

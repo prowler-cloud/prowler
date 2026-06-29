@@ -272,6 +272,24 @@ AWS_NORMALIZED_LISTS: list[NormalizedList] = [
         "HAS_SECURITY_GROUPS",
     ),
     NormalizedList(
+        "AWSVpcEndpoint",
+        "route_table_ids",
+        "AWSVpcEndpointRouteTableIdsItem",
+        "HAS_ROUTE_TABLE_IDS",
+    ),
+    NormalizedList(
+        "AWSVpcEndpoint",
+        "network_interface_ids",
+        "AWSVpcEndpointNetworkInterfaceIdsItem",
+        "HAS_NETWORK_INTERFACE_IDS",
+    ),
+    NormalizedList(
+        "AWSVpcEndpoint",
+        "subnet_ids",
+        "AWSVpcEndpointSubnetIdsItem",
+        "HAS_SUBNET_IDS",
+    ),
+    NormalizedList(
         "ELBListener", "policy_names", "ELBListenerPolicyNamesItem", "HAS_POLICY_NAMES"
     ),
     # CloudFront / Route53 / CloudWatch / CloudTrail
