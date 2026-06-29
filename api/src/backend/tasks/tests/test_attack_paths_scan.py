@@ -1835,6 +1835,12 @@ def _make_session_ctx(session, call_order=None, name=None):
 
 
 class TestSyncNodes:
+    def test_iter_sink_batches_rejects_zero_batch_size(self):
+        with pytest.raises(
+            ValueError, match="Sink batch size must be greater than zero"
+        ):
+            list(sync_module._iter_sink_batches([], batch_size=0))
+
     def test_sync_nodes_passes_isolation_labels_to_sink(self):
         row = {
             "internal_id": 1,

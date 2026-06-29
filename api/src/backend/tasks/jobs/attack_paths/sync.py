@@ -249,7 +249,7 @@ def _iter_sink_batches(
     batch_size: int | None = None,
 ) -> Iterator[list[dict[str, Any]]]:
     """Yield final sink write batches after source rows have been transformed."""
-    batch_size = batch_size or SYNC_BATCH_SIZE
+    batch_size = SYNC_BATCH_SIZE if batch_size is None else batch_size
     if batch_size <= 0:
         raise ValueError("Sink batch size must be greater than zero")
 
