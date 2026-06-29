@@ -950,6 +950,7 @@ export class ProvidersPage extends BasePage {
     try {
       await Promise.race([
         launchStepReady.waitFor({ state: "visible", timeout }),
+        this.wizardModal.waitFor({ state: "hidden", timeout }),
         connectionError.waitFor({ state: "visible", timeout }),
       ]);
     } catch {
@@ -961,6 +962,10 @@ export class ProvidersPage extends BasePage {
       throw new Error(
         `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
       );
+    }
+
+    if (await this.wizardModal.isHidden().catch(() => false)) {
+      return;
     }
 
     await expect(launchStepReady).toBeVisible({ timeout });
@@ -986,19 +991,38 @@ export class ProvidersPage extends BasePage {
       "div.border-border-error p.text-text-error-primary",
     );
 
-    // The no-launch provider tests only need to know that the provider reached
-    // the post-connection step. Do not depend exclusively on scan launch/schedule
-    // actions, because those controls are owned by the launch flow and can be
-    // hidden while scan options load.
-    await expect(
-      checkConnectionButton.or(launchStepReady).or(connectionError).first(),
-    ).toBeVisible({ timeout });
+    // The no-launch provider tests only need to know that the provider was saved
+    // or reached the post-connection step. Some providers close the wizard right
+    // after authentication; scan execution itself is covered by scans.spec.ts.
+    try {
+      await Promise.race([
+        checkConnectionButton
+          .or(launchStepReady)
+          .or(connectionError)
+          .first()
+          .waitFor({ state: "visible", timeout }),
+        this.wizardModal.waitFor({ state: "hidden", timeout }),
+      ]);
+    } catch {
+      // Continue and inspect visible state below.
+    }
 
     if (await connectionError.isVisible().catch(() => false)) {
       const errorText = await connectionError.textContent();
       throw new Error(
         `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
       );
+    }
+
+    if (await this.wizardModal.isHidden().catch(() => false)) {
+      await this.verifyLoadProviderPageAfterNewProvider();
+
+      const providerExists =
+        await this.verifySingleRowForProviderUID(providerUID);
+      if (!providerExists) {
+        throw new Error(`Provider with UID ${providerUID} was not found.`);
+      }
+      return;
     }
 
     // Provider-add E2E validates credentials and provider persistence only.
@@ -1011,9 +1035,11 @@ export class ProvidersPage extends BasePage {
       await expect(launchStepReady).toBeVisible({ timeout });
     }
 
-    await this.wizardModal
-      .getByRole("button", { name: "Close", exact: true })
-      .click();
+    if (await this.wizardModal.isVisible().catch(() => false)) {
+      await this.wizardModal
+        .getByRole("button", { name: "Close", exact: true })
+        .click();
+    }
     await expect(this.wizardModal).not.toBeVisible({ timeout: 30000 });
     await this.page.waitForURL(/\/providers/, { timeout: 30000 });
     await this.verifyLoadProviderPageAfterNewProvider();
