@@ -6,27 +6,30 @@ from prowler.providers.m365.services.entra.entra_service import (
     ConditionalAccessPolicyState,
 )
 
-ALL_GROUPS_PROTECTED = (
-    "All groups referenced by enabled or report-only Conditional Access Policies "
-    "are management-restricted or role-assignable."
-)
-
 
 class entra_conditional_access_policy_groups_management_restricted(Check):
-    """Check Conditional Access group scopes are protected against broad management."""
+    """Ensure Conditional Access group scopes are protected against broad management.
+
+    Security groups referenced by enabled or report-only Conditional Access
+    policies (in ``includeGroups`` or ``excludeGroups``) are privileged control
+    points: anyone able to change their membership can silently bypass or weaken
+    a policy. This check reports one finding per referenced group.
+
+    - PASS: The group is management-restricted or role-assignable, or no enabled
+      or report-only policy references any group.
+    - FAIL: The group is neither management-restricted nor role-assignable.
+    - MANUAL: The group reference no longer resolves in Microsoft Entra ID and
+      must be verified or removed.
+    """
 
     def execute(self) -> list[CheckReportM365]:
+        """Execute the check logic.
+
+        Returns:
+            A list of reports, one per group referenced by an enabled or
+            report-only Conditional Access policy.
+        """
         findings = []
-        report = CheckReportM365(
-            metadata=self.metadata(),
-            resource={},
-            resource_name="Conditional Access Policies",
-            resource_id="conditionalAccessPolicies",
-        )
-        report.status = "PASS"
-        report.status_extended = (
-            "No enabled or report-only Conditional Access Policy references groups."
-        )
 
         group_usage = defaultdict(lambda: {"include": [], "exclude": []})
 
@@ -34,7 +37,7 @@ class entra_conditional_access_policy_groups_management_restricted(Check):
             if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
-            user_conditions = getattr(policy.conditions, "user_conditions", None)
+            user_conditions = policy.conditions.user_conditions
             if not user_conditions:
                 continue
 
@@ -44,79 +47,84 @@ class entra_conditional_access_policy_groups_management_restricted(Check):
                 group_usage[group_id]["exclude"].append(policy)
 
         if not group_usage:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Conditional Access Policies",
+                resource_id="conditionalAccessPolicies",
+            )
+            report.status = "PASS"
+            report.status_extended = (
+                "No enabled or report-only Conditional Access Policy references "
+                "groups."
+            )
             findings.append(report)
             return findings
 
         groups_by_id = {group.id: group for group in entra_client.groups}
-        unprotected_groups = []
-        unresolved_group_ids = []
 
         for group_id in sorted(group_usage):
+            usage = self._policy_usage(group_usage[group_id])
             group = groups_by_id.get(group_id)
+
             if not group:
-                unresolved_group_ids.append(group_id)
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource={},
+                    resource_name=group_id,
+                    resource_id=group_id,
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Group {group_id} referenced by Conditional Access Policies "
+                    f"could not be resolved in Microsoft Entra ID; verify the group "
+                    f"exists or remove the stale reference ({usage})."
+                )
+                findings.append(report)
                 continue
 
-            if not (group.is_management_restricted or group.is_assignable_to_role):
-                unprotected_groups.append(group)
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=group,
+                resource_name=group.name,
+                resource_id=group.id,
+            )
 
-        if not unprotected_groups and not unresolved_group_ids:
-            report.status_extended = ALL_GROUPS_PROTECTED
+            if group.is_management_restricted or group.is_assignable_to_role:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Group {group.name} ({group.id}) referenced by Conditional "
+                    f"Access Policies is management-restricted or role-assignable."
+                )
+            else:
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Group {group.name} ({group.id}) referenced by Conditional "
+                    f"Access Policies is neither management-restricted nor "
+                    f"role-assignable ({usage})."
+                )
+
             findings.append(report)
-            return findings
 
-        report.status = "FAIL"
-        report.resource = {
-            "unprotected_groups": [group.dict() for group in unprotected_groups],
-            "unresolved_group_ids": unresolved_group_ids,
-        }
-        report.status_extended = self._build_status_extended(
-            unprotected_groups,
-            unresolved_group_ids,
-            group_usage,
-        )
-
-        findings.append(report)
         return findings
 
     @staticmethod
-    def _build_status_extended(
-        unprotected_groups,
-        unresolved_group_ids,
-        group_usage,
-    ) -> str:
-        findings = []
-        policy_names = (
-            entra_conditional_access_policy_groups_management_restricted._policy_names
-        )
+    def _policy_usage(usage) -> str:
+        """Render the include/exclude policy usage of a group as a string.
 
-        for group in unprotected_groups:
-            include_policies = policy_names(group_usage[group.id]["include"])
-            exclude_policies = policy_names(group_usage[group.id]["exclude"])
-            findings.append(
-                f"{group.name} ({group.id}) is not management-restricted or "
-                f"role-assignable; include policies: {include_policies}; "
-                f"exclude policies: {exclude_policies}"
-            )
+        Args:
+            usage: Mapping with ``include`` and ``exclude`` lists of policies.
 
-        for group_id in unresolved_group_ids:
-            include_policies = policy_names(group_usage[group_id]["include"])
-            exclude_policies = policy_names(group_usage[group_id]["exclude"])
-            findings.append(
-                f"unresolved group {group_id}; "
-                f"include policies: {include_policies}; "
-                f"exclude policies: {exclude_policies}"
-            )
+        Returns:
+            A string such as ``"include policies: A; exclude policies: B"``.
+        """
+
+        def policy_names(policies):
+            if not policies:
+                return "none"
+            return ", ".join(sorted({policy.display_name for policy in policies}))
 
         return (
-            "Conditional Access Policies reference unprotected or unresolved groups: "
-            + " | ".join(findings)
-            + "."
+            f"include policies: {policy_names(usage['include'])}; "
+            f"exclude policies: {policy_names(usage['exclude'])}"
         )
-
-    @staticmethod
-    def _policy_names(policies) -> str:
-        if not policies:
-            return "none"
-
-        return ", ".join(sorted({policy.display_name for policy in policies}))

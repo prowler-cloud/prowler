@@ -1,6 +1,3 @@
-import importlib
-import sys
-from types import SimpleNamespace
 from unittest import mock
 from uuid import uuid4
 
@@ -22,14 +19,10 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
-CHECK_MODULE_PATH = (
+CHECK_MODULE = (
     "prowler.providers.m365.services.entra."
     "entra_conditional_access_policy_groups_management_restricted."
-    "entra_conditional_access_policy_groups_management_restricted"
-)
-ALL_GROUPS_PROTECTED = (
-    "All groups referenced by enabled or report-only Conditional Access Policies "
-    "are management-restricted or role-assignable."
+    "entra_conditional_access_policy_groups_management_restricted.entra_client"
 )
 
 
@@ -80,39 +73,35 @@ def _make_policy(
     )
 
 
-def _execute_check(entra_client):
-    entra_client_module = SimpleNamespace(entra_client=entra_client)
-    with (
-        mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_m365_provider(),
-        ),
-        mock.patch.dict(
-            sys.modules,
-            {
-                "prowler.providers.m365.services.entra.entra_client": (
-                    entra_client_module
-                )
-            },
-        ),
-    ):
-        module = importlib.import_module(CHECK_MODULE_PATH)
-        module.entra_client = entra_client
-        check = module.entra_conditional_access_policy_groups_management_restricted()
-        return check.execute()
+def _entra_client_mock():
+    client = mock.MagicMock()
+    client.audited_tenant = "audited_tenant"
+    client.audited_domain = DOMAIN
+    client.groups = []
+    client.conditional_access_policies = {}
+    return client
 
 
 class Test_entra_conditional_access_policy_groups_management_restricted:
     def test_no_enabled_or_report_only_policy_references_groups(self):
-        entra_client = mock.MagicMock
-        entra_client.audited_tenant = "audited_tenant"
-        entra_client.audited_domain = DOMAIN
-        entra_client.groups = []
+        entra_client = _entra_client_mock()
         entra_client.conditional_access_policies = {
             "policy-1": _make_policy(state=ConditionalAccessPolicyState.DISABLED)
         }
 
-        result = _execute_check(entra_client)
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_groups_management_restricted.entra_conditional_access_policy_groups_management_restricted import (
+                entra_conditional_access_policy_groups_management_restricted,
+            )
+
+            check = entra_conditional_access_policy_groups_management_restricted()
+            result = check.execute()
 
         assert len(result) == 1
         assert result[0].status == "PASS"
@@ -125,15 +114,24 @@ class Test_entra_conditional_access_policy_groups_management_restricted:
         assert result[0].location == "global"
 
     def test_policy_without_user_conditions_is_treated_as_no_referenced_groups(self):
-        entra_client = mock.MagicMock
-        entra_client.audited_tenant = "audited_tenant"
-        entra_client.audited_domain = DOMAIN
-        entra_client.groups = []
+        entra_client = _entra_client_mock()
         policy = _make_policy(display_name="Policy Without User Conditions")
         policy.conditions.user_conditions = None
         entra_client.conditional_access_policies = {"policy-1": policy}
 
-        result = _execute_check(entra_client)
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_groups_management_restricted.entra_conditional_access_policy_groups_management_restricted import (
+                entra_conditional_access_policy_groups_management_restricted,
+            )
+
+            check = entra_conditional_access_policy_groups_management_restricted()
+            result = check.execute()
 
         assert len(result) == 1
         assert result[0].status == "PASS"
@@ -143,9 +141,7 @@ class Test_entra_conditional_access_policy_groups_management_restricted:
         )
 
     def test_all_referenced_groups_are_protected(self):
-        entra_client = mock.MagicMock
-        entra_client.audited_tenant = "audited_tenant"
-        entra_client.audited_domain = DOMAIN
+        entra_client = _entra_client_mock()
         entra_client.groups = [
             Group(
                 id="group-1",
@@ -170,16 +166,30 @@ class Test_entra_conditional_access_policy_groups_management_restricted:
             )
         }
 
-        result = _execute_check(entra_client)
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_groups_management_restricted.entra_conditional_access_policy_groups_management_restricted import (
+                entra_conditional_access_policy_groups_management_restricted,
+            )
 
-        assert len(result) == 1
-        assert result[0].status == "PASS"
-        assert result[0].status_extended == ALL_GROUPS_PROTECTED
+            check = entra_conditional_access_policy_groups_management_restricted()
+            result = check.execute()
+
+        assert len(result) == 2
+        assert {report.status for report in result} == {"PASS"}
+        assert {report.resource_id for report in result} == {"group-1", "group-2"}
+        for report in result:
+            assert "is management-restricted or role-assignable" in (
+                report.status_extended
+            )
 
     def test_unprotected_group_fails_with_include_and_exclude_usage(self):
-        entra_client = mock.MagicMock
-        entra_client.audited_tenant = "audited_tenant"
-        entra_client.audited_domain = DOMAIN
+        entra_client = _entra_client_mock()
         entra_client.groups = [
             Group(
                 id="group-1",
@@ -200,24 +210,37 @@ class Test_entra_conditional_access_policy_groups_management_restricted:
             ),
         }
 
-        result = _execute_check(entra_client)
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_groups_management_restricted.entra_conditional_access_policy_groups_management_restricted import (
+                entra_conditional_access_policy_groups_management_restricted,
+            )
+
+            check = entra_conditional_access_policy_groups_management_restricted()
+            result = check.execute()
 
         assert len(result) == 1
         assert result[0].status == "FAIL"
-        assert "Unprotected Group (group-1)" in result[0].status_extended
+        assert result[0].resource_id == "group-1"
+        assert result[0].resource_name == "Unprotected Group"
+        assert "Group Unprotected Group (group-1)" in result[0].status_extended
+        assert (
+            "neither management-restricted nor role-assignable"
+            in result[0].status_extended
+        )
         assert "include policies: Include Policy" in result[0].status_extended
         assert (
             "exclude policies: Report Only Exclusion Policy"
             in result[0].status_extended
         )
-        assert result[0].resource["unprotected_groups"][0]["id"] == "group-1"
-        assert result[0].resource["unresolved_group_ids"] == []
 
-    def test_unresolved_group_reference_fails(self):
-        entra_client = mock.MagicMock
-        entra_client.audited_tenant = "audited_tenant"
-        entra_client.audited_domain = DOMAIN
-        entra_client.groups = []
+    def test_unresolved_group_reference_is_manual(self):
+        entra_client = _entra_client_mock()
         entra_client.conditional_access_policies = {
             "policy-1": _make_policy(
                 excluded_groups=["deleted-group"],
@@ -225,11 +248,22 @@ class Test_entra_conditional_access_policy_groups_management_restricted:
             )
         }
 
-        result = _execute_check(entra_client)
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_groups_management_restricted.entra_conditional_access_policy_groups_management_restricted import (
+                entra_conditional_access_policy_groups_management_restricted,
+            )
+
+            check = entra_conditional_access_policy_groups_management_restricted()
+            result = check.execute()
 
         assert len(result) == 1
-        assert result[0].status == "FAIL"
-        assert "unresolved group deleted-group" in result[0].status_extended
+        assert result[0].status == "MANUAL"
+        assert result[0].resource_id == "deleted-group"
+        assert "could not be resolved" in result[0].status_extended
         assert "exclude policies: Policy With Stale Group" in result[0].status_extended
-        assert result[0].resource["unprotected_groups"] == []
-        assert result[0].resource["unresolved_group_ids"] == ["deleted-group"]
