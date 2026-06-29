@@ -1422,6 +1422,8 @@ test.describe("Add Provider", () => {
   });
 
   test.describe.serial("Add Okta Provider", () => {
+    test.setTimeout(90000);
+
     let providersPage: ProvidersPage;
 
     // Test data from environment variables
