@@ -185,6 +185,14 @@
         "securityhub_enabled",
         "vpc_flow_logs_enabled",
         "opensearch_service_domains_audit_logging_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

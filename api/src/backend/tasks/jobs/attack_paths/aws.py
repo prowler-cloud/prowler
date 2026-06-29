@@ -6,6 +6,7 @@ from typing import Any
 
 import aioboto3
 import boto3
+import botocore
 import neo4j
 from api.models import (
     AttackPathsScan as ProwlerAPIAttackPathsScan,
@@ -73,13 +74,28 @@ def start_aws_ingestion(
     # Adding an extra field
     common_job_parameters["AWS_ID"] = prowler_api_provider.uid
 
-    cartography_aws._autodiscover_accounts(
-        neo4j_session,
-        boto3_session,
-        prowler_api_provider.uid,
-        cartography_config.update_tag,
-        common_job_parameters,
-    )
+    # AWS Organizations account autodiscovery. Inlined from Cartography's removed
+    # `_autodiscover_accounts` (deleted in `0.137.0`), as `load_aws_accounts` is still public.
+    try:
+        org_client = boto3_session.client("organizations")
+        paginator = org_client.get_paginator("list_accounts")
+        discovered = []
+        for page in paginator.paginate():
+            discovered.extend(page["Accounts"])
+        active_accounts = {
+            a["Name"]: a["Id"] for a in discovered if a["Status"] == "ACTIVE"
+        }
+        cartography_aws.organizations.load_aws_accounts(
+            neo4j_session,
+            active_accounts,
+            cartography_config.update_tag,
+            common_job_parameters,
+        )
+    except botocore.exceptions.ClientError:
+        logger.warning(
+            f"Account {prowler_api_provider.uid} lacks permissions for AWS "
+            "Organizations autodiscovery."
+        )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 4)
 
     failed_syncs = sync_aws_account(
@@ -277,7 +293,7 @@ def sync_aws_account(
     sync_args: dict[str, Any],
     attack_paths_scan: ProwlerAPIAttackPathsScan,
 ) -> dict[str, str]:
-    current_progress = 4  # `cartography_aws._autodiscover_accounts`
+    current_progress = 4  # AWS Organizations account autodiscovery
     max_progress = (
         87  # `cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"]` - 1
     )

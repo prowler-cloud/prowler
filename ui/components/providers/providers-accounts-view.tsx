@@ -28,6 +28,7 @@ import {
   getTourTargetSelector,
 } from "@/lib/tours/use-driver-tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
+import type { ProviderGroup } from "@/types/components";
 import type { ProvidersTableRow } from "@/types/providers-table";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
@@ -51,6 +52,7 @@ interface ProvidersAccountsViewProps {
   filters: FilterOption[];
   metadata?: MetaDataProps;
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   rows: ProvidersTableRow[];
   /** Cloud overlay seam for provider-creation scan launch. */
   scanScheduleCapability?: ScanScheduleCapability;
@@ -62,6 +64,7 @@ export function ProvidersAccountsView({
   filters,
   metadata,
   providers,
+  providerGroups = [],
   rows,
   scanScheduleCapability,
   isScanLimitReached,
@@ -141,6 +144,7 @@ export function ProvidersAccountsView({
           <ProvidersFilters
             filters={filters}
             providers={providers}
+            providerGroups={providerGroups}
             actions={
               <>
                 <MutedFindingsConfigButton />

@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { FilterType } from "@/types/filters";
+import { FILTER_FIELD } from "@/types/filters";
 
 import { AccountsSelector } from "./accounts-selector";
 
@@ -189,7 +189,7 @@ describe("AccountsSelector", () => {
     render(
       <AccountsSelector
         providers={providers}
-        filterKey={FilterType.PROVIDER_UID}
+        filterKey={FILTER_FIELD.PROVIDER_UID}
       />,
     );
 
