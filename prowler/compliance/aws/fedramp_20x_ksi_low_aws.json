@@ -37,6 +37,14 @@
         "ssm_managed_compliant_patching",
         "ssm_managed_instance_compliance_association_compliant",
         "ssm_managed_instance_compliance_patch_compliant"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -146,6 +154,20 @@
         "inspector2_active_findings_exist",
         "securityhub_enabled",
         "sns_topics_kms_encryption_at_rest_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -205,6 +227,14 @@
         "resourceexplorer_indexes_found",
         "ssm_managed_instance_compliance_association_compliant",
         "trustedadvisor_premium_support_plan_subscribed"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -349,6 +379,14 @@
         "config_recorder_all_regions_enabled",
         "inspector2_is_enabled",
         "resourceexplorer_indexes_found"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     }
   ]
