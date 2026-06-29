@@ -936,9 +936,11 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  private async waitForProviderLaunchChoice(timeout = 30000): Promise<void> {
-    const launchAction = this.page
-      .getByRole("button", { name: "Save", exact: true })
+  private async waitForProviderReadyToClose(): Promise<void> {
+    const launchStepReady = this.page
+      .getByText("Account Connected!", { exact: true })
+      .or(this.page.getByText("Loading scan options...", { exact: true }))
+      .or(this.page.getByRole("button", { name: "Save", exact: true }))
       .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
     const connectionError = this.page.locator(
       "div.border-border-error p.text-text-error-primary",
@@ -946,8 +948,8 @@ export class ProvidersPage extends BasePage {
 
     try {
       await Promise.race([
-        launchAction.waitFor({ state: "visible", timeout }),
-        connectionError.waitFor({ state: "visible", timeout }),
+        launchStepReady.waitFor({ state: "visible", timeout: 30000 }),
+        connectionError.waitFor({ state: "visible", timeout: 30000 }),
       ]);
     } catch {
       // Continue and inspect visible state below.
@@ -960,12 +962,11 @@ export class ProvidersPage extends BasePage {
       );
     }
 
-    await expect(launchAction).toBeVisible({ timeout });
+    await expect(launchStepReady).toBeVisible({ timeout: 30000 });
   }
 
   async completeProviderConnectionWithoutLaunchingScan(
     providerUID: string,
-    timeout = 30000,
   ): Promise<void> {
     await this.verifyWizardModalOpen();
 
@@ -973,20 +974,22 @@ export class ProvidersPage extends BasePage {
       name: "Check connection",
       exact: true,
     });
-    const launchAction = this.page
-      .getByRole("button", { name: "Save", exact: true })
+    const launchStepReady = this.page
+      .getByText("Account Connected!", { exact: true })
+      .or(this.page.getByText("Loading scan options...", { exact: true }))
+      .or(this.page.getByRole("button", { name: "Save", exact: true }))
       .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
     const connectionError = this.page.locator(
       "div.border-border-error p.text-text-error-primary",
     );
 
-    // The test-connection step renders its footer action only after an async
-    // load (canSubmit gate). Wait for the footer to settle on an actionable
-    // state (or surface a connection error) instead of reading visibility on
-    // the first frame, which races the render and falls through.
+    // The no-launch provider tests only need to know that the provider reached
+    // the post-connection step. Do not depend exclusively on scan launch/schedule
+    // actions, because those controls are owned by the launch flow and can be
+    // hidden while scan options load.
     await expect(
-      checkConnectionButton.or(launchAction).or(connectionError),
-    ).toBeVisible({ timeout });
+      checkConnectionButton.or(launchStepReady).or(connectionError),
+    ).toBeVisible({ timeout: 30000 });
 
     if (await connectionError.isVisible().catch(() => false)) {
       const errorText = await connectionError.textContent();
@@ -1000,9 +1003,9 @@ export class ProvidersPage extends BasePage {
     // scan execution itself is covered by scans.spec.ts.
     if (await checkConnectionButton.isVisible().catch(() => false)) {
       await checkConnectionButton.click();
-      await this.waitForProviderLaunchChoice(timeout);
+      await this.waitForProviderReadyToClose();
     } else {
-      await expect(launchAction).toBeVisible({ timeout });
+      await expect(launchStepReady).toBeVisible({ timeout: 30000 });
     }
 
     await this.wizardModal

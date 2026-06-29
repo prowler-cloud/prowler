@@ -1430,8 +1430,6 @@ test.describe("Add Provider", () => {
     const orgDomain = (process.env.E2E_OKTA_DOMAIN ?? "").toLowerCase();
     const clientId = process.env.E2E_OKTA_CLIENT_ID ?? "";
     const privateKeyB64 = process.env.E2E_OKTA_BASE64_PRIVATE_KEY ?? "";
-    const oktaProviderTestTimeout = 150_000;
-    const oktaProviderConnectionTimeout = 60_000;
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1459,8 +1457,6 @@ test.describe("Add Provider", () => {
         ],
       },
       async ({ page }) => {
-        test.setTimeout(oktaProviderTestTimeout);
-
         // The Okta app private key is PEM-encoded (multi-line), so it is passed
         // base64-encoded via the environment variable and decoded here.
         const privateKey = Buffer.from(privateKeyB64, "base64").toString(
@@ -1505,7 +1501,6 @@ test.describe("Add Provider", () => {
         // Confirm the provider connection without launching a scan
         await providersPage.completeProviderConnectionWithoutLaunchingScan(
           orgDomain,
-          oktaProviderConnectionTimeout,
         );
       },
     );

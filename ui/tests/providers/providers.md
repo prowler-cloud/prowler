@@ -1092,7 +1092,7 @@
 - Environment variables configured: E2E_OKTA_DOMAIN, E2E_OKTA_CLIENT_ID, E2E_OKTA_BASE64_PRIVATE_KEY
 - Remove any existing provider with the same Org Domain before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Org Domain not to be already registered beforehand.
-- Okta provider authentication can take longer than the default Playwright test timeout in CI, so the test allows extra time for the provider connection step.
+- The test validates provider creation and connection only; scan execution is covered by the Scans E2E suite.
 
 ### Flow Steps
 
