@@ -588,6 +588,68 @@
           "DefaultValue": "The following extensions are blocked by default: ace, ani, apk, app, appx, arj, bat, cab, cmd, com, deb, dex, dll, docm, elf, exe, hta, img, iso, jar, jnlp, kext, lha, lib, library, lnk, lzh, macho, msc, msi, msix, msp, mst, pif, ppa, ppam, reg, rev, scf, scr, sct, sys, uif, vb, vbe, vbs, vxd, wsc, wsf, wsh, xll, xz, z",
           "References": "https://learn.microsoft.com/en-us/powershell/module/exchange/get-malwarefilterpolicy?view=exchange-ps:https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/anti-malware-policies-configure?view=o365-worldwide:https://learn.microsoft.com/en-us/office/compatibility/office-file-format-reference"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "ConfigKey": "recommended_blocked_file_types",
+          "Operator": "superset",
+          "Value": [
+            "ace",
+            "ani",
+            "apk",
+            "app",
+            "appx",
+            "arj",
+            "bat",
+            "cab",
+            "cmd",
+            "com",
+            "deb",
+            "dex",
+            "dll",
+            "docm",
+            "elf",
+            "exe",
+            "hta",
+            "img",
+            "iso",
+            "jar",
+            "jnlp",
+            "kext",
+            "lha",
+            "lib",
+            "library",
+            "lnk",
+            "lzh",
+            "macho",
+            "msc",
+            "msi",
+            "msix",
+            "msp",
+            "mst",
+            "pif",
+            "ppa",
+            "ppam",
+            "reg",
+            "rev",
+            "scf",
+            "scr",
+            "sct",
+            "sys",
+            "uif",
+            "vb",
+            "vbe",
+            "vbs",
+            "vxd",
+            "wsc",
+            "wsf",
+            "wsh",
+            "xll",
+            "xz",
+            "z"
+          ]
+        }
       ]
     },
     {
@@ -2380,6 +2442,14 @@
           "DefaultValue": "AuditEnabled: True for all mailboxes except below: - Resource Mailboxes - Public Folder Mailboxes - DiscoverySearch Mailbox AuditAdmin: ApplyRecord, Create, HardDelete, MailItemsAccessed, MoveToDeletedItems, Send, SendAs, SendOnBehalf, SoftDelete, Update, UpdateCalendarDelegation, UpdateFolderPermissions, UpdateInboxRules AuditDelegate: ApplyRecord, Create, HardDelete, MailItemsAccessed, MoveToDeletedItems, SendAs, SendOnBehalf, SoftDelete, Update, UpdateFolderPermissions, UpdateInboxRules AuditOwner: ApplyRecord, HardDelete, MailItemsAccessed, MoveToDeletedItems, Send, SoftDelete, Update, UpdateCalendarDelegation, UpdateFolderPermissions, UpdateInboxRules",
           "References": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "exchange_user_mailbox_auditing_enabled",
+          "ConfigKey": "audit_log_age",
+          "Operator": "gte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -2562,6 +2632,14 @@
           "AdditionalInformation": "",
           "DefaultValue": "MailTipsAllTipsEnabled: True MailTipsExternalRecipientsTipsEnabled: False MailTipsGroupMetricsEnabled: True MailTipsLargeAudienceThreshold: 25",
           "References": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/mailtips/mailtips:https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "exchange_organization_mailtips_enabled",
+          "ConfigKey": "recommended_mailtips_large_audience_threshold",
+          "Operator": "lte",
+          "Value": 25
         }
       ]
     },
