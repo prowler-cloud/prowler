@@ -27,10 +27,6 @@ export type FindingTriageUpdateHandler = (
   input: UpdateFindingTriageInput,
 ) => void | Promise<void>;
 
-const MUTELIST_INFO_TITLE = "Mutelist information";
-const MUTELIST_INFO_COPY =
-  "This finding will be muted through the existing Mutelist flow.";
-
 const TRIAGE_STATUS_TONE = {
   open: "warning",
   under_review: "attention",
@@ -54,6 +50,10 @@ export const isMutelistShortcutStatus = (
     (value) => value === status,
   );
 };
+
+const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
+const MUTELIST_CONFIRMATION_COPY =
+  "Changing to this triage status will mute the finding.";
 
 export function FindingTriageStatusDot({
   status,
@@ -128,11 +128,10 @@ type FindingTriageStatusControlProps =
 export function FindingTriageStatusControl(
   props: FindingTriageStatusControlProps,
 ) {
-  const [selectedStatus, setSelectedStatus] = useState(props.triage.status);
-  const [pendingMutelistStatus, setPendingMutelistStatus] =
-    useState<FindingTriageManualStatus | null>(null);
   const [tableUpdateError, setTableUpdateError] = useState<string | null>(null);
   const [isTableUpdating, setIsTableUpdating] = useState(false);
+  const [pendingShortcutStatus, setPendingShortcutStatus] =
+    useState<FindingTriageManualStatus | null>(null);
   const triage = props.triage;
 
   if (props.origin === FINDING_TRIAGE_ORIGIN.MODAL) {
@@ -149,14 +148,12 @@ export function FindingTriageStatusControl(
     triage.canEdit && Boolean(props.onTriageUpdateAction) && !isTableUpdating;
 
   const applyTableStatus = async (status: FindingTriageManualStatus) => {
-    if (!props.onTriageUpdateAction) {
+    if (!props.onTriageUpdateAction || status === triage.status) {
       return;
     }
 
-    const previousStatus = selectedStatus;
     setTableUpdateError(null);
     setIsTableUpdating(true);
-    setSelectedStatus(status);
 
     try {
       await props.onTriageUpdateAction({
@@ -165,49 +162,40 @@ export function FindingTriageStatusControl(
         triageId: triage.triageId,
         notesCount: triage.notesCount,
         status,
+        previousStatus: triage.status,
+        isMuted: triage.isMuted,
         origin: "table",
       });
     } catch {
-      setSelectedStatus(previousStatus);
       setTableUpdateError("Could not update triage status.");
     } finally {
       setIsTableUpdating(false);
     }
   };
 
+  const shouldConfirmMute = (status: FindingTriageManualStatus) =>
+    !triage.isMuted &&
+    isMutelistShortcutStatus(status) &&
+    !isMutelistShortcutStatus(triage.status);
+
   const handleTableValueChange = (status: FindingTriageManualStatus) => {
-    if (!props.onTriageUpdateAction) {
+    if (!props.onTriageUpdateAction || status === triage.status) {
       return;
     }
 
-    if (isMutelistShortcutStatus(status)) {
-      setPendingMutelistStatus(status);
+    if (shouldConfirmMute(status)) {
+      setPendingShortcutStatus(status);
       return;
     }
 
     void applyTableStatus(status);
   };
 
-  const handleMutelistOpenChange = (open: boolean) => {
-    if (!open) {
-      setPendingMutelistStatus(null);
-    }
-  };
-
-  const handleConfirmMutelistStatus = () => {
-    if (!pendingMutelistStatus) {
-      return;
-    }
-
-    void applyTableStatus(pendingMutelistStatus);
-    setPendingMutelistStatus(null);
-  };
-
   return (
     <>
       <TriageStatusPicker
         disabled={!canMutateFromTable}
-        value={selectedStatus}
+        value={triage.status}
         onValueChange={handleTableValueChange}
       />
       {tableUpdateError && (
@@ -216,32 +204,36 @@ export function FindingTriageStatusControl(
         </span>
       )}
       <Modal
-        open={pendingMutelistStatus !== null}
-        onOpenChange={handleMutelistOpenChange}
-        title={MUTELIST_INFO_TITLE}
+        open={pendingShortcutStatus !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingShortcutStatus(null);
+          }
+        }}
+        title={MUTELIST_CONFIRMATION_TITLE}
+        description={MUTELIST_CONFIRMATION_COPY}
         size="sm"
       >
-        <div className="flex flex-col gap-6">
-          <p className="text-text-neutral-secondary text-sm">
-            {MUTELIST_INFO_COPY}
-          </p>
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={() => setPendingMutelistStatus(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              size="lg"
-              onClick={handleConfirmMutelistStatus}
-            >
-              Accept
-            </Button>
-          </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setPendingShortcutStatus(null)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              const status = pendingShortcutStatus;
+              setPendingShortcutStatus(null);
+              if (status) {
+                void applyTableStatus(status);
+              }
+            }}
+          >
+            Mute finding
+          </Button>
         </div>
       </Modal>
     </>

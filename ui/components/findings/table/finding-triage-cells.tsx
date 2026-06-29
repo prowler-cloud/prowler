@@ -14,9 +14,12 @@ import {
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_ORIGIN,
+  FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageDetail,
   type FindingTriageLoadedNote,
+  type FindingTriageStatus,
   type FindingTriageSummary,
+  type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
 import {
@@ -67,9 +70,56 @@ export function FindingTriageStatusCell({
   triage?: FindingTriageSummary;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
 }) {
+  const [optimisticStatus, setOptimisticStatus] = useState<{
+    token: string;
+    findingId: string;
+    triageId: string | null;
+    previousStatus: FindingTriageStatus;
+    status: FindingTriageStatus;
+  } | null>(null);
+
+  const optimisticMatchesCurrentTriage =
+    Boolean(triage) &&
+    optimisticStatus?.findingId === triage?.findingId &&
+    optimisticStatus?.triageId === triage?.triageId &&
+    optimisticStatus?.previousStatus === triage?.status &&
+    optimisticStatus?.status !== triage?.status;
+
   if (!triage) {
     return <span className="text-text-neutral-tertiary text-sm">-</span>;
   }
+
+  const displayedTriage =
+    optimisticMatchesCurrentTriage && optimisticStatus
+      ? {
+          ...triage,
+          status: optimisticStatus.status,
+          label: FINDING_TRIAGE_STATUS_LABELS[optimisticStatus.status],
+        }
+      : triage;
+
+  const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
+    const optimisticToken = input.status ? crypto.randomUUID() : null;
+
+    if (input.status && optimisticToken) {
+      setOptimisticStatus({
+        token: optimisticToken,
+        findingId: input.findingId,
+        triageId: input.triageId,
+        previousStatus: input.previousStatus ?? triage.status,
+        status: input.status,
+      });
+    }
+
+    try {
+      await onTriageUpdateAction?.(input);
+    } catch (error) {
+      setOptimisticStatus((current) =>
+        current?.token === optimisticToken ? null : current,
+      );
+      throw error;
+    }
+  };
 
   const control = (
     <div
@@ -77,10 +127,12 @@ export function FindingTriageStatusCell({
       onPointerDown={(event) => event.stopPropagation()}
     >
       <FindingTriageStatusControl
-        key={`${triage.findingId}:${triage.status}`}
+        key={displayedTriage.findingId}
         origin={FINDING_TRIAGE_ORIGIN.TABLE}
-        triage={triage}
-        onTriageUpdateAction={onTriageUpdateAction}
+        triage={displayedTriage}
+        onTriageUpdateAction={
+          onTriageUpdateAction ? handleTriageUpdate : undefined
+        }
       />
     </div>
   );
@@ -116,14 +168,40 @@ export function FindingNotesCell({
     triage: FindingTriageSummary,
   ) => Promise<FindingTriageLoadedNote>;
 }) {
+  if (!triage) {
+    return <span className="text-text-neutral-tertiary text-sm">-</span>;
+  }
+
+  const triageIdentity = `${triage.findingId}:${triage.triageId ?? "virtual"}`;
+
+  return (
+    <FindingNotesCellContent
+      key={triageIdentity}
+      triage={triage}
+      findingContext={findingContext}
+      onTriageUpdateAction={onTriageUpdateAction}
+      onTriageNoteLoadAction={onTriageNoteLoadAction}
+    />
+  );
+}
+
+function FindingNotesCellContent({
+  triage,
+  findingContext,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
+}: {
+  triage: FindingTriageSummary;
+  findingContext: FindingTriageContext;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
+}) {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [loadedNote, setLoadedNote] = useState<FindingTriageLoadedNote>();
   const [isLoadingNote, setIsLoadingNote] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  if (!triage) {
-    return <span className="text-text-neutral-tertiary text-sm">-</span>;
-  }
 
   const hasUpdateHandler = Boolean(onTriageUpdateAction);
   const isCloudOnly =

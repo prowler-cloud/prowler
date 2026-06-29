@@ -46,7 +46,6 @@ import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,
-  type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
 import {
@@ -66,6 +65,7 @@ function makeTriageSummary(
     label: "Under Review",
     hasVisibleNote: false,
     hasPersistedStatus: true,
+    isMuted: false,
     canEdit: true,
     billingHref: "https://prowler.com/pricing",
     mutelistShortcutStatuses: [
@@ -253,6 +253,72 @@ describe("finding triage cells", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("should keep the optimistic table status while stale props are rendered during update", async () => {
+    // Given
+    const user = userEvent.setup();
+    let resolveUpdate: () => void = () => {};
+    const onTriageUpdateAction = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveUpdate = resolve;
+        }),
+    );
+    const { rerender } = render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    const statusControl = screen.getByRole("combobox", {
+      name: "Triage status",
+    });
+
+    // When: user selects a new status.
+    await user.click(statusControl);
+    await user.click(screen.getByRole("option", { name: "Under Review" }));
+
+    // Then: the optimistic status is visible immediately.
+    expect(statusControl).toHaveTextContent("Under Review");
+
+    // When: the parent renders stale data while the request is still pending.
+    rerender(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // Then: the control must not flicker back to Open.
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Under Review");
+
+    // When: backend completes and fresh props arrive.
+    resolveUpdate();
+    await waitFor(() => expect(onTriageUpdateAction).toHaveBeenCalled());
+    rerender(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+          label: "Under Review",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Under Review");
+  });
+
   it("should refresh the visible table status when triage props change", () => {
     // Given
     const { rerender } = render(
@@ -286,6 +352,28 @@ describe("finding triage cells", () => {
     ).toHaveTextContent("Remediating");
   });
 
+  it("should not submit when table status selection matches the current status", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Open" }));
+
+    // Then
+    expect(onTriageUpdateAction).not.toHaveBeenCalled();
+  });
+
   it("should rollback table status and expose an error when update fails", async () => {
     // Given
     const user = userEvent.setup();
@@ -315,11 +403,79 @@ describe("finding triage cells", () => {
     expect(statusControl).toHaveTextContent("Open");
   });
 
-  it("should keep Mutelist status pending until accepted and restore the previous status on cancel", async () => {
+  it("should not confirm when moving between Mutelist shortcut statuses", async () => {
     // Given
     const user = userEvent.setup();
-    const onTriageUpdateAction =
-      vi.fn<(input: UpdateFindingTriageInput) => void>();
+    const onTriageUpdateAction = vi.fn();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+          label: "Risk Accepted",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "False Positive" }));
+
+    // Then
+    expect(screen.queryByRole("dialog", { name: "Mute finding?" })).toBeNull();
+    await waitFor(() =>
+      expect(onTriageUpdateAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
+          previousStatus: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+          isMuted: false,
+        }),
+      ),
+    );
+  });
+
+  it("should not confirm or mute again when an already muted finding enters a shortcut status", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+          isMuted: true,
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Risk Accepted" }));
+
+    // Then
+    expect(screen.queryByRole("dialog", { name: "Mute finding?" })).toBeNull();
+    await waitFor(() =>
+      expect(onTriageUpdateAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+          previousStatus: FINDING_TRIAGE_STATUS.OPEN,
+          isMuted: true,
+        }),
+      ),
+    );
+  });
+
+  it("should confirm before applying Mutelist shortcut statuses from the table", async () => {
+    // Given
+    const user = userEvent.setup();
+    let resolveUpdate: () => void = () => {};
+    const onTriageUpdateAction = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveUpdate = resolve;
+        }),
+    );
     render(
       <FindingTriageStatusCell
         triage={makeTriageSummary({
@@ -334,38 +490,18 @@ describe("finding triage cells", () => {
       name: "Triage status",
     });
 
-    // When: user selects a Mutelist shortcut but cancels the confirmation.
+    // When: user selects a Mutelist shortcut.
     await user.click(statusControl);
     await user.click(screen.getByRole("option", { name: "False Positive" }));
 
-    // Then: the update has not fired and the visible status remains Open.
-    await waitFor(() =>
-      expect(screen.queryByRole("listbox")).not.toBeInTheDocument(),
-    );
-    expect(screen.getByRole("dialog", { name: /mutelist/i })).toBeVisible();
-    expect(screen.getByText(/will be muted/i)).toBeVisible();
-    expect(onTriageUpdateAction).not.toHaveBeenCalled();
-    expect(statusControl).toHaveTextContent("Open");
-
-    // When: user cancels.
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
-
-    // Then: previous status is restored and no update happened.
-    expect(
-      screen.queryByRole("dialog", { name: /mutelist/i }),
-    ).not.toBeInTheDocument();
-    expect(statusControl).toHaveTextContent("Open");
+    // Then: the user is warned before the server action handles muting.
+    expect(screen.getByRole("dialog", { name: "Mute finding?" })).toBeVisible();
     expect(onTriageUpdateAction).not.toHaveBeenCalled();
 
-    // When: user selects again and accepts.
-    await user.click(statusControl);
-    await user.click(screen.getByRole("option", { name: "False Positive" }));
-    await waitFor(() =>
-      expect(screen.queryByRole("listbox")).not.toBeInTheDocument(),
-    );
-    await user.click(screen.getByRole("button", { name: "Accept" }));
+    // When
+    await user.click(screen.getByRole("button", { name: "Mute finding" }));
 
-    // Then: the pending status is committed.
+    // Then
     await waitFor(() =>
       expect(onTriageUpdateAction).toHaveBeenCalledWith({
         findingId: "finding-1",
@@ -373,9 +509,13 @@ describe("finding triage cells", () => {
         triageId: "triage-1",
         notesCount: 0,
         status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
+        previousStatus: FINDING_TRIAGE_STATUS.OPEN,
+        isMuted: false,
         origin: "table",
       }),
     );
     expect(statusControl).toHaveTextContent("False Positive");
+
+    resolveUpdate();
   });
 });

@@ -77,6 +77,7 @@ export interface FindingTriageSummary {
   label: string;
   hasVisibleNote: boolean;
   hasPersistedStatus: boolean;
+  isMuted: boolean;
   canEdit: boolean;
   disabledReason?: FindingTriageDisabledReason;
   billingHref: string;
@@ -97,6 +98,8 @@ export interface UpdateFindingTriageInput {
   notesCount: number;
   noteId?: string | null;
   status?: FindingTriageManualStatus;
+  previousStatus?: FindingTriageStatus;
+  isMuted?: boolean;
   note?: string;
   origin: FindingTriageOrigin;
 }

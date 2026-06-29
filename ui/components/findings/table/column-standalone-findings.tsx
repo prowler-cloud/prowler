@@ -11,6 +11,10 @@ import {
 } from "@/components/ui/table";
 import { getRegionFlag } from "@/lib/region-flags";
 import { FindingProps, ProviderType } from "@/types";
+import type {
+  FindingTriageLoadedNote,
+  FindingTriageSummary,
+} from "@/types/findings-triage";
 
 import { FindingDetailDrawer } from "./finding-detail-drawer";
 import {
@@ -25,6 +29,9 @@ interface GetStandaloneFindingColumnsOptions {
   includeUpdatedAt?: boolean;
   openFindingId?: string | null;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
 }
 
 const getFindingsData = (row: { original: FindingProps }) => {
@@ -75,6 +82,7 @@ export function getStandaloneFindingColumns({
   includeUpdatedAt = false,
   openFindingId = null,
   onTriageUpdateAction,
+  onTriageNoteLoadAction,
 }: GetStandaloneFindingColumnsOptions = {}): ColumnDef<FindingProps>[] {
   const columns: ColumnDef<FindingProps>[] = [
     {
@@ -292,6 +300,7 @@ export function getStandaloneFindingColumns({
                   : undefined,
             }}
             onTriageUpdateAction={onTriageUpdateAction}
+            onTriageNoteLoadAction={onTriageNoteLoadAction}
           />
         );
       },

@@ -82,6 +82,7 @@ function makeTriageSummary(
     label: "Under Review",
     hasVisibleNote: false,
     hasPersistedStatus: true,
+    isMuted: false,
     canEdit: true,
     billingHref: "https://prowler.com/pricing",
     mutelistShortcutStatuses: [

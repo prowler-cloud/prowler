@@ -62,7 +62,10 @@ export function FindingNoteModal({
   const isCloudOnly =
     triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY;
   const shouldShowMutelistInfo =
-    canSubmit && isMutelistShortcutStatus(selectedStatus);
+    canSubmit &&
+    !triage.isMuted &&
+    selectedStatus !== triage.status &&
+    isMutelistShortcutStatus(selectedStatus);
   const shouldShowRemediatingInfo =
     selectedStatus === FINDING_TRIAGE_STATUS.REMEDIATING;
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

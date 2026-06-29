@@ -22,6 +22,7 @@ function makeTriageDetail(
     label: "Under Review",
     hasVisibleNote: true,
     hasPersistedStatus: true,
+    isMuted: false,
     canEdit: true,
     billingHref: "https://prowler.com/pricing",
     mutelistShortcutStatuses: [
@@ -72,6 +73,7 @@ describe("buildFindingTriageUpdateInput", () => {
       triageId: "triage-1",
       notesCount: 1,
       noteId: "note-1",
+      isMuted: false,
       note: "Updated existing note",
       origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
@@ -102,7 +104,9 @@ describe("buildFindingTriageUpdateInput", () => {
       triageId: null,
       notesCount: 0,
       noteId: null,
+      isMuted: false,
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       note: "First note",
       origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
@@ -127,7 +131,9 @@ describe("buildFindingTriageUpdateInput", () => {
       triageId: "triage-1",
       notesCount: 1,
       noteId: "note-1",
+      isMuted: false,
       status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+      previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       origin: FINDING_TRIAGE_ORIGIN.MODAL,
     });
   });

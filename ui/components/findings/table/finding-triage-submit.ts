@@ -47,8 +47,12 @@ export function buildFindingTriageUpdateInput({
     triageId: triage.triageId,
     notesCount: triage.notesCount,
     noteId: triage.noteId,
+    isMuted: triage.isMuted,
     ...(shouldIncludeStatus
-      ? { status: selectedStatus as FindingTriageManualStatus }
+      ? {
+          status: selectedStatus as FindingTriageManualStatus,
+          previousStatus: triage.status,
+        }
       : {}),
     ...(shouldCreateFirstNote || shouldUpdateExistingNote
       ? { note: trimmedNote }

@@ -208,6 +208,37 @@ describe("adaptFindingTriageSummariesResponse", () => {
     );
   });
 
+  it("should mark triage as muted when resource status is MUTED", () => {
+    // Given
+    const input = {
+      data: [
+        {
+          id: "resource-row-muted-1",
+          type: "finding-group-resources",
+          attributes: {
+            finding_id: "finding-muted-1",
+            finding_uid: "prowler-finding-muted-uid-1",
+            triage_status: FINDING_TRIAGE_STATUS.OPEN,
+            triage_notes_count: 0,
+            status: "MUTED",
+          },
+        },
+      ],
+    };
+
+    // When
+    const [summary] = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expect(summary).toEqual(
+      expect.objectContaining({
+        findingId: "finding-muted-1",
+        isMuted: true,
+        status: FINDING_TRIAGE_STATUS.OPEN,
+      }),
+    );
+  });
+
   it("should normalize flat provisional finding fields into domain triage summaries", () => {
     // Given
     const input = {

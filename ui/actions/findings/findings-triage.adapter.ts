@@ -177,6 +177,10 @@ const createSummary = (
     label: FINDING_TRIAGE_STATUS_LABELS[triageFields.status],
     hasVisibleNote: triageFields.hasVisibleNote,
     hasPersistedStatus: triageFields.hasPersistedStatus,
+    isMuted:
+      typeof attributes.muted === "boolean"
+        ? attributes.muted
+        : attributes.status === "MUTED",
     canEdit: options.canEdit ?? false,
     billingHref: options.billingHref ?? FINDING_TRIAGE_BILLING_HREF,
     mutelistShortcutStatuses: FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES,

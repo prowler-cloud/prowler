@@ -47,6 +47,14 @@ vi.mock("@/lib/server-actions-helper", () => ({
   handleApiResponse: handleApiResponseMock,
 }));
 
+vi.mock("@/actions/findings", () => ({
+  getLatestFindings: vi.fn(),
+}));
+
+vi.mock("@/actions/organizations/organizations", () => ({
+  listOrganizationsSafe: vi.fn(),
+}));
+
 vi.mock("@/lib/provider-filters", () => ({
   appendSanitizedProviderTypeFilters: vi.fn(),
 }));

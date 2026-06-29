@@ -24,6 +24,10 @@ import {
 } from "@/components/ui/table/status-finding-badge";
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
+import type {
+  FindingTriageLoadedNote,
+  FindingTriageSummary,
+} from "@/types/findings-triage";
 
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
@@ -148,6 +152,9 @@ interface GetColumnFindingResourcesOptions {
   selectableRowCount: number;
   findingTitle?: string;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
 }
 
 export function getColumnFindingResources({
@@ -155,6 +162,7 @@ export function getColumnFindingResources({
   selectableRowCount,
   findingTitle,
   onTriageUpdateAction,
+  onTriageNoteLoadAction,
 }: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -351,6 +359,7 @@ export function getColumnFindingResources({
             providerType: row.original.providerType,
           }}
           onTriageUpdateAction={onTriageUpdateAction}
+          onTriageNoteLoadAction={onTriageNoteLoadAction}
         />
       ),
       enableSorting: false,

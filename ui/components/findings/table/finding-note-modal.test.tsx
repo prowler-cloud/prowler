@@ -67,6 +67,7 @@ function makeTriageDetail(
     label: "Under Review",
     hasVisibleNote: true,
     hasPersistedStatus: true,
+    isMuted: false,
     canEdit: true,
     billingHref: "https://prowler.com/pricing",
     mutelistShortcutStatuses: [
@@ -165,6 +166,7 @@ describe("FindingNoteModal", () => {
       triageId: "triage-1",
       notesCount: 1,
       noteId: "note-1",
+      isMuted: false,
       note: "Documented owner follow-up.",
       origin: "modal",
     });
@@ -197,10 +199,28 @@ describe("FindingNoteModal", () => {
       triageId: null,
       notesCount: 0,
       noteId: null,
+      isMuted: false,
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
       note: "Initial triage note.",
       origin: "modal",
     });
+  });
+
+  it("should not submit when an existing note is cleared and status is unchanged", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const onTriageUpdateAction = vi.fn();
+    renderNoteModal({ onOpenChange, onTriageUpdateAction });
+
+    // When
+    await user.clear(screen.getByLabelText("Note text"));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // Then
+    expect(onTriageUpdateAction).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it("should keep the modal open and show an error when note update fails", async () => {
@@ -298,7 +318,9 @@ describe("FindingNoteModal", () => {
         triageId: "triage-1",
         notesCount: 1,
         noteId: "note-1",
+        isMuted: false,
         status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+        previousStatus: FINDING_TRIAGE_STATUS.OPEN,
         origin: "modal",
       }),
     );
