@@ -1,0 +1,38 @@
+{
+  "Provider": "linode",
+  "CheckID": "networking_firewall_outbound_rules_configured",
+  "CheckTitle": "Linode Cloud Firewall outbound rules are configured",
+  "CheckType": [],
+  "ServiceName": "networking",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Linode Cloud Firewalls** are checked to determine whether explicit **outbound rules** are configured. Defined egress rules express which destinations, ports, and protocols an instance is permitted to reach, rather than depending only on the firewall's default policy.",
+  "Risk": "Without explicit **outbound rules**, egress behavior depends solely on the default policy and no intended destination allow-list exists. Unconstrained or undocumented egress complicates auditing and can enable **data exfiltration** or connections to malicious endpoints if a host is compromised.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Select the associated firewall\n4. Click Add an Outbound Rule in the Rules tab",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure explicit `outbound rules` to control allowed egress destinations, ports, and protocols.",
+      "Url": "https://hub.prowler.com/check/networking_firewall_outbound_rules_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "networking_firewall_default_outbound_policy_drop"
+  ],
+  "Notes": ""
+}

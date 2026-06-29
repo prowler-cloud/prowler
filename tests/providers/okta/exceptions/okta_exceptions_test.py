@@ -7,6 +7,7 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
     OktaInvalidOrgDomainError,
+    OktaInvalidProviderIdError,
     OktaPrivateKeyFileError,
     OktaSetUpIdentityError,
     OktaSetUpSessionError,
@@ -20,6 +21,7 @@ EXPECTED_CODES = {
     OktaInvalidOrgDomainError: 14004,
     OktaPrivateKeyFileError: 14005,
     OktaInsufficientPermissionsError: 14006,
+    OktaInvalidProviderIdError: 14007,
 }
 
 

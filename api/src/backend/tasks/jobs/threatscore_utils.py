@@ -1,13 +1,12 @@
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Finding, Scan, StatusChoices
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from django.db.models import Count, F, Q, Window
 from django.db.models.functions import RowNumber
-from tasks.jobs.reports.config import MAX_FINDINGS_PER_CHECK
-
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.models import Finding, Scan, StatusChoices
 from prowler.lib.outputs.finding import Finding as FindingOutput
+from tasks.jobs.reports.config import MAX_FINDINGS_PER_CHECK
 
 logger = get_task_logger(__name__)
 
@@ -359,35 +358,40 @@ def _load_findings_for_requirement_checks(
 def _get_compliance_check_ids(compliance_obj) -> set[str]:
     """Return the union of all check_ids referenced by a compliance framework.
 
-    Used by the master report orchestrator to know which checks each
-    framework consumes from the shared ``findings_cache``, so that once a
-    framework finishes the entries no other pending framework needs can be
-    evicted from the cache (PROWLER-1733).
+    Used by the master report orchestrator to evict entries from
+    ``findings_cache`` once no pending framework needs them (PROWLER-1733).
 
-    Args:
-        compliance_obj: A loaded Compliance framework object exposing a
-            ``Requirements`` iterable, each requirement carrying ``Checks``.
-            ``None`` is treated as "no checks" rather than raising, so the
-            caller can pass ``frameworks_bulk.get(...)`` directly without
-            an extra existence check.
-
-    Returns:
-        Set of check_id strings (empty if ``compliance_obj`` is ``None``).
+    Accepts the legacy ``Compliance`` shape (``Requirements`` / ``Checks``
+    lists) and the universal ``ComplianceFramework`` shape (``requirements``
+    / ``checks`` dict keyed by provider). ``None`` returns an empty set so
+    callers can pass ``frameworks_bulk.get(...)`` directly.
     """
     if compliance_obj is None:
         return set()
-    checks: set[str] = set()
-    requirements = getattr(compliance_obj, "Requirements", None) or []
+
+    requirements = getattr(compliance_obj, "Requirements", None) or getattr(
+        compliance_obj, "requirements", None
+    )
+    if not requirements:
+        return set()
+
+    check_ids: set[str] = set()
     try:
-        # Defensive: Mock objects (used in unit tests) return another Mock
-        # for any attribute access, which is truthy but not iterable. Treat
-        # any non-iterable Requirements value as "no checks".
-        for req in requirements:
-            req_checks = getattr(req, "Checks", None) or []
+        # Mock objects in unit tests return another Mock for any attribute
+        # access — truthy but not iterable. Treat that as "no checks".
+        for requirement in requirements:
+            requirement_checks = getattr(requirement, "Checks", None)
+            if requirement_checks is None:
+                checks_by_provider = getattr(requirement, "checks", None) or {}
+                requirement_checks = [
+                    check_id
+                    for check_ids_list in checks_by_provider.values()
+                    for check_id in check_ids_list
+                ]
             try:
-                checks.update(req_checks)
+                check_ids.update(requirement_checks)
             except TypeError:
                 continue
     except TypeError:
         return set()
-    return checks
+    return check_ids

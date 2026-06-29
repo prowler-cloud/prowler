@@ -28,7 +28,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## 1. Fixture Dependency Chain
 
-```
+```text
 create_test_user (session) ─► tenants_fixture (function) ─► authenticated_client
                                      │
                                      └─► providers_fixture ─► scans_fixture ─► findings_fixture

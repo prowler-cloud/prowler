@@ -53,7 +53,7 @@ diff dashboard/compliance/{new_framework}.py \
 
 ## Decision Tree
 
-```
+```text
 JSON Valid?
 ├── No → FAIL: Fix JSON syntax errors
 └── Yes ↓
