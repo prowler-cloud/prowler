@@ -103,7 +103,7 @@ describe("provisional findings triage contract fixtures", () => {
     // Then
     expect(detail.noteBody).toBe("Current note visible only inside the modal.");
     expect(detail.hasVisibleNote).toBe(true);
-    expect(detail.maxNoteLength).toBe(300);
+    expect(detail.maxNoteLength).toBe(500);
   });
 
   it("should model disabled non-paying state through adapter options only", () => {
@@ -154,6 +154,56 @@ describe("adaptFindingTriageSummariesResponse", () => {
       expect.objectContaining({
         findingId: "finding-1",
         status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      }),
+    );
+  });
+
+  it("should use triage_notes_count from the resource triage API contract", () => {
+    // Given
+    const input = {
+      data: [
+        {
+          id: "resource-row-1",
+          type: "finding-group-resources",
+          attributes: {
+            finding_id: "finding-1",
+            finding_uid: "prowler-finding-uid-1",
+            triage_status: FINDING_TRIAGE_STATUS.REMEDIATING,
+            triage_notes_count: 5,
+            status: "FAIL",
+          },
+        },
+        {
+          id: "resource-row-2",
+          type: "finding-group-resources",
+          attributes: {
+            finding_id: "finding-2",
+            finding_uid: "prowler-finding-uid-2",
+            triage_status: FINDING_TRIAGE_STATUS.OPEN,
+            triage_notes_count: 0,
+            status: "FAIL",
+          },
+        },
+      ],
+    };
+
+    // When
+    const result = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        hasVisibleNote: true,
+        hasPersistedStatus: true,
+        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+      }),
+    );
+    expect(result[1]).toEqual(
+      expect.objectContaining({
+        hasVisibleNote: false,
+        hasPersistedStatus: true,
+        status: FINDING_TRIAGE_STATUS.OPEN,
       }),
     );
   });
@@ -335,7 +385,7 @@ describe("adaptFindingTriageDetailResponse", () => {
         hasPersistedStatus: true,
         canEdit: true,
         noteBody: "Current note visible only inside the modal.",
-        maxNoteLength: 300,
+        maxNoteLength: 500,
         privacyCopy: "This note is only visible to your team.",
       }),
     );

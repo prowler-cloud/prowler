@@ -75,6 +75,8 @@ function makeTriageSummary(
   return {
     findingId: "finding-1",
     findingUid: "prowler-finding-uid-1",
+    triageId: "triage-1",
+    notesCount: 0,
     status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
     label: "Under Review",
     hasVisibleNote: false,

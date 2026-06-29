@@ -59,6 +59,8 @@ function makeTriageSummary(
   return {
     findingId: "finding-1",
     findingUid: "prowler-finding-uid-1",
+    triageId: "triage-1",
+    notesCount: 0,
     status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
     label: "Under Review",
     hasVisibleNote: false,
@@ -148,7 +150,7 @@ describe("finding triage cells", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
-  it("should not open an editable empty-note modal for an existing note without detail", async () => {
+  it("should not open an editable empty-note modal for an existing note without a loader", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -171,6 +173,35 @@ describe("finding triage cells", () => {
     expect(
       screen.queryByRole("dialog", { name: "Note" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("should load an existing note before opening the modal", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageNoteLoadAction = vi.fn().mockResolvedValue({
+      noteId: "note-1",
+      noteBody: "Loaded existing note",
+    });
+    render(
+      <FindingNotesCell
+        triage={makeTriageSummary({ hasVisibleNote: true, notesCount: 1 })}
+        findingContext={{ title: "S3 bucket allows public reads" }}
+        onTriageUpdateAction={vi.fn()}
+        onTriageNoteLoadAction={onTriageNoteLoadAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Note exists" }));
+
+    // Then
+    expect(onTriageNoteLoadAction).toHaveBeenCalledWith(
+      expect.objectContaining({ triageId: "triage-1", notesCount: 1 }),
+    );
+    expect(await screen.findByRole("dialog", { name: "Note" })).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toHaveValue(
+      "Loaded existing note",
+    );
   });
 
   it("should disable Add note when no update handler is wired", async () => {
@@ -311,6 +342,9 @@ describe("finding triage cells", () => {
     await waitFor(() =>
       expect(onTriageUpdateAction).toHaveBeenCalledWith({
         findingId: "finding-1",
+        findingUid: "prowler-finding-uid-1",
+        triageId: "triage-1",
+        notesCount: 0,
         status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
         origin: "table",
       }),

@@ -204,6 +204,9 @@ function FindingTriageStatusControl(props: FindingTriageStatusControlProps) {
     try {
       await props.onTriageUpdateAction({
         findingId: triage.findingId,
+        findingUid: triage.findingUid,
+        triageId: triage.triageId,
+        notesCount: triage.notesCount,
         status,
         origin: "table",
       });
@@ -328,10 +331,40 @@ export function FindingNoteModal({
     setIsSubmitting(true);
 
     try {
+      const trimmedNote = note.trim();
+      const statusChanged = selectedStatus !== triage.status;
+      const shouldCreateFirstNote =
+        triage.notesCount === 0 && trimmedNote.length > 0;
+      const shouldUpdateExistingNote =
+        triage.notesCount > 0 &&
+        triage.noteId !== null &&
+        trimmedNote.length > 0 &&
+        trimmedNote !== triage.noteBody;
+      const shouldIncludeStatus =
+        isManualStatus(selectedStatus) &&
+        (statusChanged || shouldCreateFirstNote);
+
+      if (
+        !shouldIncludeStatus &&
+        !shouldCreateFirstNote &&
+        !shouldUpdateExistingNote
+      ) {
+        onOpenChange(false);
+        return;
+      }
+
       await onTriageUpdateAction?.({
         findingId: triage.findingId,
-        ...(isManualStatus(selectedStatus) ? { status: selectedStatus } : {}),
-        note,
+        findingUid: triage.findingUid,
+        triageId: triage.triageId,
+        notesCount: triage.notesCount,
+        noteId: triage.noteId,
+        ...(shouldIncludeStatus
+          ? { status: selectedStatus as FindingTriageManualStatus }
+          : {}),
+        ...(shouldCreateFirstNote || shouldUpdateExistingNote
+          ? { note: trimmedNote }
+          : {}),
         origin: "modal",
       });
       onOpenChange(false);

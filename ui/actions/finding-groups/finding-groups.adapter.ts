@@ -165,11 +165,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isFindingGroupResourceApiItem = (
   value: unknown,
 ): value is FindingGroupResourceApiItem => {
+  if (!isRecord(value) || typeof value.id !== "string") {
+    return false;
+  }
+
+  const attributes = value.attributes;
+
   return (
-    isRecord(value) &&
-    value.type === "finding-group-resources" &&
-    typeof value.id === "string" &&
-    isRecord(value.attributes)
+    isRecord(attributes) &&
+    typeof attributes.finding_id === "string" &&
+    isRecord(attributes.resource) &&
+    isRecord(attributes.provider)
   );
 };
 

@@ -61,6 +61,12 @@ const asString = (value: unknown): string | undefined =>
 
 const asBoolean = (value: unknown): boolean => value === true;
 
+const asNumber = (value: unknown): number | undefined =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
+
+const hasPositiveCount = (value: unknown): boolean =>
+  typeof value === "number" && value >= 1;
+
 const isFindingTriageStatus = (value: unknown): value is FindingTriageStatus =>
   typeof value === "string" &&
   Object.values(FINDING_TRIAGE_STATUS).includes(value as FindingTriageStatus);
@@ -129,6 +135,7 @@ const normalizeTriageFields = (
     return {
       status: flatStatus,
       hasVisibleNote:
+        hasPositiveCount(findingAttributes.triage_notes_count) ||
         asBoolean(findingAttributes.triage_has_note) ||
         asBoolean(includedAttributes.has_note) ||
         asBoolean(includedAttributes.triage_has_note),
@@ -140,6 +147,7 @@ const normalizeTriageFields = (
     return {
       status: includedStatus,
       hasVisibleNote:
+        hasPositiveCount(includedAttributes.triage_notes_count) ||
         asBoolean(includedAttributes.has_note) ||
         asBoolean(includedAttributes.triage_has_note),
       hasPersistedStatus: true,
@@ -163,6 +171,8 @@ const createSummary = (
     findingId: asString(attributes.finding_id) ?? finding.id ?? "",
     findingUid:
       asString(attributes.uid) ?? asString(attributes.finding_uid) ?? "",
+    triageId: asString(attributes.triage_id) ?? null,
+    notesCount: asNumber(attributes.triage_notes_count) ?? 0,
     status: triageFields.status,
     label: FINDING_TRIAGE_STATUS_LABELS[triageFields.status],
     hasVisibleNote: triageFields.hasVisibleNote,
@@ -247,6 +257,10 @@ export function adaptFindingTriageDetailResponse(
       id: asString(attributes.finding_id) ?? data?.id ?? "",
       attributes: {
         finding_uid: asString(attributes.finding_uid) ?? "",
+        triage_id: data?.id,
+        triage_notes_count:
+          asNumber(attributes.triage_notes_count) ??
+          (noteBody.length > 0 ? 1 : 0),
       },
     },
     {
@@ -259,6 +273,7 @@ export function adaptFindingTriageDetailResponse(
 
   return {
     ...summary,
+    noteId: asString(attributes.note_id) ?? null,
     noteBody,
     maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
     privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,

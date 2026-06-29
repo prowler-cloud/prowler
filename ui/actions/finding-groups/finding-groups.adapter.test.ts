@@ -182,6 +182,57 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
     expect(result).toEqual([]);
   });
 
+  it("should keep resource rows with valid attributes even when JSON:API type differs", () => {
+    // Given
+    const input = {
+      data: [
+        {
+          id: "resource-row-1",
+          type: "findings",
+          attributes: {
+            finding_id: "real-finding-uuid",
+            finding_uid: "prowler-finding-uid-1",
+            triage_status: "remediating",
+            triage_notes_count: 1,
+            resource: {
+              uid: "arn:aws:s3:::my-bucket",
+              name: "my-bucket",
+              service: "s3",
+              region: "us-east-1",
+              type: "Bucket",
+              resource_group: "default",
+            },
+            provider: {
+              type: "aws",
+              uid: "123456789",
+              alias: "production",
+            },
+            status: "FAIL",
+            severity: "high",
+            first_seen_at: null,
+            last_seen_at: "2024-01-01T00:00:00Z",
+          },
+        },
+      ],
+    };
+
+    // When
+    const result = adaptFindingGroupResourcesResponse(input, "check-1");
+
+    // Then
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        findingId: "real-finding-uuid",
+        resourceName: "my-bucket",
+        triage: expect.objectContaining({
+          status: FINDING_TRIAGE_STATUS.REMEDIATING,
+          hasVisibleNote: true,
+        }),
+      }),
+    );
+  });
+
   it("should skip malformed resource entries inside a data array", () => {
     // Given
     const input = {

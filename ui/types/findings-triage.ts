@@ -62,7 +62,7 @@ export const FINDING_TRIAGE_ORIGIN = {
 export type FindingTriageOrigin =
   (typeof FINDING_TRIAGE_ORIGIN)[keyof typeof FINDING_TRIAGE_ORIGIN];
 
-export const FINDING_TRIAGE_NOTE_MAX_LENGTH = 300 as const;
+export const FINDING_TRIAGE_NOTE_MAX_LENGTH = 500 as const;
 export const FINDING_TRIAGE_NOTE_PRIVACY_COPY =
   "This note is only visible to your team." as const;
 export const FINDING_TRIAGE_BILLING_HREF = "/billing" as const;
@@ -70,6 +70,8 @@ export const FINDING_TRIAGE_BILLING_HREF = "/billing" as const;
 export interface FindingTriageSummary {
   findingId: string;
   findingUid: string;
+  triageId: string | null;
+  notesCount: number;
   status: FindingTriageStatus;
   label: string;
   hasVisibleNote: boolean;
@@ -81,6 +83,7 @@ export interface FindingTriageSummary {
 }
 
 export interface FindingTriageDetail extends FindingTriageSummary {
+  noteId: string | null;
   noteBody: string;
   maxNoteLength: typeof FINDING_TRIAGE_NOTE_MAX_LENGTH;
   privacyCopy: typeof FINDING_TRIAGE_NOTE_PRIVACY_COPY;
@@ -88,7 +91,16 @@ export interface FindingTriageDetail extends FindingTriageSummary {
 
 export interface UpdateFindingTriageInput {
   findingId: string;
+  findingUid: string;
+  triageId: string | null;
+  notesCount: number;
+  noteId?: string | null;
   status?: FindingTriageManualStatus;
   note?: string;
   origin: FindingTriageOrigin;
+}
+
+export interface FindingTriageLoadedNote {
+  noteId: string;
+  noteBody: string;
 }

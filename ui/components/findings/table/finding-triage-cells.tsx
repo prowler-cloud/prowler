@@ -15,6 +15,7 @@ import {
   FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_ORIGIN,
   type FindingTriageDetail,
+  type FindingTriageLoadedNote,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
 
@@ -48,10 +49,11 @@ const getDisabledCopy = ({
 
 const getTriageDetailFromSummary = (
   triage: FindingTriageSummary,
-  noteBody = "",
+  loadedNote?: FindingTriageLoadedNote,
 ): FindingTriageDetail => ({
   ...triage,
-  noteBody,
+  noteId: loadedNote?.noteId ?? null,
+  noteBody: loadedNote?.noteBody ?? "",
   maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
   privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
 });
@@ -103,27 +105,40 @@ export function FindingNotesCell({
   triage,
   findingContext = { title: "Finding" },
   onTriageUpdateAction,
+  onTriageNoteLoadAction,
 }: {
   triage?: FindingTriageSummary;
   findingContext?: FindingTriageContext;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
 }) {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [loadedNote, setLoadedNote] = useState<FindingTriageLoadedNote>();
+  const [isLoadingNote, setIsLoadingNote] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   if (!triage) {
     return <span className="text-text-neutral-tertiary text-sm">-</span>;
   }
 
   const hasUpdateHandler = Boolean(onTriageUpdateAction);
-  const canOpenNoteModal =
+  const canOpenNewNoteModal =
     !triage.hasVisibleNote && triage.canEdit && hasUpdateHandler;
+  const canOpenExistingNoteModal =
+    triage.hasVisibleNote &&
+    triage.canEdit &&
+    hasUpdateHandler &&
+    Boolean(onTriageNoteLoadAction) &&
+    !isLoadingNote;
   const disabledCopy = getDisabledCopy({ triage, hasUpdateHandler });
 
   const noteModal = isNoteModalOpen ? (
     <FindingNoteModal
       open={isNoteModalOpen}
       onOpenChange={setIsNoteModalOpen}
-      triage={getTriageDetailFromSummary(triage)}
+      triage={getTriageDetailFromSummary(triage, loadedNote)}
       findingContext={findingContext}
       onTriageUpdateAction={onTriageUpdateAction}
     />
@@ -137,15 +152,40 @@ export function FindingNotesCell({
           variant="bare"
           size="icon-xs"
           aria-label="Note exists"
-          title="Existing notes cannot be edited from the table."
-          disabled
-          className="text-text-success-primary opacity-60"
-          onClick={(event) => {
+          title={
+            canOpenExistingNoteModal
+              ? "Open note"
+              : "Existing note cannot be loaded from the table."
+          }
+          disabled={!canOpenExistingNoteModal}
+          className="text-text-success-primary opacity-80 disabled:opacity-60"
+          onClick={async (event) => {
             event.stopPropagation();
+            if (!canOpenExistingNoteModal || !onTriageNoteLoadAction) {
+              return;
+            }
+
+            setLoadError(null);
+            setIsLoadingNote(true);
+
+            try {
+              const note = await onTriageNoteLoadAction(triage);
+              setLoadedNote(note);
+              setIsNoteModalOpen(true);
+            } catch {
+              setLoadError("Could not load the existing note.");
+            } finally {
+              setIsLoadingNote(false);
+            }
           }}
         >
           <MessageSquareText className="size-4" aria-hidden="true" />
         </Button>
+        {loadError && (
+          <span className="sr-only" role="alert">
+            {loadError}
+          </span>
+        )}
         {noteModal}
       </>
     );
@@ -157,12 +197,12 @@ export function FindingNotesCell({
         type="button"
         variant="link"
         size="link-sm"
-        disabled={!canOpenNoteModal}
+        disabled={!canOpenNewNoteModal}
         title={disabledCopy}
         className="gap-1.5 p-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:no-underline"
         onClick={(event) => {
           event.stopPropagation();
-          if (canOpenNoteModal) {
+          if (canOpenNewNoteModal) {
             setIsNoteModalOpen(true);
           }
         }}

@@ -71,6 +71,8 @@ function makeTriageDetail(
   return {
     findingId: "finding-1",
     findingUid: "prowler-finding-uid-1",
+    triageId: "triage-1",
+    notesCount: 1,
     status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
     label: "Under Review",
     hasVisibleNote: true,
@@ -81,8 +83,9 @@ function makeTriageDetail(
       FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
       FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
     ],
+    noteId: "note-1",
     noteBody: "Existing investigation note",
-    maxNoteLength: 300,
+    maxNoteLength: 500,
     privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
     ...overrides,
   };
@@ -150,7 +153,7 @@ describe("FindingNoteModal", () => {
     ).toHaveTextContent("Remediating");
   });
 
-  it("should preserve the current status in the update payload when only the note changes", async () => {
+  it("should send existing note changes with noteId and without duplicate-note status payload", async () => {
     // Given
     const user = userEvent.setup();
     const onTriageUpdateAction = vi.fn();
@@ -165,8 +168,44 @@ describe("FindingNoteModal", () => {
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
       findingId: "finding-1",
-      status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      findingUid: "prowler-finding-uid-1",
+      triageId: "triage-1",
+      notesCount: 1,
+      noteId: "note-1",
       note: "Documented owner follow-up.",
+      origin: "modal",
+    });
+  });
+
+  it("should send status plus note only when creating the first note", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    renderNoteModal({
+      triage: makeTriageDetail({
+        triageId: null,
+        notesCount: 0,
+        noteId: null,
+        noteBody: "",
+        hasVisibleNote: false,
+      }),
+      onTriageUpdateAction,
+    });
+
+    // When
+    const textarea = screen.getByLabelText("Note text");
+    await user.type(textarea, " Initial triage note. ");
+    await user.click(screen.getByRole("button", { name: "Update note" }));
+
+    // Then
+    expect(onTriageUpdateAction).toHaveBeenCalledWith({
+      findingId: "finding-1",
+      findingUid: "prowler-finding-uid-1",
+      triageId: null,
+      notesCount: 0,
+      noteId: null,
+      status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      note: "Initial triage note.",
       origin: "modal",
     });
   });
@@ -179,6 +218,8 @@ describe("FindingNoteModal", () => {
     renderNoteModal({ onOpenChange, onTriageUpdateAction });
 
     // When
+    await user.clear(screen.getByLabelText("Note text"));
+    await user.type(screen.getByLabelText("Note text"), "Changed note");
     await user.click(screen.getByRole("button", { name: "Update note" }));
 
     // Then
@@ -200,7 +241,7 @@ describe("FindingNoteModal", () => {
     await user.type(screen.getByLabelText("Note text"), "abc");
 
     // Then
-    expect(screen.getByText("3/300")).toBeInTheDocument();
+    expect(screen.getByText("3/500")).toBeInTheDocument();
     expect(screen.getByText(FINDING_TRIAGE_NOTE_PRIVACY_COPY)).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -262,8 +303,11 @@ describe("FindingNoteModal", () => {
     await waitFor(() =>
       expect(onTriageUpdateAction).toHaveBeenCalledWith({
         findingId: "finding-1",
+        findingUid: "prowler-finding-uid-1",
+        triageId: "triage-1",
+        notesCount: 1,
+        noteId: "note-1",
         status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-        note: "",
         origin: "modal",
       }),
     );

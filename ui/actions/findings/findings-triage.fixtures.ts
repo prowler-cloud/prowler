@@ -28,7 +28,9 @@ export const flatFindingWithNotePresenceOnly = {
   attributes: {
     uid: "prowler-finding-note-presence-uid-1",
     status: "FAIL",
+    triage_id: "triage-note-presence-1",
     triage_status: "under_review",
+    triage_notes_count: 1,
     triage_has_note: true,
   },
 } as const;
@@ -39,7 +41,9 @@ export const flatFindingWithUnderReviewTriage = {
   attributes: {
     uid: "prowler-finding-uid-1",
     status: "FAIL",
+    triage_id: "triage-note-presence-1",
     triage_status: "under_review",
+    triage_notes_count: 1,
     triage_has_note: true,
   },
 } as const;
@@ -50,7 +54,9 @@ export const flatPassFindingWithoutPersistedTriage = {
   attributes: {
     uid: "prowler-finding-pass-uid-1",
     status: "PASS",
+    triage_id: null,
     triage_status: null,
+    triage_notes_count: 0,
     triage_has_note: false,
   },
 } as const;
@@ -61,7 +67,9 @@ export const flatFindingWithAcceptedRiskTriage = {
   attributes: {
     uid: "prowler-finding-accepted-risk-uid-1",
     status: "FAIL",
+    triage_id: "triage-accepted-risk-1",
     triage_status: "risk_accepted",
+    triage_notes_count: 1,
     triage_has_note: true,
     triage_note:
       "Accepted risk note body that must never appear in a table DTO.",
@@ -98,6 +106,8 @@ export const relationshipFindingWithIncludedTriage = {
       attributes: {
         finding_id: "finding-relationship-1",
         finding_uid: "prowler-finding-relationship-uid-1",
+        triage_id: "triage-relationship-1",
+        triage_notes_count: 1,
         status: "false_positive",
         has_note: true,
         current_note: "Relationship note that belongs only in modal detail.",
@@ -118,7 +128,9 @@ export const findingTriageDetailResponse = {
       finding_id: "finding-1",
       finding_uid: "prowler-finding-uid-1",
       status: "risk_accepted",
+      triage_notes_count: 1,
       has_note: true,
+      note_id: "note-detail-1",
       current_note: "Current note visible only inside the modal.",
       source: "manual",
       updated_by: "user-1",
