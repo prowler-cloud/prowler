@@ -1059,7 +1059,10 @@ export class ProvidersPage extends BasePage {
     // dedicated scan/connection flows and can hang on external services.
     if (!(await testConnectionButton.isVisible().catch(() => false))) {
       try {
-        await expect(launchStepReady).toBeVisible({ timeout });
+        await Promise.race([
+          launchStepReady.waitFor({ state: "visible", timeout }),
+          this.wizardModal.waitFor({ state: "hidden", timeout }),
+        ]);
       } catch (error) {
         const debugInfo = await this.getWizardDebugInfo();
         throw new Error(
