@@ -20,9 +20,26 @@ interface FindingTriageAdapterOptions {
   billingHref?: string;
 }
 
+interface FindingTriageAttributes {
+  finding_id?: string;
+  finding_uid?: string;
+  uid?: string;
+  triage_id?: string;
+  triage_notes_count?: number;
+  triage_status?: unknown;
+  triage_has_note?: boolean;
+  status?: unknown;
+  muted?: boolean;
+  body?: unknown;
+  current_note?: string;
+  note?: string;
+  has_note?: boolean;
+  note_id?: string;
+}
+
 interface JsonApiResource {
   id?: string;
-  attributes?: Record<string, unknown>;
+  attributes?: FindingTriageAttributes;
 }
 
 interface NormalizedTriageFields {
@@ -34,7 +51,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object";
 
 const isJsonApiResource = (value: unknown): value is JsonApiResource =>
-  isRecord(value);
+  isRecord(value) &&
+  (!("attributes" in value) ||
+    value.attributes === undefined ||
+    isRecord(value.attributes));
 
 const isFindingTriageStatus = (value: unknown): value is FindingTriageStatus =>
   typeof value === "string" &&
@@ -75,25 +95,10 @@ const createSummary = (
 ): FindingTriageSummary => {
   const attributes = finding.attributes ?? {};
   const summary: FindingTriageSummary = {
-    findingId:
-      typeof attributes.finding_id === "string" && attributes.finding_id
-        ? attributes.finding_id
-        : (finding.id ?? ""),
-    findingUid:
-      typeof attributes.uid === "string" && attributes.uid
-        ? attributes.uid
-        : typeof attributes.finding_uid === "string"
-          ? attributes.finding_uid
-          : "",
-    triageId:
-      typeof attributes.triage_id === "string" && attributes.triage_id
-        ? attributes.triage_id
-        : null,
-    notesCount:
-      typeof attributes.triage_notes_count === "number" &&
-      Number.isFinite(attributes.triage_notes_count)
-        ? attributes.triage_notes_count
-        : 0,
+    findingId: attributes.finding_id || finding.id || "",
+    findingUid: attributes.uid || attributes.finding_uid || "",
+    triageId: attributes.triage_id || null,
+    notesCount: attributes.triage_notes_count ?? 0,
     status: triageFields.status,
     label: FINDING_TRIAGE_STATUS_LABELS[triageFields.status],
     hasVisibleNote: triageFields.hasVisibleNote,
@@ -192,23 +197,12 @@ export function adaptFindingTriageDetailResponse(
         : "";
   const summary = createSummary(
     {
-      id:
-        typeof attributes.finding_id === "string"
-          ? attributes.finding_id
-          : (data?.id ?? ""),
+      id: attributes.finding_id || data?.id || "",
       attributes: {
-        finding_uid:
-          typeof attributes.finding_uid === "string"
-            ? attributes.finding_uid
-            : "",
+        finding_uid: attributes.finding_uid || "",
         triage_id: data?.id,
         triage_notes_count:
-          typeof attributes.triage_notes_count === "number" &&
-          Number.isFinite(attributes.triage_notes_count)
-            ? attributes.triage_notes_count
-            : noteBody.length > 0
-              ? 1
-              : 0,
+          attributes.triage_notes_count ?? (noteBody.length > 0 ? 1 : 0),
       },
     },
     {
@@ -220,7 +214,7 @@ export function adaptFindingTriageDetailResponse(
 
   return {
     ...summary,
-    noteId: typeof attributes.note_id === "string" ? attributes.note_id : null,
+    noteId: attributes.note_id || null,
     noteBody,
     maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
     privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
