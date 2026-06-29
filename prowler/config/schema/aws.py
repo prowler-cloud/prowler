@@ -394,6 +394,7 @@ class AWSProviderConfig(ProviderConfigBase):
 
     # --- Secrets ---------------------------------------------------------
     secrets_ignore_patterns: Optional[list[str]] = None
+    secrets_ignore_files: Optional[list[str]] = None
     max_days_secret_unused: Optional[int] = Field(
         default=None,
         ge=7,

@@ -3,6 +3,7 @@ constraint surface (CIDRs, account IDs, port ranges, enums, thresholds)."""
 
 import pytest
 
+from prowler.config.scan_config_schema import SCAN_CONFIG_SCHEMA
 from prowler.config.schema.aws import AWSProviderConfig
 from prowler.config.schema.validator import validate_provider_config
 
@@ -167,6 +168,29 @@ class Test_AWS_Detect_Secrets_Plugins:
             "detect_secrets_plugins": [
                 {"name": "Custom", "my_param": "abc", "other": 42}
             ]
+        }
+
+
+class Test_AWS_Secrets_Ignore_Files:
+    def test_valid_file_patterns_round_trip(self):
+        files = ["*.deps.json", "vendor/*.js"]
+        assert _validate({"secrets_ignore_files": files}) == {
+            "secrets_ignore_files": files
+        }
+
+    def test_empty_list_is_valid(self):
+        assert _validate({"secrets_ignore_files": []}) == {"secrets_ignore_files": []}
+
+    def test_exposed_in_scan_config_schema(self):
+        aws_properties = SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
+
+        assert aws_properties["secrets_ignore_files"] == {
+            "anyOf": [
+                {"items": {"type": "string"}, "type": "array"},
+                {"type": "null"},
+            ],
+            "default": None,
+            "title": "Secrets Ignore Files",
         }
 
 
