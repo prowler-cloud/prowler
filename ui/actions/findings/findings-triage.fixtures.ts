@@ -80,46 +80,6 @@ export const flatFindingWithAcceptedRiskTriage = {
   },
 } as const;
 
-export const relationshipFindingWithIncludedTriage = {
-  data: [
-    {
-      type: "findings",
-      id: "finding-relationship-1",
-      attributes: {
-        uid: "prowler-finding-relationship-uid-1",
-        status: "FAIL",
-      },
-      relationships: {
-        triage: {
-          data: {
-            type: "finding-triages",
-            id: "triage-relationship-1",
-          },
-        },
-      },
-    },
-  ],
-  included: [
-    {
-      type: "finding-triages",
-      id: "triage-relationship-1",
-      attributes: {
-        finding_id: "finding-relationship-1",
-        finding_uid: "prowler-finding-relationship-uid-1",
-        triage_id: "triage-relationship-1",
-        triage_notes_count: 1,
-        status: "false_positive",
-        has_note: true,
-        current_note: "Relationship note that belongs only in modal detail.",
-        source: "manual",
-        updated_by: "user-2",
-        inserted_at: "2026-06-02T10:00:00Z",
-        updated_at: "2026-06-02T10:05:00Z",
-      },
-    },
-  ],
-} as const;
-
 export const findingTriageDetailResponse = {
   data: {
     type: "finding-triages",

@@ -20,7 +20,6 @@ import {
   flatFindingWithNotePresenceOnly,
   flatFindingWithUnderReviewTriage,
   flatPassFindingWithoutPersistedTriage,
-  relationshipFindingWithIncludedTriage,
 } from "./findings-triage.fixtures";
 
 const expectNoRawTransportKeys = (value: Record<string, unknown>) => {
@@ -311,75 +310,6 @@ describe("adaptFindingTriageSummariesResponse", () => {
         status: FINDING_TRIAGE_STATUS.RESOLVED,
         label: "Resolved",
         hasVisibleNote: false,
-      }),
-    );
-  });
-
-  it("should preserve included note presence when flat status and relationship triage coexist", () => {
-    // Given
-    const input = {
-      data: [
-        {
-          id: "finding-mixed-1",
-          type: "findings",
-          attributes: {
-            finding_id: "finding-mixed-1",
-            uid: "prowler-finding-mixed-uid-1",
-            status: "FAIL",
-            triage_status: "open",
-          },
-          relationships: {
-            triage: {
-              data: {
-                type: "finding-triage",
-                id: "triage-mixed-1",
-              },
-            },
-          },
-        },
-      ],
-      included: [
-        {
-          id: "triage-mixed-1",
-          type: "finding-triage",
-          attributes: {
-            status: "under_review",
-            has_note: true,
-          },
-        },
-      ],
-    };
-
-    // When
-    const [summary] = adaptFindingTriageSummariesResponse(input, {
-      canEdit: true,
-    });
-
-    // Then
-    expect(summary.status).toBe(FINDING_TRIAGE_STATUS.OPEN);
-    expect(summary.hasVisibleNote).toBe(true);
-  });
-
-  it("should normalize future relationship/included triage resources without component changes", () => {
-    // Given
-    const input = relationshipFindingWithIncludedTriage;
-
-    // When
-    const result = adaptFindingTriageSummariesResponse(input, {
-      canEdit: false,
-      disabledReason: "cloud_only",
-    });
-
-    // Then
-    expect(result[0]).toEqual(
-      expect.objectContaining({
-        findingId: "finding-relationship-1",
-        findingUid: "prowler-finding-relationship-uid-1",
-        status: FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
-        label: "False Positive",
-        hasVisibleNote: true,
-        canEdit: false,
-        disabledReason: "cloud_only",
       }),
     );
   });
