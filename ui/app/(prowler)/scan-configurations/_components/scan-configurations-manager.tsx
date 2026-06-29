@@ -132,9 +132,12 @@ export function ScanConfigurationsManager({
   });
 
   const noMatchForProvider =
-    providerFilter.length > 0 && filteredConfigs.length === 0 && !nameSearch;
+    providerFilter.length > 0 &&
+    filteredConfigs.length === 0 &&
+    !nameSearch.trim();
 
-  const hasAnyFilter = providerFilter.length > 0 || nameSearch.length > 0;
+  const hasAnyFilter =
+    providerFilter.length > 0 || nameSearch.trim().length > 0;
 
   const handleProvidersChange = (_filterKey: string, values: string[]) => {
     setProviderFilter(values);

@@ -737,7 +737,7 @@ export const scanConfigurationFormSchema = z.object({
   configuration: z
     .string()
     .trim()
-    .min(1, { message: "Configuration is required" }),
+    .min(1, { error: "Configuration is required" }),
   provider_ids: z.array(z.uuid()).optional().default([]),
   id: z.string().optional(),
 });
