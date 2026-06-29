@@ -1093,6 +1093,10 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].resource_arn == policy_arn
             assert search("iam:PassRole", result[0].status_extended)
             assert search(
+                "bedrock-agentcore:CreateAgentRuntime",
+                result[0].status_extended,
+            )
+            assert search(
                 "bedrock-agentcore:CreateAgentRuntimeEndpoint",
                 result[0].status_extended,
             )
@@ -1160,6 +1164,18 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].resource_arn == policy_arn
             assert search("iam:PassRole", result[0].status_extended)
             assert search("bedrock-agentcore:CreateHarness", result[0].status_extended)
+            assert search(
+                "bedrock-agentcore:CreateAgentRuntime",
+                result[0].status_extended,
+            )
+            assert search(
+                "bedrock-agentcore:CreateAgentRuntimeEndpoint",
+                result[0].status_extended,
+            )
+            assert search(
+                "bedrock-agentcore:CreateWorkloadIdentity",
+                result[0].status_extended,
+            )
             assert search(
                 "bedrock-agentcore:GetAgentRuntime", result[0].status_extended
             )
