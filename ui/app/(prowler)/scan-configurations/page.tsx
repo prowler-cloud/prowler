@@ -7,6 +7,7 @@ import {
 } from "@/actions/scan-configurations";
 import { ContentLayout } from "@/components/ui";
 import { isCloud } from "@/lib/shared/env";
+import { ScanConfigurationData } from "@/types/scan-configurations";
 
 import { ScanConfigurationsManager } from "./_components/scan-configurations-manager";
 
@@ -18,7 +19,9 @@ export default async function ScanConfigPage() {
   }
 
   const [configs, providersResponse, schema] = await Promise.all([
-    listScanConfigurations(),
+    // On initial load a failure falls back to an empty list; the client-side
+    // refresh surfaces errors via a toast instead of clearing the table.
+    listScanConfigurations().catch(() => [] as ScanConfigurationData[]),
     getAllProviders({}),
     getScanConfigurationSchema(),
   ]);

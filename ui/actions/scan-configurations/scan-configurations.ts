@@ -271,8 +271,11 @@ export const listScanConfigurations = async (): Promise<
     const json = await response.json();
     return (json.data || []) as ScanConfigurationData[];
   } catch (error) {
+    // Re-throw so callers can distinguish a fetch/auth failure from an empty
+    // result. Collapsing errors into `[]` would render a false "no scan
+    // configurations" state and overwrite the table on a failed refresh.
     console.error("Error listing Scan Configurations:", error);
-    return [];
+    throw error;
   }
 };
 

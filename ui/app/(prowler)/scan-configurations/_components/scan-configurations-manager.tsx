@@ -49,8 +49,17 @@ export function ScanConfigurationsManager({
   const { toast } = useToast();
 
   const refresh = async () => {
-    const fresh = await listScanConfigurations();
-    setConfigs(fresh);
+    try {
+      const fresh = await listScanConfigurations();
+      setConfigs(fresh);
+    } catch {
+      // Keep the current table on a failed reload instead of clearing it.
+      toast({
+        variant: "destructive",
+        title: "Oops! Something went wrong",
+        description: "Failed to reload Scan Configurations. Please try again.",
+      });
+    }
   };
 
   const openCreate = () => {

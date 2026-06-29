@@ -45,9 +45,11 @@ export type ScanConfigurationActionState = {
   data?: ScanConfigurationData;
 } | null;
 
+export interface DeleteScanConfigurationErrors {
+  general?: string;
+}
+
 export type DeleteScanConfigurationActionState = {
-  errors?: {
-    general?: string;
-  };
+  errors?: DeleteScanConfigurationErrors;
   success?: string;
 } | null;
