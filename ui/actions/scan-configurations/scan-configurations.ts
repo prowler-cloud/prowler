@@ -5,20 +5,21 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
-import { scanConfigFormSchema } from "@/types/formSchemas";
+import { scanConfigurationFormSchema } from "@/types/formSchemas";
 import {
-  DeleteScanConfigActionState,
-  ScanConfigActionState,
-  ScanConfigData,
-  ScanConfigErrors,
-  ScanConfigRequestBody,
-} from "@/types/scan-configs";
+  DeleteScanConfigurationActionState,
+  ScanConfigurationActionState,
+  ScanConfigurationData,
+  ScanConfigurationErrors,
+  ScanConfigurationRequestBody,
+} from "@/types/scan-configurations";
 
-const SCAN_CONFIG_PATH = "/scan-config";
+const SCAN_CONFIGURATION_PATH = "/scan-configurations";
 
-// Scan Config IDs are UUIDs. Validate before interpolating into request URLs so
-// a malformed/crafted value can't inject path segments (SSRF / path injection).
-const scanConfigIdSchema = z.uuid();
+// Scan Configuration IDs are UUIDs. Validate before interpolating into request
+// URLs so a malformed/crafted value can't inject path segments (SSRF / path
+// injection).
+const scanConfigurationIdSchema = z.uuid();
 
 const parseConfiguration = (value: string): Record<string, unknown> => {
   // Backend (YamlOrJsonField) accepts either a YAML string or a JSON object.
@@ -37,10 +38,10 @@ const collectProviderIds = (formData: FormData): string[] => {
     .filter(Boolean);
 };
 
-export const createScanConfig = async (
-  _prevState: ScanConfigActionState,
+export const createScanConfiguration = async (
+  _prevState: ScanConfigurationActionState,
   formData: FormData,
-): Promise<ScanConfigActionState> => {
+): Promise<ScanConfigurationActionState> => {
   const headers = await getAuthHeaders({ contentType: true });
   const formDataObject = {
     name: formData.get("name"),
@@ -48,7 +49,7 @@ export const createScanConfig = async (
     provider_ids: collectProviderIds(formData),
   };
 
-  const validated = scanConfigFormSchema.safeParse(formDataObject);
+  const validated = scanConfigurationFormSchema.safeParse(formDataObject);
   if (!validated.success) {
     const fieldErrors = validated.error.flatten().fieldErrors;
     return {
@@ -75,10 +76,10 @@ export const createScanConfig = async (
   }
 
   try {
-    const url = new URL(`${apiBaseUrl}/scan-configs`);
-    const bodyData: ScanConfigRequestBody = {
+    const url = new URL(`${apiBaseUrl}/scan-configurations`);
+    const bodyData: ScanConfigurationRequestBody = {
       data: {
-        type: "scan-configs",
+        type: "scan-configurations",
         attributes: {
           name,
           configuration: parsedConfig,
@@ -97,11 +98,11 @@ export const createScanConfig = async (
       const detail =
         errorData?.errors?.[0]?.detail ||
         errorData?.message ||
-        `Failed to create Scan Config: ${response.statusText}`;
+        `Failed to create Scan Configuration: ${response.statusText}`;
       const pointer = errorData?.errors?.[0]?.source?.pointer as
         | string
         | undefined;
-      const errors: ScanConfigErrors = {};
+      const errors: ScanConfigurationErrors = {};
       if (pointer?.includes("name")) errors.name = detail;
       else if (pointer?.includes("configuration"))
         errors.configuration = detail;
@@ -111,35 +112,37 @@ export const createScanConfig = async (
     }
 
     const data = await response.json();
-    revalidatePath(SCAN_CONFIG_PATH);
+    revalidatePath(SCAN_CONFIGURATION_PATH);
     return {
-      success: "Scan Config created successfully!",
-      data: data.data as ScanConfigData,
+      success: "Scan Configuration created successfully!",
+      data: data.data as ScanConfigurationData,
     };
   } catch (error) {
-    console.error("Error creating Scan Config:", error);
+    console.error("Error creating Scan Configuration:", error);
     return {
       errors: {
         general:
           error instanceof Error
             ? error.message
-            : "Error creating Scan Config. Please try again.",
+            : "Error creating Scan Configuration. Please try again.",
       },
     };
   }
 };
 
-export const updateScanConfig = async (
-  _prevState: ScanConfigActionState,
+export const updateScanConfiguration = async (
+  _prevState: ScanConfigurationActionState,
   formData: FormData,
-): Promise<ScanConfigActionState> => {
+): Promise<ScanConfigurationActionState> => {
   const id = formData.get("id");
   if (!id) {
-    return { errors: { general: "Scan Config ID is required for update" } };
+    return {
+      errors: { general: "Scan Configuration ID is required for update" },
+    };
   }
-  const idResult = scanConfigIdSchema.safeParse(String(id));
+  const idResult = scanConfigurationIdSchema.safeParse(String(id));
   if (!idResult.success) {
-    return { errors: { general: "Invalid Scan Config ID" } };
+    return { errors: { general: "Invalid Scan Configuration ID" } };
   }
   const validId = idResult.data;
   const headers = await getAuthHeaders({ contentType: true });
@@ -149,7 +152,7 @@ export const updateScanConfig = async (
     provider_ids: collectProviderIds(formData),
   };
 
-  const validated = scanConfigFormSchema.safeParse(formDataObject);
+  const validated = scanConfigurationFormSchema.safeParse(formDataObject);
   if (!validated.success) {
     const fieldErrors = validated.error.flatten().fieldErrors;
     return {
@@ -176,10 +179,10 @@ export const updateScanConfig = async (
   }
 
   try {
-    const url = new URL(`${apiBaseUrl}/scan-configs/${validId}`);
-    const bodyData: ScanConfigRequestBody = {
+    const url = new URL(`${apiBaseUrl}/scan-configurations/${validId}`);
+    const bodyData: ScanConfigurationRequestBody = {
       data: {
-        type: "scan-configs",
+        type: "scan-configurations",
         id: validId,
         attributes: {
           name,
@@ -199,35 +202,35 @@ export const updateScanConfig = async (
       const detail =
         errorData?.errors?.[0]?.detail ||
         errorData?.message ||
-        `Failed to update Scan Config: ${response.statusText}`;
+        `Failed to update Scan Configuration: ${response.statusText}`;
       return { errors: { general: detail } };
     }
 
     const data = await response.json();
-    revalidatePath(SCAN_CONFIG_PATH);
+    revalidatePath(SCAN_CONFIGURATION_PATH);
     return {
-      success: "Scan Config updated successfully!",
-      data: data.data as ScanConfigData,
+      success: "Scan Configuration updated successfully!",
+      data: data.data as ScanConfigurationData,
     };
   } catch (error) {
-    console.error("Error updating Scan Config:", error);
+    console.error("Error updating Scan Configuration:", error);
     return {
       errors: {
         general:
           error instanceof Error
             ? error.message
-            : "Error updating Scan Config. Please try again.",
+            : "Error updating Scan Configuration. Please try again.",
       },
     };
   }
 };
 
-export const getScanConfigSchema = async (): Promise<Record<
+export const getScanConfigurationSchema = async (): Promise<Record<
   string,
   unknown
 > | null> => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/scan-configs/schema`);
+  const url = new URL(`${apiBaseUrl}/scan-configurations/schema`);
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
@@ -235,7 +238,7 @@ export const getScanConfigSchema = async (): Promise<Record<
     });
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch Scan Config schema: ${response.statusText}`,
+        `Failed to fetch Scan Configuration schema: ${response.statusText}`,
       );
     }
     const json = await response.json();
@@ -244,14 +247,16 @@ export const getScanConfigSchema = async (): Promise<Record<
       | undefined;
     return schema ?? null;
   } catch (error) {
-    console.error("Error fetching Scan Config schema:", error);
+    console.error("Error fetching Scan Configuration schema:", error);
     return null;
   }
 };
 
-export const listScanConfigs = async (): Promise<ScanConfigData[]> => {
+export const listScanConfigurations = async (): Promise<
+  ScanConfigurationData[]
+> => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/scan-configs`);
+  const url = new URL(`${apiBaseUrl}/scan-configurations`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -259,23 +264,28 @@ export const listScanConfigs = async (): Promise<ScanConfigData[]> => {
       headers,
     });
     if (!response.ok) {
-      throw new Error(`Failed to list Scan Configs: ${response.statusText}`);
+      throw new Error(
+        `Failed to list Scan Configurations: ${response.statusText}`,
+      );
     }
     const json = await response.json();
-    return (json.data || []) as ScanConfigData[];
+    return (json.data || []) as ScanConfigurationData[];
   } catch (error) {
-    console.error("Error listing Scan Configs:", error);
-    return [];
+    // Re-throw so callers can distinguish a fetch/auth failure from an empty
+    // result. Collapsing errors into `[]` would render a false "no scan
+    // configurations" state and overwrite the table on a failed refresh.
+    console.error("Error listing Scan Configurations:", error);
+    throw error;
   }
 };
 
-export const getScanConfig = async (
+export const getScanConfiguration = async (
   id: string,
-): Promise<ScanConfigData | undefined> => {
-  const idResult = scanConfigIdSchema.safeParse(id);
+): Promise<ScanConfigurationData | undefined> => {
+  const idResult = scanConfigurationIdSchema.safeParse(id);
   if (!idResult.success) return undefined;
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/scan-configs/${idResult.data}`);
+  const url = new URL(`${apiBaseUrl}/scan-configurations/${idResult.data}`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -284,28 +294,30 @@ export const getScanConfig = async (
     });
     if (!response.ok) return undefined;
     const json = await response.json();
-    return json.data as ScanConfigData;
+    return json.data as ScanConfigurationData;
   } catch (error) {
-    console.error("Error fetching Scan Config:", error);
+    console.error("Error fetching Scan Configuration:", error);
     return undefined;
   }
 };
 
-export const deleteScanConfig = async (
-  _prevState: DeleteScanConfigActionState,
+export const deleteScanConfiguration = async (
+  _prevState: DeleteScanConfigurationActionState,
   formData: FormData,
-): Promise<DeleteScanConfigActionState> => {
+): Promise<DeleteScanConfigurationActionState> => {
   const headers = await getAuthHeaders({ contentType: true });
   const id = formData.get("id");
   if (!id) {
-    return { errors: { general: "Scan Config ID is required for deletion" } };
+    return {
+      errors: { general: "Scan Configuration ID is required for deletion" },
+    };
   }
-  const idResult = scanConfigIdSchema.safeParse(String(id));
+  const idResult = scanConfigurationIdSchema.safeParse(String(id));
   if (!idResult.success) {
-    return { errors: { general: "Invalid Scan Config ID" } };
+    return { errors: { general: "Invalid Scan Configuration ID" } };
   }
   try {
-    const url = new URL(`${apiBaseUrl}/scan-configs/${idResult.data}`);
+    const url = new URL(`${apiBaseUrl}/scan-configurations/${idResult.data}`);
     const response = await fetch(url.toString(), {
       method: "DELETE",
       headers,
@@ -314,19 +326,19 @@ export const deleteScanConfig = async (
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.errors?.[0]?.detail ||
-          `Failed to delete Scan Config: ${response.statusText}`,
+          `Failed to delete Scan Configuration: ${response.statusText}`,
       );
     }
-    revalidatePath(SCAN_CONFIG_PATH);
-    return { success: "Scan Config deleted successfully!" };
+    revalidatePath(SCAN_CONFIGURATION_PATH);
+    return { success: "Scan Configuration deleted successfully!" };
   } catch (error) {
-    console.error("Error deleting Scan Config:", error);
+    console.error("Error deleting Scan Configuration:", error);
     return {
       errors: {
         general:
           error instanceof Error
             ? error.message
-            : "Error deleting Scan Config. Please try again.",
+            : "Error deleting Scan Configuration. Please try again.",
       },
     };
   }

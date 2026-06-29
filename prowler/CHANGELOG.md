@@ -15,7 +15,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `waf_regional_webacl_logging_enabled` check for AWS provider, verifying that each AWS WAF Classic Regional Web ACL has logging enabled to a Kinesis Data Firehose stream [(#11539)](https://github.com/prowler-cloud/prowler/pull/11539)
 - `sdk_only` provider property (default `true`) and `Provider.get_app_providers()`, so a provider (built-in or external) stays CLI/SDK-only and hidden from the app unless it declares `sdk_only = False` [(#11427)](https://github.com/prowler-cloud/prowler/pull/11427)
 - `Provider.get_scan_arguments()`, `Provider.get_connection_arguments()` and `Provider.get_credentials_schema()` contract methods, so a provider persisted as a stored uid plus a secret dict can be constructed and validated programmatically (to be consumed by the API in a later change) [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
+- CIS Amazon Web Services Foundations Benchmark v7.0.0 compliance framework for the AWS provider, adding the new Organizations section (2.1.1-2.1.6), resource policy (2.21), web front-end access logging (4.10), and VPC Endpoints (6.8) recommendations [(#11707)](https://github.com/prowler-cloud/prowler/pull/11707)
 - CIS Microsoft Azure Foundations Benchmark v6.0.0 compliance framework for the Azure provider [(#11708)](https://github.com/prowler-cloud/prowler/pull/11708)
+- CIS Google Cloud Platform Foundation Benchmark v5.0.0 compliance framework for the GCP provider [(#11714)](https://github.com/prowler-cloud/prowler/pull/11714)
 - `--scan-secrets-validate` flag and `aws.secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 
 ### 🔄 Changed
@@ -30,6 +32,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Key the `cloudwatch_log_group_no_secrets_in_logs` secret scan by log group ARN instead of name, so same-named log groups and streams in different regions no longer collide and reuse each other's findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
 - Azure PostgreSQL flexible server collection no longer drops the remaining servers in a subscription when one server fails to collect; the `connection_throttle.enable` parameter (removed in PostgreSQL 16+) is treated as absent only when the Azure SDK reports it as not found, so unexpected lookup failures are not silently reported as throttling disabled [(#11595)](https://github.com/prowler-cloud/prowler/pull/11595)
+- Azure `keyvault_logging_enabled` now accepts Key Vault diagnostic settings that enable the explicit `AuditEvent` category, avoiding false failures when Azure returns category-based logs without category groups [(#11660)](https://github.com/prowler-cloud/prowler/pull/11660)
 
 ---
 

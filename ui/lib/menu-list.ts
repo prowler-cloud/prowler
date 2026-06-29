@@ -133,10 +133,10 @@ export const getMenuList = ({
               active: pathname === "/mutelist",
             },
             {
-              href: "/scan-config",
-              label: "Scan Config",
+              href: "/scan-configurations",
+              label: "Scan Configuration",
               icon: SlidersHorizontal,
-              active: isCloudEnv && pathname.startsWith("/scan-config"),
+              active: isCloudEnv && pathname.startsWith("/scan-configurations"),
               highlight: true,
               disabled: !isCloudEnv,
               cloudOnly: !isCloudEnv,
