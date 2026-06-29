@@ -6,9 +6,16 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
 - `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
 - `stepfunctions_statemachine_encrypted_with_cmk` check for AWS provider, verifying that each Step Functions state machine uses a customer-managed KMS key for encryption at rest rather than the default AWS-owned key [(#11538)](https://github.com/prowler-cloud/prowler/pull/11538)
+- CIS Controls v8.1 universal compliance framework mapping existing checks across 18 providers (AWS, Azure, GCP, Kubernetes, M365, GitHub, AlibabaCloud, OracleCloud, GoogleWorkspace, Okta, Cloudflare, Vercel, MongoDB Atlas, OpenStack, Linode, StackIT, NHN, and Scaleway) to the 18 CIS Critical Security Controls and their Safeguards [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
+- CIS Microsoft 365 Foundations Benchmark v7.0.0 compliance framework for the M365 provider [(#11699)](https://github.com/prowler-cloud/prowler/pull/11699)
+- `waf_regional_webacl_logging_enabled` check for AWS provider, verifying that each AWS WAF Classic Regional Web ACL has logging enabled to a Kinesis Data Firehose stream [(#11539)](https://github.com/prowler-cloud/prowler/pull/11539)
+- `sdk_only` provider property (default `true`) and `Provider.get_app_providers()`, so a provider (built-in or external) stays CLI/SDK-only and hidden from the app unless it declares `sdk_only = False` [(#11427)](https://github.com/prowler-cloud/prowler/pull/11427)
+- `Provider.get_scan_arguments()`, `Provider.get_connection_arguments()` and `Provider.get_credentials_schema()` contract methods, so a provider persisted as a stored uid plus a secret dict can be constructed and validated programmatically (to be consumed by the API in a later change) [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
+- CIS Microsoft Azure Foundations Benchmark v6.0.0 compliance framework for the Azure provider [(#11708)](https://github.com/prowler-cloud/prowler/pull/11708)
 - `--scan-secrets-validate` flag and `aws.secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 
 ### 🔄 Changed
@@ -20,6 +27,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Report secret-scanning checks as `MANUAL` instead of `PASS` when the scanner fails (non-zero exit, timeout, unparseable output or missing binary), so a scanner failure is no longer indistinguishable from "no secrets found" [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Avoid a false `FAIL` in `cloudwatch_log_group_no_secrets_in_logs` when a multiline event's secrets are all removed by `secrets_ignore_patterns` during the rescan [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
+- Azure PostgreSQL flexible server collection no longer drops the remaining servers in a subscription when one server fails to collect; the `connection_throttle.enable` parameter (removed in PostgreSQL 16+) is treated as absent only when the Azure SDK reports it as not found, so unexpected lookup failures are not silently reported as throttling disabled [(#11595)](https://github.com/prowler-cloud/prowler/pull/11595)
 
 ---
 

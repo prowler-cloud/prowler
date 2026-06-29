@@ -1888,8 +1888,8 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         description=(
             "Download a specific compliance report as an OCSF JSON file. "
             "Only universal frameworks that declare an output configuration "
-            "produce this artifact (currently 'dora_2022_2554' and 'csa_ccm_4.0'); any "
-            "other framework returns 404."
+            "produce this artifact (currently 'dora_2022_2554', 'csa_ccm_4.0' "
+            "and 'cis_controls_8.1'); any other framework returns 404."
         ),
         parameters=[
             OpenApiParameter(

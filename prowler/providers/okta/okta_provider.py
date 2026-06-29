@@ -78,6 +78,7 @@ class OktaProvider(Provider):
     """
 
     _type: str = "okta"
+    sdk_only: bool = False
     _auth_method: str = None
     _session: OktaSession
     _identity: OktaIdentityInfo
