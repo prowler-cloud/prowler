@@ -1028,13 +1028,11 @@ export class ProvidersPage extends BasePage {
       return;
     }
 
-    // Provider-add E2E validates credentials and provider persistence only.
-    // Launching one scan per provider made CI noisy and overloaded the backend;
-    // scan execution itself is covered by scans.spec.ts.
-    if (await testConnectionButton.isVisible().catch(() => false)) {
-      await testConnectionButton.click();
-      await this.waitForProviderReadyToClose(timeout);
-    } else {
+    // Provider-add E2E validates credential persistence only. Reaching the
+    // connection step is enough; do not click "Continue"/"Check connection"
+    // because that performs provider-specific connectivity checks covered by
+    // dedicated scan/connection flows and can hang on external services.
+    if (!(await testConnectionButton.isVisible().catch(() => false))) {
       await expect(launchStepReady).toBeVisible({ timeout });
     }
 
