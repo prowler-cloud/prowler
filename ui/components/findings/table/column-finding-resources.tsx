@@ -25,12 +25,12 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
 
-import type { FindingTriageUpdateHandler } from "./finding-note-modal";
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
   FindingNotesCell,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
+import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   type DeltaType,

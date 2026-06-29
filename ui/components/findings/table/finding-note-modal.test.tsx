@@ -163,7 +163,7 @@ describe("FindingNoteModal", () => {
     const textarea = screen.getByLabelText("Note text");
     await user.clear(textarea);
     await user.type(textarea, "Documented owner follow-up.");
-    await user.click(screen.getByRole("button", { name: "Update note" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
@@ -195,7 +195,7 @@ describe("FindingNoteModal", () => {
     // When
     const textarea = screen.getByLabelText("Note text");
     await user.type(textarea, " Initial triage note. ");
-    await user.click(screen.getByRole("button", { name: "Update note" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
@@ -220,7 +220,7 @@ describe("FindingNoteModal", () => {
     // When
     await user.clear(screen.getByLabelText("Note text"));
     await user.type(screen.getByLabelText("Note text"), "Changed note");
-    await user.click(screen.getByRole("button", { name: "Update note" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     // Then
     expect(
@@ -246,7 +246,7 @@ describe("FindingNoteModal", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(
-      screen.getByRole("button", { name: "Update note" }),
+      screen.getByRole("button", { name: "Save changes" }),
     ).toBeInTheDocument();
   });
 
@@ -297,7 +297,7 @@ describe("FindingNoteModal", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Update note" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     // Then
     await waitFor(() =>

@@ -13,11 +13,11 @@ import { getRegionFlag } from "@/lib/region-flags";
 import { FindingProps, ProviderType } from "@/types";
 
 import { FindingDetailDrawer } from "./finding-detail-drawer";
-import type { FindingTriageUpdateHandler } from "./finding-note-modal";
 import {
   FindingNotesCell,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
+import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
 
