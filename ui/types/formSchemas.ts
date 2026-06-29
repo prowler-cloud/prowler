@@ -31,23 +31,6 @@ export const editRoleFormSchema = z.object({
   groups: z.array(z.string()).optional(),
 });
 
-export const editScanFormSchema = (currentName: string) =>
-  z.object({
-    scanName: z
-      .string()
-      .refine((val) => val === "" || val.length >= 3, {
-        message: "Must be empty or have at least 3 characters.",
-      })
-      .refine((val) => val === "" || val.length <= 32, {
-        message: "Must not exceed 32 characters.",
-      })
-      .refine((val) => val !== currentName, {
-        message: "The new name must be different from the current one.",
-      })
-      .optional(),
-    scanId: z.string(),
-  });
-
 export const onDemandScanFormSchema = () =>
   z.object({
     [ProviderCredentialFields.PROVIDER_ID]: z.string(),
@@ -737,5 +720,24 @@ export const mutedFindingsConfigFormSchema = z.object({
         });
       }
     }),
+  id: z.string().optional(),
+});
+
+// The editor owns content validation: live YAML syntax + schema (ranges/enums)
+// checks run through `validateScanConfigurationPayload(yamlString, schema)` in
+// `lib/yaml.ts` and surface in a single inline panel. Here we only enforce the
+// form-level shape (a name and a non-empty configuration) so we don't render the
+// same YAML error twice.
+export const scanConfigurationFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be at most 100 characters" }),
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { error: "Configuration is required" }),
+  provider_ids: z.array(z.uuid()).optional().default([]),
   id: z.string().optional(),
 });

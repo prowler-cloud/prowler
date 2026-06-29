@@ -1,13 +1,10 @@
-from typing import Dict
-
 import boto3
 import openai
+from api.models import LighthouseProviderConfiguration, LighthouseProviderModels
 from botocore import UNSIGNED
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 from celery.utils.log import get_task_logger
-
-from api.models import LighthouseProviderConfiguration, LighthouseProviderModels
 
 logger = get_task_logger(__name__)
 
@@ -104,7 +101,7 @@ def _extract_openai_api_key(
 
 def _extract_openai_compatible_params(
     provider_cfg: LighthouseProviderConfiguration,
-) -> Dict[str, str] | None:
+) -> dict[str, str] | None:
     """
     Extract base_url and api_key for OpenAI-compatible providers.
     """
@@ -122,7 +119,7 @@ def _extract_openai_compatible_params(
 
 def _extract_bedrock_credentials(
     provider_cfg: LighthouseProviderConfiguration,
-) -> Dict[str, str] | None:
+) -> dict[str, str] | None:
     """
     Safely extract AWS Bedrock credentials from a provider configuration.
 
@@ -177,7 +174,7 @@ def _extract_bedrock_credentials(
 
 
 def _create_bedrock_client(
-    bedrock_creds: Dict[str, str], service_name: str = "bedrock"
+    bedrock_creds: dict[str, str], service_name: str = "bedrock"
 ):
     """
     Create a boto3 Bedrock client with the appropriate authentication method.
@@ -221,7 +218,7 @@ def _create_bedrock_client(
     )
 
 
-def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
+def check_lighthouse_provider_connection(provider_config_id: str) -> dict:
     """
     Validate a Lighthouse provider configuration by calling the provider API and
     toggle its active state accordingly.
@@ -314,7 +311,7 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
         return {"connected": False, "error": error_message}
 
 
-def _fetch_openai_models(api_key: str) -> Dict[str, str]:
+def _fetch_openai_models(api_key: str) -> dict[str, str]:
     """
     Fetch available models from OpenAI API.
 
@@ -355,7 +352,7 @@ def _fetch_openai_models(api_key: str) -> Dict[str, str]:
     return filtered_models
 
 
-def _fetch_openai_compatible_models(base_url: str, api_key: str) -> Dict[str, str]:
+def _fetch_openai_compatible_models(base_url: str, api_key: str) -> dict[str, str]:
     """
     Fetch available models from an OpenAI-compatible API using the OpenAI SDK.
 
@@ -367,7 +364,7 @@ def _fetch_openai_compatible_models(base_url: str, api_key: str) -> Dict[str, st
     client = openai.OpenAI(api_key=api_key, base_url=base_url)
     models = client.models.list()
 
-    available_models: Dict[str, str] = {}
+    available_models: dict[str, str] = {}
     for model in models.data:
         model_id = model.id
         # Prefer provider-supplied human-friendly name when available
@@ -462,7 +459,7 @@ def _extract_foundation_model_ids(profile_models: list) -> list[str]:
 
 def _build_inference_profile_map(
     bedrock_client, region: str
-) -> Dict[str, tuple[str, str]]:
+) -> dict[str, tuple[str, str]]:
     """
     Build map of foundation_model_id -> best inference profile.
 
@@ -472,7 +469,7 @@ def _build_inference_profile_map(
         Prefers region-matched profiles over others
     """
     region_prefix = _get_region_prefix(region)
-    model_to_profile: Dict[str, tuple[str, str]] = {}
+    model_to_profile: dict[str, tuple[str, str]] = {}
 
     try:
         response = bedrock_client.list_inference_profiles()
@@ -533,7 +530,7 @@ def _check_on_demand_availability(bedrock_client, model_id: str) -> bool:
         return False
 
 
-def _fetch_bedrock_models(bedrock_creds: Dict[str, str]) -> Dict[str, str]:
+def _fetch_bedrock_models(bedrock_creds: dict[str, str]) -> dict[str, str]:
     """
     Fetch available models from AWS Bedrock, preferring inference profiles over ON_DEMAND.
 
@@ -560,7 +557,7 @@ def _fetch_bedrock_models(bedrock_creds: Dict[str, str]) -> Dict[str, str]:
     foundation_response = bedrock_client.list_foundation_models()
     model_summaries = foundation_response.get("modelSummaries", [])
 
-    models_to_return: Dict[str, str] = {}
+    models_to_return: dict[str, str] = {}
     on_demand_models: set[str] = set()
 
     for model in model_summaries:
@@ -585,7 +582,7 @@ def _fetch_bedrock_models(bedrock_creds: Dict[str, str]) -> Dict[str, str]:
                 models_to_return[model_id] = model_name
                 on_demand_models.add(model_id)
 
-    available_models: Dict[str, str] = {}
+    available_models: dict[str, str] = {}
 
     for model_id, model_name in models_to_return.items():
         if model_id in on_demand_models:
@@ -597,7 +594,7 @@ def _fetch_bedrock_models(bedrock_creds: Dict[str, str]) -> Dict[str, str]:
     return available_models
 
 
-def refresh_lighthouse_provider_models(provider_config_id: str) -> Dict:
+def refresh_lighthouse_provider_models(provider_config_id: str) -> dict:
     """
     Refresh the catalog of models for a Lighthouse provider configuration.
 
@@ -619,7 +616,7 @@ def refresh_lighthouse_provider_models(provider_config_id: str) -> Dict:
         LighthouseProviderConfiguration.DoesNotExist: If no configuration exists with the given ID.
     """
     provider_cfg = LighthouseProviderConfiguration.objects.get(pk=provider_config_id)
-    fetched_models: Dict[str, str] = {}
+    fetched_models: dict[str, str] = {}
 
     try:
         if (

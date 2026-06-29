@@ -1,5 +1,6 @@
 import {
   getComplianceCsv,
+  getComplianceOcsf,
   getCompliancePdfReport,
   type ScanBinaryResult,
 } from "@/actions/scans";
@@ -10,10 +11,14 @@ import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
+import { readEnv } from "@/lib/runtime-env";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
-export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+export const baseUrl = process.env.AUTH_URL;
+export const apiBaseUrl = readEnv(
+  "UI_API_BASE_URL",
+  "NEXT_PUBLIC_API_BASE_URL",
+);
 
 /**
  * Extracts a form value from a FormData object
@@ -101,6 +106,38 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
   return url.toString();
 };
 
+const REPORT_PREPARATION_ERROR =
+  "Unable to prepare the scan report. Please try again in a few minutes.";
+
+export const GENERIC_SERVER_ERROR_MESSAGE =
+  "Server is temporarily unavailable. Please try again in a few minutes.";
+
+const HTML_ERROR_PATTERN =
+  /(?:<!doctype\s+html|<html\b|<\/?(?:head|title|body|center|h1|h2|pre)\b)/i;
+
+export const sanitizeErrorMessage = (
+  message: string,
+  fallback = GENERIC_SERVER_ERROR_MESSAGE,
+): string => {
+  const trimmedMessage = message.trim();
+
+  if (!trimmedMessage) {
+    return fallback;
+  }
+
+  return HTML_ERROR_PATTERN.test(trimmedMessage) ? fallback : trimmedMessage;
+};
+
+const getPreflightErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+
+  if (contentType.includes("text/html")) {
+    return REPORT_PREPARATION_ERROR;
+  }
+
+  return (await response.text()) || "An unknown error occurred.";
+};
+
 export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
@@ -121,11 +158,10 @@ export const downloadScanZip = async (
     }
 
     if (!preflightResponse.ok) {
-      const errorMessage = await preflightResponse.text();
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: errorMessage || "An unknown error occurred.",
+        description: await getPreflightErrorMessage(preflightResponse),
       });
       return;
     }
@@ -231,6 +267,32 @@ export const downloadComplianceCsv = async (
     result,
     "text/csv",
     "The compliance report has been downloaded successfully.",
+    toast,
+  );
+};
+
+/**
+ * Download the per-framework OCSF JSON export.
+ *
+ * Only universal frameworks declaring an ``outputs`` block produce this
+ * artifact (currently DORA and CSA CCM 4.0); callers must gate the call
+ * via ``isOcsfSupported`` to avoid surfacing a broken download on
+ * frameworks the API will 404 on.
+ */
+export const downloadComplianceOcsf = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the OCSF report. This may take a moment.",
+  });
+  const result = await getComplianceOcsf(scanId, complianceId);
+  await downloadFile(
+    result,
+    "application/json",
+    "The compliance OCSF report has been downloaded successfully.",
     toast,
   );
 };
@@ -361,11 +423,11 @@ export function decryptKey(passkey: string) {
 
 export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    return error.message;
+    return sanitizeErrorMessage(error.message);
   } else if (error && typeof error === "object" && "message" in error) {
-    return String(error.message);
+    return sanitizeErrorMessage(String(error.message));
   } else if (typeof error === "string") {
-    return error;
+    return sanitizeErrorMessage(error);
   } else {
     return "Oops! Something went wrong.";
   }

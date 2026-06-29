@@ -2,7 +2,7 @@ import gc
 import io
 import math
 import time
-from typing import Callable
+from collections.abc import Callable
 
 import matplotlib
 from celery.utils.log import get_task_logger

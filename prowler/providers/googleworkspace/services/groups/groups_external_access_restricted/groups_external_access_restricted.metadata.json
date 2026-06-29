@@ -13,8 +13,8 @@
   "Risk": "Allowing external access to groups exposes **group names, descriptions, and membership** to anyone outside the organization, increasing the risk of **information disclosure** and enabling external parties to identify targets for **social engineering attacks**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/10308022",
-    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+    "https://knowledge.workspace.google.com/admin/groups/what-you-get-with-groups-for-business",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
   ],
   "Remediation": {
     "Code": {

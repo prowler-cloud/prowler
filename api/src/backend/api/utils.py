@@ -1,22 +1,21 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Subquery
-from rest_framework.exceptions import NotFound, ValidationError
-
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Subquery
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
+from rest_framework.exceptions import NotFound, ValidationError
 
 if TYPE_CHECKING:
     from prowler.providers.alibabacloud.alibabacloud_provider import (
@@ -243,6 +242,12 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "filter_accounts": [provider.uid],
         }
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        if isinstance(prowler_provider_kwargs.get("region"), str):
+            prowler_provider_kwargs = {
+                **prowler_provider_kwargs,
+                "region": {prowler_provider_kwargs["region"]},
+            }
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
         # clouds_yaml_content, clouds_yaml_cloud and provider_id are validated
         # in the provider itself, so it's not needed here.
@@ -436,8 +441,8 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
 
         # Only save regions if connection is successful
         if connection.is_connected:
-            regions_status = {r: True for r in connection.enabled_regions}
-            regions_status.update({r: False for r in connection.disabled_regions})
+            regions_status = dict.fromkeys(connection.enabled_regions, True)
+            regions_status.update(dict.fromkeys(connection.disabled_regions, False))
 
             # Save regions information in the integration configuration
             integration.configuration["regions"] = regions_status
@@ -519,7 +524,7 @@ def validate_invitation(
             raise ValidationError({"invitation_token": "Invalid invitation code."})
 
     # Check if the invitation has expired
-    if invitation.expires_at < datetime.now(timezone.utc):
+    if invitation.expires_at < datetime.now(UTC):
         invitation.state = Invitation.State.EXPIRED
         invitation.save(using=MainRouter.admin_db)
         raise InvitationTokenExpiredException()
@@ -590,6 +595,6 @@ def initialize_prowler_integration(integration: Integration) -> Jira:
             with rls_transaction(str(integration.tenant_id)):
                 integration.configuration["projects"] = {}
                 integration.connected = False
-                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+                integration.connection_last_checked_at = datetime.now(tz=UTC)
                 integration.save()
             raise jira_auth_error

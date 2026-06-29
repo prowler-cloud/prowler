@@ -313,8 +313,8 @@ export function MultiSelectContent({
 
   const widthClasses =
     width === "wide"
-      ? "w-[min(max(var(--radix-popover-trigger-width),24rem),calc(100vw-2rem))] max-w-[32rem]"
-      : "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))] max-w-[24rem]";
+      ? "w-[calc(100vw-2rem)] sm:w-max sm:min-w-[min(max(var(--radix-popover-trigger-width),24rem),32rem)] sm:max-w-[32rem]"
+      : "w-[calc(100vw-2rem)] sm:w-max sm:min-w-[min(var(--radix-popover-trigger-width),22rem)] sm:max-w-[22rem]";
 
   function handleSearchValueChange(searchValue: string) {
     if (!canSearch || !searchValue.trim()) return;
@@ -391,6 +391,7 @@ export function MultiSelectItem({
   keywords,
   onSelect,
   className,
+  disabled = false,
   ...props
 }: {
   badgeLabel?: ReactNode;
@@ -407,20 +408,25 @@ export function MultiSelectItem({
   return (
     <CommandItem
       {...props}
+      disabled={disabled}
+      aria-disabled={disabled}
+      data-disabled={disabled ? "true" : undefined}
       value={value}
       keywords={keywords}
       data-slot="multiselect-item"
       className={cn(
         "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary my-1 flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none first:mt-0 last:mb-0 hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         isSelected && "bg-slate-100 dark:bg-slate-800/50",
+        disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
         className,
       )}
       onSelect={() => {
+        if (disabled) return;
         toggleValue(value);
         onSelect?.(value);
       }}
     >
-      <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+      <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap">
         {children}
       </span>
       <CheckIcon

@@ -2,10 +2,9 @@
 
 from functools import partial
 
-from django.db import migrations
-
 from api.db_utils import PostgresEnumMigration, ProcessorTypeEnum, register_enum
 from api.models import Processor
+from django.db import migrations
 
 ProcessorTypeEnumMigration = PostgresEnumMigration(
     enum_name="processor_type",

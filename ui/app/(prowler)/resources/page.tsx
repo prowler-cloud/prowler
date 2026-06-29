@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
-import { getProviders } from "@/actions/providers";
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
+import { getAllProviders } from "@/actions/providers";
 import {
   getLatestMetadataInfo,
   getLatestResources,
@@ -37,19 +38,23 @@ export default async function Resources({
 
   const initialResourceId = resolvedSearchParams.resourceId?.toString();
 
-  const [metadataInfoData, providersData, resourceByIdData] = await Promise.all(
-    [
-      (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
-        query,
-        filters: outputFilters,
-        sort: encodedSort,
-      }),
-      getProviders({ pageSize: 50 }),
-      initialResourceId
-        ? getResourceById(initialResourceId, { include: ["provider"] })
-        : Promise.resolve(undefined),
-    ],
-  );
+  const [
+    metadataInfoData,
+    providersData,
+    providerGroupsData,
+    resourceByIdData,
+  ] = await Promise.all([
+    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
+      query,
+      filters: outputFilters,
+      sort: encodedSort,
+    }),
+    getAllProviders(),
+    getAllProviderGroups(),
+    initialResourceId
+      ? getResourceById(initialResourceId, { include: ["provider"] })
+      : Promise.resolve(undefined),
+  ]);
 
   const processedResource = resourceByIdData?.data
     ? (() => {
@@ -80,6 +85,7 @@ export default async function Resources({
         <div className="mb-6">
           <ResourcesFilters
             providers={providersData?.data || []}
+            providerGroups={providerGroupsData?.data || []}
             uniqueRegions={uniqueRegions}
             uniqueServices={uniqueServices}
             uniqueResourceTypes={uniqueResourceTypes}

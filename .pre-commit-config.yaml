@@ -7,6 +7,10 @@
 #   P50 — dependency validation
 
 default_install_hook_types: [pre-commit]
+# Hooks run on commit only by default;
+# NOTE: default_stages does NOT override a hook's manifest stages, so fixers shipping pre-push in their
+# manifest need an explicit stages: ["pre-commit"] below to stay off push.
+default_stages: [pre-commit]
 
 repos:
   ## GENERAL (prek built-in — no external repo needed)
@@ -21,13 +25,16 @@ repos:
       - id: check-json
         priority: 10
       - id: end-of-file-fixer
+        stages: ["pre-commit"]
         priority: 0
       - id: trailing-whitespace
+        stages: ["pre-commit"]
         priority: 0
       - id: no-commit-to-branch
         priority: 10
       - id: pretty-format-json
         args: ["--autofix", --no-sort-keys, --no-ensure-ascii]
+        stages: ["pre-commit"]
         priority: 10
 
   ## TOML
@@ -82,6 +89,7 @@ repos:
         name: "SDK - isort"
         files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
         args: ["--profile", "black"]
+        stages: ["pre-commit"]
         priority: 20
 
   - repo: https://github.com/psf/black
@@ -102,17 +110,36 @@ repos:
         priority: 30
 
   ## PYTHON — API + MCP Server (ruff)
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.11
+  # Run ruff through `uv run` against each project so prek uses the exact ruff
+  # version pinned in that project's uv.lock — the same version GitHub Actions
+  # runs via `uv run ruff`. This removes the drift between the local hooks and
+  # CI. api/ and mcp_server/ are separate uv projects, so they need separate
+  # hooks (each `uv run --project` resolves its own pinned ruff + config).
+  - repo: local
     hooks:
-      - id: ruff
-        name: "API + MCP - ruff check"
-        files: { glob: ["{api,mcp_server}/**/*.py"] }
-        args: ["--fix"]
+      - id: ruff-check-api
+        name: "API - ruff check"
+        entry: uv run --project ./api ruff check --fix
+        language: system
+        files: { glob: ["api/**/*.py"] }
         priority: 30
-      - id: ruff-format
-        name: "API + MCP - ruff format"
-        files: { glob: ["{api,mcp_server}/**/*.py"] }
+      - id: ruff-format-api
+        name: "API - ruff format"
+        entry: uv run --project ./api ruff format
+        language: system
+        files: { glob: ["api/**/*.py"] }
+        priority: 20
+      - id: ruff-check-mcp
+        name: "MCP - ruff check"
+        entry: uv run --project ./mcp_server ruff check --fix
+        language: system
+        files: { glob: ["mcp_server/**/*.py"] }
+        priority: 30
+      - id: ruff-format-mcp
+        name: "MCP - ruff format"
+        entry: uv run --project ./mcp_server ruff format
+        language: system
+        files: { glob: ["mcp_server/**/*.py"] }
         priority: 20
 
   ## PYTHON — uv (API + SDK)
@@ -132,6 +159,13 @@ repos:
         files: { glob: ["{pyproject.toml,uv.lock}"] }
         pass_filenames: false
         priority: 50
+
+  ## MARKDOWN
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        priority: 30
 
   ## CONTAINERS
   - repo: https://github.com/hadolint/hadolint

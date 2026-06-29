@@ -15,17 +15,22 @@ class SageMaker(AWSService):
         self.sagemaker_notebook_instances = []
         self.sagemaker_models = []
         self.sagemaker_training_jobs = []
+        self.sagemaker_processing_jobs = []
+        self.processing_jobs_scanned_regions = set()
         self.sagemaker_domains = []
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
+        self.sagemaker_monitoring_schedules = []
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
         self.__threading_call__(self._list_models)
         self.__threading_call__(self._list_training_jobs)
+        self.__threading_call__(self._list_processing_jobs)
         self.__threading_call__(self._list_endpoint_configs)
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
+        self.__threading_call__(self._list_monitoring_schedules)
 
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
@@ -34,6 +39,9 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._describe_training_job, self.sagemaker_training_jobs
+        )
+        self.__threading_call__(
+            self._describe_processing_job, self.sagemaker_processing_jobs
         )
         self.__threading_call__(
             self._describe_endpoint_config, list(self.endpoint_configs.values())
@@ -48,6 +56,9 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._list_tags_for_resource, self.sagemaker_training_jobs
+        )
+        self.__threading_call__(
+            self._list_tags_for_resource, self.sagemaker_processing_jobs
         )
         self.__threading_call__(
             self._list_tags_for_resource, list(self.endpoint_configs.values())
@@ -124,6 +135,66 @@ class SageMaker(AWSService):
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_processing_jobs(self, regional_client):
+        """List SageMaker processing jobs in a region.
+
+        Populates ``self.sagemaker_processing_jobs`` with `ProcessingJob`
+        entries and adds ``regional_client.region`` to
+        ``self.processing_jobs_scanned_regions`` once pagination succeeds, so
+        regions where ``ListProcessingJobs`` fails are skipped by checks that
+        consume that set.
+
+        Args:
+            regional_client: Regional SageMaker boto3 client.
+        """
+        logger.info("SageMaker - listing processing jobs...")
+        try:
+            list_processing_jobs_paginator = regional_client.get_paginator(
+                "list_processing_jobs"
+            )
+            for page in list_processing_jobs_paginator.paginate():
+                for processing_job in page["ProcessingJobSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            processing_job["ProcessingJobArn"], self.audit_resources
+                        )
+                    ):
+                        self.sagemaker_processing_jobs.append(
+                            ProcessingJob(
+                                name=processing_job["ProcessingJobName"],
+                                region=regional_client.region,
+                                arn=processing_job["ProcessingJobArn"],
+                            )
+                        )
+            self.processing_jobs_scanned_regions.add(regional_client.region)
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_processing_job(self, processing_job):
+        """Describe a SageMaker processing job and enrich its image metadata.
+
+        Reads ``AppSpecification.ImageUri`` from ``DescribeProcessingJob`` and
+        stores it on ``processing_job.image_uri``. Errors are logged and
+        swallowed so a failure in one job does not abort the scan.
+
+        Args:
+            processing_job: ProcessingJob model to enrich in-place.
+        """
+        logger.info("SageMaker - describing processing job...")
+        try:
+            regional_client = self.regional_clients[processing_job.region]
+            describe_processing_job = regional_client.describe_processing_job(
+                ProcessingJobName=processing_job.name
+            )
+            app_spec = describe_processing_job.get("AppSpecification", {})
+            processing_job.image_uri = app_spec.get("ImageUri")
+        except Exception as error:
+            logger.error(
+                f"{processing_job.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_notebook_instance(self, notebook_instance):
@@ -377,6 +448,46 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_monitoring_schedules(self, regional_client):
+        logger.info("SageMaker - listing monitoring schedules...")
+        name = "SageMaker Monitoring Schedules"
+        arn = self.get_unknown_arn(
+            region=regional_client.region,
+            resource_type="monitoring-schedule",
+        )
+        has_schedules = False
+        is_scheduled = False
+        try:
+            paginator = regional_client.get_paginator("list_monitoring_schedules")
+            for page in paginator.paginate():
+                for schedule in page["MonitoringScheduleSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            schedule["MonitoringScheduleArn"], self.audit_resources
+                        )
+                    ):
+                        has_schedules = True
+                        if schedule["MonitoringScheduleStatus"] == "Scheduled":
+                            is_scheduled = True
+                            name = schedule["MonitoringScheduleName"]
+                            arn = schedule["MonitoringScheduleArn"]
+                            break
+                if is_scheduled:
+                    break
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        self.sagemaker_monitoring_schedules.append(
+            MonitoringSchedule(
+                name=name,
+                region=regional_client.region,
+                arn=arn,
+                has_schedules=has_schedules,
+                is_scheduled=is_scheduled,
+            )
+        )
+
 
 class NotebookInstance(BaseModel):
     name: str
@@ -406,6 +517,25 @@ class TrainingJob(BaseModel):
     volume_kms_key_id: str = None
     network_isolation: bool = None
     vpc_config_subnets: list[str] = []
+    tags: Optional[list] = []
+
+
+class ProcessingJob(BaseModel):
+    """Represents a SageMaker processing job.
+
+    Attributes:
+        name: Processing job name.
+        region: AWS region where the job lives.
+        arn: Processing job ARN.
+        image_uri: Container image URI from `AppSpecification.ImageUri`,
+            populated by `_describe_processing_job`.
+        tags: Resource tags, populated by `_list_tags_for_resource`.
+    """
+
+    name: str
+    region: str
+    arn: str
+    image_uri: Optional[str] = None
     tags: Optional[list] = []
 
 
@@ -441,3 +571,11 @@ class ModelRegistry(BaseModel):
     region: str
     has_groups: bool = False
     has_approved_packages: bool = False
+
+
+class MonitoringSchedule(BaseModel):
+    name: str
+    region: str
+    arn: str
+    has_schedules: bool = False
+    is_scheduled: bool = False

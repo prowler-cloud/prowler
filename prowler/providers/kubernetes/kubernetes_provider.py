@@ -58,6 +58,7 @@ class KubernetesProvider(Provider):
     """
 
     _type: str = "kubernetes"
+    sdk_only: bool = False
     _session: KubernetesSession
     _namespaces: list
     _audit_config: dict

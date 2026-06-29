@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.7.2] (Prowler v5.28.1)
+
+### 🐞 Fixed
+
+- Preserve authorization header in HTTP mode [(#11366)](https://github.com/prowler-cloud/prowler/pull/11366)
+
+---
+
 ## [0.7.1] (Prowler v5.28.0)
 
 ### 🔐 Security
@@ -43,6 +51,8 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 ### 🚀 Added
 
 - Attack Path tool to get Neo4j DB schema [(#10321)](https://github.com/prowler-cloud/prowler/pull/10321)
+
+---
 
 ## [0.4.0] (Prowler v5.19.0)
 
