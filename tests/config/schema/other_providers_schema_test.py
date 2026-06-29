@@ -147,6 +147,21 @@ class Test_Okta_Schema:
         assert _validate("okta", {"okta_max_retries": -1}) == {}
         assert _validate("okta", {"okta_max_retries": 11}) == {}
 
+    def test_request_timeout_zero_allowed(self):
+        # 0 is documented as "disable the timeout" in config.yaml.
+        assert _validate("okta", {"okta_request_timeout": 0}) == {
+            "okta_request_timeout": 0
+        }
+
+    def test_request_timeout_in_range_allowed(self):
+        assert _validate("okta", {"okta_request_timeout": 300}) == {
+            "okta_request_timeout": 300
+        }
+
+    def test_request_timeout_out_of_range_dropped(self):
+        assert _validate("okta", {"okta_request_timeout": -1}) == {}
+        assert _validate("okta", {"okta_request_timeout": 3601}) == {}
+
     def test_non_numeric_value_dropped(self):
         # A typo'd string must not flow through to the limiter (it would crash
         # the `> 0` comparison during provider init).

@@ -2,6 +2,10 @@
 title: "Okta Rate Limit Configuration in Prowler"
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.32.0" />
+
 Prowler's Okta Provider manages API rate limits with two complementary controls:
 
 - **Request throttling (proactive):** Prowler paces outbound requests through a shared limiter so scans stay under Okta's rate limits and rarely trigger a rate-limit response in the first place.

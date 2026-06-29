@@ -73,15 +73,32 @@ class OktaRateLimiter:
             await self._sleep(wait)
 
 
-def build_throttled_http_client(limiter: OktaRateLimiter):
+def build_throttled_http_client(limiter: OktaRateLimiter) -> type[HTTPClient]:
     """Return an `HTTPClient` subclass that paces requests through `limiter`.
 
     The Okta SDK instantiates `config["httpClient"]` with its HTTP config, so we
     return a class (not an instance) that closes over the shared limiter.
+
+    Args:
+        limiter: Shared token-bucket limiter that paces the aggregate request
+            rate across every service client of the provider.
+
+    Returns:
+        An `HTTPClient` subclass that awaits the limiter before each request.
     """
 
     class ThrottledHTTPClient(HTTPClient):
+        """`HTTPClient` that acquires a limiter token before each request."""
+
         async def send_request(self, request):
+            """Acquire a rate-limit token, then delegate to the SDK client.
+
+            Args:
+                request: The request payload built by the Okta SDK.
+
+            Returns:
+                The result of the underlying `HTTPClient.send_request` call.
+            """
             await limiter.acquire()
             return await super().send_request(request)
 
