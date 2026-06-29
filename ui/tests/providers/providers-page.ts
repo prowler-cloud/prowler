@@ -936,7 +936,7 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  private async waitForProviderLaunchChoice(): Promise<void> {
+  private async waitForProviderLaunchChoice(timeout = 30000): Promise<void> {
     const launchAction = this.page
       .getByRole("button", { name: "Save", exact: true })
       .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
@@ -946,8 +946,8 @@ export class ProvidersPage extends BasePage {
 
     try {
       await Promise.race([
-        launchAction.waitFor({ state: "visible", timeout: 30000 }),
-        connectionError.waitFor({ state: "visible", timeout: 30000 }),
+        launchAction.waitFor({ state: "visible", timeout }),
+        connectionError.waitFor({ state: "visible", timeout }),
       ]);
     } catch {
       // Continue and inspect visible state below.
@@ -960,11 +960,12 @@ export class ProvidersPage extends BasePage {
       );
     }
 
-    await expect(launchAction).toBeVisible();
+    await expect(launchAction).toBeVisible({ timeout });
   }
 
   async completeProviderConnectionWithoutLaunchingScan(
     providerUID: string,
+    timeout = 30000,
   ): Promise<void> {
     await this.verifyWizardModalOpen();
 
@@ -985,7 +986,7 @@ export class ProvidersPage extends BasePage {
     // the first frame, which races the render and falls through.
     await expect(
       checkConnectionButton.or(launchAction).or(connectionError),
-    ).toBeVisible({ timeout: 30000 });
+    ).toBeVisible({ timeout });
 
     if (await connectionError.isVisible().catch(() => false)) {
       const errorText = await connectionError.textContent();
@@ -999,9 +1000,9 @@ export class ProvidersPage extends BasePage {
     // scan execution itself is covered by scans.spec.ts.
     if (await checkConnectionButton.isVisible().catch(() => false)) {
       await checkConnectionButton.click();
-      await this.waitForProviderLaunchChoice();
+      await this.waitForProviderLaunchChoice(timeout);
     } else {
-      await expect(launchAction).toBeVisible();
+      await expect(launchAction).toBeVisible({ timeout });
     }
 
     await this.wizardModal

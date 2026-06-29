@@ -1092,6 +1092,7 @@
 - Environment variables configured: E2E_OKTA_DOMAIN, E2E_OKTA_CLIENT_ID, E2E_OKTA_BASE64_PRIVATE_KEY
 - Remove any existing provider with the same Org Domain before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Org Domain not to be already registered beforehand.
+- Okta provider authentication can take longer than the default Playwright test timeout in CI, so the test allows extra time for the provider connection step.
 
 ### Flow Steps
 
@@ -1101,16 +1102,16 @@
 4. Fill provider details (org domain and alias)
 5. Verify Okta credentials page is loaded
 6. Fill Okta credentials (client ID and PEM-encoded private key)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Confirm provider connection without launching a scan
+8. Verify return to Providers page
+9. Verify provider exists in Providers table
 
 ### Expected Result
 
 - Okta provider successfully added with OAuth 2.0 Private Key JWT credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated successfully without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
@@ -1119,10 +1120,9 @@
 - Provider details form accepts org domain (Okta-managed domain, e.g. acme.okta.com) and alias
 - Credentials page loads with Client ID input and Private Key textarea
 - Credentials are properly filled in the correct fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by org domain)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by org domain)
 
 ### Notes
 
