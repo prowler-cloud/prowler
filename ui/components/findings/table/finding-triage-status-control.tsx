@@ -67,12 +67,10 @@ function TriageStatusPicker({
   disabled,
   value,
   onValueChange,
-  variant = "table",
 }: {
   disabled: boolean;
   value: FindingTriageStatus;
   onValueChange: (status: FindingTriageManualStatus) => void;
-  variant?: "table" | "modal";
 }) {
   return (
     <Select
@@ -87,7 +85,7 @@ function TriageStatusPicker({
       <SelectTrigger
         aria-label="Triage status"
         disabled={disabled}
-        size={variant === "modal" ? "status-modal" : "status-table"}
+        size="status-table"
         iconSize="sm"
         variant="status"
         tone={TRIAGE_STATUS_TONE[value]}
@@ -142,7 +140,6 @@ export function FindingTriageStatusControl(
       <TriageStatusPicker
         disabled={!triage.canEdit}
         value={props.value}
-        variant="modal"
         onValueChange={props.onValueChange}
       />
     );

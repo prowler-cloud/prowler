@@ -154,7 +154,7 @@ export function FindingNotesCell({
       <>
         <Button
           type="button"
-          variant="bare"
+          variant="bare-success"
           size="icon-xs"
           aria-label="Note exists"
           title={
@@ -163,7 +163,6 @@ export function FindingNotesCell({
               : "Existing note cannot be loaded from the table."
           }
           disabled={!canOpenExistingNoteModal}
-          className="text-text-success-primary opacity-80 disabled:opacity-60"
           onClick={async (event) => {
             event.stopPropagation();
             if (!canOpenExistingNoteModal || !onTriageNoteLoadAction) {
@@ -201,10 +200,9 @@ export function FindingNotesCell({
       <Button
         type="button"
         variant="link"
-        size="link-sm"
+        size="link-inline"
         disabled={!canOpenNewNoteModal}
         title={disabledCopy}
-        className="gap-1.5 p-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:no-underline"
         onClick={(event) => {
           event.stopPropagation();
           if (canOpenNewNoteModal) {

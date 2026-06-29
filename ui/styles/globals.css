@@ -63,23 +63,6 @@
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: var(--color-rose-50);
 
-  /* Status Select Colors */
-  --select-status-warning-text: var(--color-orange-700);
-  --select-status-warning-border: var(--color-orange-300);
-  --select-status-warning-bg: var(--color-orange-50);
-  --select-status-attention-text: var(--color-amber-700);
-  --select-status-attention-border: var(--color-amber-300);
-  --select-status-attention-bg: var(--color-amber-50);
-  --select-status-info-text: var(--color-blue-700);
-  --select-status-info-border: var(--color-blue-300);
-  --select-status-info-bg: var(--color-blue-50);
-  --select-status-success-text: var(--color-emerald-700);
-  --select-status-success-border: var(--color-emerald-300);
-  --select-status-success-bg: var(--color-emerald-50);
-  --select-status-risk-text: var(--color-purple-700);
-  --select-status-risk-border: var(--color-purple-300);
-  --select-status-risk-bg: var(--color-purple-50);
-
   /* Data Background Colors */
   --bg-data-azure: var(--color-sky-400);
   --bg-data-kubernetes: var(--color-indigo-600);
@@ -160,23 +143,6 @@
   --bg-warning-secondary: var(--color-orange-900);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: #432232;
-
-  /* Status Select Colors */
-  --select-status-warning-text: var(--color-orange-400);
-  --select-status-warning-border: var(--color-orange-700);
-  --select-status-warning-bg: var(--color-orange-950);
-  --select-status-attention-text: var(--color-yellow-400);
-  --select-status-attention-border: var(--color-yellow-700);
-  --select-status-attention-bg: var(--color-yellow-950);
-  --select-status-info-text: var(--color-blue-400);
-  --select-status-info-border: var(--color-blue-700);
-  --select-status-info-bg: var(--color-blue-950);
-  --select-status-success-text: var(--color-emerald-400);
-  --select-status-success-border: var(--color-emerald-700);
-  --select-status-success-bg: var(--color-emerald-950);
-  --select-status-risk-text: var(--color-purple-400);
-  --select-status-risk-border: var(--color-purple-700);
-  --select-status-risk-bg: var(--color-purple-950);
 
   /* Data Background Colors */
   --bg-data-azure: var(--color-sky-400);
@@ -269,23 +235,6 @@
   --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
-
-  /* Status Select Colors */
-  --color-select-status-warning-text: var(--select-status-warning-text);
-  --color-select-status-warning-border: var(--select-status-warning-border);
-  --color-select-status-warning-bg: var(--select-status-warning-bg);
-  --color-select-status-attention-text: var(--select-status-attention-text);
-  --color-select-status-attention-border: var(--select-status-attention-border);
-  --color-select-status-attention-bg: var(--select-status-attention-bg);
-  --color-select-status-info-text: var(--select-status-info-text);
-  --color-select-status-info-border: var(--select-status-info-border);
-  --color-select-status-info-bg: var(--select-status-info-bg);
-  --color-select-status-success-text: var(--select-status-success-text);
-  --color-select-status-success-border: var(--select-status-success-border);
-  --color-select-status-success-bg: var(--select-status-success-bg);
-  --color-select-status-risk-text: var(--select-status-risk-text);
-  --color-select-status-risk-border: var(--select-status-risk-border);
-  --color-select-status-risk-bg: var(--select-status-risk-bg);
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);

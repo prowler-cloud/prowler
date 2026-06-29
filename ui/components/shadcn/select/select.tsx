@@ -14,21 +14,29 @@ type SelectStatusTone = "warning" | "attention" | "info" | "success" | "risk";
 
 const selectStatusToneClasses = {
   warning:
-    "border-select-status-warning-border bg-select-status-warning-bg text-select-status-warning-text [&_svg]:text-select-status-warning-text",
+    "border-border-neutral-tertiary bg-transparent text-text-warning-primary [&_svg]:text-text-warning-primary",
   attention:
-    "border-select-status-attention-border bg-select-status-attention-bg text-select-status-attention-text [&_svg]:text-select-status-attention-text",
-  info: "border-select-status-info-border bg-select-status-info-bg text-select-status-info-text [&_svg]:text-select-status-info-text",
+    "border-border-neutral-tertiary bg-transparent text-text-warning-primary [&_svg]:text-text-warning-primary",
+  info: "border-border-neutral-tertiary bg-transparent text-button-tertiary [&_svg]:text-button-tertiary",
   success:
-    "border-select-status-success-border bg-select-status-success-bg text-select-status-success-text [&_svg]:text-select-status-success-text",
-  risk: "border-select-status-risk-border bg-select-status-risk-bg text-select-status-risk-text [&_svg]:text-select-status-risk-text",
+    "border-border-neutral-tertiary bg-transparent text-text-success-primary [&_svg]:text-text-success-primary",
+  risk: "border-border-neutral-tertiary bg-transparent text-text-neutral-secondary [&_svg]:text-text-neutral-secondary",
+} as const satisfies Record<SelectStatusTone, string>;
+
+const selectStatusItemToneClasses = {
+  warning: "text-text-warning-primary [&_svg]:text-text-warning-primary",
+  attention: "text-text-warning-primary [&_svg]:text-text-warning-primary",
+  info: "text-button-tertiary [&_svg]:text-button-tertiary",
+  success: "text-text-success-primary [&_svg]:text-text-success-primary",
+  risk: "text-text-neutral-secondary [&_svg]:text-text-neutral-secondary",
 } as const satisfies Record<SelectStatusTone, string>;
 
 const selectStatusDotClasses = {
-  warning: "bg-select-status-warning-text",
-  attention: "bg-select-status-attention-text",
-  info: "bg-select-status-info-text",
-  success: "bg-select-status-success-text",
-  risk: "bg-select-status-risk-text",
+  warning: "bg-bg-warning",
+  attention: "bg-bg-warning",
+  info: "bg-bg-data-info",
+  success: "bg-bg-pass",
+  risk: "bg-bg-data-muted",
 } as const satisfies Record<SelectStatusTone, string>;
 
 function Select({
@@ -192,7 +200,7 @@ function SelectItem({
       data-slot="select-item"
       className={cn(
         "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary hover:bg-bg-neutral-tertiary relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-3 pr-12 pl-4 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
-        tone && selectStatusToneClasses[tone],
+        tone && selectStatusItemToneClasses[tone],
         className,
       )}
       {...props}

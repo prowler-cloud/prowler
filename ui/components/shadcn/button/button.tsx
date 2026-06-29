@@ -21,10 +21,12 @@ const buttonVariants = cva(
           "border border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary text-text-neutral-primary focus-visible:ring-border-neutral-tertiary/50",
         ghost:
           "border border-transparent text-text-neutral-primary hover:bg-bg-neutral-tertiary active:bg-border-neutral-secondary focus-visible:ring-border-neutral-secondary/50",
-        link: "text-button-tertiary underline-offset-4 hover:text-button-tertiary-hover disabled:bg-transparent",
+        link: "text-button-tertiary underline-offset-4 hover:text-button-tertiary-hover disabled:bg-transparent disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:no-underline",
         // Chrome-free: no border/background, only the icon shows. Hover/active shift
         // the icon color instead of painting a box. Pair with an `icon*` size.
         bare: "border-0 bg-transparent p-0 text-text-neutral-secondary hover:text-text-neutral-primary active:text-text-neutral-primary focus-visible:ring-border-neutral-secondary/50 disabled:bg-transparent",
+        "bare-success":
+          "border-0 bg-transparent p-0 text-text-success-primary opacity-80 hover:text-text-success-primary hover:opacity-100 active:text-text-success-primary focus-visible:ring-border-neutral-secondary/50 disabled:bg-transparent disabled:opacity-60",
         // Menu variant like secondary but more padding and the back is almost transparent
         menu: "backdrop-blur-xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/10 text-text-neutral-primary dark:text-white shadow-lg hover:bg-white/70 dark:hover:bg-white/10 hover:border-white/90 dark:hover:border-white/30 active:bg-white/80 dark:active:bg-white/15 active:scale-[0.98] focus-visible:ring-button-primary/50 transition-all duration-200",
         "menu-active":
@@ -43,6 +45,7 @@ const buttonVariants = cva(
         "icon-lg": "size-10",
         "link-xs": "text-xs",
         "link-sm": "text-sm",
+        "link-inline": "h-auto min-w-0 gap-1.5 p-0 text-sm",
       },
     },
     defaultVariants: {
