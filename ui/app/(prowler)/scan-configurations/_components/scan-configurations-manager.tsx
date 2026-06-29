@@ -3,7 +3,10 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { deleteScanConfig, listScanConfigs } from "@/actions/scan-configs";
+import {
+  deleteScanConfiguration,
+  listScanConfigurations,
+} from "@/actions/scan-configurations";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
@@ -12,43 +15,51 @@ import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { ProviderProps } from "@/types/providers";
-import { ScanConfigData } from "@/types/scan-configs";
+import { ScanConfigurationData } from "@/types/scan-configurations";
 
-import { ScanConfigEditor } from "./scan-config-editor";
-import { createScanConfigsColumns } from "./scan-configs-columns";
+import { ScanConfigurationEditor } from "./scan-configuration-editor";
+import { createScanConfigurationsColumns } from "./scan-configurations-columns";
 
 // Same column basis classes as `FindingsFilters` so the controls align across
 // breakpoints with the rest of the product.
 const FILTER_CONTROL_COLUMN_CLASS =
   "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
 
-interface ScanConfigsManagerProps {
-  initialConfigs: ScanConfigData[];
+interface ScanConfigurationsManagerProps {
+  initialConfigs: ScanConfigurationData[];
   richProviders: ProviderProps[];
   schema: Record<string, unknown> | null;
 }
 
-export function ScanConfigsManager({
+export function ScanConfigurationsManager({
   initialConfigs,
   richProviders,
   schema,
-}: ScanConfigsManagerProps) {
-  const [configs, setConfigs] = useState<ScanConfigData[]>(initialConfigs);
+}: ScanConfigurationsManagerProps) {
+  const [configs, setConfigs] =
+    useState<ScanConfigurationData[]>(initialConfigs);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editingConfig, setEditingConfig] = useState<ScanConfigData | null>(
-    null,
-  );
-  const [pendingDelete, setPendingDelete] = useState<ScanConfigData | null>(
-    null,
-  );
+  const [editingConfig, setEditingConfig] =
+    useState<ScanConfigurationData | null>(null);
+  const [pendingDelete, setPendingDelete] =
+    useState<ScanConfigurationData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [accountFilter, setAccountFilter] = useState<string[]>([]);
+  const [providerFilter, setProviderFilter] = useState<string[]>([]);
   const [nameSearch, setNameSearch] = useState<string>("");
   const { toast } = useToast();
 
   const refresh = async () => {
-    const fresh = await listScanConfigs();
-    setConfigs(fresh);
+    try {
+      const fresh = await listScanConfigurations();
+      setConfigs(fresh);
+    } catch {
+      // Keep the current table on a failed reload instead of clearing it.
+      toast({
+        variant: "destructive",
+        title: "Oops! Something went wrong",
+        description: "Failed to reload Scan Configurations. Please try again.",
+      });
+    }
   };
 
   const openCreate = () => {
@@ -56,7 +67,7 @@ export function ScanConfigsManager({
     setEditorOpen(true);
   };
 
-  const openEdit = (config: ScanConfigData) => {
+  const openEdit = (config: ScanConfigurationData) => {
     setEditingConfig(config);
     setEditorOpen(true);
   };
@@ -76,10 +87,10 @@ export function ScanConfigsManager({
     formData.append("id", pendingDelete.id);
 
     try {
-      const result = await deleteScanConfig(null, formData);
+      const result = await deleteScanConfiguration(null, formData);
       if (result?.success) {
         toast({
-          title: "Scan Config deleted",
+          title: "Scan Configuration deleted",
           description: result.success,
         });
         await refresh();
@@ -94,7 +105,7 @@ export function ScanConfigsManager({
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
-        description: "Error deleting Scan Config. Please try again.",
+        description: "Error deleting Scan Configuration. Please try again.",
       });
     } finally {
       setIsDeleting(false);
@@ -102,15 +113,15 @@ export function ScanConfigsManager({
     }
   };
 
-  const columns = createScanConfigsColumns(
+  const columns = createScanConfigurationsColumns(
     (cfg) => openEdit(cfg),
     (cfg) => setPendingDelete(cfg),
   );
 
   const filteredConfigs = configs.filter((c) => {
-    if (accountFilter.length > 0) {
+    if (providerFilter.length > 0) {
       const attached = c.attributes.providers || [];
-      const overlaps = accountFilter.some((pid) => attached.includes(pid));
+      const overlaps = providerFilter.some((pid) => attached.includes(pid));
       if (!overlaps) return false;
     }
     if (nameSearch) {
@@ -120,17 +131,20 @@ export function ScanConfigsManager({
     return true;
   });
 
-  const noMatchForAccount =
-    accountFilter.length > 0 && filteredConfigs.length === 0 && !nameSearch;
+  const noMatchForProvider =
+    providerFilter.length > 0 &&
+    filteredConfigs.length === 0 &&
+    !nameSearch.trim();
 
-  const hasAnyFilter = accountFilter.length > 0 || nameSearch.length > 0;
+  const hasAnyFilter =
+    providerFilter.length > 0 || nameSearch.trim().length > 0;
 
-  const handleAccountsChange = (_filterKey: string, values: string[]) => {
-    setAccountFilter(values);
+  const handleProvidersChange = (_filterKey: string, values: string[]) => {
+    setProviderFilter(values);
   };
 
   const clearFilters = () => {
-    setAccountFilter([]);
+    setProviderFilter([]);
     setNameSearch("");
   };
 
@@ -138,46 +152,46 @@ export function ScanConfigsManager({
     <>
       <div className="mb-6">
         <BatchFiltersLayout
-          testIdPrefix="scan-config"
+          testIdPrefix="scan-configuration"
           controlsClassName="gap-3"
           controls={
             <>
               <div className={FILTER_CONTROL_COLUMN_CLASS}>
                 <AccountsSelector
                   providers={richProviders}
-                  onBatchChange={handleAccountsChange}
-                  selectedValues={accountFilter}
+                  onBatchChange={handleProvidersChange}
+                  selectedValues={providerFilter}
                 />
               </div>
               {hasAnyFilter && (
                 <ClearFiltersButton
                   showCount
                   pendingCount={
-                    accountFilter.length + (nameSearch.trim() ? 1 : 0)
+                    providerFilter.length + (nameSearch.trim() ? 1 : 0)
                   }
                   onClear={clearFilters}
                 />
               )}
               <Button size="lg" onClick={openCreate} className="md:ml-auto">
                 <Plus className="size-4" />
-                New Scan Config
+                New Scan Configuration
               </Button>
             </>
           }
         />
       </div>
 
-      {noMatchForAccount ? (
+      {noMatchForProvider ? (
         <Card variant="base" className="p-8 text-center">
           <p className="text-default-700 text-sm font-medium">
-            {accountFilter.length === 1
-              ? "No Scan Config is attached to this account."
-              : "No Scan Config is attached to any of the selected accounts."}
+            {providerFilter.length === 1
+              ? "No Scan Configuration is attached to this provider."
+              : "No Scan Configuration is attached to any of the selected providers."}
           </p>
           <p className="text-default-500 mt-1 text-sm">
-            The next scan{accountFilter.length === 1 ? "" : "s"} will use the
-            built-in defaults shipped with Prowler. Attach a Scan Config from
-            the editor to override them.
+            The next scan{providerFilter.length === 1 ? "" : "s"} will use the
+            built-in defaults shipped with Prowler. Attach a Scan Configuration
+            from the editor to override them.
           </p>
         </Card>
       ) : (
@@ -195,7 +209,7 @@ export function ScanConfigsManager({
         />
       )}
 
-      <ScanConfigEditor
+      <ScanConfigurationEditor
         open={editorOpen}
         onClose={handleEditorClose}
         richProviders={richProviders}
@@ -207,14 +221,15 @@ export function ScanConfigsManager({
       <Modal
         open={!!pendingDelete}
         onOpenChange={(open) => !open && setPendingDelete(null)}
-        title="Delete Scan Config"
+        title="Delete Scan Configuration"
         size="md"
       >
         <div className="flex flex-col gap-4">
           <p className="text-default-600 text-sm">
             Are you sure you want to delete{" "}
-            <strong>{pendingDelete?.attributes.name}</strong>? Attached accounts
-            will fall back to the built-in scan defaults on their next scan.
+            <strong>{pendingDelete?.attributes.name}</strong>? Attached
+            providers will fall back to the built-in scan defaults on their next
+            scan.
           </p>
           <div className="flex w-full justify-end gap-4">
             <Button

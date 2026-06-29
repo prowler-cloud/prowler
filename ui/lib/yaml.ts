@@ -275,14 +275,14 @@ Mutelist:
           Tags:
             - "Name=aws-controltower-VPC"`;
 
-export interface ScanConfigValidationError {
+export interface ScanConfigurationValidationError {
   path: string;
   message: string;
 }
 
-export interface ScanConfigValidationResult {
+export interface ScanConfigurationValidationResult {
   isValid: boolean;
-  errors: ScanConfigValidationError[];
+  errors: ScanConfigurationValidationError[];
 }
 
 // Compile the JSON Schema with ajv at most once per schema reference.
@@ -316,16 +316,16 @@ const formatAjvPath = (err: ErrorObject): string => {
 };
 
 /**
- * Validate a YAML string against the aggregated Scan Config JSON Schema.
+ * Validate a YAML string against the aggregated Scan Configuration JSON Schema.
  *
  * If `schema` is null (e.g. backend unreachable), it falls back to only
  * checking that the YAML parses to a mapping — so the user is never blocked
  * from saving when the schema endpoint is down.
  */
-export const validateScanConfigPayload = (
+export const validateScanConfigurationPayload = (
   val: string,
   schema: Record<string, unknown> | null,
-): ScanConfigValidationResult => {
+): ScanConfigurationValidationResult => {
   const yamlCheck = validateYaml(val);
   if (!yamlCheck.isValid) {
     return {
@@ -377,10 +377,10 @@ export const validateScanConfigPayload = (
   return { isValid: false, errors };
 };
 
-export const defaultScanConfigYaml = `# Scan Config overrides the per-tenant defaults documented in
+export const defaultScanConfigurationYaml = `# Scan Configuration overrides the per-tenant defaults documented in
 # prowler/config/config.yaml. Add only the keys you want to override.
 # Allowed ranges and enums are described by the server-side JSON Schema
-# served at /api/v1/scan-configs/schema; invalid values are flagged below.
+# served at /api/v1/scan-configurations/schema; invalid values are flagged below.
 
 aws:
   max_unused_access_keys_days: 45

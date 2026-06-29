@@ -6,12 +6,12 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/shadcn";
 import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import { ScanConfigData } from "@/types/scan-configs";
+import { ScanConfigurationData } from "@/types/scan-configurations";
 
-export const createScanConfigsColumns = (
-  onEdit: (config: ScanConfigData) => void,
-  onDelete: (config: ScanConfigData) => void,
-): ColumnDef<ScanConfigData>[] => [
+export const createScanConfigurationsColumns = (
+  onEdit: (config: ScanConfigurationData) => void,
+  onDelete: (config: ScanConfigurationData) => void,
+): ColumnDef<ScanConfigurationData>[] => [
   {
     accessorKey: "attributes.name",
     header: ({ column }) => (
@@ -28,7 +28,7 @@ export const createScanConfigsColumns = (
   {
     id: "providers_count",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Accounts" />
+      <DataTableColumnHeader column={column} title="Providers" />
     ),
     cell: ({ row }) => {
       const count = row.original.attributes.providers?.length ?? 0;
@@ -36,10 +36,10 @@ export const createScanConfigsColumns = (
         <span className="text-text-neutral-primary text-sm">
           {count === 0 ? (
             <span className="text-text-neutral-tertiary italic">
-              No accounts
+              No providers
             </span>
           ) : (
-            `${count} ${count === 1 ? "account" : "accounts"}`
+            `${count} ${count === 1 ? "provider" : "providers"}`
           )}
         </span>
       );
