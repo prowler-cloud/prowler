@@ -301,7 +301,8 @@ from rest_framework_json_api import serializers
                     },
                     "regions": {
                         "type": "array",
-                        "items": {"type": "string"},
+                        "minItems": 1,
+                        "items": {"type": "string", "minLength": 1},
                         "description": "Optional explicit OCI regions to audit. Omit to audit all "
                         "subscribed OCI regions discovered from the tenancy.",
                     },

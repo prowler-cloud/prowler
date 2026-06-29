@@ -15,7 +15,7 @@ def remove_oraclecloud_secret_regions(apps, schema_editor):
 
     for tenant in Tenant.objects.using(db_alias).all().iterator():
         with rls_transaction(str(tenant.id), using=db_alias):
-            provider_secrets = ProviderSecret.objects.using(db_alias).filter(
+            provider_secrets = ProviderSecret._base_manager.using(db_alias).filter(
                 provider__provider="oraclecloud"
             )
 

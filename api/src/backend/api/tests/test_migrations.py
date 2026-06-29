@@ -27,6 +27,8 @@ class TestRemoveOraclecloudSecretRegionsMigration:
                 "regions": ["us-phoenix-1"],
             },
         )
+        oraclecloud_provider.is_deleted = True
+        oraclecloud_provider.save(update_fields=["is_deleted"])
         aws_secret = ProviderSecret.objects.create(
             tenant_id=aws_provider.tenant_id,
             provider=aws_provider,
@@ -44,7 +46,7 @@ class TestRemoveOraclecloudSecretRegionsMigration:
 
         migration.remove_oraclecloud_secret_regions(apps, schema_editor)
 
-        oraclecloud_secret.refresh_from_db()
+        oraclecloud_secret = ProviderSecret.all_objects.get(pk=oraclecloud_secret.pk)
         aws_secret.refresh_from_db()
         assert "region" not in oraclecloud_secret.secret
         assert "regions" not in oraclecloud_secret.secret
