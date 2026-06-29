@@ -118,6 +118,7 @@ const ProvidersTabContent = async ({
       isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
       filters={providersView.filters}
       providers={providersView.providers}
+      providerGroups={providersView.providerGroups}
       metadata={providersView.metadata}
       rows={providersView.rows}
     />

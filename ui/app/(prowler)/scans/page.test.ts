@@ -21,3 +21,20 @@ describe("scans page onboarding", () => {
     expect(source).toContain("onboardingAction={onboardingAction}");
   });
 });
+
+describe("scans page scheduled tab source", () => {
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  const pagePath = path.join(currentDir, "page.tsx");
+  const source = readFileSync(pagePath, "utf8");
+
+  it("sources the Scheduled tab from /schedules only for the advanced capability", () => {
+    expect(source).toContain("getSchedulesPage");
+    expect(source).toContain("SCAN_SCHEDULE_CAPABILITY.ADVANCED");
+    expect(source).toContain("tab === SCAN_JOBS_TAB.SCHEDULED");
+  });
+
+  it("maps schedule resources to rows and delegates pagination to the endpoint", () => {
+    expect(source).toContain("buildScheduledTabRows");
+    expect(source).toContain("pickScheduleProviderFilters");
+  });
+});

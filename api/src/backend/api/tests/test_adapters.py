@@ -3,11 +3,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from allauth.socialaccount.models import SocialLogin
-from django.contrib.auth import get_user_model
-
 from api.adapters import ProwlerSocialAccountAdapter
 from api.db_router import MainRouter
 from api.models import SAMLConfiguration
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 

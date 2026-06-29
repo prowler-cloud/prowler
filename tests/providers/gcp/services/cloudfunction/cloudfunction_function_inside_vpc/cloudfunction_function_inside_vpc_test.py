@@ -13,6 +13,13 @@ _CHECK_PATH = (
 _CLIENT_PATH = f"{_CHECK_PATH}.cloudfunction_client"
 
 
+def _function_id(name: str) -> str:
+    return (
+        f"projects/{GCP_PROJECT_ID}/locations/{GCP_US_CENTER1_LOCATION}"
+        f"/functions/{name}"
+    )
+
+
 class Test_cloudfunction_function_inside_vpc:
     def test_no_functions(self):
         cloudfunction_client = mock.MagicMock()
@@ -63,6 +70,7 @@ class Test_cloudfunction_function_inside_vpc:
             )
             cloudfunction_client.functions = [
                 Function(
+                    id=_function_id("fn-vpc"),
                     name="fn-vpc",
                     project_id=GCP_PROJECT_ID,
                     location=GCP_US_CENTER1_LOCATION,
@@ -106,6 +114,7 @@ class Test_cloudfunction_function_inside_vpc:
 
             cloudfunction_client.functions = [
                 Function(
+                    id=_function_id("fn-public"),
                     name="fn-public",
                     project_id=GCP_PROJECT_ID,
                     location=GCP_US_CENTER1_LOCATION,
@@ -149,6 +158,7 @@ class Test_cloudfunction_function_inside_vpc:
 
             cloudfunction_client.functions = [
                 Function(
+                    id=_function_id("fn-empty"),
                     name="fn-empty",
                     project_id=GCP_PROJECT_ID,
                     location=GCP_US_CENTER1_LOCATION,
@@ -184,6 +194,7 @@ class Test_cloudfunction_function_inside_vpc:
 
             cloudfunction_client.functions = [
                 Function(
+                    id=_function_id("fn-deploy"),
                     name="fn-deploy",
                     project_id=GCP_PROJECT_ID,
                     location=GCP_US_CENTER1_LOCATION,

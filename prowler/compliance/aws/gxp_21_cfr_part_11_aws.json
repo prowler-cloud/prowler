@@ -266,6 +266,9 @@
         "ec2_ebs_default_encryption",
         "efs_encryption_at_rest_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_encryption_at_rest_enabled",
         "opensearch_service_domains_node_to_node_encryption_enabled",
@@ -347,6 +350,20 @@
         "cloudtrail_cloudwatch_logging_enabled",
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     }
   ]

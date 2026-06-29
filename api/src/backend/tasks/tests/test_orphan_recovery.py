@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -6,7 +6,6 @@ import pytest
 from celery import states
 from django.test import override_settings
 from django_celery_results.models import TaskResult
-
 from tasks.jobs.orphan_recovery import (
     _decode_celery_field,
     _reconcile_task_results,
@@ -29,8 +28,7 @@ def _orphan_result(*, name, kwargs, worker, created_minutes_ago, status=states.S
         task_args=repr([]),
     )
     TaskResult.objects.filter(pk=tr.pk).update(
-        date_created=datetime.now(tz=timezone.utc)
-        - timedelta(minutes=created_minutes_ago)
+        date_created=datetime.now(tz=UTC) - timedelta(minutes=created_minutes_ago)
     )
     tr.refresh_from_db()
     return tr

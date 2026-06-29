@@ -1,10 +1,9 @@
 import logging
 import time
 
+from config.custom_logging import BackendLogger
 from django.core.handlers.asgi import ASGIRequest
 from django.db import connections
-
-from config.custom_logging import BackendLogger
 
 
 class CloseDBConnectionsMiddleware:
