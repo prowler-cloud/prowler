@@ -41,18 +41,28 @@ const buildFindingTriageNoteBody = (body: string) => ({
   },
 });
 
-async function getJsonApi(url: string) {
+const buildApiUrl = (path: `/${string}`) => {
+  if (!apiBaseUrl) {
+    throw new Error("API base URL is not configured.");
+  }
+
+  const url = new URL(apiBaseUrl);
+  url.pathname = `${url.pathname.replace(/\/$/, "")}${path}`;
+  return url.toString();
+};
+
+async function getJsonApi(path: `/${string}`) {
   const headers = await getAuthHeaders({ contentType: false });
-  const response = await fetch(url, {
+  const response = await fetch(buildApiUrl(path), {
     headers,
   });
 
   return handleApiResponse(response);
 }
 
-async function patchJsonApi(url: string, body: unknown) {
+async function patchJsonApi(path: `/${string}`, body: unknown) {
   const headers = await getAuthHeaders({ contentType: false });
-  const response = await fetch(url, {
+  const response = await fetch(buildApiUrl(path), {
     method: "PATCH",
     headers: {
       ...headers,
@@ -141,7 +151,7 @@ async function rollbackTriageStatus(
 
   if (input.triageId) {
     await patchJsonApi(
-      `${apiBaseUrl}/finding-triages/${input.triageId}`,
+      `/finding-triages/${input.triageId}`,
       buildFindingTriageBody({ status: previousStatus }),
     );
     return;
@@ -149,7 +159,7 @@ async function rollbackTriageStatus(
 
   if (findingUid) {
     await patchJsonApi(
-      `${apiBaseUrl}/findings/${encodePathSegment(findingUid)}/triage`,
+      `/findings/${encodePathSegment(findingUid)}/triage`,
       buildFindingTriageBody({ status: previousStatus }),
     );
   }
@@ -179,7 +189,9 @@ async function resolveFindingUid({
     return findingUid;
   }
 
-  const apiResponse = await getJsonApi(`${apiBaseUrl}/findings/${findingId}`);
+  const apiResponse = await getJsonApi(
+    `/findings/${encodePathSegment(findingId)}`,
+  );
   const resolvedFindingUid = apiResponse?.data?.attributes?.uid;
 
   if (typeof resolvedFindingUid !== "string" || !resolvedFindingUid) {
@@ -197,8 +209,8 @@ export async function loadLatestFindingTriageNote(
     : await resolveFindingUid(triage);
   const apiResponse = await getJsonApi(
     triage.triageId
-      ? `${apiBaseUrl}/finding-triages/${triage.triageId}/notes`
-      : `${apiBaseUrl}/findings/${encodePathSegment(findingUid)}/triage/notes`,
+      ? `/finding-triages/${triage.triageId}/notes`
+      : `/findings/${encodePathSegment(findingUid)}/triage/notes`,
   );
   const latestNote = adaptLatestFindingTriageNote(apiResponse);
 
@@ -211,18 +223,18 @@ export async function loadLatestFindingTriageNote(
 
 export async function updateFindingTriage(input: UpdateFindingTriageInput) {
   let findingUid: string | undefined;
-  let triageUrl: string;
+  let triagePath: `/${string}`;
 
   if (input.triageId) {
-    triageUrl = `${apiBaseUrl}/finding-triages/${input.triageId}`;
+    triagePath = `/finding-triages/${input.triageId}`;
   } else {
     findingUid = await resolveFindingUid(input);
-    triageUrl = `${apiBaseUrl}/findings/${encodePathSegment(findingUid)}/triage`;
+    triagePath = `/findings/${encodePathSegment(findingUid)}/triage`;
   }
 
   if (input.note && input.notesCount > 0 && input.noteId) {
     const noteResult = await patchJsonApi(
-      `${triageUrl}/notes/${input.noteId}`,
+      `${triagePath}/notes/${input.noteId}`,
       buildFindingTriageNoteBody(input.note),
     );
 
@@ -236,7 +248,7 @@ export async function updateFindingTriage(input: UpdateFindingTriageInput) {
   }
 
   const result = await patchJsonApi(
-    triageUrl,
+    triagePath,
     buildFindingTriageBody({
       status: input.status,
       note: input.notesCount === 0 ? input.note : undefined,
