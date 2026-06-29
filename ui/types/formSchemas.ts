@@ -724,9 +724,9 @@ export const mutedFindingsConfigFormSchema = z.object({
 });
 
 // The schema-driven (ranges/enums/types) validation lives in the editor via
-// `validateScanConfigPayload(yamlString, schema)` in `lib/yaml.ts`. Here we
-// only enforce the form-level shape: a name and a YAML string that parses.
-export const scanConfigFormSchema = z.object({
+// `validateScanConfigurationPayload(yamlString, schema)` in `lib/yaml.ts`. Here
+// we only enforce the form-level shape: a name and a YAML string that parses.
+export const scanConfigurationFormSchema = z.object({
   name: z
     .string()
     .trim()

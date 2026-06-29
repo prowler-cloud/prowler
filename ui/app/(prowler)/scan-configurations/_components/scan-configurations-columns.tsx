@@ -6,12 +6,12 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/shadcn";
 import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import { ScanConfigData } from "@/types/scan-configs";
+import { ScanConfigurationData } from "@/types/scan-configurations";
 
-export const createScanConfigsColumns = (
-  onEdit: (config: ScanConfigData) => void,
-  onDelete: (config: ScanConfigData) => void,
-): ColumnDef<ScanConfigData>[] => [
+export const createScanConfigurationsColumns = (
+  onEdit: (config: ScanConfigurationData) => void,
+  onDelete: (config: ScanConfigurationData) => void,
+): ColumnDef<ScanConfigurationData>[] => [
   {
     accessorKey: "attributes.name",
     header: ({ column }) => (

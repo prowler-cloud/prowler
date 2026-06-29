@@ -5,7 +5,10 @@ import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { createScanConfig, updateScanConfig } from "@/actions/scan-configs";
+import {
+  createScanConfiguration,
+  updateScanConfiguration,
+} from "@/actions/scan-configurations";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import {
   Button,
@@ -21,44 +24,44 @@ import { CustomLink } from "@/components/ui/custom/custom-link";
 import { fontMono } from "@/config/fonts";
 import {
   convertToYaml,
-  defaultScanConfigYaml,
-  validateScanConfigPayload,
+  defaultScanConfigurationYaml,
+  validateScanConfigurationPayload,
 } from "@/lib/yaml";
-import { scanConfigFormSchema } from "@/types/formSchemas";
+import { scanConfigurationFormSchema } from "@/types/formSchemas";
 import { ProviderProps } from "@/types/providers";
-import { ScanConfigData } from "@/types/scan-configs";
+import { ScanConfigurationData } from "@/types/scan-configurations";
 
-interface ScanConfigEditorProps {
+interface ScanConfigurationEditorProps {
   open: boolean;
   onClose: (saved: boolean) => void;
   richProviders: ProviderProps[];
-  existingConfigs: ScanConfigData[];
-  config: ScanConfigData | null;
+  existingConfigs: ScanConfigurationData[];
+  config: ScanConfigurationData | null;
   schema: Record<string, unknown> | null;
 }
 
-interface ScanConfigFormProps {
+interface ScanConfigurationFormProps {
   onClose: (saved: boolean) => void;
   richProviders: ProviderProps[];
-  existingConfigs: ScanConfigData[];
-  config: ScanConfigData | null;
+  existingConfigs: ScanConfigurationData[];
+  config: ScanConfigurationData | null;
   schema: Record<string, unknown> | null;
 }
 
 // `provider_ids` has a zod `.default([])`, so the resolver's input and output
 // types differ — type the form with both so RHF and zodResolver line up.
-type ScanConfigFormInput = z.input<typeof scanConfigFormSchema>;
-type ScanConfigFormValues = z.output<typeof scanConfigFormSchema>;
+type ScanConfigurationFormInput = z.input<typeof scanConfigurationFormSchema>;
+type ScanConfigurationFormValues = z.output<typeof scanConfigurationFormSchema>;
 
 const MAX_ERRORS_SHOWN = 10;
 
-function ScanConfigForm({
+function ScanConfigurationForm({
   onClose,
   richProviders,
   existingConfigs,
   config,
   schema,
-}: ScanConfigFormProps) {
+}: ScanConfigurationFormProps) {
   const isEdit = !!config;
   const { toast } = useToast();
   const errorPanelRef = useRef<HTMLDivElement | null>(null);
@@ -66,8 +69,12 @@ function ScanConfigForm({
   // The form is remounted every time the modal opens (Radix unmounts the
   // dialog content on close), so deriving the defaults from `config` here is
   // enough to reset the form — no `useEffect` needed.
-  const form = useForm<ScanConfigFormInput, unknown, ScanConfigFormValues>({
-    resolver: zodResolver(scanConfigFormSchema),
+  const form = useForm<
+    ScanConfigurationFormInput,
+    unknown,
+    ScanConfigurationFormValues
+  >({
+    resolver: zodResolver(scanConfigurationFormSchema),
     defaultValues: config
       ? {
           name: config.attributes.name,
@@ -84,7 +91,7 @@ function ScanConfigForm({
   // form state because it's derived purely from the current YAML text — skip it
   // while the field is empty so we don't flag an error before the user types.
   const yamlValidation = configText.trim()
-    ? validateScanConfigPayload(configText, schema)
+    ? validateScanConfigurationPayload(configText, schema)
     : { isValid: true, errors: [] };
 
   // A provider can only be attached to one config at a time. We exclude
@@ -133,12 +140,14 @@ function ScanConfigForm({
 
     try {
       const result = config
-        ? await updateScanConfig(null, formData)
-        : await createScanConfig(null, formData);
+        ? await updateScanConfiguration(null, formData)
+        : await createScanConfiguration(null, formData);
 
       if (result?.success) {
         toast({
-          title: isEdit ? "Scan Config updated" : "Scan Config created",
+          title: isEdit
+            ? "Scan Configuration updated"
+            : "Scan Configuration created",
           description: result.success,
         });
         onClose(true);
@@ -186,9 +195,9 @@ function ScanConfigForm({
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <Field>
-        <FieldLabel htmlFor="scan-config-name">Name</FieldLabel>
+        <FieldLabel htmlFor="scan-configuration-name">Name</FieldLabel>
         <Input
-          id="scan-config-name"
+          id="scan-configuration-name"
           placeholder="e.g. stricter-iam-aws"
           aria-invalid={!!nameError}
           {...form.register("name")}
@@ -197,7 +206,9 @@ function ScanConfigForm({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="scan-config-yaml">Configuration (YAML)</FieldLabel>
+        <FieldLabel htmlFor="scan-configuration-yaml">
+          Configuration (YAML)
+        </FieldLabel>
         <p className="text-default-500 text-tiny">
           Follows the structure of{" "}
           <CustomLink
@@ -210,8 +221,8 @@ function ScanConfigForm({
           are listed below in real time.
         </p>
         <Textarea
-          id="scan-config-yaml"
-          placeholder={defaultScanConfigYaml}
+          id="scan-configuration-yaml"
+          placeholder={defaultScanConfigurationYaml}
           rows={14}
           aria-invalid={!!configError || !yamlValidation.isValid}
           className={fontMono.className + " text-sm"}
@@ -258,7 +269,8 @@ function ScanConfigForm({
             <>
               {" "}
               {lockedCount} {lockedCount === 1 ? "account is" : "accounts are"}{" "}
-              hidden because they are already attached to another Scan Config.
+              hidden because they are already attached to another Scan
+              Configuration.
             </>
           )}
         </p>
@@ -266,7 +278,7 @@ function ScanConfigForm({
           <p className="text-default-500 text-tiny italic">
             {richProviders.length === 0
               ? "No providers available in this tenant."
-              : "All providers are already attached to other Scan Configs."}
+              : "All providers are already attached to other Scan Configurations."}
           </p>
         ) : (
           <AccountsSelector
@@ -302,14 +314,14 @@ function ScanConfigForm({
   );
 }
 
-export function ScanConfigEditor({
+export function ScanConfigurationEditor({
   open,
   onClose,
   richProviders,
   existingConfigs,
   config,
   schema,
-}: ScanConfigEditorProps) {
+}: ScanConfigurationEditorProps) {
   const isEdit = !!config;
 
   return (
@@ -318,10 +330,10 @@ export function ScanConfigEditor({
       onOpenChange={(o) => {
         if (!o) onClose(false);
       }}
-      title={isEdit ? "Edit Scan Config" : "New Scan Config"}
+      title={isEdit ? "Edit Scan Configuration" : "New Scan Configuration"}
       size="2xl"
     >
-      <ScanConfigForm
+      <ScanConfigurationForm
         key={config?.id ?? "new"}
         onClose={onClose}
         richProviders={richProviders}

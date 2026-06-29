@@ -1,30 +1,33 @@
 import { redirect } from "next/navigation";
 
 import { getAllProviders } from "@/actions/providers";
-import { getScanConfigSchema, listScanConfigs } from "@/actions/scan-configs";
+import {
+  getScanConfigurationSchema,
+  listScanConfigurations,
+} from "@/actions/scan-configurations";
 import { ContentLayout } from "@/components/ui";
 import { isCloud } from "@/lib/shared/env";
 
-import { ScanConfigsManager } from "./_components/scan-configs-manager";
+import { ScanConfigurationsManager } from "./_components/scan-configurations-manager";
 
 export default async function ScanConfigPage() {
-  // Scan Config is a Prowler Cloud-only feature; the OSS API has no
-  // /scan-configs endpoints, so guard the route before hitting them.
+  // Scan Configuration is a Prowler Cloud-only feature; the OSS API has no
+  // /scan-configurations endpoints, so guard the route before hitting them.
   if (!isCloud()) {
     redirect("/");
   }
 
   const [configs, providersResponse, schema] = await Promise.all([
-    listScanConfigs(),
+    listScanConfigurations(),
     getAllProviders({}),
-    getScanConfigSchema(),
+    getScanConfigurationSchema(),
   ]);
 
   const richProviders = providersResponse?.data ?? [];
 
   return (
-    <ContentLayout title="Scan Config" icon="lucide:sliders">
-      <ScanConfigsManager
+    <ContentLayout title="Scan Configuration" icon="lucide:sliders">
+      <ScanConfigurationsManager
         initialConfigs={configs}
         richProviders={richProviders}
         schema={schema}
