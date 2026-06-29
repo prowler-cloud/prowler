@@ -1285,6 +1285,65 @@ class Test_iam_policy_allows_privilege_escalation:
             )
 
     @mock_aws
+    def test_iam_policy_allows_privilege_escalation_agentcore_wildcard(
+        self,
+    ):
+        """Test detection of AgentCore privilege escalation when the policy grants the bedrock-agentcore:* namespace wildcard."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        policy_name = "agentcore_wildcard_policy"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "bedrock-agentcore:*",
+                    ],
+                    "Resource": "*",
+                }
+            ],
+        }
+
+        policy_arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
+
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_id == policy_name
+            assert result[0].resource_arn == policy_arn
+            assert search(
+                "bedrock-agentcore:InvokeAgentRuntimeCommand",
+                result[0].status_extended,
+            )
+            assert search(
+                "bedrock-agentcore:StartCodeInterpreterSession",
+                result[0].status_extended,
+            )
+            assert search(
+                "bedrock-agentcore:StartBrowserSession", result[0].status_extended
+            )
+
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_put(
         self,
     ):
