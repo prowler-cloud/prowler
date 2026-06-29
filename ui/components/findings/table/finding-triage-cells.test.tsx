@@ -228,6 +228,35 @@ describe("finding triage cells", () => {
     ).toHaveTextContent("Remediating");
   });
 
+  it("should rollback table status and expose an error when update fails", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn().mockRejectedValue(new Error("fail"));
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    const statusControl = screen.getByRole("combobox", {
+      name: "Triage status",
+    });
+
+    // When
+    await user.click(statusControl);
+    await user.click(screen.getByRole("option", { name: "Remediating" }));
+
+    // Then
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not update triage status.",
+    );
+    expect(statusControl).toHaveTextContent("Open");
+  });
+
   it("should keep Mutelist status pending until accepted and restore the previous status on cancel", async () => {
     // Given
     const user = userEvent.setup();

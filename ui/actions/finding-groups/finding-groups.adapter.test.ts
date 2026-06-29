@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  FINDING_TRIAGE_DISABLED_REASON,
-  FINDING_TRIAGE_STATUS,
-} from "@/types/findings-triage";
+import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
 
 import {
   adaptFindingGroupResourcesResponse,
@@ -185,6 +182,52 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
     expect(result).toEqual([]);
   });
 
+  it("should skip malformed resource entries inside a data array", () => {
+    // Given
+    const input = {
+      data: [
+        null,
+        "bad-entry",
+        {
+          id: "resource-row-1",
+          type: "finding-group-resources",
+          attributes: {
+            finding_id: "real-finding-uuid",
+            resource: {
+              uid: "arn:aws:s3:::my-bucket",
+              name: "my-bucket",
+              service: "s3",
+              region: "us-east-1",
+              type: "Bucket",
+              resource_group: "default",
+            },
+            provider: {
+              type: "aws",
+              uid: "123456789",
+              alias: "production",
+            },
+            status: "FAIL",
+            severity: "high",
+            first_seen_at: null,
+            last_seen_at: "2024-01-01T00:00:00Z",
+          },
+        },
+      ],
+    };
+
+    // When
+    const result = adaptFindingGroupResourcesResponse(input, "check-1");
+
+    // Then
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        findingId: "real-finding-uuid",
+        resourceName: "my-bucket",
+      }),
+    );
+  });
+
   it("should attach adapter-produced triage DTOs to finding-level resource rows", () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
@@ -233,7 +276,7 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
         status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
         label: "Under Review",
         hasVisibleNote: true,
-        canEdit: true,
+        canEdit: false,
       }),
     );
     expectNoRawTriageTransportKeys(
@@ -241,7 +284,7 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
     );
   });
 
-  it("should attach Cloud-disabled triage DTOs outside Cloud", () => {
+  it("should leave triage editing disabled until a real capability is provided", () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     const input = {
@@ -285,9 +328,9 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
     expect(row.triage).toEqual(
       expect.objectContaining({
         canEdit: false,
-        disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
       }),
     );
+    expect(row.triage).not.toHaveProperty("disabledReason");
   });
 
   it("should return mapped rows for valid data", () => {

@@ -10,11 +10,11 @@ import { handleApiResponse } from "@/lib/server-actions-helper";
 const withFindingTriageSummaries = <T extends { data?: unknown }>(
   response: T | undefined,
 ): T | undefined => {
-  const canEditTriage = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-
+  // API/backend entitlement and mutation transport are owned outside this UI
+  // slice. Keep table mutation controls disabled until a real capability +
+  // update handler is wired.
   return attachFindingTriageSummariesToResponse(response, {
-    canEdit: canEditTriage,
-    disabledReason: canEditTriage ? undefined : "cloud_only",
+    canEdit: false,
   });
 };
 

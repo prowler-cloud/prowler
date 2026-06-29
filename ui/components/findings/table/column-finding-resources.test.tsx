@@ -374,7 +374,7 @@ describe("column-finding-resources", () => {
     expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
   });
 
-  it("should keep Add note available so non-paying users can open the disabled modal upsell", () => {
+  it("should disable Add note for Cloud-only rows when no update handler is wired", () => {
     // Given
     const columns = getColumnFindingResources({
       rowSelection: {},
@@ -408,7 +408,7 @@ describe("column-finding-resources", () => {
     );
 
     // Then
-    expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Add note" })).toBeDisabled();
   });
 
   it("should disable editable triage control when no update handler is wired", () => {

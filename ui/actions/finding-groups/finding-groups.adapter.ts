@@ -7,7 +7,6 @@ import type {
   Severity,
 } from "@/types";
 import { FINDINGS_ROW_TYPE } from "@/types";
-import { FINDING_TRIAGE_DISABLED_REASON } from "@/types/findings-triage";
 
 /**
  * API response shape for a finding group (JSON:API).
@@ -160,6 +159,20 @@ interface FindingGroupResourceApiItem {
   attributes: FindingGroupResourceAttributes;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object";
+
+const isFindingGroupResourceApiItem = (
+  value: unknown,
+): value is FindingGroupResourceApiItem => {
+  return (
+    isRecord(value) &&
+    value.type === "finding-group-resources" &&
+    typeof value.id === "string" &&
+    isRecord(value.attributes)
+  );
+};
+
 /**
  * Transforms the API response for finding group resources (drill-down)
  * into FindingResourceRow[].
@@ -177,14 +190,13 @@ export function adaptFindingGroupResourcesResponse(
     return [];
   }
 
-  const data = (apiResponse as { data: FindingGroupResourceApiItem[] }).data;
-  const canEditTriage = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-  const triageSummaries = adaptFindingTriageSummariesResponse(apiResponse, {
-    canEdit: canEditTriage,
-    disabledReason: canEditTriage
-      ? undefined
-      : FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
-  });
+  const data = (apiResponse as { data: unknown[] }).data.filter(
+    isFindingGroupResourceApiItem,
+  );
+  const triageSummaries = adaptFindingTriageSummariesResponse(
+    { ...apiResponse, data },
+    { canEdit: false },
+  );
 
   return data.map((item, index) => ({
     id: item.id,

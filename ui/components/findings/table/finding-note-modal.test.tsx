@@ -13,11 +13,10 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/icons/providers-badge", () => ({
-  PROVIDER_BADGE_BY_NAME: {
-    AWS: () => <span data-testid="aws-provider-badge">AWS icon</span>,
-    Azure: () => <span data-testid="azure-provider-badge">Azure icon</span>,
-  },
+vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
+  ProviderTypeIcon: ({ type }: { type: string }) => (
+    <span data-testid={`${type}-provider-badge`}>{type} icon</span>
+  ),
 }));
 
 vi.mock("@/components/shadcn/modal", () => ({
@@ -170,6 +169,24 @@ describe("FindingNoteModal", () => {
       note: "Documented owner follow-up.",
       origin: "modal",
     });
+  });
+
+  it("should keep the modal open and show an error when note update fails", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const onTriageUpdateAction = vi.fn().mockRejectedValue(new Error("fail"));
+    renderNoteModal({ onOpenChange, onTriageUpdateAction });
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Update note" }));
+
+    // Then
+    expect(
+      await screen.findByText("Could not update the note. Please try again."),
+    ).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Note" })).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
   it("should render counter, privacy copy, and cancel/update actions", async () => {

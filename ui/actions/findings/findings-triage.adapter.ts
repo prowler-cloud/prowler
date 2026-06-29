@@ -189,16 +189,18 @@ export function adaptFindingTriageSummariesResponse(
 
   const includedLookup = createIncludedLookup(apiResponse.included);
 
-  return toResourceArray(apiResponse.data).map((finding) =>
-    createSummary(
-      finding,
-      normalizeTriageFields(
+  return toResourceArray(apiResponse.data)
+    .filter(isJsonApiResource)
+    .map((finding) =>
+      createSummary(
         finding,
-        findIncludedTriage(finding, includedLookup),
+        normalizeTriageFields(
+          finding,
+          findIncludedTriage(finding, includedLookup),
+        ),
+        options,
       ),
-      options,
-    ),
-  );
+    );
 }
 
 export function attachFindingTriageSummariesToResponse<

@@ -139,6 +139,25 @@ describe("adaptFindingTriageSummariesResponse", () => {
     expect(result).toEqual([]);
   });
 
+  it("should skip malformed entries inside a data array", () => {
+    // Given
+    const input = {
+      data: [null, "bad-entry", flatFindingWithUnderReviewTriage],
+    };
+
+    // When
+    const result = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        findingId: "finding-1",
+        status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      }),
+    );
+  });
+
   it("should normalize flat provisional finding fields into domain triage summaries", () => {
     // Given
     const input = {

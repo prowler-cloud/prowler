@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
-import { PROVIDER_BADGE_BY_NAME } from "@/components/icons/providers-badge";
-import { Button, Textarea } from "@/components/shadcn";
+import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
+import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Select,
@@ -24,7 +24,7 @@ import {
   type FindingTriageSummary,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
-import { PROVIDER_DISPLAY_NAMES, type ProviderType } from "@/types/providers";
+import type { ProviderType } from "@/types/providers";
 
 export interface FindingTriageContext {
   title: string;
@@ -173,6 +173,8 @@ function FindingTriageStatusControl(props: FindingTriageStatusControlProps) {
   const [selectedStatus, setSelectedStatus] = useState(props.triage.status);
   const [pendingMutelistStatus, setPendingMutelistStatus] =
     useState<FindingTriageManualStatus | null>(null);
+  const [tableUpdateError, setTableUpdateError] = useState<string | null>(null);
+  const [isTableUpdating, setIsTableUpdating] = useState(false);
   const triage = props.triage;
 
   if (props.origin === FINDING_TRIAGE_ORIGIN.MODAL) {
@@ -187,7 +189,31 @@ function FindingTriageStatusControl(props: FindingTriageStatusControlProps) {
   }
 
   const canMutateFromTable =
-    triage.canEdit && Boolean(props.onTriageUpdateAction);
+    triage.canEdit && Boolean(props.onTriageUpdateAction) && !isTableUpdating;
+
+  const applyTableStatus = async (status: FindingTriageManualStatus) => {
+    if (!props.onTriageUpdateAction) {
+      return;
+    }
+
+    const previousStatus = selectedStatus;
+    setTableUpdateError(null);
+    setIsTableUpdating(true);
+    setSelectedStatus(status);
+
+    try {
+      await props.onTriageUpdateAction({
+        findingId: triage.findingId,
+        status,
+        origin: "table",
+      });
+    } catch {
+      setSelectedStatus(previousStatus);
+      setTableUpdateError("Could not update triage status.");
+    } finally {
+      setIsTableUpdating(false);
+    }
+  };
 
   const handleTableValueChange = (status: FindingTriageManualStatus) => {
     if (!props.onTriageUpdateAction) {
@@ -199,12 +225,7 @@ function FindingTriageStatusControl(props: FindingTriageStatusControlProps) {
       return;
     }
 
-    setSelectedStatus(status);
-    props.onTriageUpdateAction({
-      findingId: triage.findingId,
-      status,
-      origin: "table",
-    });
+    void applyTableStatus(status);
   };
 
   const handleMutelistOpenChange = (open: boolean) => {
@@ -223,12 +244,7 @@ function FindingTriageStatusControl(props: FindingTriageStatusControlProps) {
       return;
     }
 
-    setSelectedStatus(pendingMutelistStatus);
-    props.onTriageUpdateAction({
-      findingId: triage.findingId,
-      status: pendingMutelistStatus,
-      origin: "table",
-    });
+    void applyTableStatus(pendingMutelistStatus);
     setPendingMutelistStatus(null);
   };
 
@@ -239,6 +255,11 @@ function FindingTriageStatusControl(props: FindingTriageStatusControlProps) {
         value={selectedStatus}
         onValueChange={handleTableValueChange}
       />
+      {tableUpdateError && (
+        <span className="sr-only" role="alert">
+          {tableUpdateError}
+        </span>
+      )}
       <Modal
         open={pendingMutelistStatus !== null}
         onOpenChange={handleMutelistOpenChange}
@@ -285,19 +306,15 @@ export function FindingNoteModal({
     triage.status,
   );
   const [note, setNote] = useState(triage.noteBody);
-  const canSubmit = triage.canEdit && Boolean(onTriageUpdateAction);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const canSubmit =
+    triage.canEdit && Boolean(onTriageUpdateAction) && !isSubmitting;
   const isCloudOnly =
     triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY;
   const shouldShowMutelistInfo =
     canSubmit && isMutelistShortcutStatus(selectedStatus);
-  const providerDisplayName = findingContext.providerType
-    ? PROVIDER_DISPLAY_NAMES[findingContext.providerType]
-    : findingContext.provider;
-  const ProviderBadge = providerDisplayName
-    ? PROVIDER_BADGE_BY_NAME[providerDisplayName]
-    : undefined;
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!canSubmit) {
@@ -307,13 +324,22 @@ export function FindingNoteModal({
       return;
     }
 
-    onTriageUpdateAction?.({
-      findingId: triage.findingId,
-      ...(isManualStatus(selectedStatus) ? { status: selectedStatus } : {}),
-      note,
-      origin: "modal",
-    });
-    onOpenChange(false);
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    try {
+      await onTriageUpdateAction?.({
+        findingId: triage.findingId,
+        ...(isManualStatus(selectedStatus) ? { status: selectedStatus } : {}),
+        note,
+        origin: "modal",
+      });
+      onOpenChange(false);
+    } catch {
+      setSubmitError("Could not update the note. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePrimaryClick = () => {
@@ -327,11 +353,11 @@ export function FindingNoteModal({
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <div className="flex items-center gap-4">
           <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center rounded-lg">
-            {ProviderBadge ? (
-              <ProviderBadge width={22} height={22} />
+            {findingContext.providerType ? (
+              <ProviderTypeIcon type={findingContext.providerType} size={22} />
             ) : (
-              <span className="text-xs font-semibold text-red-500">
-                {providerDisplayName?.slice(0, 3).toUpperCase() ?? "—"}
+              <span className="text-text-neutral-secondary text-xs font-semibold">
+                {findingContext.provider?.slice(0, 3).toUpperCase() ?? "—"}
               </span>
             )}
           </div>
@@ -366,9 +392,15 @@ export function FindingNoteModal({
         </div>
 
         {shouldShowMutelistInfo && (
-          <div className="rounded-lg border border-orange-500/50 bg-orange-500/10 p-3 text-sm text-orange-300">
-            This finding will be muted through the existing Mutelist flow.
-          </div>
+          <Alert variant="warning">
+            <AlertDescription>{MUTELIST_INFO_COPY}</AlertDescription>
+          </Alert>
+        )}
+
+        {submitError && (
+          <Alert variant="error">
+            <AlertDescription>{submitError}</AlertDescription>
+          </Alert>
         )}
 
         <div className="space-y-2">
@@ -406,11 +438,13 @@ export function FindingNoteModal({
             size="lg"
             onClick={handlePrimaryClick}
           >
-            {canSubmit
-              ? "Update note"
-              : isCloudOnly
-                ? "Only in Cloud"
-                : "Unavailable"}
+            {isSubmitting
+              ? "Updating..."
+              : canSubmit
+                ? "Update note"
+                : isCloudOnly
+                  ? "Only in Cloud"
+                  : "Unavailable"}
           </Button>
         </div>
       </form>

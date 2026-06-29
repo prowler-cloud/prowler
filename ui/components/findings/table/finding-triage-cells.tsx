@@ -3,6 +3,7 @@
 import { MessageSquareText } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/shadcn";
 import {
   Tooltip,
   TooltipContent,
@@ -114,11 +115,8 @@ export function FindingNotesCell({
   }
 
   const hasUpdateHandler = Boolean(onTriageUpdateAction);
-  const canOpenNoteModal = triage.hasVisibleNote
-    ? false
-    : triage.canEdit
-      ? hasUpdateHandler
-      : triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY;
+  const canOpenNoteModal =
+    !triage.hasVisibleNote && triage.canEdit && hasUpdateHandler;
   const disabledCopy = getDisabledCopy({ triage, hasUpdateHandler });
 
   const noteModal = isNoteModalOpen ? (
@@ -134,18 +132,20 @@ export function FindingNotesCell({
   if (triage.hasVisibleNote) {
     return (
       <>
-        <button
+        <Button
           type="button"
+          variant="bare"
+          size="icon-xs"
           aria-label="Note exists"
           title="Existing notes cannot be edited from the table."
           disabled
-          className="text-text-success-primary inline-flex cursor-not-allowed items-center opacity-60"
+          className="text-text-success-primary opacity-60"
           onClick={(event) => {
             event.stopPropagation();
           }}
         >
           <MessageSquareText className="size-4" aria-hidden="true" />
-        </button>
+        </Button>
         {noteModal}
       </>
     );
@@ -153,11 +153,13 @@ export function FindingNotesCell({
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="link"
+        size="link-sm"
         disabled={!canOpenNoteModal}
         title={disabledCopy}
-        className="text-button-tertiary hover:text-button-tertiary-hover inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:underline disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:no-underline"
+        className="gap-1.5 p-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:no-underline"
         onClick={(event) => {
           event.stopPropagation();
           if (canOpenNoteModal) {
@@ -167,7 +169,7 @@ export function FindingNotesCell({
       >
         <MessageSquareText className="size-4" aria-hidden="true" />
         <span>Add note</span>
-      </button>
+      </Button>
       {noteModal}
     </>
   );
