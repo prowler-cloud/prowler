@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import type {
   LighthouseV2Configuration,
   LighthouseV2Message,
@@ -239,6 +240,37 @@ describe("LighthouseV2ChatPage", () => {
       "/api/lighthouse/v2/sessions/session-1/event-stream",
     );
     replaceStateSpy.mockRestore();
+  });
+
+  it("updates the URL before notifying session history listeners", async () => {
+    // Given
+    const user = userEvent.setup();
+    const notifiedUrls: string[] = [];
+    const recordCurrentUrl = () => {
+      notifiedUrls.push(`${window.location.pathname}${window.location.search}`);
+    };
+    window.addEventListener(
+      LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
+      recordCurrentUrl,
+    );
+    renderPage();
+
+    try {
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: "Message" }),
+        ["Summarize findings", "{Enter}"].join(""),
+      );
+
+      // Then
+      await waitFor(() => expect(notifiedUrls.length).toBeGreaterThan(0));
+      expect(notifiedUrls[0]).toBe("/lighthouse?session=session-1");
+    } finally {
+      window.removeEventListener(
+        LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
+        recordCurrentUrl,
+      );
+    }
   });
 
   it("subscribes to the stream before sending the message (no replay buffer)", async () => {

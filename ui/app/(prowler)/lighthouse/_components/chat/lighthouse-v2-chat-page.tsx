@@ -202,16 +202,12 @@ export function LighthouseV2ChatPage({
       return null;
     }
 
-    setActiveSessionId(result.data.id);
-    notifyLighthouseV2SessionsChanged();
     // Update the URL in place (not router.push) so the force-dynamic server
     // component is NOT re-run mid-submit. A re-run would change `key` in
     // page.tsx and remount this component, tearing down the open EventSource.
-    window.history.replaceState(
-      null,
-      "",
-      `/lighthouse?session=${encodeURIComponent(result.data.id)}`,
-    );
+    replaceLighthouseV2SessionUrl(result.data.id);
+    setActiveSessionId(result.data.id);
+    notifyLighthouseV2SessionsChanged();
     return result.data.id;
   };
 
@@ -321,7 +317,7 @@ export function LighthouseV2ChatPage({
       setIsSubmitting(false);
       setLastSubmittedText(null);
       setStreamState(createInitialLighthouseV2StreamState());
-      window.history.replaceState(null, "", "/lighthouse");
+      replaceLighthouseV2SessionUrl(null);
     };
 
     window.addEventListener(LIGHTHOUSE_V2_NEW_CHAT_EVENT, resetToNewChat);
@@ -392,4 +388,12 @@ export function LighthouseV2ChatPage({
       )}
     </Card>
   );
+}
+
+function replaceLighthouseV2SessionUrl(sessionId: string | null) {
+  const url = sessionId
+    ? `/lighthouse?session=${encodeURIComponent(sessionId)}`
+    : "/lighthouse";
+
+  window.history.replaceState(window.history.state, "", url);
 }
