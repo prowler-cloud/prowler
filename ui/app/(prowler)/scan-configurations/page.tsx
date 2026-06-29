@@ -7,7 +7,6 @@ import {
 } from "@/actions/scan-configurations";
 import { ContentLayout } from "@/components/ui";
 import { isCloud } from "@/lib/shared/env";
-import { ScanConfigurationData } from "@/types/scan-configurations";
 
 import { ScanConfigurationsManager } from "./_components/scan-configurations-manager";
 
@@ -18,10 +17,10 @@ export default async function ScanConfigPage() {
     redirect("/");
   }
 
+  // A failure here propagates to the `(prowler)/error.tsx` boundary instead of
+  // rendering a false "no scan configurations" empty table during SSR.
   const [configs, providersResponse, schema] = await Promise.all([
-    // On initial load a failure falls back to an empty list; the client-side
-    // refresh surfaces errors via a toast instead of clearing the table.
-    listScanConfigurations().catch(() => [] as ScanConfigurationData[]),
+    listScanConfigurations(),
     getAllProviders({}),
     getScanConfigurationSchema(),
   ]);
