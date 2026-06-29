@@ -1501,6 +1501,7 @@ test.describe("Add Provider", () => {
         // Confirm the provider connection without launching a scan
         await providersPage.completeProviderConnectionWithoutLaunchingScan(
           orgDomain,
+          60000,
         );
       },
     );

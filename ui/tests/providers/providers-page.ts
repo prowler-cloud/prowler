@@ -936,20 +936,21 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  private async waitForProviderReadyToClose(): Promise<void> {
+  private async waitForProviderReadyToClose(timeout = 30000): Promise<void> {
     const launchStepReady = this.page
       .getByText("Account Connected!", { exact: true })
       .or(this.page.getByText("Loading scan options...", { exact: true }))
       .or(this.page.getByRole("button", { name: "Save", exact: true }))
-      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }))
+      .first();
     const connectionError = this.page.locator(
       "div.border-border-error p.text-text-error-primary",
     );
 
     try {
       await Promise.race([
-        launchStepReady.waitFor({ state: "visible", timeout: 30000 }),
-        connectionError.waitFor({ state: "visible", timeout: 30000 }),
+        launchStepReady.waitFor({ state: "visible", timeout }),
+        connectionError.waitFor({ state: "visible", timeout }),
       ]);
     } catch {
       // Continue and inspect visible state below.
@@ -962,11 +963,12 @@ export class ProvidersPage extends BasePage {
       );
     }
 
-    await expect(launchStepReady).toBeVisible({ timeout: 30000 });
+    await expect(launchStepReady).toBeVisible({ timeout });
   }
 
   async completeProviderConnectionWithoutLaunchingScan(
     providerUID: string,
+    timeout = 30000,
   ): Promise<void> {
     await this.verifyWizardModalOpen();
 
@@ -978,7 +980,8 @@ export class ProvidersPage extends BasePage {
       .getByText("Account Connected!", { exact: true })
       .or(this.page.getByText("Loading scan options...", { exact: true }))
       .or(this.page.getByRole("button", { name: "Save", exact: true }))
-      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }))
+      .first();
     const connectionError = this.page.locator(
       "div.border-border-error p.text-text-error-primary",
     );
@@ -988,8 +991,8 @@ export class ProvidersPage extends BasePage {
     // actions, because those controls are owned by the launch flow and can be
     // hidden while scan options load.
     await expect(
-      checkConnectionButton.or(launchStepReady).or(connectionError),
-    ).toBeVisible({ timeout: 30000 });
+      checkConnectionButton.or(launchStepReady).or(connectionError).first(),
+    ).toBeVisible({ timeout });
 
     if (await connectionError.isVisible().catch(() => false)) {
       const errorText = await connectionError.textContent();
@@ -1003,9 +1006,9 @@ export class ProvidersPage extends BasePage {
     // scan execution itself is covered by scans.spec.ts.
     if (await checkConnectionButton.isVisible().catch(() => false)) {
       await checkConnectionButton.click();
-      await this.waitForProviderReadyToClose();
+      await this.waitForProviderReadyToClose(timeout);
     } else {
-      await expect(launchStepReady).toBeVisible({ timeout: 30000 });
+      await expect(launchStepReady).toBeVisible({ timeout });
     }
 
     await this.wizardModal
