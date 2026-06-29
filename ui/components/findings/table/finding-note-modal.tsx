@@ -10,6 +10,8 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectStatusDot,
+  type SelectStatusTone,
   SelectTrigger,
 } from "@/components/shadcn/select/select";
 import {
@@ -65,41 +67,15 @@ const getVisibleStatusLabel = (status: FindingTriageStatus) => {
   return FINDING_TRIAGE_STATUS_LABELS[status];
 };
 
-const TRIAGE_STATUS_STYLE = {
-  open: "border-orange-600/70 bg-orange-950/40 text-orange-400 [&_svg]:text-orange-400",
-  under_review:
-    "border-yellow-600/70 bg-yellow-950/40 text-yellow-400 [&_svg]:text-yellow-400",
-  remediating:
-    "border-blue-600/70 bg-blue-950/40 text-blue-400 [&_svg]:text-blue-400",
-  resolved:
-    "border-emerald-600/70 bg-emerald-950/40 text-emerald-400 [&_svg]:text-emerald-400",
-  risk_accepted:
-    "border-purple-600/70 bg-purple-950/40 text-purple-400 [&_svg]:text-purple-400",
-  false_positive:
-    "border-purple-600/70 bg-purple-950/40 text-purple-400 [&_svg]:text-purple-400",
-  reopened:
-    "border-orange-600/70 bg-orange-950/40 text-orange-400 [&_svg]:text-orange-400",
-} as const satisfies Record<FindingTriageStatus, string>;
-
-const TRIAGE_STATUS_TEXT_STYLE = {
-  open: "text-orange-400",
-  under_review: "text-yellow-400",
-  remediating: "text-blue-400",
-  resolved: "text-emerald-400",
-  risk_accepted: "text-purple-400",
-  false_positive: "text-purple-400",
-  reopened: "text-orange-400",
-} as const satisfies Record<FindingTriageStatus, string>;
-
-const TRIAGE_STATUS_DOT_STYLE = {
-  open: "bg-orange-400",
-  under_review: "bg-yellow-400",
-  remediating: "bg-blue-400",
-  resolved: "bg-emerald-400",
-  risk_accepted: "bg-purple-400",
-  false_positive: "bg-purple-400",
-  reopened: "bg-orange-400",
-} as const satisfies Record<FindingTriageStatus, string>;
+const TRIAGE_STATUS_TONE = {
+  open: "warning",
+  under_review: "attention",
+  remediating: "info",
+  resolved: "success",
+  risk_accepted: "risk",
+  false_positive: "risk",
+  reopened: "warning",
+} as const satisfies Record<FindingTriageStatus, SelectStatusTone>;
 
 function TriageStatusSelect({
   disabled,
@@ -125,26 +101,22 @@ function TriageStatusSelect({
       <SelectTrigger
         aria-label="Triage status"
         disabled={disabled}
-        size="sm"
+        size={variant === "modal" ? "status-modal" : "status-table"}
         iconSize="sm"
-        className={`${TRIAGE_STATUS_STYLE[value]} ${
-          variant === "modal"
-            ? "!h-8 !w-auto min-w-28 border-0 bg-transparent px-2 py-0 shadow-none hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-            : "!h-8 !w-fit max-w-40 !min-w-0 rounded-lg !px-3 !py-0 text-xs font-semibold"
-        }`}
+        variant="status"
+        tone={TRIAGE_STATUS_TONE[value]}
       >
         <span className="truncate">{getVisibleStatusLabel(value)}</span>
       </SelectTrigger>
       <SelectContent>
         {FINDING_TRIAGE_MANUAL_STATUS_VALUES.map((status) => (
-          <SelectItem key={status} value={status}>
-            <span
-              className={`${TRIAGE_STATUS_DOT_STYLE[status]} size-2 rounded-full`}
-              aria-hidden="true"
-            />
-            <span className={TRIAGE_STATUS_TEXT_STYLE[status]}>
-              {FINDING_TRIAGE_STATUS_LABELS[status]}
-            </span>
+          <SelectItem
+            key={status}
+            value={status}
+            tone={TRIAGE_STATUS_TONE[status]}
+          >
+            <SelectStatusDot tone={TRIAGE_STATUS_TONE[status]} />
+            <span>{FINDING_TRIAGE_STATUS_LABELS[status]}</span>
           </SelectItem>
         ))}
       </SelectContent>
@@ -412,10 +384,7 @@ export function FindingNoteModal({
           <span className="text-text-neutral-primary text-sm font-semibold">
             Status:
           </span>
-          <span
-            className={`${TRIAGE_STATUS_DOT_STYLE[selectedStatus]} size-2 rounded-full`}
-            aria-hidden="true"
-          />
+          <SelectStatusDot tone={TRIAGE_STATUS_TONE[selectedStatus]} />
           <FindingTriageStatusControl
             origin={FINDING_TRIAGE_ORIGIN.MODAL}
             triage={triage}

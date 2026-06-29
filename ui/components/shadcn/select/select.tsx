@@ -10,6 +10,27 @@ const stopWheelPropagation = (event: WheelEvent<HTMLElement>) => {
   event.stopPropagation();
 };
 
+type SelectStatusTone = "warning" | "attention" | "info" | "success" | "risk";
+
+const selectStatusToneClasses = {
+  warning:
+    "border-select-status-warning-border bg-select-status-warning-bg text-select-status-warning-text [&_svg]:text-select-status-warning-text",
+  attention:
+    "border-select-status-attention-border bg-select-status-attention-bg text-select-status-attention-text [&_svg]:text-select-status-attention-text",
+  info: "border-select-status-info-border bg-select-status-info-bg text-select-status-info-text [&_svg]:text-select-status-info-text",
+  success:
+    "border-select-status-success-border bg-select-status-success-bg text-select-status-success-text [&_svg]:text-select-status-success-text",
+  risk: "border-select-status-risk-border bg-select-status-risk-bg text-select-status-risk-text [&_svg]:text-select-status-risk-text",
+} as const satisfies Record<SelectStatusTone, string>;
+
+const selectStatusDotClasses = {
+  warning: "bg-select-status-warning-text",
+  attention: "bg-select-status-attention-text",
+  info: "bg-select-status-info-text",
+  success: "bg-select-status-success-text",
+  risk: "bg-select-status-risk-text",
+} as const satisfies Record<SelectStatusTone, string>;
+
 function Select({
   allowDeselect = false,
   ...props
@@ -51,18 +72,23 @@ function SelectTrigger({
   className,
   size = "default",
   iconSize = "default",
+  variant = "default",
+  tone,
   children,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default";
+  size?: "sm" | "default" | "status-table" | "status-modal";
   iconSize?: "sm" | "default";
+  variant?: "default" | "status";
+  tone?: SelectStatusTone;
 }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "group border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 has-[>svg]:px-3 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
+        "group border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 has-[>svg]:px-3 data-[size=default]:h-[52px] data-[size=sm]:h-10 data-[size=status-modal]:h-8 data-[size=status-modal]:w-auto data-[size=status-modal]:min-w-28 data-[size=status-modal]:border-0 data-[size=status-modal]:bg-transparent data-[size=status-modal]:px-2 data-[size=status-modal]:py-0 data-[size=status-modal]:shadow-none data-[size=status-modal]:hover:bg-transparent data-[size=status-modal]:focus-visible:ring-0 data-[size=status-modal]:focus-visible:ring-offset-0 data-[size=status-table]:h-8 data-[size=status-table]:w-fit data-[size=status-table]:max-w-40 data-[size=status-table]:min-w-0 data-[size=status-table]:px-3 data-[size=status-table]:py-0 data-[size=status-table]:text-xs data-[size=status-table]:font-semibold *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
+        variant === "status" && tone && selectStatusToneClasses[tone],
         className,
       )}
       {...props}
@@ -155,14 +181,18 @@ function SelectLabel({
 
 function SelectItem({
   className,
+  tone,
   children,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Item>) {
+}: ComponentProps<typeof SelectPrimitive.Item> & {
+  tone?: SelectStatusTone;
+}) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-3 pr-12 pl-4 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary hover:bg-bg-neutral-tertiary relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-3 pr-12 pl-4 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        tone && selectStatusToneClasses[tone],
         className,
       )}
       {...props}
@@ -176,6 +206,15 @@ function SelectItem({
         <CheckIcon className="text-bg-button-secondary absolute right-4 size-5" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
+  );
+}
+
+function SelectStatusDot({ tone }: { tone: SelectStatusTone }) {
+  return (
+    <span
+      className={cn(selectStatusDotClasses[tone], "size-2 rounded-full")}
+      aria-hidden="true"
+    />
   );
 }
 
@@ -237,6 +276,8 @@ export {
   SelectScrollDownButton,
   SelectScrollUpButton,
   SelectSeparator,
+  SelectStatusDot,
+  type SelectStatusTone,
   SelectTrigger,
   SelectValue,
 };
