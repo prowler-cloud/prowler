@@ -19,6 +19,7 @@ from prowler.providers.aws.services.iam.lib.policy import get_effective_actions
 # - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
 # - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 # - https://github.com/DataDog/pathfinding.cloud (AWS IAM Privilege Escalation Path Library)
+# - https://www.beyondtrust.com/blog/entry/aws-agentcore-privilege-escalation (AWS Bedrock AgentCore)
 
 privilege_escalation_policies_combination = {
     # IAM self-escalation and policy manipulation
