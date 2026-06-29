@@ -9,45 +9,57 @@ import {
 import {
   type LighthouseV2Configuration,
   type LighthouseV2ProviderType,
-  type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
+  type LighthouseV2TenantConfiguration,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Card } from "@/components/shadcn/card/card";
+import { useToast } from "@/components/ui";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
+import { LighthouseV2BusinessContextForm } from "./business-context-form";
 import { LighthouseV2ConfigurationForm } from "./configuration-form";
 import { LighthouseV2EmptyState } from "./empty-state";
-import { ConfigFeedbackAlert } from "./feedback-alert";
 import { LighthouseV2ProviderRail } from "./provider-rail";
 
 interface LighthouseV2ConfigPageProps {
   configurations: LighthouseV2Configuration[];
   providers: LighthouseV2SupportedProvider[];
-  modelsByProvider: Record<
-    LighthouseV2ProviderType,
-    LighthouseV2SupportedModel[]
-  >;
+  tenantConfiguration?: LighthouseV2TenantConfiguration;
   error?: string;
 }
 
 export function LighthouseV2ConfigPage({
   configurations,
   providers,
-  modelsByProvider,
+  tenantConfiguration,
   error,
 }: LighthouseV2ConfigPageProps) {
+  const { toast } = useToast();
   const [localConfigurations, setLocalConfigurations] =
     useState(configurations);
   const [selectedProvider, setSelectedProvider] =
     useState<LighthouseV2ProviderType>(providers[0]?.id ?? "openai");
-  const [feedback, setFeedback] = useState<FeedbackState | null>(
-    error
-      ? {
-          title: "Configuration unavailable",
-          description: error,
-          variant: FEEDBACK_VARIANT.ERROR,
-        }
-      : null,
-  );
+
+  const showFeedback = (feedback: FeedbackState) => {
+    toast({
+      title: feedback.title,
+      description: feedback.description,
+      variant:
+        feedback.variant === FEEDBACK_VARIANT.ERROR ? "destructive" : "default",
+    });
+  };
+
+  // Surface a load-time error (failed fetch) once, since it is not tied to a
+  // user interaction that could dispatch the toast itself.
+  useMountEffect(() => {
+    if (error) {
+      showFeedback({
+        title: "Configuration unavailable",
+        description: error,
+        variant: FEEDBACK_VARIANT.ERROR,
+      });
+    }
+  });
 
   const selectedConfig = localConfigurations.find(
     (config) => config.providerType === selectedProvider,
@@ -55,11 +67,6 @@ export function LighthouseV2ConfigPage({
   const selectedProviderDefinition =
     providers.find((provider) => provider.id === selectedProvider) ??
     providers[0];
-  const selectedModels =
-    selectedProviderDefinition &&
-    modelsByProvider[selectedProviderDefinition.id]
-      ? modelsByProvider[selectedProviderDefinition.id]
-      : [];
 
   const upsertConfiguration = (configuration: LighthouseV2Configuration) => {
     setLocalConfigurations((current) => [
@@ -73,7 +80,7 @@ export function LighthouseV2ConfigPage({
   ) => {
     upsertConfiguration(configuration);
     setSelectedProvider(configuration.providerType);
-    setFeedback({
+    showFeedback({
       title: "Configuration saved.",
       description:
         "Lighthouse AI can use this provider after it tests cleanly.",
@@ -85,7 +92,7 @@ export function LighthouseV2ConfigPage({
     configuration: LighthouseV2Configuration,
   ) => {
     upsertConfiguration(configuration);
-    setFeedback(
+    showFeedback(
       configuration.connected
         ? {
             title: "Connection successful.",
@@ -105,7 +112,7 @@ export function LighthouseV2ConfigPage({
     setLocalConfigurations((current) =>
       current.filter((config) => config.id !== configurationId),
     );
-    setFeedback({
+    showFeedback({
       title: "Configuration removed.",
       description: "This provider is no longer available for Lighthouse AI.",
       variant: FEEDBACK_VARIANT.INFO,
@@ -122,27 +129,19 @@ export function LighthouseV2ConfigPage({
       padding="none"
       role="region"
       aria-label="Lighthouse AI settings"
-      className="min-h-[calc(100dvh-6.5rem)] w-full gap-0 overflow-hidden"
+      className="w-full gap-0 overflow-hidden"
     >
-      {feedback && (
-        <div className="border-border-neutral-secondary border-b px-4 py-4 md:px-5">
-          <ConfigFeedbackAlert
-            feedback={feedback}
-            onClose={() => setFeedback(null)}
-          />
-        </div>
-      )}
+      <LighthouseV2BusinessContextForm
+        initialBusinessContext={tenantConfiguration?.businessContext ?? ""}
+      />
 
-      <div className="grid min-h-0 gap-0 xl:grid-cols-[320px_auto_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 gap-0 xl:grid-cols-[320px_auto_minmax(0,1fr)]">
         <div className="min-w-0 p-4 md:p-5">
           <LighthouseV2ProviderRail
             configurations={localConfigurations}
             providers={providers}
             selectedProvider={selectedProvider}
-            onSelectProvider={(provider) => {
-              setSelectedProvider(provider);
-              setFeedback(null);
-            }}
+            onSelectProvider={setSelectedProvider}
           />
         </div>
 
@@ -152,16 +151,17 @@ export function LighthouseV2ConfigPage({
           className="border-border-neutral-secondary border-t xl:border-t-0 xl:border-l"
         />
 
-        <div className="min-w-0">
+        <div className="flex min-h-0 w-full min-w-0">
           <LighthouseV2ConfigurationForm
             key={selectedProvider}
             configuration={selectedConfig}
-            models={selectedModels}
             provider={selectedProviderDefinition}
             onConfigurationSaved={handleConfigurationSaved}
             onConfigurationDeleted={handleConfigurationDeleted}
             onConfigurationTested={handleConfigurationTested}
-            onFeedback={setFeedback}
+            onFeedback={(feedback) => {
+              if (feedback) showFeedback(feedback);
+            }}
           />
         </div>
       </div>

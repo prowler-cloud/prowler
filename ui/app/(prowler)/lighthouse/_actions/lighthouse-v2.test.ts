@@ -27,6 +27,7 @@ vi.mock("@/lib/helper", () => ({
 import {
   createLighthouseV2Session,
   updateLighthouseV2Session,
+  updateLighthouseV2TenantConfiguration,
 } from "./lighthouse-v2";
 
 function sessionResponse(id = "session-1") {
@@ -45,6 +46,26 @@ function sessionResponse(id = "session-1") {
       },
     },
     { status: 201 },
+  );
+}
+
+function tenantConfigurationResponse() {
+  return Response.json(
+    {
+      data: {
+        id: "tenant-config-1",
+        type: "lighthouse-configurations",
+        attributes: {
+          business_context: "Production tenant",
+          default_provider: "bedrock",
+          default_models: {
+            openai: "gpt-5.1",
+            bedrock: "anthropic.claude-4",
+          },
+        },
+      },
+    },
+    { status: 200 },
   );
 }
 
@@ -76,5 +97,42 @@ describe("Lighthouse v2 session write actions", () => {
 
     // Proves the test harness would catch a revalidate being (re)introduced.
     expect(revalidatePathMock).toHaveBeenCalledWith("/lighthouse");
+  });
+
+  it("updates tenant model preferences without revalidating the active chat route", async () => {
+    // Given
+    const fetchMock = vi.fn().mockResolvedValue(tenantConfigurationResponse());
+    vi.stubGlobal("fetch", fetchMock);
+
+    // When
+    const result = await updateLighthouseV2TenantConfiguration({
+      defaultProvider: "bedrock",
+      defaultModels: {
+        openai: "gpt-5.1",
+        bedrock: "anthropic.claude-4",
+      },
+    });
+
+    // Then
+    expect("data" in result && result.data.defaultProvider).toBe("bedrock");
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL("https://api.example.com/api/v1/lighthouse/configuration"),
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({
+          data: {
+            type: "lighthouse-configurations",
+            attributes: {
+              default_provider: "bedrock",
+              default_models: {
+                openai: "gpt-5.1",
+                bedrock: "anthropic.claude-4",
+              },
+            },
+          },
+        }),
+      }),
+    );
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 });

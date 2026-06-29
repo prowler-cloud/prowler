@@ -2,14 +2,10 @@ import { Spacer } from "@heroui/spacer";
 
 import {
   getLighthouseV2Configurations,
-  getLighthouseV2SupportedModels,
   getLighthouseV2SupportedProviders,
+  getLighthouseV2TenantConfiguration,
 } from "@/app/(prowler)/lighthouse/_actions";
 import { LighthouseV2ConfigPage } from "@/app/(prowler)/lighthouse/_components/config";
-import type {
-  LighthouseV2ProviderType,
-  LighthouseV2SupportedModel,
-} from "@/app/(prowler)/lighthouse/_types";
 import {
   LighthouseSettings,
   LLMProvidersTable,
@@ -21,28 +17,14 @@ export const dynamic = "force-dynamic";
 
 export default async function LighthouseSettingsPage() {
   if (isCloud()) {
-    const [configurationsResult, providersResult] = await Promise.all([
-      getLighthouseV2Configurations(),
-      getLighthouseV2SupportedProviders(),
-    ]);
+    const [configurationsResult, providersResult, tenantConfigurationResult] =
+      await Promise.all([
+        getLighthouseV2Configurations(),
+        getLighthouseV2SupportedProviders(),
+        getLighthouseV2TenantConfiguration(),
+      ]);
 
     const providers = "data" in providersResult ? providersResult.data : [];
-    const modelsEntries = await Promise.all(
-      providers.map(async (provider) => {
-        const result = await getLighthouseV2SupportedModels(provider.id);
-        return [
-          provider.id,
-          "data" in result ? result.data : [],
-        ] as const satisfies readonly [
-          LighthouseV2ProviderType,
-          LighthouseV2SupportedModel[],
-        ];
-      }),
-    );
-    const modelsByProvider = Object.fromEntries(modelsEntries) as Record<
-      LighthouseV2ProviderType,
-      LighthouseV2SupportedModel[]
-    >;
     const error =
       "error" in configurationsResult
         ? configurationsResult.error
@@ -57,7 +39,11 @@ export default async function LighthouseSettingsPage() {
             "data" in configurationsResult ? configurationsResult.data : []
           }
           providers={providers}
-          modelsByProvider={modelsByProvider}
+          tenantConfiguration={
+            "data" in tenantConfigurationResult
+              ? tenantConfigurationResult.data
+              : undefined
+          }
           error={error}
         />
       </ContentLayout>

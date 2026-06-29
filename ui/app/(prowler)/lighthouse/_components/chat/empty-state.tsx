@@ -1,7 +1,7 @@
 "use client";
 
 import { BookOpen, FileCheck2, Network, ShieldAlert } from "lucide-react";
-import { type FormEvent } from "react";
+import { type ReactNode, type SubmitEvent } from "react";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/shadcn/button/button";
@@ -36,13 +36,15 @@ interface ChatEmptyStateProps {
   feedback: string | null;
   canRetry: boolean;
   onRetry: () => void;
+  onDismissFeedback: () => void;
   canSend: boolean;
   input: string;
   isStreaming: boolean;
+  modelSelector: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
   onStop: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
 }
 

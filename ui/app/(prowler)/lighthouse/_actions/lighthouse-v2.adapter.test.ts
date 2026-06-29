@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildLighthouseV2ConfigurationPayload,
+  buildLighthouseV2TenantConfigurationUpdatePayload,
   mapLighthouseV2Configuration,
   mapLighthouseV2Message,
   mapLighthouseV2Model,
   mapLighthouseV2Provider,
+  mapLighthouseV2TenantConfiguration,
   validateLighthouseV2ConfigurationInput,
 } from "./lighthouse-v2.adapter";
 
@@ -20,7 +22,6 @@ describe("lighthouse-v2.adapter", () => {
           provider_type: "bedrock",
           base_url: null,
           default_model: "anthropic.claude",
-          business_context: "Production AWS account",
           connected: true,
           connection_last_checked_at: "2026-06-24T10:00:00Z",
           inserted_at: "2026-06-24T09:00:00Z",
@@ -37,7 +38,6 @@ describe("lighthouse-v2.adapter", () => {
         providerType: "bedrock",
         baseUrl: null,
         defaultModel: "anthropic.claude",
-        businessContext: "Production AWS account",
         connected: true,
         connectionLastCheckedAt: "2026-06-24T10:00:00Z",
         insertedAt: "2026-06-24T09:00:00Z",
@@ -76,6 +76,37 @@ describe("lighthouse-v2.adapter", () => {
         supportsFunctionCalling: true,
         supportsVision: false,
         supportsReasoning: true,
+      });
+    });
+
+    it("should map tenant model defaults by provider", () => {
+      // Given
+      const resource: Parameters<typeof mapLighthouseV2TenantConfiguration>[0] =
+        {
+          id: "tenant-config-1",
+          type: "lighthouse-configurations",
+          attributes: {
+            business_context: "Production tenant",
+            default_provider: "bedrock",
+            default_models: {
+              openai: "gpt-5.1",
+              bedrock: "anthropic.claude-4",
+            },
+          },
+        };
+
+      // When
+      const config = mapLighthouseV2TenantConfiguration(resource);
+
+      // Then
+      expect(config).toEqual({
+        id: "tenant-config-1",
+        businessContext: "Production tenant",
+        defaultProvider: "bedrock",
+        defaultModels: {
+          openai: "gpt-5.1",
+          bedrock: "anthropic.claude-4",
+        },
       });
     });
 
@@ -122,8 +153,6 @@ describe("lighthouse-v2.adapter", () => {
       // Given
       const input = {
         providerType: "bedrock" as const,
-        defaultModel: "anthropic.claude",
-        businessContext: "Production AWS account",
         credentials: {
           aws_access_key_id: "AKIA0000000000000000",
           aws_secret_access_key: "a".repeat(40),
@@ -143,6 +172,36 @@ describe("lighthouse-v2.adapter", () => {
             aws_access_key_id: "AKIA0000000000000000",
             aws_secret_access_key: "a".repeat(40),
             aws_region_name: "us-east-1",
+          },
+        },
+      });
+      expect(payload.data.attributes).not.toHaveProperty("default_model");
+      expect(payload.data.attributes).not.toHaveProperty("business_context");
+    });
+
+    it("should build tenant preference payloads with provider model maps", () => {
+      // Given
+      const input = {
+        defaultProvider: "bedrock" as const,
+        defaultModels: {
+          openai: "gpt-5.1",
+          bedrock: "anthropic.claude-4",
+        },
+      };
+
+      // When
+      const payload = buildLighthouseV2TenantConfigurationUpdatePayload(input);
+
+      // Then
+      expect(payload).toEqual({
+        data: {
+          type: "lighthouse-configurations",
+          attributes: {
+            default_provider: "bedrock",
+            default_models: {
+              openai: "gpt-5.1",
+              bedrock: "anthropic.claude-4",
+            },
           },
         },
       });

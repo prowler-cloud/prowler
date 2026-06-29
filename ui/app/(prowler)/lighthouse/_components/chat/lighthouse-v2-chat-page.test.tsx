@@ -57,19 +57,26 @@ function stubEventSource() {
   vi.stubGlobal("EventSource", EventSourceMock);
 }
 
-const { cancelRunMock, createSessionMock, getMessagesMock, sendMessageMock } =
-  vi.hoisted(() => ({
-    cancelRunMock: vi.fn(),
-    createSessionMock: vi.fn(),
-    getMessagesMock: vi.fn(),
-    sendMessageMock: vi.fn(),
-  }));
+const {
+  cancelRunMock,
+  createSessionMock,
+  getMessagesMock,
+  sendMessageMock,
+  updateTenantConfigurationMock,
+} = vi.hoisted(() => ({
+  cancelRunMock: vi.fn(),
+  createSessionMock: vi.fn(),
+  getMessagesMock: vi.fn(),
+  sendMessageMock: vi.fn(),
+  updateTenantConfigurationMock: vi.fn(),
+}));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   cancelLighthouseV2Run: cancelRunMock,
   createLighthouseV2Session: createSessionMock,
   getLighthouseV2Messages: getMessagesMock,
   sendLighthouseV2Message: sendMessageMock,
+  updateLighthouseV2TenantConfiguration: updateTenantConfigurationMock,
 }));
 
 // Streamdown pulls in shiki/wasm syntax highlighting that doesn't run under
@@ -85,7 +92,6 @@ const configurations: LighthouseV2Configuration[] = [
     providerType: "openai",
     baseUrl: null,
     defaultModel: "gpt-5.1",
-    businessContext: "Production account",
     connected: true,
     connectionLastCheckedAt: "2026-06-24T10:00:00Z",
     insertedAt: "2026-06-24T09:00:00Z",
@@ -96,7 +102,6 @@ const configurations: LighthouseV2Configuration[] = [
     providerType: "bedrock",
     baseUrl: null,
     defaultModel: "anthropic.claude-4",
-    businessContext: "AWS landing zone",
     connected: true,
     connectionLastCheckedAt: "2026-06-23T10:00:00Z",
     insertedAt: "2026-06-23T09:00:00Z",
@@ -105,10 +110,20 @@ const configurations: LighthouseV2Configuration[] = [
 ];
 
 const modelsByProvider = {
-  openai: [model("gpt-5.1")],
+  openai: [model("gpt-5.1"), model("gpt-4.1")],
   bedrock: [model("anthropic.claude-4")],
   "openai-compatible": [model("llama-3.3")],
 };
+
+const tenantConfiguration = {
+  id: "tenant-config-1",
+  businessContext: "Production account",
+  defaultProvider: "openai",
+  defaultModels: {
+    openai: "gpt-5.1",
+    bedrock: "anthropic.claude-4",
+  },
+} satisfies Parameters<typeof LighthouseV2ChatPage>[0]["tenantConfiguration"];
 
 describe("LighthouseV2ChatPage", () => {
   beforeEach(() => {
@@ -120,10 +135,15 @@ describe("LighthouseV2ChatPage", () => {
         disconnect = vi.fn();
       },
     );
+    Object.defineProperty(Element.prototype, "scrollIntoView", {
+      configurable: true,
+      value: vi.fn(),
+    });
     cancelRunMock.mockReset();
     createSessionMock.mockReset();
     getMessagesMock.mockReset();
     sendMessageMock.mockReset();
+    updateTenantConfigurationMock.mockReset();
     // The mock never fires "open": the client must POST the message without
     // waiting for it (the backend sends no bytes until the worker emits, which
     // only happens after the POST). This is the regression guard for the
@@ -150,18 +170,21 @@ describe("LighthouseV2ChatPage", () => {
         },
       },
     });
+    updateTenantConfigurationMock.mockResolvedValue({
+      data: tenantConfiguration,
+    });
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("does not render provider or model selectors in the chat composer", () => {
+  it("renders the searchable model selector and settings shortcut", () => {
     // Given / When
     renderPage();
 
     // Then
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Model" })).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Lighthouse AI settings" }),
     ).toHaveAttribute("href", "/lighthouse/settings");
@@ -206,11 +229,16 @@ describe("LighthouseV2ChatPage", () => {
     ).not.toHaveClass("border-t");
   });
 
-  it("sends messages with the connected default provider and model from configuration", async () => {
+  it("sends messages with the tenant default provider and its saved model", async () => {
     // Given
     const user = userEvent.setup();
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
-    renderPage();
+    renderPage({
+      tenantConfiguration: {
+        ...tenantConfiguration,
+        defaultProvider: "bedrock",
+      },
+    });
 
     // When
     await user.type(
@@ -223,8 +251,8 @@ describe("LighthouseV2ChatPage", () => {
       expect(sendMessageMock).toHaveBeenCalledWith({
         sessionId: "session-1",
         text: "Summarize findings",
-        provider: "openai",
-        model: "gpt-5.1",
+        provider: "bedrock",
+        model: "anthropic.claude-4",
       }),
     );
     expect(createSessionMock).toHaveBeenCalledWith("Summarize findings");
@@ -240,6 +268,84 @@ describe("LighthouseV2ChatPage", () => {
       "/api/lighthouse/v2/sessions/session-1/event-stream",
     );
     replaceStateSpy.mockRestore();
+  });
+
+  it("falls back to the first connected provider when tenant defaults are invalid", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderPage({
+      tenantConfiguration: {
+        ...tenantConfiguration,
+        defaultProvider: "bedrock",
+        defaultModels: {
+          bedrock: "missing-model",
+        },
+      },
+    });
+
+    // When
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+
+    // Then
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "openai",
+          model: "gpt-5.1",
+        }),
+      ),
+    );
+  });
+
+  it("persists the selected chat model without deleting other provider defaults", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderPage();
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Model" }));
+    await user.click(
+      await screen.findByRole("option", { name: "anthropic.claude-4" }),
+    );
+
+    // Then
+    await waitFor(() =>
+      expect(updateTenantConfigurationMock).toHaveBeenCalledWith({
+        defaultProvider: "bedrock",
+        defaultModels: {
+          openai: "gpt-5.1",
+          bedrock: "anthropic.claude-4",
+        },
+      }),
+    );
+  });
+
+  it("keeps the chosen model applied and surfaces the backend reason when saving the default fails", async () => {
+    // Given
+    const user = userEvent.setup();
+    updateTenantConfigurationMock.mockResolvedValue({
+      error: "Invalid model 'anthropic.claude-4' for provider 'bedrock'.",
+      status: 400,
+    });
+    renderPage();
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Model" }));
+    await user.click(
+      await screen.findByRole("option", { name: "anthropic.claude-4" }),
+    );
+
+    // Then: the failed save shows the real backend message as an error alert,
+    // and the selection stays applied so the connected provider remains usable.
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Invalid model 'anthropic.claude-4' for provider 'bedrock'.",
+    );
+    expect(screen.getByRole("combobox", { name: "Model" })).toHaveTextContent(
+      "anthropic.claude-4",
+    );
   });
 
   it("updates the URL before notifying session history listeners", async () => {
@@ -364,6 +470,7 @@ function renderPage(props?: RenderPageProps) {
   const componentProps = {
     configurations: props?.configurations ?? configurations,
     modelsByProvider: props?.modelsByProvider ?? modelsByProvider,
+    tenantConfiguration: props?.tenantConfiguration ?? tenantConfiguration,
     initialSessionId: props?.initialSessionId,
     initialMessages: props?.initialMessages ?? [],
     initialPrompt: props?.initialPrompt,

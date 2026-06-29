@@ -39,10 +39,6 @@ const lighthouseV2ConfigFormSchemaBase = z.object({
   awsSecretAccessKey: z.string(),
   awsRegionName: z.string(),
   baseUrl: z.string(),
-  defaultModel: z.string(),
-  businessContext: z.string().max(BUSINESS_CONTEXT_LIMIT, {
-    error: "Business context cannot exceed 1000 characters.",
-  }),
 });
 
 export type LighthouseV2ConfigFormValues = z.infer<
@@ -55,8 +51,6 @@ export const EMPTY_FORM_VALUES: LighthouseV2ConfigFormValues = {
   awsSecretAccessKey: "",
   awsRegionName: "",
   baseUrl: "",
-  defaultModel: "",
-  businessContext: "",
 };
 
 export function getFormDefaults(
@@ -65,8 +59,6 @@ export function getFormDefaults(
   return {
     ...EMPTY_FORM_VALUES,
     baseUrl: configuration?.baseUrl ?? "",
-    defaultModel: configuration?.defaultModel ?? "",
-    businessContext: configuration?.businessContext ?? "",
   };
 }
 

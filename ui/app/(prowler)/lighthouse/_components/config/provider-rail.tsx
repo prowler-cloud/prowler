@@ -67,9 +67,6 @@ export function LighthouseV2ProviderRail({
                   </span>
                   <StatusBadge status={status} />
                 </div>
-                <p className="text-text-neutral-secondary mt-1 truncate text-xs">
-                  {config?.defaultModel || "No default model"}
-                </p>
                 <p className="text-text-neutral-tertiary mt-1 text-xs">
                   {formatLastChecked(config?.connectionLastCheckedAt)}
                 </p>

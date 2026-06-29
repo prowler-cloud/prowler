@@ -1,17 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Bot,
-  KeyRound,
-  Loader2,
-  PlugZap,
-  Save,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { KeyRound, Loader2, PlugZap, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import {
   createLighthouseV2Configuration,
@@ -22,7 +14,6 @@ import {
 import {
   buildCredentialPayload,
   buildLighthouseV2ConfigFormSchema,
-  BUSINESS_CONTEXT_LIMIT,
   EMPTY_FORM_VALUES,
   FEEDBACK_VARIANT,
   type FeedbackState,
@@ -36,21 +27,10 @@ import {
   type LighthouseV2Configuration,
   type LighthouseV2ConfigurationInput,
   type LighthouseV2ConfigurationUpdateInput,
-  type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Button } from "@/components/shadcn/button/button";
-import { Field, FieldError, FieldLabel } from "@/components/shadcn/field/field";
 import { Modal } from "@/components/shadcn/modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn/select/select";
-import { Textarea } from "@/components/shadcn/textarea/textarea";
-import { cn } from "@/lib/utils";
 
 import { ConfigurationSection } from "./configuration-section";
 import { CredentialFields } from "./credential-fields";
@@ -59,7 +39,6 @@ import { StatusBadge } from "./status-badge";
 
 export function LighthouseV2ConfigurationForm({
   configuration,
-  models,
   onConfigurationDeleted,
   onConfigurationSaved,
   onConfigurationTested,
@@ -67,7 +46,6 @@ export function LighthouseV2ConfigurationForm({
   provider,
 }: {
   configuration?: LighthouseV2Configuration;
-  models: LighthouseV2SupportedModel[];
   onConfigurationDeleted: (configurationId: string) => void;
   onConfigurationSaved: (configuration: LighthouseV2Configuration) => void;
   onConfigurationTested: (configuration: LighthouseV2Configuration) => void;
@@ -87,7 +65,6 @@ export function LighthouseV2ConfigurationForm({
     defaultValues: getFormDefaults(configuration),
     mode: "onSubmit",
   });
-  const businessContext = form.watch("businessContext");
   const status = getConnectionStatus(configuration);
 
   const handleSave = async (values: LighthouseV2ConfigFormValues) => {
@@ -102,8 +79,6 @@ export function LighthouseV2ConfigurationForm({
 
     const basePayload = {
       baseUrl: trimToNullable(values.baseUrl),
-      defaultModel: trimToNullable(values.defaultModel),
-      businessContext: values.businessContext,
     };
 
     const result = configuration
@@ -177,7 +152,7 @@ export function LighthouseV2ConfigurationForm({
   };
 
   return (
-    <section className="min-w-0">
+    <section className="flex h-full w-full min-w-0 flex-col">
       <div className="border-border-neutral-secondary flex flex-col gap-4 border-b px-4 py-6 md:flex-row md:items-start md:justify-between md:px-5">
         <div className="flex min-w-0 gap-3">
           <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-12 shrink-0 items-center justify-center rounded-[10px] border">
@@ -218,97 +193,29 @@ export function LighthouseV2ConfigurationForm({
       </div>
 
       <form
-        className="grid gap-0"
+        className="flex h-full min-h-0 w-full flex-1 flex-col"
         onSubmit={form.handleSubmit(handleSave)}
         noValidate
       >
-        <ConfigurationSection
-          icon={<KeyRound className="size-4" />}
-          title="Credentials"
-          description={
-            configuration
-              ? "Leave blank to keep existing credentials."
-              : "Credentials are required for new configurations."
-          }
-        >
-          <CredentialFields
-            errors={form.formState.errors}
-            provider={providerType}
-            register={form.register}
-          />
-        </ConfigurationSection>
-
-        <ConfigurationSection
-          icon={<Sparkles className="size-4" />}
-          title="Default model"
-          description="Model used when chat does not override provider/model for a turn."
-        >
-          <Controller
-            control={form.control}
-            name="defaultModel"
-            render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="lighthouse-v2-model">
-                  Default model
-                </FieldLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  allowDeselect
-                >
-                  <SelectTrigger id="lighthouse-v2-model">
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent width="wide">
-                    {models.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            )}
-          />
-        </ConfigurationSection>
-
-        <ConfigurationSection
-          icon={<Bot className="size-4" />}
-          title="Business context"
-          description="Short operational context Lighthouse AI should consider while answering."
-        >
-          <Field>
-            <div className="flex items-center justify-between gap-3">
-              <FieldLabel htmlFor="lighthouse-v2-business-context">
-                Business context
-              </FieldLabel>
-              <span
-                className={cn(
-                  "text-xs",
-                  businessContext.length > BUSINESS_CONTEXT_LIMIT
-                    ? "text-text-error-primary"
-                    : "text-text-neutral-tertiary",
-                )}
-              >
-                {businessContext.length}/{BUSINESS_CONTEXT_LIMIT}
-              </span>
-            </div>
-            <Textarea
-              id="lighthouse-v2-business-context"
-              textareaSize="lg"
-              aria-invalid={Boolean(form.formState.errors.businessContext)}
-              placeholder="Example: production AWS accounts, PCI workloads, EU data residency, critical internet-facing services..."
-              {...form.register("businessContext")}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <ConfigurationSection
+            icon={<KeyRound className="size-4" />}
+            title="Credentials"
+            description={
+              configuration
+                ? "Leave blank to keep existing credentials."
+                : "Credentials are required for new configurations."
+            }
+          >
+            <CredentialFields
+              errors={form.formState.errors}
+              provider={providerType}
+              register={form.register}
             />
-            {form.formState.errors.businessContext?.message && (
-              <FieldError>
-                {form.formState.errors.businessContext.message}
-              </FieldError>
-            )}
-          </Field>
-        </ConfigurationSection>
+          </ConfigurationSection>
+        </div>
 
-        <div className="flex flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between md:px-5">
+        <div className="border-border-neutral-secondary mt-auto flex flex-col gap-4 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5">
           <div className="text-text-neutral-secondary text-sm">
             {configuration
               ? "Saving updates may change chat behavior immediately."

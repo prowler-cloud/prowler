@@ -11,6 +11,8 @@ import {
   type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
   type LighthouseV2Task,
+  type LighthouseV2TenantConfiguration,
+  type LighthouseV2TenantConfigurationUpdateInput,
 } from "@/app/(prowler)/lighthouse/_types";
 
 export interface JsonApiResource<TAttributes> {
@@ -32,12 +34,17 @@ export interface JsonApiDocument<TData> {
 interface ConfigurationAttributes {
   provider_type: LighthouseV2ProviderType;
   base_url: string | null;
-  default_model: string | null;
-  business_context?: string | null;
+  default_model?: string | null;
   connected: boolean | null;
   connection_last_checked_at: string | null;
   inserted_at: string;
   updated_at: string;
+}
+
+interface TenantConfigurationAttributes {
+  business_context?: string | null;
+  default_provider?: LighthouseV2ProviderType | "";
+  default_models?: Record<string, string> | null;
 }
 
 interface SupportedProviderAttributes {
@@ -114,12 +121,22 @@ export function mapLighthouseV2Configuration(
     id: resource.id,
     providerType: resource.attributes.provider_type,
     baseUrl: resource.attributes.base_url,
-    defaultModel: resource.attributes.default_model,
-    businessContext: resource.attributes.business_context ?? "",
+    defaultModel: resource.attributes.default_model ?? null,
     connected: resource.attributes.connected,
     connectionLastCheckedAt: resource.attributes.connection_last_checked_at,
     insertedAt: resource.attributes.inserted_at,
     updatedAt: resource.attributes.updated_at,
+  };
+}
+
+export function mapLighthouseV2TenantConfiguration(
+  resource: JsonApiResource<TenantConfigurationAttributes>,
+): LighthouseV2TenantConfiguration {
+  return {
+    id: resource.id,
+    businessContext: resource.attributes.business_context ?? "",
+    defaultProvider: resource.attributes.default_provider ?? "",
+    defaultModels: resource.attributes.default_models ?? {},
   };
 }
 
@@ -195,8 +212,6 @@ export function buildLighthouseV2ConfigurationPayload(
         provider_type: input.providerType,
         credentials: input.credentials,
         base_url: input.baseUrl ?? null,
-        default_model: input.defaultModel ?? null,
-        business_context: input.businessContext,
       }),
     },
   };
@@ -213,8 +228,21 @@ export function buildLighthouseV2ConfigurationUpdatePayload(
       attributes: filterUndefinedAttributes({
         credentials: input.credentials,
         base_url: input.baseUrl,
-        default_model: input.defaultModel,
+      }),
+    },
+  };
+}
+
+export function buildLighthouseV2TenantConfigurationUpdatePayload(
+  input: LighthouseV2TenantConfigurationUpdateInput,
+) {
+  return {
+    data: {
+      type: "lighthouse-configurations",
+      attributes: filterUndefinedAttributes({
         business_context: input.businessContext,
+        default_provider: input.defaultProvider,
+        default_models: input.defaultModels,
       }),
     },
   };

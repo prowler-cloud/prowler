@@ -1,9 +1,10 @@
 "use client";
 
-import { CornerDownLeft, Settings } from "lucide-react";
+import { CornerDownLeft, Settings, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { type FormEvent } from "react";
+import { type ReactNode, type SubmitEvent } from "react";
 
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
@@ -17,13 +18,15 @@ interface ChatComposerPanelProps {
   feedback: string | null;
   canRetry: boolean;
   onRetry: () => void;
+  onDismissFeedback: () => void;
   canSend: boolean;
   input: string;
   isStreaming: boolean;
+  modelSelector: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
   onStop: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
 }
 
@@ -33,6 +36,7 @@ export function ChatComposerPanel({
   feedback,
   canRetry,
   onRetry,
+  onDismissFeedback,
   ...composerProps
 }: ChatComposerPanelProps) {
   return (
@@ -41,6 +45,7 @@ export function ChatComposerPanel({
         feedback={feedback}
         canRetry={canRetry}
         onRetry={onRetry}
+        onDismiss={onDismissFeedback}
       />
       <ChatComposer {...composerProps} />
     </>
@@ -51,22 +56,27 @@ function ChatFeedbackBar({
   feedback,
   canRetry,
   onRetry,
+  onDismiss,
 }: {
   feedback: string | null;
   canRetry: boolean;
   onRetry: () => void;
+  onDismiss: () => void;
 }) {
   if (!feedback) return null;
 
   return (
-    <div className="border-border-neutral-secondary bg-bg-neutral-secondary mb-3 flex items-center justify-between gap-3 rounded-[8px] border px-3 py-2 text-sm">
-      <span>{feedback}</span>
-      {canRetry && (
-        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-          Retry
-        </Button>
-      )}
-    </div>
+    <Alert variant="error" onClose={onDismiss} className="mb-3 pr-10">
+      <TriangleAlert />
+      <AlertDescription className="flex items-center justify-between gap-3">
+        <span>{feedback}</span>
+        {canRetry && (
+          <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+            Retry
+          </Button>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -74,12 +84,13 @@ interface ChatComposerProps {
   canSend: boolean;
   input: string;
   isStreaming: boolean;
+  modelSelector: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
   // Kept on the contract but unused for now: the backend can't cancel a run yet,
   // so the stop control is replaced by a non-interactive spinner.
   onStop: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
 }
 
@@ -89,6 +100,7 @@ function ChatComposer({
   isStreaming,
   selectedConfigurationConnected,
   onInputChange,
+  modelSelector,
   onSubmit,
   onSubmitText,
 }: ChatComposerProps) {
@@ -117,12 +129,18 @@ function ChatComposer({
           }
         }}
       />
-      <div className="flex items-center justify-between px-3 pb-3">
-        <Button type="button" variant="outline" size="icon-sm" asChild>
-          <Link href="/lighthouse/settings" aria-label="Lighthouse AI settings">
-            <Settings className="size-4" />
-          </Link>
-        </Button>
+      <div className="flex items-center justify-between gap-3 px-3 pb-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <Button type="button" variant="outline" size="icon-sm" asChild>
+            <Link
+              href="/lighthouse/settings"
+              aria-label="Lighthouse AI settings"
+            >
+              <Settings className="size-4" />
+            </Link>
+          </Button>
+          {modelSelector}
+        </div>
         {isStreaming ? (
           <div
             className="flex size-8 items-center justify-center"

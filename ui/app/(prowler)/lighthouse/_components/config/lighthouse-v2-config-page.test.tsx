@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
   LighthouseV2Configuration,
-  LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 
@@ -15,15 +14,25 @@ const {
   deleteConfigurationMock,
   testConnectionMock,
   updateConfigurationMock,
+  updateTenantConfigurationMock,
+  toastMock,
 } = vi.hoisted(() => ({
   createConfigurationMock: vi.fn(),
   deleteConfigurationMock: vi.fn(),
   testConnectionMock: vi.fn(),
   updateConfigurationMock: vi.fn(),
+  updateTenantConfigurationMock: vi.fn(),
+  toastMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
+}));
+
+// Action feedback is delivered through toasts (rendered by the layout Toaster),
+// so we assert the dispatched toast rather than in-page banner text.
+vi.mock("@/components/ui", () => ({
+  useToast: () => ({ toast: toastMock, dismiss: vi.fn() }),
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
@@ -31,6 +40,7 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   deleteLighthouseV2Configuration: deleteConfigurationMock,
   testLighthouseV2ConfigurationConnection: testConnectionMock,
   updateLighthouseV2Configuration: updateConfigurationMock,
+  updateLighthouseV2TenantConfiguration: updateTenantConfigurationMock,
 }));
 
 const providers: LighthouseV2SupportedProvider[] = [
@@ -39,31 +49,12 @@ const providers: LighthouseV2SupportedProvider[] = [
   { id: "openai-compatible", name: "OpenAI-compatible" },
 ];
 
-const modelsByProvider = {
-  openai: [
-    model("gpt-5.1", {
-      supportsFunctionCalling: true,
-      supportsVision: true,
-      supportsReasoning: true,
-    }),
-  ],
-  bedrock: [
-    model("anthropic.claude-4", {
-      supportsFunctionCalling: true,
-      supportsVision: false,
-      supportsReasoning: true,
-    }),
-  ],
-  "openai-compatible": [model("llama-3.3")],
-};
-
 const configurations: LighthouseV2Configuration[] = [
   {
     id: "config-openai",
     providerType: "openai",
     baseUrl: null,
     defaultModel: "gpt-5.1",
-    businessContext: "Production account",
     connected: true,
     connectionLastCheckedAt: "2026-06-24T10:00:00Z",
     insertedAt: "2026-06-24T09:00:00Z",
@@ -74,7 +65,6 @@ const configurations: LighthouseV2Configuration[] = [
     providerType: "bedrock",
     baseUrl: null,
     defaultModel: "anthropic.claude-4",
-    businessContext: "AWS landing zone",
     connected: false,
     connectionLastCheckedAt: "2026-06-23T10:00:00Z",
     insertedAt: "2026-06-23T09:00:00Z",
@@ -88,6 +78,16 @@ describe("LighthouseV2ConfigPage", () => {
     deleteConfigurationMock.mockReset();
     testConnectionMock.mockReset();
     updateConfigurationMock.mockReset();
+    updateTenantConfigurationMock.mockReset();
+    toastMock.mockReset();
+    updateTenantConfigurationMock.mockResolvedValue({
+      data: {
+        id: "tenant-config-1",
+        businessContext: "Updated business context",
+        defaultProvider: "",
+        defaultModels: {},
+      },
+    });
 
     createConfigurationMock.mockResolvedValue({ data: configurations[0] });
     deleteConfigurationMock.mockResolvedValue({ data: true });
@@ -120,12 +120,7 @@ describe("LighthouseV2ConfigPage", () => {
     );
 
     expect(settingsCard).toHaveAttribute("data-slot", "card");
-    expect(settingsCard).toHaveClass(
-      "min-h-[calc(100dvh-6.5rem)]",
-      "w-full",
-      "gap-0",
-      "overflow-hidden",
-    );
+    expect(settingsCard).toHaveClass("w-full", "gap-0", "overflow-hidden");
     expect(settingsCard).not.toHaveClass("mx-auto", "max-w-7xl");
     expect(settingsSeparator).toHaveClass(
       "border-t",
@@ -149,50 +144,50 @@ describe("LighthouseV2ConfigPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("loads provider-specific form values when switching provider", async () => {
+  it("renders a single shared business context, not a per-provider default model", async () => {
     // Given
     const user = userEvent.setup();
     renderPage();
 
-    // When
+    // Then: business context is tenant-wide, so there is exactly one editor
+    expect(
+      screen.getAllByRole("textbox", { name: /Business context/i }),
+    ).toHaveLength(1);
+
+    // When switching providers, no per-provider model/context field appears
     await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
 
     // Then
     expect(
-      screen.getByRole("textbox", { name: /Business context/i }),
-    ).toHaveValue("AWS landing zone");
+      screen.queryByRole("combobox", { name: "Default model" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Default model")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("combobox", { name: "Default model" }),
-    ).toHaveTextContent("anthropic.claude-4");
+      screen.getAllByRole("textbox", { name: /Business context/i }),
+    ).toHaveLength(1);
   });
 
-  it("updates an existing configuration without sending blank credentials", async () => {
+  it("updates an existing configuration without sending blank credentials or model defaults", async () => {
     // Given
     const user = userEvent.setup();
-    updateConfigurationMock.mockResolvedValue({
-      data: {
-        ...configurations[0],
-        businessContext: "Updated context",
-      },
-    });
+    updateConfigurationMock.mockResolvedValue({ data: configurations[0] });
     renderPage();
 
-    // When
-    await user.clear(
-      screen.getByRole("textbox", { name: /Business context/i }),
+    // When: save the active provider without touching credentials
+    await user.click(
+      within(
+        screen.getByRole("region", { name: "Lighthouse AI settings" }),
+      ).getByRole("button", { name: /^Save$/i }),
     );
-    await user.type(
-      screen.getByRole("textbox", { name: /Business context/i }),
-      "Updated context",
-    );
-    await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     // Then
-    await waitFor(() =>
-      expect(updateConfigurationMock).toHaveBeenCalledWith(
-        "config-openai",
-        expect.not.objectContaining({ credentials: expect.anything() }),
-      ),
+    await waitFor(() => expect(updateConfigurationMock).toHaveBeenCalled());
+    expect(updateConfigurationMock.mock.calls[0]?.[0]).toBe("config-openai");
+    expect(updateConfigurationMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      "credentials",
+    );
+    expect(updateConfigurationMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      "defaultModel",
     );
   });
 
@@ -204,7 +199,6 @@ describe("LighthouseV2ConfigPage", () => {
       providerType: "openai-compatible",
       baseUrl: "https://llm.example.com/v1",
       defaultModel: "llama-3.3",
-      businessContext: "Private model",
       connected: null,
       connectionLastCheckedAt: null,
       insertedAt: "2026-06-24T10:00:00Z",
@@ -222,21 +216,22 @@ describe("LighthouseV2ConfigPage", () => {
       screen.getByLabelText("Base URL"),
       "https://llm.example.com/v1",
     );
-    await user.type(
-      screen.getByRole("textbox", { name: /Business context/i }),
-      "Private model",
-    );
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     // Then
-    await waitFor(() =>
-      expect(createConfigurationMock).toHaveBeenCalledWith({
+    await waitFor(() => expect(createConfigurationMock).toHaveBeenCalled());
+    expect(createConfigurationMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
         providerType: "openai-compatible",
         credentials: { api_key: "provider-key" },
         baseUrl: "https://llm.example.com/v1",
-        defaultModel: null,
-        businessContext: "Private model",
       }),
+    );
+    expect(createConfigurationMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      "defaultModel",
+    );
+    expect(createConfigurationMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      "businessContext",
     );
   });
 
@@ -275,32 +270,6 @@ describe("LighthouseV2ConfigPage", () => {
     expect(screen.getByLabelText("AWS region")).toBeInTheDocument();
   });
 
-  it("shows the business context counter and blocks values over 1000 characters", async () => {
-    // Given
-    const user = userEvent.setup();
-    renderPage();
-
-    // When
-    const businessContext = screen.getByRole("textbox", {
-      name: /Business context/i,
-    });
-    await user.clear(businessContext);
-    // Paste the whole string in one event instead of 1001 keystrokes, which
-    // re-renders the watched form on every character and times out under load.
-    await user.click(businessContext);
-    await user.paste("a".repeat(1001));
-    await user.click(screen.getByRole("button", { name: /^Save$/i }));
-
-    // Then
-    expect(screen.getByText("1001/1000")).toBeInTheDocument();
-    expect(
-      await screen.findByText(
-        "Business context cannot exceed 1000 characters.",
-      ),
-    ).toBeInTheDocument();
-    expect(updateConfigurationMock).not.toHaveBeenCalled();
-  });
-
   it("tests the connection and reports the resulting status", async () => {
     // Given
     const user = userEvent.setup();
@@ -316,7 +285,14 @@ describe("LighthouseV2ConfigPage", () => {
     await waitFor(() =>
       expect(testConnectionMock).toHaveBeenCalledWith("config-openai"),
     );
-    expect(await screen.findByText("Connection failed.")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Connection failed.",
+          variant: "destructive",
+        }),
+      ),
+    );
     expect(
       screen.queryByRole("button", { name: /Refresh status/i }),
     ).not.toBeInTheDocument();
@@ -337,7 +313,11 @@ describe("LighthouseV2ConfigPage", () => {
     await waitFor(() =>
       expect(deleteConfigurationMock).toHaveBeenCalledWith("config-openai"),
     );
-    expect(screen.getByText("Configuration removed.")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Configuration removed." }),
+      ),
+    );
   });
 });
 
@@ -348,23 +328,8 @@ function renderPage(
     <LighthouseV2ConfigPage
       configurations={props?.configurations ?? configurations}
       providers={props?.providers ?? providers}
-      modelsByProvider={props?.modelsByProvider ?? modelsByProvider}
+      tenantConfiguration={props?.tenantConfiguration}
       error={props?.error}
     />,
   );
-}
-
-function model(
-  id: string,
-  overrides: Partial<LighthouseV2SupportedModel> = {},
-): LighthouseV2SupportedModel {
-  return {
-    id,
-    maxInputTokens: null,
-    maxOutputTokens: null,
-    supportsFunctionCalling: null,
-    supportsVision: null,
-    supportsReasoning: null,
-    ...overrides,
-  };
 }
