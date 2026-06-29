@@ -376,13 +376,11 @@ override-dependencies = ["okta==3.4.2"]
 # framework-required signature param in skills/django-drf template assets
 ignore_names = [
   "Prefix",
-  "a",
   "backfill_scan_metadata_fixture",
   "create_provider_group_relationship",
   "expected_scanner_args",
   "field_to_check",
   "finding_groups_title_variants_fixture",
-  "k",
   "latest_scan_finding_with_categories",
   "mock_*",
   "provider_compliance_scores_fixture",
