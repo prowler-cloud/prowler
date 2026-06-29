@@ -35,11 +35,6 @@
     "identity-access",
     "email-security"
   ],
-  "Compliance": [
-    {
-      "ComplianceVersion": "1.0"
-    }
-  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
