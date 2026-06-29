@@ -225,7 +225,10 @@ describe("finding triage cells", () => {
     // Then
     expect(screen.getByRole("dialog", { name: "Note" })).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Only in Cloud" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(
+      screen.getByRole("link", { name: "Available in Prowler Cloud" }),
+    ).toHaveAttribute("href", "https://prowler.com/pricing");
   });
 
   it("should disable Add note when no update handler is wired", async () => {

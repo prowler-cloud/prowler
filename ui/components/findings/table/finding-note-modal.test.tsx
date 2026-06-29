@@ -3,16 +3,6 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
-const { routerPushMock } = vi.hoisted(() => ({
-  routerPushMock: vi.fn(),
-}));
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: routerPushMock,
-  }),
-}));
-
 vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
   ProviderTypeIcon: ({ type }: { type: string }) => (
     <span data-testid={`${type}-provider-badge`}>{type} icon</span>
@@ -250,10 +240,8 @@ describe("FindingNoteModal", () => {
     ).toBeInTheDocument();
   });
 
-  it("should disable controls and route the primary action to Billing for non-paying users", async () => {
+  it("should disable controls and show the Cloud upsell badge for non-paying users", () => {
     // Given
-    const user = userEvent.setup();
-    routerPushMock.mockClear();
     renderNoteModal({
       triage: makeTriageDetail({
         canEdit: false,
@@ -261,15 +249,15 @@ describe("FindingNoteModal", () => {
       }),
     });
 
-    // When
-    await user.click(screen.getByRole("button", { name: "Only in Cloud" }));
-
     // Then
     expect(
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveAttribute("data-disabled", "");
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(routerPushMock).toHaveBeenCalledWith("https://prowler.com/pricing");
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(
+      screen.getByRole("link", { name: "Available in Prowler Cloud" }),
+    ).toHaveAttribute("href", "https://prowler.com/pricing");
     expect(screen.queryByText(/will be muted/i)).not.toBeInTheDocument();
   });
 

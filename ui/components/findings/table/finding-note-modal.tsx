@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
@@ -47,7 +47,6 @@ export function FindingNoteModal({
   findingContext,
   onTriageUpdateAction,
 }: FindingNoteModalProps) {
-  const router = useRouter();
   // Local state needed: modal edits are buffered until the user chooses Update.
   const [selectedStatus, setSelectedStatus] = useState<FindingTriageStatus>(
     triage.status,
@@ -65,9 +64,6 @@ export function FindingNoteModal({
     event.preventDefault();
 
     if (!canSubmit) {
-      if (isCloudOnly) {
-        router.push(triage.billingHref);
-      }
       return;
     }
 
@@ -93,12 +89,6 @@ export function FindingNoteModal({
       setSubmitError("Could not update the note. Please try again.");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleUnavailablePrimaryClick = () => {
-    if (isCloudOnly) {
-      router.push(triage.billingHref);
     }
   };
 
@@ -184,19 +174,24 @@ export function FindingNoteModal({
           >
             Cancel
           </Button>
-          <Button
-            type={canSubmit ? "submit" : "button"}
-            size="lg"
-            onClick={canSubmit ? undefined : handleUnavailablePrimaryClick}
-          >
-            {isSubmitting
-              ? "Saving..."
-              : canSubmit
-                ? "Save changes"
-                : isCloudOnly
-                  ? "Only in Cloud"
+          <span className="relative inline-flex">
+            {isCloudOnly && (
+              <span className="absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
+                <CloudFeatureBadgeLink href={triage.billingHref} />
+              </span>
+            )}
+            <Button
+              type={canSubmit ? "submit" : "button"}
+              size="lg"
+              disabled={!canSubmit}
+            >
+              {isSubmitting
+                ? "Saving..."
+                : canSubmit || isCloudOnly
+                  ? "Save changes"
                   : "Unavailable"}
-          </Button>
+            </Button>
+          </span>
         </div>
       </form>
     </Modal>
