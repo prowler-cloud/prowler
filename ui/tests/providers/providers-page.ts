@@ -936,6 +936,31 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  private async getWizardDebugInfo(): Promise<string> {
+    const isWizardVisible = await this.wizardModal
+      .isVisible()
+      .catch(() => false);
+    const wizardText = isWizardVisible
+      ? await this.wizardModal.innerText().catch(() => "<failed to read text>")
+      : "<wizard not visible>";
+    const visibleButtons = isWizardVisible
+      ? await this.wizardModal
+          .getByRole("button")
+          .allTextContents()
+          .catch(() => [])
+      : [];
+    const wizardHtml = isWizardVisible
+      ? await this.wizardModal.innerHTML().catch(() => "<failed to read html>")
+      : "<wizard not visible>";
+
+    return [
+      `Wizard visible: ${isWizardVisible}`,
+      `Visible button text: ${visibleButtons.map((text) => text.trim()).join(" | ") || "<none>"}`,
+      `Wizard text:\n${wizardText.trim() || "<empty>"}`,
+      `Wizard HTML (first 6000 chars):\n${wizardHtml.slice(0, 6000)}`,
+    ].join("\n\n");
+  }
+
   private async waitForProviderReadyToClose(timeout = 30000): Promise<void> {
     const launchStepReady = this.page
       .getByText("Account Connected!", { exact: true })
@@ -1033,7 +1058,15 @@ export class ProvidersPage extends BasePage {
     // because that performs provider-specific connectivity checks covered by
     // dedicated scan/connection flows and can hang on external services.
     if (!(await testConnectionButton.isVisible().catch(() => false))) {
-      await expect(launchStepReady).toBeVisible({ timeout });
+      try {
+        await expect(launchStepReady).toBeVisible({ timeout });
+      } catch (error) {
+        const debugInfo = await this.getWizardDebugInfo();
+        throw new Error(
+          `Provider no-scan flow did not reach the connection or launch step.\n\n${debugInfo}`,
+          { cause: error },
+        );
+      }
     }
 
     if (await this.wizardModal.isVisible().catch(() => false)) {
