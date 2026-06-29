@@ -195,6 +195,7 @@ export function InlineResourceContainer({
   const columns = getColumnFindingResources({
     rowSelection,
     selectableRowCount,
+    findingTitle: group.checkTitle,
     onTriageUpdateAction: async (input) => {
       await updateFindingTriage(input);
       refresh();

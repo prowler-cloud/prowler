@@ -141,6 +141,9 @@ describe("FindingNoteModal", () => {
     expect(
       within(dialog).getByRole("combobox", { name: "Triage status" }),
     ).toHaveTextContent("Remediating");
+    expect(
+      within(dialog).getByText(/automatically changed to Resolved/i),
+    ).toBeVisible();
   });
 
   it("should send existing note changes with noteId and without duplicate-note status payload", async () => {

@@ -218,7 +218,7 @@ function makeResource(
 }
 
 describe("column-finding-resources", () => {
-  it("should render Triage and Notes as the last visible data columns", () => {
+  it("should render actions as the last visible column after Triage and Notes", () => {
     // Given
     const columns = getColumnFindingResources({
       rowSelection: {},
@@ -233,7 +233,7 @@ describe("column-finding-resources", () => {
     );
 
     // Then
-    expect(columnIds.slice(-3)).toEqual(["actions", "triage", "notes"]);
+    expect(columnIds.slice(-3)).toEqual(["triage", "notes", "actions"]);
   });
 
   it("should render the current triage status label", () => {

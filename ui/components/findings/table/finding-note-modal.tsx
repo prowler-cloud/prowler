@@ -9,6 +9,7 @@ import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
+  FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
   type FindingTriageStatus,
 } from "@/types/findings-triage";
@@ -39,6 +40,8 @@ interface FindingNoteModalProps {
 
 const MUTELIST_INFO_COPY =
   "This finding will be muted through the existing Mutelist flow.";
+const REMEDIATING_INFO_COPY =
+  "Once this finding is fixed and passes in the next scan, it will be automatically changed to Resolved.";
 
 export function FindingNoteModal({
   open,
@@ -60,6 +63,8 @@ export function FindingNoteModal({
     triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY;
   const shouldShowMutelistInfo =
     canSubmit && isMutelistShortcutStatus(selectedStatus);
+  const shouldShowRemediatingInfo =
+    selectedStatus === FINDING_TRIAGE_STATUS.REMEDIATING;
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -135,6 +140,12 @@ export function FindingNoteModal({
         {shouldShowMutelistInfo && (
           <Alert variant="warning">
             <AlertDescription>{MUTELIST_INFO_COPY}</AlertDescription>
+          </Alert>
+        )}
+
+        {shouldShowRemediatingInfo && (
+          <Alert variant="info">
+            <AlertDescription>{REMEDIATING_INFO_COPY}</AlertDescription>
           </Alert>
         )}
 

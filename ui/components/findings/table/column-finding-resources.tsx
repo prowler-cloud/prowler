@@ -146,12 +146,14 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 interface GetColumnFindingResourcesOptions {
   rowSelection: RowSelectionState;
   selectableRowCount: number;
+  findingTitle?: string;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
 }
 
 export function getColumnFindingResources({
   rowSelection,
   selectableRowCount,
+  findingTitle,
   onTriageUpdateAction,
 }: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
@@ -319,13 +321,6 @@ export function getColumnFindingResources({
       },
       enableSorting: false,
     },
-    // Actions column — utility actions are kept before final data columns.
-    {
-      id: "actions",
-      header: () => <div className="w-10" />,
-      cell: ({ row }) => <ResourceRowActions row={row} />,
-      enableSorting: false,
-    },
     // Triage
     {
       id: "triage",
@@ -350,7 +345,7 @@ export function getColumnFindingResources({
         <FindingNotesCell
           triage={row.original.triage}
           findingContext={{
-            title: row.original.checkId,
+            title: findingTitle || row.original.checkId,
             resource: row.original.resourceName,
             provider: row.original.providerAlias,
             providerType: row.original.providerType,
@@ -358,6 +353,13 @@ export function getColumnFindingResources({
           onTriageUpdateAction={onTriageUpdateAction}
         />
       ),
+      enableSorting: false,
+    },
+    // Actions column — utility actions are kept last.
+    {
+      id: "actions",
+      header: () => <div className="w-10" />,
+      cell: ({ row }) => <ResourceRowActions row={row} />,
       enableSorting: false,
     },
   ];
