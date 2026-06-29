@@ -97,6 +97,10 @@ Some AWS services accumulate large numbers of resources (EBS snapshots, backup r
 
 The global default applies to the supported resources below and is overridable per resource. The default global value is `0`, which disables the limit and scans every resource. A global `null` value is also unlimited. For per-resource values, `null` means inherit the global default; set `0` or a negative value to disable that resource limit explicitly. Positive values enable limits.
 
+<Warning>
+When positive resource scan limits are configured, compliance results are based only on the selected resources, not on the full set of matching resources in the account. Treat compliance summaries and percentages as partial evidence, because unselected resources are not analyzed and can change the real compliance posture.
+</Warning>
+
 #### Global Behavior
 
 Resource scan limits select resources for analysis. They do not cap, prioritize, or reorder findings.
