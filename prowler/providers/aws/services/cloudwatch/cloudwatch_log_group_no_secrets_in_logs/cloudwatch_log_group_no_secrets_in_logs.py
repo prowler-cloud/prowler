@@ -25,14 +25,16 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
 
         # Phase 1: batch-scan every (log group, log stream). Payloads are yielded
         # lazily so only a chunk is written/held at a time, which matters for
-        # accounts with very large numbers of log groups/streams.
+        # accounts with very large numbers of log groups/streams. The log group
+        # ARN (not its name) keys every map below, since group and stream names
+        # are not unique across regions and would otherwise collide.
         def stream_payloads():
             for log_group in logs_client.log_groups.values():
                 if not log_group.log_streams:
                     continue
                 for log_stream_name, events in log_group.log_streams.items():
                     yield (
-                        (log_group.name, log_stream_name),
+                        (log_group.arn, log_stream_name),
                         "\n".join(dumps(event["message"]) for event in events),
                     )
 
@@ -53,12 +55,12 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
         # collect the multiline events to rescan. Each multiline event is
         # rescanned once (keyed by timestamp) to resolve per-line detail; the
         # rescans are batched in Phase 3 instead of one subprocess per event.
-        stream_plans = {}  # (group, stream) -> {timestamp: {"multiline", "types"}}
-        rescan_payloads = {}  # (group, stream, timestamp) -> multiline event data
-        groups_with_rescan = set()  # groups that depend on the Phase 3 rescan
+        stream_plans = {}  # (group arn, stream) -> {timestamp: {"multiline", "types"}}
+        rescan_payloads = {}  # (group arn, stream, timestamp) -> multiline event data
+        groups_with_rescan = set()  # group arns that depend on the Phase 3 rescan
         for log_group in logs_client.log_groups.values():
             for log_stream_name in log_group.log_streams or {}:
-                stream_secrets = stream_results.get((log_group.name, log_stream_name))
+                stream_secrets = stream_results.get((log_group.arn, log_stream_name))
                 if not stream_secrets:
                     continue
                 events = log_group.log_streams[log_stream_name]
@@ -85,12 +87,12 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                         # line: the event is rescanned to get the type and line
                         # number of each secret.
                         rescan_payloads[
-                            (log_group.name, log_stream_name, cloudwatch_timestamp)
+                            (log_group.arn, log_stream_name, cloudwatch_timestamp)
                         ] = log_event_data
-                        groups_with_rescan.add(log_group.name)
+                        groups_with_rescan.add(log_group.arn)
                     else:
                         plan[cloudwatch_timestamp]["types"].append(secret["type"])
-                stream_plans[(log_group.name, log_stream_name)] = plan
+                stream_plans[(log_group.arn, log_stream_name)] = plan
 
         # Phase 3: one batched rescan for all multiline flagged events. Validation
         # is never enabled here: this rescan only resolves line numbers for
@@ -126,18 +128,18 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
             log_group_secrets = []
             all_secrets = []
             for log_stream_name in log_group.log_streams or {}:
-                stream_secrets = stream_results.get((log_group.name, log_stream_name))
+                stream_secrets = stream_results.get((log_group.arn, log_stream_name))
                 if not stream_secrets:
                     continue
                 all_secrets.extend(stream_secrets)
                 log_stream_secrets = {}
                 for cloudwatch_timestamp, entry in stream_plans[
-                    (log_group.name, log_stream_name)
+                    (log_group.arn, log_stream_name)
                 ].items():
                     secrets_dict = SecretsDict()
                     if entry["multiline"]:
                         for event_secret in rescan_results.get(
-                            (log_group.name, log_stream_name, cloudwatch_timestamp),
+                            (log_group.arn, log_stream_name, cloudwatch_timestamp),
                             [],
                         ):
                             secrets_dict.add_secret(
@@ -166,7 +168,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
             # The multiline rescan failed for a group that had flagged secrets:
             # detail is unavailable, so report MANUAL rather than risk a false
             # PASS when every flagged event was multiline.
-            if rescan_scan_error and log_group.name in groups_with_rescan:
+            if rescan_scan_error and log_group.arn in groups_with_rescan:
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Secrets were detected in log group {log_group.name} but the "

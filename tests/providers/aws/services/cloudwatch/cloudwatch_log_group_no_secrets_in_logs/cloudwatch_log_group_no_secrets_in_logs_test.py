@@ -349,3 +349,73 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert "Could not scan" in result[0].status_extended
+
+    @mock_aws
+    def test_same_group_and_stream_names_in_two_regions_do_not_collide(self):
+        # Regression: log group and stream names are not unique across regions,
+        # so the per-stream key must be region-aware (ARN-based). Otherwise the
+        # secret found in one region would be reused for the same-named group in
+        # another region, producing a false FAIL.
+        group_name = "shared-name"
+        stream_name = "shared stream"
+
+        us_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        us_client.create_log_group(logGroupName=group_name)
+        us_client.create_log_stream(logGroupName=group_name, logStreamName=stream_name)
+        us_client.put_log_events(
+            logGroupName=group_name,
+            logStreamName=stream_name,
+            logEvents=[
+                {
+                    "timestamp": timestamp,
+                    "message": 'password = "Tr0ub4dor3xKq9vLmZ"',
+                }
+            ],
+        )
+
+        eu_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
+        eu_client.create_log_group(logGroupName=group_name)
+        eu_client.create_log_stream(logGroupName=group_name, logStreamName=stream_name)
+        eu_client.put_log_events(
+            logGroupName=group_name,
+            logStreamName=stream_name,
+            logEvents=[{"timestamp": timestamp, "message": "just a normal log line"}],
+        )
+
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        from prowler.providers.common.models import Audit_Metadata
+
+        aws_provider.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+            completed_checks=0,
+            audit_progress=0,
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
+                new=Logs(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs import (
+                cloudwatch_log_group_no_secrets_in_logs,
+            )
+
+            check = cloudwatch_log_group_no_secrets_in_logs()
+            result = check.execute()
+
+            assert len(result) == 2
+            by_region = {report.region: report for report in result}
+            # Only the region with the real secret must FAIL.
+            assert by_region[AWS_REGION_US_EAST_1].status == "FAIL"
+            assert by_region[AWS_REGION_EU_WEST_1].status == "PASS"
