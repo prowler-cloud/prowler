@@ -215,10 +215,12 @@ function ScanConfigurationForm({
         />
         <div aria-live="polite" className="mt-1" ref={errorPanelRef}>
           {yamlValidation.errors.length === 0 && configText.trim() ? (
-            <p className="text-tiny text-success">Configuration valid</p>
+            <p className="text-tiny text-text-success-primary">
+              Configuration valid
+            </p>
           ) : yamlValidation.errors.length > 0 ? (
-            <div className="border-danger-200 bg-danger-50 rounded-md border p-3">
-              <p className="text-tiny text-danger mb-1 font-medium">
+            <div className="border-border-error rounded-md border bg-red-50 p-3 dark:bg-red-950/50">
+              <p className="text-tiny text-text-error-primary mb-1 font-medium">
                 {yamlValidation.errors.length} validation{" "}
                 {yamlValidation.errors.length === 1 ? "error" : "errors"}:
               </p>
