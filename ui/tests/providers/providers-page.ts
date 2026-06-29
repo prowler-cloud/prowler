@@ -1057,19 +1057,16 @@ export class ProvidersPage extends BasePage {
     // connection step is enough; do not click "Continue"/"Check connection"
     // because that performs provider-specific connectivity checks covered by
     // dedicated scan/connection flows and can hang on external services.
-    if (!(await testConnectionButton.isVisible().catch(() => false))) {
-      try {
-        await Promise.race([
-          launchStepReady.waitFor({ state: "visible", timeout }),
-          this.wizardModal.waitFor({ state: "hidden", timeout }),
-        ]);
-      } catch (error) {
-        const debugInfo = await this.getWizardDebugInfo();
-        throw new Error(
-          `Provider no-scan flow did not reach the connection or launch step.\n\n${debugInfo}`,
-          { cause: error },
-        );
-      }
+    const reachedNoScanState =
+      (await testConnectionButton.isVisible().catch(() => false)) ||
+      (await launchStepReady.isVisible().catch(() => false)) ||
+      (await this.wizardModal.isHidden().catch(() => false));
+
+    if (!reachedNoScanState) {
+      const debugInfo = await this.getWizardDebugInfo();
+      throw new Error(
+        `Provider no-scan flow did not reach the connection or launch step.\n\n${debugInfo}`,
+      );
     }
 
     if (await this.wizardModal.isVisible().catch(() => false)) {
