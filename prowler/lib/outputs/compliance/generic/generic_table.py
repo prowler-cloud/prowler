@@ -32,23 +32,19 @@ def get_generic_compliance_table(
                 and compliance.Version in compliance_framework.upper()
                 and compliance.Provider.upper() in compliance_framework.upper()
             ):
-                effective_status = finding.status
                 for requirement in compliance.Requirements:
-                    if finding.check_id in requirement.Checks:
-                        config_status = resolve_requirement_config_status(
-                            requirement, audit_config, config_status_cache
-                        )
-                        if (
-                            get_effective_status(finding.status, config_status)
-                            == "FAIL"
-                        ):
-                            effective_status = "FAIL"
-                            break
-                if finding.muted:
-                    if index not in muted_count:
-                        muted_count.append(index)
-                else:
-                    if effective_status == "FAIL" and index not in fail_count:
+                    # A configurable check that passed with a too-loose config is
+                    # forced to FAIL (source of truth: framework ConfigRequirements).
+                    config_status = resolve_requirement_config_status(
+                        requirement, audit_config, config_status_cache
+                    )
+                    effective_status = get_effective_status(
+                        finding.status, config_status
+                    )
+                    if finding.muted:
+                        if index not in muted_count:
+                            muted_count.append(index)
+                    elif effective_status == "FAIL" and index not in fail_count:
                         fail_count.append(index)
                     elif effective_status == "PASS" and index not in pass_count:
                         pass_count.append(index)

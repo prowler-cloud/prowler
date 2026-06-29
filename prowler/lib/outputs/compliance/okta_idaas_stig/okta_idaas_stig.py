@@ -37,21 +37,15 @@ def get_okta_idaas_stig_table(
         for compliance in check_compliances:
             if compliance.Framework == "Okta-IDaaS-STIG":
                 provider = compliance.Provider
-                # A configurable check that passed with a too-loose config is
-                # forced to FAIL (source of truth: framework ConfigRequirements).
-                effective_status = finding.status
                 for requirement in compliance.Requirements:
-                    if finding.check_id in requirement.Checks:
-                        config_status = resolve_requirement_config_status(
-                            requirement, audit_config, config_status_cache
-                        )
-                        if (
-                            get_effective_status(finding.status, config_status)
-                            == "FAIL"
-                        ):
-                            effective_status = "FAIL"
-                            break
-                for requirement in compliance.Requirements:
+                    # A configurable check that passed with a too-loose config is
+                    # forced to FAIL (source of truth: framework ConfigRequirements).
+                    config_status = resolve_requirement_config_status(
+                        requirement, audit_config, config_status_cache
+                    )
+                    effective_status = get_effective_status(
+                        finding.status, config_status
+                    )
                     for attribute in requirement.Attributes:
                         section = attribute.Section
 
