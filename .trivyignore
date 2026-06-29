@@ -52,6 +52,19 @@ CVE-2026-43185 pkg:linux-libc-dev exp:2026-07-15
 CVE-2023-45853 pkg:zlib1g exp:2026-07-15
 CVE-2023-45853 pkg:zlib1g-dev exp:2026-07-15
 
+# CVE-2026-55200 — libssh2 out-of-bounds write in ssh2_transport_read() due to
+# an unchecked packet_length field in transport.c (heap corruption, possible RCE).
+# Package: libssh2-1.
+# Why ignored: libssh2-1 is pulled in only as a transitive dependency of libcurl4
+# (installed in the SDK Dockerfile for the networking/PowerShell stack). The
+# vulnerable path is reached exclusively when libssh2 acts as an SSH/SCP/SFTP
+# client parsing transport packets from a server. Prowler never uses libcurl's
+# SSH/SCP/SFTP transports; it talks to cloud provider HTTPS endpoints only, so the
+# affected code is unreachable at runtime. Fixed upstream in libssh2 commit
+# 97acf3df (PR #2052); no Debian bookworm fix is available yet.
+# Ref: https://security-tracker.debian.org/tracker/CVE-2026-55200
+CVE-2026-55200 pkg:libssh2-1 exp:2026-07-15
+
 # --- API container image (api/Dockerfile) ---
 # The entries below are specific to the Prowler API image, which ships
 # PowerShell and additional build tooling on top of the same bookworm base.
