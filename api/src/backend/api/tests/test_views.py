@@ -14348,6 +14348,86 @@ class TestTenantFinishACSView:
             .exists()
         )
 
+    def test_dispatch_resolves_multi_valued_usertype_to_highest_privilege(
+        self,
+        create_test_user,
+        tenants_fixture,
+        admin_role_fixture,
+        roles_fixture,
+        saml_setup,
+        settings,
+        monkeypatch,
+    ):
+        """Test that multi-valued userType claim resolves to the highest privilege role"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+
+        admin_role = admin_role_fixture
+        viewer_role = roles_fixture[3]
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+                "userType": [viewer_role.name, admin_role.name],
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug=saml_setup["domain"])
+
+        assert response.status_code == 302
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=admin_role, tenant_id=tenant.id)
+            .exists()
+        )
+        assert not (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=viewer_role, tenant_id=tenant.id)
+            .exists()
+        )
+
 
 @pytest.mark.django_db
 class TestLighthouseConfigViewSet:

@@ -813,16 +813,60 @@ class TenantFinishACSView(FinishACSView):
 
         # Only remap roles when the IdP provides a userType attribute.
         # Without it, the user's current roles are left untouched.
-        role_name = (
-            extra.get("userType", [""])[0].strip() if extra.get("userType") else ""
-        )
-        if role_name:
+        user_types = extra.get("userType") if extra else None
+        role_names = []
+        if user_types:
+            if isinstance(user_types, str):
+                role_names = [user_types.strip()]
+            elif isinstance(user_types, list):
+                role_names = [
+                    r.strip() for r in user_types if isinstance(r, str) and r.strip()
+                ]
+
+        if role_names:
             with transaction.atomic(using=MainRouter.admin_db):
-                role = (
-                    Role.objects.using(MainRouter.admin_db)
-                    .filter(name=role_name, tenant=tenant)
-                    .first()
-                )
+                existing_roles = {
+                    r.name: r
+                    for r in Role.objects.using(MainRouter.admin_db).filter(
+                        name__in=role_names, tenant=tenant
+                    )
+                }
+
+                def get_role_score(r):
+                    if r is None:
+                        return 0
+                    score = 0
+                    if getattr(r, "manage_account", False):
+                        score += 1000
+                    if getattr(r, "manage_users", False):
+                        score += 50
+                    if getattr(r, "manage_billing", False):
+                        score += 20
+                    if getattr(r, "manage_providers", False):
+                        score += 10
+                    if getattr(r, "manage_integrations", False):
+                        score += 10
+                    if getattr(r, "manage_scans", False):
+                        score += 10
+                    if getattr(r, "unlimited_visibility", False):
+                        score += 5
+                    return score
+
+                role_name = role_names[0]
+                role = existing_roles.get(role_name)
+                best_score = get_role_score(role)
+
+                for name in role_names[1:]:
+                    r = existing_roles.get(name)
+                    score = get_role_score(r)
+                    if score > best_score:
+                        best_score = score
+                        role_name = name
+                        role = r
+                    elif score == best_score:
+                        if role is None and r is not None:
+                            role_name = name
+                            role = r
 
                 # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
                 remaining_manage_account_users = (
