@@ -137,6 +137,21 @@ class Test_Okta_Schema:
             "okta_requests_per_second": 0.5
         }
 
+    def test_requests_per_second_floor_allowed(self):
+        # 0.1 is the lowest non-zero rate accepted.
+        assert _validate("okta", {"okta_requests_per_second": 0.1}) == {
+            "okta_requests_per_second": 0.1
+        }
+
+    def test_requests_per_second_below_floor_dropped(self):
+        # A tiny rate (e.g. 0.001 -> ~1000s/request) would make scans take
+        # days or years; it must be rejected, not silently honoured.
+        assert _validate("okta", {"okta_requests_per_second": 0.001}) == {}
+        assert _validate("okta", {"okta_requests_per_second": 0.05}) == {}
+
+    def test_requests_per_second_above_max_dropped(self):
+        assert _validate("okta", {"okta_requests_per_second": 101}) == {}
+
     def test_requests_per_second_negative_dropped(self):
         assert _validate("okta", {"okta_requests_per_second": -1}) == {}
 

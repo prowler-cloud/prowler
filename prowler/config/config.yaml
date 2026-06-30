@@ -728,5 +728,7 @@ okta:
   # through a shared limiter so scans stay under Okta's rate limits proactively,
   # rather than relying on the 429 retry above as a safety net. Okta enforces
   # limits per endpoint, so this is a deliberately simple global cap; lower it if
-  # scans still hit limits, raise it to scan faster. Set to 0 to disable.
+  # scans still hit limits, raise it to scan faster. Set to 0 to disable. Valid
+  # range: 0 or 0.1..100 — non-zero rates below 0.1 are rejected because they
+  # would make a scan impractically slow.
   okta_requests_per_second: 4
