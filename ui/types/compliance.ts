@@ -43,10 +43,34 @@ export interface Requirement {
   check_ids: string[];
   // True when the FAIL is caused solely by an invalid scan config.
   invalid_config?: boolean;
+  // Cross-provider augmentations — populated only when the requirement
+  // originates from the cross-provider mapper-input adapter; the per-scan
+  // mappers leave these undefined so existing renderers keep working
+  // untouched.
+  providers?: Record<string, RequirementStatus>;
+  check_ids_by_provider?: Record<string, string[]>;
+  scan_ids_by_provider?: Record<string, string[]>;
   // This is to allow any key to be added to the requirement object
   // because each compliance has different keys
-  [key: string]: string | string[] | number | boolean | object[] | undefined;
+  [key: string]:
+    | string
+    | string[]
+    | number
+    | boolean
+    | object[]
+    | Record<string, string>
+    | Record<string, string[]>
+    | Record<string, RequirementStatus>
+    | undefined;
 }
+
+/**
+ * Alias preserved for call-sites that want to spell out their intent when they
+ * consume the cross-provider augmentations specifically. The augmentations live
+ * on ``Requirement`` so per-scan and cross-provider code share the same nominal
+ * type.
+ */
+export type CrossProviderRequirement = Requirement;
 
 export interface Control {
   label: string;
@@ -444,6 +468,12 @@ export interface AttributesItemData {
         platforms: string[];
         technique_url: string;
       };
+      // Cross-provider augmentations: only populated by the cross-provider
+      // mapper-input adapter. Per-scan attribute responses leave them
+      // undefined.
+      providers?: Record<string, RequirementStatus>;
+      check_ids_by_provider?: Record<string, string[]>;
+      scan_ids_by_provider?: Record<string, string[]>;
     };
   };
 }
@@ -484,4 +514,72 @@ export interface CategoryData {
   failurePercentage: number;
   totalRequirements: number;
   failedRequirements: number;
+}
+
+// Cross-provider compliance types
+//
+// Backed by GET /api/v1/cross-provider-compliance-overviews/ which aggregates
+// rows from one scan per compatible provider under a universal compliance
+// framework (e.g. csa_ccm_4.0). The roll-up is computed server-side
+// (FAIL > PASS > MANUAL).
+
+export const CROSS_PROVIDER_COMPLIANCE_TYPE =
+  "cross-provider-compliance-overviews" as const;
+
+export type CrossProviderRequirementStatus = "PASS" | "FAIL" | "MANUAL";
+
+export interface CrossProviderRequirementData {
+  id: string;
+  name: string;
+  description: string;
+  // Free-form metadata mirroring the universal JSON's per-requirement
+  // attributes (e.g. CSA CCM exposes Section, CCMLite, IaaS, PaaS, SaaS,
+  // ScopeApplicability).
+  attributes: Record<string, unknown>;
+  // Rolled-up status for this requirement across providers.
+  status: CrossProviderRequirementStatus;
+  // Per-provider status that fed the roll-up. Keys match
+  // CrossProviderComplianceOverviewAttributes.providers.
+  providers: Record<string, CrossProviderRequirementStatus>;
+  // Per-contributing-provider check IDs the universal framework declares
+  // for this requirement. The UI uses this map to scope
+  // ``filter[check_id__in]`` when fetching findings per scan.
+  check_ids_by_provider?: Record<string, string[]>;
+}
+
+export interface CrossProviderComplianceOverviewAttributes {
+  compliance_id: string;
+  framework: string;
+  name: string;
+  version: string;
+  description: string;
+  // Catalogue of providers the universal framework declares checks for.
+  compatible_providers: string[];
+  // Provider types of the scans actually used as input.
+  requested_providers: string[];
+  // Providers that contributed at least one row after RBAC + filters.
+  providers: string[];
+  // Concrete scan UUIDs aggregated.
+  scan_ids: string[];
+  // Provider type → list of scan UUIDs the response was aggregated
+  // from. A list (not a single UUID) because a tenant can have N
+  // accounts of the same type — e.g. three AWS accounts contribute
+  // three scans, all keyed under ``"aws"``. The UI fans out one
+  // ``filter[scan]`` query per UUID when drilling into a requirement.
+  scan_ids_by_provider: Record<string, string[]>;
+  requirements_passed: number;
+  requirements_failed: number;
+  requirements_manual: number;
+  total_requirements: number;
+  requirements: CrossProviderRequirementData[];
+}
+
+export interface CrossProviderComplianceOverviewData {
+  type: typeof CROSS_PROVIDER_COMPLIANCE_TYPE;
+  id: string; // universal framework name (e.g. "csa_ccm_4.0")
+  attributes: CrossProviderComplianceOverviewAttributes;
+}
+
+export interface CrossProviderComplianceOverviewResponse {
+  data: CrossProviderComplianceOverviewData;
 }

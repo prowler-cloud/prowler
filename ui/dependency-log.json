@@ -121,6 +121,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-accordion",
+    "from": "1.2.12",
+    "to": "1.2.12",
+    "strategy": "installed",
+    "generatedAt": "2026-06-30T13:26:29.681Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-alert-dialog",
     "from": "1.1.14",
     "to": "1.1.14",

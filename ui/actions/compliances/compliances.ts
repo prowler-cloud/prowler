@@ -140,3 +140,55 @@ export const getComplianceRequirements = async ({
     return undefined;
   }
 };
+
+/**
+ * Aggregate a universal compliance framework across one scan per compatible
+ * provider. Backed by ``GET /cross-provider-compliance-overviews/`` (Prowler
+ * Cloud only — the OSS API does not expose this endpoint).
+ *
+ * ``scanIds`` is optional: when omitted, the API auto-selects the most recent
+ * COMPLETED scan for every provider in the tenant whose type is declared
+ * compatible by the universal framework (further narrowed by ``providerTypes``
+ * and by RBAC visibility).
+ */
+export const getCrossProviderComplianceOverview = async ({
+  complianceId,
+  scanIds,
+  providerTypes,
+  regions,
+}: {
+  complianceId: string;
+  scanIds?: string[];
+  providerTypes?: string | string[];
+  regions?: string | string[];
+}) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/cross-provider-compliance-overviews`);
+
+  const setParam = (key: string, value?: string | string[]) => {
+    if (!value) return;
+    const serializedValue = Array.isArray(value) ? value.join(",") : value;
+    if (serializedValue.trim().length > 0) {
+      url.searchParams.set(key, serializedValue);
+    }
+  };
+
+  setParam("filter[compliance_id]", complianceId);
+  if (scanIds && scanIds.length > 0) {
+    setParam("filter[scan__in]", scanIds);
+  }
+  setParam("filter[provider_type__in]", providerTypes);
+  setParam("filter[region__in]", regions);
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+
+    if (response.status === 402) return { redirectTo: "/billing" };
+
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error("Error fetching cross-provider compliance overview:", error);
+    return undefined;
+  }
+};

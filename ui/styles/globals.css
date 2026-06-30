@@ -429,3 +429,35 @@
     user-select: text;
   }
 }
+
+/*
+ * Shadcn Accordion (Radix) animations.
+ *
+ * The shadcn ``Accordion`` content uses ``data-[state=open]`` and
+ * ``data-[state=closed]`` selectors that reach for ``animate-accordion-down``
+ * and ``animate-accordion-up``. Tailwind 4 picks them up via the
+ * ``--animate-*`` theme tokens declared in ``@theme``; the keyframes
+ * themselves live here so the project keeps a single source of truth.
+ */
+@theme {
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}

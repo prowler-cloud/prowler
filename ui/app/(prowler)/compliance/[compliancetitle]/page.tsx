@@ -1,4 +1,6 @@
 import { Spacer } from "@heroui/spacer";
+import { Info } from "lucide-react";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
@@ -6,6 +8,7 @@ import {
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
   getCompliancesOverview,
+  getCrossProviderComplianceOverview,
 } from "@/actions/compliances";
 import { getThreatScore } from "@/actions/overview";
 import { getScan } from "@/actions/scans";
@@ -14,6 +17,7 @@ import {
   ComplianceDownloadContainer,
   ComplianceHeader,
   ComplianceWarming,
+  CrossProviderDetail,
   RequirementsStatusCard,
   RequirementsStatusCardSkeleton,
   // SectionsFailureRateCard,
@@ -25,15 +29,18 @@ import {
   TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import {
   getReportTypeForCompliance,
   pickLatestCisPerProvider,
 } from "@/lib/compliance/compliance-report-types";
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import {
   AttributesData,
+  CrossProviderComplianceOverviewData,
   Framework,
   RequirementsTotals,
 } from "@/types/compliance";
@@ -44,7 +51,9 @@ interface ComplianceDetailSearchParams {
   version?: string;
   scanId?: string;
   section?: string;
+  mode?: string;
   "filter[region__in]"?: string;
+  "filter[provider_type__in]"?: string;
   "filter[cis_profile_level]"?: string;
   page?: string;
   pageSize?: string;
@@ -59,10 +68,68 @@ export default async function ComplianceDetail({
 }) {
   const { compliancetitle } = await params;
   const resolvedSearchParams = await searchParams;
-  const { complianceId, version, scanId, section } = resolvedSearchParams;
+  const { complianceId, version, scanId, section, mode } = resolvedSearchParams;
   const regionFilter = resolvedSearchParams["filter[region__in]"];
+  const providerTypeFilter = resolvedSearchParams["filter[provider_type__in]"];
   const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
+
+  // Cross-provider mode: skip the per-scan pipeline and render the
+  // cross-provider universal compliance roll-up instead. This is a Prowler
+  // Cloud-only feature (the OSS API has no cross-provider-compliance-overviews
+  // endpoint), so block the route in OSS the same way Alerts/Scan
+  // Configuration do.
+  if (mode === "cross-provider") {
+    if (!isCloud()) {
+      redirect("/compliance");
+    }
+
+    const crossProviderTitle = compliancetitle.split("-").join(" ");
+    const crossProviderResponse = await getCrossProviderComplianceOverview({
+      complianceId,
+      providerTypes: providerTypeFilter,
+      regions: regionFilter,
+    });
+
+    if (!crossProviderResponse || "redirectTo" in crossProviderResponse) {
+      return (
+        <ContentLayout title={crossProviderTitle}>
+          <Alert variant="info">
+            <Info className="size-4" />
+            <AlertDescription>
+              Cross-provider data is not available for this framework yet.
+            </AlertDescription>
+          </Alert>
+        </ContentLayout>
+      );
+    }
+
+    const crossProviderData = (
+      crossProviderResponse as {
+        data?: CrossProviderComplianceOverviewData;
+      }
+    ).data;
+
+    if (!crossProviderData) {
+      return (
+        <ContentLayout title={crossProviderTitle}>
+          <Alert variant="info">
+            <Info className="size-4" />
+            <AlertDescription>
+              No cross-provider compliance data was returned for this framework.
+            </AlertDescription>
+          </Alert>
+        </ContentLayout>
+      );
+    }
+
+    const headerTitle = crossProviderData.attributes.name || crossProviderTitle;
+    return (
+      <ContentLayout title={headerTitle}>
+        <CrossProviderDetail attributes={crossProviderData.attributes} />
+      </ContentLayout>
+    );
+  }
 
   // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
   const paramsForKey = Object.fromEntries(

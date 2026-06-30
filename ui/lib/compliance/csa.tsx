@@ -6,6 +6,7 @@ import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
+  CrossProviderRequirement,
   CSAAttributesMetadata,
   Framework,
   Requirement,
@@ -66,6 +67,14 @@ export const mapComplianceData = (
     const description = attributeItem.attributes.description;
     const status = requirementData.attributes.status || "";
     const checks = attributeItem.attributes.attributes.check_ids || [];
+    // Optional cross-provider augmentations (only present when the attribute
+    // item came from ``crossProviderToMapperInput``).
+    const providersForRequirement =
+      attributeItem.attributes.attributes.providers;
+    const checkIdsByProvider =
+      attributeItem.attributes.attributes.check_ids_by_provider;
+    const scanIdsByProvider =
+      attributeItem.attributes.attributes.scan_ids_by_provider;
 
     const framework = findOrCreateFramework(frameworks, frameworkName);
     const category = findOrCreateCategory(framework.categories, categoryName);
@@ -73,7 +82,11 @@ export const mapComplianceData = (
     const control = findOrCreateControl(category.controls, categoryName);
 
     const finalStatus: RequirementStatus = status as RequirementStatus;
-    const requirement: Requirement = {
+    // Build the cross-provider-augmented requirement; it structurally extends
+    // ``Requirement`` so the per-scan accordion pipeline accepts it without
+    // changes — the extra maps stay ``undefined`` when the input did not carry
+    // them.
+    const requirement: CrossProviderRequirement = {
       name: requirementName ? `${id} - ${requirementName}` : id,
       description,
       status: finalStatus,
@@ -85,6 +98,9 @@ export const mapComplianceData = (
       paas: attrs.PaaS,
       saas: attrs.SaaS,
       scope_applicability: attrs.ScopeApplicability,
+      providers: providersForRequirement,
+      check_ids_by_provider: checkIdsByProvider,
+      scan_ids_by_provider: scanIdsByProvider,
     };
 
     control.requirements.push(requirement);
@@ -124,6 +140,7 @@ export const toAccordionItems = (
               name={requirement.name}
               status={requirement.status as FindingStatus}
               invalidConfig={requirement.invalid_config}
+              providers={(requirement as CrossProviderRequirement).providers}
             />
           ),
           content: (
