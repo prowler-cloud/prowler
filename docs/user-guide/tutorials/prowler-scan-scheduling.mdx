@@ -1,6 +1,6 @@
 ---
 title: 'Scan Scheduling'
-description: 'Create, edit, and monitor recurring scans in Prowler Cloud and Prowler App.'
+description: 'Create, edit, and monitor recurring scans in Prowler Cloud and Enterprise.'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -10,39 +10,34 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 Scan Scheduling lets Prowler run recurring scans for connected providers. Use it to keep findings, compliance results, and resource inventory up to date without launching every scan manually.
 
 <Note>
-Scan scheduling availability depends on the account type:
-
-* **Prowler Cloud paid subscription:** Custom recurring schedules.
-* **Prowler Cloud trial or onboarding:** Manual scans only.
-* **Prowler App:** Daily recurring scans every 24 hours, tied to the time when the provider was created.
+This feature is available exclusively in **Prowler Cloud** and **Prowler Enterprise** with a [subscription](https://prowler.com/pricing).
 </Note>
 
 ## Prerequisites
 
-Before creating or editing Scan Schedules, ensure that:
+Before creating or editing scan schedules, ensure that:
 
 * At least one provider is connected.
-* The user role includes the **Manage Scans** permission. See [RBAC Administrative Permissions](/user-guide/tutorials/prowler-app-rbac#rbac-administrative-permissions) for details.
-* Custom recurring schedules require a Prowler Cloud paid subscription.
+* The user role includes the **Manage Scans** permission, configured through Role-Based Access Control (RBAC). See [RBAC Administrative Permissions](/user-guide/tutorials/prowler-app-rbac#rbac-administrative-permissions) for details.
 
 ## Schedule Options
 
-Prowler Cloud accounts with a paid subscription support these custom recurring schedule options:
+A Prowler Cloud or Enterprise subscription supports the following custom recurring schedule options. Prowler self-hosted runs a daily scan automatically and does not expose custom cadence controls.
 
-| Schedule Option | Description |
-|-----------------|-------------|
-| Daily | Runs one scan every day at the selected time. |
-| Every 48 hours | Runs one scan every 48 hours, anchored to the selected time. |
-| Weekly | Runs one scan every week on the selected day and time. |
-| Monthly | Runs one scan every month on the selected day, from day 1 to day 28. |
+| Schedule Option | Description | Cloud & Enterprise | Self-Hosted |
+|-----------------|-------------|--------------------|-------------|
+| Daily | Runs one scan every day at the selected time. | Yes | Automatic |
+| Every 48 hours | Runs one scan every 48 hours, anchored to the selected time. | Yes | — |
+| Weekly | Runs one scan every week on the selected day and time. | Yes | — |
+| Monthly | Runs one scan every month on the selected day, from day 1 to day 28. | Yes | — |
 
-The schedule time uses the browser timezone when the schedule is saved. Prowler displays the next scheduled scan in that timezone.
+The scan time is always selected on the hour (for example, 14:00); minutes cannot be set. The schedule time uses the browser timezone when the schedule is saved. Prowler displays the next scheduled scan in that timezone.
 
-## Create a Schedule From Scan Jobs
+## Create a Schedule From Scans
 
-To create a schedule from the **Scan Jobs** page:
+To create a schedule from the **Scans** page:
 
-1. Navigate to **Scan Jobs**.
+1. Navigate to **Scans**.
 2. Click **Launch Scan**.
 3. Select a connected provider.
 4. Select **On a schedule**.
@@ -100,22 +95,13 @@ Bulk schedule edits apply one schedule to every selected provider. If the wrong 
 
 To review upcoming scheduled scans:
 
-1. Navigate to **Scan Jobs**.
+1. Navigate to **Scans**.
 2. Click the **Scheduled** tab.
 
 The **Scheduled** tab shows configured schedules, next scan time, and last scan time. Pending rows represent configured schedules that have not started their next scan yet.
 
 <Frame>
-  <img src="/images/prowler-app/scan-scheduling/scheduled-scans-tab.png" alt="Scan Jobs Scheduled tab showing pending scheduled scans, schedule cadence, next scan, and last scan columns" />
+  <img src="/images/prowler-app/scan-scheduling/scheduled-scans-tab.png" alt="Scans Scheduled tab showing pending scheduled scans, schedule cadence, next scan, and last scan columns" />
 </Frame>
 
 To edit a schedule from this tab, open the row actions menu and click **Edit Scan Schedule**.
-
-## Availability by Account Type
-
-| Account Type | Available Scan Actions |
-|--------------|------------------------|
-| Prowler Cloud paid subscription | Run scans now, create custom recurring schedules, edit schedules, remove schedules, and optionally launch an initial scan after saving. |
-| Prowler Cloud trial or onboarding | Run manual scans only. Recurring schedules are unavailable. |
-| Prowler Cloud over the scan limit | Scan and schedule actions are blocked until billing is updated. |
-| Prowler App | Run manual scans and create daily recurring schedules every 24 hours during provider launch. The daily schedule is tied to the provider creation time, and custom cadence controls are unavailable. |
