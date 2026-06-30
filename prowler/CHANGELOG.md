@@ -21,6 +21,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Kubernetes Benchmark v2.0.1 compliance framework for the Kubernetes provider [(#11722)](https://github.com/prowler-cloud/prowler/pull/11722)
 - CIS GitHub Benchmark v1.2.0 compliance framework for the GitHub provider [(#11719)](https://github.com/prowler-cloud/prowler/pull/11719)
 
+### 🔄 Changed
+
+- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
+
 ### 🐞 Fixed
 
 - Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
