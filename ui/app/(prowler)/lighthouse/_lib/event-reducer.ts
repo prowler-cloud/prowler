@@ -15,18 +15,47 @@ export const LIGHTHOUSE_V2_STREAM_STATUS = {
 export type LighthouseV2StreamStatus =
   (typeof LIGHTHOUSE_V2_STREAM_STATUS)[keyof typeof LIGHTHOUSE_V2_STREAM_STATUS];
 
+export const LIGHTHOUSE_V2_TOOL_CALL_STATUS = {
+  RUNNING: "running",
+  COMPLETED: "completed",
+} as const;
+
+export type LighthouseV2ToolCallStatus =
+  (typeof LIGHTHOUSE_V2_TOOL_CALL_STATUS)[keyof typeof LIGHTHOUSE_V2_TOOL_CALL_STATUS];
+
+export const LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE = {
+  TEXT: "text",
+  TOOL_CALL: "tool_call",
+} as const;
+
 export interface LighthouseV2ToolCallState {
   id: string;
   name: string;
-  status: "running" | "completed";
+  status: LighthouseV2ToolCallStatus;
   outcome?: string;
 }
+
+export interface LighthouseV2StreamTextActivityItem {
+  id: string;
+  type: typeof LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TEXT;
+  text: string;
+}
+
+export interface LighthouseV2StreamToolCallActivityItem
+  extends LighthouseV2ToolCallState {
+  type: typeof LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TOOL_CALL;
+}
+
+export type LighthouseV2StreamActivityItem =
+  | LighthouseV2StreamTextActivityItem
+  | LighthouseV2StreamToolCallActivityItem;
 
 export interface LighthouseV2StreamState {
   status: LighthouseV2StreamStatus;
   activeTaskId: string | null;
   assistantText: string;
   toolCalls: LighthouseV2ToolCallState[];
+  activityItems: LighthouseV2StreamActivityItem[];
   messageId?: string;
   error?: {
     code: string;
@@ -44,6 +73,7 @@ export function createInitialLighthouseV2StreamState(
     activeTaskId: taskId,
     assistantText: "",
     toolCalls: [],
+    activityItems: [],
   };
 }
 
@@ -57,20 +87,30 @@ export function reduceLighthouseV2Event(
         ...state,
         status: LIGHTHOUSE_V2_STREAM_STATUS.STREAMING,
         assistantText: `${state.assistantText}${event.content}`,
+        activityItems: appendTextActivityItem(
+          state.activityItems,
+          event.content,
+        ),
       };
-    case LIGHTHOUSE_V2_SSE_EVENT.TOOL_CALL_START:
+    case LIGHTHOUSE_V2_SSE_EVENT.TOOL_CALL_START: {
+      const toolCall = {
+        id: event.toolCallId,
+        name: event.toolName,
+        status: LIGHTHOUSE_V2_TOOL_CALL_STATUS.RUNNING,
+      };
       return {
         ...state,
         status: LIGHTHOUSE_V2_STREAM_STATUS.STREAMING,
-        toolCalls: [
-          ...state.toolCalls,
+        toolCalls: [...state.toolCalls, toolCall],
+        activityItems: [
+          ...state.activityItems,
           {
-            id: event.toolCallId,
-            name: event.toolName,
-            status: "running",
+            ...toolCall,
+            type: LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TOOL_CALL,
           },
         ],
       };
+    }
     case LIGHTHOUSE_V2_SSE_EVENT.TOOL_CALL_END:
       return {
         ...state,
@@ -78,10 +118,20 @@ export function reduceLighthouseV2Event(
           toolCall.id === event.toolCallId
             ? {
                 ...toolCall,
-                status: "completed",
+                status: LIGHTHOUSE_V2_TOOL_CALL_STATUS.COMPLETED,
                 outcome: event.outcome,
               }
             : toolCall,
+        ),
+        activityItems: state.activityItems.map((item) =>
+          item.type === LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TOOL_CALL &&
+          item.id === event.toolCallId
+            ? {
+                ...item,
+                status: LIGHTHOUSE_V2_TOOL_CALL_STATUS.COMPLETED,
+                outcome: event.outcome,
+              }
+            : item,
         ),
       };
     case LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_END:
@@ -113,4 +163,33 @@ export function reduceLighthouseV2Event(
         status: LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED,
       };
   }
+}
+
+function appendTextActivityItem(
+  activityItems: LighthouseV2StreamActivityItem[],
+  text: string,
+): LighthouseV2StreamActivityItem[] {
+  if (!text) {
+    return activityItems;
+  }
+
+  const lastItem = activityItems.at(-1);
+  if (lastItem?.type === LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TEXT) {
+    return [
+      ...activityItems.slice(0, -1),
+      {
+        ...lastItem,
+        text: `${lastItem.text}${text}`,
+      },
+    ];
+  }
+
+  return [
+    ...activityItems,
+    {
+      id: `text-${activityItems.length}`,
+      type: LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TEXT,
+      text,
+    },
+  ];
 }

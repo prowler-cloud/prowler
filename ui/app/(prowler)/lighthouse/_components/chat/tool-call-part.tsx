@@ -23,14 +23,13 @@ import {
   QueryCodeEditor,
 } from "@/components/shared/query-code-editor";
 
-// Groups a finished message's tool calls under one collapsed disclosure so the
-// "work" is hidden behind a single chevron by default, mirroring the streaming
-// chain-of-thought. The answer text renders separately, always visible.
+// Groups consecutive finished tool calls under one collapsed disclosure so the
+// "work" stays compact while surrounding text can render in chronological order.
 export function ToolCalls({ parts }: { parts: LighthouseV2Part[] }) {
   if (parts.length === 0) {
     return null;
   }
-  const label = `Used ${parts.length} ${parts.length === 1 ? "tool" : "tools"}`;
+  const label = getToolCallsLabel(parts);
 
   return (
     <ChainOfThought className="space-y-0">
@@ -44,6 +43,17 @@ export function ToolCalls({ parts }: { parts: LighthouseV2Part[] }) {
       </ChainOfThoughtContent>
     </ChainOfThought>
   );
+}
+
+function getToolCallsLabel(parts: LighthouseV2Part[]): string {
+  if (parts.length === 1) {
+    const toolCall = getToolCallContent(parts[0].content);
+    if (toolCall) {
+      return `Used ${formatToolName(toolCall.toolName)}`;
+    }
+  }
+
+  return `Used ${parts.length} ${parts.length === 1 ? "tool" : "tools"}`;
 }
 
 // One tool call as a light, collapsed row: status + humanized name, expanding to

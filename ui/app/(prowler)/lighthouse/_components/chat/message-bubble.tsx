@@ -17,6 +17,20 @@ import { cn } from "@/lib/utils";
 import { MessageMarkdown } from "./message-markdown";
 import { ToolCalls } from "./tool-call-part";
 
+const ASSISTANT_PART_GROUP_TYPE = {
+  TEXT: "text",
+  TOOL_CALL: "tool_call",
+} as const;
+
+type AssistantPartGroupType =
+  (typeof ASSISTANT_PART_GROUP_TYPE)[keyof typeof ASSISTANT_PART_GROUP_TYPE];
+
+interface AssistantPartGroup {
+  id: string;
+  type: AssistantPartGroupType;
+  parts: LighthouseV2Part[];
+}
+
 export function MessageBubble({ message }: { message: LighthouseV2Message }) {
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
   // Text-only join feeds the copy button; tool calls are rendered separately.
@@ -70,25 +84,69 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
 }
 
 function AssistantParts({ parts }: { parts: LighthouseV2Part[] }) {
-  // Tool calls collapse into one disclosure (the "work"); text is the answer.
-  const toolParts = parts.filter(
-    (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TOOL_CALL,
-  );
-  const textParts = parts.filter(
-    (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT,
-  );
+  const groups = groupAssistantParts(parts);
 
   return (
     <div className="space-y-3">
-      <ToolCalls parts={toolParts} />
-      {textParts.map((part, index) => {
-        const text = getTextContent(part.content);
-        return text ? (
-          <MessageMarkdown key={part.id || `text-${index}`} text={text} />
-        ) : null;
-      })}
+      {groups.map((group) =>
+        group.type === ASSISTANT_PART_GROUP_TYPE.TOOL_CALL ? (
+          <ToolCalls key={group.id} parts={group.parts} />
+        ) : (
+          <AssistantTextParts key={group.id} parts={group.parts} />
+        ),
+      )}
     </div>
   );
+}
+
+function AssistantTextParts({ parts }: { parts: LighthouseV2Part[] }) {
+  return parts.map((part, index) => {
+    const text = getTextContent(part.content);
+    return text ? (
+      <MessageMarkdown key={part.id || `text-${index}`} text={text} />
+    ) : null;
+  });
+}
+
+function groupAssistantParts(parts: LighthouseV2Part[]): AssistantPartGroup[] {
+  return parts.reduce<AssistantPartGroup[]>((groups, part, index) => {
+    const groupType = getAssistantPartGroupType(part);
+    if (!groupType) {
+      return groups;
+    }
+
+    const lastGroup = groups.at(-1);
+    if (lastGroup?.type === groupType) {
+      return [
+        ...groups.slice(0, -1),
+        {
+          ...lastGroup,
+          parts: [...lastGroup.parts, part],
+        },
+      ];
+    }
+
+    return [
+      ...groups,
+      {
+        id: `${groupType}-${part.id || index}`,
+        type: groupType,
+        parts: [part],
+      },
+    ];
+  }, []);
+}
+
+function getAssistantPartGroupType(
+  part: LighthouseV2Part,
+): AssistantPartGroupType | null {
+  if (part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT) {
+    return ASSISTANT_PART_GROUP_TYPE.TEXT;
+  }
+  if (part.type === LIGHTHOUSE_V2_PART_TYPE.TOOL_CALL) {
+    return ASSISTANT_PART_GROUP_TYPE.TOOL_CALL;
+  }
+  return null;
 }
 
 function MessageMeta({
