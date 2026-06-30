@@ -21,6 +21,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Kubernetes Benchmark v2.0.1 compliance framework for the Kubernetes provider [(#11722)](https://github.com/prowler-cloud/prowler/pull/11722)
 - CIS GitHub Benchmark v1.2.0 compliance framework for the GitHub provider [(#11719)](https://github.com/prowler-cloud/prowler/pull/11719)
 
+### 🔄 Changed
+
+- `awslambda_function_no_secrets_in_code` now supports a `secrets_ignore_files` audit-config option to skip files inside the deployment package by glob pattern (e.g. `*.deps.json`), suppressing .NET dependency-manifest false positives without masking real secrets [(#11222)](https://github.com/prowler-cloud/prowler/pull/11222)
+
 ### 🐞 Fixed
 
 - Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
@@ -94,7 +98,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
-- `awslambda_function_no_secrets_in_code` now supports a `secrets_ignore_files` audit-config option to skip files inside the deployment package by glob pattern (e.g. `*.deps.json`), suppressing .NET dependency-manifest false positives without masking real secrets [(#11222)](https://github.com/prowler-cloud/prowler/pull/11222)
 
 ### 🐞 Fixed
 
