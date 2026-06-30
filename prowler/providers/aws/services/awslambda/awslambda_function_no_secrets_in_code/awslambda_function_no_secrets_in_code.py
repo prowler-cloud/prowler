@@ -16,8 +16,8 @@ class awslambda_function_no_secrets_in_code(Check):
             )
             # Glob patterns of file names inside the deployment package to skip
             # when scanning for secrets (e.g. "*.deps.json" for .NET Lambdas).
-            secrets_ignore_files = awslambda_client.audit_config.get(
-                "secrets_ignore_files", []
+            secrets_ignore_files = (
+                awslambda_client.audit_config.get("secrets_ignore_files", []) or []
             )
             for function, function_code in awslambda_client._get_function_code():
                 if function_code:
@@ -31,43 +31,46 @@ class awslambda_function_no_secrets_in_code(Check):
                     )
                     with tempfile.TemporaryDirectory() as tmp_dir_name:
                         function_code.code_zip.extractall(tmp_dir_name)
-                        # List all files
-                        files_in_zip = next(os.walk(tmp_dir_name))[2]
                         secrets_findings = []
-                        for file in files_in_zip:
-                            # Skip files whose name matches an ignore pattern
-                            # so known false-positive files (e.g. .NET
-                            # *.deps.json) do not raise spurious findings.
-                            if any(
-                                fnmatch.fnmatch(file, pattern)
-                                for pattern in secrets_ignore_files
-                            ):
-                                continue
-                            detect_secrets_output = detect_secrets_scan(
-                                file=f"{tmp_dir_name}/{file}",
-                                excluded_secrets=secrets_ignore_patterns,
-                                detect_secrets_plugins=awslambda_client.audit_config.get(
-                                    "detect_secrets_plugins",
-                                ),
-                            )
-                            if detect_secrets_output:
-                                for (
-                                    secret
-                                ) in (
-                                    detect_secrets_output
-                                ):  # Appears that only 1 file is being scanned at a time, so could rework this
-                                    output_file_name = secret["filename"].replace(
-                                        f"{tmp_dir_name}/", ""
-                                    )
-                                    secrets_string = ", ".join(
-                                        [
-                                            f"{secret['type']} on line {secret['line_number']}"
-                                            for secret in detect_secrets_output
-                                        ]
-                                    )
-                                    secrets_findings.append(
-                                        f"{output_file_name}: {secrets_string}"
-                                    )
+                        for root, _, files in os.walk(tmp_dir_name):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                relative_file_path = os.path.relpath(
+                                    file_path, tmp_dir_name
+                                )
+                                # Skip files whose relative path matches an ignore pattern
+                                # so known false-positive files (e.g. .NET
+                                # *.deps.json) do not raise spurious findings.
+                                if any(
+                                    fnmatch.fnmatch(relative_file_path, pattern)
+                                    for pattern in secrets_ignore_files
+                                ):
+                                    continue
+                                detect_secrets_output = detect_secrets_scan(
+                                    file=file_path,
+                                    excluded_secrets=secrets_ignore_patterns,
+                                    detect_secrets_plugins=awslambda_client.audit_config.get(
+                                        "detect_secrets_plugins",
+                                    ),
+                                )
+                                if detect_secrets_output:
+                                    for (
+                                        secret
+                                    ) in (
+                                        detect_secrets_output
+                                    ):  # Appears that only 1 file is being scanned at a time, so could rework this
+                                        output_file_name = os.path.relpath(
+                                            secret["filename"], tmp_dir_name
+                                        )
+                                        secrets_string = ", ".join(
+                                            [
+                                                f"{secret['type']} on line {secret['line_number']}"
+                                                for secret in detect_secrets_output
+                                            ]
+                                        )
+                                        secrets_findings.append(
+                                            f"{output_file_name}: {secrets_string}"
+                                        )
 
                         if secrets_findings:
                             final_output_string = "; ".join(secrets_findings)

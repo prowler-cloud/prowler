@@ -1,3 +1,4 @@
+import os
 import zipfile
 from unittest import mock
 
@@ -65,6 +66,10 @@ LAMBDA_DEPS_JSON_WITH_SECRET = """
 }
 """
 
+LAMBDA_VENDOR_JS_WITH_SECRET = """
+const dbPassword = "test-vendor-password";
+"""
+
 
 def get_lambda_code_from_files(files: dict) -> LambdaCode:
     # The check only calls code_zip.extractall(dir); mock it to drop the
@@ -74,6 +79,7 @@ def get_lambda_code_from_files(files: dict) -> LambdaCode:
 
     def _extractall(path):
         for name, content in files.items():
+            os.makedirs(os.path.dirname(f"{path}/{name}"), exist_ok=True)
             with open(f"{path}/{name}", "w") as fd:
                 fd.write(content)
 
@@ -86,6 +92,15 @@ def mock_get_function_code_with_deps_json_secret():
         {
             "lambda_function.py": LAMBDA_FUNCTION_CODE_WITHOUT_SECRETS,
             "myapp.deps.json": LAMBDA_DEPS_JSON_WITH_SECRET,
+        }
+    )
+
+
+def mock_get_function_code_with_nested_vendor_secret():
+    yield create_lambda_function(), get_lambda_code_from_files(
+        {
+            "lambda_function.py": LAMBDA_FUNCTION_CODE_WITHOUT_SECRETS,
+            "vendor/package.js": LAMBDA_VENDOR_JS_WITH_SECRET,
         }
     )
 
@@ -243,7 +258,10 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client = mock.MagicMock
         lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
         lambda_client._get_function_code = mock_get_function_code_with_deps_json_secret
-        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+        lambda_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_ignore_files": None,
+        }
 
         with (
             mock.patch(
@@ -265,6 +283,66 @@ class Test_awslambda_function_no_secrets_in_code:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "myapp.deps.json" in result[0].status_extended
+
+    def test_function_code_nested_vendor_secret_not_ignored(self):
+        lambda_client = mock.MagicMock
+        lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
+        lambda_client._get_function_code = (
+            mock_get_function_code_with_nested_vendor_secret
+        )
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+                awslambda_function_no_secrets_in_code,
+            )
+
+            check = awslambda_function_no_secrets_in_code()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "vendor/package.js" in result[0].status_extended
+
+    def test_function_code_nested_vendor_secret_ignored_by_file_pattern(self):
+        lambda_client = mock.MagicMock
+        lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
+        lambda_client._get_function_code = (
+            mock_get_function_code_with_nested_vendor_secret
+        )
+        lambda_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_ignore_files": ["vendor/*.js"],
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+                awslambda_function_no_secrets_in_code,
+            )
+
+            check = awslambda_function_no_secrets_in_code()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
 
     def test_function_code_deps_json_secret_ignored_by_file_pattern(self):
         lambda_client = mock.MagicMock
