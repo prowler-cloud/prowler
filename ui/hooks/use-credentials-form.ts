@@ -180,7 +180,6 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.OCI_FINGERPRINT]: "",
           [ProviderCredentialFields.OCI_KEY_CONTENT]: "",
           [ProviderCredentialFields.OCI_TENANCY]: providerUid || "",
-          [ProviderCredentialFields.OCI_REGION]: "",
           [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
         };
       case "mongodbatlas":
