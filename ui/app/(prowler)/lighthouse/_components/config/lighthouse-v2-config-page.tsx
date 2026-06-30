@@ -69,11 +69,21 @@ export function LighthouseV2ConfigPage({
     providers.find((provider) => provider.id === selectedProvider) ??
     providers[0];
 
+  // Replace in place (don't filter+append): the shared business-context editor
+  // is anchored to localConfigurations[0], so reordering on every save/test
+  // would silently retarget it to a different provider's configuration.
   const upsertConfiguration = (configuration: LighthouseV2Configuration) => {
-    setLocalConfigurations((current) => [
-      ...current.filter((config) => config.id !== configuration.id),
-      configuration,
-    ]);
+    setLocalConfigurations((current) => {
+      const index = current.findIndex(
+        (config) => config.id === configuration.id,
+      );
+      if (index === -1) {
+        return [...current, configuration];
+      }
+      const next = [...current];
+      next[index] = configuration;
+      return next;
+    });
   };
 
   const handleConfigurationSaved = (
@@ -134,6 +144,7 @@ export function LighthouseV2ConfigPage({
     >
       {businessContextConfig ? (
         <LighthouseV2BusinessContextForm
+          key={businessContextConfig.id}
           configurationId={businessContextConfig.id}
           initialBusinessContext={businessContextConfig.businessContext}
         />

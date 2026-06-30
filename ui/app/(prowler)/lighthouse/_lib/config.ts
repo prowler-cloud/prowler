@@ -11,7 +11,7 @@ import {
   type LighthouseV2ProviderType,
 } from "@/app/(prowler)/lighthouse/_types";
 
-export const BUSINESS_CONTEXT_LIMIT = 1000;
+export const BUSINESS_CONTEXT_LIMIT = 5000;
 
 export const CONNECTION_STATUS = {
   CONNECTED: "connected",

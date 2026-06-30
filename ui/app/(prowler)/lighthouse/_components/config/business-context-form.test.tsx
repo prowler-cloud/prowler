@@ -89,16 +89,16 @@ describe("LighthouseV2BusinessContextForm", () => {
       />,
     );
 
-    // When: paste in one event instead of 1001 keystrokes
+    // When: paste in one event instead of 5001 keystrokes
     await user.click(
       screen.getByRole("textbox", { name: /Business context/i }),
     );
-    await user.paste("a".repeat(1001));
+    await user.paste("a".repeat(5001));
 
     // Then
-    expect(screen.getByText("1001/1000")).toBeInTheDocument();
+    expect(screen.getByText("5001/5000")).toBeInTheDocument();
     expect(
-      screen.getByText("Business context cannot exceed 1000 characters."),
+      screen.getByText("Business context cannot exceed 5000 characters."),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Save business context" }),

@@ -35,18 +35,24 @@ export function LighthouseV2BusinessContextForm({
 
     setSaving(true);
     setError(null);
-    const result = await updateLighthouseV2Configuration(configurationId, {
-      businessContext,
-    });
-    setSaving(false);
 
-    if ("error" in result) {
-      setError(result.error);
-      return;
+    try {
+      const result = await updateLighthouseV2Configuration(configurationId, {
+        businessContext,
+      });
+
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+
+      setSavedContext(result.data.businessContext);
+      setBusinessContext(result.data.businessContext);
+    } catch {
+      setError("Something went wrong while saving. Please try again.");
+    } finally {
+      setSaving(false);
     }
-
-    setSavedContext(result.data.businessContext);
-    setBusinessContext(result.data.businessContext);
   };
 
   return (
