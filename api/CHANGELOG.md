@@ -61,6 +61,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Timestamp precision support for `/api/v1/findings` `inserted_at` and `updated_at` filters [(#11754)](https://github.com/prowler-cloud/prowler/pull/11754)
 
+### 🚀 Added
+
+- NCSC Cyber Essentials 3.3 compliance framework support for the Azure provider [(#11588)](https://github.com/prowler-cloud/prowler/pull/11588)
+
 ### 🔄 Changed
 
 - Attack Paths: AWS Neptune is now supported as a persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`), Cartography's (bumped to 0.138.1) per-scan ingest database stays on Neo4j [(#11524)](https://github.com/prowler-cloud/prowler/pull/11524)
