@@ -13,8 +13,6 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
   LighthouseV2Task,
-  LighthouseV2TenantConfiguration,
-  LighthouseV2TenantConfigurationUpdateInput,
 } from "@/app/(prowler)/lighthouse/_types";
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
@@ -26,7 +24,6 @@ import {
   buildLighthouseV2MessagePayload,
   buildLighthouseV2SessionCreatePayload,
   buildLighthouseV2SessionUpdatePayload,
-  buildLighthouseV2TenantConfigurationUpdatePayload,
   getJsonApiArray,
   type JsonApiDocument,
   mapLighthouseV2Configuration,
@@ -35,7 +32,6 @@ import {
   mapLighthouseV2Provider,
   mapLighthouseV2Session,
   mapLighthouseV2Task,
-  mapLighthouseV2TenantConfiguration,
   validateLighthouseV2ConfigurationInput,
 } from "./lighthouse-v2.adapter";
 
@@ -103,31 +99,6 @@ export async function deleteLighthouseV2Configuration(
     `/lighthouse/config/${encodeURIComponent(configId)}`,
     { method: "DELETE" },
     "/lighthouse/config",
-  );
-}
-
-export async function getLighthouseV2TenantConfiguration(): Promise<
-  LighthouseV2ActionResult<LighthouseV2TenantConfiguration>
-> {
-  return getSingle(
-    "/lighthouse/configuration",
-    mapLighthouseV2TenantConfiguration,
-  );
-}
-
-export async function updateLighthouseV2TenantConfiguration(
-  input: LighthouseV2TenantConfigurationUpdateInput,
-): Promise<LighthouseV2ActionResult<LighthouseV2TenantConfiguration>> {
-  return mutateSingle(
-    "/lighthouse/configuration",
-    {
-      method: "PATCH",
-      body: JSON.stringify(
-        buildLighthouseV2TenantConfigurationUpdatePayload(input),
-      ),
-    },
-    mapLighthouseV2TenantConfiguration,
-    "",
   );
 }
 

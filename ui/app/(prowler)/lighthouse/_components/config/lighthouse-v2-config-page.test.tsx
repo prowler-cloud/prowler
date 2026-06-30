@@ -14,14 +14,12 @@ const {
   deleteConfigurationMock,
   testConnectionMock,
   updateConfigurationMock,
-  updateTenantConfigurationMock,
   toastMock,
 } = vi.hoisted(() => ({
   createConfigurationMock: vi.fn(),
   deleteConfigurationMock: vi.fn(),
   testConnectionMock: vi.fn(),
   updateConfigurationMock: vi.fn(),
-  updateTenantConfigurationMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -40,7 +38,6 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   deleteLighthouseV2Configuration: deleteConfigurationMock,
   testLighthouseV2ConfigurationConnection: testConnectionMock,
   updateLighthouseV2Configuration: updateConfigurationMock,
-  updateLighthouseV2TenantConfiguration: updateTenantConfigurationMock,
 }));
 
 const providers: LighthouseV2SupportedProvider[] = [
@@ -55,6 +52,7 @@ const configurations: LighthouseV2Configuration[] = [
     providerType: "openai",
     baseUrl: null,
     defaultModel: "gpt-5.1",
+    businessContext: "Production context",
     connected: true,
     connectionLastCheckedAt: "2026-06-24T10:00:00Z",
     insertedAt: "2026-06-24T09:00:00Z",
@@ -65,6 +63,7 @@ const configurations: LighthouseV2Configuration[] = [
     providerType: "bedrock",
     baseUrl: null,
     defaultModel: "anthropic.claude-4",
+    businessContext: "Production context",
     connected: false,
     connectionLastCheckedAt: "2026-06-23T10:00:00Z",
     insertedAt: "2026-06-23T09:00:00Z",
@@ -78,16 +77,7 @@ describe("LighthouseV2ConfigPage", () => {
     deleteConfigurationMock.mockReset();
     testConnectionMock.mockReset();
     updateConfigurationMock.mockReset();
-    updateTenantConfigurationMock.mockReset();
     toastMock.mockReset();
-    updateTenantConfigurationMock.mockResolvedValue({
-      data: {
-        id: "tenant-config-1",
-        businessContext: "Updated business context",
-        defaultProvider: "",
-        defaultModels: {},
-      },
-    });
 
     createConfigurationMock.mockResolvedValue({ data: configurations[0] });
     deleteConfigurationMock.mockResolvedValue({ data: true });
@@ -167,6 +157,17 @@ describe("LighthouseV2ConfigPage", () => {
     ).toHaveLength(1);
   });
 
+  it("hides the business context editor until a provider is configured", () => {
+    // Given / When: no configurations exist yet
+    renderPage({ configurations: [] });
+
+    // Then: the editor is replaced by a hint and the textarea is absent
+    expect(
+      screen.queryByRole("textbox", { name: /Business context/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Configure a provider first/i)).toBeInTheDocument();
+  });
+
   it("updates an existing configuration without sending blank credentials or model defaults", async () => {
     // Given
     const user = userEvent.setup();
@@ -199,6 +200,7 @@ describe("LighthouseV2ConfigPage", () => {
       providerType: "openai-compatible",
       baseUrl: "https://llm.example.com/v1",
       defaultModel: "llama-3.3",
+      businessContext: "",
       connected: null,
       connectionLastCheckedAt: null,
       insertedAt: "2026-06-24T10:00:00Z",
@@ -328,7 +330,6 @@ function renderPage(
     <LighthouseV2ConfigPage
       configurations={props?.configurations ?? configurations}
       providers={props?.providers ?? providers}
-      tenantConfiguration={props?.tenantConfiguration}
       error={props?.error}
     />,
   );

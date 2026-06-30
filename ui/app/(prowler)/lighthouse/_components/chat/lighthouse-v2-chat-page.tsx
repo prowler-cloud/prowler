@@ -7,7 +7,7 @@ import {
   createLighthouseV2Session,
   getLighthouseV2Messages,
   sendLighthouseV2Message,
-  updateLighthouseV2TenantConfiguration,
+  updateLighthouseV2Configuration,
 } from "@/app/(prowler)/lighthouse/_actions";
 import {
   Conversation,
@@ -35,13 +35,13 @@ import {
 import { parseStreamEvent } from "@/app/(prowler)/lighthouse/_lib/stream-event-parser";
 import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
 import {
+  LIGHTHOUSE_V2_PROVIDER_TYPE,
   LIGHTHOUSE_V2_SSE_EVENT,
   type LighthouseV2Configuration,
   type LighthouseV2Message,
   type LighthouseV2ProviderType,
   type LighthouseV2SSEEvent,
   type LighthouseV2SupportedModel,
-  type LighthouseV2TenantConfiguration,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Card } from "@/components/shadcn";
 import {
@@ -61,7 +61,6 @@ interface LighthouseV2ChatPageProps {
     LighthouseV2ProviderType,
     LighthouseV2SupportedModel[]
   >;
-  tenantConfiguration?: LighthouseV2TenantConfiguration;
   initialSessionId?: string;
   initialMessages: LighthouseV2Message[];
   initialActiveTaskId?: string | null;
@@ -72,7 +71,6 @@ interface LighthouseV2ChatPageProps {
 export function LighthouseV2ChatPage({
   configurations,
   modelsByProvider,
-  tenantConfiguration,
   initialSessionId,
   initialMessages,
   initialActiveTaskId,
@@ -87,13 +85,9 @@ export function LighthouseV2ChatPage({
   const initialModelSelection = resolveInitialModelSelection(
     connectedConfigurations,
     modelsByProvider,
-    tenantConfiguration,
   );
   const [selectedModelSelection, setSelectedModelSelection] =
     useState<LighthouseV2ModelSelection | null>(initialModelSelection);
-  const [tenantModelDefaults, setTenantModelDefaults] = useState<
-    Record<string, string>
-  >(tenantConfiguration?.defaultModels ?? {});
   const [modelPreferenceSaving, setModelPreferenceSaving] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     initialSessionId ?? null,
@@ -313,35 +307,27 @@ export function LighthouseV2ChatPage({
     selection: LighthouseV2ModelSelection,
   ) => {
     // The selection drives the model used for the next message, so it stays
-    // applied even if persisting it as the tenant default fails. Only the
-    // saved-default mirror is rolled back on failure — reverting the active
-    // selection would make a connected provider unusable when the save 4xxs.
-    const previousDefaults = tenantModelDefaults;
-
+    // applied even if persisting it as the provider's default model fails —
+    // reverting it would make a connected provider unusable when the save 4xxs.
     setSelectedModelSelection(selection);
     setFeedback(null);
 
-    const nextDefaults = {
-      ...tenantModelDefaults,
-      [selection.providerType]: selection.modelId,
-    };
-    setTenantModelDefaults(nextDefaults);
+    const configId = connectedConfigurations.find(
+      (configuration) => configuration.providerType === selection.providerType,
+    )?.id;
+    if (!configId) return;
+
     setModelPreferenceSaving(true);
 
-    const result = await updateLighthouseV2TenantConfiguration({
-      defaultProvider: selection.providerType,
-      defaultModels: nextDefaults,
+    const result = await updateLighthouseV2Configuration(configId, {
+      defaultModel: selection.modelId,
     });
 
     setModelPreferenceSaving(false);
 
     if ("error" in result) {
-      setTenantModelDefaults(previousDefaults);
       setFeedback(result.error);
-      return;
     }
-
-    setTenantModelDefaults(result.data.defaultModels);
   };
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -421,7 +407,7 @@ export function LighthouseV2ChatPage({
     input,
     isStreaming: Boolean(streamState.activeTaskId),
     modelSelector: (
-      <div className="min-w-0 flex-1 sm:max-w-80">
+      <div className="min-w-0 flex-1 sm:max-w-48">
         <Combobox
           aria-label="Model"
           value={selectedModelValue}
@@ -493,69 +479,45 @@ function replaceLighthouseV2SessionUrl(sessionId: string | null) {
   window.history.replaceState(window.history.state, "", url);
 }
 
+// Fixed precedence used to pick which connected provider opens the chat. Any
+// provider outside this list keeps its relative order behind these.
+const LIGHTHOUSE_V2_PROVIDER_PRIORITY = [
+  LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI,
+  LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK,
+  LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE,
+] as const;
+
 function resolveInitialModelSelection(
   connectedConfigurations: LighthouseV2Configuration[],
   modelsByProvider: Record<
     LighthouseV2ProviderType,
     LighthouseV2SupportedModel[]
   >,
-  tenantConfiguration?: LighthouseV2TenantConfiguration,
 ): LighthouseV2ModelSelection | null {
-  const tenantDefaultProvider = tenantConfiguration?.defaultProvider;
+  const priorityIndex = (providerType: LighthouseV2ProviderType) => {
+    const index = LIGHTHOUSE_V2_PROVIDER_PRIORITY.indexOf(providerType);
+    return index === -1 ? LIGHTHOUSE_V2_PROVIDER_PRIORITY.length : index;
+  };
+  // Stable sort keeps providers outside the priority list in their original order.
+  const orderedConfigurations = [...connectedConfigurations].sort(
+    (a, b) => priorityIndex(a.providerType) - priorityIndex(b.providerType),
+  );
 
-  if (tenantDefaultProvider) {
-    const defaultModel =
-      tenantConfiguration.defaultModels[tenantDefaultProvider];
-    if (
-      defaultModel &&
-      hasConnectedModel(
-        connectedConfigurations,
-        modelsByProvider,
-        tenantDefaultProvider,
-        defaultModel,
-      )
-    ) {
-      return {
-        providerType: tenantDefaultProvider,
-        modelId: defaultModel,
-      };
-    }
-  }
-
-  for (const configuration of connectedConfigurations) {
+  for (const configuration of orderedConfigurations) {
     const providerModels = modelsByProvider[configuration.providerType] ?? [];
-    const savedModel =
-      tenantConfiguration?.defaultModels[configuration.providerType];
-    const model =
-      providerModels.find((candidate) => candidate.id === savedModel) ??
-      providerModels[0];
-
-    if (model) {
-      return {
-        providerType: configuration.providerType,
-        modelId: model.id,
-      };
-    }
+    if (providerModels.length === 0) continue;
+    // Prefer the provider's remembered model when it is still supported;
+    // otherwise fall back to the first supported model.
+    const rememberedModel = providerModels.find(
+      (model) => model.id === configuration.defaultModel,
+    );
+    return {
+      providerType: configuration.providerType,
+      modelId: (rememberedModel ?? providerModels[0]).id,
+    };
   }
 
   return null;
-}
-
-function hasConnectedModel(
-  connectedConfigurations: LighthouseV2Configuration[],
-  modelsByProvider: Record<
-    LighthouseV2ProviderType,
-    LighthouseV2SupportedModel[]
-  >,
-  providerType: LighthouseV2ProviderType,
-  modelId: string,
-) {
-  return (
-    connectedConfigurations.some(
-      (configuration) => configuration.providerType === providerType,
-    ) &&
-    (modelsByProvider[providerType] ?? []).some((model) => model.id === modelId)
-  );
 }
 
 function buildModelSelectorGroups(

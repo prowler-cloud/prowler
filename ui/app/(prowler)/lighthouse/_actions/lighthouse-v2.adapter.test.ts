@@ -2,12 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildLighthouseV2ConfigurationPayload,
-  buildLighthouseV2TenantConfigurationUpdatePayload,
+  buildLighthouseV2ConfigurationUpdatePayload,
   mapLighthouseV2Configuration,
   mapLighthouseV2Message,
   mapLighthouseV2Model,
   mapLighthouseV2Provider,
-  mapLighthouseV2TenantConfiguration,
   validateLighthouseV2ConfigurationInput,
 } from "./lighthouse-v2.adapter";
 
@@ -22,6 +21,7 @@ describe("lighthouse-v2.adapter", () => {
           provider_type: "bedrock",
           base_url: null,
           default_model: "anthropic.claude",
+          business_context: "Production tenant",
           connected: true,
           connection_last_checked_at: "2026-06-24T10:00:00Z",
           inserted_at: "2026-06-24T09:00:00Z",
@@ -38,6 +38,7 @@ describe("lighthouse-v2.adapter", () => {
         providerType: "bedrock",
         baseUrl: null,
         defaultModel: "anthropic.claude",
+        businessContext: "Production tenant",
         connected: true,
         connectionLastCheckedAt: "2026-06-24T10:00:00Z",
         insertedAt: "2026-06-24T09:00:00Z",
@@ -76,37 +77,6 @@ describe("lighthouse-v2.adapter", () => {
         supportsFunctionCalling: true,
         supportsVision: false,
         supportsReasoning: true,
-      });
-    });
-
-    it("should map tenant model defaults by provider", () => {
-      // Given
-      const resource: Parameters<typeof mapLighthouseV2TenantConfiguration>[0] =
-        {
-          id: "tenant-config-1",
-          type: "lighthouse-configurations",
-          attributes: {
-            business_context: "Production tenant",
-            default_provider: "bedrock",
-            default_models: {
-              openai: "gpt-5.1",
-              bedrock: "anthropic.claude-4",
-            },
-          },
-        };
-
-      // When
-      const config = mapLighthouseV2TenantConfiguration(resource);
-
-      // Then
-      expect(config).toEqual({
-        id: "tenant-config-1",
-        businessContext: "Production tenant",
-        defaultProvider: "bedrock",
-        defaultModels: {
-          openai: "gpt-5.1",
-          bedrock: "anthropic.claude-4",
-        },
       });
     });
 
@@ -179,32 +149,36 @@ describe("lighthouse-v2.adapter", () => {
       expect(payload.data.attributes).not.toHaveProperty("business_context");
     });
 
-    it("should build tenant preference payloads with provider model maps", () => {
-      // Given
-      const input = {
-        defaultProvider: "bedrock" as const,
-        defaultModels: {
-          openai: "gpt-5.1",
-          bedrock: "anthropic.claude-4",
-        },
-      };
-
+    it("should build per-provider update payloads with default_model and business_context", () => {
       // When
-      const payload = buildLighthouseV2TenantConfigurationUpdatePayload(input);
+      const payload = buildLighthouseV2ConfigurationUpdatePayload("config-1", {
+        defaultModel: "anthropic.claude-4",
+        businessContext: "Production tenant",
+      });
 
       // Then
       expect(payload).toEqual({
         data: {
-          type: "lighthouse-configurations",
+          type: "lighthouse-ai-configurations",
+          id: "config-1",
           attributes: {
-            default_provider: "bedrock",
-            default_models: {
-              openai: "gpt-5.1",
-              bedrock: "anthropic.claude-4",
-            },
+            default_model: "anthropic.claude-4",
+            business_context: "Production tenant",
           },
         },
       });
+    });
+
+    it("should omit untouched fields from the update payload", () => {
+      // When
+      const payload = buildLighthouseV2ConfigurationUpdatePayload("config-1", {
+        defaultModel: "gpt-5.1",
+      });
+
+      // Then
+      expect(payload.data.attributes).toEqual({ default_model: "gpt-5.1" });
+      expect(payload.data.attributes).not.toHaveProperty("business_context");
+      expect(payload.data.attributes).not.toHaveProperty("credentials");
     });
 
     it("should require base_url for OpenAI-compatible configurations", () => {

@@ -9,7 +9,6 @@ import {
   getLighthouseV2Messages,
   getLighthouseV2Session,
   getLighthouseV2SupportedModels,
-  getLighthouseV2TenantConfiguration,
 } from "@/app/(prowler)/lighthouse/_actions";
 import { LighthouseV2ChatPage } from "@/app/(prowler)/lighthouse/_components/chat";
 import { LighthouseV2NavigationModeSync } from "@/app/(prowler)/lighthouse/_components/navigation";
@@ -37,9 +36,7 @@ export default async function AIChatbot({
     typeof params.session === "string" ? params.session : undefined;
 
   if (isCloud()) {
-    const [configurationsResult, tenantConfigurationResult] = await Promise.all(
-      [getLighthouseV2Configurations(), getLighthouseV2TenantConfiguration()],
-    );
+    const configurationsResult = await getLighthouseV2Configurations();
     const configurations =
       "data" in configurationsResult ? configurationsResult.data : [];
     const connectedConfigurations = configurations.filter(
@@ -92,11 +89,6 @@ export default async function AIChatbot({
             key={chatRouteKey}
             configurations={configurations}
             modelsByProvider={modelsByProvider}
-            tenantConfiguration={
-              "data" in tenantConfigurationResult
-                ? tenantConfigurationResult.data
-                : undefined
-            }
             initialSessionId={activeSessionId}
             initialMessages={
               "data" in initialMessages ? initialMessages.data : []

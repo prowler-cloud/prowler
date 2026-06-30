@@ -26,8 +26,8 @@ vi.mock("@/lib/helper", () => ({
 
 import {
   createLighthouseV2Session,
+  updateLighthouseV2Configuration,
   updateLighthouseV2Session,
-  updateLighthouseV2TenantConfiguration,
 } from "./lighthouse-v2";
 
 function sessionResponse(id = "session-1") {
@@ -49,19 +49,21 @@ function sessionResponse(id = "session-1") {
   );
 }
 
-function tenantConfigurationResponse() {
+function configurationResponse(id = "config-1") {
   return Response.json(
     {
       data: {
-        id: "tenant-config-1",
-        type: "lighthouse-configurations",
+        id,
+        type: "lighthouse-ai-configurations",
         attributes: {
+          provider_type: "bedrock",
+          base_url: null,
+          default_model: "anthropic.claude-4",
           business_context: "Production tenant",
-          default_provider: "bedrock",
-          default_models: {
-            openai: "gpt-5.1",
-            bedrock: "anthropic.claude-4",
-          },
+          connected: true,
+          connection_last_checked_at: "2026-06-25T10:00:00Z",
+          inserted_at: "2026-06-25T09:00:00Z",
+          updated_at: "2026-06-25T10:00:00Z",
         },
       },
     },
@@ -99,40 +101,35 @@ describe("Lighthouse v2 session write actions", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith("/lighthouse");
   });
 
-  it("updates tenant model preferences without revalidating the active chat route", async () => {
+  it("persists the chosen model as the provider default without remounting the active chat", async () => {
     // Given
-    const fetchMock = vi.fn().mockResolvedValue(tenantConfigurationResponse());
+    const fetchMock = vi.fn().mockResolvedValue(configurationResponse());
     vi.stubGlobal("fetch", fetchMock);
 
     // When
-    const result = await updateLighthouseV2TenantConfiguration({
-      defaultProvider: "bedrock",
-      defaultModels: {
-        openai: "gpt-5.1",
-        bedrock: "anthropic.claude-4",
-      },
+    const result = await updateLighthouseV2Configuration("config-1", {
+      defaultModel: "anthropic.claude-4",
     });
 
     // Then
-    expect("data" in result && result.data.defaultProvider).toBe("bedrock");
+    expect("data" in result && result.data.defaultModel).toBe(
+      "anthropic.claude-4",
+    );
     expect(fetchMock).toHaveBeenCalledWith(
-      new URL("https://api.example.com/api/v1/lighthouse/configuration"),
+      new URL("https://api.example.com/api/v1/lighthouse/config/config-1"),
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({
           data: {
-            type: "lighthouse-configurations",
-            attributes: {
-              default_provider: "bedrock",
-              default_models: {
-                openai: "gpt-5.1",
-                bedrock: "anthropic.claude-4",
-              },
-            },
+            type: "lighthouse-ai-configurations",
+            id: "config-1",
+            attributes: { default_model: "anthropic.claude-4" },
           },
         }),
       }),
     );
-    expect(revalidatePathMock).not.toHaveBeenCalled();
+    // Revalidating the active force-dynamic chat route would remount it and kill
+    // the live EventSource — only the settings route may be revalidated.
+    expect(revalidatePathMock).not.toHaveBeenCalledWith("/lighthouse");
   });
 });

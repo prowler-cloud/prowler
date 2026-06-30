@@ -3,18 +3,20 @@
 import { Bot, Loader2, Save } from "lucide-react";
 import { useState } from "react";
 
-import { updateLighthouseV2TenantConfiguration } from "@/app/(prowler)/lighthouse/_actions";
+import { updateLighthouseV2Configuration } from "@/app/(prowler)/lighthouse/_actions";
 import { BUSINESS_CONTEXT_LIMIT } from "@/app/(prowler)/lighthouse/_lib/config";
 import { Button } from "@/components/shadcn/button/button";
 import { Field, FieldError, FieldLabel } from "@/components/shadcn/field/field";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { cn } from "@/lib/utils";
 
-// Tenant-wide business context. It is shared across every provider and chat, so
-// it is edited once here rather than per provider configuration.
+// Shared business context. The backend syncs it across every provider config, so
+// it is edited once here against any single configuration rather than per provider.
 export function LighthouseV2BusinessContextForm({
+  configurationId,
   initialBusinessContext,
 }: {
+  configurationId: string;
   initialBusinessContext: string;
 }) {
   const [businessContext, setBusinessContext] = useState(
@@ -33,7 +35,7 @@ export function LighthouseV2BusinessContextForm({
 
     setSaving(true);
     setError(null);
-    const result = await updateLighthouseV2TenantConfiguration({
+    const result = await updateLighthouseV2Configuration(configurationId, {
       businessContext,
     });
     setSaving(false);

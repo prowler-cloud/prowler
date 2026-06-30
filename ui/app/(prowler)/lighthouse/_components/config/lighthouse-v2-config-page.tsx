@@ -10,7 +10,6 @@ import {
   type LighthouseV2Configuration,
   type LighthouseV2ProviderType,
   type LighthouseV2SupportedProvider,
-  type LighthouseV2TenantConfiguration,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Card } from "@/components/shadcn/card/card";
 import { useToast } from "@/components/ui";
@@ -24,14 +23,12 @@ import { LighthouseV2ProviderRail } from "./provider-rail";
 interface LighthouseV2ConfigPageProps {
   configurations: LighthouseV2Configuration[];
   providers: LighthouseV2SupportedProvider[];
-  tenantConfiguration?: LighthouseV2TenantConfiguration;
   error?: string;
 }
 
 export function LighthouseV2ConfigPage({
   configurations,
   providers,
-  tenantConfiguration,
   error,
 }: LighthouseV2ConfigPageProps) {
   const { toast } = useToast();
@@ -60,6 +57,10 @@ export function LighthouseV2ConfigPage({
       });
     }
   });
+
+  // Business context is shared across every provider (the backend syncs it on
+  // update), so it is edited once against any single configuration.
+  const businessContextConfig = localConfigurations[0];
 
   const selectedConfig = localConfigurations.find(
     (config) => config.providerType === selectedProvider,
@@ -131,9 +132,19 @@ export function LighthouseV2ConfigPage({
       aria-label="Lighthouse AI settings"
       className="w-full gap-0 overflow-hidden"
     >
-      <LighthouseV2BusinessContextForm
-        initialBusinessContext={tenantConfiguration?.businessContext ?? ""}
-      />
+      {businessContextConfig ? (
+        <LighthouseV2BusinessContextForm
+          configurationId={businessContextConfig.id}
+          initialBusinessContext={businessContextConfig.businessContext}
+        />
+      ) : (
+        <section
+          data-slot="lighthouse-v2-business-context-empty"
+          className="border-border-neutral-secondary text-text-neutral-secondary border-b px-4 py-4 text-sm md:px-5"
+        >
+          Configure a provider first to add shared business context.
+        </section>
+      )}
 
       <div className="grid min-h-0 flex-1 gap-0 xl:grid-cols-[320px_auto_minmax(0,1fr)]">
         <div className="min-w-0 p-4 md:p-5">

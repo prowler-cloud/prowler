@@ -62,13 +62,13 @@ const {
   createSessionMock,
   getMessagesMock,
   sendMessageMock,
-  updateTenantConfigurationMock,
+  updateConfigurationMock,
 } = vi.hoisted(() => ({
   cancelRunMock: vi.fn(),
   createSessionMock: vi.fn(),
   getMessagesMock: vi.fn(),
   sendMessageMock: vi.fn(),
-  updateTenantConfigurationMock: vi.fn(),
+  updateConfigurationMock: vi.fn(),
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
@@ -76,7 +76,7 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   createLighthouseV2Session: createSessionMock,
   getLighthouseV2Messages: getMessagesMock,
   sendLighthouseV2Message: sendMessageMock,
-  updateLighthouseV2TenantConfiguration: updateTenantConfigurationMock,
+  updateLighthouseV2Configuration: updateConfigurationMock,
 }));
 
 // Streamdown pulls in shiki/wasm syntax highlighting that doesn't run under
@@ -92,6 +92,7 @@ const configurations: LighthouseV2Configuration[] = [
     providerType: "openai",
     baseUrl: null,
     defaultModel: "gpt-5.1",
+    businessContext: "Production account",
     connected: true,
     connectionLastCheckedAt: "2026-06-24T10:00:00Z",
     insertedAt: "2026-06-24T09:00:00Z",
@@ -102,6 +103,7 @@ const configurations: LighthouseV2Configuration[] = [
     providerType: "bedrock",
     baseUrl: null,
     defaultModel: "anthropic.claude-4",
+    businessContext: "Production account",
     connected: true,
     connectionLastCheckedAt: "2026-06-23T10:00:00Z",
     insertedAt: "2026-06-23T09:00:00Z",
@@ -114,16 +116,6 @@ const modelsByProvider = {
   bedrock: [model("anthropic.claude-4")],
   "openai-compatible": [model("llama-3.3")],
 };
-
-const tenantConfiguration = {
-  id: "tenant-config-1",
-  businessContext: "Production account",
-  defaultProvider: "openai",
-  defaultModels: {
-    openai: "gpt-5.1",
-    bedrock: "anthropic.claude-4",
-  },
-} satisfies Parameters<typeof LighthouseV2ChatPage>[0]["tenantConfiguration"];
 
 describe("LighthouseV2ChatPage", () => {
   beforeEach(() => {
@@ -143,7 +135,7 @@ describe("LighthouseV2ChatPage", () => {
     createSessionMock.mockReset();
     getMessagesMock.mockReset();
     sendMessageMock.mockReset();
-    updateTenantConfigurationMock.mockReset();
+    updateConfigurationMock.mockReset();
     // The mock never fires "open": the client must POST the message without
     // waiting for it (the backend sends no bytes until the worker emits, which
     // only happens after the POST). This is the regression guard for the
@@ -170,9 +162,7 @@ describe("LighthouseV2ChatPage", () => {
         },
       },
     });
-    updateTenantConfigurationMock.mockResolvedValue({
-      data: tenantConfiguration,
-    });
+    updateConfigurationMock.mockResolvedValue({ data: configurations[1] });
   });
 
   afterEach(() => {
@@ -229,16 +219,11 @@ describe("LighthouseV2ChatPage", () => {
     ).not.toHaveClass("border-t");
   });
 
-  it("sends messages with the tenant default provider and its saved model", async () => {
-    // Given
+  it("opens the highest-priority connected provider with its remembered model", async () => {
+    // Given: both OpenAI and Bedrock are connected; OpenAI outranks Bedrock
     const user = userEvent.setup();
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
-    renderPage({
-      tenantConfiguration: {
-        ...tenantConfiguration,
-        defaultProvider: "bedrock",
-      },
-    });
+    renderPage();
 
     // When
     await user.type(
@@ -246,13 +231,14 @@ describe("LighthouseV2ChatPage", () => {
       ["Summarize findings", "{Enter}"].join(""),
     );
 
-    // Then: the message is sent even though EventSource never fires "open"
+    // Then: the message is sent with OpenAI and its remembered defaultModel,
+    // even though EventSource never fires "open"
     await waitFor(() =>
       expect(sendMessageMock).toHaveBeenCalledWith({
         sessionId: "session-1",
         text: "Summarize findings",
-        provider: "bedrock",
-        model: "anthropic.claude-4",
+        provider: "openai",
+        model: "gpt-5.1",
       }),
     );
     expect(createSessionMock).toHaveBeenCalledWith("Summarize findings");
@@ -270,17 +256,14 @@ describe("LighthouseV2ChatPage", () => {
     replaceStateSpy.mockRestore();
   });
 
-  it("falls back to the first connected provider when tenant defaults are invalid", async () => {
-    // Given
+  it("opens a lower-priority provider when the higher-priority one is disconnected", async () => {
+    // Given: only Bedrock is connected
     const user = userEvent.setup();
     renderPage({
-      tenantConfiguration: {
-        ...tenantConfiguration,
-        defaultProvider: "bedrock",
-        defaultModels: {
-          bedrock: "missing-model",
-        },
-      },
+      configurations: [
+        { ...configurations[0], connected: false },
+        configurations[1],
+      ],
     });
 
     // When
@@ -293,6 +276,33 @@ describe("LighthouseV2ChatPage", () => {
     await waitFor(() =>
       expect(sendMessageMock).toHaveBeenCalledWith(
         expect.objectContaining({
+          provider: "bedrock",
+          model: "anthropic.claude-4",
+        }),
+      ),
+    );
+  });
+
+  it("falls back to the first supported model when the remembered model is unsupported", async () => {
+    // Given: OpenAI's remembered default model is no longer offered
+    const user = userEvent.setup();
+    renderPage({
+      configurations: [
+        { ...configurations[0], defaultModel: "missing-model" },
+        configurations[1],
+      ],
+    });
+
+    // When
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+
+    // Then: OpenAI stays selected (highest priority) but on its first model
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
           provider: "openai",
           model: "gpt-5.1",
         }),
@@ -300,7 +310,7 @@ describe("LighthouseV2ChatPage", () => {
     );
   });
 
-  it("persists the selected chat model without deleting other provider defaults", async () => {
+  it("persists the selected chat model as that provider's default", async () => {
     // Given
     const user = userEvent.setup();
     renderPage();
@@ -311,14 +321,10 @@ describe("LighthouseV2ChatPage", () => {
       await screen.findByRole("option", { name: "anthropic.claude-4" }),
     );
 
-    // Then
+    // Then: only the chosen provider's config is updated, by id
     await waitFor(() =>
-      expect(updateTenantConfigurationMock).toHaveBeenCalledWith({
-        defaultProvider: "bedrock",
-        defaultModels: {
-          openai: "gpt-5.1",
-          bedrock: "anthropic.claude-4",
-        },
+      expect(updateConfigurationMock).toHaveBeenCalledWith("config-bedrock", {
+        defaultModel: "anthropic.claude-4",
       }),
     );
   });
@@ -326,7 +332,7 @@ describe("LighthouseV2ChatPage", () => {
   it("keeps the chosen model applied and surfaces the backend reason when saving the default fails", async () => {
     // Given
     const user = userEvent.setup();
-    updateTenantConfigurationMock.mockResolvedValue({
+    updateConfigurationMock.mockResolvedValue({
       error: "Invalid model 'anthropic.claude-4' for provider 'bedrock'.",
       status: 400,
     });
@@ -470,7 +476,6 @@ function renderPage(props?: RenderPageProps) {
   const componentProps = {
     configurations: props?.configurations ?? configurations,
     modelsByProvider: props?.modelsByProvider ?? modelsByProvider,
-    tenantConfiguration: props?.tenantConfiguration ?? tenantConfiguration,
     initialSessionId: props?.initialSessionId,
     initialMessages: props?.initialMessages ?? [],
     initialPrompt: props?.initialPrompt,

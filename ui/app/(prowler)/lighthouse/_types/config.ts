@@ -37,6 +37,7 @@ export interface LighthouseV2Configuration {
   providerType: LighthouseV2ProviderType;
   baseUrl: string | null;
   defaultModel: string | null;
+  businessContext: string;
   connected: boolean | null;
   connectionLastCheckedAt: string | null;
   insertedAt: string;
@@ -52,19 +53,8 @@ export interface LighthouseV2ConfigurationInput {
 export interface LighthouseV2ConfigurationUpdateInput {
   credentials?: LighthouseV2Credentials;
   baseUrl?: string | null;
-}
-
-export interface LighthouseV2TenantConfiguration {
-  id: string;
-  businessContext: string;
-  defaultProvider: LighthouseV2ProviderType | "";
-  defaultModels: Record<string, string>;
-}
-
-export interface LighthouseV2TenantConfigurationUpdateInput {
+  defaultModel?: string | null;
   businessContext?: string;
-  defaultProvider?: LighthouseV2ProviderType | "";
-  defaultModels?: Record<string, string>;
 }
 
 export interface LighthouseV2SupportedProvider {

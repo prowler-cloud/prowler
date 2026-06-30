@@ -3,7 +3,6 @@ import { Spacer } from "@heroui/spacer";
 import {
   getLighthouseV2Configurations,
   getLighthouseV2SupportedProviders,
-  getLighthouseV2TenantConfiguration,
 } from "@/app/(prowler)/lighthouse/_actions";
 import { LighthouseV2ConfigPage } from "@/app/(prowler)/lighthouse/_components/config";
 import {
@@ -17,12 +16,10 @@ export const dynamic = "force-dynamic";
 
 export default async function LighthouseSettingsPage() {
   if (isCloud()) {
-    const [configurationsResult, providersResult, tenantConfigurationResult] =
-      await Promise.all([
-        getLighthouseV2Configurations(),
-        getLighthouseV2SupportedProviders(),
-        getLighthouseV2TenantConfiguration(),
-      ]);
+    const [configurationsResult, providersResult] = await Promise.all([
+      getLighthouseV2Configurations(),
+      getLighthouseV2SupportedProviders(),
+    ]);
 
     const providers = "data" in providersResult ? providersResult.data : [];
     const error =
@@ -39,11 +36,6 @@ export default async function LighthouseSettingsPage() {
             "data" in configurationsResult ? configurationsResult.data : []
           }
           providers={providers}
-          tenantConfiguration={
-            "data" in tenantConfigurationResult
-              ? tenantConfigurationResult.data
-              : undefined
-          }
           error={error}
         />
       </ContentLayout>
