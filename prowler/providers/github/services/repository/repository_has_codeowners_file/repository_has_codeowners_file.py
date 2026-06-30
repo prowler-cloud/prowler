@@ -10,6 +10,8 @@ class repository_has_codeowners_file(Check):
     """Check if a repository has a CODEOWNERS file
 
     This class verifies whether each repository has a CODEOWNERS file.
+    Archived repositories are skipped since they are read-only and
+    cannot be modified without first being unarchived.
     """
 
     def execute(self) -> List[CheckReportGithub]:
@@ -22,6 +24,10 @@ class repository_has_codeowners_file(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
+            # Archived repos are read-only and cannot be updated without
+            # first being unarchived, so this check is not actionable for them.
+            if repo.archived:
+                continue
             if repo.codeowners_exists is not None:
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 if repo.codeowners_exists:
