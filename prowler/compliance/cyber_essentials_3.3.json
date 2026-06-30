@@ -378,16 +378,13 @@
       "description": "Automatic updates must be enabled on in-scope software where this is possible.",
       "attributes": {
         "Theme": "Security Update Management",
-        "AssessmentStatus": "Automated",
+        "AssessmentStatus": "Manual",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Enable Microsoft Defender for Cloud auto-provisioning for the Log Analytics agent and vulnerability assessment, and configure automatic guest OS updates on Azure VMs.",
+        "RemediationProcedure": "Enable automatic updates on in-scope software where possible: configure automatic guest patching (patchMode 'AutomaticByPlatform') on Azure VMs and VM scale sets, and enable vendor auto-update mechanisms for any third-party software running on those workloads. Note: existing Azure checks do not directly observe whether automatic updates are enabled (Defender auto-provisioning and vulnerability assessment only prove monitoring and assessment coverage), so this requirement must be verified manually until a dedicated check validating update automation exists.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": [
-          "defender_auto_provisioning_log_analytics_agent_vms_on",
-          "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
-        ]
+        "azure": []
       }
     },
     {
