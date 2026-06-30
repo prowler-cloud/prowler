@@ -32,7 +32,7 @@ Prowler Cloud supports these recurring schedule options:
 | Weekly | Runs one scan every week on the selected day and time. |
 | Monthly | Runs one scan every month on the selected day, from day 1 to day 28. |
 
-The schedule time uses the browser timezone at the moment the schedule is saved. Prowler displays the next scheduled scan in that timezone.
+The schedule time uses the browser timezone when the schedule is saved. Prowler displays the next scheduled scan in that timezone.
 
 ## Create a Schedule From Scan Jobs
 
@@ -89,7 +89,7 @@ To bulk edit provider schedules:
 For AWS Organizations and Organizational Unit rows, **Edit Scan Schedule** applies the schedule to the connected child providers in that group.
 
 <Warning>
-Bulk schedule edits apply one schedule to every selected provider. Review the selected providers before saving.
+Bulk schedule edits apply one schedule to every selected provider. If the wrong providers are selected, Prowler applies the same cadence to unintended providers. To recover, reopen bulk edit with the correct selection or update affected provider schedules individually.
 </Warning>
 
 ## Review Scheduled Scans
