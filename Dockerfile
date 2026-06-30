@@ -95,6 +95,18 @@ RUN uv sync --locked --compile-bytecode && \
 # Install PowerShell modules
 RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py
 
+USER root
+
+# Remove build-only packages from the final image after Python dependencies are installed.
+RUN apt-get purge -y --auto-remove \
+    build-essential \
+    pkg-config \
+    libzstd-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+USER prowler
+
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
