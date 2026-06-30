@@ -1835,6 +1835,12 @@ def _make_session_ctx(session, call_order=None, name=None):
 
 
 class TestSyncNodes:
+    def test_iter_sink_batches_rejects_zero_batch_size(self):
+        with pytest.raises(
+            ValueError, match="Sink batch size must be greater than zero"
+        ):
+            list(sync_module._iter_sink_batches([], batch_size=0))
+
     def test_sync_nodes_passes_isolation_labels_to_sink(self):
         row = {
             "internal_id": 1,
@@ -1940,6 +1946,51 @@ class TestSyncNodes:
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
 
+    def test_sync_nodes_chunks_expanded_list_rows_before_sink_write(self):
+        row = {
+            "internal_id": 1,
+            "element_id": "elem-1",
+            "labels": ["SomeLabel"],
+            "props": {"values": ["a", "b", "c", "d", "e"]},
+        }
+        normalized_lists = [
+            sync_module.NormalizedList(
+                "SomeLabel",
+                "values",
+                "SomeLabelValuesItem",
+                "HAS_VALUES",
+            )
+        ]
+
+        src_1 = MagicMock()
+        src_1.run.return_value = [row]
+        src_2 = MagicMock()
+        src_2.run.return_value = []
+        sink = MagicMock()
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[
+                    _make_session_ctx(src_1),
+                    _make_session_ctx(src_2),
+                ],
+            ),
+            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 2),
+        ):
+            result = sync_module.sync_nodes(
+                "src", "tgt", "t-1", "p-1", sink, normalized_lists
+            )
+
+        assert result == {"parents": 1, "children": 5, "parent_child_rels": 5}
+        assert [
+            len(call_args.args[2]) for call_args in sink.write_nodes.call_args_list[1:]
+        ] == [2, 2, 1]
+        assert [
+            len(call_args.args[3])
+            for call_args in sink.write_relationships.call_args_list
+        ] == [2, 2, 1]
+
     def test_sync_nodes_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
@@ -2029,6 +2080,42 @@ class TestSyncRelationships:
         assert sink.write_relationships.call_count == 2
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
+
+    def test_sync_relationships_chunks_grouped_rows_before_sink_write(self):
+        rows = [
+            {
+                "internal_id": idx,
+                "rel_type": "HAS",
+                "start_element_id": f"s-{idx}",
+                "end_element_id": f"e-{idx}",
+                "props": {},
+            }
+            for idx in range(1, 6)
+        ]
+
+        src_1 = MagicMock()
+        src_1.run.return_value = rows
+        src_2 = MagicMock()
+        src_2.run.return_value = []
+        sink = MagicMock()
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[
+                    _make_session_ctx(src_1),
+                    _make_session_ctx(src_2),
+                ],
+            ),
+            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 2),
+        ):
+            total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
+
+        assert total == 5
+        assert [
+            len(call_args.args[3])
+            for call_args in sink.write_relationships.call_args_list
+        ] == [2, 2, 1]
 
     def test_sync_relationships_empty_source_returns_zero(self):
         src = MagicMock()

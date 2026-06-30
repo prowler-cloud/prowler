@@ -19,6 +19,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Amazon Web Services Foundations Benchmark v7.0.0 compliance framework for the AWS provider, adding the new Organizations section (2.1.1-2.1.6), resource policy (2.21), web front-end access logging (4.10), and VPC Endpoints (6.8) recommendations [(#11707)](https://github.com/prowler-cloud/prowler/pull/11707)
 - CIS Microsoft Azure Foundations Benchmark v6.0.0 compliance framework for the Azure provider [(#11708)](https://github.com/prowler-cloud/prowler/pull/11708)
 - CIS Google Cloud Platform Foundation Benchmark v5.0.0 compliance framework for the GCP provider [(#11714)](https://github.com/prowler-cloud/prowler/pull/11714)
+- CIS Kubernetes Benchmark v2.0.1 compliance framework for the Kubernetes provider [(#11722)](https://github.com/prowler-cloud/prowler/pull/11722)
+- CIS GitHub Benchmark v1.2.0 compliance framework for the GitHub provider [(#11719)](https://github.com/prowler-cloud/prowler/pull/11719)
 
 ### 🐞 Fixed
 
