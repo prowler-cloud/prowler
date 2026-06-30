@@ -936,28 +936,6 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  private async getWizardDebugInfo(): Promise<string> {
-    const isWizardVisible = await this.wizardModal
-      .isVisible()
-      .catch(() => false);
-    if (!isWizardVisible) {
-      return "Wizard visible: false";
-    }
-    const wizardText = await this.wizardModal
-      .innerText()
-      .catch(() => "<failed to read text>");
-    const visibleButtons = await this.wizardModal
-      .getByRole("button")
-      .allTextContents()
-      .catch(() => []);
-
-    return [
-      "Wizard visible: true",
-      `Visible button text: ${visibleButtons.map((text) => text.trim()).join(" | ") || "<none>"}`,
-      `Wizard text:\n${wizardText.trim() || "<empty>"}`,
-    ].join("\n\n");
-  }
-
   async completeProviderConnectionWithoutLaunchingScan(
     providerUID: string,
     timeout = 30000,
@@ -1025,9 +1003,8 @@ export class ProvidersPage extends BasePage {
       (await this.wizardModal.isHidden().catch(() => false));
 
     if (!reachedNoScanState) {
-      const debugInfo = await this.getWizardDebugInfo();
       throw new Error(
-        `Provider no-scan flow did not reach the connection or launch step.\n\n${debugInfo}`,
+        "Provider no-scan flow did not reach the connection or launch step.",
       );
     }
 
