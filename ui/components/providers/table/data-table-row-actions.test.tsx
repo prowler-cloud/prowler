@@ -47,6 +47,10 @@ vi.mock("../forms/edit-name-form", () => ({
   EditNameForm: () => null,
 }));
 
+vi.mock("../scan-config/manage-scan-config-modal", () => ({
+  ManageScanConfigModal: () => null,
+}));
+
 vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
   EDIT_SCAN_SCHEDULE_STATE: {
     LOADING: "loading",

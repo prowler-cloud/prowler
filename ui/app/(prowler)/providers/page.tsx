@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { listScanConfigurations } from "@/actions/scan-configurations";
 import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
 import { CliImportBanner } from "@/components/scans";
@@ -103,24 +104,38 @@ const ProviderGroupsFallback = () => {
   );
 };
 
+// Scan configurations in the tenant, so each provider row can associate/
+// disassociate its config. Cloud-only (the OSS API has no scan-configurations
+// endpoint); failures degrade to "no configs" rather than breaking the page.
+const loadScanConfigs = async (isCloud: boolean) => {
+  if (!isCloud) return [];
+  try {
+    return await listScanConfigurations();
+  } catch {
+    return [];
+  }
+};
+
 const ProvidersTabContent = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const providersView = await loadProvidersAccountsViewData({
-    searchParams,
-    isCloud: process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
-  });
+  const isCloud = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const [providersView, scanConfigs] = await Promise.all([
+    loadProvidersAccountsViewData({ searchParams, isCloud }),
+    loadScanConfigs(isCloud),
+  ]);
 
   return (
     <ProvidersAccountsView
-      isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
+      isCloud={isCloud}
       filters={providersView.filters}
       providers={providersView.providers}
       providerGroups={providersView.providerGroups}
       metadata={providersView.metadata}
       rows={providersView.rows}
+      scanConfigs={scanConfigs}
     />
   );
 };

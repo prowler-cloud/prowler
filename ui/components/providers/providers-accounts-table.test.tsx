@@ -147,6 +147,7 @@ describe("ProvidersAccountsTable", () => {
       expect.any(Function),
       expect.any(Function),
       SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+      [],
     );
   });
 
@@ -268,6 +269,7 @@ describe("ProvidersAccountsTable", () => {
       expect.any(Function),
       expect.any(Function),
       SCAN_SCHEDULE_CAPABILITY.ADVANCED,
+      [],
     );
   });
 
@@ -301,6 +303,7 @@ describe("ProvidersAccountsTable", () => {
       expect.any(Function),
       expect.any(Function),
       SCAN_SCHEDULE_CAPABILITY.ADVANCED,
+      [],
     );
   });
 });

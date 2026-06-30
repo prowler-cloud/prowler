@@ -30,6 +30,7 @@ import {
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProviderGroup } from "@/types/components";
 import type { ProvidersTableRow } from "@/types/providers-table";
+import type { ScanConfigurationData } from "@/types/scan-configurations";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 const addProviderFlow = getFlowById("add-provider")!;
@@ -56,6 +57,9 @@ interface ProvidersAccountsViewProps {
   rows: ProvidersTableRow[];
   /** Cloud overlay seam for provider-creation scan launch. */
   scanScheduleCapability?: ScanScheduleCapability;
+  /** All scan configurations in the tenant, for the provider row's associate/
+   * disassociate action (Cloud-only). */
+  scanConfigs?: ScanConfigurationData[];
   isScanLimitReached?: boolean;
 }
 
@@ -67,6 +71,7 @@ export function ProvidersAccountsView({
   providerGroups = [],
   rows,
   scanScheduleCapability,
+  scanConfigs,
   isScanLimitReached,
 }: ProvidersAccountsViewProps) {
   const pathname = usePathname();
@@ -157,6 +162,7 @@ export function ProvidersAccountsView({
             metadata={metadata}
             rows={rows}
             scanScheduleCapability={scanScheduleCapability}
+            scanConfigs={scanConfigs}
             onOpenProviderWizard={openProviderWizard}
             onOpenOrganizationWizard={openOrganizationWizard}
           />

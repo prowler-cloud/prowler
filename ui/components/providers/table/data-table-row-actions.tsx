@@ -6,6 +6,7 @@ import {
   KeyRound,
   Pencil,
   Rocket,
+  SlidersHorizontal,
   Timer,
   Trash2,
 } from "lucide-react";
@@ -45,6 +46,7 @@ import {
   ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import { ScanConfigurationData } from "@/types/scan-configurations";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
@@ -55,6 +57,7 @@ import {
 import { DeleteForm } from "../forms/delete-form";
 import { DeleteOrganizationForm } from "../forms/delete-organization-form";
 import { EditNameForm } from "../forms/edit-name-form";
+import { ManageScanConfigModal } from "../scan-config/manage-scan-config-modal";
 
 interface DataTableRowActionsProps {
   row: Row<ProvidersTableRow>;
@@ -72,6 +75,11 @@ interface DataTableRowActionsProps {
   onClearSelection: () => void;
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
+  /**
+   * All scan configurations in the tenant, used to associate/disassociate this
+   * provider's config from the row menu (Cloud-only feature). Empty in OSS.
+   */
+  scanConfigs?: ScanConfigurationData[];
   /**
    * Schedule capability override. Absent in OSS (defaults to a Cloud-vs-non-Cloud
    * decision). The prowler-cloud overlay injects a billing-aware capability so
@@ -271,6 +279,7 @@ export function DataTableRowActions({
   onClearSelection,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
+  scanConfigs = [],
   capability,
 }: DataTableRowActionsProps) {
   const canEditSchedule =
@@ -282,6 +291,7 @@ export function DataTableRowActions({
     kind: EDIT_SCAN_SCHEDULE_STATE.LOADING,
   });
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isScanConfigOpen, setIsScanConfigOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -295,6 +305,12 @@ export function DataTableRowActions({
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
+  // The scan config this provider is currently attached to, if any.
+  const currentScanConfig = provider
+    ? (scanConfigs.find((c) =>
+        (c.attributes.providers || []).includes(providerId),
+      ) ?? null)
+    : null;
   const scheduleProvider: ScanScheduleProvider | undefined = provider
     ? {
         providerId,
@@ -548,6 +564,17 @@ export function DataTableRowActions({
         provider={scheduleProvider}
         state={scheduleState}
       />
+      {isCloud() && provider && (
+        <ManageScanConfigModal
+          open={isScanConfigOpen}
+          onOpenChange={setIsScanConfigOpen}
+          providerId={providerId}
+          providerLabel={providerAlias || providerUid}
+          scanConfigs={scanConfigs}
+          currentConfigId={currentScanConfig?.id ?? null}
+          onSaved={() => router.refresh()}
+        />
+      )}
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
           <ActionDropdownItem
@@ -573,6 +600,13 @@ export function DataTableRowActions({
               icon={<CalendarClock />}
               label="Edit Scan Schedule"
               onSelect={() => void openScheduleEditor()}
+            />
+          )}
+          {isCloud() && (
+            <ActionDropdownItem
+              icon={<SlidersHorizontal />}
+              label="Edit Scan Configuration"
+              onSelect={() => setIsScanConfigOpen(true)}
             />
           )}
           <ActionDropdownItem

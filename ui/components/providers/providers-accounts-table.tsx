@@ -14,6 +14,7 @@ import {
   isProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import { ScanConfigurationData } from "@/types/scan-configurations";
 import type {
   ScanScheduleCapability,
   ScanScheduleProvider,
@@ -26,6 +27,9 @@ interface ProvidersAccountsTableProps {
   metadata?: MetaDataProps;
   rows: ProvidersTableRow[];
   scanScheduleCapability?: ScanScheduleCapability;
+  /** All scan configurations in the tenant, for the provider row's associate/
+   * disassociate action (Cloud-only). */
+  scanConfigs?: ScanConfigurationData[];
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
 }
@@ -159,6 +163,7 @@ function ProvidersAccountsTableContent({
   metadata,
   rows,
   scanScheduleCapability,
+  scanConfigs,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
 }: ProvidersAccountsTableProps) {
@@ -182,6 +187,7 @@ function ProvidersAccountsTableContent({
     onOpenProviderWizard,
     onOpenOrganizationWizard,
     scanScheduleCapability,
+    scanConfigs ?? [],
   );
 
   return (

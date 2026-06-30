@@ -28,13 +28,11 @@ const FILTER_CONTROL_COLUMN_CLASS =
 interface ScanConfigurationsManagerProps {
   initialConfigs: ScanConfigurationData[];
   richProviders: ProviderProps[];
-  schema: Record<string, unknown> | null;
 }
 
 export function ScanConfigurationsManager({
   initialConfigs,
   richProviders,
-  schema,
 }: ScanConfigurationsManagerProps) {
   const [configs, setConfigs] =
     useState<ScanConfigurationData[]>(initialConfigs);
@@ -215,7 +213,6 @@ export function ScanConfigurationsManager({
         richProviders={richProviders}
         existingConfigs={configs}
         config={editingConfig}
-        schema={schema}
       />
 
       <Modal

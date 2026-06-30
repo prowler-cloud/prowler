@@ -50,7 +50,7 @@ export function BreadcrumbNavigation({
       "/users": "lucide:users",
       "/compliance": "lucide:shield-check",
       "/findings": "lucide:search",
-      "/scans": "lucide:activity",
+      "/scans": "lucide:timer",
       "/roles": "lucide:key",
       "/resources": "lucide:database",
       "/lighthouse": <LighthouseIcon />,

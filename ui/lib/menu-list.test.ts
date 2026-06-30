@@ -92,14 +92,14 @@ describe("getMenuList", () => {
     );
   });
 
-  it("should show Scan Configuration as disabled Cloud-only in OSS when Cloud is disabled", () => {
+  it("should show Scan as disabled Cloud-only in OSS when Cloud is disabled", () => {
     // Given / When
-    const scanConfig = findSubmenu("Scan Configuration");
+    const scanConfig = findSubmenu("Scan");
 
     // Then
     expect(scanConfig).toEqual(
       expect.objectContaining({
-        href: "/scan-configurations",
+        href: "/scans/config",
         disabled: true,
         cloudOnly: true,
         highlight: true,
@@ -108,20 +108,20 @@ describe("getMenuList", () => {
     );
   });
 
-  it("should show Scan Configuration as new under Configuration when Cloud is enabled", () => {
+  it("should show Scan as new under Configuration when Cloud is enabled", () => {
     // Given
     process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
 
     // When
-    const scanConfig = getMenuList({ pathname: "/scan-configurations" })
+    const scanConfig = getMenuList({ pathname: "/scans/config" })
       .flatMap((group) => group.menus)
       .flatMap((menu) => menu.submenus ?? [])
-      .find((submenu) => submenu.label === "Scan Configuration");
+      .find((submenu) => submenu.label === "Scan");
 
     // Then
     expect(scanConfig).toEqual(
       expect.objectContaining({
-        href: "/scan-configurations",
+        href: "/scans/config",
         active: true,
         highlight: true,
       }),

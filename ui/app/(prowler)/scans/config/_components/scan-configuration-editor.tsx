@@ -25,7 +25,7 @@ import { fontMono } from "@/config/fonts";
 import {
   convertToYaml,
   defaultScanConfigurationYaml,
-  validateScanConfigurationPayload,
+  validateYaml,
 } from "@/lib/yaml";
 import { scanConfigurationFormSchema } from "@/types/formSchemas";
 import { ProviderProps } from "@/types/providers";
@@ -37,7 +37,6 @@ interface ScanConfigurationEditorProps {
   richProviders: ProviderProps[];
   existingConfigs: ScanConfigurationData[];
   config: ScanConfigurationData | null;
-  schema: Record<string, unknown> | null;
 }
 
 interface ScanConfigurationFormProps {
@@ -45,7 +44,6 @@ interface ScanConfigurationFormProps {
   richProviders: ProviderProps[];
   existingConfigs: ScanConfigurationData[];
   config: ScanConfigurationData | null;
-  schema: Record<string, unknown> | null;
 }
 
 // `provider_ids` has a zod `.default([])`, so the resolver's input and output
@@ -53,14 +51,11 @@ interface ScanConfigurationFormProps {
 type ScanConfigurationFormInput = z.input<typeof scanConfigurationFormSchema>;
 type ScanConfigurationFormValues = z.output<typeof scanConfigurationFormSchema>;
 
-const MAX_ERRORS_SHOWN = 10;
-
 function ScanConfigurationForm({
   onClose,
   richProviders,
   existingConfigs,
   config,
-  schema,
 }: ScanConfigurationFormProps) {
   const isEdit = !!config;
   const { toast } = useToast();
@@ -87,12 +82,13 @@ function ScanConfigurationForm({
   const configText = form.watch("configuration") || "";
   const selectedProviders = form.watch("provider_ids") || [];
 
-  // Real-time validation against the server schema (ranges/enums). Kept out of
-  // form state because it's derived purely from the current YAML text — skip it
-  // while the field is empty so we don't flag an error before the user types.
-  const yamlValidation = configText.trim()
-    ? validateScanConfigurationPayload(configText, schema)
-    : { isValid: true, errors: [] };
+  // Mirror the Mutelist editor: the client validates YAML *syntax* live (that it
+  // parses to a mapping); the API validates the configuration values
+  // (ranges/enums) on save and returns them inline. Skip while empty so we don't
+  // flag an error before the user types.
+  const yamlSyntax = configText.trim()
+    ? validateYaml(configText)
+    : { isValid: true as const };
 
   // A provider can only be attached to one config at a time. We exclude
   // providers that are owned by *other* configs from the selector so the user
@@ -111,9 +107,9 @@ function ScanConfigurationForm({
   const lockedCount = richProviders.length - selectableProviders.length;
 
   const onSubmit = form.handleSubmit(async (values) => {
-    // The inline panel already lists every schema/syntax error in real time, so
-    // we don't duplicate them in a toast — just bring the panel into view.
-    if (yamlValidation.errors.length > 0) {
+    // Block on a YAML syntax error (the inline message already explains it); the
+    // API validates the values on save and returns any errors inline.
+    if (!yamlSyntax.isValid) {
       errorPanelRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "center",
@@ -194,64 +190,64 @@ function ScanConfigurationForm({
         <FieldLabel htmlFor="scan-configuration-yaml">
           Configuration (YAML)
         </FieldLabel>
-        <p className="text-default-500 text-tiny">
-          Follows the structure of{" "}
-          <CustomLink
-            size="sm"
-            href="https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml"
-          >
-            prowler/config/config.yaml
-          </CustomLink>
-          . Allowed ranges and enums come from the server schema; invalid values
-          are listed below in real time.
-        </p>
+        <ul className="text-default-500 text-tiny mb-1 list-disc pl-5">
+          <li>
+            Follows the structure of{" "}
+            <CustomLink
+              size="xs"
+              href="https://docs.prowler.com/user-guide/cli/tutorials/configuration_file"
+            >
+              prowler/config/config.yaml
+            </CustomLink>
+            ; include only the keys you want to override.
+          </li>
+          <li>The configuration is validated on save.</li>
+          <li>
+            Learn more about configuring scans{" "}
+            <CustomLink
+              size="xs"
+              href="https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration"
+            >
+              here
+            </CustomLink>
+            .
+          </li>
+        </ul>
         <Textarea
           id="scan-configuration-yaml"
           placeholder={defaultScanConfigurationYaml}
           rows={14}
-          aria-invalid={!!configError || !yamlValidation.isValid}
+          aria-invalid={!!configError || !yamlSyntax.isValid}
           className={fontMono.className + " text-sm"}
-          {...form.register("configuration")}
+          {...form.register("configuration", {
+            // A server-side validation error becomes stale the moment the user
+            // edits the YAML — clear it so it can't linger next to the live
+            // client-side syntax check.
+            onChange: () => form.clearErrors("configuration"),
+          })}
         />
         <div aria-live="polite" className="mt-1" ref={errorPanelRef}>
-          {yamlValidation.errors.length === 0 && configText.trim() ? (
+          {!yamlSyntax.isValid ? (
+            <FieldError>{`Invalid YAML format: ${yamlSyntax.error}`}</FieldError>
+          ) : configText.trim() && !configError ? (
             <p className="text-tiny text-text-success-primary">
-              Configuration valid
+              Valid YAML format
             </p>
-          ) : yamlValidation.errors.length > 0 ? (
-            <div className="border-border-error rounded-md border bg-red-50 p-3 dark:bg-red-950/50">
-              <p className="text-tiny text-text-error-primary mb-1 font-medium">
-                {yamlValidation.errors.length} validation{" "}
-                {yamlValidation.errors.length === 1 ? "error" : "errors"}:
-              </p>
-              <ul className="text-default-700 text-tiny list-disc space-y-1 pl-5">
-                {yamlValidation.errors
-                  .slice(0, MAX_ERRORS_SHOWN)
-                  .map((err, idx) => (
-                    <li key={`${err.path}-${idx}`}>
-                      <code className="text-tiny">{err.path}</code>:{" "}
-                      <span>{err.message}</span>
-                    </li>
-                  ))}
-                {yamlValidation.errors.length > MAX_ERRORS_SHOWN && (
-                  <li>
-                    + {yamlValidation.errors.length - MAX_ERRORS_SHOWN} more
-                  </li>
-                )}
-              </ul>
-            </div>
           ) : null}
           {configError && (
-            <FieldError className="mt-1">{configError}</FieldError>
+            <FieldError className="mt-1 whitespace-pre-wrap">
+              {configError}
+            </FieldError>
           )}
         </div>
       </Field>
 
       <Field>
-        <FieldLabel>Attach to providers</FieldLabel>
+        <FieldLabel>Attach to providers (optional)</FieldLabel>
         <p className="text-default-500 text-tiny">
-          Pick the cloud providers that should use this configuration on their
-          next scan.
+          Pick the providers that should use this configuration on their next
+          scan. You can save it without any and attach providers later — it just
+          won&apos;t apply to a scan until one is attached.
           {lockedCount > 0 && (
             <>
               {" "}
@@ -274,6 +270,12 @@ function ScanConfigurationForm({
               form.setValue("provider_ids", values, { shouldValidate: true })
             }
             selectedValues={selectedProviders}
+            // Here an empty selection means "no providers attached" (the field
+            // is optional), not the filter default of "all providers". Override
+            // the filter-oriented labels so the control reads correctly.
+            placeholder="No providers selected"
+            emptySelectionLabel="No providers selected"
+            clearSelectionLabel="Clear selection"
             search={{
               placeholder: "Search providers...",
               emptyMessage: "No providers found.",
@@ -293,7 +295,11 @@ function ScanConfigurationForm({
         >
           Cancel
         </Button>
-        <Button type="submit" size="lg" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          size="lg"
+          disabled={isSubmitting || !yamlSyntax.isValid}
+        >
           {isSubmitting ? "Saving..." : isEdit ? "Update" : "Save"}
         </Button>
       </div>
@@ -307,7 +313,6 @@ export function ScanConfigurationEditor({
   richProviders,
   existingConfigs,
   config,
-  schema,
 }: ScanConfigurationEditorProps) {
   const isEdit = !!config;
 
@@ -319,6 +324,9 @@ export function ScanConfigurationEditor({
       }}
       title={isEdit ? "Edit Scan Configuration" : "New Scan Configuration"}
       size="2xl"
+      // The form is tall (YAML editor + provider selector); cap the height and
+      // let it scroll so it never overflows the viewport on short screens.
+      className="max-h-[90dvh] overflow-y-auto"
     >
       <ScanConfigurationForm
         key={config?.id ?? "new"}
@@ -326,7 +334,6 @@ export function ScanConfigurationEditor({
         richProviders={richProviders}
         existingConfigs={existingConfigs}
         config={config}
-        schema={schema}
       />
     </Modal>
   );
