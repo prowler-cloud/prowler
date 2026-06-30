@@ -20,6 +20,7 @@ import {
 import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
+import type { ProviderGroup } from "@/types/components";
 import type { ProviderProps } from "@/types/providers";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
@@ -32,6 +33,7 @@ import { useScansFilters } from "./use-scans-filters";
 
 interface ScansPageShellProps {
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   hasManageScansPermission: boolean;
   activeScanCount?: number;
   children: ReactNode;
@@ -42,6 +44,7 @@ interface ScansPageShellProps {
 
 export function ScansPageShell({
   providers,
+  providerGroups = [],
   hasManageScansPermission,
   activeScanCount = 0,
   children,
@@ -116,6 +119,7 @@ export function ScansPageShell({
       >
         <ScansFilterBar
           providers={providers}
+          providerGroups={providerGroups}
           activeTab={filters.activeTab}
           scheduleType={filters.scheduleType}
           scanStatus={filters.scanStatus}

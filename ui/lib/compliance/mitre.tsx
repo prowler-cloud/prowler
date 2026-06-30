@@ -71,6 +71,7 @@ export const mapComplianceData = (
       description: description,
       status: finalStatus,
       check_ids: checks,
+      invalid_config: requirementData.attributes.invalid_config || false,
       pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
       fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
       manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
@@ -133,6 +134,7 @@ export const toAccordionItems = (
             type=""
             name={requirement.name}
             status={requirement.status as FindingStatus}
+            invalidConfig={requirement.invalid_config}
           />
         ),
         content: (
