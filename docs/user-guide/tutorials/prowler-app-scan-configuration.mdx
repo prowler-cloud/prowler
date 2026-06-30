@@ -2,6 +2,10 @@
 title: 'Scan Configuration'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.32.0" />
+
 Scan Configuration lets you override Prowler's built-in scan defaults per tenant and per provider, directly from Prowler App — without editing files or redeploying. Each configuration is a small YAML document that changes how specific checks behave (thresholds, allowed values, retention windows, and so on), and you attach it to the cloud providers that should use it on their next scan.
 
 <Note>
