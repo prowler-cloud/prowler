@@ -5,10 +5,10 @@ import { createMuteRule } from "@/actions/mute-rules";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
-  FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES,
   FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageLoadedNote,
   type FindingTriageSummary,
+  isMutelistShortcutStatus,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
@@ -60,19 +60,7 @@ async function getJsonApi(path: `/${string}`) {
   return handleApiResponse(response);
 }
 
-async function patchJsonApi(path: `/${string}`, body: unknown) {
-  const headers = await getAuthHeaders({ contentType: false });
-  const response = await fetch(buildApiUrl(path), {
-    method: "PATCH",
-    headers: {
-      ...headers,
-      "Content-Type": JSON_API_CONTENT_TYPE,
-    },
-    body: JSON.stringify(body),
-  });
-
-  const result = await handleApiResponse(response);
-
+const throwIfApiError = (result: unknown) => {
   if (
     result &&
     typeof result === "object" &&
@@ -87,19 +75,35 @@ async function patchJsonApi(path: `/${string}`, body: unknown) {
         : "Finding triage request failed.",
     );
   }
+};
 
+async function patchJsonApi(path: `/${string}`, body: unknown) {
+  const headers = await getAuthHeaders({ contentType: false });
+  const response = await fetch(buildApiUrl(path), {
+    method: "PATCH",
+    headers: {
+      ...headers,
+      "Content-Type": JSON_API_CONTENT_TYPE,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const result = await handleApiResponse(response);
+  throwIfApiError(result);
   return result;
 }
 
-const isMutelistShortcutStatus = (
-  status:
-    | UpdateFindingTriageInput["status"]
-    | UpdateFindingTriageInput["previousStatus"],
-) =>
-  Boolean(status) &&
-  FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES.some(
-    (shortcutStatus) => shortcutStatus === status,
-  );
+async function deleteJsonApi(path: `/${string}`) {
+  const headers = await getAuthHeaders({ contentType: false });
+  const response = await fetch(buildApiUrl(path), {
+    method: "DELETE",
+    headers,
+  });
+
+  const result = await handleApiResponse(response);
+  throwIfApiError(result);
+  return result;
+}
 
 const shouldCreateTriageMuteRule = (
   input: UpdateFindingTriageInput,
@@ -233,10 +237,11 @@ export async function updateFindingTriage(input: UpdateFindingTriageInput) {
   }
 
   if (input.note !== undefined && input.notesCount > 0 && input.noteId) {
-    const noteResult = await patchJsonApi(
-      `${triagePath}/notes/${input.noteId}`,
-      buildFindingTriageNoteBody(input.note),
-    );
+    const notePath: `/${string}` = `${triagePath}/notes/${input.noteId}`;
+    const noteResult =
+      input.note === ""
+        ? await deleteJsonApi(notePath)
+        : await patchJsonApi(notePath, buildFindingTriageNoteBody(input.note));
 
     if (!input.status) {
       return noteResult;

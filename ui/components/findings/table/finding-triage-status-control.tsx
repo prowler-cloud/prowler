@@ -14,12 +14,13 @@ import {
 } from "@/components/shadcn/select/select";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
-  FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES,
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageManualStatus,
   type FindingTriageStatus,
   type FindingTriageSummary,
+  isManualStatus,
+  isMutelistShortcutStatus,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
@@ -36,20 +37,6 @@ const TRIAGE_STATUS_TONE = {
   false_positive: "risk",
   reopened: "warning",
 } as const satisfies Record<FindingTriageStatus, SelectStatusTone>;
-
-export const isManualStatus = (
-  status: FindingTriageStatus,
-): status is FindingTriageManualStatus => {
-  return FINDING_TRIAGE_MANUAL_STATUS_VALUES.some((value) => value === status);
-};
-
-export const isMutelistShortcutStatus = (
-  status: FindingTriageStatus,
-): boolean => {
-  return FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES.some(
-    (value) => value === status,
-  );
-};
 
 const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
 const MUTELIST_CONFIRMATION_COPY =

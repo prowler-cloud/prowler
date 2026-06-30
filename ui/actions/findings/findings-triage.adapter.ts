@@ -162,16 +162,14 @@ export function attachFindingTriageSummariesToResponse<
     return apiResponse;
   }
 
-  const triageSummaries = adaptFindingTriageSummariesResponse(
-    apiResponse,
-    options,
-  );
-
   return {
     ...apiResponse,
-    data: apiResponse.data.map((item, index) =>
+    data: apiResponse.data.map((item) =>
       isJsonApiResource(item)
-        ? { ...item, triage: triageSummaries[index] }
+        ? {
+            ...item,
+            triage: createSummary(item, normalizeTriageFields(item), options),
+          }
         : item,
     ),
   };

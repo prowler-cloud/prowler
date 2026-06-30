@@ -219,7 +219,7 @@ describe("findings triage actions", () => {
     );
   });
 
-  it("should send an empty body when clearing an existing note", async () => {
+  it("should delete an existing persisted note when it is cleared", async () => {
     // Given
     const { updateFindingTriage } = await importActions();
     handleApiResponseMock.mockResolvedValue({ data: { id: "note-1" } });
@@ -237,17 +237,14 @@ describe("findings triage actions", () => {
     // Then
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.test/api/v1/finding-triages/triage-1/notes/note-1",
-      expect.objectContaining({
-        method: "PATCH",
-        body: JSON.stringify({
-          data: {
-            type: "finding-triage-notes",
-            attributes: {
-              body: "",
-            },
-          },
-        }),
-      }),
+      {
+        method: "DELETE",
+        headers: { Authorization: "Bearer token" },
+      },
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "https://api.test/api/v1/finding-triages/triage-1/notes/note-1",
+      expect.objectContaining({ method: "PATCH" }),
     );
   });
 
@@ -350,6 +347,32 @@ describe("findings triage actions", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.test/api/v1/findings/finding%2Fstable%2Fuid/triage/notes/note-1",
       expect.objectContaining({ method: "PATCH" }),
+    );
+  });
+
+  it("should delete a virtual existing note when it is cleared", async () => {
+    // Given
+    const { updateFindingTriage } = await importActions();
+    handleApiResponseMock.mockResolvedValue({ data: { id: "note-1" } });
+
+    // When
+    await updateFindingTriage({
+      findingId: "finding-snapshot-id",
+      findingUid: "finding/stable/uid",
+      triageId: null,
+      notesCount: 1,
+      noteId: "note-1",
+      note: "",
+    });
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.test/api/v1/findings/finding%2Fstable%2Fuid/triage/notes/note-1",
+      expect.objectContaining({
+        method: "DELETE",
+        headers: { Authorization: "Bearer token" },
+      }),
     );
   });
 

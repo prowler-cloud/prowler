@@ -88,7 +88,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating new skills | `skill-creator` |
 | Creating or reviewing Django migrations | `django-migration-psql` |
 | Creating/modifying Prowler UI components | `prowler-ui` |
-| Creating/modifying Prowler UI components | `prowler-ui-component-standards` |
+| Working with Prowler UI modals, selects, buttons, or colors | `prowler-ui-component-standards` |
 | Creating/modifying models, views, serializers | `prowler-api` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Debug why a GitHub Actions job is failing | `prowler-ci` |

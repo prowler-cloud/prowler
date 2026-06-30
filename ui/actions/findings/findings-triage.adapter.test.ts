@@ -12,6 +12,7 @@ import {
   adaptFindingTriageDetailResponse,
   adaptFindingTriageSummariesResponse,
   adaptLatestFindingTriageNote,
+  attachFindingTriageSummariesToResponse,
 } from "./findings-triage.adapter";
 import {
   allProvisionalTriageStatusFindings,
@@ -187,6 +188,57 @@ describe("adaptFindingTriageSummariesResponse", () => {
       expect.objectContaining({
         findingId: "finding-1",
         status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      }),
+    );
+  });
+
+  it("should not shift attached summaries after malformed entries", () => {
+    // Given
+    const validWithoutTriage = {
+      id: "resource-row-1",
+      type: "finding-group-resources",
+      attributes: {
+        finding_id: "finding-1",
+        finding_uid: "prowler-finding-uid-1",
+        triage_status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+        triage_notes_count: 1,
+        status: "FAIL",
+      },
+    };
+    const laterValidWithoutTriage = {
+      id: "resource-row-2",
+      type: "finding-group-resources",
+      attributes: {
+        finding_id: "finding-2",
+        finding_uid: "prowler-finding-uid-2",
+        triage_status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+        triage_notes_count: 0,
+        status: "MUTED",
+      },
+    };
+    const input = {
+      data: [validWithoutTriage, null, laterValidWithoutTriage],
+    };
+
+    // When
+    const result = attachFindingTriageSummariesToResponse(input);
+
+    // Then
+    expect(result?.data[0]).toEqual(
+      expect.objectContaining({
+        triage: expect.objectContaining({
+          findingId: "finding-1",
+          status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+        }),
+      }),
+    );
+    expect(result?.data[1]).toBeNull();
+    expect(result?.data[2]).toEqual(
+      expect.objectContaining({
+        triage: expect.objectContaining({
+          findingId: "finding-2",
+          status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+        }),
       }),
     );
   });

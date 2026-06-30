@@ -2,10 +2,9 @@ import {
   type FindingTriageDetail,
   type FindingTriageManualStatus,
   type FindingTriageStatus,
+  isManualStatus,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
-
-import { isManualStatus } from "./finding-triage-status-control";
 
 export interface BuildFindingTriageUpdateInputParams {
   triage: FindingTriageDetail;

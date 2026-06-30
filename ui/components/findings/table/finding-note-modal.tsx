@@ -12,6 +12,7 @@ import {
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
   type FindingTriageStatus,
+  isMutelistShortcutStatus,
 } from "@/types/findings-triage";
 import type { ProviderType } from "@/types/providers";
 
@@ -19,7 +20,6 @@ import {
   FindingTriageStatusControl,
   FindingTriageStatusDot,
   type FindingTriageUpdateHandler,
-  isMutelistShortcutStatus,
 } from "./finding-triage-status-control";
 import { buildFindingTriageUpdateInput } from "./finding-triage-submit";
 

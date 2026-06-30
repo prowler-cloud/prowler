@@ -37,13 +37,22 @@ export const FINDING_TRIAGE_AUTOMATION_STATUS_VALUES = [
   FINDING_TRIAGE_STATUS.REOPENED,
 ] as const;
 
-export type FindingTriageAutomationStatus =
-  (typeof FINDING_TRIAGE_AUTOMATION_STATUS_VALUES)[number];
-
 export const FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES = [
   FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
   FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
 ] as const;
+
+export const isManualStatus = (
+  status: unknown,
+): status is FindingTriageManualStatus => {
+  return FINDING_TRIAGE_MANUAL_STATUS_VALUES.some((value) => value === status);
+};
+
+export const isMutelistShortcutStatus = (status: unknown): boolean => {
+  return FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES.some(
+    (value) => value === status,
+  );
+};
 
 export const FINDING_TRIAGE_DISABLED_REASON = {
   CLOUD_ONLY: "cloud_only",
@@ -58,9 +67,6 @@ export const FINDING_TRIAGE_ORIGIN = {
   TABLE: "table",
   MODAL: "modal",
 } as const;
-
-export type FindingTriageOrigin =
-  (typeof FINDING_TRIAGE_ORIGIN)[keyof typeof FINDING_TRIAGE_ORIGIN];
 
 export const FINDING_TRIAGE_NOTE_MAX_LENGTH = 500 as const;
 export const FINDING_TRIAGE_NOTE_PRIVACY_COPY =
