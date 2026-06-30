@@ -20,6 +20,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Google Cloud Platform Foundation Benchmark v5.0.0 compliance framework for the GCP provider [(#11714)](https://github.com/prowler-cloud/prowler/pull/11714)
 - CIS Kubernetes Benchmark v2.0.1 compliance framework for the Kubernetes provider [(#11722)](https://github.com/prowler-cloud/prowler/pull/11722)
 - CIS GitHub Benchmark v1.2.0 compliance framework for the GitHub provider [(#11719)](https://github.com/prowler-cloud/prowler/pull/11719)
+- `--scan-secrets-validate` flag and `aws.secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+
+### 🔄 Changed
+
+- Replaced the `detect-secrets` library with [Kingfisher](https://github.com/mongodb/kingfisher) as the engine for the secret-scanning checks; scans run fully offline by default and obvious placeholder values are no longer reported as findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Removed the `detect_secrets_plugins` configuration option, which is no longer used by the new secret-scanning engine [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 
 ### 🔄 Changed
 
@@ -27,9 +33,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
+- Report secret-scanning checks as `MANUAL` instead of `PASS` when the scanner fails (non-zero exit, timeout, unparseable output or missing binary), so a scanner failure is no longer indistinguishable from "no secrets found" [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Avoid a false `FAIL` in `cloudwatch_log_group_no_secrets_in_logs` when a multiline event's secrets are all removed by `secrets_ignore_patterns` during the rescan [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Key the `cloudwatch_log_group_no_secrets_in_logs` secret scan by log group ARN instead of name, so same-named log groups and streams in different regions no longer collide and reuse each other's findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
 - Azure PostgreSQL flexible server collection no longer drops the remaining servers in a subscription when one server fails to collect; the `connection_throttle.enable` parameter (removed in PostgreSQL 16+) is treated as absent only when the Azure SDK reports it as not found, so unexpected lookup failures are not silently reported as throttling disabled [(#11595)](https://github.com/prowler-cloud/prowler/pull/11595)
 - Azure `keyvault_logging_enabled` now accepts Key Vault diagnostic settings that enable the explicit `AuditEvent` category, avoiding false failures when Azure returns category-based logs without category groups [(#11660)](https://github.com/prowler-cloud/prowler/pull/11660)
+- GitHub default branch protection checks now evaluate repository rulesets in addition to classic branch protection, avoiding false positives for repositories that enforce protection through rulesets [(#11723)](https://github.com/prowler-cloud/prowler/pull/11723)
+- Okta, Alibaba Cloud and OpenStack scan-config sections are now validated against a registered schema instead of being silently accepted, so their configurable thresholds (session/idle timeouts, retention days, image-sharing and secret-scanning settings) log a warning and fall back to the built-in default whenever a value is out of range [(#11725)](https://github.com/prowler-cloud/prowler/pull/11725)
 
 ---
 

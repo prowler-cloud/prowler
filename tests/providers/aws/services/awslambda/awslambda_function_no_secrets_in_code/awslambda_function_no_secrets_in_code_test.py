@@ -20,7 +20,7 @@ LAMBDA_FUNCTION_RUNTIME = "nodejs4.3"
 LAMBDA_FUNCTION_ARN = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{LAMBDA_FUNCTION_NAME}"
 LAMBDA_FUNCTION_CODE_WITH_SECRETS = """
 def lambda_handler(event, context):
-        db_password = "test-password"
+        db_password = "Tr0ub4dor3xKq9vLmZ"
         print("custom log event")
         return event
 """
@@ -178,7 +178,7 @@ class Test_awslambda_function_no_secrets_in_code:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in Lambda function {LAMBDA_FUNCTION_NAME} code -> lambda_function.py: Secret Keyword on line 3."
+                == f"Potential secret found in Lambda function {LAMBDA_FUNCTION_NAME} code -> lambda_function.py: Generic Password on line 3."
             )
             assert result[0].resource_tags == []
 
@@ -380,3 +380,36 @@ class Test_awslambda_function_no_secrets_in_code:
                 == f"No secrets found in Lambda function {LAMBDA_FUNCTION_NAME} code."
             )
             assert result[0].resource_tags == []
+
+    def test_scan_failure_reports_manual_not_pass(self):
+        from prowler.lib.utils.utils import SecretsScanError
+
+        lambda_client = mock.MagicMock
+        lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
+        lambda_client._get_function_code = mock_get_function_codewith_secrets
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+                new=lambda_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.detect_secrets_scan_batch",
+                side_effect=SecretsScanError("Kingfisher exited with code 1"),
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
+                awslambda_function_no_secrets_in_code,
+            )
+
+            check = awslambda_function_no_secrets_in_code()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not scan" in result[0].status_extended

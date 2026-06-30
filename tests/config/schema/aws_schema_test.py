@@ -149,10 +149,11 @@ class Test_AWS_Detect_Secrets_Plugins:
             ]
         }
 
-    def test_plugin_missing_name_drops_whole_field(self):
-        # ``name`` is required by the upstream library.
+    def test_plugin_missing_name_passes_through(self):
+        # Plugin kwargs are intentionally passed through so runtime plugin
+        # validation remains owned by the upstream secret scanner.
         out = _validate({"detect_secrets_plugins": [{"limit": 6.0}]})
-        assert out == {}
+        assert out == {"detect_secrets_plugins": [{"limit": 6.0}]}
 
     def test_extra_plugin_kwargs_pass_through(self):
         # Plugins can have arbitrary extra params (extra="allow" on the
@@ -238,9 +239,5 @@ class Test_AWS_Full_Default_Config_Round_Trips:
             "threat_detection_enumeration_threshold": 0.3,
             "threat_detection_llm_jacking_threshold": 0.4,
             "ec2_high_risk_ports": [25, 110, 8088],
-            "detect_secrets_plugins": [
-                {"name": "AWSKeyDetector"},
-                {"name": "Base64HighEntropyString", "limit": 6.0},
-            ],
         }
         assert _validate(raw) == raw

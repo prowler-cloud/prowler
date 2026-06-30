@@ -6,7 +6,7 @@ LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
-ARG TRIVY_VERSION=0.71.0
+ARG TRIVY_VERSION=0.71.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
@@ -94,6 +94,18 @@ RUN uv sync --locked --compile-bytecode && \
 
 # Install PowerShell modules
 RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py
+
+USER root
+
+# Remove build-only packages from the final image after Python dependencies are installed.
+RUN apt-get purge -y --auto-remove \
+    build-essential \
+    pkg-config \
+    libzstd-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+USER prowler
 
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
