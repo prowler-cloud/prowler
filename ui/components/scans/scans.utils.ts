@@ -1,5 +1,18 @@
 import {
+  PROVIDER_IN_FILTER_KEY,
+  PROVIDER_TYPE_IN_FILTER_KEY,
+} from "@/lib/provider-filters";
+import {
+  buildProviderScheduleSummary,
+  describeScheduleCadence,
+  getNextScheduledRunInTimezone,
+  getScheduleCadenceParts,
+  isScheduleConfigured,
+} from "@/lib/schedules";
+import {
   DEFAULT_SCAN_JOBS_TAB,
+  type MetaDataProps,
+  type ProviderProps,
   SCAN_JOBS_TAB,
   SCAN_STATE,
   SCAN_TRIGGER,
@@ -9,6 +22,8 @@ import {
   type ScanProps,
   type ScanState,
   type ScanTrigger,
+  type ScheduleAttributes,
+  type ScheduleProps,
   type SearchParamsProps,
 } from "@/types";
 
@@ -136,7 +151,7 @@ export function getScanJobsTabFilters(
 
 export function getScanAlias(scan: ScanProps): string {
   if (scan.attributes.trigger === SCAN_TRIGGER.SCHEDULED)
-    return "scheduled scan";
+    return "Scheduled Scan";
   return scan.attributes.name?.trim() || "-";
 }
 
@@ -177,6 +192,233 @@ export function getScanStatusFilterOptions(
       label: getScanStatusLabel(state),
     })),
   ];
+}
+
+export interface BuildPendingScheduleRowsParams {
+  providers: ProviderProps[];
+  schedulesByProviderId: Record<string, ScheduleAttributes>;
+  /** Providers that already have a real `state=scheduled` Scan row. */
+  coveredProviderIds: Set<string>;
+  now: Date;
+}
+
+interface AppendPendingScheduleRowsToPageParams
+  extends BuildPendingScheduleRowsParams {
+  scans: ScanProps[];
+  meta?: MetaDataProps;
+  page: number;
+  pageSize: number;
+}
+
+/**
+ * Synthesizes Scheduled-tab rows for configured schedules without a Scan row
+ * yet (the backend only creates one after each run).
+ */
+export function buildPendingScheduleRows({
+  providers,
+  schedulesByProviderId,
+  coveredProviderIds,
+  now,
+}: BuildPendingScheduleRowsParams): ScanProps[] {
+  return providers.flatMap((provider) => {
+    if (coveredProviderIds.has(provider.id)) return [];
+
+    const schedule = schedulesByProviderId[provider.id];
+    if (!schedule || !isScheduleConfigured(schedule) || !schedule.scan_enabled)
+      return [];
+
+    // Prefer the server-computed next fire time; fall back to a client estimate.
+    const nextScanAt =
+      schedule.next_scan_at ??
+      getNextScheduledRunInTimezone(schedule, now)?.toISOString() ??
+      null;
+
+    return [
+      {
+        type: "scans" as const,
+        id: `pending-schedule-${provider.id}`,
+        attributes: {
+          name: "",
+          trigger: SCAN_TRIGGER.SCHEDULED,
+          state: SCAN_STATE.SCHEDULED,
+          unique_resource_count: 0,
+          progress: 0,
+          scanner_args: null,
+          duration: null,
+          started_at: null,
+          inserted_at: now.toISOString(),
+          completed_at: null,
+          scheduled_at: nextScanAt,
+          next_scan_at: null,
+        },
+        relationships: {
+          provider: { data: { type: "providers", id: provider.id } },
+          // No Celery task behind synthetic rows.
+          task: { data: { type: "tasks", id: "" } },
+        },
+        providerInfo: {
+          provider: provider.attributes.provider,
+          uid: provider.attributes.uid,
+          alias: provider.attributes.alias,
+        },
+        pendingSchedule: {
+          summary: describeScheduleCadence(schedule),
+          cadence: getScheduleCadenceParts(schedule).cadence,
+          nextScanAt,
+          lastScanAt: schedule.last_scan_at ?? null,
+        },
+      },
+    ];
+  });
+}
+
+export function getProviderIdsFromScans(scans: ScanProps[]): Set<string> {
+  return new Set(
+    scans
+      .map((scan) => scan.relationships?.provider?.data?.id)
+      .filter((id): id is string => Boolean(id)),
+  );
+}
+
+export function appendPendingScheduleRowsToPage({
+  scans,
+  meta,
+  page,
+  pageSize,
+  providers,
+  schedulesByProviderId,
+  coveredProviderIds,
+  now,
+}: AppendPendingScheduleRowsToPageParams): {
+  data: ScanProps[];
+  meta?: MetaDataProps;
+} {
+  // The API paginates real scheduled scans, while pending rows come from
+  // configured schedules without a scan yet. Reconcile both sources here so the
+  // rendered rows and pagination metadata describe the same combined list.
+  const pendingRows = buildPendingScheduleRows({
+    providers,
+    schedulesByProviderId,
+    coveredProviderIds,
+    now,
+  });
+  const safePageSize = Math.max(1, pageSize);
+  const realCount = meta?.pagination.count ?? scans.length;
+  const pendingStart = Math.max(0, (page - 1) * safePageSize - realCount);
+  const pendingSlots = Math.max(0, safePageSize - scans.length);
+  const pagePendingRows = pendingRows.slice(
+    pendingStart,
+    pendingStart + pendingSlots,
+  );
+  const combinedCount = realCount + pendingRows.length;
+  const combinedPages =
+    combinedCount === 0 ? 0 : Math.ceil(combinedCount / safePageSize);
+
+  return {
+    data: [...scans, ...pagePendingRows],
+    meta: meta
+      ? {
+          ...meta,
+          pagination: {
+            ...meta.pagination,
+            page,
+            count: combinedCount,
+            pages: combinedPages,
+          },
+        }
+      : undefined,
+  };
+}
+
+// Provider filters the `/schedules` endpoint accepts (by id / type). The scans
+// filter-bar's uid filter is not supported there, so it is intentionally dropped.
+const SCHEDULE_FORWARDED_FILTER_KEYS = [
+  PROVIDER_IN_FILTER_KEY,
+  PROVIDER_TYPE_IN_FILTER_KEY,
+] as const;
+
+/** Provider filters forwarded to `/schedules` so the backend applies them and pagination stays native. */
+export function pickScheduleProviderFilters(
+  searchParams: SearchParamsProps,
+): Record<string, string | string[]> {
+  const filters: Record<string, string | string[]> = {};
+  for (const key of SCHEDULE_FORWARDED_FILTER_KEYS) {
+    const value = searchParams[key];
+    if (typeof value === "string" || Array.isArray(value)) {
+      filters[key] = value;
+    }
+  }
+  return filters;
+}
+
+interface SchedulesPageResult {
+  data?: ScheduleProps[] | null;
+  included?: { type: string; id: string }[];
+  meta?: MetaDataProps;
+  error?: unknown;
+}
+
+/** Builds Scheduled-tab rows + meta from a `getSchedulesPage` result (advanced/Cloud path). */
+export function buildScheduledTabRows(
+  result: SchedulesPageResult | null | undefined,
+  now: Date,
+): { data: ScanProps[]; meta?: MetaDataProps } {
+  if (!result || result.error) return { data: [] };
+
+  const providerById = new Map(
+    ((result.included ?? []) as ProviderProps[])
+      .filter((resource) => resource.type === "providers")
+      .map((provider) => [provider.id, provider]),
+  );
+
+  const data = (result.data ?? []).map((schedule) =>
+    mapScheduleToScanRow(schedule, providerById.get(schedule.id), now),
+  );
+
+  return { data, meta: result.meta };
+}
+
+/** Maps a `/schedules` resource (1:1 with a provider) to the Scheduled-tab row shape. */
+export function mapScheduleToScanRow(
+  schedule: ScheduleProps,
+  provider: ProviderProps | undefined,
+  now: Date,
+): ScanProps {
+  // Reuse the canonical cadence + next/last-run summary used across the app.
+  const summary = buildProviderScheduleSummary(schedule.attributes, now);
+
+  return {
+    type: "scans",
+    id: `schedule-${schedule.id}`,
+    attributes: {
+      name: "",
+      trigger: SCAN_TRIGGER.SCHEDULED,
+      state: SCAN_STATE.SCHEDULED,
+      unique_resource_count: 0,
+      progress: 0,
+      scanner_args: null,
+      duration: null,
+      started_at: null,
+      inserted_at: now.toISOString(),
+      completed_at: null,
+      scheduled_at: summary.nextScanAt ?? null,
+      next_scan_at: null,
+    },
+    relationships: {
+      // The schedule resource id IS the provider id.
+      provider: { data: { type: "providers", id: schedule.id } },
+      // No Celery task behind a schedule row.
+      task: { data: { type: "tasks", id: "" } },
+    },
+    providerInfo: provider
+      ? {
+          provider: provider.attributes.provider,
+          uid: provider.attributes.uid,
+          alias: provider.attributes.alias,
+        }
+      : undefined,
+    pendingSchedule: summary,
+  };
 }
 
 function getNumericValue(

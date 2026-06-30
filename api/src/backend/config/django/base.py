@@ -3,6 +3,7 @@ from datetime import timedelta
 from config.custom_logging import LOGGING  # noqa
 from config.env import BASE_DIR, env  # noqa
 from config.settings.celery import *  # noqa
+from config.settings.eventstream import *  # noqa
 from config.settings.partitions import *  # noqa
 from config.settings.sentry import *  # noqa
 from config.settings.social_login import *  # noqa
@@ -44,9 +45,11 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "rest_framework.authtoken",
     "drf_simple_apikey",
+    "django_eventstream",
 ]
 
 MIDDLEWARE = [
+    "api.middleware.CloseDBConnectionsMiddleware",
     "django_guid.middleware.guid_middleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -136,6 +139,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 DJANGO_GUID = {
     "GUID_HEADER_NAME": "Transaction-ID",
@@ -306,6 +310,11 @@ SESSION_COOKIE_SECURE = True
 ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
 )  # 48h
+
+# Selects where the persistent attack-paths graph is stored. The scan
+# temporary database is always Neo4j; only the sink is configurable.
+# Valid values: "neo4j" (default, OSS and local dev), "neptune" (hosted).
+ATTACK_PATHS_SINK_DATABASE = env.str("ATTACK_PATHS_SINK_DATABASE", default="neo4j")
 
 # Orphan task recovery feature flags. The master switch is OFF by default, so task
 # recovery is opt-in; enable it with DJANGO_TASK_RECOVERY_ENABLED=true. The per-group

@@ -14,6 +14,57 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_securitygroup_not_used:
+    def test_ec2_sg_used_by_lambda_outside_selected_analysis_limit(self):
+        from prowler.providers.aws.services.ec2.ec2_service import SecurityGroup
+
+        sg_id = "sg-limited-out"
+        sg_name = "lambda-sg"
+        security_group = SecurityGroup(
+            name=sg_name,
+            region=AWS_REGION_US_EAST_1,
+            arn=f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{sg_id}",
+            id=sg_id,
+            vpc_id="vpc-test",
+            associated_sgs=[],
+            network_interfaces=[],
+            ingress_rules=[],
+            egress_rules=[],
+            tags=[],
+        )
+        ec2_client = mock.MagicMock()
+        ec2_client.security_groups = {security_group.arn: security_group}
+        awslambda_client = mock.MagicMock()
+        awslambda_client.functions = {}
+        awslambda_client.security_groups_in_use = {sg_id}
+        aws_provider = set_mocked_aws_provider()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
+                new=ec2_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
+                new=awslambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
+                ec2_securitygroup_not_used,
+            )
+
+            result = ec2_securitygroup_not_used().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == f"Security group {sg_name} ({sg_id}) it is being used."
+        )
+
     @mock_aws
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources

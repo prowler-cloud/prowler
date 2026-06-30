@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_user_with_recent_sign_in",
+  "CheckTitle": "Enabled user has signed in within the last 90 days",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Microsoft Entra ID** enabled user accounts are evaluated for **recent sign-in activity**. Accounts that have not signed in for more than 90 days are flagged as stale. Stale accounts indicate orphaned identities that may have been abandoned after personnel changes, project completions, or role transitions without proper deprovisioning.",
+  "Risk": "Stale accounts retain **role assignments** and **group memberships**. Attackers target dormant accounts via **credential stuffing** and **password spraying** because owners are unlikely to notice anomalous activity. Compromise enables **lateral movement**, **data exfiltration**, and **persistence** while evading detection tuned to active users.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/signinactivity",
+    "https://learn.microsoft.com/en-us/entra/identity/monitoring-health/concept-sign-ins"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az rest --method patch --url https://graph.microsoft.com/v1.0/users/<user_id> --body '{\"accountEnabled\":false}'",
+      "NativeIaC": "",
+      "Other": "1. Sign in to Microsoft Entra admin center\n2. Go to Identity > Users > All users\n3. Add filter: Sign-in activity > Last interactive sign-in date is before <90 days ago>\n4. Review each stale account with the account owner or manager\n5. Disable accounts confirmed as no longer needed\n6. After a grace period, delete disabled accounts\n7. Establish a recurring access review to automate this process",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement **automated access reviews** in Entra ID to periodically review and remove stale accounts. Configure reviews to run quarterly, targeting all users or specific groups. Set auto-apply to disable accounts that are not confirmed by reviewers. For immediate remediation, filter users by last sign-in date and disable accounts inactive for more than 90 days after confirming with managers.",
+      "Url": "https://hub.prowler.com/check/entra_user_with_recent_sign_in"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The signInActivity resource requires Microsoft Entra ID P1 or P2 license. Tenants without this license will not have sign-in activity data available, and all users will be reported as never having signed in."
+}

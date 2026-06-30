@@ -1133,6 +1133,17 @@
         "defender_ensure_defender_for_dns_is_on",
         "sqlserver_tde_encryption_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
+      ],
       "Attributes": [
         {
           "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
@@ -1163,6 +1174,17 @@
         "network_ssh_internet_access_restricted",
         "network_udp_internet_access_restricted",
         "network_watcher_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ],
       "Attributes": [
         {
@@ -1886,6 +1908,17 @@
         "storage_ensure_minimum_tls_version_12",
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ],
       "Attributes": [
         {

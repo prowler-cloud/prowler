@@ -59,6 +59,14 @@
         "cloudwatch_log_metric_filter_security_group_changes",
         "cloudwatch_log_metric_filter_unauthorized_api_calls",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -85,6 +93,14 @@
         "kms_cmk_rotation_enabled",
         "redshift_cluster_audit_logging",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

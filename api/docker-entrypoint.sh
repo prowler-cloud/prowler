@@ -21,13 +21,19 @@ apply_fixtures() {
 }
 
 start_dev_server() {
-  echo "Starting the development server..."
-  exec uv run python manage.py runserver 0.0.0.0:"${DJANGO_PORT:-8080}"
+  echo "Starting the development server (Gunicorn ASGI, debug + reload)..."
+  # Same server/worker as prod (config.asgi via the native `asgi` worker), so
+  # SSE streams run on the event loop exactly as they do in production. DEBUG is
+  # on so guniconf's `reload = DEBUG` hot-reloads edited code (and flips
+  # `preload_app` off so reload actually takes).
+  export DJANGO_DEBUG="${DJANGO_DEBUG:-True}"
+  export DJANGO_BIND_ADDRESS="${DJANGO_BIND_ADDRESS:-0.0.0.0}"
+  exec uv run gunicorn -c config/guniconf.py config.asgi:application
 }
 
 start_prod_server() {
   echo "Starting the Gunicorn server..."
-  exec uv run gunicorn -c config/guniconf.py config.wsgi:application
+  exec uv run gunicorn -c config/guniconf.py config.asgi:application
 }
 
 resolve_worker_hostname() {
