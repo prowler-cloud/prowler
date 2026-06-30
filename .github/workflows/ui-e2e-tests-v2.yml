@@ -238,7 +238,23 @@ jobs:
 
       - name: Run E2E tests
         working-directory: ./ui
+        env:
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPOSITORY: ${{ github.repository }}
         run: |
+          if [[ -z "${E2E_ADMIN_USER}" || -z "${E2E_ADMIN_PASSWORD}" || -z "${E2E_NEW_USER_PASSWORD}" ]]; then
+            if [[ "${PR_HEAD_REPOSITORY}" != "${BASE_REPOSITORY}" ]]; then
+              echo "Required E2E secrets are unavailable for forked PRs. Skipping E2E tests for this PR context."
+              echo "## E2E Tests Skipped" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "Required E2E secrets are unavailable for forked PRs, so auth/signup E2E tests cannot run." >> $GITHUB_STEP_SUMMARY
+              exit 0
+            fi
+
+            echo "Required E2E secrets are missing for an internal PR context."
+            exit 1
+          fi
+
           if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
             echo "Running ALL E2E tests..."
             pnpm run test:e2e
