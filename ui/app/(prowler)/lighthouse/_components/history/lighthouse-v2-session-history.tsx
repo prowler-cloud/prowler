@@ -88,23 +88,33 @@ export function LighthouseV2SessionHistory({
           <div className="grid min-w-0">
             {visibleSessions.map((session) => {
               const sessionTitle = session.title || "Untitled chat";
+              const isActive = activeSessionId === session.id;
 
               return (
                 <div
                   key={session.id}
                   className={cn(
                     "hover:bg-bg-neutral-tertiary group relative flex min-w-0 items-center overflow-hidden rounded-[8px] transition-colors",
-                    activeSessionId === session.id && "bg-bg-neutral-tertiary",
+                    isActive &&
+                      "bg-bg-neutral-tertiary before:bg-button-primary before:absolute before:top-1/2 before:left-0 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full",
                   )}
                 >
                   <Tooltip delayDuration={100}>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-[8px] px-2 py-2 text-left text-sm"
+                        className={cn(
+                          "flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-[8px] px-2 py-2 text-left text-sm",
+                          isActive && "text-text-neutral-primary",
+                        )}
                         onClick={() => onOpenSession(session.id)}
                       >
-                        <span className="min-w-0 flex-1 truncate">
+                        <span
+                          className={cn(
+                            "min-w-0 flex-1 truncate",
+                            isActive && "font-medium",
+                          )}
+                        >
                           {sessionTitle}
                         </span>
                         <span className="text-text-neutral-tertiary min-w-[3.25rem] shrink-0 text-right text-xs whitespace-nowrap transition-opacity group-focus-within:opacity-0 group-hover:opacity-0">

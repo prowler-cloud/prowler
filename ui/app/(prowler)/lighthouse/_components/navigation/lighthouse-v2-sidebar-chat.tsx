@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageSquare, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -25,6 +25,8 @@ import { LighthouseV2SessionHistory } from "../history";
 
 export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeSessionId = searchParams.get("session");
   const [sessions, setSessions] = useState<LighthouseV2Session[]>([]);
   const [search, setSearch] = useState("");
 
@@ -93,6 +95,7 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
       <LighthouseV2SessionHistory
         compact
         sessions={sessions}
+        activeSessionId={activeSessionId}
         search={search}
         onSearchChange={handleSearchChange}
         onNewSession={handleNewSession}
