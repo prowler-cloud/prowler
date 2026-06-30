@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -181,6 +181,29 @@ describe("LighthouseV2ChatPage", () => {
     expect(
       screen.getByRole("link", { name: "Lighthouse AI settings" }),
     ).toHaveAttribute("href", "/lighthouse/settings");
+  });
+
+  it("shows the current OpenAI model without a selector when OpenAI is the only connected provider", () => {
+    // Given / When
+    renderPage({
+      configurations: [
+        { ...configurations[0], defaultModel: "gpt-5.1", connected: true },
+        { ...configurations[1], connected: false },
+      ],
+      modelsByProvider: {
+        openai: [model("gpt-5.1", "GPT-5.1")],
+        bedrock: [model("anthropic.claude-4")],
+        "openai-compatible": [model("llama-3.3")],
+      },
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("combobox", { name: "Model" }),
+    ).not.toBeInTheDocument();
+    const currentModel = screen.getByLabelText("Current model: OpenAI GPT-5.1");
+    expect(within(currentModel).getByText("OpenAI")).toBeInTheDocument();
+    expect(within(currentModel).getByText("GPT-5.1")).toBeInTheDocument();
   });
 
   it("shows model names in the selector while keeping model ids for persistence", async () => {

@@ -50,6 +50,7 @@ import {
 } from "@/components/shadcn/combobox/combobox";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
+import { ProviderIcon } from "../config/provider-icon";
 import { ChatComposerPanel } from "./composer";
 import { ChatEmptyState } from "./empty-state";
 import { MessageBubble } from "./message-bubble";
@@ -118,6 +119,21 @@ export function LighthouseV2ChatPage({
     modelsByProvider,
     supportedProviders,
   );
+  const showStaticOpenAIModel =
+    isOnlyConnectedProvider(
+      connectedConfigurations,
+      LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI,
+    ) &&
+    selectedModelSelection?.providerType === LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI;
+  const selectedModelLabel = selectedModelSelection
+    ? getModelSelectionLabel(selectedModelSelection, modelsByProvider)
+    : "No model selected";
+  const selectedProviderName = selectedModelSelection
+    ? getProviderDisplayName(
+        selectedModelSelection.providerType,
+        supportedProviders,
+      )
+    : "OpenAI";
   const selectedModelValue = selectedModelSelection
     ? buildLighthouseV2ModelSelectionValue(
         selectedModelSelection.providerType,
@@ -386,7 +402,13 @@ export function LighthouseV2ChatPage({
     canSend,
     input,
     isStreaming: Boolean(streamState.activeTaskId),
-    modelSelector: (
+    modelSelector: showStaticOpenAIModel ? (
+      <CurrentModelDisplay
+        provider={selectedModelSelection.providerType}
+        providerName={selectedProviderName}
+        modelName={selectedModelLabel}
+      />
+    ) : (
       <div className="min-w-0 flex-1 sm:max-w-48">
         <Combobox
           aria-label="Model"
@@ -456,6 +478,34 @@ function replaceLighthouseV2SessionUrl(sessionId: string | null) {
     : "/lighthouse";
 
   window.history.replaceState(window.history.state, "", url);
+}
+
+function CurrentModelDisplay({
+  provider,
+  providerName,
+  modelName,
+}: {
+  provider: LighthouseV2ProviderType;
+  providerName: string;
+  modelName: string;
+}) {
+  return (
+    <div
+      aria-label={`Current model: ${providerName} ${modelName}`}
+      className="border-border-neutral-secondary bg-bg-neutral-secondary flex h-8 max-w-48 min-w-0 items-center gap-2 rounded-lg border px-2.5 text-sm"
+    >
+      <ProviderIcon
+        provider={provider}
+        className="text-text-neutral-secondary size-3.5 shrink-0"
+      />
+      <span className="text-text-neutral-tertiary shrink-0">
+        {providerName}
+      </span>
+      <span className="text-text-neutral-primary min-w-0 truncate font-medium">
+        {modelName}
+      </span>
+    </div>
+  );
 }
 
 // Fixed precedence used to pick which connected provider opens the chat. Any
@@ -534,4 +584,38 @@ function buildModelSelectorGroups(
   }
 
   return groups;
+}
+
+function isOnlyConnectedProvider(
+  connectedConfigurations: LighthouseV2Configuration[],
+  providerType: LighthouseV2ProviderType,
+) {
+  return (
+    connectedConfigurations.length === 1 &&
+    connectedConfigurations[0]?.providerType === providerType
+  );
+}
+
+function getModelSelectionLabel(
+  selection: LighthouseV2ModelSelection,
+  modelsByProvider: Record<
+    LighthouseV2ProviderType,
+    LighthouseV2SupportedModel[]
+  >,
+) {
+  return (
+    modelsByProvider[selection.providerType]?.find(
+      (model) => model.id === selection.modelId,
+    )?.name ?? selection.modelId
+  );
+}
+
+function getProviderDisplayName(
+  providerType: LighthouseV2ProviderType,
+  supportedProviders: LighthouseV2SupportedProvider[],
+) {
+  return (
+    supportedProviders.find((provider) => provider.id === providerType)?.name ??
+    providerType
+  );
 }
