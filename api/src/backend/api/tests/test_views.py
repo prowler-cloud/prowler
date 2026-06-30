@@ -4754,6 +4754,64 @@ class TestAttackPathsScanViewSet:
         assert first_attributes["provider_type"] == provider.provider
         assert first_attributes["provider_uid"] == provider.uid
 
+    def test_attack_paths_scans_list_prefers_active_sink_scan_on_rollback(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        settings,
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        provider = providers_fixture[0]
+
+        neo4j_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neo4j",
+        )
+        neptune_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neptune",
+        )
+
+        response = authenticated_client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert str(neo4j_scan.id) in ids
+        assert str(neptune_scan.id) not in ids
+
+    def test_attack_paths_scans_list_falls_back_when_active_sink_has_no_scan(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        settings,
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        provider = providers_fixture[0]
+
+        legacy_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neo4j",
+        )
+
+        response = authenticated_client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert str(legacy_scan.id) in ids
+
     def test_attack_paths_scans_list_respects_provider_group_visibility(
         self,
         authenticated_client_no_permissions_rbac,
@@ -4874,7 +4932,8 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_queries.assert_called_once_with(provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        mock_get_queries.assert_called_once_with(provider.provider, is_migrated=False)
         payload = response.json()["data"]
         assert len(payload) == 1
         assert payload[0]["id"] == "aws-rds"
@@ -4974,7 +5033,8 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_query.assert_called_once_with("aws-rds")
+        # TODO: drop the is_migrated argument after Neptune cutover
+        mock_get_query.assert_called_once_with("aws-rds", is_migrated=False)
         mock_get_db_name.assert_called_once_with(attack_paths_scan.provider.tenant_id)
         provider_id = str(attack_paths_scan.provider_id)
         mock_prepare.assert_called_once_with(
@@ -4988,6 +5048,7 @@ class TestAttackPathsScanViewSet:
             query_definition,
             prepared_parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         result = response.json()["data"]
         attributes = result["attributes"]
@@ -5339,6 +5400,7 @@ class TestAttackPathsScanViewSet:
             "db-test",
             "MATCH (n) RETURN n",
             str(attack_paths_scan.provider_id),
+            scan=attack_paths_scan,
         )
         attributes = response.json()["data"]["attributes"]
         assert len(attributes["nodes"]) == 1
@@ -5875,9 +5937,10 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_schema.assert_called_once_with(
-            "db-test", str(attack_paths_scan.provider_id)
-        )
+        mock_get_schema.assert_called_once()
+        schema_args = mock_get_schema.call_args[0]
+        assert schema_args[:2] == ("db-test", str(attack_paths_scan.provider_id))
+        assert schema_args[2].id == attack_paths_scan.id
         attributes = response.json()["data"]["attributes"]
         assert attributes["provider"] == "aws"
         assert attributes["cartography_version"] == "0.129.0"

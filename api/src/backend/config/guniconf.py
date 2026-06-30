@@ -83,12 +83,32 @@ def _warm_compliance_caches_in_background():
 
 
 def post_fork(_server, worker):
-    """Warm compliance caches after each worker fork.
+    """Re-initialize attack-paths drivers and warm compliance caches per worker.
 
-    Warm compliance caches in a background thread so the worker becomes ready
-    immediately. A request for a not-yet-warmed provider lazily loads just that
-    provider, which stays well under the worker timeout.
+    Neo4j / Neptune drivers spawn background IO threads that do not survive
+    ``fork()``. When the gunicorn master runs with ``preload_app=True``, the
+    child inherits driver objects whose pool references dead threads and
+    hangs on the first ``pool.acquire`` call until the watchdog kills the
+    worker. Re-initializing per worker guarantees each child owns its own
+    live threads. See GUNICORN_WORKER_TIMEOUTS_ANALYSIS.md for detail.
+
+    Compliance caches are then warmed in a background thread so the worker
+    becomes ready immediately. A request for a not-yet-warmed provider lazily
+    loads just that provider, which stays well under the worker timeout.
     """
+    from api.attack_paths import database as graph_database
+
+    try:
+        graph_database.close_driver()
+    except Exception:  # pragma: no cover - best-effort cleanup
+        gunicorn_logger.debug(
+            "Failed to close inherited Neo4j driver in post_fork for worker pid=%s",
+            worker.pid,
+            exc_info=True,
+        )
+    graph_database.init_driver()
+    gunicorn_logger.info(f"Attack-paths drivers initialized for worker {worker.pid}")
+
     threading.Thread(
         target=_warm_compliance_caches_in_background,
         name="warm-compliance-caches",

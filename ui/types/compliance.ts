@@ -41,6 +41,8 @@ export interface Requirement {
   fail: number;
   manual: number;
   check_ids: string[];
+  // True when the FAIL is caused solely by an invalid scan config.
+  invalid_config?: boolean;
   // This is to allow any key to be added to the requirement object
   // because each compliance has different keys
   [key: string]: string | string[] | number | boolean | object[] | undefined;
@@ -395,6 +397,19 @@ export interface DORARequirement extends Requirement {
   article_title: DORAAttributesMetadata["ArticleTitle"];
 }
 
+export interface CISControlsAttributesMetadata {
+  Section: string;
+  Function: string | null;
+  AssetType: string | null;
+  ImplementationGroups: string[] | null;
+}
+
+export interface CISControlsRequirement extends Requirement {
+  function?: string;
+  asset_type?: string;
+  implementation_groups?: string[];
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -419,6 +434,7 @@ export interface AttributesItemData {
         | ASDEssentialEightAttributesMetadata[]
         | OktaIDaaSStigAttributesMetadata[]
         | DORAAttributesMetadata[]
+        | CISControlsAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure
@@ -440,6 +456,8 @@ export interface RequirementItemData {
     version: string;
     description: string;
     status: RequirementStatus;
+    // True when the FAIL is caused solely by an invalid scan config.
+    invalid_config?: boolean;
     // For Threat compliance:
     passed_findings?: number;
     total_findings?: number;
