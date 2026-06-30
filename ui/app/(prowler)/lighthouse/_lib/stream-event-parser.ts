@@ -37,12 +37,6 @@ export function parseStreamEvent(
       messageId: readString(data, "message_id"),
     };
   }
-  if (type === LIGHTHOUSE_V2_SSE_EVENT.RUN_CANCELLED) {
-    return {
-      type,
-      taskId: readString(data, "task_id"),
-    };
-  }
   return {
     type: LIGHTHOUSE_V2_SSE_EVENT.ERROR,
     code: readString(data, "code"),

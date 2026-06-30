@@ -112,22 +112,6 @@ describe("event-reducer", () => {
     expect(next.activeTaskId).toBeNull();
   });
 
-  it("should mark run cancellation as terminal without error", () => {
-    // Given
-    const state = createInitialLighthouseV2StreamState("task-1");
-
-    // When
-    const next = reduceLighthouseV2Event(state, {
-      type: "run.cancelled",
-      taskId: "task-1",
-    });
-
-    // Then
-    expect(next.status).toBe("cancelled");
-    expect(next.error).toBeUndefined();
-    expect(next.activeTaskId).toBeNull();
-  });
-
   it("should store terminal errors", () => {
     // Given
     const state = createInitialLighthouseV2StreamState("task-1");

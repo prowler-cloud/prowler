@@ -25,7 +25,6 @@ interface ChatComposerPanelProps {
   modelSelector: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
-  onStop: () => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
 }
@@ -87,9 +86,6 @@ interface ChatComposerProps {
   modelSelector: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
-  // Kept on the contract but unused for now: the backend can't cancel a run yet,
-  // so the stop control is replaced by a non-interactive spinner.
-  onStop: () => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
 }

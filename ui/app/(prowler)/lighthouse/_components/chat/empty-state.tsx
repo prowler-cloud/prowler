@@ -43,7 +43,6 @@ interface ChatEmptyStateProps {
   modelSelector: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
-  onStop: () => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
 }

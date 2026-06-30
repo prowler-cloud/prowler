@@ -3,7 +3,6 @@ export const LIGHTHOUSE_V2_SSE_EVENT = {
   TOOL_CALL_START: "tool_call.start",
   TOOL_CALL_END: "tool_call.end",
   MESSAGE_END: "message.end",
-  RUN_CANCELLED: "run.cancelled",
   ERROR: "error",
   DISCONNECT: "disconnect",
 } as const;
@@ -33,11 +32,6 @@ export interface LighthouseV2MessageEndEvent {
   messageId: string;
 }
 
-export interface LighthouseV2RunCancelledEvent {
-  type: typeof LIGHTHOUSE_V2_SSE_EVENT.RUN_CANCELLED;
-  taskId: string;
-}
-
 export interface LighthouseV2ErrorEvent {
   type: typeof LIGHTHOUSE_V2_SSE_EVENT.ERROR;
   code: string;
@@ -53,6 +47,5 @@ export type LighthouseV2SSEEvent =
   | LighthouseV2ToolCallStartEvent
   | LighthouseV2ToolCallEndEvent
   | LighthouseV2MessageEndEvent
-  | LighthouseV2RunCancelledEvent
   | LighthouseV2ErrorEvent
   | LighthouseV2DisconnectEvent;

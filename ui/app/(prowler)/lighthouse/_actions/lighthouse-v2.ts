@@ -12,13 +12,11 @@ import type {
   LighthouseV2Session,
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
-  LighthouseV2Task,
 } from "@/app/(prowler)/lighthouse/_types";
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 import {
-  buildLighthouseV2CancelRunPayload,
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
   buildLighthouseV2MessagePayload,
@@ -263,21 +261,6 @@ export async function sendLighthouseV2Message(
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-export async function cancelLighthouseV2Run(
-  sessionId: string,
-  taskId: string,
-): Promise<LighthouseV2ActionResult<LighthouseV2Task>> {
-  return mutateSingle(
-    `/lighthouse/sessions/${encodeURIComponent(sessionId)}/cancel-run`,
-    {
-      method: "POST",
-      body: JSON.stringify(buildLighthouseV2CancelRunPayload(taskId)),
-    },
-    mapLighthouseV2Task,
-    "/lighthouse",
-  );
 }
 
 async function getCollection<TResource, TOutput>(

@@ -3,7 +3,6 @@
 import { type SubmitEvent, useRef, useState } from "react";
 
 import {
-  cancelLighthouseV2Run,
   createLighthouseV2Session,
   getLighthouseV2Messages,
   sendLighthouseV2Message,
@@ -151,7 +150,6 @@ export function LighthouseV2ChatPage({
   ) => {
     if (
       event.type === LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_END ||
-      event.type === LIGHTHOUSE_V2_SSE_EVENT.RUN_CANCELLED ||
       event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR
     ) {
       closeStream();
@@ -194,11 +192,6 @@ export function LighthouseV2ChatPage({
     );
     source.addEventListener("message.end", (event) =>
       applyEvent(parseStreamEvent(event, LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_END)),
-    );
-    source.addEventListener("run.cancelled", (event) =>
-      applyEvent(
-        parseStreamEvent(event, LIGHTHOUSE_V2_SSE_EVENT.RUN_CANCELLED),
-      ),
     );
     source.addEventListener("error", (event) => {
       if (event instanceof MessageEvent) {
@@ -339,25 +332,6 @@ export function LighthouseV2ChatPage({
     void submitMessage(input);
   };
 
-  const handleStop = async () => {
-    if (!activeSessionId || !streamState.activeTaskId) return;
-    const taskId = streamState.activeTaskId;
-    const result = await cancelLighthouseV2Run(activeSessionId, taskId);
-    closeStream();
-    setStreamState((current) =>
-      reduceLighthouseV2Event(current, {
-        type: "run.cancelled",
-        taskId,
-      }),
-    );
-    setBlockedByConflict(false);
-    await refreshMessages(activeSessionId);
-    notifyLighthouseV2SessionsChanged();
-    if ("error" in result) {
-      setFeedback(result.error);
-    }
-  };
-
   useMountEffect(() => {
     if (initialSessionId && initialActiveTaskId && initialStreamUrl) {
       startStream(initialStreamUrl, initialSessionId);
@@ -427,7 +401,6 @@ export function LighthouseV2ChatPage({
     ),
     selectedConfigurationConnected: selectedConfiguration?.connected === true,
     onInputChange: setInput,
-    onStop: handleStop,
     onSubmit: handleSubmit,
     onSubmitText: submitMessage,
   };

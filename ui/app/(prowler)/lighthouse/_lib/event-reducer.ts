@@ -7,7 +7,6 @@ export const LIGHTHOUSE_V2_STREAM_STATUS = {
   IDLE: "idle",
   STREAMING: "streaming",
   COMPLETED: "completed",
-  CANCELLED: "cancelled",
   ERROR: "error",
   DISCONNECTED: "disconnected",
 } as const;
@@ -140,12 +139,6 @@ export function reduceLighthouseV2Event(
         status: LIGHTHOUSE_V2_STREAM_STATUS.COMPLETED,
         activeTaskId: null,
         messageId: event.messageId,
-      };
-    case LIGHTHOUSE_V2_SSE_EVENT.RUN_CANCELLED:
-      return {
-        ...state,
-        status: LIGHTHOUSE_V2_STREAM_STATUS.CANCELLED,
-        activeTaskId: null,
       };
     case LIGHTHOUSE_V2_SSE_EVENT.ERROR:
       return {

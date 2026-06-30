@@ -59,13 +59,11 @@ function stubEventSource() {
 }
 
 const {
-  cancelRunMock,
   createSessionMock,
   getMessagesMock,
   sendMessageMock,
   updateConfigurationMock,
 } = vi.hoisted(() => ({
-  cancelRunMock: vi.fn(),
   createSessionMock: vi.fn(),
   getMessagesMock: vi.fn(),
   sendMessageMock: vi.fn(),
@@ -73,7 +71,6 @@ const {
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
-  cancelLighthouseV2Run: cancelRunMock,
   createLighthouseV2Session: createSessionMock,
   getLighthouseV2Messages: getMessagesMock,
   sendLighthouseV2Message: sendMessageMock,
@@ -138,7 +135,6 @@ describe("LighthouseV2ChatPage", () => {
       configurable: true,
       value: vi.fn(),
     });
-    cancelRunMock.mockReset();
     createSessionMock.mockReset();
     getMessagesMock.mockReset();
     sendMessageMock.mockReset();

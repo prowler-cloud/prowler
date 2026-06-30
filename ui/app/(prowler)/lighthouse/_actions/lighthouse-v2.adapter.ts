@@ -271,15 +271,6 @@ export function buildLighthouseV2MessagePayload(input: {
   };
 }
 
-export function buildLighthouseV2CancelRunPayload(taskId: string) {
-  return {
-    data: {
-      type: "lighthouse-run-cancellations",
-      attributes: { task_id: taskId },
-    },
-  };
-}
-
 export function validateLighthouseV2ConfigurationInput(input: {
   providerType: LighthouseV2ProviderType;
   credentials?: LighthouseV2Credentials;
