@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileCheck2, Network, ShieldAlert } from "lucide-react";
+import { Cloud, FileCheck2, Network, ShieldAlert } from "lucide-react";
 import { type ReactNode, type SubmitEvent } from "react";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
@@ -26,9 +26,9 @@ const LIGHTHOUSE_V2_SUGGESTIONS = [
     icon: Network,
   },
   {
-    label: "Docs",
-    prompt: "Point me to the relevant Prowler documentation for this task.",
-    icon: BookOpen,
+    label: "How can I onboard to my AWS account?",
+    prompt: "How can I onboard to my AWS account?",
+    icon: Cloud,
   },
 ] as const;
 

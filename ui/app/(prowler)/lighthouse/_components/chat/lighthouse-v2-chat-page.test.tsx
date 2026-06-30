@@ -206,6 +206,27 @@ describe("LighthouseV2ChatPage", () => {
     expect(within(currentModel).getByText("GPT-5.1")).toBeInTheDocument();
   });
 
+  it("uses the AWS onboarding quick prompt instead of the docs prompt", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderPage();
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "How can I onboard to my AWS account?",
+      }),
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Docs" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue(
+      "How can I onboard to my AWS account?",
+    );
+  });
+
   it("shows model names in the selector while keeping model ids for persistence", async () => {
     // Given
     const user = userEvent.setup();
