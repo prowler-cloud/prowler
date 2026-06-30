@@ -14,7 +14,7 @@ thresholds) and avoids ints that obviously break downstream maths
 
 from typing import Annotated, Literal, Optional
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator, BeforeValidator, Field
 
 from prowler.config.schema.base import ProviderConfigBase
 from prowler.config.schema.validators import (
@@ -101,6 +101,17 @@ def _validate_account_ids(v: Optional[list[str]]) -> Optional[list[str]]:
     return v
 
 
+def _reject_bool_resource_limit(v):
+    if isinstance(v, bool):
+        raise ValueError("resource scan limits must be integers, not booleans")
+    return v
+
+
+ResourceScanLimit = Annotated[
+    Optional[int], BeforeValidator(_reject_bool_resource_limit)
+]
+
+
 # ---- Nested models ----------------------------------------------------------
 
 
@@ -128,6 +139,50 @@ class _DetectSecretsPlugin(ProviderConfigBase):
 
 
 class AWSProviderConfig(ProviderConfigBase):
+    # --- Resource scan limits ---------------------------------------------
+    max_scanned_resources_per_service: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Global resource scan limit for high-volume AWS services. Use 0 or -1 to disable.",
+    )
+    max_ebs_snapshots: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for EBS snapshots. Use 0 or -1 to disable.",
+    )
+    max_backup_recovery_points: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for AWS Backup recovery points. Use 0 or -1 to disable.",
+    )
+    max_cloudwatch_log_groups: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for CloudWatch log groups. Use 0 or -1 to disable.",
+    )
+    max_lambda_functions: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for Lambda functions. Use 0 or -1 to disable.",
+    )
+    max_ecs_task_definitions: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for ECS task definitions. Use 0 or -1 to disable.",
+    )
+    max_codeartifact_packages: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for CodeArtifact packages. Use 0 or -1 to disable.",
+    )
+
     # --- IAM ---------------------------------------------------------------
     mute_non_default_regions: Optional[bool] = None
     disallowed_regions: Optional[list[str]] = None

@@ -23,6 +23,7 @@ class ECS(AWSService):
         # is described and exposed for checks.
         self.task_definitions = {}
         self._task_definition_arns = None
+        self._task_definition_arns_by_region = {}
         self.task_definition_limit = get_resource_scan_limit(
             self.audit_config, "max_ecs_task_definitions"
         )
@@ -44,27 +45,10 @@ class ECS(AWSService):
         if self._task_definition_arns is not None:
             return self._task_definition_arns
         logger.info("ECS - Listing Task Definitions...")
+        self.__threading_call__(self._list_task_definition_arns_by_region)
         arns_by_region = []
-        for region, regional_client in self.regional_clients.items():
-            try:
-                list_ecs_paginator = regional_client.get_paginator(
-                    "list_task_definitions"
-                )
-                regional_arns = []
-                for task_definition in iter_limited_paginator_items(
-                    list_ecs_paginator,
-                    "taskDefinitionArns",
-                    None,
-                    item_filter=lambda task_definition: not self.audit_resources
-                    or is_resource_filtered(task_definition, self.audit_resources),
-                    sort="DESC",
-                ):
-                    regional_arns.append((task_definition, region))
-                arns_by_region.append(regional_arns)
-            except Exception as error:
-                logger.error(
-                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        for region in self.regional_clients:
+            arns_by_region.append(self._task_definition_arns_by_region.get(region, []))
         arns = []
         for task_definition_batch in zip_longest(*arns_by_region):
             for task_definition in task_definition_batch:
@@ -73,6 +57,25 @@ class ECS(AWSService):
         self._task_definition_arns = arns
         return arns
 
+    def _list_task_definition_arns_by_region(self, regional_client):
+        try:
+            list_ecs_paginator = regional_client.get_paginator("list_task_definitions")
+            regional_arns = []
+            for task_definition in iter_limited_paginator_items(
+                list_ecs_paginator,
+                "taskDefinitionArns",
+                None,
+                item_filter=lambda task_definition: not self.audit_resources
+                or is_resource_filtered(task_definition, self.audit_resources),
+                sort="DESC",
+            ):
+                regional_arns.append((task_definition, regional_client.region))
+            self._task_definition_arns_by_region[regional_client.region] = regional_arns
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _load_task_definitions_for_analysis(self):
         """Yield task definitions lazily, describing each one on demand.
 
@@ -80,6 +83,7 @@ class ECS(AWSService):
         reused across checks (checks run sequentially, so no locking is needed).
         The configured resource limit bounds ``describe_task_definition`` calls.
         """
+        task_definitions = []
         for arn, region in limit_resources(
             self._list_task_definition_arns(), self.task_definition_limit
         ):
@@ -93,8 +97,15 @@ class ECS(AWSService):
                     region=region,
                     environment_variables=[],
                 )
-                self._describe_task_definition(task_definition)
                 self.task_definitions[arn] = task_definition
+                task_definitions.append(task_definition)
+
+        self.__threading_call__(self._describe_task_definition, task_definitions)
+
+        for arn, _ in limit_resources(
+            self._list_task_definition_arns(), self.task_definition_limit
+        ):
+            task_definition = self.task_definitions[arn]
             yield task_definition
 
     def _describe_task_definition(self, task_definition):

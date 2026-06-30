@@ -6,7 +6,11 @@ import botocore
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.backup.backup_service import Backup, BackupVault
+from prowler.providers.aws.services.backup.backup_service import (
+    Backup,
+    BackupVault,
+    RecoveryPoint,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -468,3 +472,73 @@ class TestBackupService:
 
         assert len(backup.recovery_points) == 2
         assert len(tagged) == 2
+
+    def test_recovery_point_limit_uses_deterministic_tie_breaker(self):
+        backup = Backup.__new__(Backup)
+        backup.recovery_point_limit = 2
+        backup.recovery_points = [
+            RecoveryPoint(
+                arn="arn:aws:backup:us-east-1:123456789012:recovery-point:z",
+                id="z",
+                region="us-east-1",
+                backup_vault_name="vault-b",
+                encrypted=True,
+                backup_vault_region="us-east-1",
+            ),
+            RecoveryPoint(
+                arn="arn:aws:backup:eu-west-1:123456789012:recovery-point:b",
+                id="b",
+                region="eu-west-1",
+                backup_vault_name="vault-b",
+                encrypted=True,
+                backup_vault_region="eu-west-1",
+            ),
+            RecoveryPoint(
+                arn="arn:aws:backup:eu-west-1:123456789012:recovery-point:a",
+                id="a",
+                region="eu-west-1",
+                backup_vault_name="vault-a",
+                encrypted=True,
+                backup_vault_region="eu-west-1",
+            ),
+        ]
+
+        backup._select_recovery_points_for_analysis()
+
+        assert [rp.id for rp in backup.recovery_points] == ["a", "b"]
+
+    def test_recovery_point_limit_keeps_newest_before_tie_breaker(self):
+        backup = Backup.__new__(Backup)
+        backup.recovery_point_limit = 2
+        backup.recovery_points = [
+            RecoveryPoint(
+                arn="arn:aws:backup:eu-west-1:123456789012:recovery-point:older-a",
+                id="older-a",
+                region="eu-west-1",
+                backup_vault_name="vault-a",
+                encrypted=True,
+                backup_vault_region="eu-west-1",
+                creation_date=datetime(2024, 1, 1),
+            ),
+            RecoveryPoint(
+                arn="arn:aws:backup:us-east-1:123456789012:recovery-point:newer-z",
+                id="newer-z",
+                region="us-east-1",
+                backup_vault_name="vault-z",
+                encrypted=True,
+                backup_vault_region="us-east-1",
+                creation_date=datetime(2024, 1, 2),
+            ),
+            RecoveryPoint(
+                arn="arn:aws:backup:eu-west-1:123456789012:recovery-point:missing-date",
+                id="missing-date",
+                region="eu-west-1",
+                backup_vault_name="vault-a",
+                encrypted=True,
+                backup_vault_region="eu-west-1",
+            ),
+        ]
+
+        backup._select_recovery_points_for_analysis()
+
+        assert [rp.id for rp in backup.recovery_points] == ["newer-z", "older-a"]

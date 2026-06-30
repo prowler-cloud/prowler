@@ -28,7 +28,9 @@ class CodeArtifact(AWSService):
         self.__threading_call__(self._list_repositories)
         for _ in self._load_packages_for_analysis():
             pass
-        self._list_tags_for_resource()
+        self.__threading_call__(
+            self._list_tags_for_resource, self.repositories.values()
+        )
 
     def _list_repositories(self, regional_client):
         logger.info("CodeArtifact - Listing Repositories...")
@@ -194,15 +196,14 @@ class CodeArtifact(AWSService):
                     return
             self._packages_listed.add(repository.arn)
 
-    def _list_tags_for_resource(self):
+    def _list_tags_for_resource(self, repository):
         logger.info("CodeArtifact - List Tags...")
         try:
-            for repository in self.repositories.values():
-                regional_client = self.regional_clients[repository.region]
-                response = regional_client.list_tags_for_resource(
-                    resourceArn=repository.arn
-                )["tags"]
-                repository.tags = response
+            regional_client = self.regional_clients[repository.region]
+            response = regional_client.list_tags_for_resource(
+                resourceArn=repository.arn
+            )["tags"]
+            repository.tags = response
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

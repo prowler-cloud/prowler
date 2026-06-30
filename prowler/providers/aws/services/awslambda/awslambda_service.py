@@ -229,7 +229,7 @@ class Lambda(AWSService):
                             self.functions[function.arn].policy = {}
         except Exception as error:
             logger.error(
-                f"{function.region} --"
+                f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
             )
@@ -257,7 +257,7 @@ class Lambda(AWSService):
                             self.functions[function.arn].url_config = None
         except Exception as error:
             logger.error(
-                f"{function.region} --"
+                f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
             )

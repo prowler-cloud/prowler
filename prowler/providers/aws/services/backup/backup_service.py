@@ -37,7 +37,7 @@ class Backup(AWSService):
         self.recovery_point_limit = get_resource_scan_limit(
             self.audit_config, "max_backup_recovery_points"
         )
-        self._list_recovery_points()
+        self.__threading_call__(self._list_recovery_points, self.backup_vaults or [])
         self._select_recovery_points_for_analysis()
         self.__threading_call__(self._list_tags, self.recovery_points)
 
@@ -193,37 +193,41 @@ class Backup(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_recovery_points(self):
+    def _list_recovery_points(self, backup_vault=None):
         logger.info("Backup - Listing Recovery Points...")
-        for backup_vault in self.backup_vaults or []:
-            try:
-                regional_client = self.regional_clients[backup_vault.region]
-                paginator = regional_client.get_paginator(
-                    "list_recovery_points_by_backup_vault"
-                )
-                for page in paginator.paginate(BackupVaultName=backup_vault.name):
-                    for recovery_point in page.get("RecoveryPoints", []):
-                        arn = recovery_point.get("RecoveryPointArn")
-                        if arn:
-                            rp = RecoveryPoint(
-                                arn=arn,
-                                id=arn.split(":")[-1],
-                                backup_vault_name=backup_vault.name,
-                                encrypted=recovery_point.get("IsEncrypted", False),
-                                creation_date=recovery_point.get("CreationDate"),
-                                backup_vault_region=backup_vault.region,
-                                region=backup_vault.region,
-                                tags=[],
-                            )
-                            self.recovery_points.append(rp)
-            except ClientError as error:
-                logger.error(
-                    f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            except Exception as error:
-                logger.error(
-                    f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        if backup_vault is None:
+            for vault in self.backup_vaults or []:
+                self._list_recovery_points(vault)
+            return
+
+        try:
+            regional_client = self.regional_clients[backup_vault.region]
+            paginator = regional_client.get_paginator(
+                "list_recovery_points_by_backup_vault"
+            )
+            for page in paginator.paginate(BackupVaultName=backup_vault.name):
+                for recovery_point in page.get("RecoveryPoints", []):
+                    arn = recovery_point.get("RecoveryPointArn")
+                    if arn:
+                        rp = RecoveryPoint(
+                            arn=arn,
+                            id=arn.split(":")[-1],
+                            backup_vault_name=backup_vault.name,
+                            encrypted=recovery_point.get("IsEncrypted", False),
+                            creation_date=recovery_point.get("CreationDate"),
+                            backup_vault_region=backup_vault.region,
+                            region=backup_vault.region,
+                            tags=[],
+                        )
+                        self.recovery_points.append(rp)
+        except ClientError as error:
+            logger.error(
+                f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            logger.error(
+                f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _select_recovery_points_for_analysis(self):
         self.recovery_points = list(
@@ -231,11 +235,16 @@ class Backup(AWSService):
                 sorted(
                     self.recovery_points,
                     key=lambda rp: (
-                        rp.creation_date.timestamp()
-                        if isinstance(rp.creation_date, datetime)
-                        else 0.0
+                        (
+                            -rp.creation_date.timestamp()
+                            if isinstance(rp.creation_date, datetime)
+                            else 0.0
+                        ),
+                        rp.region or "",
+                        rp.backup_vault_name or "",
+                        rp.arn or "",
+                        rp.id or "",
                     ),
-                    reverse=True,
                 ),
                 self.recovery_point_limit,
             )
