@@ -26,7 +26,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
 - Azure PostgreSQL flexible server collection no longer drops the remaining servers in a subscription when one server fails to collect; the `connection_throttle.enable` parameter (removed in PostgreSQL 16+) is treated as absent only when the Azure SDK reports it as not found, so unexpected lookup failures are not silently reported as throttling disabled [(#11595)](https://github.com/prowler-cloud/prowler/pull/11595)
 - Azure `keyvault_logging_enabled` now accepts Key Vault diagnostic settings that enable the explicit `AuditEvent` category, avoiding false failures when Azure returns category-based logs without category groups [(#11660)](https://github.com/prowler-cloud/prowler/pull/11660)
-- GitHub default branch protection checks now evaluate repository rulesets in addition to classic branch protection, avoiding false positives for repositories that enforce protection through rulesets [(#11723)](https://github.com/prowler-cloud/prowler/pull/11723)
 - Okta, Alibaba Cloud and OpenStack scan-config sections are now validated against a registered schema instead of being silently accepted, so their configurable thresholds (session/idle timeouts, retention days, image-sharing and secret-scanning settings) log a warning and fall back to the built-in default whenever a value is out of range [(#11725)](https://github.com/prowler-cloud/prowler/pull/11725)
 
 ---
@@ -126,6 +125,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - GCP `logging_log_metric_filter_and_alert_*` checks now credit org-level aggregated sinks filtered to the Admin Activity audit stream [(#11575)](https://github.com/prowler-cloud/prowler/pull/11575)
 - A broken built-in provider no longer aborts the CLI when a different provider was invoked [(#11618)](https://github.com/prowler-cloud/prowler/pull/11618)
 - GCP organization scans with `--organization-id` no longer silently fall back to the credentials' host project when the Cloud Asset API call fails [(#11280)](https://github.com/prowler-cloud/prowler/pull/11280)
+
+### 🔄 Changed
+
+- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
 
 ---
 
