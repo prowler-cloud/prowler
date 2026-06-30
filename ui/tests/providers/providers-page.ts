@@ -993,19 +993,21 @@ export class ProvidersPage extends BasePage {
       return;
     }
 
-    // Provider-add E2E validates credential persistence only. Reaching the
-    // connection step is enough; do not click "Continue"/"Check connection"
-    // because that performs provider-specific connectivity checks covered by
-    // dedicated scan/connection flows and can hang on external services.
-    const reachedNoScanState =
-      (await testConnectionButton.isVisible().catch(() => false)) ||
-      (await launchStepReady.isVisible().catch(() => false)) ||
-      (await this.wizardModal.isHidden().catch(() => false));
+    // Execute the connection step so the flow exercises provider connectivity,
+    // not just credential entry. The connection is NOT required to succeed:
+    // external provider connectivity (e.g. Okta) can time out in E2E, and a
+    // failed/timed-out connection does not undo provider creation. The scan is
+    // not launched here (covered by scans.spec.ts); the provider's presence on
+    // the Providers page is the source of truth and is verified below.
+    if (await testConnectionButton.isVisible().catch(() => false)) {
+      await testConnectionButton.click();
 
-    if (!reachedNoScanState) {
-      throw new Error(
-        "Provider no-scan flow did not reach the connection or launch step.",
-      );
+      // Let the connection check settle (success, error, or wizard close).
+      await Promise.race([
+        launchStepReady.waitFor({ state: "visible", timeout }).catch(() => {}),
+        this.wizardModal.waitFor({ state: "hidden", timeout }).catch(() => {}),
+        connectionError.waitFor({ state: "visible", timeout }).catch(() => {}),
+      ]);
     }
 
     if (await this.wizardModal.isVisible().catch(() => false)) {
