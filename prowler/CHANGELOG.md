@@ -26,9 +26,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Replaced the `detect-secrets` library with [Kingfisher](https://github.com/mongodb/kingfisher) as the engine for the secret-scanning checks; scans run fully offline by default and obvious placeholder values are no longer reported as findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Removed the `detect_secrets_plugins` configuration option, which is no longer used by the new secret-scanning engine [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
-
-### 🔄 Changed
-
 - `awslambda_function_no_secrets_in_code` now supports a `secrets_ignore_files` audit-config option to skip files inside the deployment package by glob pattern (e.g. `*.deps.json`), suppressing .NET dependency-manifest false positives without masking real secrets [(#11222)](https://github.com/prowler-cloud/prowler/pull/11222)
 
 ### 🐞 Fixed
