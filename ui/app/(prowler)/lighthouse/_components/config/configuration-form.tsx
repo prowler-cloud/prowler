@@ -14,6 +14,7 @@ import {
 import {
   buildCredentialPayload,
   buildLighthouseV2ConfigFormSchema,
+  buildLighthouseV2ConfigurationInput,
   EMPTY_FORM_VALUES,
   FEEDBACK_VARIANT,
   type FeedbackState,
@@ -25,8 +26,8 @@ import {
 import { formatLastChecked } from "@/app/(prowler)/lighthouse/_lib/format";
 import {
   type LighthouseV2Configuration,
-  type LighthouseV2ConfigurationInput,
   type LighthouseV2ConfigurationUpdateInput,
+  type LighthouseV2Credentials,
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Button } from "@/components/shadcn/button/button";
@@ -67,6 +68,35 @@ export function LighthouseV2ConfigurationForm({
   });
   const status = getConnectionStatus(configuration);
 
+  const runConnectionTest = async (configurationId: string) => {
+    setTesting(true);
+    onFeedback(null);
+
+    try {
+      const result =
+        await testLighthouseV2ConfigurationConnection(configurationId);
+
+      if ("error" in result) {
+        onFeedback({
+          title: "Connection check failed",
+          description: result.error,
+          variant: FEEDBACK_VARIANT.ERROR,
+        });
+        return;
+      }
+
+      onConfigurationTested(result.data);
+    } catch {
+      onFeedback({
+        title: "Connection check failed",
+        description: "Something went wrong while testing. Please try again.",
+        variant: FEEDBACK_VARIANT.ERROR,
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   const handleSave = async (values: LighthouseV2ConfigFormValues) => {
     setSaving(true);
     onFeedback(null);
@@ -76,79 +106,86 @@ export function LighthouseV2ConfigurationForm({
       values,
       hasConfiguration,
     );
+    const baseUrl = trimToNullable(values.baseUrl);
+    const shouldTestAfterSave =
+      !configuration ||
+      Boolean(credentials) ||
+      baseUrl !== (configuration.baseUrl ?? null);
 
-    const basePayload = {
-      baseUrl: trimToNullable(values.baseUrl),
-    };
+    try {
+      const result = configuration
+        ? await updateLighthouseV2Configuration(configuration.id, {
+            baseUrl,
+            ...(credentials ? { credentials } : {}),
+          } satisfies LighthouseV2ConfigurationUpdateInput)
+        : await createLighthouseV2Configuration(
+            buildLighthouseV2ConfigurationInput(
+              providerType,
+              credentials as LighthouseV2Credentials,
+              baseUrl,
+            ),
+          );
 
-    const result = configuration
-      ? await updateLighthouseV2Configuration(configuration.id, {
-          ...basePayload,
-          ...(credentials ? { credentials } : {}),
-        } satisfies LighthouseV2ConfigurationUpdateInput)
-      : await createLighthouseV2Configuration({
-          providerType,
-          credentials:
-            credentials as LighthouseV2ConfigurationInput["credentials"],
-          ...basePayload,
+      if ("error" in result) {
+        onFeedback({
+          title: "Configuration not saved",
+          description: result.error,
+          variant: FEEDBACK_VARIANT.ERROR,
         });
+        return;
+      }
 
-    setSaving(false);
-
-    if ("error" in result) {
+      form.reset(getFormDefaults(result.data));
+      onConfigurationSaved(result.data);
+      if (shouldTestAfterSave) {
+        await runConnectionTest(result.data.id);
+      }
+    } catch {
       onFeedback({
         title: "Configuration not saved",
-        description: result.error,
+        description: "Something went wrong while saving. Please try again.",
         variant: FEEDBACK_VARIANT.ERROR,
       });
-      return;
+    } finally {
+      setSaving(false);
     }
-
-    form.reset(getFormDefaults(result.data));
-    onConfigurationSaved(result.data);
   };
 
   const handleTestConnection = async () => {
     if (!configuration) return;
 
-    setTesting(true);
-    onFeedback(null);
-    const result = await testLighthouseV2ConfigurationConnection(
-      configuration.id,
-    );
-    setTesting(false);
-
-    if ("error" in result) {
-      onFeedback({
-        title: "Connection check failed",
-        description: result.error,
-        variant: FEEDBACK_VARIANT.ERROR,
-      });
-      return;
-    }
-
-    onConfigurationTested(result.data);
+    await runConnectionTest(configuration.id);
   };
 
   const handleDelete = async () => {
     if (!configuration) return;
 
     setDeleting(true);
-    const result = await deleteLighthouseV2Configuration(configuration.id);
-    setDeleting(false);
 
-    if ("error" in result) {
+    try {
+      const result = await deleteLighthouseV2Configuration(configuration.id);
+
+      if ("error" in result) {
+        onFeedback({
+          title: "Configuration not removed",
+          description: result.error,
+          variant: FEEDBACK_VARIANT.ERROR,
+        });
+        return;
+      }
+
+      setDeleteOpen(false);
+      form.reset(EMPTY_FORM_VALUES);
+      onConfigurationDeleted(configuration.id);
+    } catch {
       onFeedback({
         title: "Configuration not removed",
-        description: result.error,
+        description: "Something went wrong while deleting. Please try again.",
         variant: FEEDBACK_VARIANT.ERROR,
       });
-      return;
+    } finally {
+      setDeleting(false);
     }
-
-    setDeleteOpen(false);
-    form.reset(EMPTY_FORM_VALUES);
-    onConfigurationDeleted(configuration.id);
   };
 
   return (

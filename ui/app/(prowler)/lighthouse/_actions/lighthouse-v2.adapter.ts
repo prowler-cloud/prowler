@@ -5,7 +5,9 @@ import {
   type LighthouseV2ConfigurationUpdateInput,
   type LighthouseV2Credentials,
   type LighthouseV2Message,
+  type LighthouseV2MessageRole,
   type LighthouseV2Part,
+  type LighthouseV2PartType,
   type LighthouseV2ProviderType,
   type LighthouseV2Session,
   type LighthouseV2SupportedModel,
@@ -63,7 +65,7 @@ interface SessionAttributes {
 }
 
 interface MessageAttributes {
-  role: "user" | "assistant";
+  role: LighthouseV2MessageRole;
   model: string | null;
   token_usage: unknown;
   inserted_at: string;
@@ -72,7 +74,7 @@ interface MessageAttributes {
 
 interface PartAttributes {
   id?: string;
-  part_type: "text" | "reasoning" | "tool_call";
+  part_type: LighthouseV2PartType;
   content: unknown;
   tool_call_outcome?: string | null;
   inserted_at?: string | null;
@@ -102,6 +104,15 @@ interface ValidationFailure {
 }
 
 type ValidationResult = ValidationSuccess | ValidationFailure;
+
+const LIGHTHOUSE_V2_API_PROVIDER_TYPE = {
+  OPENAI: "openai",
+  BEDROCK: "bedrock",
+  OPENAI_COMPATIBLE: "openai_compatible",
+} as const;
+
+type LighthouseV2ApiProviderType =
+  (typeof LIGHTHOUSE_V2_API_PROVIDER_TYPE)[keyof typeof LIGHTHOUSE_V2_API_PROVIDER_TYPE];
 
 export function getJsonApiArray<TResource>(
   document: JsonApiDocument<TResource[]>,
@@ -173,7 +184,9 @@ export function mapLighthouseV2Message(
     model: resource.attributes.model,
     tokenUsage: resource.attributes.token_usage,
     insertedAt: resource.attributes.inserted_at,
-    parts: (resource.attributes.parts ?? []).map(mapLighthouseV2Part),
+    parts: (resource.attributes.parts ?? []).map((part, index) =>
+      mapLighthouseV2Part(part, index),
+    ),
   };
 }
 
@@ -198,7 +211,7 @@ export function buildLighthouseV2ConfigurationPayload(
     data: {
       type: "lighthouse-ai-configurations",
       attributes: filterUndefinedAttributes({
-        provider_type: input.providerType,
+        provider_type: toLighthouseV2ApiProviderType(input.providerType),
         credentials: input.credentials,
         base_url: input.baseUrl ?? null,
       }),
@@ -264,7 +277,7 @@ export function buildLighthouseV2MessagePayload(input: {
             content: { text: input.text },
           },
         ],
-        provider: input.provider,
+        provider: toLighthouseV2ApiProviderType(input.provider),
         model: input.model || undefined,
       }),
     },
@@ -313,10 +326,28 @@ export function validateLighthouseV2ConfigurationInput(input: {
   return { success: true };
 }
 
-function mapLighthouseV2Part(resource: UnknownPartResource): LighthouseV2Part {
+export function toLighthouseV2ApiProviderType(
+  providerType: LighthouseV2ProviderType,
+): LighthouseV2ApiProviderType {
+  switch (providerType) {
+    case LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI:
+      return LIGHTHOUSE_V2_API_PROVIDER_TYPE.OPENAI;
+    case LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK:
+      return LIGHTHOUSE_V2_API_PROVIDER_TYPE.BEDROCK;
+    case LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE:
+      return LIGHTHOUSE_V2_API_PROVIDER_TYPE.OPENAI_COMPATIBLE;
+  }
+}
+
+function mapLighthouseV2Part(
+  resource: UnknownPartResource,
+  index: number,
+): LighthouseV2Part {
   const attributes = "attributes" in resource ? resource.attributes : resource;
+  // Persisted parts carry an id; streamed/id-less parts fall back to a stable
+  // per-message index so multiple id-less parts never collide on "" as a key.
   const id =
-    "id" in resource && resource.id ? resource.id : (attributes.id ?? "");
+    ("id" in resource ? resource.id : attributes.id) ?? `part-${index}`;
 
   return {
     id,
@@ -345,9 +376,17 @@ function hasBedrockRegion(credentials: LighthouseV2Credentials): boolean {
 function normalizeLighthouseV2ProviderType(
   providerType: string,
 ): LighthouseV2ProviderType {
-  if (providerType === "openai_compatible") {
-    return LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE;
+  const normalized =
+    providerType === "openai_compatible"
+      ? LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE
+      : providerType;
+
+  // Validate at the adapter boundary so an unexpected backend id fails fast
+  // here instead of crossing into the UI as a bogus "valid" provider.
+  const allowed: readonly string[] = Object.values(LIGHTHOUSE_V2_PROVIDER_TYPE);
+  if (!allowed.includes(normalized)) {
+    throw new Error(`Unsupported Lighthouse v2 provider: ${providerType}`);
   }
 
-  return providerType as LighthouseV2ProviderType;
+  return normalized as LighthouseV2ProviderType;
 }

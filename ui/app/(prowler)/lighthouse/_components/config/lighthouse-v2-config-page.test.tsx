@@ -207,6 +207,13 @@ describe("LighthouseV2ConfigPage", () => {
       updatedAt: "2026-06-24T10:00:00Z",
     };
     createConfigurationMock.mockResolvedValue({ data: createdConfig });
+    testConnectionMock.mockResolvedValue({
+      data: {
+        ...createdConfig,
+        connected: true,
+        connectionLastCheckedAt: "2026-06-24T10:01:00Z",
+      },
+    });
     renderPage();
 
     // When
@@ -235,6 +242,19 @@ describe("LighthouseV2ConfigPage", () => {
     expect(createConfigurationMock.mock.calls[0]?.[0]).not.toHaveProperty(
       "businessContext",
     );
+    await waitFor(() =>
+      expect(testConnectionMock).toHaveBeenCalledWith("config-compatible"),
+    );
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Connection successful." }),
+      ),
+    );
+    expect(
+      within(
+        screen.getByRole("button", { name: /OpenAI-compatible/i }),
+      ).getByText("Connected"),
+    ).toBeInTheDocument();
   });
 
   it("blocks OpenAI-compatible save when base URL is missing", async () => {

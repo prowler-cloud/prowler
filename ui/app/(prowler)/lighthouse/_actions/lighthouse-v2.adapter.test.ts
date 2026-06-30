@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
+  buildLighthouseV2MessagePayload,
   mapLighthouseV2Configuration,
   mapLighthouseV2Message,
   mapLighthouseV2Model,
@@ -118,6 +119,44 @@ describe("lighthouse-v2.adapter", () => {
         content: { text: "Done" },
       });
     });
+
+    it("should give id-less parts stable fallback keys instead of empty strings", () => {
+      // Given
+      const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
+        id: "message-2",
+        type: "lighthouse-messages",
+        attributes: {
+          role: "assistant",
+          model: null,
+          token_usage: null,
+          inserted_at: "2026-06-24T10:02:00Z",
+          parts: [
+            { part_type: "text", content: { text: "one" } },
+            { part_type: "text", content: { text: "two" } },
+          ],
+        },
+      };
+
+      // When
+      const message = mapLighthouseV2Message(resource);
+
+      // Then
+      expect(message.parts.map((part) => part.id)).toEqual([
+        "part-0",
+        "part-1",
+      ]);
+    });
+
+    it("should reject unknown provider ids at the adapter boundary", () => {
+      // Given / When / Then
+      expect(() =>
+        mapLighthouseV2Provider({
+          id: "totally-unknown-provider",
+          type: "lighthouse-supported-providers",
+          attributes: { name: "Mystery" },
+        }),
+      ).toThrow(/Unsupported Lighthouse v2 provider/);
+    });
   });
 
   describe("when building Cloud payloads", () => {
@@ -126,7 +165,7 @@ describe("lighthouse-v2.adapter", () => {
       const input = {
         providerType: "bedrock" as const,
         credentials: {
-          aws_access_key_id: "AKIA0000000000000000",
+          aws_access_key_id: "test-bedrock-access-key",
           aws_secret_access_key: "a".repeat(40),
           aws_region_name: "us-east-1",
         },
@@ -141,7 +180,7 @@ describe("lighthouse-v2.adapter", () => {
         attributes: {
           provider_type: "bedrock",
           credentials: {
-            aws_access_key_id: "AKIA0000000000000000",
+            aws_access_key_id: "test-bedrock-access-key",
             aws_secret_access_key: "a".repeat(40),
             aws_region_name: "us-east-1",
           },
@@ -149,6 +188,40 @@ describe("lighthouse-v2.adapter", () => {
       });
       expect(payload.data.attributes).not.toHaveProperty("default_model");
       expect(payload.data.attributes).not.toHaveProperty("business_context");
+    });
+
+    it("should serialize OpenAI-compatible configuration provider ids for the Cloud API", () => {
+      // Given
+      const input = {
+        providerType: "openai-compatible" as const,
+        credentials: { api_key: "provider-key" },
+        baseUrl: "https://openrouter.ai/api/v1",
+      };
+
+      // When
+      const payload = buildLighthouseV2ConfigurationPayload(input);
+
+      // Then
+      expect(payload.data.attributes).toMatchObject({
+        provider_type: "openai_compatible",
+        credentials: { api_key: "provider-key" },
+        base_url: "https://openrouter.ai/api/v1",
+      });
+    });
+
+    it("should serialize OpenAI-compatible message provider ids for the Cloud API", () => {
+      // Given
+      const input = {
+        text: "Summarize critical findings",
+        provider: "openai-compatible" as const,
+        model: "openrouter/auto",
+      };
+
+      // When
+      const payload = buildLighthouseV2MessagePayload(input);
+
+      // Then
+      expect(payload.data.attributes.provider).toBe("openai_compatible");
     });
 
     it("should build per-provider update payloads with default_model and business_context", () => {

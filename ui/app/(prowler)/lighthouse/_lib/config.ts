@@ -2,8 +2,12 @@ import { z } from "zod";
 
 import {
   LIGHTHOUSE_V2_PROVIDER_TYPE,
+  type LighthouseV2BedrockCredentials,
   type LighthouseV2Configuration,
+  type LighthouseV2ConfigurationInput,
   type LighthouseV2Credentials,
+  type LighthouseV2OpenAICompatibleCredentials,
+  type LighthouseV2OpenAICredentials,
   type LighthouseV2ProviderType,
 } from "@/app/(prowler)/lighthouse/_types";
 
@@ -68,14 +72,25 @@ export function buildLighthouseV2ConfigFormSchema(
 ) {
   return lighthouseV2ConfigFormSchemaBase.superRefine((data, ctx) => {
     const apiKey = data.apiKey.trim();
+    const baseUrl = data.baseUrl.trim();
 
     if (
       provider === LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE &&
-      !data.baseUrl.trim()
+      !baseUrl
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Base URL is required for OpenAI-compatible providers.",
+        path: ["baseUrl"],
+      });
+    }
+
+    // Presence is enforced above per provider; here we only reject malformed
+    // values so strings like "foo" never reach the Cloud API.
+    if (baseUrl && !isValidUrl(baseUrl)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Base URL must be a valid URL.",
         path: ["baseUrl"],
       });
     }
@@ -151,6 +166,45 @@ export function buildCredentialPayload(
   if (hasConfiguration && !values.apiKey.trim()) return undefined;
 
   return { api_key: values.apiKey.trim() };
+}
+
+function isValidUrl(value: string): boolean {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Builds the provider-keyed discriminated input from the runtime `provider` and
+// the credentials the form assembled for it. This is the single place where the
+// dynamic provider value is narrowed to a concrete variant, so the casts stay
+// confined here while every typed caller of `LighthouseV2ConfigurationInput`
+// gets full discriminated-union checking.
+export function buildLighthouseV2ConfigurationInput(
+  provider: LighthouseV2ProviderType,
+  credentials: LighthouseV2Credentials,
+  baseUrl: string | null,
+): LighthouseV2ConfigurationInput {
+  switch (provider) {
+    case LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE:
+      return {
+        providerType: LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE,
+        credentials: credentials as LighthouseV2OpenAICompatibleCredentials,
+        baseUrl: baseUrl ?? "",
+      };
+    case LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK:
+      return {
+        providerType: LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK,
+        credentials: credentials as LighthouseV2BedrockCredentials,
+      };
+    case LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI:
+      return {
+        providerType: LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI,
+        credentials: credentials as LighthouseV2OpenAICredentials,
+      };
+  }
 }
 
 export function trimToNullable(value: string) {

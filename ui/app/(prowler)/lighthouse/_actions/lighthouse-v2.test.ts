@@ -26,6 +26,7 @@ vi.mock("@/lib/helper", () => ({
 
 import {
   createLighthouseV2Session,
+  getLighthouseV2SupportedModels,
   updateLighthouseV2Configuration,
   updateLighthouseV2Session,
 } from "./lighthouse-v2";
@@ -69,6 +70,10 @@ function configurationResponse(id = "config-1") {
     },
     { status: 200 },
   );
+}
+
+function modelsResponse() {
+  return Response.json({ data: [] }, { status: 200 });
 }
 
 describe("Lighthouse v2 session write actions", () => {
@@ -131,5 +136,24 @@ describe("Lighthouse v2 session write actions", () => {
     // Revalidating the active force-dynamic chat route would remount it and kill
     // the live EventSource — only the settings route may be revalidated.
     expect(revalidatePathMock).not.toHaveBeenCalledWith("/lighthouse");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/lighthouse/settings");
+  });
+
+  it("loads OpenAI-compatible models using the Cloud provider id", async () => {
+    // Given
+    const fetchMock = vi.fn().mockResolvedValue(modelsResponse());
+    vi.stubGlobal("fetch", fetchMock);
+
+    // When
+    const result = await getLighthouseV2SupportedModels("openai-compatible");
+
+    // Then
+    expect("data" in result && result.data).toEqual([]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/v1/lighthouse/supported-providers/openai_compatible/models",
+      expect.objectContaining({
+        method: "GET",
+      }),
+    );
   });
 });

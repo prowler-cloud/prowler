@@ -30,6 +30,7 @@ import {
   mapLighthouseV2Provider,
   mapLighthouseV2Session,
   mapLighthouseV2Task,
+  toLighthouseV2ApiProviderType,
   validateLighthouseV2ConfigurationInput,
 } from "./lighthouse-v2.adapter";
 
@@ -69,7 +70,7 @@ export async function createLighthouseV2Configuration(
       body: JSON.stringify(buildLighthouseV2ConfigurationPayload(input)),
     },
     mapLighthouseV2Configuration,
-    "/lighthouse/config",
+    "/lighthouse/settings",
   );
 }
 
@@ -86,7 +87,7 @@ export async function updateLighthouseV2Configuration(
       ),
     },
     mapLighthouseV2Configuration,
-    "/lighthouse/config",
+    "/lighthouse/settings",
   );
 }
 
@@ -96,7 +97,7 @@ export async function deleteLighthouseV2Configuration(
   return mutateEmpty(
     `/lighthouse/config/${encodeURIComponent(configId)}`,
     { method: "DELETE" },
-    "/lighthouse/config",
+    "/lighthouse/settings",
   );
 }
 
@@ -160,7 +161,7 @@ export async function getLighthouseV2SupportedModels(
   provider: LighthouseV2ProviderType,
 ): Promise<LighthouseV2ActionResult<LighthouseV2SupportedModel[]>> {
   return getCollection(
-    `/lighthouse/supported-providers/${encodeURIComponent(provider)}/models`,
+    `/lighthouse/supported-providers/${encodeURIComponent(toLighthouseV2ApiProviderType(provider))}/models`,
     mapLighthouseV2Model,
   );
 }

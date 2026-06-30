@@ -26,11 +26,14 @@ export interface LighthouseV2BedrockApiKeyCredentials {
   aws_region_name: string;
 }
 
+export type LighthouseV2BedrockCredentials =
+  | LighthouseV2BedrockAccessKeyCredentials
+  | LighthouseV2BedrockApiKeyCredentials;
+
 export type LighthouseV2Credentials =
   | LighthouseV2OpenAICredentials
   | LighthouseV2OpenAICompatibleCredentials
-  | LighthouseV2BedrockAccessKeyCredentials
-  | LighthouseV2BedrockApiKeyCredentials;
+  | LighthouseV2BedrockCredentials;
 
 export interface LighthouseV2Configuration {
   id: string;
@@ -44,11 +47,32 @@ export interface LighthouseV2Configuration {
   updatedAt: string;
 }
 
-export interface LighthouseV2ConfigurationInput {
-  providerType: LighthouseV2ProviderType;
-  credentials: LighthouseV2Credentials;
-  baseUrl?: string | null;
+// Provider-keyed input variants: the `providerType` discriminant ties the
+// accepted `credentials` shape (and whether `baseUrl` is allowed) to each
+// provider, so a mismatched pair fails to type-check at the call site instead
+// of slipping past into the adapter/server-action boundary.
+export interface LighthouseV2OpenAIConfigurationInput {
+  providerType: typeof LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI;
+  credentials: LighthouseV2OpenAICredentials;
+  baseUrl?: null;
 }
+
+export interface LighthouseV2OpenAICompatibleConfigurationInput {
+  providerType: typeof LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE;
+  credentials: LighthouseV2OpenAICompatibleCredentials;
+  baseUrl: string;
+}
+
+export interface LighthouseV2BedrockConfigurationInput {
+  providerType: typeof LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK;
+  credentials: LighthouseV2BedrockCredentials;
+  baseUrl?: null;
+}
+
+export type LighthouseV2ConfigurationInput =
+  | LighthouseV2OpenAIConfigurationInput
+  | LighthouseV2OpenAICompatibleConfigurationInput
+  | LighthouseV2BedrockConfigurationInput;
 
 export interface LighthouseV2ConfigurationUpdateInput {
   credentials?: LighthouseV2Credentials;
