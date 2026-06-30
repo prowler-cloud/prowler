@@ -2796,6 +2796,52 @@ class TestProviderGroupViewSet:
 
 @pytest.mark.django_db
 class TestProviderSecretViewSet:
+    @staticmethod
+    def _get_oraclecloud_provider(providers_fixture):
+        return next(
+            provider
+            for provider in providers_fixture
+            if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value
+        )
+
+    @staticmethod
+    def _oraclecloud_secret(**overrides):
+        secret = {
+            "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+            "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+            "key_content": "test-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+        }
+        secret.update(overrides)
+        return secret
+
+    def _create_oraclecloud_secret(
+        self,
+        authenticated_client,
+        providers_fixture,
+        secret,
+        name="OCI Secret",
+    ):
+        provider = self._get_oraclecloud_provider(providers_fixture)
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": name,
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": secret,
+                },
+                "relationships": {
+                    "provider": {"data": {"type": "providers", "id": str(provider.id)}}
+                },
+            }
+        }
+        return authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
     def test_provider_secrets_list(self, authenticated_client, provider_secret_fixture):
         response = authenticated_client.get(reverse("providersecret-list"))
         assert response.status_code == status.HTTP_200_OK
@@ -2931,9 +2977,8 @@ class TestProviderSecretViewSet:
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
-                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-key-content\n-----END RSA PRIVATE KEY-----",
+                    "key_content": "test-key-content",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
                 },
             ),
             # OCI with API key credentials (with key_file)
@@ -2945,7 +2990,18 @@ class TestProviderSecretViewSet:
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
                     "key_file": "/path/to/oci_api_key.pem",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with explicit region filters
+            (
+                Provider.ProviderChoices.ORACLECLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "test-key-content",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "regions": ["us-ashburn-1", "us-phoenix-1"],
                 },
             ),
             # OCI with API key credentials (with passphrase)
@@ -2955,9 +3011,8 @@ class TestProviderSecretViewSet:
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
-                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-encrypted-key\n-----END RSA PRIVATE KEY-----",
+                    "key_content": "test-encrypted-key",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
                     "pass_phrase": "my-secure-passphrase",
                 },
             ),
@@ -3109,6 +3164,160 @@ class TestProviderSecretViewSet:
             str(provider_secret.provider.id)
             == data["data"]["relationships"]["provider"]["data"]["id"]
         )
+
+    def test_provider_secrets_create_oraclecloud_without_regions_stores_neither(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(),
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        provider_secret = ProviderSecret.objects.get()
+        assert "region" not in provider_secret.secret
+        assert "regions" not in provider_secret.secret
+
+    def test_provider_secrets_create_oraclecloud_with_regions_stores_regions(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(regions=["us-ashburn-1", "us-phoenix-1"]),
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        provider_secret = ProviderSecret.objects.get()
+        assert provider_secret.secret["regions"] == ["us-ashburn-1", "us-phoenix-1"]
+        assert "region" not in provider_secret.secret
+
+    def test_provider_secrets_create_oraclecloud_rejects_region_and_regions(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(region="us-ashburn-1", regions=["us-phoenix-1"]),
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["status"] == "400"
+        assert errors[0]["code"] == "invalid"
+        assert errors[0]["source"]["pointer"] == "/data/attributes/secret/region"
+
+    def test_provider_secrets_update_oraclecloud_without_regions_stores_neither(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        create_response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(regions=["us-ashburn-1"]),
+        )
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {"secret": self._oraclecloud_secret()},
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert "region" not in provider_secret.secret
+        assert "regions" not in provider_secret.secret
+
+    def test_provider_secrets_update_oraclecloud_with_regions_stores_regions(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        create_response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(),
+        )
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "secret": self._oraclecloud_secret(
+                        regions=["us-ashburn-1", "us-phoenix-1"]
+                    )
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert provider_secret.secret["regions"] == ["us-ashburn-1", "us-phoenix-1"]
+        assert "region" not in provider_secret.secret
+
+    def test_provider_secrets_update_oraclecloud_rejects_region_and_regions(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        create_response = self._create_oraclecloud_secret(
+            authenticated_client,
+            providers_fixture,
+            self._oraclecloud_secret(),
+        )
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "secret": self._oraclecloud_secret(
+                        region="us-ashburn-1", regions=["us-phoenix-1"]
+                    )
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["status"] == "400"
+        assert errors[0]["code"] == "invalid"
+        assert errors[0]["source"]["pointer"] == "/data/attributes/secret/region"
 
     @pytest.mark.parametrize(
         "attributes, error_code, error_pointer",
@@ -4069,7 +4278,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         presigned_url = (
@@ -4175,7 +4384,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.TaskSerializer",
-            lambda *args, **kwargs: type("S", (), {"data": dummy}),
+            lambda *_args, **_kwargs: type("S", (), {"data": dummy}),
         )
 
         framework = get_compliance_frameworks(scan.provider.provider)[0]
@@ -4233,7 +4442,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         match_key = "path/compliance/mitre_attack_aws.csv"
@@ -4275,7 +4484,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         old_key = "path/compliance/prowler-output-aws-20240101000000_cis_1.4_aws.csv"
@@ -4356,7 +4565,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         class FakeS3Client:
@@ -4546,8 +4755,10 @@ class TestScanViewSet:
             inserted_at=base + timedelta(hours=1)
         )
 
-        mock_task_serializer.side_effect = lambda instance, *a, **k: SimpleNamespace(
-            data={"id": str(instance.id), "state": StateChoices.EXECUTING}
+        mock_task_serializer.side_effect = lambda instance, *_args, **_kwargs: (
+            SimpleNamespace(
+                data={"id": str(instance.id), "state": StateChoices.EXECUTING}
+            )
         )
 
         url = reverse("scan-report", kwargs={"pk": scan.id})
