@@ -12,10 +12,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { SidebarNavigationModeToggle } from "@/components/sidebar/navigation-mode-toggle";
 import { ScrollArea } from "@/components/ui/scroll-area/scroll-area";
 import { CollapsibleMenu } from "@/components/ui/sidebar/collapsible-menu";
 import { MenuItem } from "@/components/ui/sidebar/menu-item";
-import { SidebarNavigationModeToggle } from "@/components/ui/sidebar/navigation-mode-toggle";
 import { useAuth } from "@/hooks";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { SIDEBAR_NAVIGATION_MODE, useSidebar } from "@/hooks/use-sidebar";

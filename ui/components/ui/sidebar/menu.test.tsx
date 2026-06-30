@@ -1,13 +1,29 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import { SIDEBAR_NAVIGATION_MODE } from "@/hooks/use-sidebar";
 
-const { openLaunchScanModalMock, pathnameValue, pushMock } = vi.hoisted(() => ({
+const {
+  openLaunchScanModalMock,
+  pathnameValue,
+  pushMock,
+  navigationModeValue,
+  setNavigationModeMock,
+} = vi.hoisted(() => ({
   openLaunchScanModalMock: vi.fn(),
   pathnameValue: { current: "/findings" },
   pushMock: vi.fn(),
+  navigationModeValue: { current: "browse" },
+  setNavigationModeMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -44,14 +60,36 @@ vi.mock("@/store", () => ({
   ) => selector({ openLaunchScanModal: openLaunchScanModalMock }),
 }));
 
+vi.mock("@/hooks/use-sidebar", async (importActual) => {
+  const actual = await importActual<typeof import("@/hooks/use-sidebar")>();
+  return {
+    ...actual,
+    useSidebar: (
+      selector: (state: {
+        navigationMode: string;
+        setNavigationMode: (mode: string) => void;
+      }) => unknown,
+    ) =>
+      selector({
+        navigationMode: navigationModeValue.current,
+        setNavigationMode: setNavigationModeMock,
+      }),
+  };
+});
+
 let MenuComponent: typeof import("./menu").Menu;
-let SidebarNavigationModeToggleComponent: typeof import("./navigation-mode-toggle").SidebarNavigationModeToggle;
+let SidebarNavigationModeToggleComponent: typeof import("@/components/sidebar/navigation-mode-toggle").SidebarNavigationModeToggle;
 
 beforeAll(async () => {
   MenuComponent = (await import("./menu")).Menu;
   SidebarNavigationModeToggleComponent = (
-    await import("./navigation-mode-toggle")
+    await import("@/components/sidebar/navigation-mode-toggle")
   ).SidebarNavigationModeToggle;
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  navigationModeValue.current = "browse";
 });
 
 describe("Menu", () => {
@@ -99,6 +137,30 @@ describe("Menu", () => {
     expect(
       launchScanLink.querySelector('svg[viewBox="0 0 432.08 396.77"]'),
     ).toBeInTheDocument();
+  });
+
+  it("swaps to the Lighthouse chat sidebar in cloud CHAT mode", () => {
+    pathnameValue.current = "/lighthouse";
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    navigationModeValue.current = SIDEBAR_NAVIGATION_MODE.CHAT;
+
+    render(<MenuComponent isOpen />);
+
+    expect(screen.getByTestId("lighthouse-chat-sidebar")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Chat" })).toBeInTheDocument();
+  });
+
+  it("keeps the navigation menu in cloud BROWSE mode", () => {
+    pathnameValue.current = "/findings";
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    navigationModeValue.current = SIDEBAR_NAVIGATION_MODE.BROWSE;
+
+    render(<MenuComponent isOpen />);
+
+    expect(
+      screen.queryByTestId("lighthouse-chat-sidebar"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Home" })).toBeInTheDocument();
   });
 });
 
