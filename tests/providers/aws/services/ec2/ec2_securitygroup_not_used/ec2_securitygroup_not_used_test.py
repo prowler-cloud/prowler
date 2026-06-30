@@ -36,8 +36,13 @@ class Test_ec2_securitygroup_not_used:
         awslambda_client = mock.MagicMock()
         awslambda_client.functions = {}
         awslambda_client.security_groups_in_use = {sg_id}
+        aws_provider = set_mocked_aws_provider()
 
         with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
                 new=ec2_client,
