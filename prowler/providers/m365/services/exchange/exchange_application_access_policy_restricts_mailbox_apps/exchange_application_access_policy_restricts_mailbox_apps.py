@@ -35,6 +35,27 @@ class exchange_application_access_policy_restricts_mailbox_apps(Check):
             findings.append(report)
             return findings
 
+        mailbox_permission_collection_error = getattr(
+            entra_client,
+            "exchange_mailbox_permission_service_principals_error",
+            None,
+        )
+        if isinstance(mailbox_permission_collection_error, str):
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=exchange_client.organization_config,
+                resource_name="Exchange Online",
+                resource_id="ExchangeOnlineTenant",
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Microsoft Graph mailbox permission collection failed. "
+                "Manually verify whether applications with Exchange mailbox "
+                "permissions are restricted using Application Access Policies."
+            )
+            findings.append(report)
+            return findings
+
         policy_app_ids = {
             policy.app_id.lower()
             for policy in application_access_policies

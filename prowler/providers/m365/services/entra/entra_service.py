@@ -85,6 +85,7 @@ class Entra(M365Service):
         self.tenant_domain = provider.identity.tenant_domain
         self.tenant_id = getattr(provider.identity, "tenant_id", None)
         self.user_registration_details_error: Optional[str] = None
+        self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -1362,6 +1363,7 @@ OAuthAppInfo
         logger.info(
             "Entra - Getting service principals with Exchange mailbox permissions..."
         )
+        self.exchange_mailbox_permission_service_principals_error = None
         service_principals = {}
         graph_service_principal = None
         candidate_service_principals = []
@@ -1453,6 +1455,9 @@ OAuthAppInfo
                         exchange_mailbox_permissions=sorted(exchange_permissions),
                     )
         except Exception as error:
+            self.exchange_mailbox_permission_service_principals_error = (
+                f"{error.__class__.__name__}: {error}"
+            )
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

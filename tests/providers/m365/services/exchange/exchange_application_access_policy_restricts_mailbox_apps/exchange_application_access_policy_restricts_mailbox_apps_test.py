@@ -80,6 +80,47 @@ class Test_exchange_application_access_policy_restricts_mailbox_apps:
 
         assert len(result) == 0
 
+    def test_graph_collection_unavailable_returns_manual(self):
+        exchange_client = mock.MagicMock()
+        exchange_client.audited_tenant = "audited_tenant"
+        exchange_client.audited_domain = DOMAIN
+        exchange_client.organization_config = None
+        exchange_client.application_access_policies = []
+
+        entra_client = mock.MagicMock()
+        entra_client.exchange_mailbox_permission_service_principals = {}
+        entra_client.exchange_mailbox_permission_service_principals_error = (
+            "RuntimeError: Graph unavailable"
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.exchange.exchange_application_access_policy_restricts_mailbox_apps.exchange_application_access_policy_restricts_mailbox_apps.exchange_client",
+                new=exchange_client,
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.exchange.exchange_application_access_policy_restricts_mailbox_apps.exchange_application_access_policy_restricts_mailbox_apps.entra_client",
+                new=entra_client,
+            ),
+        ):
+            check_module = importlib.import_module(CHECK_MODULE)
+
+            result = (
+                check_module.exchange_application_access_policy_restricts_mailbox_apps().execute()
+            )
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].resource_id == "ExchangeOnlineTenant"
+        assert (
+            "Microsoft Graph mailbox permission collection failed"
+            in result[0].status_extended
+        )
+
     def test_service_principal_without_policy_fails(self):
         exchange_client = mock.MagicMock()
         exchange_client.audited_tenant = "audited_tenant"
@@ -175,34 +216,3 @@ class Test_exchange_application_access_policy_restricts_mailbox_apps:
             "is restricted using an Application Access Policy"
             in result[0].status_extended
         )
-
-    def test_no_resources(self):
-        exchange_client = mock.MagicMock()
-        exchange_client.audited_tenant = "audited_tenant"
-        exchange_client.audited_domain = DOMAIN
-        exchange_client.organization_config = None
-        exchange_client.application_access_policies = []
-
-        entra_client = mock.MagicMock()
-        entra_client.exchange_mailbox_permission_service_principals = {}
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_m365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_application_access_policy_restricts_mailbox_apps.exchange_application_access_policy_restricts_mailbox_apps.exchange_client",
-                new=exchange_client,
-            ),
-            mock.patch(
-                "prowler.providers.m365.services.exchange.exchange_application_access_policy_restricts_mailbox_apps.exchange_application_access_policy_restricts_mailbox_apps.entra_client",
-                new=entra_client,
-            ),
-        ):
-            check_module = importlib.import_module(CHECK_MODULE)
-            result = (
-                check_module.exchange_application_access_policy_restricts_mailbox_apps().execute()
-            )
-
-        assert len(result) == 0

@@ -987,6 +987,30 @@ class Test_Entra_Service:
         assert set(result.keys()) == {"sp-mailbox"}
         assert result["sp-mailbox"].app_id == "app-mailbox"
         assert result["sp-mailbox"].exchange_mailbox_permissions == ["Mail.Read"]
+
+    def test__get_exchange_mailbox_permission_service_principals_records_error(self):
+        """
+        Graph collection failures preserve unavailable state separately from empty results.
+        """
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(side_effect=RuntimeError("Graph unavailable"))
+            )
+        )
+
+        result = asyncio.run(
+            entra_service._get_exchange_mailbox_permission_service_principals()
+        )
+
+        assert result == {}
+        assert "RuntimeError" in (
+            entra_service.exchange_mailbox_permission_service_principals_error
+        )
+        assert "Graph unavailable" in (
+            entra_service.exchange_mailbox_permission_service_principals_error
+        )
+
     def test__resolve_identifiers_for_type_flags_only_404(self):
         """Only HTTP 404 / Request_ResourceNotFound mark an id as deleted.
 
