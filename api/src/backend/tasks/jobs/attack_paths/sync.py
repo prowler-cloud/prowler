@@ -18,6 +18,7 @@ added to the catalog.
 import json
 import time
 from collections import defaultdict
+from collections.abc import Iterator
 from typing import Any
 
 import neo4j
@@ -153,20 +154,21 @@ def sync_nodes(
             break
 
         for labels, batch in parent_groups.items():
-            sink.write_nodes(
-                target_database, _render_labels(labels, extra_labels), batch
-            )
+            rendered_labels = _render_labels(labels, extra_labels)
+            for sink_batch in _iter_sink_batches(batch):
+                sink.write_nodes(target_database, rendered_labels, sink_batch)
 
         for child_label, batch in child_groups.items():
-            sink.write_nodes(
-                target_database,
-                _render_labels((child_label,), extra_labels),
-                batch,
-            )
+            rendered_labels = _render_labels((child_label,), extra_labels)
+            for sink_batch in _iter_sink_batches(batch):
+                sink.write_nodes(target_database, rendered_labels, sink_batch)
             children_synced += len(batch)
 
         for rel_type, batch in rel_groups.items():
-            sink.write_relationships(target_database, rel_type, provider_id, batch)
+            for sink_batch in _iter_sink_batches(batch):
+                sink.write_relationships(
+                    target_database, rel_type, provider_id, sink_batch
+                )
             parent_child_rels += len(batch)
 
         parents_synced += batch_count
@@ -226,7 +228,10 @@ def sync_relationships(
             break
 
         for rel_type, batch in grouped.items():
-            sink.write_relationships(target_database, rel_type, provider_id, batch)
+            for sink_batch in _iter_sink_batches(batch):
+                sink.write_relationships(
+                    target_database, rel_type, provider_id, sink_batch
+                )
 
         total_synced += batch_count
         batch_dt = time.perf_counter() - tb
@@ -237,6 +242,19 @@ def sync_relationships(
         )
 
     return total_synced
+
+
+def _iter_sink_batches(
+    rows: list[dict[str, Any]],
+    batch_size: int | None = None,
+) -> Iterator[list[dict[str, Any]]]:
+    """Yield final sink write batches after source rows have been transformed."""
+    batch_size = SYNC_BATCH_SIZE if batch_size is None else batch_size
+    if batch_size <= 0:
+        raise ValueError("Sink batch size must be greater than zero")
+
+    for index in range(0, len(rows), batch_size):
+        yield rows[index : index + batch_size]
 
 
 def _node_to_sync_dict(
