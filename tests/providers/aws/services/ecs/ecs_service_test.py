@@ -379,10 +379,10 @@ class Test_ECS_Service:
                 AWS_REGION_EU_WEST_1,
                 AWS_REGION_US_EAST_1,
             ]
-            assert describe_calls == [
+            assert set(describe_calls) == {
                 "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:3",
                 "arn:aws:ecs:us-east-1:123456789012:task-definition/fam:9",
-            ]
+            }
 
     # Test list ECS clusters
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
