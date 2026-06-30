@@ -224,4 +224,34 @@ describe("ManageScanConfigModal", () => {
     expect(onSaved).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalled();
   });
+
+  it("resets a cancelled selection when the modal is reopened", async () => {
+    // Given a provider with no attached config.
+    const user = userEvent.setup();
+    const baseProps: React.ComponentProps<typeof ManageScanConfigModal> = {
+      open: true,
+      onOpenChange: vi.fn(),
+      providerId: "provider-1",
+      providerLabel: "AWS App Account",
+      scanConfigs: [
+        makeConfig("config-a", "Config A", []),
+        makeConfig("config-b", "Config B", []),
+      ],
+      currentConfigId: null,
+      onSaved: vi.fn(),
+    };
+    const { rerender } = render(<ManageScanConfigModal {...baseProps} />);
+
+    // When the user picks Config A but closes the modal without saving.
+    await openSelectAndChoose(user, /^config a$/i);
+    rerender(<ManageScanConfigModal {...baseProps} open={false} />);
+
+    // And reopens it for the same (still unattached) provider.
+    rerender(<ManageScanConfigModal {...baseProps} open />);
+
+    // Then the selection falls back to Default — the stale choice is gone, so
+    // saving without touching the dropdown sends nothing.
+    await clickSave(user);
+    expect(setScanConfigurationProvidersMock).not.toHaveBeenCalled();
+  });
 });

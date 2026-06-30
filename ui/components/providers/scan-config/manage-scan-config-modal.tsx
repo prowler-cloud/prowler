@@ -47,13 +47,17 @@ export function ManageScanConfigModal({
       title="Scan Configuration"
       size="md"
     >
-      {/* Remount the form per provider/config so the selection resets to the
-          provider's current config on open — no prop-to-state sync needed. */}
-      <ManageScanConfigForm
-        key={formProps.currentConfigId ?? DEFAULT_VALUE}
-        onOpenChange={onOpenChange}
-        {...formProps}
-      />
+      {/* Only mount the form while the modal is open so a fresh instance is
+          created on every reopen — its selection always initializes from the
+          provider's current config, never from a stale, cancelled selection.
+          The key resets it again if the attached config changes mid-open. */}
+      {open && (
+        <ManageScanConfigForm
+          key={formProps.currentConfigId ?? DEFAULT_VALUE}
+          onOpenChange={onOpenChange}
+          {...formProps}
+        />
+      )}
     </Modal>
   );
 }
