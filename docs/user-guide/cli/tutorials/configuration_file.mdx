@@ -88,7 +88,6 @@ The following list includes all the AWS checks with configurable variables that 
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
 | `opensearch_service_domains_not_publicly_accessible`          | `trusted_ips`                                    | List of Strings |
 
-
 ### Resource Scan Limit
 
 <VersionBadge version="5.32.0" />
@@ -148,6 +147,31 @@ This split is intentional. It reduces expensive per-resource analysis calls with
 | CodeArtifact packages (`max_codeartifact_packages`) | Prowler lists CodeArtifact repositories and lazily lists packages inside them. | The selected packages exposed to `codeartifact_packages_*` checks, including latest-version metadata for those packages. | AWS `ListPackages` does not provide a newest-package timestamp ordering in this path. Prowler preserves repository order and package API order, then applies the limit. Latest package version metadata is retrieved for selected packages with `sortBy=PUBLISHED_TIME` and `maxResults=1`. | Bounds `ListPackageVersions` calls to selected packages and can stop package listing once the limit is reached. Repository listing still runs. | Package selection is best effort by API order, not newest package order. Packages outside the selected repository/API order are not analyzed, so origin restriction or latest-version issues can be missed. |
 
 Use limits when scan duration, API throttling, or cost are more important than exhaustive coverage for these high-volume resources. Keep limits disabled when you need complete evidence for every resource in the affected checks.
+
+### Validating Discovered Secrets
+
+<VersionBadge version="5.32.0" />
+
+By default, the secret-scanning checks run fully offline: secrets are detected but never sent anywhere. Setting `secrets_validate` to `True` additionally confirms whether each discovered secret is live by authenticating with it against the corresponding provider API. The discovered secret itself serves as the credential, so Prowler requires no additional permissions to validate it.
+
+`secrets_validate` applies to every AWS secret-scanning check listed above (those that accept `secrets_ignore_patterns`). The `--scan-secrets-validate` CLI flag is provider-wide: it also enables validation for the secret-scanning checks of other providers, such as the OpenStack metadata checks.
+
+To enable validation through the configuration file, set the value under the `aws` section:
+
+```yaml
+aws:
+  secrets_validate: True
+```
+
+To enable validation for a single scan (any provider), use Prowler CLI:
+
+```
+prowler aws --scan-secrets-validate
+```
+
+<Warning>
+Secret validation makes outbound network calls that authenticate with each discovered secret. The credential is exercised against the provider, so the call appears in the audited account's logs and can trigger its monitoring (for example, AWS CloudTrail records the validation request). Validation stays disabled by default so that scans remain fully offline.
+</Warning>
 
 
 ## Azure

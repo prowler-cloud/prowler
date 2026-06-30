@@ -4,18 +4,16 @@ from typing import Optional
 
 from pydantic import Field
 
-from prowler.config.schema.aws import _DetectSecretsPlugin
 from prowler.config.schema.base import ProviderConfigBase
 
 
 class OpenStackProviderConfig(ProviderConfigBase):
     """OpenStack provider configuration schema.
 
-    Bounds the image-sharing threshold and reuses the AWS secret-scanning
-    config models (``detect_secrets_plugins`` / ``secrets_ignore_patterns``)
-    consumed by the metadata sensitive-data checks. Every field is optional:
-    when omitted (or dropped for being out of range) the check falls back to
-    its own default via ``audit_config.get(key, default)``.
+    Bounds the image-sharing threshold and reuses the ``secrets_ignore_patterns``
+    config consumed by the metadata sensitive-data checks. Every field is
+    optional: when omitted (or dropped for being out of range) the check falls
+    back to its own default via ``audit_config.get(key, default)``.
     """
 
     image_sharing_threshold: Optional[int] = Field(
@@ -30,11 +28,7 @@ class OpenStackProviderConfig(ProviderConfigBase):
     secrets_ignore_patterns: Optional[list[str]] = Field(
         default=None,
         description=(
-            "Regex patterns whose matches are excluded from detect-secrets "
+            "Regex patterns whose matches are excluded from secret "
             "scanning of resource metadata."
         ),
-    )
-    detect_secrets_plugins: Optional[list[_DetectSecretsPlugin]] = Field(
-        default=None,
-        description="Custom detect-secrets plugin configuration for metadata scanning.",
     )

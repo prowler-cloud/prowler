@@ -193,21 +193,8 @@ class Test_OpenStack_Schema:
         raw = {
             "image_sharing_threshold": 5,
             "secrets_ignore_patterns": ["AKIA[0-9A-Z]{16}"],
-            "detect_secrets_plugins": [
-                {"name": "Base64HighEntropyString", "limit": 4.5}
-            ],
         }
         assert _validate("openstack", raw) == raw
 
     def test_zero_threshold_dropped(self):
         assert _validate("openstack", {"image_sharing_threshold": 0}) == {}
-
-    def test_invalid_plugin_entropy_dropped(self):
-        # Reuses the AWS _DetectSecretsPlugin entropy bound (0..10).
-        assert (
-            _validate(
-                "openstack",
-                {"detect_secrets_plugins": [{"name": "X", "limit": 50}]},
-            )
-            == {}
-        )
