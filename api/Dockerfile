@@ -4,6 +4,8 @@ LABEL maintainer="https://github.com/prowler-cloud/api"
 
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
+# Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
+ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
 ARG TRIVY_VERSION=0.71.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
