@@ -42,6 +42,7 @@ import {
   type LighthouseV2ProviderType,
   type LighthouseV2SSEEvent,
   type LighthouseV2SupportedModel,
+  type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Card } from "@/components/shadcn";
 import {
@@ -61,6 +62,7 @@ interface LighthouseV2ChatPageProps {
     LighthouseV2ProviderType,
     LighthouseV2SupportedModel[]
   >;
+  supportedProviders: LighthouseV2SupportedProvider[];
   initialSessionId?: string;
   initialMessages: LighthouseV2Message[];
   initialActiveTaskId?: string | null;
@@ -71,6 +73,7 @@ interface LighthouseV2ChatPageProps {
 export function LighthouseV2ChatPage({
   configurations,
   modelsByProvider,
+  supportedProviders,
   initialSessionId,
   initialMessages,
   initialActiveTaskId,
@@ -112,6 +115,7 @@ export function LighthouseV2ChatPage({
   const modelSelectorGroups = buildModelSelectorGroups(
     connectedConfigurations,
     modelsByProvider,
+    supportedProviders,
   );
   const selectedModelValue = selectedModelSelection
     ? buildLighthouseV2ModelSelectionValue(
@@ -526,29 +530,33 @@ function buildModelSelectorGroups(
     LighthouseV2ProviderType,
     LighthouseV2SupportedModel[]
   >,
+  supportedProviders: LighthouseV2SupportedProvider[],
 ): ComboboxGroup[] {
-  return connectedConfigurations
-    .map((configuration) => ({
-      heading: getLighthouseV2ProviderLabel(configuration.providerType),
-      options: (modelsByProvider[configuration.providerType] ?? []).map(
-        (model) => ({
-          value: buildLighthouseV2ModelSelectionValue(
-            configuration.providerType,
-            model.id,
-          ),
-          label: model.id,
-        }),
-      ),
-    }))
-    .filter((group) => group.options.length > 0);
-}
+  const groups: ComboboxGroup[] = [];
 
-function getLighthouseV2ProviderLabel(providerType: LighthouseV2ProviderType) {
-  return LIGHTHOUSE_V2_PROVIDER_LABELS[providerType] ?? providerType;
-}
+  for (const provider of supportedProviders) {
+    const configuration = connectedConfigurations.find(
+      (item) => item.providerType === provider.id,
+    );
+    if (!configuration) continue;
 
-const LIGHTHOUSE_V2_PROVIDER_LABELS = {
-  openai: "OpenAI",
-  bedrock: "Amazon Bedrock",
-  "openai-compatible": "OpenAI Compatible",
-} as const satisfies Record<LighthouseV2ProviderType, string>;
+    const options = (modelsByProvider[configuration.providerType] ?? []).map(
+      (model) => ({
+        value: buildLighthouseV2ModelSelectionValue(
+          configuration.providerType,
+          model.id,
+        ),
+        label: model.name,
+      }),
+    );
+
+    if (options.length === 0) continue;
+
+    groups.push({
+      heading: provider.name,
+      options,
+    });
+  }
+
+  return groups;
+}

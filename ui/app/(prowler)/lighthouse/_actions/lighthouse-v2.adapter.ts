@@ -30,7 +30,7 @@ export interface JsonApiDocument<TData> {
 }
 
 interface ConfigurationAttributes {
-  provider_type: LighthouseV2ProviderType;
+  provider_type: string;
   base_url: string | null;
   default_model?: string | null;
   business_context?: string | null;
@@ -45,6 +45,8 @@ interface SupportedProviderAttributes {
 }
 
 interface SupportedModelAttributes {
+  model_name?: string | null;
+  name?: string | null;
   max_input_tokens: number | null;
   max_output_tokens: number | null;
   supports_function_calling: boolean | null;
@@ -112,7 +114,9 @@ export function mapLighthouseV2Configuration(
 ): LighthouseV2Configuration {
   return {
     id: resource.id,
-    providerType: resource.attributes.provider_type,
+    providerType: normalizeLighthouseV2ProviderType(
+      resource.attributes.provider_type,
+    ),
     baseUrl: resource.attributes.base_url,
     defaultModel: resource.attributes.default_model ?? null,
     businessContext: resource.attributes.business_context ?? "",
@@ -127,7 +131,7 @@ export function mapLighthouseV2Provider(
   resource: JsonApiResource<SupportedProviderAttributes>,
 ): LighthouseV2SupportedProvider {
   return {
-    id: resource.id as LighthouseV2ProviderType,
+    id: normalizeLighthouseV2ProviderType(resource.id),
     name: resource.attributes.name,
   };
 }
@@ -137,6 +141,8 @@ export function mapLighthouseV2Model(
 ): LighthouseV2SupportedModel {
   return {
     id: resource.id,
+    name:
+      resource.attributes.model_name ?? resource.attributes.name ?? resource.id,
     maxInputTokens: resource.attributes.max_input_tokens,
     maxOutputTokens: resource.attributes.max_output_tokens,
     supportsFunctionCalling: resource.attributes.supports_function_calling,
@@ -343,4 +349,14 @@ function hasBedrockRegion(credentials: LighthouseV2Credentials): boolean {
   return (
     "aws_region_name" in credentials && Boolean(credentials.aws_region_name)
   );
+}
+
+function normalizeLighthouseV2ProviderType(
+  providerType: string,
+): LighthouseV2ProviderType {
+  if (providerType === "openai_compatible") {
+    return LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE;
+  }
+
+  return providerType as LighthouseV2ProviderType;
 }

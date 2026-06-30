@@ -64,6 +64,7 @@ export interface LighthouseV2SupportedProvider {
 
 export interface LighthouseV2SupportedModel {
   id: string;
+  name: string;
   maxInputTokens: number | null;
   maxOutputTokens: number | null;
   supportsFunctionCalling: boolean | null;

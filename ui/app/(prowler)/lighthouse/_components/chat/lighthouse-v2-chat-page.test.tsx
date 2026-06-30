@@ -8,6 +8,7 @@ import type {
   LighthouseV2Configuration,
   LighthouseV2Message,
   LighthouseV2SupportedModel,
+  LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 
 import { LighthouseV2ChatPage } from "./lighthouse-v2-chat-page";
@@ -117,6 +118,12 @@ const modelsByProvider = {
   "openai-compatible": [model("llama-3.3")],
 };
 
+const supportedProviders: LighthouseV2SupportedProvider[] = [
+  { id: "openai", name: "OpenAI" },
+  { id: "bedrock", name: "AWS Bedrock" },
+  { id: "openai-compatible", name: "OpenAI Compatible" },
+];
+
 describe("LighthouseV2ChatPage", () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -178,6 +185,84 @@ describe("LighthouseV2ChatPage", () => {
     expect(
       screen.getByRole("link", { name: "Lighthouse AI settings" }),
     ).toHaveAttribute("href", "/lighthouse/settings");
+  });
+
+  it("shows model names in the selector while keeping model ids for persistence", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderPage({
+      configurations: [
+        { ...configurations[0], defaultModel: "gpt-5.1" },
+        {
+          ...configurations[1],
+          defaultModel: "us.anthropic.claude-sonnet-4-20250514-v1:0",
+        },
+      ],
+      modelsByProvider: {
+        openai: [model("gpt-5.1", "GPT-5.1")],
+        bedrock: [
+          model(
+            "us.anthropic.claude-sonnet-4-20250514-v1:0",
+            "Claude Sonnet 4",
+          ),
+        ],
+        "openai-compatible": [],
+      },
+    });
+
+    // When
+    const modelSelector = screen.getByRole("combobox", { name: "Model" });
+    await user.click(modelSelector);
+
+    // Then
+    expect(modelSelector).toHaveTextContent("GPT-5.1");
+    expect(
+      await screen.findByRole("option", { name: "Claude Sonnet 4" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("us.anthropic.claude-sonnet-4-20250514-v1:0"),
+    ).not.toBeInTheDocument();
+
+    // When
+    await user.click(screen.getByRole("option", { name: "Claude Sonnet 4" }));
+
+    // Then
+    await waitFor(() =>
+      expect(updateConfigurationMock).toHaveBeenCalledWith("config-bedrock", {
+        defaultModel: "us.anthropic.claude-sonnet-4-20250514-v1:0",
+      }),
+    );
+    expect(modelSelector).toHaveTextContent("Claude Sonnet 4");
+  });
+
+  it("uses supported provider names as model selector section headings", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderPage({
+      configurations: [
+        ...configurations,
+        {
+          id: "config-openai-compatible",
+          providerType: "openai-compatible",
+          baseUrl: "https://example.com/v1",
+          defaultModel: "llama-3.3",
+          businessContext: "Production account",
+          connected: true,
+          connectionLastCheckedAt: "2026-06-22T10:00:00Z",
+          insertedAt: "2026-06-22T09:00:00Z",
+          updatedAt: "2026-06-22T10:00:00Z",
+        },
+      ],
+      supportedProviders,
+    });
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Model" }));
+
+    // Then
+    expect(await screen.findByText("AWS Bedrock")).toBeInTheDocument();
+    expect(screen.getByText("OpenAI Compatible")).toBeInTheDocument();
+    expect(screen.queryByText("Amazon Bedrock")).not.toBeInTheDocument();
   });
 
   it("uses the tuned scrollbar and bottom fade without a composer separator", () => {
@@ -476,6 +561,7 @@ function renderPage(props?: RenderPageProps) {
   const componentProps = {
     configurations: props?.configurations ?? configurations,
     modelsByProvider: props?.modelsByProvider ?? modelsByProvider,
+    supportedProviders: props?.supportedProviders ?? supportedProviders,
     initialSessionId: props?.initialSessionId,
     initialMessages: props?.initialMessages ?? [],
     initialPrompt: props?.initialPrompt,
@@ -486,9 +572,10 @@ function renderPage(props?: RenderPageProps) {
   return render(<LighthouseV2ChatPage {...componentProps} />);
 }
 
-function model(id: string): LighthouseV2SupportedModel {
+function model(id: string, name = id): LighthouseV2SupportedModel {
   return {
     id,
+    name,
     maxInputTokens: null,
     maxOutputTokens: null,
     supportsFunctionCalling: null,

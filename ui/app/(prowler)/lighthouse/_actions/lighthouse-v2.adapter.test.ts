@@ -49,14 +49,15 @@ describe("lighthouse-v2.adapter", () => {
     it("should map supported provider and model payloads", () => {
       // Given
       const provider = {
-        id: "openai",
+        id: "openai_compatible",
         type: "lighthouse-supported-providers",
-        attributes: { name: "OpenAI" },
+        attributes: { name: "OpenAI Compatible" },
       };
       const model = {
         id: "gpt-5.5",
         type: "lighthouse-supported-models",
         attributes: {
+          model_name: "GPT 5.5",
           max_input_tokens: 100000,
           max_output_tokens: 8192,
           supports_function_calling: true,
@@ -67,11 +68,12 @@ describe("lighthouse-v2.adapter", () => {
 
       // When / Then
       expect(mapLighthouseV2Provider(provider)).toEqual({
-        id: "openai",
-        name: "OpenAI",
+        id: "openai-compatible",
+        name: "OpenAI Compatible",
       });
       expect(mapLighthouseV2Model(model)).toEqual({
         id: "gpt-5.5",
+        name: "GPT 5.5",
         maxInputTokens: 100000,
         maxOutputTokens: 8192,
         supportsFunctionCalling: true,
