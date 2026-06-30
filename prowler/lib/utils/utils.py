@@ -224,27 +224,47 @@ def _scan_batch_chunk(
         kingfisher_output = json.loads(output) if output.strip() else {}
 
         source_lines_cache = {}
+
+        def source_lines(file_name: str) -> list:
+            if file_name not in source_lines_cache:
+                with open(
+                    os.path.join(tmp_dir, file_name),
+                    encoding=encoding_format_utf_8,
+                    errors="replace",
+                ) as f:
+                    source_lines_cache[file_name] = f.read().splitlines()
+            return source_lines_cache[file_name]
+
         for entry in kingfisher_output.get("findings", []):
             finding = entry.get("finding", {})
             name = os.path.basename(finding.get("path", ""))
             key = index_to_key.get(name)
             if key is None:
                 continue
+            # Validate the line index before any consumer trusts it. Checks use
+            # ``line_number`` as a 1-based index into their own parallel data
+            # (e.g. CloudWatch does ``events[line_number - 1]``), so a missing,
+            # non-integer, or out-of-range line would crash the check or map the
+            # secret to the wrong resource. Fail closed: surface a malformed
+            # finding as a scan failure so callers report MANUAL instead of a
+            # wrong PASS/FAIL. ``bool`` is rejected explicitly because it is a
+            # subclass of ``int``.
             line_number = finding.get("line")
-            if excluded_secrets and line_number:
-                if name not in source_lines_cache:
-                    with open(
-                        os.path.join(tmp_dir, name),
-                        encoding=encoding_format_utf_8,
-                        errors="replace",
-                    ) as f:
-                        source_lines_cache[name] = f.read().splitlines()
-                lines = source_lines_cache[name]
-                if line_number <= len(lines) and any(
-                    re.search(pattern, lines[line_number - 1])
-                    for pattern in excluded_secrets
-                ):
-                    continue
+            lines = source_lines(name)
+            if (
+                isinstance(line_number, bool)
+                or not isinstance(line_number, int)
+                or not 1 <= line_number <= len(lines)
+            ):
+                raise SecretsScanError(
+                    f"Kingfisher returned an invalid line number "
+                    f"{line_number!r} for a finding in {name}"
+                )
+            if excluded_secrets and any(
+                re.search(pattern, lines[line_number - 1])
+                for pattern in excluded_secrets
+            ):
+                continue
             results.setdefault(key, []).append(_finding_to_dict(entry, name))
     except SecretsScanError:
         # Already a typed scan failure; propagate so callers report MANUAL.

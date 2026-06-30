@@ -42,6 +42,75 @@ def _fake_kingfisher_run(output_content=None, returncode=0, stderr=""):
     return _run
 
 
+def _fake_kingfisher_run_with_findings(findings):
+    """Build a ``subprocess.run`` replacement that emits crafted findings.
+
+    Each entry in ``findings`` is a ``(payload_index, line)`` pair: the finding
+    is mapped back to the temp file named ``str(payload_index)`` (the basename
+    ``_scan_batch_chunk`` writes per payload) and given the requested ``line``
+    value (omitted entirely when ``line`` is the sentinel ``_OMIT``). Returns a
+    success exit code so only the finding shape is under test.
+    """
+
+    def _run(command, *_args, **_kwargs):
+        output_path = command[command.index("--output") + 1]
+        entries = []
+        for payload_index, line in findings:
+            finding = {"path": str(payload_index), "snippet": "secret"}
+            if line is not _OMIT:
+                finding["line"] = line
+            entries.append({"finding": finding, "rule": {"name": "Generic Secret"}})
+        import json as _json
+
+        with open(output_path, "w") as output_file:
+            output_file.write(_json.dumps({"findings": entries}))
+        return subprocess.CompletedProcess(command, 200, stdout="", stderr="")
+
+    return _run
+
+
+_OMIT = object()
+
+
+class Test_detect_secrets_scan_batch_invalid_line:
+    """Kingfisher's ``line`` is consumed as a trusted 1-based index by checks
+    (e.g. CloudWatch ``events[line_number - 1]``). A malformed line must fail
+    closed as SecretsScanError, never return a finding with a bad index."""
+
+    @pytest.mark.parametrize(
+        "line",
+        [_OMIT, None, "2", 0, -1, 5, True],
+        ids=["missing", "none", "string", "zero", "negative", "out_of_range", "bool"],
+    )
+    def test_invalid_line_raises(self, line):
+        # Payload "data" is a single line, so any line other than 1 is invalid.
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run_with_findings([(0, line)]),
+        ):
+            with pytest.raises(SecretsScanError) as exc:
+                detect_secrets_scan_batch({"a": "data"})
+        assert "invalid line number" in str(exc.value)
+
+    def test_valid_line_is_returned(self):
+        # A valid in-range line must still pass through to the caller.
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run_with_findings([(0, 1)]),
+        ):
+            results = detect_secrets_scan_batch({"a": "data"})
+        assert results["a"][0]["line_number"] == 1
+
+    def test_one_invalid_line_aborts_the_whole_scan(self):
+        # Even mixed with a valid finding, a single invalid line fails closed.
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run_with_findings([(0, 1), (1, 0)]),
+        ):
+            with pytest.raises(SecretsScanError):
+                detect_secrets_scan_batch({"a": "data", "b": "data"})
+
+
 class Test_utils_open_file:
     def test_open_read_file(self):
         temp_data_file = tempfile.NamedTemporaryFile(delete=False)
