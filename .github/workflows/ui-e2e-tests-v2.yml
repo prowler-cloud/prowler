@@ -11,6 +11,7 @@ on:
       - "v5.*"
     paths:
       - '.github/workflows/ui-e2e-tests-v2.yml'
+      - '.github/workflows/test-impact-analysis.yml'
       - '.github/test-impact.yml'
       - 'ui/**'
   pull_request:
@@ -25,6 +26,7 @@ on:
       - "v5.*"
     paths:
       - '.github/workflows/ui-e2e-tests-v2.yml'
+      - '.github/workflows/test-impact-analysis.yml'
       - '.github/test-impact.yml'
       - 'ui/**'
       - 'api/**'  # API changes can affect UI E2E
@@ -65,7 +67,9 @@ jobs:
   impact-analysis:
     if: |
       github.repository == 'prowler-cloud/prowler' &&
-      (github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'run-ui-e2e'))
+      (github.event_name == 'push' ||
+        contains(github.event.pull_request.labels.*.name, 'run-ui-e2e') ||
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association))
     uses: ./.github/workflows/test-impact-analysis.yml
 
   # Run E2E tests based on impact analysis
@@ -73,7 +77,9 @@ jobs:
     needs: impact-analysis
     if: |
       github.repository == 'prowler-cloud/prowler' &&
-      (github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'run-ui-e2e')) &&
+      (github.event_name == 'push' ||
+        contains(github.event.pull_request.labels.*.name, 'run-ui-e2e') ||
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)) &&
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
     environment: ui-e2e-cloud
@@ -348,7 +354,8 @@ jobs:
     if: |
       github.repository == 'prowler-cloud/prowler' &&
       github.event_name == 'pull_request' &&
-      !contains(github.event.pull_request.labels.*.name, 'run-ui-e2e')
+      !contains(github.event.pull_request.labels.*.name, 'run-ui-e2e') &&
+      !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -371,7 +378,9 @@ jobs:
     needs: impact-analysis
     if: |
       github.repository == 'prowler-cloud/prowler' &&
-      (github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'run-ui-e2e')) &&
+      (github.event_name == 'push' ||
+        contains(github.event.pull_request.labels.*.name, 'run-ui-e2e') ||
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)) &&
       needs.impact-analysis.outputs.has-ui-e2e != 'true' &&
       needs.impact-analysis.outputs.run-all != 'true'
     runs-on: ubuntu-latest
