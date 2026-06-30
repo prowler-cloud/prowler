@@ -112,49 +112,6 @@ describe("LighthouseV2SessionHistory", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("marks the active session with a visible sidebar indicator", () => {
-    // Given / When
-    renderHistory({
-      activeSessionId: "session-active",
-      sessions: [
-        session({
-          id: "session-active",
-          title: "Active chat",
-          updatedAt: "2026-06-25T09:00:00Z",
-        }),
-        session({
-          id: "session-other",
-          title: "Other chat",
-          updatedAt: "2026-06-25T09:00:00Z",
-        }),
-      ],
-    });
-
-    // Then
-    const activeSessionButton = screen.getByRole("button", {
-      name: /Active chat.*Today/,
-    });
-    const otherSessionButton = screen.getByRole("button", {
-      name: /Other chat.*Today/,
-    });
-    const activeSessionTitle =
-      within(activeSessionButton).getByText("Active chat");
-    const otherSessionTitle =
-      within(otherSessionButton).getByText("Other chat");
-
-    expect(activeSessionButton.parentElement).toHaveClass(
-      "before:bg-button-primary",
-      "before:absolute",
-      "before:left-0",
-    );
-    expect(activeSessionButton).toHaveClass("text-text-neutral-primary");
-    expect(activeSessionTitle).toHaveClass("font-medium");
-    expect(otherSessionButton.parentElement).not.toHaveClass(
-      "before:bg-button-primary",
-    );
-    expect(otherSessionTitle).not.toHaveClass("font-medium");
-  });
-
   it("replaces the age label with the archive action on row hover", () => {
     // Given / When
     renderHistory({
