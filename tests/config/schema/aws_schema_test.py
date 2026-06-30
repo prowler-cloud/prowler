@@ -3,12 +3,59 @@ constraint surface (CIDRs, account IDs, port ranges, enums, thresholds)."""
 
 import pytest
 
+from prowler.config.scan_config_schema import SCAN_CONFIG_SCHEMA
 from prowler.config.schema.aws import AWSProviderConfig
 from prowler.config.schema.validator import validate_provider_config
 
 
 def _validate(raw):
     return validate_provider_config("aws", raw, AWSProviderConfig)
+
+
+RESOURCE_LIMIT_KEYS = [
+    "max_scanned_resources_per_service",
+    "max_ebs_snapshots",
+    "max_backup_recovery_points",
+    "max_cloudwatch_log_groups",
+    "max_lambda_functions",
+    "max_ecs_task_definitions",
+    "max_codeartifact_packages",
+]
+
+
+class Test_AWS_Resource_Limits:
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_positive_values_round_trip(self, key):
+        assert _validate({key: 100}) == {key: 100}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_null_values_round_trip(self, key):
+        assert _validate({key: None}) == {key: None}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_zero_disable_sentinel_round_trips(self, key):
+        assert _validate({key: 0}) == {key: 0}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_numeric_strings_are_coerced_to_int(self, key):
+        assert _validate({key: "100"}) == {key: 100}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_disable_sentinel_minus_one_round_trips(self, key):
+        assert _validate({key: -1}) == {key: -1}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    @pytest.mark.parametrize("value", [True, False])
+    def test_booleans_are_dropped_not_coerced_to_int(self, key, value):
+        assert _validate({key: value}) == {}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_invalid_strings_are_dropped(self, key):
+        assert _validate({key: "not-an-int"}) == {}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_keys_are_exposed_in_scan_config_schema(self, key):
+        assert key in SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
 
 
 class Test_AWS_Threat_Detection_Thresholds:
