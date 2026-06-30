@@ -26,6 +26,8 @@ class repository_default_branch_requires_multiple_approvals(Check):
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not enforce at least 2 approvals for code changes."
+                if repo.default_branch.approval_count_source == "ruleset_not_active":
+                    report.status_extended = f"Repository {repo.name} has at least 2 approvals configured in a ruleset, but the ruleset is not active."
 
                 if repo.default_branch.approval_count >= 2:
                     report.status = "PASS"

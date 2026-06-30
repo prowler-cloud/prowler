@@ -26,6 +26,11 @@ class repository_default_branch_requires_linear_history(Check):
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not require linear history on default branch ({repo.default_branch.name})."
+                if (
+                    repo.default_branch.required_linear_history_source
+                    == "ruleset_not_active"
+                ):
+                    report.status_extended = f"Repository {repo.name} has linear history configured in a ruleset on default branch ({repo.default_branch.name}), but the ruleset is not active."
 
                 if repo.default_branch.required_linear_history:
                     report.status = "PASS"
