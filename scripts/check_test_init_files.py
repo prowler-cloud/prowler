@@ -5,10 +5,23 @@ from __future__ import annotations
 
 import sys
 from argparse import ArgumentParser
+from os import walk
 from pathlib import Path
 
 EXCLUDED_TEST_INIT_ROOTS = {
     Path("tests/lib/check/fixtures/checks_folder"),
+}
+
+IGNORED_DIRECTORY_NAMES = {
+    ".git",
+    ".mypy_cache",
+    ".nox",
+    ".pytest_cache",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "node_modules",
+    "venv",
 }
 
 
@@ -27,11 +40,23 @@ def is_excluded_test_init_file(path: Path, root: Path) -> bool:
 
 def find_test_init_files(root: Path) -> list[Path]:
     """Return sorted __init__.py files found under test directories."""
-    return sorted(
-        path
-        for path in root.rglob("__init__.py")
-        if is_test_init_file(path) and not is_excluded_test_init_file(path, root)
-    )
+    matches = []
+
+    for current_root, directories, filenames in walk(root):
+        directories[:] = [
+            directory
+            for directory in directories
+            if directory not in IGNORED_DIRECTORY_NAMES
+        ]
+        if "__init__.py" in filenames:
+            path = Path(current_root) / "__init__.py"
+        else:
+            continue
+
+        if is_test_init_file(path) and not is_excluded_test_init_file(path, root):
+            matches.append(path)
+
+    return sorted(matches)
 
 
 def main(argv: list[str] | None = None) -> int:

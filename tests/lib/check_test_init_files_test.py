@@ -47,6 +47,30 @@ def test_find_test_init_files_detects_only_test_directories(tmp_path):
     ]
 
 
+def test_find_test_init_files_ignores_virtualenv_test_packages(tmp_path):
+    guard = load_guard_module()
+
+    virtualenv_tests = (
+        tmp_path
+        / ".venv"
+        / "lib"
+        / "python3.12"
+        / "site-packages"
+        / "package"
+        / "tests"
+    )
+    virtualenv_tests.mkdir(parents=True)
+    (virtualenv_tests / "__init__.py").write_text("")
+    (tmp_path / "tests" / "providers" / "aws").mkdir(parents=True)
+    (tmp_path / "tests" / "providers" / "aws" / "__init__.py").write_text("")
+
+    matches = guard.find_test_init_files(tmp_path)
+
+    assert [path.relative_to(tmp_path) for path in matches] == [
+        Path("tests/providers/aws/__init__.py"),
+    ]
+
+
 def test_main_returns_error_when_test_init_files_exist(tmp_path, capsys):
     guard = load_guard_module()
 
