@@ -102,6 +102,23 @@ RUN uv sync --locked --no-install-project && \
 
 RUN .venv/bin/python .venv/lib/python3.12/site-packages/prowler/providers/m365/lib/powershell/m365_powershell.py
 
+USER root
+
+# Remove build-only packages from the final image after Python dependencies are installed.
+RUN apt-get purge -y --auto-remove \
+    gcc \
+    g++ \
+    make \
+    libxml2-dev \
+    libxmlsec1-dev \
+    pkg-config \
+    libtool \
+    libxslt1-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+USER prowler
+
 COPY --chown=prowler:prowler src/backend/ ./backend/
 COPY --chown=prowler:prowler docker-entrypoint.sh ./docker-entrypoint.sh
 
