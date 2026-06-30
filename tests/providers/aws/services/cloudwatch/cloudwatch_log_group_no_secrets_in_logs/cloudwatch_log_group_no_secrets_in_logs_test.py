@@ -351,6 +351,129 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             assert "Could not scan" in result[0].status_extended
 
     @mock_aws
+    def test_two_multiline_events_same_timestamp_do_not_collide(self):
+        # Regression: a CloudWatch stream can hold several events sharing one
+        # millisecond timestamp. The multiline rescan must be keyed per event
+        # (not only per timestamp), otherwise the later event's payload
+        # overwrites the earlier one and secret evidence is lost.
+        log_group_arn = (
+            f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test:*"
+        )
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="test", tags={"test": "test"})
+        logs_client.create_log_stream(logGroupName="test", logStreamName="test stream")
+        # Two distinct multiline (valid JSON) events at the same timestamp.
+        logs_client.put_log_events(
+            logGroupName="test",
+            logStreamName="test stream",
+            logEvents=[
+                {
+                    "timestamp": timestamp,
+                    "message": '{"api_key": "AKIAIOSFODNN7EXAMPLE", "note": "a"}',
+                },
+                {
+                    "timestamp": timestamp,
+                    "message": '{"secret": "AKIAI44QH8DHBEXAMPLE", "note": "b"}',
+                },
+            ],
+        )
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        from prowler.providers.common.models import Audit_Metadata
+
+        aws_provider.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+            completed_checks=0,
+            audit_progress=0,
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.detect_secrets_scan_batch",
+                side_effect=[
+                    # Phase 1: both events flagged (one secret on each line).
+                    {
+                        (log_group_arn, "test stream"): [
+                            {
+                                "type": "AWS Access Key",
+                                "line_number": 1,
+                                "filename": "data",
+                                "hashed_secret": "a",
+                                "is_verified": False,
+                            },
+                            {
+                                "type": "AWS Access Key",
+                                "line_number": 2,
+                                "filename": "data",
+                                "hashed_secret": "b",
+                                "is_verified": False,
+                            },
+                        ]
+                    },
+                    # Phase 3: each event is rescanned under its own key. If the
+                    # keys collided, only one of these would survive.
+                    {
+                        (
+                            log_group_arn,
+                            "test stream",
+                            dttimestamp,
+                            0,
+                        ): [
+                            {
+                                "type": "AWS Access Key",
+                                "line_number": 2,
+                                "filename": "data",
+                                "hashed_secret": "a",
+                                "is_verified": False,
+                            }
+                        ],
+                        (
+                            log_group_arn,
+                            "test stream",
+                            dttimestamp,
+                            1,
+                        ): [
+                            {
+                                "type": "AWS Access Key",
+                                "line_number": 2,
+                                "filename": "data",
+                                "hashed_secret": "b",
+                                "is_verified": False,
+                            }
+                        ],
+                    },
+                ],
+            ),
+        ):
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs import (
+                cloudwatch_log_group_no_secrets_in_logs,
+            )
+
+            check = cloudwatch_log_group_no_secrets_in_logs()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            # Both events' secrets must be reported, not just the last one.
+            assert (
+                result[0].status_extended
+                == f"Potential secrets found in log group test in log stream test stream at {dttimestamp} - AWS Access Key on line 2."
+            )
+
+    @mock_aws
     def test_same_group_and_stream_names_in_two_regions_do_not_collide(self):
         # Regression: log group and stream names are not unique across regions,
         # so the per-stream key must be region-aware (ARN-based). Otherwise the

@@ -51,12 +51,22 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
             stream_results = {}
             stream_scan_error = error
 
-        # Phase 2: plan the per-timestamp secrets for each flagged stream and
-        # collect the multiline events to rescan. Each multiline event is
-        # rescanned once (keyed by timestamp) to resolve per-line detail; the
-        # rescans are batched in Phase 3 instead of one subprocess per event.
-        stream_plans = {}  # (group arn, stream) -> {timestamp: {"multiline", "types"}}
-        rescan_payloads = {}  # (group arn, stream, timestamp) -> multiline event data
+        # Phase 2: plan the per-event secrets for each flagged stream and collect
+        # the multiline events to rescan. Each multiline event is rescanned once
+        # to resolve per-line detail; the rescans are batched in Phase 3 instead
+        # of one subprocess per event. The event index (``line_number - 1``,
+        # since Phase 1 joins one event per line) is the per-event discriminator:
+        # a CloudWatch stream can hold several events sharing one millisecond
+        # timestamp, so keying only by timestamp would let a later multiline
+        # event overwrite an earlier one's payload and lose secret evidence.
+        # Output still groups/displays by timestamp; only the rescan identity is
+        # per event.
+        # stream_plans: (group arn, stream) ->
+        #     {timestamp: {event index: {"multiline", "types"}}}
+        # rescan_payloads: (group arn, stream, timestamp, event index) ->
+        #     multiline event data
+        stream_plans = {}
+        rescan_payloads = {}
         groups_with_rescan = set()  # group arns that depend on the Phase 3 rescan
         for log_group in logs_client.log_groups.values():
             for log_stream_name in log_group.log_streams or {}:
@@ -66,7 +76,8 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                 events = log_group.log_streams[log_stream_name]
                 plan = {}
                 for secret in stream_secrets:
-                    flagged_event = events[secret["line_number"] - 1]
+                    event_index = secret["line_number"] - 1
+                    flagged_event = events[event_index]
                     cloudwatch_timestamp = convert_to_cloudwatch_timestamp_format(
                         flagged_event["timestamp"]
                     )
@@ -77,8 +88,9 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                     except Exception:
                         log_event_data = dumps(flagged_event["message"], indent=2)
                     multiline = len(log_event_data.split("\n")) > 1
-                    if cloudwatch_timestamp not in plan:
-                        plan[cloudwatch_timestamp] = {
+                    events_at_timestamp = plan.setdefault(cloudwatch_timestamp, {})
+                    if event_index not in events_at_timestamp:
+                        events_at_timestamp[event_index] = {
                             "multiline": multiline,
                             "types": [],
                         }
@@ -87,11 +99,16 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                         # line: the event is rescanned to get the type and line
                         # number of each secret.
                         rescan_payloads[
-                            (log_group.arn, log_stream_name, cloudwatch_timestamp)
+                            (
+                                log_group.arn,
+                                log_stream_name,
+                                cloudwatch_timestamp,
+                                event_index,
+                            )
                         ] = log_event_data
                         groups_with_rescan.add(log_group.arn)
                     else:
-                        plan[cloudwatch_timestamp]["types"].append(secret["type"])
+                        events_at_timestamp[event_index]["types"].append(secret["type"])
                 stream_plans[(log_group.arn, log_stream_name)] = plan
 
         # Phase 3: one batched rescan for all multiline flagged events. Validation
@@ -133,21 +150,29 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                     continue
                 all_secrets.extend(stream_secrets)
                 log_stream_secrets = {}
-                for cloudwatch_timestamp, entry in stream_plans[
+                for cloudwatch_timestamp, events_at_timestamp in stream_plans[
                     (log_group.arn, log_stream_name)
                 ].items():
                     secrets_dict = SecretsDict()
-                    if entry["multiline"]:
-                        for event_secret in rescan_results.get(
-                            (log_group.arn, log_stream_name, cloudwatch_timestamp),
-                            [],
-                        ):
-                            secrets_dict.add_secret(
-                                event_secret["line_number"], event_secret["type"]
-                            )
-                    else:
-                        for secret_type in entry["types"]:
-                            secrets_dict.add_secret(1, secret_type)
+                    # Multiple events can share one timestamp; aggregate each
+                    # event's secrets into the timestamp's display entry.
+                    for event_index, entry in events_at_timestamp.items():
+                        if entry["multiline"]:
+                            for event_secret in rescan_results.get(
+                                (
+                                    log_group.arn,
+                                    log_stream_name,
+                                    cloudwatch_timestamp,
+                                    event_index,
+                                ),
+                                [],
+                            ):
+                                secrets_dict.add_secret(
+                                    event_secret["line_number"], event_secret["type"]
+                                )
+                        else:
+                            for secret_type in entry["types"]:
+                                secrets_dict.add_secret(1, secret_type)
                     # Only record the event when at least one non-ignored secret
                     # remains after the rescan. A multiline event whose secrets
                     # were all dropped by ``secrets_ignore_patterns`` leaves an
