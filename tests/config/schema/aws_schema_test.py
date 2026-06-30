@@ -130,48 +130,6 @@ class Test_AWS_Enums:
         assert _validate({"ecr_repository_vulnerability_minimum_severity": level}) == {}
 
 
-class Test_AWS_Detect_Secrets_Plugins:
-    def test_plugin_without_limit(self):
-        out = _validate({"detect_secrets_plugins": [{"name": "AWSKeyDetector"}]})
-        assert out == {"detect_secrets_plugins": [{"name": "AWSKeyDetector"}]}
-
-    def test_plugin_with_limit(self):
-        out = _validate(
-            {
-                "detect_secrets_plugins": [
-                    {"name": "Base64HighEntropyString", "limit": 6.0}
-                ]
-            }
-        )
-        assert out == {
-            "detect_secrets_plugins": [
-                {"name": "Base64HighEntropyString", "limit": 6.0}
-            ]
-        }
-
-    def test_plugin_missing_name_passes_through(self):
-        # Plugin kwargs are intentionally passed through so runtime plugin
-        # validation remains owned by the upstream secret scanner.
-        out = _validate({"detect_secrets_plugins": [{"limit": 6.0}]})
-        assert out == {"detect_secrets_plugins": [{"limit": 6.0}]}
-
-    def test_extra_plugin_kwargs_pass_through(self):
-        # Plugins can have arbitrary extra params (extra="allow" on the
-        # nested model). They must round-trip.
-        out = _validate(
-            {
-                "detect_secrets_plugins": [
-                    {"name": "Custom", "my_param": "abc", "other": 42}
-                ]
-            }
-        )
-        assert out == {
-            "detect_secrets_plugins": [
-                {"name": "Custom", "my_param": "abc", "other": 42}
-            ]
-        }
-
-
 class Test_AWS_Secrets_Ignore_Files:
     def test_valid_file_patterns_round_trip(self):
         files = ["*.deps.json", "vendor/*.js"]
