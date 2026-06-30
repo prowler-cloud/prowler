@@ -50,7 +50,9 @@ export const Modal = ({
       <DialogContent
         onOpenAutoFocus={onOpenAutoFocus}
         className={cn(
-          "border-text-neutral-tertiary bg-bg-neutral-secondary rounded-[24px] border shadow-[0_0_200px_0_rgba(15,44,46,0.50)]",
+          // Cap the height and scroll tall content so the dialog never
+          // overflows the viewport on short screens.
+          "border-text-neutral-tertiary bg-bg-neutral-secondary max-h-[90dvh] overflow-y-auto rounded-[24px] border shadow-[0_0_200px_0_rgba(15,44,46,0.50)]",
           SIZE_CLASSES[size],
           className,
         )}

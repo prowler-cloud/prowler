@@ -21,8 +21,6 @@ import {
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { fontMono } from "@/config/fonts";
-import { cn } from "@/lib/utils";
 import {
   convertToYaml,
   defaultScanConfigurationYaml,
@@ -219,7 +217,7 @@ function ScanConfigurationForm({
           placeholder={defaultScanConfigurationYaml}
           rows={14}
           aria-invalid={!!configError || !yamlSyntax.isValid}
-          className={cn(fontMono.className, "text-sm")}
+          font="mono"
           {...form.register("configuration", {
             // A server-side validation error becomes stale the moment the user
             // edits the YAML — clear it so it can't linger next to the live
@@ -227,7 +225,11 @@ function ScanConfigurationForm({
             onChange: () => form.clearErrors("configuration"),
           })}
         />
-        <div aria-live="polite" className="mt-1" ref={errorPanelRef}>
+        <div
+          aria-live="polite"
+          className="mt-1 flex flex-col gap-1"
+          ref={errorPanelRef}
+        >
           {!yamlSyntax.isValid ? (
             <FieldError>{`Invalid YAML format: ${yamlSyntax.error}`}</FieldError>
           ) : configText.trim() && !configError ? (
@@ -235,11 +237,7 @@ function ScanConfigurationForm({
               Valid YAML format
             </p>
           ) : null}
-          {configError && (
-            <FieldError className="mt-1 whitespace-pre-wrap">
-              {configError}
-            </FieldError>
-          )}
+          {configError && <FieldError multiline>{configError}</FieldError>}
         </div>
       </Field>
 
@@ -325,9 +323,6 @@ export function ScanConfigurationEditor({
       }}
       title={isEdit ? "Edit Scan Configuration" : "New Scan Configuration"}
       size="2xl"
-      // The form is tall (YAML editor + provider selector); cap the height and
-      // let it scroll so it never overflows the viewport on short screens.
-      className="max-h-[90dvh] overflow-y-auto"
     >
       <ScanConfigurationForm
         key={config?.id ?? "new"}

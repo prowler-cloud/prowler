@@ -170,27 +170,31 @@ export function ScanConfigurationsManager({
                   onClear={clearFilters}
                 />
               )}
-              <Button size="lg" onClick={openCreate} className="md:ml-auto">
-                <Plus className="size-4" />
-                New Scan Configuration
-              </Button>
+              <div className="md:ml-auto">
+                <Button size="lg" onClick={openCreate}>
+                  <Plus className="size-4" />
+                  New Scan Configuration
+                </Button>
+              </div>
             </>
           }
         />
       </div>
 
       {noMatchForProvider ? (
-        <Card variant="base" className="p-8 text-center">
-          <p className="text-default-700 text-sm font-medium">
-            {providerFilter.length === 1
-              ? "No Scan Configuration is attached to this provider."
-              : "No Scan Configuration is attached to any of the selected providers."}
-          </p>
-          <p className="text-default-500 mt-1 text-sm">
-            The next scan{providerFilter.length === 1 ? "" : "s"} will use the
-            built-in defaults shipped with Prowler. Attach a Scan Configuration
-            from the editor to override them.
-          </p>
+        <Card variant="base" padding="xl">
+          <div className="text-center">
+            <p className="text-default-700 text-sm font-medium">
+              {providerFilter.length === 1
+                ? "No Scan Configuration is attached to this provider."
+                : "No Scan Configuration is attached to any of the selected providers."}
+            </p>
+            <p className="text-default-500 mt-1 text-sm">
+              The next scan{providerFilter.length === 1 ? "" : "s"} will use the
+              built-in defaults shipped with Prowler. Attach a Scan
+              Configuration from the editor to override them.
+            </p>
+          </div>
         </Card>
       ) : (
         <DataTable

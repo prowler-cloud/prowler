@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { setScanConfigurationProviders } from "@/actions/scan-configurations";
 import { Button } from "@/components/shadcn";
@@ -33,27 +33,44 @@ interface ManageScanConfigModalProps {
   onSaved: () => void;
 }
 
+type ManageScanConfigFormProps = Omit<ManageScanConfigModalProps, "open">;
+
 export function ManageScanConfigModal({
   open,
+  onOpenChange,
+  ...formProps
+}: ManageScanConfigModalProps) {
+  return (
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Scan Configuration"
+      size="md"
+    >
+      {/* Remount the form per provider/config so the selection resets to the
+          provider's current config on open — no prop-to-state sync needed. */}
+      <ManageScanConfigForm
+        key={formProps.currentConfigId ?? DEFAULT_VALUE}
+        onOpenChange={onOpenChange}
+        {...formProps}
+      />
+    </Modal>
+  );
+}
+
+function ManageScanConfigForm({
   onOpenChange,
   providerId,
   providerLabel,
   scanConfigs,
   currentConfigId,
   onSaved,
-}: ManageScanConfigModalProps) {
+}: ManageScanConfigFormProps) {
   const { toast } = useToast();
   const [selected, setSelected] = useState<string>(
     currentConfigId ?? DEFAULT_VALUE,
   );
   const [isSaving, setIsSaving] = useState(false);
-
-  // Reset the selection to the provider's current config each time the modal
-  // opens (the same instance is reused across opens, and the current config can
-  // change after a save + refresh).
-  useEffect(() => {
-    if (open) setSelected(currentConfigId ?? DEFAULT_VALUE);
-  }, [open, currentConfigId]);
 
   const handleSave = async () => {
     // No change — nothing to do.
@@ -135,74 +152,67 @@ export function ManageScanConfigModal({
   };
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Scan Configuration"
-      size="md"
-    >
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
+      <p className="text-default-500 text-tiny">
+        Choose the scan configuration to apply to{" "}
+        <strong>{providerLabel}</strong> on its next scan, or leave default. To
+        create or edit configurations, go to{" "}
+        <CustomLink size="xs" href="/scans/config" target="_self">
+          Scan Config
+        </CustomLink>
+        .
+      </p>
+
+      {/* Always show the dropdown with Default — even with no custom configs,
+          the provider can fall back to Prowler's SDK defaults. */}
+      <div className="flex flex-col gap-1">
+        <Select value={selected} onValueChange={setSelected}>
+          <SelectTrigger aria-label="Scan configuration">
+            <SelectValue placeholder="Default" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={DEFAULT_VALUE}>Default</SelectItem>
+            {scanConfigs.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.attributes.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <p className="text-default-500 text-tiny">
-          Choose the scan configuration to apply to{" "}
-          <strong>{providerLabel}</strong> on its next scan, or leave default.
-          To create or edit configurations, go to{" "}
-          <CustomLink size="xs" href="/scans/config" target="_self">
-            Scan Config
+          <strong>Default</strong>
+          {
+            " uses Prowler's scan configuration baseline. Read more about it in the "
+          }
+          <CustomLink
+            size="xs"
+            href="https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration"
+          >
+            documentation
           </CustomLink>
           .
         </p>
-
-        {/* Always show the dropdown with Default — even with no custom configs,
-            the provider can fall back to Prowler's SDK defaults. */}
-        <div className="flex flex-col gap-1">
-          <Select value={selected} onValueChange={setSelected}>
-            <SelectTrigger>
-              <SelectValue placeholder="Default" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={DEFAULT_VALUE}>Default</SelectItem>
-              {scanConfigs.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.attributes.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-default-500 text-tiny">
-            <strong>Default</strong>
-            {
-              " uses Prowler's scan configuration baseline. Read more about it in the "
-            }
-            <CustomLink
-              size="xs"
-              href="https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration"
-            >
-              documentation
-            </CustomLink>
-            .
-          </p>
-        </div>
-
-        <div className="flex w-full justify-end gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            onClick={() => onOpenChange(false)}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            size="lg"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
-        </div>
       </div>
-    </Modal>
+
+      <div className="flex w-full justify-end gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="lg"
+          onClick={() => onOpenChange(false)}
+          disabled={isSaving}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="lg"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? "Saving..." : "Save"}
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -3,6 +3,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { ComponentProps, forwardRef } from "react";
 
+import { fontMono } from "@/config/fonts";
 import { cn } from "@/lib/utils";
 
 const textareaVariants = cva(
@@ -30,15 +31,26 @@ const textareaVariants = cva(
 
 export interface TextareaProps
   extends Omit<ComponentProps<"textarea">, "size">,
-    VariantProps<typeof textareaVariants> {}
+    VariantProps<typeof textareaVariants> {
+  /**
+   * Font family. `mono` renders the value in the design system's monospace
+   * face — use it for code/YAML/config input. `fontMono.className` is a
+   * generated next/font class, so it lives here rather than in the cva variants.
+   */
+  font?: "sans" | "mono";
+}
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, variant, textareaSize, ...props }, ref) => {
+  ({ className, variant, textareaSize, font = "sans", ...props }, ref) => {
     return (
       <textarea
         ref={ref}
         data-slot="textarea"
-        className={cn(textareaVariants({ variant, textareaSize, className }))}
+        className={cn(
+          textareaVariants({ variant, textareaSize }),
+          font === "mono" && fontMono.className,
+          className,
+        )}
         {...props}
       />
     );
