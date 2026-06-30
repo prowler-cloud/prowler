@@ -96,6 +96,11 @@ def inject_provider_label(cypher: str, provider_id: str) -> str:
         node pattern.
     """
     label = get_provider_label(provider_id)
+    return inject_label(cypher, label)
+
+
+def inject_label(cypher: str, label: str) -> str:
+    """Rewrite a Cypher query to append a label to every node pattern."""
 
     # Step 1: Protect strings and comments (single pass, leftmost-first)
     protected: list[str] = []

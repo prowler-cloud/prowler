@@ -171,6 +171,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         update_tag=tmp_cartography_config.update_tag,
     )
 
+    graph_database.verify_scan_databases_available()
+
     # Starting the Attack Paths scan
     if not db_utils.starting_attack_paths_scan(
         attack_paths_scan, tenant_cartography_config
