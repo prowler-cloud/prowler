@@ -647,3 +647,60 @@ class Test_compute_instance_metadata_sensitive_data:
             assert result[0].check_metadata.Severity == Severity.critical
             assert "confirmed to be live" in result[0].status_extended
             assert mock_scan.call_args.kwargs.get("validate") is True
+
+    def test_scan_failure_reports_manual(self):
+        from prowler.lib.utils.utils import SecretsScanError
+
+        compute_client = mock.MagicMock()
+        compute_client.audit_config = {"secrets_ignore_patterns": []}
+        compute_client.instances = [
+            ComputeInstance(
+                id="instance-scan-fail",
+                name="Scan Fail",
+                status="ACTIVE",
+                flavor_id="flavor-1",
+                security_groups=["default"],
+                region=OPENSTACK_REGION,
+                project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={},
+                has_config_drive=False,
+                metadata={"api_key": "placeholder"},
+                user_data="",
+                trusted_image_certificates=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.compute.compute_instance_metadata_sensitive_data.compute_instance_metadata_sensitive_data.compute_client",
+                new=compute_client,
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.compute.compute_instance_metadata_sensitive_data.compute_instance_metadata_sensitive_data.detect_secrets_scan_batch",
+                side_effect=SecretsScanError("Kingfisher exited with code 1"),
+            ),
+        ):
+            from prowler.providers.openstack.services.compute.compute_instance_metadata_sensitive_data.compute_instance_metadata_sensitive_data import (
+                compute_instance_metadata_sensitive_data,
+            )
+
+            check = compute_instance_metadata_sensitive_data()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not scan" in result[0].status_extended

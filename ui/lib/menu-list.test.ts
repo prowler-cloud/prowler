@@ -92,6 +92,42 @@ describe("getMenuList", () => {
     );
   });
 
+  it("should show Scan Configuration as disabled Cloud-only in OSS when Cloud is disabled", () => {
+    // Given / When
+    const scanConfig = findSubmenu("Scan Configuration");
+
+    // Then
+    expect(scanConfig).toEqual(
+      expect.objectContaining({
+        href: "/scan-configurations",
+        disabled: true,
+        cloudOnly: true,
+        highlight: true,
+        active: false,
+      }),
+    );
+  });
+
+  it("should show Scan Configuration as new under Configuration when Cloud is enabled", () => {
+    // Given
+    process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
+
+    // When
+    const scanConfig = getMenuList({ pathname: "/scan-configurations" })
+      .flatMap((group) => group.menus)
+      .flatMap((menu) => menu.submenus ?? [])
+      .find((submenu) => submenu.label === "Scan Configuration");
+
+    // Then
+    expect(scanConfig).toEqual(
+      expect.objectContaining({
+        href: "/scan-configurations",
+        active: true,
+        highlight: true,
+      }),
+    );
+  });
+
   it("should remove the new highlight from Attack Paths", () => {
     // Given / When
     const attackPaths = findMenu("Attack Paths");

@@ -58,7 +58,7 @@ dependencies = [
   "matplotlib (==3.10.8)",
   "reportlab (==4.4.10)",
   "neo4j (==6.1.0)",
-  "cartography (==0.135.0)",
+  "cartography (==0.138.1)",
   "gevent (==25.9.1)",
   "werkzeug (==3.1.7)",
   "sqlparse (==0.5.5)",
@@ -193,7 +193,7 @@ constraint-dependencies = [
   "blinker==1.9.0",
   "boto3==1.40.61",
   "botocore==1.40.61",
-  "cartography==0.135.0",
+  "cartography==0.138.1",
   "celery==5.6.2",
   "certifi==2026.1.4",
   "cffi==2.0.0",
@@ -447,7 +447,7 @@ constraint-dependencies = [
   "wcwidth==0.5.3",
   "websocket-client==1.9.0",
   "werkzeug==3.1.7",
-  "workos==6.0.4",
+  "workos==6.0.8",
   "wrapt==1.17.3",
   "xlsxwriter==3.2.9",
   "xmlsec==1.3.17",
@@ -458,8 +458,13 @@ constraint-dependencies = [
   "zope-interface==8.2",
   "zstd==1.5.7.3"
 ]
-# prowler@master needs okta==3.4.2; cartography 0.135.0 declares okta<1.0.0 for an
-# integration prowler does not import.
+# prowler@master needs okta==3.4.2, but cartography 0.138.1 requires okta<1.0.0.
+# Attack Paths does not ingest Okta today, so override the Cartography
+# dependency to the Prowler pin.
+#
+# prowler@master needs azure-mgmt-containerservice==34.1.0, but cartography
+# 0.138.1 requires azure-mgmt-containerservice>=41.0.0. Attack Paths does not
+# ingest Azure today, so override the Cartography dependency to the Prowler pin.
 #
 # prowler@master hard-pins microsoft-kiota-abstractions==1.9.2 in [project.dependencies].
 # The microsoft-kiota-http security bump to 1.9.9 (GHSA-7j59-v9qr-6fq9) requires
@@ -475,6 +480,7 @@ constraint-dependencies = [
 # that request pyjwt[crypto] and leave cryptography (needed for RS256) only transitive.
 override-dependencies = [
   "okta==3.4.2",
+  "azure-mgmt-containerservice==34.1.0",
   "microsoft-kiota-abstractions==1.9.9",
   "dulwich==1.2.5",
   "pyjwt[crypto]==2.13.0"

@@ -2,6 +2,7 @@ import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -24,9 +25,14 @@ class ssm_document_secrets(Check):
                 if document.content:
                     yield index, json.dumps(document.content, indent=2)
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for index, document in enumerate(documents):
             report = Check_Report_AWS(metadata=self.metadata(), resource=document)
@@ -36,6 +42,14 @@ class ssm_document_secrets(Check):
             )
 
             if document.content:
+                if scan_error:
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"Could not scan SSM Document {document.name} for secrets: "
+                        f"{scan_error}; manual review is required."
+                    )
+                    findings.append(report)
+                    continue
                 detect_secrets_output = batch_results.get(index)
                 if detect_secrets_output:
                     secrets_string = ", ".join(

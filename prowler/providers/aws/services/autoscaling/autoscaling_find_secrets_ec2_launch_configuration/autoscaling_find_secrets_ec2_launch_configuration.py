@@ -5,6 +5,7 @@ from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -24,9 +25,9 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
 
         # Collect the decoded User Data of each launch configuration and scan it
         # all in batched Kingfisher invocations instead of one subprocess each.
-        # Configurations whose User Data cannot be decoded are skipped (no report),
+        # Configurations whose User Data cannot be decoded are undecodable (no report),
         # matching the original per-resource behavior.
-        skipped = set()
+        undecodable = set()
 
         def payloads():
             for index, configuration in enumerate(configurations):
@@ -44,26 +45,41 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     logger.warning(
                         f"{configuration.region} -- Unable to decode user data in autoscaling launch configuration {configuration.name}: {error}"
                     )
-                    skipped.add(index)
+                    undecodable.add(index)
                     continue
                 except Exception as error:
                     logger.error(
                         f"{configuration.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    skipped.add(index)
+                    undecodable.add(index)
                     continue
                 yield index, user_data
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for index, configuration in enumerate(configurations):
-            if index in skipped:
-                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=configuration)
 
-            if configuration.user_data:
+            if scan_error and configuration.user_data:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan autoscaling {configuration.name} User Data for "
+                    f"secrets: {scan_error}; manual review is required."
+                )
+                findings.append(report)
+                continue
+
+            if index in undecodable:
+                report.status = "MANUAL"
+                report.status_extended = f"Could not decode User Data for autoscaling {configuration.name}; manual review is required to scan for secrets."
+            elif configuration.user_data:
                 has_secrets = batch_results.get(index)
                 if has_secrets:
                     report.status = "FAIL"

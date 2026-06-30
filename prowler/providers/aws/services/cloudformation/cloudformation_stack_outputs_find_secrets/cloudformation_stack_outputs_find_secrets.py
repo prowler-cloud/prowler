@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -27,9 +28,14 @@ class cloudformation_stack_outputs_find_secrets(Check):
                 if stack.outputs:
                     yield index, "".join(f"{output}\n" for output in stack.outputs)
 
-        batch_results = detect_secrets_scan_batch(
-            payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for index, stack in enumerate(stacks):
             report = Check_Report_AWS(metadata=self.metadata(), resource=stack)
@@ -38,6 +44,14 @@ class cloudformation_stack_outputs_find_secrets(Check):
                 f"No secrets found in CloudFormation Stack {stack.name} Outputs."
             )
             if stack.outputs:
+                if scan_error:
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"Could not scan CloudFormation Stack {stack.name} Outputs "
+                        f"for secrets: {scan_error}; manual review is required."
+                    )
+                    findings.append(report)
+                    continue
                 detect_secrets_output = batch_results.get(index)
                 if detect_secrets_output:
                     secrets_string = ", ".join(

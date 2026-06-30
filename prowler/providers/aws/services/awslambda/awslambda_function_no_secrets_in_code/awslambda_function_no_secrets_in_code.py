@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -47,11 +48,29 @@ class awslambda_function_no_secrets_in_code(Check):
                             continue
                         yield (index, file_name), content
 
-        batch_results = detect_secrets_scan_batch(
-            code_payloads(),
-            excluded_secrets=secrets_ignore_patterns,
-            validate=validate,
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                code_payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
+
+        if scan_error:
+            # The scan failed before any function's code could be cleared. Report
+            # MANUAL for every function rather than risk a false PASS.
+            for function in awslambda_client.functions.values():
+                report = Check_Report_AWS(metadata=self.metadata(), resource=function)
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan Lambda function {function.name} code for "
+                    f"secrets: {scan_error}; manual review is required."
+                )
+                findings.append(report)
+            return findings
 
         findings_by_function = defaultdict(dict)
         for (index, file_name), file_findings in batch_results.items():

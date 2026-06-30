@@ -2,6 +2,7 @@ import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
@@ -26,11 +27,16 @@ class awslambda_function_no_secrets_in_variables(Check):
                 if function.environment:
                     yield index, json.dumps(function.environment, indent=2)
 
-        batch_results = detect_secrets_scan_batch(
-            environment_payloads(),
-            excluded_secrets=secrets_ignore_patterns,
-            validate=validate,
-        )
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                environment_payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
 
         for index, function in enumerate(functions):
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
@@ -41,6 +47,14 @@ class awslambda_function_no_secrets_in_variables(Check):
             )
 
             if function.environment:
+                if scan_error:
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"Could not scan Lambda function {function.name} variables "
+                        f"for secrets: {scan_error}; manual review is required."
+                    )
+                    findings.append(report)
+                    continue
                 detect_secrets_output = batch_results.get(index)
                 if detect_secrets_output:
                     original_env_vars = list(function.environment.keys())

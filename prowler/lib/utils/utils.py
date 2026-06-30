@@ -48,6 +48,17 @@ default_secrets_batch_chunk_size = 500
 default_secrets_scan_timeout = 300
 
 
+class SecretsScanError(Exception):
+    """The secret scanner could not produce a trustworthy result.
+
+    Raised when Kingfisher exits with a non-success code, times out, cannot be
+    located/executed, or returns output that cannot be parsed. This is distinct
+    from "no secrets found": a security check must never treat a scanner failure
+    as a clean result, so callers are expected to surface it as ``MANUAL``
+    (manual review required) instead of ``PASS``.
+    """
+
+
 @lru_cache(maxsize=1)
 def get_kingfisher_binary() -> str:
     """Return the path to the bundled Kingfisher binary (cached)."""
@@ -203,41 +214,71 @@ def _scan_batch_chunk(
             timeout=default_secrets_scan_timeout,
         )
         if process.returncode not in _kingfisher_success_exit_codes:
-            logger.error(
-                f"Error scanning for secrets: Kingfisher exited with code "
-                f"{process.returncode}: {process.stderr.strip()[:500]}"
+            raise SecretsScanError(
+                f"Kingfisher exited with code {process.returncode}: "
+                f"{process.stderr.strip()[:500]}"
             )
-            return
 
         with open(temp_output_file.name, encoding=encoding_format_utf_8) as f:
             output = f.read()
         kingfisher_output = json.loads(output) if output.strip() else {}
 
         source_lines_cache = {}
+
+        def source_lines(file_name: str) -> list:
+            if file_name not in source_lines_cache:
+                with open(
+                    os.path.join(tmp_dir, file_name),
+                    encoding=encoding_format_utf_8,
+                    errors="replace",
+                ) as f:
+                    source_lines_cache[file_name] = f.read().splitlines()
+            return source_lines_cache[file_name]
+
         for entry in kingfisher_output.get("findings", []):
             finding = entry.get("finding", {})
             name = os.path.basename(finding.get("path", ""))
             key = index_to_key.get(name)
             if key is None:
                 continue
+            # Validate the line index before any consumer trusts it. Checks use
+            # ``line_number`` as a 1-based index into their own parallel data
+            # (e.g. CloudWatch does ``events[line_number - 1]``), so a missing,
+            # non-integer, or out-of-range line would crash the check or map the
+            # secret to the wrong resource. Fail closed: surface a malformed
+            # finding as a scan failure so callers report MANUAL instead of a
+            # wrong PASS/FAIL. ``bool`` is rejected explicitly because it is a
+            # subclass of ``int``.
             line_number = finding.get("line")
-            if excluded_secrets and line_number:
-                if name not in source_lines_cache:
-                    with open(
-                        os.path.join(tmp_dir, name),
-                        encoding=encoding_format_utf_8,
-                        errors="replace",
-                    ) as f:
-                        source_lines_cache[name] = f.read().splitlines()
-                lines = source_lines_cache[name]
-                if line_number <= len(lines) and any(
-                    re.search(pattern, lines[line_number - 1])
-                    for pattern in excluded_secrets
-                ):
-                    continue
+            lines = source_lines(name)
+            if (
+                isinstance(line_number, bool)
+                or not isinstance(line_number, int)
+                or not 1 <= line_number <= len(lines)
+            ):
+                raise SecretsScanError(
+                    f"Kingfisher returned an invalid line number "
+                    f"{line_number!r} for a finding in {name}"
+                )
+            if excluded_secrets and any(
+                re.search(pattern, lines[line_number - 1])
+                for pattern in excluded_secrets
+            ):
+                continue
             results.setdefault(key, []).append(_finding_to_dict(entry, name))
-    except Exception as e:
-        logger.error(f"Error scanning for secrets: {e}")
+    except SecretsScanError:
+        # Already a typed scan failure; propagate so callers report MANUAL.
+        raise
+    except subprocess.TimeoutExpired as error:
+        raise SecretsScanError(
+            f"Kingfisher timed out after {default_secrets_scan_timeout}s "
+            "while scanning for secrets"
+        ) from error
+    except Exception as error:
+        # Fail closed: a missing/unexecutable binary, unparseable JSON output or
+        # any other runtime failure must NOT be silently treated as "no secrets
+        # found". Surface it so callers can report MANUAL instead of PASS.
+        raise SecretsScanError(f"Secret scan failed: {error}") from error
     finally:
         if temp_output_file and os.path.exists(temp_output_file.name):
             os.remove(temp_output_file.name)
@@ -282,6 +323,11 @@ def detect_secrets_scan_batch(
         dicts, each with ``filename``, ``line_number``, ``type``,
         ``hashed_secret`` and ``is_verified`` keys. Keys with no findings are
         omitted.
+    Raises:
+        SecretsScanError: if the scanner fails for any chunk (non-success exit
+            code, timeout, missing/unexecutable binary or unparseable output).
+            An empty result is therefore always "no secrets found", never a
+            silent scan failure; callers must report MANUAL on this error.
     """
     items = payloads.items() if hasattr(payloads, "items") else payloads
     results = {}

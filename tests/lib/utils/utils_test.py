@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tempfile
 from datetime import datetime
 from time import mktime
@@ -7,6 +8,7 @@ import pytest
 from mock import patch
 
 from prowler.lib.utils.utils import (
+    SecretsScanError,
     detect_secrets_scan_batch,
     file_exists,
     get_file_permissions,
@@ -18,6 +20,95 @@ from prowler.lib.utils.utils import (
     strip_ansi_codes,
     validate_ip_address,
 )
+
+
+def _fake_kingfisher_run(output_content=None, returncode=0, stderr=""):
+    """Build a ``subprocess.run`` replacement that mimics a Kingfisher call.
+
+    When ``output_content`` is given it is written to the ``--output`` path from
+    the command (so the reader sees realistic file content); the call returns a
+    CompletedProcess with the requested ``returncode``/``stderr``.
+    """
+
+    def _run(command, *_args, **_kwargs):
+        if output_content is not None:
+            output_path = command[command.index("--output") + 1]
+            with open(output_path, "w") as output_file:
+                output_file.write(output_content)
+        return subprocess.CompletedProcess(
+            command, returncode, stdout="", stderr=stderr
+        )
+
+    return _run
+
+
+def _fake_kingfisher_run_with_findings(findings):
+    """Build a ``subprocess.run`` replacement that emits crafted findings.
+
+    Each entry in ``findings`` is a ``(payload_index, line)`` pair: the finding
+    is mapped back to the temp file named ``str(payload_index)`` (the basename
+    ``_scan_batch_chunk`` writes per payload) and given the requested ``line``
+    value (omitted entirely when ``line`` is the sentinel ``_OMIT``). Returns a
+    success exit code so only the finding shape is under test.
+    """
+
+    def _run(command, *_args, **_kwargs):
+        output_path = command[command.index("--output") + 1]
+        entries = []
+        for payload_index, line in findings:
+            finding = {"path": str(payload_index), "snippet": "secret"}
+            if line is not _OMIT:
+                finding["line"] = line
+            entries.append({"finding": finding, "rule": {"name": "Generic Secret"}})
+        import json as _json
+
+        with open(output_path, "w") as output_file:
+            output_file.write(_json.dumps({"findings": entries}))
+        return subprocess.CompletedProcess(command, 200, stdout="", stderr="")
+
+    return _run
+
+
+_OMIT = object()
+
+
+class Test_detect_secrets_scan_batch_invalid_line:
+    """Kingfisher's ``line`` is consumed as a trusted 1-based index by checks
+    (e.g. CloudWatch ``events[line_number - 1]``). A malformed line must fail
+    closed as SecretsScanError, never return a finding with a bad index."""
+
+    @pytest.mark.parametrize(
+        "line",
+        [_OMIT, None, "2", 0, -1, 5, True],
+        ids=["missing", "none", "string", "zero", "negative", "out_of_range", "bool"],
+    )
+    def test_invalid_line_raises(self, line):
+        # Payload "data" is a single line, so any line other than 1 is invalid.
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run_with_findings([(0, line)]),
+        ):
+            with pytest.raises(SecretsScanError) as exc:
+                detect_secrets_scan_batch({"a": "data"})
+        assert "invalid line number" in str(exc.value)
+
+    def test_valid_line_is_returned(self):
+        # A valid in-range line must still pass through to the caller.
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run_with_findings([(0, 1)]),
+        ):
+            results = detect_secrets_scan_batch({"a": "data"})
+        assert results["a"][0]["line_number"] == 1
+
+    def test_one_invalid_line_aborts_the_whole_scan(self):
+        # Even mixed with a valid finding, a single invalid line fails closed.
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run_with_findings([(0, 1), (1, 0)]),
+        ):
+            with pytest.raises(SecretsScanError):
+                detect_secrets_scan_batch({"a": "data", "b": "data"})
 
 
 class Test_utils_open_file:
@@ -149,6 +240,67 @@ class Test_detect_secrets_scan_batch:
             iter([("x", 'password = "Tr0ub4dor3xKq9vLmZ"')])
         )
         assert "x" in results
+
+
+class Test_detect_secrets_scan_batch_failures:
+    """A scanner failure must surface as SecretsScanError, never as empty
+    results (which a caller would read as 'no secrets found')."""
+
+    def test_non_zero_exit_code_raises(self):
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run(returncode=1, stderr="boom"),
+        ):
+            with pytest.raises(SecretsScanError) as exc:
+                detect_secrets_scan_batch({"a": "data"})
+        assert "exited with code 1" in str(exc.value)
+        assert "boom" in str(exc.value)
+
+    def test_timeout_raises(self):
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(cmd="kingfisher", timeout=300),
+        ):
+            with pytest.raises(SecretsScanError) as exc:
+                detect_secrets_scan_batch({"a": "data"})
+        assert "timed out" in str(exc.value)
+
+    def test_malformed_json_output_raises(self):
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run(
+                output_content="{not valid json", returncode=0
+            ),
+        ):
+            with pytest.raises(SecretsScanError):
+                detect_secrets_scan_batch({"a": "data"})
+
+    def test_missing_binary_raises(self):
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=FileNotFoundError("kingfisher binary not found"),
+        ):
+            with pytest.raises(SecretsScanError):
+                detect_secrets_scan_batch({"a": "data"})
+
+    def test_empty_output_is_not_a_failure(self):
+        # Empty output means the scan ran and found nothing; it must NOT raise.
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run(output_content="", returncode=0),
+        ):
+            assert detect_secrets_scan_batch({"a": "data"}) == {}
+
+    def test_failure_in_any_chunk_aborts_the_whole_scan(self):
+        # A failure in any chunk must abort the whole scan, not silently return
+        # partial results from the chunks that happened to succeed first.
+        payloads = {f"k{i}": "data" for i in range(4)}
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run(returncode=2, stderr="boom"),
+        ):
+            with pytest.raises(SecretsScanError):
+                detect_secrets_scan_batch(payloads, chunk_size=2)
 
 
 class Test_hash_sha512:

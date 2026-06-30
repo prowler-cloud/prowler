@@ -351,3 +351,48 @@ class Test_awslambda_function_no_secrets_in_variables:
                 == f"No secrets found in Lambda function {function_name} variables."
             )
             assert result[0].resource_tags == []
+
+    def test_scan_failure_reports_manual_not_pass(self):
+        # A scanner failure must not be treated as "no secrets found".
+        from prowler.lib.utils.utils import SecretsScanError
+
+        lambda_client = mock.MagicMock
+        function_name = "test-lambda"
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+        lambda_client.functions = {
+            "function_name": Function(
+                name=function_name,
+                security_groups=[],
+                arn=function_arn,
+                region=AWS_REGION_US_EAST_1,
+                runtime="nodejs4.3",
+                environment={"db_password": "test-value"},
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables.awslambda_client",
+                new=lambda_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables.detect_secrets_scan_batch",
+                side_effect=SecretsScanError("Kingfisher exited with code 1"),
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_variables.awslambda_function_no_secrets_in_variables import (
+                awslambda_function_no_secrets_in_variables,
+            )
+
+            check = awslambda_function_no_secrets_in_variables()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not scan" in result[0].status_extended
+            assert "manual review is required" in result[0].status_extended

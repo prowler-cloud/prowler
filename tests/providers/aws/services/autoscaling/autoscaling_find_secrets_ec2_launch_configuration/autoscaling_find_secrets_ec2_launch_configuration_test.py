@@ -341,7 +341,9 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             check = autoscaling_find_secrets_ec2_launch_configuration()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not decode User Data" in result[0].status_extended
 
     @mock_aws
     def test_one_autoscaling_file_invalid_gzip_error(self):
@@ -381,4 +383,6 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             check = autoscaling_find_secrets_ec2_launch_configuration()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not decode User Data" in result[0].status_extended

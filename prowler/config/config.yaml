@@ -681,9 +681,50 @@ okta:
   # 15 per DISA STIG V-273186 (OKTA-APP-000020); raise it only with an
   # explicit risk acceptance.
   okta_max_session_idle_minutes: 15
+  # okta.signon_global_session_lifetime_18h
+  # Maximum acceptable Global Session lifetime, in minutes. Defaults to
+  # 18h (1080); raise it only with an explicit risk acceptance.
+  okta_max_session_lifetime_minutes: 1080
   # Okta Applications
   # okta.application_admin_console_session_idle_timeout_15min
   # Maximum acceptable Okta Admin Console app idle timeout, in minutes.
   # Defaults to 15 per DISA STIG V-273187 (OKTA-APP-000025); raise it only
   # with an explicit risk acceptance.
   okta_admin_console_idle_timeout_max_minutes: 15
+  # Okta Users
+  # okta.user_inactivity_automation_35d_enabled
+  # Maximum number of days a user can stay inactive before the
+  # inactivity-automation check flags the org. Defaults to 35.
+  okta_user_inactivity_max_days: 35
+  # Okta Identity Providers
+  # okta.idp_smart_card_dod_approved_ca
+  # Extra regex patterns matched against a Smart Card IdP certificate issuer
+  # DN to recognise a DOD-approved CA, on top of the built-in `OU=DoD` /
+  # `OU=ECA` patterns.
+  okta_dod_approved_ca_issuer_patterns: []
+
+alibabacloud:
+  # alibabacloud.cs_kubernetes_cluster_check_recent / cs_kubernetes_cluster_check_weekly
+  # Maximum number of days an ACK cluster can go without a security check
+  # before being flagged. Defaults to 7.
+  max_cluster_check_days: 7
+  # alibabacloud.ram_user_console_access_unused
+  # Days a RAM user's console access can stay unused before being flagged.
+  # Defaults to 90.
+  max_console_access_days: 90
+  # alibabacloud.sls_logstore_retention_period
+  # Minimum required SLS log store retention, in days. Defaults to 365.
+  min_log_retention_days: 365
+  # alibabacloud.rds_instance_sql_audit_retention
+  # Minimum required RDS SQL audit log retention, in days. Defaults to 180.
+  min_rds_audit_retention_days: 180
+
+openstack:
+  # openstack.image_not_shared_with_multiple_projects
+  # Maximum number of accepted project members a shared image may have before
+  # being flagged. Defaults to 5.
+  image_sharing_threshold: 5
+  # openstack.<compute|blockstorage|objectstorage>_*_metadata_sensitive_data
+  # Regex patterns whose matches are excluded from secret scanning of
+  # resource metadata.
+  secrets_ignore_patterns: []
