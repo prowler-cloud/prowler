@@ -14,7 +14,7 @@ thresholds) and avoids ints that obviously break downstream maths
 
 from typing import Annotated, Literal, Optional
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator, BeforeValidator, Field
 
 from prowler.config.schema.base import ProviderConfigBase
 from prowler.config.schema.validators import (
@@ -101,33 +101,65 @@ def _validate_account_ids(v: Optional[list[str]]) -> Optional[list[str]]:
     return v
 
 
-# ---- Nested models ----------------------------------------------------------
+def _reject_bool_resource_limit(v):
+    if isinstance(v, bool):
+        raise ValueError("resource scan limits must be integers, not booleans")
+    return v
 
 
-class _DetectSecretsPlugin(ProviderConfigBase):
-    """One entry inside ``detect_secrets_plugins``.
-
-    Only ``name`` is required by the upstream library. ``limit`` is used by
-    the entropy detectors. Any other plugin-specific kwarg is preserved by
-    the ``extra="allow"`` policy inherited from ProviderConfigBase.
-    """
-
-    name: str
-    limit: Optional[float] = Field(
-        default=None,
-        ge=0.0,
-        le=10.0,
-        description=(
-            "Entropy threshold for detect-secrets entropy plugins. Range: 0..10 "
-            "(Shannon entropy is bounded by log2(256)=8; >10 is meaningless)."
-        ),
-    )
+ResourceScanLimit = Annotated[
+    Optional[int], BeforeValidator(_reject_bool_resource_limit)
+]
 
 
 # ---- Main schema ------------------------------------------------------------
 
 
 class AWSProviderConfig(ProviderConfigBase):
+    # --- Resource scan limits ---------------------------------------------
+    max_scanned_resources_per_service: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Global resource scan limit for high-volume AWS services. Use 0 or -1 to disable.",
+    )
+    max_ebs_snapshots: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for EBS snapshots. Use 0 or -1 to disable.",
+    )
+    max_backup_recovery_points: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for AWS Backup recovery points. Use 0 or -1 to disable.",
+    )
+    max_cloudwatch_log_groups: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for CloudWatch log groups. Use 0 or -1 to disable.",
+    )
+    max_lambda_functions: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for Lambda functions. Use 0 or -1 to disable.",
+    )
+    max_ecs_task_definitions: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for ECS task definitions. Use 0 or -1 to disable.",
+    )
+    max_codeartifact_packages: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for CodeArtifact packages. Use 0 or -1 to disable.",
+    )
+
     # --- IAM ---------------------------------------------------------------
     mute_non_default_regions: Optional[bool] = None
     disallowed_regions: Optional[list[str]] = None
@@ -394,6 +426,14 @@ class AWSProviderConfig(ProviderConfigBase):
 
     # --- Secrets ---------------------------------------------------------
     secrets_ignore_patterns: Optional[list[str]] = None
+    secrets_validate: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Validate discovered secrets against the provider APIs (live check). "
+            "Makes outbound network calls that authenticate with the discovered "
+            "secret. Disabled by default."
+        ),
+    )
     max_days_secret_unused: Optional[int] = Field(
         default=None,
         ge=7,
@@ -417,6 +457,3 @@ class AWSProviderConfig(ProviderConfigBase):
         le=8760,
         description="Hours of Kinesis stream retention. Range: 24..8760 (1 day .. 1 year).",
     )
-
-    # --- detect-secrets plugin list -------------------------------------
-    detect_secrets_plugins: Optional[list[_DetectSecretsPlugin]] = None
