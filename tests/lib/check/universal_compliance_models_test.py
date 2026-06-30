@@ -903,7 +903,7 @@ class TestCyberEssentialsFramework:
             "..",
             "prowler",
             "compliance",
-            "cyber_essentials.json",
+            "cyber_essentials_3.3.json",
         )
         return os.path.normpath(base)
 
