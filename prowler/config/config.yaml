@@ -725,9 +725,6 @@ openstack:
   # being flagged. Defaults to 5.
   image_sharing_threshold: 5
   # openstack.<compute|blockstorage|objectstorage>_*_metadata_sensitive_data
-  # Regex patterns whose matches are excluded from detect-secrets scanning of
+  # Regex patterns whose matches are excluded from secret scanning of
   # resource metadata.
   secrets_ignore_patterns: []
-  # Custom detect-secrets plugin configuration for metadata scanning. Each
-  # entry requires a `name`; entropy plugins also accept a `limit` (0..10).
-  detect_secrets_plugins: []
