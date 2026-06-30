@@ -12,6 +12,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
 - CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
 
+### 🔄 Changed
+
+- OCI provider setup no longer requires a region in the credentials form [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
+
 ---
 
 ## [1.31.1] (Prowler v5.31.1)
@@ -27,10 +31,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Controlled `402` and `403` Server Action error messages for alert seed and mutation flows [(#11629)](https://github.com/prowler-cloud/prowler/pull/11629)
-
-### 🔄 Changed
-
-- OCI provider setup no longer requires a region in the credentials form [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
 
 ### 🐞 Fixed
 
