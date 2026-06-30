@@ -1422,8 +1422,6 @@ test.describe("Add Provider", () => {
   });
 
   test.describe.serial("Add Okta Provider", () => {
-    test.setTimeout(90000);
-
     let providersPage: ProvidersPage;
 
     // Test data from environment variables
@@ -1503,7 +1501,6 @@ test.describe("Add Provider", () => {
         // Confirm the provider connection without launching a scan
         await providersPage.completeProviderConnectionWithoutLaunchingScan(
           orgDomain,
-          60000,
         );
       },
     );

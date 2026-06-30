@@ -940,60 +940,22 @@ export class ProvidersPage extends BasePage {
     const isWizardVisible = await this.wizardModal
       .isVisible()
       .catch(() => false);
-    const wizardText = isWizardVisible
-      ? await this.wizardModal.innerText().catch(() => "<failed to read text>")
-      : "<wizard not visible>";
-    const visibleButtons = isWizardVisible
-      ? await this.wizardModal
-          .getByRole("button")
-          .allTextContents()
-          .catch(() => [])
-      : [];
-    const wizardHtml = isWizardVisible
-      ? await this.wizardModal.innerHTML().catch(() => "<failed to read html>")
-      : "<wizard not visible>";
+    if (!isWizardVisible) {
+      return "Wizard visible: false";
+    }
+    const wizardText = await this.wizardModal
+      .innerText()
+      .catch(() => "<failed to read text>");
+    const visibleButtons = await this.wizardModal
+      .getByRole("button")
+      .allTextContents()
+      .catch(() => []);
 
     return [
-      `Wizard visible: ${isWizardVisible}`,
+      "Wizard visible: true",
       `Visible button text: ${visibleButtons.map((text) => text.trim()).join(" | ") || "<none>"}`,
       `Wizard text:\n${wizardText.trim() || "<empty>"}`,
-      `Wizard HTML (first 6000 chars):\n${wizardHtml.slice(0, 6000)}`,
     ].join("\n\n");
-  }
-
-  private async waitForProviderReadyToClose(timeout = 30000): Promise<void> {
-    const launchStepReady = this.page
-      .getByText("Account Connected!", { exact: true })
-      .or(this.page.getByText("Loading scan options...", { exact: true }))
-      .or(this.page.getByRole("button", { name: "Save", exact: true }))
-      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }))
-      .first();
-    const connectionError = this.page.locator(
-      "div.border-border-error p.text-text-error-primary",
-    );
-
-    try {
-      await Promise.race([
-        launchStepReady.waitFor({ state: "visible", timeout }),
-        this.wizardModal.waitFor({ state: "hidden", timeout }),
-        connectionError.waitFor({ state: "visible", timeout }),
-      ]);
-    } catch {
-      // Continue and inspect visible state below.
-    }
-
-    if (await connectionError.isVisible().catch(() => false)) {
-      const errorText = await connectionError.textContent();
-      throw new Error(
-        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-      );
-    }
-
-    if (await this.wizardModal.isHidden().catch(() => false)) {
-      return;
-    }
-
-    await expect(launchStepReady).toBeVisible({ timeout });
   }
 
   async completeProviderConnectionWithoutLaunchingScan(
