@@ -2,10 +2,10 @@ version = 1
 revision = 3
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and sys_platform != 'win32'",
-    "python_full_version < '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform == 'win32'",
     "python_full_version < '3.12' and sys_platform != 'win32'",
+    "python_full_version < '3.12' and sys_platform == 'win32'",
 ]
 
 [manifest]
@@ -1410,16 +1410,16 @@ wheels = [
 
 [[package]]
 name = "azure-mgmt-managementgroups"
-version = "1.1.0"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-mgmt-core" },
     { name = "isodate" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fd/73/ac5e064ed7343e1b3172f32f09be3efca906087218d3046b5038f2f394ed/azure_mgmt_managementgroups-1.1.0.tar.gz", hash = "sha256:e6199baf118890ba2bda35dda83a88861c0b1bbef126311b20ec12eed9681951", size = 60101, upload-time = "2026-02-13T03:45:45.439Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/09/12/c80cc24e4a05d5617a8896d87093beffc1db6149b57c062d908f20f129dc/azure_mgmt_managementgroups-2.0.0.tar.gz", hash = "sha256:02d008fadfd7610b1c7059e3c3a8a33dedaef4b654749b81978b437baf264f1d", size = 81734, upload-time = "2026-06-29T02:45:19.161Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/92/bc/993158de03cc0a49f2cf8192615ffedbc508c417cb3522e88f6652b714cc/azure_mgmt_managementgroups-1.1.0-py3-none-any.whl", hash = "sha256:140934589559ef6afcac6f1d24f995588a1965aaa89d47851c1cc639fafb1942", size = 83586, upload-time = "2026-02-13T03:45:46.836Z" },
+    { url = "https://files.pythonhosted.org/packages/59/51/22dc53ecbe65f341536b291cfd419573489eb419e82b292e325b3f86334f/azure_mgmt_managementgroups-2.0.0-py3-none-any.whl", hash = "sha256:d8461e05c4da0010adb6bfc935f1364ad04c20bdbaafc80ef5a9756b9ac2bdc4", size = 84339, upload-time = "2026-06-29T02:45:20.26Z" },
 ]
 
 [[package]]
@@ -2881,6 +2881,9 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+pyopenssl = [
+    { name = "pyopenssl" },
+]
 requests = [
     { name = "requests" },
 ]
@@ -2913,9 +2916,10 @@ wheels = [
 
 [[package]]
 name = "google-cloud-aiplatform"
-version = "1.153.1"
+version = "1.158.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "certifi" },
     { name = "docstring-parser" },
     { name = "google-api-core", extra = ["grpc"] },
     { name = "google-auth" },
@@ -2929,14 +2933,14 @@ dependencies = [
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d5/97/1779e66ab845550bc602364311ea093ba156cb805a1c31b7c4d6f25b5863/google_cloud_aiplatform-1.153.1.tar.gz", hash = "sha256:445b6c683d5c630f174d81ae1f69f7da9e27e4d4ec5b70c5fe96de5c1247cfbc", size = 11011349, upload-time = "2026-05-15T06:34:14.851Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/74/71440b7793068d8411f096712d6274a64a42f44bd01a11d67d8cbbd27b54/google_cloud_aiplatform-1.158.0.tar.gz", hash = "sha256:85b6bedc3823824617db1ea83e07fa07f00681d7ab63c42cdc584066a844737b", size = 11128785, upload-time = "2026-06-16T23:08:45.036Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/01/8a1900e7a742ed480e6037ac4f6541466cb981d81bd4cbd34a9d46204ea1/google_cloud_aiplatform-1.153.1-py2.py3-none-any.whl", hash = "sha256:033fa1595a7e8ed1d97066e261e630f38fbc60e10c98c6487cf228fe9c7ec151", size = 9170782, upload-time = "2026-05-15T06:34:10.887Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/1c/4273f7a6eb59214a94575d34a3603b37519217af7dfc1bcd2387daed0219/google_cloud_aiplatform-1.158.0-py2.py3-none-any.whl", hash = "sha256:8ed07f866fe9a49c31f0ba9fc8049c5cd5b47ff7f833ca3d9d8ce480f871d715", size = 9343147, upload-time = "2026-06-16T23:08:41.398Z" },
 ]
 
 [[package]]
 name = "google-cloud-artifact-registry"
-version = "1.21.0"
+version = "1.22.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core", extra = ["grpc"] },
@@ -2946,9 +2950,9 @@ dependencies = [
     { name = "proto-plus" },
     { name = "protobuf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/13/2b/24e6956789bc1244efb18143aa4f124e03d870228e5bfd065c04d38a4d6b/google_cloud_artifact_registry-1.21.0.tar.gz", hash = "sha256:546e51eb5d463a6e5c668be6727d14f8ec82bc798031398006b2213d703e184c", size = 315219, upload-time = "2026-03-30T22:50:38.875Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/af/9c/a78d175a0484c500063696b1b923920392de6e5e4c1bd509210721554242/google_cloud_artifact_registry-1.22.0.tar.gz", hash = "sha256:0e8173a97ae695dfcf02c83277a0fd574e1a39be409da6345b945bebe577ad94", size = 312446, upload-time = "2026-06-03T14:52:43.625Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/8c/a5c68031728f38d3306bad5ac10c0ca670cbdf414db308ddefa2c47f2b34/google_cloud_artifact_registry-1.21.0-py3-none-any.whl", hash = "sha256:a07079035438fd0f2e7264d4318b388650495f011db575405c18c9881449025c", size = 250544, upload-time = "2026-03-30T22:48:49.345Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/3d/a777dee068746bf2c44475221be3d2209a0810f1b811c0cf21b66f488583/google_cloud_artifact_registry-1.22.0-py3-none-any.whl", hash = "sha256:2a595448af4366c016aa61805b7e8f685ab089022a1ebb65bea1eaaae461b37d", size = 250051, upload-time = "2026-06-03T14:51:59.298Z" },
 ]
 
 [[package]]
@@ -2973,20 +2977,20 @@ wheels = [
 
 [[package]]
 name = "google-cloud-bigquery"
-version = "3.41.0"
+version = "3.42.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core", extra = ["grpc"] },
-    { name = "google-auth" },
+    { name = "google-auth", extra = ["pyopenssl"] },
     { name = "google-cloud-core" },
     { name = "google-resumable-media" },
     { name = "packaging" },
     { name = "python-dateutil" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ce/13/6515c7aab55a4a0cf708ffd309fb9af5bab54c13e32dc22c5acd6497193c/google_cloud_bigquery-3.41.0.tar.gz", hash = "sha256:2217e488b47ed576360c9b2cc07d59d883a54b83167c0ef37f915c26b01a06fe", size = 513434, upload-time = "2026-03-30T22:50:55.347Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/a2/be1cffbb1a9894ecf394ab0096b113ae9e4f73686595d906a9f3082b07c2/google_cloud_bigquery-3.42.1.tar.gz", hash = "sha256:3c6878f424fc2b21f0bb414ca7262abd008465575a7b7c44c552105278a18914", size = 515411, upload-time = "2026-06-22T23:21:05.884Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/40/33/1d3902efadef9194566d499d61507e1f038454e0b55499d2d7f8ab2a4fee/google_cloud_bigquery-3.41.0-py3-none-any.whl", hash = "sha256:2a5b5a737b401cbd824a6e5eac7554100b878668d908e6548836b5d8aaa4dcaa", size = 262343, upload-time = "2026-03-30T22:48:45.444Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/1e/8b098aeb69ef87de5195d076ce6d82002c3ebf1920373d386ca7b6e63cfa/google_cloud_bigquery-3.42.1-py3-none-any.whl", hash = "sha256:159143c1b7248858f35549c09efea5d031c2883145623419ea7c505a50c0899a", size = 263814, upload-time = "2026-06-22T23:18:42.313Z" },
 ]
 
 [[package]]
@@ -3053,7 +3057,7 @@ wheels = [
 
 [[package]]
 name = "google-cloud-run"
-version = "0.16.0"
+version = "0.16.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core", extra = ["grpc"] },
@@ -3063,14 +3067,14 @@ dependencies = [
     { name = "proto-plus" },
     { name = "protobuf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/89/dcaf0dc97e39b41e446456ceb60657ab025de79cfccd39cbd739d1a9849e/google_cloud_run-0.16.0.tar.gz", hash = "sha256:d52cf4e6ad3702ae48caccf6abcab543afee6f61c2a6ec753cc62a31e5b629f1", size = 514452, upload-time = "2026-03-26T22:17:05.589Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/27/3f/d2887a46446311c10871dde73e97bc9c07b08963ff92cb0a78a564d87a45/google_cloud_run-0.16.1.tar.gz", hash = "sha256:568bf7fceba8f844a39b69858a8e642f6cca27eab7246c621d9d341c289b1158", size = 513602, upload-time = "2026-06-22T23:22:30.849Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fa/c7/46153dc13713b5e4276d86f28ff4563332f9e4bae5ebc83abc5bfd994801/google_cloud_run-0.16.0-py3-none-any.whl", hash = "sha256:d7d2dd7307130fde2a0ce27e96d580dd23b7b2d973b6484b94d902e6b2618860", size = 459112, upload-time = "2026-03-26T22:16:00.018Z" },
+    { url = "https://files.pythonhosted.org/packages/37/27/aed6476e16083dfe4da93633331b0561e0160249d44e81d96077185afe27/google_cloud_run-0.16.1-py3-none-any.whl", hash = "sha256:8b7b91b20270cff5514a0af7ac2009572b3d3501a075868cf956a1f8cc6e61f2", size = 459007, upload-time = "2026-06-22T23:20:29.456Z" },
 ]
 
 [[package]]
 name = "google-cloud-storage"
-version = "3.10.1"
+version = "3.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core" },
@@ -3080,9 +3084,9 @@ dependencies = [
     { name = "google-resumable-media" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4c/47/205eb8e9a1739b5345843e5a425775cbdc472cc38e7eda082ba5b8d02450/google_cloud_storage-3.10.1.tar.gz", hash = "sha256:97db9aa4460727982040edd2bd13ff3d5e2260b5331ad22895802da1fc2a5286", size = 17309950, upload-time = "2026-03-23T09:35:23.409Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/58/72/86f94e1639a8bcd9d33e8e01b49afcaa1c3a13bda7683c681717e0901e15/google_cloud_storage-3.12.0.tar.gz", hash = "sha256:03ae9847c6babb368f35f054126b8a08cbc0e3266efb990eb17b9926a45cf3be", size = 17338620, upload-time = "2026-06-12T18:03:29.215Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/ff/ca9ab2417fa913d75aae38bf40bf856bb2749a604b2e0f701b37cfcd23cc/google_cloud_storage-3.10.1-py3-none-any.whl", hash = "sha256:a72f656759b7b99bda700f901adcb3425a828d4a29f911bc26b3ea79c5b1217f", size = 324453, upload-time = "2026-03-23T09:35:21.368Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/bd/a89eaebd2f9db5f92ddcc8e4f23c266be1dbd11058bb83451d8dd029f34c/google_cloud_storage-3.12.0-py3-none-any.whl", hash = "sha256:3880773754ddf7c27567b04e2a4d193950b6b99429f37b9097d873686e95b09c", size = 340605, upload-time = "2026-06-12T18:03:12.677Z" },
 ]
 
 [[package]]
@@ -3128,14 +3132,14 @@ wheels = [
 
 [[package]]
 name = "google-resumable-media"
-version = "2.9.0"
+version = "2.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-crc32c" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/00/4b/0b235beccc310d0a48adbc7246b719d173cca6c88c572dfa4b090e39143c/google_resumable_media-2.9.0.tar.gz", hash = "sha256:f7cfb224846a9dd444d125115dfbe8ef02a2b893e78f087762fe716a255a734b", size = 2164534, upload-time = "2026-05-07T08:04:44.236Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/48/f8/1ca5781d6be9cb9f73f7d40f4958c4bd1226a60598e3e39e1d6aaf838c4b/google_resumable_media-2.10.0.tar.gz", hash = "sha256:e324bc9d0fdae4c52a08ae90456edc4e71ece858399e1217ac0eb3a51d6bc6ee", size = 2164570, upload-time = "2026-06-03T16:14:26.103Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/73/3518e63deb1667c5409a4579e28daf5e84479a87a72c547e0487f7883dcd/google_resumable_media-2.9.0-py3-none-any.whl", hash = "sha256:c8901e88e389af8bed64d9696c74d8bad961865eb2236e13e0bfca9bb0a65ca3", size = 81507, upload-time = "2026-05-07T08:03:23.809Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/d8/00c6854ac1512bb9eaf13bd3f8f28222f7674947fc510a4ff7616f2efc80/google_resumable_media-2.10.0-py3-none-any.whl", hash = "sha256:88152884bee37b2bf36a0ab81ad8c7fd12212c9803dd981d77c1b35b02d34e7c", size = 81533, upload-time = "2026-06-03T16:13:12.51Z" },
 ]
 
 [[package]]
@@ -3584,15 +3588,15 @@ wheels = [
 
 [[package]]
 name = "jwcrypto"
-version = "1.5.7"
+version = "1.5.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/90/f065668004d22715c1940d6e88e4c3afc8ee16d5664e4478d2c8fd23a250/jwcrypto-1.5.7.tar.gz", hash = "sha256:70204d7cca406eda8c82352e3c41ba2d946610dafd19e54403f0a1f4f18633c6", size = 89535, upload-time = "2026-04-07T00:35:36.116Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/7e/53c14813521693e931e420d9db00efe317419ff194495903bce03402275e/jwcrypto-1.5.8.tar.gz", hash = "sha256:c3d7114b6f6e65b52f6b7da817eb8cb8423e1da31e1ef13508447c81ecbdcc34", size = 90772, upload-time = "2026-06-24T19:36:50.782Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/72/24/fb7da4d6613de7001feaf540d4b5969c6b5a1c42839043b0196cb13aa057/jwcrypto-1.5.7-py3-none-any.whl", hash = "sha256:729463fefe28b6de5cf1ebfda3e94f1a1b41d2799148ef98a01cb9678ebe2bb0", size = 94799, upload-time = "2026-04-07T00:35:35.085Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/7c/f87c5db042c4f7b4476346fc0d22f1025a777fee08eebde3720d3b9c4eb5/jwcrypto-1.5.8-py3-none-any.whl", hash = "sha256:85aeb475f808d56bbc2f2ed1f6f73e6a317c4011a4321505f02f0aed695a3742", size = 96133, upload-time = "2026-06-24T19:36:49.519Z" },
 ]
 
 [[package]]
@@ -4036,7 +4040,7 @@ wheels = [
 
 [package.optional-dependencies]
 broker = [
-    { name = "pymsalruntime", marker = "sys_platform == 'win32'" },
+    { name = "pymsalruntime" },
 ]
 
 [[package]]
@@ -4674,7 +4678,7 @@ wheels = [
 [[package]]
 name = "prowler"
 version = "5.32.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#5dac8a0a53272e4db68c476fb969dc03e88beb68" }
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#34e8e3ca61adad0d34adbbc58473e351f6ac61b7" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
