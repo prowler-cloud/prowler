@@ -1,37 +1,11 @@
 import json
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import defusedxml
 from allauth.socialaccount.models import SocialApp
-from config.custom_logging import BackendLogger
-from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
-from cryptography.fernet import Fernet, InvalidToken
-from defusedxml import ElementTree as ET
-from django.conf import settings
-from django.contrib.auth.models import AbstractBaseUser
-from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.indexes import GinIndex, OpClass
-from django.contrib.postgres.search import SearchVector, SearchVectorField
-from django.contrib.sites.models import Site
-from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator
-from django.db import models
-from django.db.models import Q
-from django.db.models.functions import Upper
-from django.utils import timezone as django_timezone
-from django.utils.translation import gettext_lazy as _
-from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
-from drf_simple_apikey.crypto import get_crypto
-from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
-from psqlextra.manager import PostgresManager
-from psqlextra.models import PostgresPartitionedModel
-from psqlextra.types import PostgresPartitioningMethod
-from uuid6 import uuid7
-
 from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
@@ -58,7 +32,32 @@ from api.rls import (
     RowLevelSecurityProtectedModel,
     Tenant,
 )
+from config.custom_logging import BackendLogger
+from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
+from cryptography.fernet import Fernet, InvalidToken
+from defusedxml import ElementTree as ET
+from django.conf import settings
+from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex, OpClass
+from django.contrib.postgres.search import SearchVector, SearchVectorField
+from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
+from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Upper
+from django.utils import timezone as django_timezone
+from django.utils.translation import gettext_lazy as _
+from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
+from drf_simple_apikey.crypto import get_crypto
+from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 from prowler.lib.check.models import Severity
+from psqlextra.manager import PostgresManager
+from psqlextra.models import PostgresPartitionedModel
+from psqlextra.types import PostgresPartitioningMethod
+from uuid6 import uuid7
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -1443,8 +1442,8 @@ class Role(RowLevelSecurityProtectedModel):
 
     @classmethod
     def filter_by_permission_state(cls, queryset, value):
-        q_all_true = Q(**{field: True for field in cls.PERMISSION_FIELDS})
-        q_all_false = Q(**{field: False for field in cls.PERMISSION_FIELDS})
+        q_all_true = Q(**dict.fromkeys(cls.PERMISSION_FIELDS, True))
+        q_all_false = Q(**dict.fromkeys(cls.PERMISSION_FIELDS, False))
 
         if value == PermissionChoices.UNLIMITED:
             return queryset.filter(q_all_true)
@@ -2027,11 +2026,11 @@ class SAMLToken(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
-            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
+            self.expires_at = datetime.now(UTC) + timedelta(seconds=15)
         super().save(*args, **kwargs)
 
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) >= self.expires_at
+        return datetime.now(UTC) >= self.expires_at
 
 
 class SAMLDomainIndex(models.Model):

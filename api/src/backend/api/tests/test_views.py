@@ -3,7 +3,7 @@ import io
 import json
 import os
 import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,31 +15,6 @@ import jwt
 import pytest
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
-from botocore.exceptions import ClientError, NoCredentialsError
-from conftest import (
-    API_JSON_CONTENT_TYPE,
-    TEST_PASSWORD,
-    TEST_USER,
-    TODAY,
-    today_after_n_days,
-)
-from django.conf import settings
-from django.db import connection
-from django.db.models import Count
-from django.http import JsonResponse
-from django.test import RequestFactory
-from django.test.utils import CaptureQueriesContext
-from django.urls import reverse
-from django_celery_results.models import TaskResult
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.response import Response
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
-from rest_framework_simplejwt.tokens import RefreshToken
-
 from api.attack_paths import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
@@ -84,8 +59,32 @@ from api.models import (
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from botocore.exceptions import ClientError, NoCredentialsError
+from conftest import (
+    API_JSON_CONTENT_TYPE,
+    TEST_PASSWORD,
+    TEST_USER,
+    TODAY,
+    today_after_n_days,
+)
+from django.conf import settings
+from django.db import connection
+from django.db.models import Count
+from django.http import JsonResponse
+from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
+from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class TestViewSet:
@@ -4497,11 +4496,11 @@ class TestScanViewSet:
                     "Contents": [
                         {
                             "Key": old_key,
-                            "LastModified": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                            "LastModified": datetime(2024, 1, 1, tzinfo=UTC),
                         },
                         {
                             "Key": latest_key,
-                            "LastModified": datetime(2024, 2, 2, tzinfo=timezone.utc),
+                            "LastModified": datetime(2024, 2, 2, tzinfo=UTC),
                         },
                     ]
                 }
@@ -4750,7 +4749,7 @@ class TestScanViewSet:
         )
         # `inserted_at` is `auto_now_add`, and within the test transaction the DB
         # `now()` is constant, so force distinct timestamps to make order_by stable.
-        base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        base = datetime(2024, 1, 1, tzinfo=UTC)
         Task.objects.filter(pk=old_task.pk).update(inserted_at=base)
         Task.objects.filter(pk=new_task.pk).update(
             inserted_at=base + timedelta(hours=1)
@@ -4966,6 +4965,64 @@ class TestAttackPathsScanViewSet:
         assert first_attributes["provider_type"] == provider.provider
         assert first_attributes["provider_uid"] == provider.uid
 
+    def test_attack_paths_scans_list_prefers_active_sink_scan_on_rollback(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        settings,
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        provider = providers_fixture[0]
+
+        neo4j_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neo4j",
+        )
+        neptune_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neptune",
+        )
+
+        response = authenticated_client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert str(neo4j_scan.id) in ids
+        assert str(neptune_scan.id) not in ids
+
+    def test_attack_paths_scans_list_falls_back_when_active_sink_has_no_scan(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        settings,
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        provider = providers_fixture[0]
+
+        legacy_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neo4j",
+        )
+
+        response = authenticated_client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert str(legacy_scan.id) in ids
+
     def test_attack_paths_scans_list_respects_provider_group_visibility(
         self,
         authenticated_client_no_permissions_rbac,
@@ -5086,7 +5143,8 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_queries.assert_called_once_with(provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        mock_get_queries.assert_called_once_with(provider.provider, is_migrated=False)
         payload = response.json()["data"]
         assert len(payload) == 1
         assert payload[0]["id"] == "aws-rds"
@@ -5186,7 +5244,8 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_query.assert_called_once_with("aws-rds")
+        # TODO: drop the is_migrated argument after Neptune cutover
+        mock_get_query.assert_called_once_with("aws-rds", is_migrated=False)
         mock_get_db_name.assert_called_once_with(attack_paths_scan.provider.tenant_id)
         provider_id = str(attack_paths_scan.provider_id)
         mock_prepare.assert_called_once_with(
@@ -5200,6 +5259,7 @@ class TestAttackPathsScanViewSet:
             query_definition,
             prepared_parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         result = response.json()["data"]
         attributes = result["attributes"]
@@ -5551,6 +5611,7 @@ class TestAttackPathsScanViewSet:
             "db-test",
             "MATCH (n) RETURN n",
             str(attack_paths_scan.provider_id),
+            scan=attack_paths_scan,
         )
         attributes = response.json()["data"]["attributes"]
         assert len(attributes["nodes"]) == 1
@@ -6087,9 +6148,10 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_schema.assert_called_once_with(
-            "db-test", str(attack_paths_scan.provider_id)
-        )
+        mock_get_schema.assert_called_once()
+        schema_args = mock_get_schema.call_args[0]
+        assert schema_args[:2] == ("db-test", str(attack_paths_scan.provider_id))
+        assert schema_args[2].id == attack_paths_scan.id
         attributes = response.json()["data"]["attributes"]
         assert attributes["provider"] == "aws"
         assert attributes["cartography_version"] == "0.129.0"
@@ -7190,9 +7252,8 @@ class TestResourceViewSet:
         This ensures the endpoint follows API conventions where missing authentication
         returns 401 Unauthorized, not 404 Not Found.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]  # AWS provider from fixture
 
@@ -7265,9 +7326,8 @@ class TestResourceViewSet:
         This ensures authentication errors are properly distinguished from
         resource not found errors.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]
 
@@ -7285,9 +7345,8 @@ class TestResourceViewSet:
         tenant = tenants_fixture[0]
         expired_payload = {
             "token_type": "access",
-            "exp": datetime.now(timezone.utc)
-            - timedelta(hours=1),  # Expired 1 hour ago
-            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
+            "exp": datetime.now(UTC) - timedelta(hours=1),  # Expired 1 hour ago
+            "iat": datetime.now(UTC) - timedelta(hours=2),
             "jti": str(uuid4()),
             "user_id": str(uuid4()),
             "tenant_id": str(tenant.id),
@@ -7312,9 +7371,8 @@ class TestResourceViewSet:
 
         Malformed or invalid tokens should return 401 Unauthorized, not 404 Not Found.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]
 
@@ -8115,7 +8173,7 @@ class TestJWTFields:
 
 @pytest.mark.django_db
 class TestInvitationViewSet:
-    TOMORROW = datetime.now(timezone.utc) + timedelta(days=1, hours=1)
+    TOMORROW = datetime.now(UTC) + timedelta(days=1, hours=1)
     TOMORROW_ISO = TOMORROW.isoformat()
 
     def test_invitations_list(self, authenticated_client, invitations_fixture):
@@ -8238,9 +8296,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": "thisisarandomemail@prowler.com",
-                    "expires_at": (
-                        datetime.now(timezone.utc) + timedelta(hours=23)
-                    ).isoformat(),
+                    "expires_at": (datetime.now(UTC) + timedelta(hours=23)).isoformat(),
                 },
             }
         }
@@ -8267,7 +8323,7 @@ class TestInvitationViewSet:
         invitation, *_ = invitations_fixture
         role1, role2, *_ = roles_fixture
         new_email = "new_email@prowler.com"
-        new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+        new_expires_at = datetime.now(UTC) + timedelta(days=7)
         new_expires_at_iso = new_expires_at.isoformat()
         data = {
             "data": {
@@ -8354,9 +8410,7 @@ class TestInvitationViewSet:
                 "id": str(invitation.id),
                 "type": "invitations",
                 "attributes": {
-                    "expires_at": (
-                        datetime.now(timezone.utc) + timedelta(hours=23)
-                    ).isoformat(),
+                    "expires_at": (datetime.now(UTC) + timedelta(hours=23)).isoformat(),
                 },
             }
         }
@@ -8529,7 +8583,7 @@ class TestInvitationViewSet:
         self, authenticated_client, invitations_fixture
     ):
         invitation, *_ = invitations_fixture
-        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
         invitation.email = TEST_USER
         invitation.save()
 
@@ -8548,7 +8602,7 @@ class TestInvitationViewSet:
     ):
         new_email = "new_email@prowler.com"
         invitation, *_ = invitations_fixture
-        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
         invitation.email = new_email
         invitation.save()
 
@@ -9644,8 +9698,8 @@ class TestComplianceOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant_id=provider.tenant_id,
-            started_at=datetime.now(timezone.utc),
-            completed_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
         )
 
     def _create_requirement(
@@ -10333,7 +10387,7 @@ class TestComplianceOverviewViewSet:
         assert gcp_provider.provider == Provider.ProviderChoices.GCP.value
         assert azure_provider.provider == Provider.ProviderChoices.AZURE.value
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         gcp_scan = Scan.objects.create(
             name="gcp scan",
             provider=gcp_provider,
@@ -10462,7 +10516,7 @@ class TestComplianceOverviewViewSet:
             provider_group=provider_group,
         )
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         allowed_scan = Scan.objects.create(
             name="allowed scan",
             provider=allowed_provider,
@@ -10814,7 +10868,7 @@ class TestOverviewViewSet:
         assert denied_provider.provider not in aggregated
 
     def _create_scan(self, tenant, provider, name, started_at=None):
-        scan_started = started_at or datetime.now(timezone.utc) - timedelta(hours=1)
+        scan_started = started_at or datetime.now(UTC) - timedelta(hours=1)
         return Scan.objects.create(
             tenant=tenant,
             provider=provider,
@@ -10957,8 +11011,8 @@ class TestOverviewViewSet:
             failed_findings=35,
         )
 
-        older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc)
-        newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=timezone.utc)
+        older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=UTC)
+        newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=UTC)
         ThreatScoreSnapshot.objects.filter(id=snapshot1.id).update(
             inserted_at=older_inserted
         )
@@ -11577,7 +11631,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
         )
 
         # Create scan for day 3
@@ -11587,7 +11641,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC),
         )
 
         # Create DailySeveritySummary for day 1
@@ -11660,7 +11714,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=UTC),
         )
         scan2 = Scan.objects.create(
             name="severity-over-time-scan-p2",
@@ -11668,7 +11722,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 2, 1, 14, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 2, 1, 14, 0, 0, tzinfo=UTC),
         )
 
         # Create DailySeveritySummary for provider1
@@ -11732,7 +11786,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 3, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC),
         )
         scan2 = Scan.objects.create(
             name="severity-over-time-filter-scan-p2",
@@ -11740,7 +11794,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 3, 1, 14, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 3, 1, 14, 0, 0, tzinfo=UTC),
         )
 
         # Provider 1 - critical=100
@@ -13536,7 +13590,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=valid_token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expires_at=datetime.now(UTC) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -13562,7 +13616,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=expired_token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+            expires_at=datetime.now(UTC) - timedelta(seconds=1),
         )
 
         url = reverse("token-saml")
@@ -13581,7 +13635,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expires_at=datetime.now(UTC) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -13797,7 +13851,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -13817,18 +13873,23 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(
                 tenant_id=tenants_fixture[0].id
             )
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenants_fixture[0]
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -13875,6 +13936,81 @@ class TestTenantFinishACSView:
         user.name = original_name
         user.company_name = original_company
         user.save()
+
+    def test_dispatch_rejects_assertion_email_domain_that_differs_from_slug(
+        self, tenants_fixture, saml_setup, monkeypatch
+    ):
+        monkeypatch.setenv("AUTH_URL", "http://localhost")
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        victim_tenant = tenants_fixture[0]
+        attacker_tenant = tenants_fixture[1]
+        attacker_domain = "attacker.com"
+
+        SAMLConfiguration.objects.using(MainRouter.admin_db).create(
+            email_domain=attacker_domain,
+            metadata_xml="""<?xml version='1.0' encoding='UTF-8'?>
+                <md:EntityDescriptor entityID='ATTACKER' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+                <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+                    <md:KeyDescriptor use='signing'>
+                    <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+                        <ds:X509Data>
+                        <ds:X509Certificate>TEST</ds:X509Certificate>
+                        </ds:X509Data>
+                    </ds:KeyInfo>
+                    </md:KeyDescriptor>
+                    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://ATTACKER/sso/saml'/>
+                </md:IDPSSODescriptor>
+                </md:EntityDescriptor>
+            """,
+            tenant=attacker_tenant,
+        )
+        user = User.objects.using(MainRouter.admin_db).create(
+            email=f"intruder@{saml_setup['domain']}", name="Intruder"
+        )
+        social_account = SocialAccount(
+            user=user,
+            provider="ATTACKER",
+            extra_data={
+                "firstName": ["Mallory"],
+                "lastName": ["Example"],
+            },
+        )
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": attacker_domain})
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                provider_id="ATTACKER",
+                client_id=attacker_domain,
+                name="Attacker App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug=attacker_domain)
+
+        assert response.status_code == 302
+        assert "sso_saml_failed=true" in response.url
+        assert not (
+            Membership.objects.using(MainRouter.admin_db)
+            .filter(user=user, tenant=victim_tenant)
+            .exists()
+        )
+        assert (
+            not SAMLToken.objects.using(MainRouter.admin_db).filter(user=user).exists()
+        )
 
     def test_rollback_saml_user_when_error_occurs(self, users_fixture, monkeypatch):
         """Test that a user is properly deleted when created during SAML flow and an error occurs"""
@@ -13945,7 +14081,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -13965,16 +14103,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -14013,7 +14156,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -14033,16 +14178,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -14092,7 +14242,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -14112,16 +14264,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -14170,7 +14327,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -14190,16 +14349,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -14254,7 +14418,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = user
         request.session = {}
@@ -14274,16 +14440,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -14337,7 +14508,9 @@ class TestTenantFinishACSView:
         )
 
         request = RequestFactory().get(
-            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
         )
         request.user = non_admin_user
         request.session = {}
@@ -14357,16 +14530,21 @@ class TestTenantFinishACSView:
             patch("api.models.User.objects.get") as mock_user_get,
         ):
             mock_get_app_or_404.return_value = MagicMock(
-                provider="saml", client_id="testtenant", name="Test App", settings={}
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
             )
             mock_sa_get.return_value = social_account
             mock_socialapp_get.return_value = MagicMock(provider_id="saml")
             mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
-            mock_saml_config_get.return_value = MagicMock()
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
             mock_user_get.return_value = non_admin_user
 
             view = TenantFinishACSView.as_view()
-            response = view(request, organization_slug="testtenant")
+            response = view(request, organization_slug=saml_setup["domain"])
 
         assert response.status_code == 302
 
@@ -18873,7 +19051,7 @@ class TestFindingGroupViewSet:
             provider=provider1,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
         latest_scan_provider2 = Scan.objects.create(
@@ -18881,7 +19059,7 @@ class TestFindingGroupViewSet:
             provider=provider2,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
         older_scan_provider1 = Scan.objects.create(
@@ -18889,7 +19067,7 @@ class TestFindingGroupViewSet:
             provider=provider1,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc) - timedelta(days=1),
+            completed_at=datetime.now(UTC) - timedelta(days=1),
         )
 
         # Older scan — these should be excluded from /latest
@@ -18903,7 +19081,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(days=2),
+            first_seen_at=datetime.now(UTC) - timedelta(days=2),
             muted=False,
         )
 
@@ -18918,7 +19096,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p1_pass.add_resources([resource1])
@@ -18933,7 +19111,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p1_fail.add_resources([resource2])
@@ -18949,7 +19127,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p2.add_resources([resource3])
@@ -19483,7 +19661,7 @@ class TestFindingGroupViewSet:
         resource = resources_fixture[0]
         check_id = "overlap_regression_check"
 
-        t0 = datetime.now(timezone.utc) - timedelta(hours=5)
+        t0 = datetime.now(UTC) - timedelta(hours=5)
         t1 = t0 + timedelta(hours=1)
         t1_end = t1 + timedelta(minutes=30)
         t2 = t0 + timedelta(hours=4)

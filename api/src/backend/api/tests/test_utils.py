@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
-from rest_framework.exceptions import NotFound, ValidationError
-
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Provider
@@ -35,6 +33,7 @@ from prowler.providers.okta.okta_provider import OktaProvider
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 from prowler.providers.vercel.vercel_provider import VercelProvider
+from rest_framework.exceptions import NotFound, ValidationError
 
 
 class TestMergeDicts:
@@ -761,7 +760,7 @@ class TestValidateInvitation:
         invitation = MagicMock(spec=Invitation)
         invitation.token = "VALID_TOKEN"
         invitation.email = "user@example.com"
-        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) + timedelta(days=1)
         invitation.state = Invitation.State.PENDING
         invitation.tenant = MagicMock()
         return invitation
@@ -809,7 +808,7 @@ class TestValidateInvitation:
             )
 
     def test_invitation_expired(self, invitation):
-        expired_time = datetime.now(timezone.utc) - timedelta(days=1)
+        expired_time = datetime.now(UTC) - timedelta(days=1)
         invitation.expires_at = expired_time
 
         with (
@@ -818,7 +817,7 @@ class TestValidateInvitation:
         ):
             mock_db = mock_using.return_value
             mock_db.get.return_value = invitation
-            mock_datetime.now.return_value = datetime.now(timezone.utc)
+            mock_datetime.now.return_value = datetime.now(UTC)
 
             with pytest.raises(InvitationTokenExpiredException):
                 validate_invitation("VALID_TOKEN", "user@example.com")
@@ -863,7 +862,7 @@ class TestValidateInvitation:
         invitation = MagicMock(spec=Invitation)
         invitation.token = "VALID_TOKEN"
         invitation.email = uppercase_email
-        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) + timedelta(days=1)
         invitation.state = Invitation.State.PENDING
         invitation.tenant = MagicMock()
 

@@ -877,7 +877,9 @@ export class ProvidersPage extends BasePage {
         if (actionName === "Check connection") {
           await this.handleCheckConnectionCompletion();
         }
-        if (actionName === "Launch scan") {
+        // "Save" is the wizard's final action (saves the scan schedule) and
+        // "Launch scan" its legacy/manual counterpart; both close the modal.
+        if (actionName === "Launch scan" || actionName === "Save") {
           await this.handleLaunchScanCompletion();
         }
         return;
@@ -890,6 +892,12 @@ export class ProvidersPage extends BasePage {
   }
 
   private async handleCheckConnectionCompletion(): Promise<void> {
+    // A successful connection advances to the schedule step ("Save"); older
+    // flows surfaced a "Launch scan" action instead.
+    const saveScheduleButton = this.page.getByRole("button", {
+      name: "Save",
+      exact: true,
+    });
     const launchScanButton = this.page.getByRole("button", {
       name: "Launch scan",
       exact: true,
@@ -900,6 +908,7 @@ export class ProvidersPage extends BasePage {
 
     try {
       await Promise.race([
+        saveScheduleButton.waitFor({ state: "visible", timeout: 30000 }),
         launchScanButton.waitFor({ state: "visible", timeout: 30000 }),
         this.wizardModal.waitFor({ state: "hidden", timeout: 30000 }),
         connectionError.waitFor({ state: "visible", timeout: 30000 }),
@@ -915,9 +924,94 @@ export class ProvidersPage extends BasePage {
       );
     }
 
-    if (await launchScanButton.isVisible().catch(() => false)) {
+    if (await saveScheduleButton.isVisible().catch(() => false)) {
+      await saveScheduleButton.click();
+      await this.handleLaunchScanCompletion();
+    } else if (await launchScanButton.isVisible().catch(() => false)) {
       await launchScanButton.click();
       await this.handleLaunchScanCompletion();
+    }
+  }
+
+  private async waitForProviderLaunchChoice(): Promise<void> {
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+
+    try {
+      await Promise.race([
+        launchAction.waitFor({ state: "visible", timeout: 30000 }),
+        connectionError.waitFor({ state: "visible", timeout: 30000 }),
+      ]);
+    } catch {
+      // Continue and inspect visible state below.
+    }
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    await expect(launchAction).toBeVisible();
+  }
+
+  async completeProviderConnectionWithoutLaunchingScan(
+    providerUID: string,
+  ): Promise<void> {
+    await this.verifyWizardModalOpen();
+
+    const checkConnectionButton = this.page.getByRole("button", {
+      name: "Check connection",
+      exact: true,
+    });
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+
+    // The test-connection step renders its footer action only after an async
+    // load (canSubmit gate). Wait for the footer to settle on an actionable
+    // state (or surface a connection error) instead of reading visibility on
+    // the first frame, which races the render and falls through.
+    await expect(
+      checkConnectionButton.or(launchAction).or(connectionError),
+    ).toBeVisible({ timeout: 30000 });
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    // Provider-add E2E validates credentials and provider persistence only.
+    // Launching one scan per provider made CI noisy and overloaded the backend;
+    // scan execution itself is covered by scans.spec.ts.
+    if (await checkConnectionButton.isVisible().catch(() => false)) {
+      await checkConnectionButton.click();
+      await this.waitForProviderLaunchChoice();
+    } else {
+      await expect(launchAction).toBeVisible();
+    }
+
+    await this.wizardModal
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await expect(this.wizardModal).not.toBeVisible({ timeout: 30000 });
+    await this.page.waitForURL(/\/providers/, { timeout: 30000 });
+    await this.verifyLoadProviderPageAfterNewProvider();
+
+    const providerExists =
+      await this.verifySingleRowForProviderUID(providerUID);
+    if (!providerExists) {
+      throw new Error(`Provider with UID ${providerUID} was not found.`);
     }
   }
 
@@ -926,7 +1020,7 @@ export class ProvidersPage extends BasePage {
       "div.border-border-error p.text-text-error-primary",
     );
     const launchErrorToast = this.page.getByRole("alert").filter({
-      hasText: /Unable to launch scan/i,
+      hasText: /Unable to (launch scan|save scan schedule)/i,
     });
 
     try {
@@ -1517,9 +1611,11 @@ export class ProvidersPage extends BasePage {
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
 
-    // Some providers show "Check connection" before "Launch scan".
+    // The final step saves the scan schedule ("Save"); manual-only accounts
+    // show "Launch scan" and some providers show "Check connection" first.
     const launchAction = this.page
-      .getByRole("button", { name: "Launch scan", exact: true })
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }))
       .or(
         this.page.getByRole("button", {
           name: "Check connection",
@@ -1547,10 +1643,14 @@ export class ProvidersPage extends BasePage {
       hasText: providerUID,
     });
 
-    // Verify the number of matching rows is 1
-    const count = await matchingRows.count();
-    if (count !== 1) return false;
-    return true;
+    // Use an auto-retrying assertion (not an instant count()) so the check
+    // waits for the table refetch to render the newly added provider row.
+    try {
+      await expect(matchingRows).toHaveCount(1, { timeout: 15000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {

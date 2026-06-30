@@ -2,6 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { FILTER_FIELD } from "@/types/filters";
+
 import { AccountsSelector } from "./accounts-selector";
 
 const multiSelectContentSpy = vi.fn();
@@ -145,7 +147,22 @@ describe("AccountsSelector", () => {
       placeholder: "Search Providers...",
       emptyMessage: "No Providers found.",
     });
+    expect(screen.getByText("All Providers")).toBeInTheDocument();
     expect(screen.getByText("Production AWS")).toBeInTheDocument();
+  });
+
+  it("supports contextual placeholder and empty-selection copy", () => {
+    render(
+      <AccountsSelector
+        providers={providers}
+        placeholder="Select a Provider"
+        emptySelectionLabel="No provider selected"
+        clearSelectionLabel="Clear provider selection"
+      />,
+    );
+
+    expect(screen.getByText("Select a Provider")).toBeInTheDocument();
+    expect(screen.getByText("No provider selected")).toBeInTheDocument();
   });
 
   it("allows disabling search explicitly", () => {
@@ -170,7 +187,10 @@ describe("AccountsSelector", () => {
 
   it("can use provider UID values for pages whose API filters by provider_uid__in", () => {
     render(
-      <AccountsSelector providers={providers} filterKey="provider_uid__in" />,
+      <AccountsSelector
+        providers={providers}
+        filterKey={FILTER_FIELD.PROVIDER_UID}
+      />,
     );
 
     expect(

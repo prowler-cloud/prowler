@@ -36,6 +36,7 @@ class OpenstackProvider(Provider):
     """OpenStack provider responsible for bootstrapping the SDK session."""
 
     _type: str = "openstack"
+    sdk_only: bool = False
     _session: OpenStackSession
     _identity: OpenStackIdentityInfo
     _audit_config: dict

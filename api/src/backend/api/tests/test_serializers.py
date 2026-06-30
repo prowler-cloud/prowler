@@ -1,8 +1,7 @@
 import pytest
-from rest_framework.exceptions import ValidationError
-
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
 from api.v1.serializers import ImageProviderSecret, OracleCloudProviderSecret
+from rest_framework.exceptions import ValidationError
 
 
 class TestS3ConfigSerializer:

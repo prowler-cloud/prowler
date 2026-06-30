@@ -78,6 +78,7 @@ dependencies = [
   "google-auth-httplib2==0.2.0",
   "jsonschema==4.23.0",
   "kubernetes==32.0.1",
+  "linode-api4==5.45.0",
   "markdown==3.10.2",
   "microsoft-kiota-abstractions==1.9.9",
   "numpy==2.2.6",
@@ -124,7 +125,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
-version = "5.31.0"
+version = "5.32.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
@@ -218,6 +219,7 @@ constraint-dependencies = [
   "coverage==7.6.12",
   "darabonba-core==1.0.5",
   "decorator==5.2.1",
+  "deprecated==1.3.1",
   "dill==0.4.1",
   "distro==1.9.0",
   "dnspython==2.8.0",
@@ -300,6 +302,7 @@ constraint-dependencies = [
   "platformdirs==4.9.6",
   "plotly==6.7.0",
   "pluggy==1.6.0",
+  "polling==0.3.2",
   "prek==0.3.9",
   "propcache==0.5.2",
   "proto-plus==1.28.0",

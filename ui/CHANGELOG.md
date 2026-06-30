@@ -2,7 +2,27 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.31.0] (Prowler UNRELEASED)
+## [1.32.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Add `Scan Configuration` menu item under the Configuration menu (only available in Prowler Cloud) [(#11695)](https://github.com/prowler-cloud/prowler/pull/11695)
+- Scan configuration management page (`/scan-configurations`) to create, edit, and manage scan configurations with live YAML validation against the server JSON Schema (only available in Prowler Cloud) [(#11695)](https://github.com/prowler-cloud/prowler/pull/11695)
+- Surface an "invalid scan configuration" note on compliance requirements that fail solely because the applied scan config does not meet them [(#11695)](https://github.com/prowler-cloud/prowler/pull/11695)
+- Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
+- CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
+
+---
+
+## [1.31.1] (Prowler v5.31.1)
+
+### 🔄 Changed
+
+- Schedule Scans provider table and launch flows now use provider schedule fields, restore OSS daily scheduling, default to the next local scan hour, and clarify provider selection in launch scan [(#11684)](https://github.com/prowler-cloud/prowler/pull/11684)
+
+---
+
+## [1.31.0] (Prowler v5.31.0)
 
 ### 🚀 Added
 
@@ -31,6 +51,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Threat Map no longer shows an empty map for accounts that only have Okta or Google Workspace scans [(#11542)](https://github.com/prowler-cloud/prowler/pull/11542)
 - Compliance attributes requests now pass the selected scan, so multi-provider universal frameworks (e.g. CSA CCM) load the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
+
+### 🔄 Changed
+
+- Public SaaS config (Sentry, Google Tag Manager, API base/docs URL) now resolves at container runtime instead of build time; self-hosted deployments set the UI config through the new `UI_`-prefixed env vars (`UI_API_BASE_URL`, `UI_API_DOCS_URL`, `UI_GOOGLE_TAG_MANAGER_ID`, `UI_SENTRY_DSN`, `UI_SENTRY_ENVIRONMENT`), with the previous `NEXT_PUBLIC_*` names still honored as a deprecated fallback [(#11500)](https://github.com/prowler-cloud/prowler/pull/11500)
+
+### 🐞 Fixed
+
+- `ui/.env` template now lists only the canonical `UI_SENTRY_DSN` and `UI_SENTRY_ENVIRONMENT` names; the deprecated `NEXT_PUBLIC_SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_ENVIRONMENT` entries have been removed [(#11500)](https://github.com/prowler-cloud/prowler/pull/11500)
 
 ---
 

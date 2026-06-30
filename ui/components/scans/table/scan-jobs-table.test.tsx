@@ -2,8 +2,13 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { SCAN_JOBS_TAB, type ScanProps } from "@/types";
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { ScanJobsTable } from "./scan-jobs-table";
+
+const { getScanJobsColumnsMock } = vi.hoisted(() => ({
+  getScanJobsColumnsMock: vi.fn((_options: unknown) => []),
+}));
 
 vi.mock("@/components/ui/table", () => ({
   DataTable: ({ data }: { data: ScanProps[] }) => (
@@ -12,7 +17,7 @@ vi.mock("@/components/ui/table", () => ({
 }));
 
 vi.mock("./scan-jobs-columns", () => ({
-  getScanJobsColumns: () => [],
+  getScanJobsColumns: (options: unknown) => getScanJobsColumnsMock(options),
 }));
 
 vi.mock("../auto-refresh", () => ({
@@ -95,5 +100,21 @@ describe("ScanJobsTable", () => {
     expect(
       screen.queryByTestId("no-scans-empty-state"),
     ).not.toBeInTheDocument();
+  });
+
+  it("passes scan schedule capability to scan job columns", () => {
+    render(
+      <ScanJobsTable
+        data={[]}
+        tab={SCAN_JOBS_TAB.ACTIVE}
+        hasFilters
+        scanScheduleCapability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+      />,
+    );
+
+    expect(getScanJobsColumnsMock).toHaveBeenCalledWith({
+      tab: SCAN_JOBS_TAB.ACTIVE,
+      capability: SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+    });
   });
 });
